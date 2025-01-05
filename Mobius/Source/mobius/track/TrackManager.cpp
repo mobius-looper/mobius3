@@ -402,13 +402,13 @@ void TrackManager::beginAudioBlock()
 /**
  * Advance the longWatcher which may cause more actions to fire.
  */
-void TrackManager::advanceLongWatcher()
+void TrackManager::advanceLongWatcher(int frames)
 {
     // advance the long press detector, this may call back
     // to longPressDetected to fire an action
     // todo: Mobius has one of these too, try to merge
     if (!longDisable)
-      longWatcher.advance(stream->getInterruptFrames());
+      longWatcher.advance(frames);
 }
 
 #if 0

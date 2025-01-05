@@ -633,6 +633,12 @@
         <FILE id="lEcdBG" name="MainWindow.h" compile="0" resource="0" file="../Mobius/Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{9EED59CE-20A8-984F-2766-AAF0F27339C9}" name="mobius">
+        <FILE id="Xs7IMz" name="TimeSlicer.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/TimeSlicer.cpp"/>
+        <FILE id="G9TER5" name="TimeSlicer.h" compile="0" resource="0" file="../Mobius/Source/mobius/TimeSlicer.h"/>
+        <FILE id="Mwj9Td" name="AudioStreamSlicer.cpp" compile="1" resource="0"
+              file="../Mobius/Source/mobius/AudioStreamSlicer.cpp"/>
+        <FILE id="Bf8yYx" name="AudioStreamSlicer.h" compile="0" resource="0"
+              file="../Mobius/Source/mobius/AudioStreamSlicer.h"/>
         <GROUP id="{1F797BCC-2589-4084-878C-ED9A7FE75E71}" name="track">
           <FILE id="JMxD9h" name="BaseScheduler.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/track/BaseScheduler.cpp"/>
@@ -838,10 +844,6 @@
           <FILE id="RWBIjZ" name="Synchronizer.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/core/Synchronizer.cpp"/>
           <FILE id="EQwcf8" name="Synchronizer.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Synchronizer.h"/>
-          <FILE id="CkjMLr" name="SyncState.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/SyncState.cpp"/>
-          <FILE id="pGucPq" name="SyncState.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/SyncState.h"/>
-          <FILE id="rku0TB" name="SyncTracker.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/SyncTracker.cpp"/>
-          <FILE id="xSG9fU" name="SyncTracker.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/SyncTracker.h"/>
           <FILE id="JEih6Q" name="Track.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Track.cpp"/>
           <FILE id="venj3K" name="Track.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Track.h"/>
           <FILE id="huYjcW" name="TriggerState.cpp" compile="1" resource="0"

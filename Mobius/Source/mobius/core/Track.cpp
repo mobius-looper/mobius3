@@ -48,6 +48,7 @@
 #include "../../util/StructureDumper.h"
 
 #include "../../model/UserVariable.h"
+#include "../../model/MobiusConfig.h"
 #include "../../model/Setup.h"
 
 #include "../MobiusInterface.h"

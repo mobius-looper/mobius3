@@ -78,7 +78,6 @@ class Pulsator
     void loadSession(class Session* s);
 
     void interruptStart(class MobiusAudioStream* stream);
-    juce::Array<int>* getOrderedLeaders();
     int getPulseFrame(int follower);
     int getPulseFrame(int followerId, Pulse::Type type);
 
@@ -129,6 +128,7 @@ class Pulsator
     }
 
     Pulse* getBlockPulse(Pulse::Source src);
+    Follower* getFollower(int id, bool warn = true);
 
   private:
 
@@ -158,8 +158,6 @@ class Pulsator
 
     void reset();
     Leader* getLeader(int id);
-    Follower* getFollower(int id, bool warn = true);
-    void orderLeaders();
     void advance(int blockFrames);
     
     void gatherHost(class MobiusAudioStream* stream);

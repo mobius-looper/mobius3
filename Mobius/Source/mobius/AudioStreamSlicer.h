@@ -1,3 +1,4 @@
+
 /**
  * Helper class for TimeSlicer that wraps the MobiusAudioStream provided
  * by the container and gives the tracks subsections of the full stream block.
@@ -16,11 +17,13 @@
 
 class AudioStreamSlicer : public MobiusAudioStream
 {
+  public:
+    
     AudioStreamSlicer(MobiusAudioStream* src);
     ~AudioStreamSlicer();
 
     // slice control
-    void setBlockOffset(int offset);
+    void setSlice(int offset, int length);
     
     // MobiusAudioStream interface
 
@@ -42,5 +45,6 @@ class AudioStreamSlicer : public MobiusAudioStream
 
     MobiusAudioStream* containerStream = nullptr;
     int blockOffset = 0;
+    int blockLength = 0;
     
 };    

@@ -183,6 +183,7 @@ void MidiTrack::doAction(UIAction* a)
 
 void MidiTrack::syncPulse(class Pulse* p)
 {
+    (void)p;
     Trace(1, "MidiTrack::syncPulse not implemented");
 }
 

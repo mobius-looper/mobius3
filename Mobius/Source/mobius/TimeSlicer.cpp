@@ -22,7 +22,12 @@
 #include "MobiusKernel.h"
 
 #include "../sync/SyncMaster.h"
+#include "../sync/Follower.h"
+#include "track/LogicalTrack.h"
 #include "track/TrackManager.h"
+
+#include "AudioStreamSlicer.h"
+#include "TimeSlicer.h"
 
 TimeSlicer::TimeSlicer(MobiusKernel* k, SyncMaster* sm, TrackManager* tm)
 {
@@ -35,8 +40,8 @@ TimeSlicer::TimeSlicer(MobiusKernel* k, SyncMaster* sm, TrackManager* tm)
 
     // make sure this is large enough to contain a reasonably high number
     // of slices without dynamic allocation in the audio thread
-    int maxSlices = 100;
-    slices.ensureStorageAllocated(100);
+    int maxSlices = 32;
+    slices.ensureStorageAllocated(maxSlices);
 
     test();
 }
@@ -57,7 +62,7 @@ void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
 
         gatherSlices(track);
         
-        if (slizes.size() == 0) {
+        if (slices.size() == 0) {
             // just take the whole thing
             advanceTrack(track, stream);
         }
@@ -66,7 +71,7 @@ void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
             int blockOffset = 0;
         
             for (int i = 0 ; i < slices.size() ; i++) {
-                Slice& s = slices.getReference(location);
+                Slice& s = slices.getReference(i);
             
                 int sliceLength = s.blockOffset - blockOffset;
                 // it is permissible to have a slice of zero if there is more
@@ -82,18 +87,18 @@ void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
                 // now let the track know about this pulse
                 notifyPulse(track, s);
             }
-        }
 
-        int remainder = stream->getInterruptFrames() - blockOffset;
-        if(remainder > 0) {
-            ass.setSlice(blockOffset, remainder);
+            int remainder = stream->getInterruptFrames() - blockOffset;
+            if(remainder > 0) {
+                ass.setSlice(blockOffset, remainder);
             
-            advanceTrack(track, &ass);
+                advanceTrack(track, &ass);
+            }
+            else if (remainder < 0) {
+                Trace(1, "TimeSlicer: Block offset math is fucked");
+            }
         }
-        else if (remainder < 0) {
-            Trace(1, "TimeSlicer: Block offset math is fucked");
-        }
-
+        
         track->setAdvanced(true);
         track = nextTrack();
     }
@@ -122,7 +127,7 @@ void TimeSlicer::advanceTrack(LogicalTrack* track, MobiusAudioStream* stream)
 /**
  * Here we've just advanced the track up to the frame where a pulse resides.
  */
-void TimeSlicer::notifyPulse(LoticalTrack* track, Slice& slice)
+void TimeSlicer::notifyPulse(LogicalTrack* track, Slice& slice)
 {
     // these can only be Pulses right now, eventually other types of
     // slice may exist
@@ -213,7 +218,7 @@ void TimeSlicer::test()
 /**
  * SyncMaster callback whenever follower/leader changes are made.
  */
-void TimeSlicer::syncFollowChanges()
+void TimeSlicer::syncFollowerChanges()
 {
     ordered = false;
 }
@@ -225,7 +230,9 @@ void TimeSlicer::syncFollowChanges()
  */
 void TimeSlicer::prepareTracks()
 {
-    juce::OwnedArray<LogicalTrack>* tracks = trackMaster->getTracks();
+    //juce::OwnedArray<LogicalTrack>* tracks = trackManager->getTracks();
+    //for (int i = 0 ; i < tracks->size() ; i++) {
+    juce::OwnedArray<LogicalTrack>& tracks = trackManager->getTracks();
     for (auto track : tracks) {
         track->setVisited(false);
         track->setAdvanced(false);
@@ -244,7 +251,9 @@ void TimeSlicer::orderTracks()
 {
     orderedTracks.clearQuick();
 
-    juce::OwnedArray<LogicalTrack>* tracks = trackMaster->getTracks();
+    //juce::OwnedArray<LogicalTrack>* tracks = trackManager->getTracks();
+    //for (int i = 0 ; i < tracks->size() ; i++) {
+    juce::OwnedArray<LogicalTrack>& tracks = trackManager->getTracks();
     for (auto track : tracks) {
         orderTracks(track);
     }
@@ -282,14 +291,14 @@ LogicalTrack* TimeSlicer::nextTrack()
 
     if (!ordered) {
         orderTracks();
-        orderIndex = 0;
+        orderedIndex = 0;
     }
 
-    while (next == nullptr && orderIndex < orderedTracks.size()) {
+    while (next == nullptr && orderedIndex < orderedTracks.size()) {
         LogicalTrack* lt = orderedTracks[orderedIndex];
         if (!lt->isAdvanced())
           next = lt;
-        orderIndex++;
+        orderedIndex++;
     }
 
     return next;

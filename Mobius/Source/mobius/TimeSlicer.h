@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "SyncMaster.h"
-
 class TimeSlicer : public SyncMaster::Listener
 {
   public:
@@ -37,7 +35,7 @@ class TimeSlicer : public SyncMaster::Listener
     ~TimeSlicer();
 
     void processAudioStream(class MobiusAudioStream* stream);
-    void syncFollowChanges();
+    void syncFollowerChanges();
 
   private:
 
@@ -51,11 +49,11 @@ class TimeSlicer : public SyncMaster::Listener
     juce::Array<Slice> slices;
     int sliceCount = 0;
 
-    juce::Array<LogicalTrack*> orderedTracks;
+    juce::Array<class LogicalTrack*> orderedTracks;
     int orderedIndex = 0;
     bool ordered = false;
 
-    void gatherSlices();
+    void gatherSlices(class LogicalTrack* track);
     void insertPulse(class Pulse* p);
     void test();
     
@@ -63,5 +61,7 @@ class TimeSlicer : public SyncMaster::Listener
     void orderTracks();
     void orderTracks(class LogicalTrack* t);
     class LogicalTrack* nextTrack();
+    void notifyPulse(class LogicalTrack* track, Slice& slice);
+    void advanceTrack(class LogicalTrack* track, class MobiusAudioStream* stream);
 
 };

@@ -25,6 +25,7 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
+#include "../../../model/MobiusConfig.h"
 
 #include "../Action.h"
 #include "../Event.h"

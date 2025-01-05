@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/MobiusConfig.h"
 
 #include "../../Notifier.h"
 

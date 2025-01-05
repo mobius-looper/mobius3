@@ -5,7 +5,7 @@
 #pragma once
 
 // necessary for SyncSource
-#include "../../model/Setup.h"
+#include "../../model/ParameterConstants.h"
  
 //////////////////////////////////////////////////////////////////////
 //
@@ -73,6 +73,11 @@ class Synchronizer {
 	Synchronizer(class Mobius* mob);
 	~Synchronizer();
 
+    // needed by a few internals used to getting things from Synchronizer
+    class SyncMaster* getSyncMaster() {
+        return mSyncMaster;
+    }
+
 	void updateConfiguration(class MobiusConfig* config);
     void globalReset();
     
@@ -108,31 +113,36 @@ class Synchronizer {
 	void interruptEnd();
 
     void trackSyncEvent(class Track* t, class EventType* type, int offset);
-    void syncPulse(class Track* track, class Pulse* pulse);
 
     // 
     // Loop and Function callbacks
     //
 
-    void loopRealignSlave(Loop* l);
-    void loopLocalStartPoint(Loop* l);
-    void loopReset(Loop* loop);
-    void loopRecordStart(Loop* l);
-    void loopRecordStop(Loop* l, Event* stop);
-    void loopResize(Loop* l, bool resize);
-    void loopSpeedShift(Loop* l);
-    void loopSwitch(Loop* l, bool resize);
-    void loopPause(Loop* l);
-    void loopResume(Loop* l);
-    void loopMute(Loop* l);
-    void loopRestart(Loop* l);
-    void loopMidiStart(Loop* l);
-    void loopMidiStop(Loop* l, bool force);
-    void loopSetStartPoint(Loop* l, Event* e);
+    void loopRealignSlave(class Loop* l);
+    void loopLocalStartPoint(class Loop* l);
+    void loopReset(class Loop* loop);
+    void loopRecordStart(class Loop* l);
+    void loopRecordStop(class Loop* l, class Event* stop);
+    void loopResize(class Loop* l, bool resize);
+    void loopSpeedShift(class Loop* l);
+    void loopSwitch(class Loop* l, bool resize);
+    void loopPause(class Loop* l);
+    void loopResume(class Loop* l);
+    void loopMute(class Loop* l);
+    void loopRestart(class Loop* l);
+    void loopMidiStart(class Loop* l);
+    void loopMidiStop(class Loop* l, bool force);
+    void loopSetStartPoint(class Loop* l, class Event* e);
 
     void loadProject(class Project* p);
     void loadLoop(class Loop* l);
 
+    // Temporary master interface for old functions
+    void setTrackSyncMaster(class Track* t);
+    void setOutSyncMaster(class Track* t);
+    class Track* getTrackSyncMaster();
+    class Track* getOutSyncMaster();
+    
 	/////////////////////////////////////////////////////////////////////
 	// 
 	// Private
@@ -146,6 +156,9 @@ class Synchronizer {
 
     // our eventual upstart replacement, the ass kissing bastard
     class SyncMaster* mSyncMaster = nullptr;
+
+    // used by getFramesPerBeat, not sure where this came from
+    bool mNoSyncBeatRounding = false;
     
     // record scheduling
     
@@ -158,21 +171,29 @@ class Synchronizer {
     void setAutoStopEvent(class Action* action, class Loop* loop, class Event* stop, 
                           float barFrames, int bars);
     class Event* scheduleSyncRecordStop(class Action* action, class Loop* l);
-    void getRecordUnit(class Loop* l, class SyncUnitInfo* unit);
+    void getRecordUnit(class Loop* l, SyncUnitInfo* unit);
     float getSpeed(class Loop* l);
     void traceTempo(class Loop* l, const char* type, float tempo);
     float getFramesPerBeat(float tempo);
     int getBeatsPerBar(SyncSource src, Loop* l);
 
 
-    void startRecording(Loop* l, Event* e);
-    void syncPulseRecording(Loop* l, Event* e);
-    void activateRecordStop(Loop* l, Event* pulse, Event* stop);
+    void startRecording(class Loop* l);
+    void syncPulseRecording(class Loop* l, class Pulse* p);
+    void activateRecordStop(class Loop* l, class Pulse* pulse, class Event* stop);
     
     bool isTransportMaster(class Loop* l);
 
     // temporary porting to SyncMaster that doesn't take a TraceContext
-    void fullStop(TraceContext* l, const char* msg);
-    void muteMidiStop(Loop* l);
+    void fullStop(class TraceContext* l, const char* msg);
+    void muteMidiStop(class Loop* l);
+
+    void sendStart(class Loop* l, bool checkManual, bool checkNear);
+
+    void doRealign(class Loop* loop, class Event* pulse, class Event* realign);
+    void moveLoopFrame(class Loop* l, long newFrame);
+    void realignSlave(class Loop* l, class Event* pulse);
+    long wrapFrame(class Loop* l, long frame);
+
 
 };

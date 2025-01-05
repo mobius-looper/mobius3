@@ -15,6 +15,8 @@
 #include <string.h>
 #include <memory.h>
 
+#include "../../../util/Trace.h"
+
 #include "../Action.h"
 #include "../Event.h"
 #include "../Function.h"
@@ -55,8 +57,11 @@ SynchronizerEventType::SynchronizerEventType()
 
 void SynchronizerEventType::invoke(Loop* l, Event* e)
 {
-    Synchronizer* sync = l->getSynchronizer();
-	sync->syncEvent(l, e);
+    (void)l;
+    (void)e;
+    Trace(1, "SynchronizerEventType::invoke not expecting this");
+    //Synchronizer* sync = l->getSynchronizer();
+	//sync->syncEvent(l, e);
 }
 
 SynchronizerEventType SyncEventObj;

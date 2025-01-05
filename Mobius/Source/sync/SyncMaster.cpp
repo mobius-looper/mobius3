@@ -94,6 +94,43 @@ void SyncMaster::addListener(Listener* l)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Stub Shit
+//
+// These were added to get Synchronizer to compile'
+// need to deal with it
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This is called when a track is reset, if this was one of the sync masters
+ * Synchronizer would try to auto-assign another one.
+ */
+void SyncMaster::notifyTrackReset(int number)
+{
+    (void)number;
+}
+
+/**
+ * Called after a loop or project load in a track.
+ * If the track now has content and there was no track out out sync master,
+ * Synchronizer would auto-assign this one.
+ */
+void SyncMaster::notifyLoopLoad(int number)
+{
+    (void)number;
+}
+
+/**
+ * I think the intent here was the same as notifyLoopLoad
+ * It could auto-assign masters
+ */
+void SyncMaster::notifyTrackAvailable(int number)
+{
+    (void)number;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Advance
 //
 //////////////////////////////////////////////////////////////////////
@@ -453,7 +490,7 @@ void SyncMaster::follow(int follower, int leader, Pulse::Type type)
     pulsator->follow(follower, leader, type);
 
     if (listener != nullptr)
-      listener->syncFollowChanges();
+      listener->syncFollowerChanges();
 }
 
 /**
@@ -474,7 +511,7 @@ void SyncMaster::setTrackSyncMaster(int leader, int leaderFrames)
     pulsator->setTrackSyncMaster(leader, leaderFrames);
 
     if (listener != nullptr)
-      listener->syncFollowChanges();
+      listener->syncFollowerChanges();
 }
 
 int SyncMaster::getTrackSyncMaster()
@@ -686,6 +723,17 @@ bool SyncMaster::isMidiInStarted()
 //
 //////////////////////////////////////////////////////////////////////
     
+bool SyncMaster::isHostReceiving()
+{
+    //return midiAnalyzer->isReceiving();
+    return false;
+}
+bool SyncMaster::isHostStarted()
+{
+    //return midiAnalyzer->isStarted();
+    return false;
+}
+
 #if 0
 class MidiSyncEvent* SyncMaster::hostNextEvent()
 {
@@ -711,16 +759,6 @@ int SyncMaster::getHostBeat()
     return states.host.beat;
 }
 
-bool SyncMaster::isHostReceiving()
-{
-    //return midiAnalyzer->isReceiving();
-    return false;
-}
-bool SyncMaster::isHostStarted()
-{
-    //return midiAnalyzer->isStarted();
-    return false;
-}
 #endif
 
 //////////////////////////////////////////////////////////////////////
@@ -734,6 +772,8 @@ bool SyncMaster::isHostStarted()
  */
 int SyncMaster::getBarFrames(Pulse::Source src)
 {
+    (void)src;
+    
 #if 0        
     if (src == SYNC_HOST) {
         if (mHostTracker->isLocked()) {
@@ -784,6 +824,9 @@ int SyncMaster::getBarFrames(Pulse::Source src)
         }
 #endif
 
+       return 4;
+
+}
 
 /****************************************************************************/
 /****************************************************************************/

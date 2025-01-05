@@ -53,6 +53,7 @@
 #include "../../util/StructureDumper.h"
 
 #include "../../model/ParameterConstants.h"
+#include "../../model/MobiusConfig.h"
 #include "../../model/Trigger.h"
 
 #include "../Audio.h"

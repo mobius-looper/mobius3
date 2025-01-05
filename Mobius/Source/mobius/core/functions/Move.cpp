@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <memory.h>
 
+#include "../../../util/Trace.h"
 #include "../../../util/Util.h"
 
 #include "../Action.h"
@@ -214,8 +215,10 @@ void MoveFunction::doEvent(Loop* loop, Event* event)
 
 	// If this is Drift, we have to update the tracker too
 	if (event->function == Drift) {
-        Synchronizer* sync = loop->getSynchronizer();
-        sync->loopDrift(loop, (int)(newFrame - loop->getFrame()));
+        //Synchronizer* sync = loop->getSynchronizer();
+
+        Trace(1, "Move: Drift function no longer implemented");
+        //sync->loopDrift(loop, (int)(newFrame - loop->getFrame()));
     }
 
 	loop->setFrame(newFrame);

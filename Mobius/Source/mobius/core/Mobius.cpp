@@ -25,6 +25,7 @@
 #include "../../util/StructureDumper.h"
 //#include "../../SuperDumper.h"
 
+#include "../../model/MobiusConfig.h"
 #include "../../model/Setup.h"
 #include "../../model/UserVariable.h"
 #include "../../model/UIAction.h"

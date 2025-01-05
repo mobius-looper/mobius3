@@ -37,6 +37,7 @@
 
 #include "Audio.h"
 #include "SampleManager.h"
+#include "TimeSlicer.h"
 
 // drag this bitch in
 #include "core/Mobius.h"
@@ -178,7 +179,7 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     mTracks.reset(new TrackManager(this));
     mTracks->initialize(configuration, ses, mCore);
 
-    mTimeSlicer.reset(new TimeSlicer(this, &syncMaster, mTracks));
+    mTimeSlicer.reset(new TimeSlicer(this, &syncMaster, mTracks.get()));
 }
 
 void MobiusKernel::propagateSymbolProperties()
@@ -679,14 +680,14 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // at this point before TimeSlicer, TrackManager would advance the LongWatcher
     // which could result in more actions firing, that still needs to happen
     // before block advance
-    mTracks->advanceLongWatcher();
+    mTracks->advanceLongWatcher(stream->getInterruptFrames());
     
     // !! The TimeSlicer is going to need to include MSL track Waits in its
     // dependency analysis which will complicate what mCore->beginAudioBlockAfterActions
     // above is doing.  Need to merge that with whatever the surgeon is doing
     mTimeSlicer->processAudioStream(stream);
 
-    mCore->finishAudioBlock();
+    mCore->finishAudioBlock(stream);
     
     updateParameters();
     notifier.afterBlock();

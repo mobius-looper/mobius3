@@ -43,6 +43,7 @@
 #include <memory.h>
 #include <string.h>
 
+#include "../../../util/Trace.h"
 #include "../../../util/Util.h"
 #include "../../../model/MobiusConfig.h"
 #include "../../../model/Setup.h"
@@ -56,7 +57,6 @@
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Synchronizer.h"
-#include "../SyncState.h"
 #include "../Track.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -279,8 +279,9 @@ void DriftCorrectFunction::invoke(Action* action, Mobius* m)
 {
 	if (action->down) {
 		trace(action, m);
-        Synchronizer* sync = m->getSynchronizer();
-        sync->forceDriftCorrect();
+        Trace(1, "DriftCorrectFunction: no longer implemented");
+        //Synchronizer* sync = m->getSynchronizer();
+        //sync->forceDriftCorrect();
 	}
 }
 

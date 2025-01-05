@@ -294,7 +294,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     int activePreset = 0;
 
     std::unique_ptr<TrackManager> mTracks;
-    std::unique_ptr<class TimeSlider> mTimeSlicer;
+    std::unique_ptr<class TimeSlicer> mTimeSlicer;
     
     // special mode for TestDriver
     bool testMode = false;

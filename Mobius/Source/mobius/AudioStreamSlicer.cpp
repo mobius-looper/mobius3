@@ -14,9 +14,10 @@ AudioStreamSlicer::~AudioStreamSlicer()
 {
 }
 
-void AudioStreamSlicer::setBlockOffset(int o)
+void AudioStreamSlicer::setSlice(int offset, int length)
 {
-    blockOffset = o;
+    blockOffset = offset;
+    blockLength = length;
 }
 
 /**
@@ -26,12 +27,16 @@ void AudioStreamSlicer::setBlockOffset(int o)
  */
 int AudioStreamSlicer::getInterruptFrames()
 {
+    // why didn't this work?
+    /*
     int actual = containerStream->getInterruptFrames() - blockOffset;
     if (actual < 0) {
         Trace(1, "AudioStreamSlicer: Block offset too large");
         actual = 0;
     }
     return actual;
+    */
+    return blockLength;
 }
 
 /**
@@ -47,7 +52,7 @@ void AudioStreamSlicer::getInterruptBuffers(int inport, float** input,
     float* adjustedInput = nullptr;
     float* adjustedOutput = nullptr;
 
-    constainerStream->getInterruptBuffers(inport, &adjustedInput, outport, &adjustedOutput);
+    containerStream->getInterruptBuffers(inport, &adjustedInput, outport, &adjustedOutput);
 
     adjustedInput += (blockOffset * 2);
     adjustedOutput += (blockOffset * 2);
@@ -70,13 +75,13 @@ juce::MidiBuffer* AudioStreamSlicer::getMidiMessages()
 double AudioStreamSlicer::getStreamTime()
 {
     Trace(1, "AudioStreamSlicer::getStreamTime Unexpected call");
-    return 0.0lf;
+    return 0.0f;
 }
 
 double AudioStreamSlicer::getLastInterruptStreamTime()
 {
     Trace(1, "AudioStreamSlicer::getLastInterruptStreamTime Unexpected call");
-    return 0.0lf;
+    return 0.0f;
 }
     
 class AudioTime* AudioStreamSlicer::getAudioTime()

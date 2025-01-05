@@ -36,7 +36,7 @@ class SyncMaster
     class Listener {
       public:
         virtual ~Listener() {}
-        void syncFollowerChanges() = 0;
+        virtual void syncFollowerChanges() = 0;
     };
     
     SyncMaster();
@@ -75,6 +75,11 @@ class SyncMaster
     int getMilliseconds();
     void sendAlert(juce::String msg);
 
+    void notifyTrackReset(int id);
+    void notifyTrackAvailable(int id);
+    void notifyLoopLoad(int id);
+    int getBarFrames(Pulse::Source src);
+    
     //////////////////////////////////////////////////////////////////////
     // Leader/Follower Pulsator passthroughs
     //////////////////////////////////////////////////////////////////////
@@ -98,6 +103,13 @@ class SyncMaster
 
     class Follower* getFollower(int id);
 
+    //////////////////////////////////////////////////////////////////////
+    // Host
+    //////////////////////////////////////////////////////////////////////
+
+    bool isHostReceiving();
+    bool isHostStarted();
+    
     //////////////////////////////////////////////////////////////////////
     // Transport/MIDI Output
     //////////////////////////////////////////////////////////////////////
@@ -232,6 +244,7 @@ class SyncMaster
   private:
 
     class MobiusContainer* container = nullptr;
+    Listener* listener = nullptr;
     int sampleRate = 44100;
     
     SyncMasterState states;

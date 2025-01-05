@@ -37,6 +37,8 @@
 
 // for getLastSampleFrames
 #include "../MobiusKernel.h"
+#include "../../sync/SyncMaster.h"
+#include "../../sync/Pulse.h"
 
 #include "Event.h"
 #include "EventManager.h"
@@ -2065,12 +2067,14 @@ TrackSyncMasterVariableType::TrackSyncMasterVariableType()
 
 void TrackSyncMasterVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	int number = 0;
 	Synchronizer* s = t->getSynchronizer();
+    /*
 	Track* master = s->getTrackSyncMaster();
 	if (master != NULL)
 	  number = master->getDisplayNumber();
-	value->setInt(number);
+    */
+    SyncMaster* sm = s->getSyncMaster();
+	value->setInt(sm->getTrackSyncMaster());
 }
 
 TrackSyncMasterVariableType TrackSyncMasterVariableObj;
@@ -2102,12 +2106,9 @@ OutSyncMasterVariableType::OutSyncMasterVariableType()
 
 void OutSyncMasterVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	int number = 0;
 	Synchronizer* s = t->getSynchronizer();
-	Track* master = s->getOutSyncMaster();
-	if (master != NULL)
-	  number = master->getDisplayNumber();
-	value->setInt(number);
+    SyncMaster* sm = s->getSyncMaster();
+	value->setInt(sm->getOutSyncMaster());
 }
 
 OutSyncMasterVariableType OutSyncMasterVariableObj;
@@ -2144,7 +2145,8 @@ SyncTempoVariableType::SyncTempoVariableType()
 void SyncTempoVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
-	float tempo = s->getTempo(t);
+    SyncMaster* sm = s->getSyncMaster();
+	float tempo = sm->getTempo(Pulse::SourceTransport);
 
 	// assume its ok to truncate this one, if you want something
 	// more accurate could have a RealSyncTempoVariable?
@@ -2179,7 +2181,8 @@ SyncRawBeatVariableType::SyncRawBeatVariableType()
 void SyncRawBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getRawBeat(t));
+    SyncMaster* sm = s->getSyncMaster();
+    value->setInt(sm->getBeat(Pulse::SourceTransport));
 }
 
 SyncRawBeatVariableType SyncRawBeatVariableObj;
@@ -2210,7 +2213,8 @@ SyncBeatVariableType::SyncBeatVariableType()
 void SyncBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getBeat(t));
+    SyncMaster* sm = s->getSyncMaster();
+    value->setInt(sm->getBeat(Pulse::SourceTransport));
 }
 
 SyncBeatVariableType SyncBeatVariableObj;
@@ -2241,7 +2245,8 @@ SyncBarVariableType::SyncBarVariableType()
 void SyncBarVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getBar(t));
+    SyncMaster* sm = s->getSyncMaster();
+    value->setInt(sm->getBar(Pulse::SourceTransport));
 }
 
 SyncBarVariableType SyncBarVariableObj;
@@ -2695,8 +2700,10 @@ SyncOutTempoVariableType::SyncOutTempoVariableType()
 
 void SyncOutTempoVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	float tempo = t->getSynchronizer()->getOutTempo();
-
+	//float tempo = t->getSynchronizer()->getOutTempo();
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+    float tempo = sm->getTempo(Pulse::SourceTransport);
+    
 	// assume its ok to truncate this one, if you want something
 	// more accurate could have a RealTempoVariable?
 	value->setLong((long)tempo);
@@ -2729,7 +2736,10 @@ SyncOutRawBeatVariableType::SyncOutRawBeatVariableType()
 void SyncOutRawBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getOutRawBeat());
+    //value->setInt(s->getOutRawBeat());
+    
+    SyncMaster* sm = s->getSyncMaster();
+    value->setInt(sm->getBeat(Pulse::SourceTransport));
 }
 
 SyncOutRawBeatVariableType SyncOutRawBeatVariableObj;
@@ -2759,7 +2769,9 @@ SyncOutBeatVariableType::SyncOutBeatVariableType()
 void SyncOutBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getOutBeat());
+    //value->setInt(s->getOutBeat());
+    SyncMaster* sm = s->getSyncMaster();
+    value->setInt(sm->getBeat(Pulse::SourceTransport));
 }
 
 SyncOutBeatVariableType SyncOutBeatVariableObj;
@@ -2788,7 +2800,9 @@ SyncOutBarVariableType::SyncOutBarVariableType()
 void SyncOutBarVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getOutBar());
+    //value->setInt(s->getOutBar());
+    SyncMaster* sm = s->getSyncMaster();
+    value->setInt(sm->getBar(Pulse::SourceTransport));
 }
 
 SyncOutBarVariableType SyncOutBarVariableObj;
@@ -2816,7 +2830,8 @@ SyncOutSendingVariableType::SyncOutSendingVariableType()
 
 void SyncOutSendingVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	value->setBool(t->getSynchronizer()->isSending());
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+	value->setBool(sm->isMidiOutSending());
 }
 
 SyncOutSendingVariableType SyncOutSendingVariableObj;
@@ -2844,7 +2859,10 @@ SyncOutStartedVariableType::SyncOutStartedVariableType()
 
 void SyncOutStartedVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	value->setBool(t->getSynchronizer()->isStarted());
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+    // no longer get these from Synchronizer
+	//value->setBool(t->getSynchronizer()->isStarted());
+    value->setBool(sm->isMidiOutStarted());
 }
 
 SyncOutStartedVariableType SyncOutStartedVariableObj;
@@ -2873,7 +2891,9 @@ SyncOutStartsVariableType::SyncOutStartsVariableType()
 
 void SyncOutStartsVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	value->setInt(t->getSynchronizer()->getStarts());
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+	//value->setInt(t->getSynchronizer()->getStarts());
+    value->setInt(sm->getMidiOutStarts());
 }
 
 SyncOutStartsVariableType SyncOutStartsVariableObj;
@@ -2909,8 +2929,10 @@ SyncInTempoVariableType::SyncInTempoVariableType()
 
 void SyncInTempoVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	float tempo = t->getSynchronizer()->getInTempo();
-
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+	//float tempo = t->getSynchronizer()->getInTempo();
+    float tempo = sm->getTempo(Pulse::SourceMidiIn);
+    
 	// assume its ok to truncate this one, if you want something
 	// more accurate could have a RealTempoVariable?
 	value->setLong((long)tempo);
@@ -2941,8 +2963,8 @@ SyncInRawBeatVariableType::SyncInRawBeatVariableType()
 
 void SyncInRawBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getInRawBeat());
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+    value->setInt(sm->getMidiInRawBeat());
 }
 
 SyncInRawBeatVariableType SyncInRawBeatVariableObj;
@@ -2971,8 +2993,8 @@ SyncInBeatVariableType::SyncInBeatVariableType()
 
 void SyncInBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getInBeat());
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+    value->setInt(sm->getMidiInRawBeat());
 }
 
 SyncInBeatVariableType SyncInBeatVariableObj;
@@ -3000,8 +3022,10 @@ SyncInBarVariableType::SyncInBarVariableType()
 
 void SyncInBarVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getInBar());
+    (void)t;
+    //SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+    // not counting these, need to!
+    value->setInt(1);
 }
 
 SyncInBarVariableType SyncInBarVariableObj;
@@ -3029,7 +3053,8 @@ SyncInReceivingVariableType::SyncInReceivingVariableType()
 
 void SyncInReceivingVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	value->setBool(t->getSynchronizer()->isInReceiving());
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+	value->setBool(sm->isMidiInReceiving());
 }
 
 SyncInReceivingVariableType SyncInReceivingVariableObj;
@@ -3057,7 +3082,8 @@ SyncInStartedVariableType::SyncInStartedVariableType()
 
 void SyncInStartedVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	value->setBool(t->getSynchronizer()->isInStarted());
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+	value->setBool(sm->isMidiInStarted());
 }
 
 SyncInStartedVariableType SyncInStartedVariableObj;
@@ -3091,7 +3117,8 @@ SyncHostTempoVariableType::SyncHostTempoVariableType()
 
 void SyncHostTempoVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	float tempo = t->getSynchronizer()->getHostTempo();
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+	float tempo = sm->getTempo(Pulse::SourceHost);
 
 	// assume its ok to truncate this one, if you want something
 	// more accurate could have a RealTempoVariable?
@@ -3123,8 +3150,8 @@ SyncHostRawBeatVariableType::SyncHostRawBeatVariableType()
 
 void SyncHostRawBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getHostRawBeat());
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+    value->setInt(sm->getBeat(Pulse::SourceHost));
 }
 
 SyncHostRawBeatVariableType SyncHostRawBeatVariableObj;
@@ -3152,8 +3179,8 @@ SyncHostBeatVariableType::SyncHostBeatVariableType()
 
 void SyncHostBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getHostBeat());
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+    value->setInt(sm->getBeat(Pulse::SourceHost));
 }
 
 SyncHostBeatVariableType SyncHostBeatVariableObj;
@@ -3181,8 +3208,8 @@ SyncHostBarVariableType::SyncHostBarVariableType()
 
 void SyncHostBarVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	Synchronizer* s = t->getSynchronizer();
-    value->setInt(s->getHostBar());
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+    value->setInt(sm->getBar(Pulse::SourceHost));
 }
 
 SyncHostBarVariableType SyncHostBarVariableObj;
@@ -3214,7 +3241,8 @@ SyncHostReceivingVariableType::SyncHostReceivingVariableType()
 
 void SyncHostReceivingVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	value->setBool(t->getSynchronizer()->isHostReceiving());
+    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
+	value->setBool(sm->isHostReceiving());
 }
 
 SyncHostReceivingVariableType SyncHostReceivingVariableObj;
@@ -3391,19 +3419,19 @@ ScriptInternalVariable* InternalVariables[] = {
 
 	// Generic Sync
 
-	SyncAudioFrameVariable,
+	//SyncAudioFrameVariable,
     SyncBarVariable,
     SyncBeatVariable,
-	SyncCorrectionsVariable,
-	SyncCyclePulsesVariable,
-	SyncDealignVariable,
-	SyncDriftVariable,
-	SyncDriftChecksVariable,
-    SyncLoopFramesVariable,
-	SyncPreRealignFrameVariable,
-	SyncPulseVariable,
-	SyncPulseFramesVariable,
-    SyncPulsesVariable,
+	//SyncCorrectionsVariable,
+	//SyncCyclePulsesVariable,
+	//SyncDealignVariable,
+	//SyncDriftVariable,
+	//SyncDriftChecksVariable,
+    //SyncLoopFramesVariable,
+	//SyncPreRealignFrameVariable,
+	//SyncPulseVariable,
+	//SyncPulseFramesVariable,
+    //SyncPulsesVariable,
     SyncRawBeatVariable,
     SyncTempoVariable,
 

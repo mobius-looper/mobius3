@@ -2258,7 +2258,7 @@ long EventManager::reflectFrame(Loop* loop, long frame)
 Event* EventManager::getNextEvent()
 {
 	Event* event = NULL;
-    Synchronizer* synchronizer = mTrack->getSynchronizer();
+    //Synchronizer* synchronizer = mTrack->getSynchronizer();
 
     // adjust the input stream for speed shifts performed
     // by the last event
@@ -2277,7 +2277,8 @@ Event* EventManager::getNextEvent()
         // Calculate the next available sync event.
         // For some events, the frame will be the offset within the current
         // interrupt buffer where this event should take place
-		Event* sync = synchronizer->getNextEvent(loop);
+		//Event* sync = synchronizer->getNextEvent(loop);
+		Event* sync = nullptr;
 
 		// Recalculate the frame relative to the loop.  This is the only
         // modification we're allowed to do to the event.
@@ -2351,8 +2352,10 @@ Event* EventManager::getNextEvent()
 		if (sync != NULL) {
 			// advance if we decided to use it, otheriwise keep it till
             // next time
-			if (event == sync)
-			  synchronizer->useEvent(sync);
+			if (event == sync) {
+                // no longer a thing
+                //synchronizer->useEvent(sync);
+            }
 		}
 	}
 	

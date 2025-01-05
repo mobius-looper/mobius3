@@ -68,13 +68,17 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     int getMidiTrackCount();
     int getAudioTrackCount();
     int getFocusedTrackIndex();
-    
+
+    juce::OwnedArray<LogicalTrack>& getTracks() {
+        return tracks;
+    }
+        
     //
     // Stimuli
     //
 
     void beginAudioBlock();
-    void advanceLongWatcher();
+    void advanceLongWatcher(int frames);
 
     // no longer in control over this, TimeSlizer does ordered track advance
     //void processAudioStream(class MobiusAudioStream* argStream);

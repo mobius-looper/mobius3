@@ -561,6 +561,12 @@
         <FILE id="einvVL" name="MainWindow.h" compile="0" resource="0" file="Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
+        <FILE id="uo1Wve" name="AudioStreamSlicer.cpp" compile="1" resource="0"
+              file="Source/mobius/AudioStreamSlicer.cpp"/>
+        <FILE id="EyVrAj" name="AudioStreamSlicer.h" compile="0" resource="0"
+              file="Source/mobius/AudioStreamSlicer.h"/>
+        <FILE id="G2Qgyf" name="TimeSlicer.cpp" compile="1" resource="0" file="Source/mobius/TimeSlicer.cpp"/>
+        <FILE id="yWDOik" name="TimeSlicer.h" compile="0" resource="0" file="Source/mobius/TimeSlicer.h"/>
         <GROUP id="{D9CEF926-5070-AF3E-4E9F-1323713390DF}" name="track">
           <FILE id="feGMpx" name="BaseScheduler.cpp" compile="1" resource="0"
                 file="Source/mobius/track/BaseScheduler.cpp"/>
@@ -766,10 +772,6 @@
           <FILE id="RA1PQz" name="Synchronizer.cpp" compile="1" resource="0"
                 file="Source/mobius/core/Synchronizer.cpp"/>
           <FILE id="mydA6m" name="Synchronizer.h" compile="0" resource="0" file="Source/mobius/core/Synchronizer.h"/>
-          <FILE id="QocDfP" name="SyncState.cpp" compile="1" resource="0" file="Source/mobius/core/SyncState.cpp"/>
-          <FILE id="xzjuPE" name="SyncState.h" compile="0" resource="0" file="Source/mobius/core/SyncState.h"/>
-          <FILE id="ro4223" name="SyncTracker.cpp" compile="1" resource="0" file="Source/mobius/core/SyncTracker.cpp"/>
-          <FILE id="R2mCoz" name="SyncTracker.h" compile="0" resource="0" file="Source/mobius/core/SyncTracker.h"/>
           <FILE id="U54Yyx" name="Track.cpp" compile="1" resource="0" file="Source/mobius/core/Track.cpp"/>
           <FILE id="Pk3xfB" name="Track.h" compile="0" resource="0" file="Source/mobius/core/Track.h"/>
           <FILE id="eAJ65C" name="TriggerState.cpp" compile="1" resource="0"

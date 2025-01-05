@@ -433,17 +433,6 @@ Leader* Pulsator::getLeader(int leaderId)
 }
 
 /**
- * This is an array of leader ids in dependency order
- * The component responsible for advancing tracks during each
- * audio block is required to advance the leaders first so they
- * may register pulses that followers want to follow.
- */
-juce::Array<int>* Pulsator::getOrderedLeaders()
-{
-    return &orderedLeaders;
-}
-
-/**
  * Called by Leaders (tracks or other internal objects) to register the crossing
  * of a synchronization boundary after they were allowed to consume
  * this audio block.
@@ -535,8 +524,6 @@ void Pulsator::follow(int followerId, Pulse::Source source, Pulse::Type type)
             traceFollowChange(f, source, 0, type);
         }
         else {
-            bool wasInternal = (f->source == Pulse::SourceLeader);
-        
             f->source = source;
             f->leader = 0;
             f->type = type;
@@ -811,7 +798,6 @@ void Pulsator::unfollow(int followerId)
             Trace(2, tracebuf);
         }
         
-        bool wasInternal = (f->source == Pulse::SourceLeader);
         f->source = Pulse::SourceNone;
         f->leader = 0;
         f->type = Pulse::PulseBeat;
@@ -972,7 +958,7 @@ Pulse* Pulsator::getBlockPulse(Follower* f)
 
         // special case, if the leader is the follower, it means we couldn't find
         // a leader after starting which means it self-leads and won't have pulses
-        if (leader != followerId) {
+        if (leader != f->id) {
 
             switch (source) {
                 case Pulse::SourceNone:
@@ -1010,7 +996,7 @@ Pulse* Pulsator::getBlockPulse(Follower* f)
             }
 
             // filter  based on the desired pulse type
-            if (!isRelevant(p, f->type))
+            if (!isRelevant(pulse, f->type))
               pulse = nullptr;
         }
     }

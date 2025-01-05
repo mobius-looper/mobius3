@@ -26,6 +26,7 @@
 #include "../../util/List.h"
 #include "../../util/Util.h"
 #include "../../model/SystemConstant.h"
+#include "../../model/MobiusConfig.h"
 #include "../../model/Trigger.h"
 
 #include "Action.h"
