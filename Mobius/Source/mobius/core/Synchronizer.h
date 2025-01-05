@@ -1,3 +1,6 @@
+/**
+ * Largely gutted during the Great SyncMaster Reorganization
+ */
 
 #ifndef SYNCHRONIZER_H
 #define SYNCHRONIZER_H
@@ -14,7 +17,6 @@
  ****************************************************************************/
 
 // OBSOLETE: Should be moved somewhere under SyncMaster
-
 
 /**
  * The minimum tempo we allow when generating MIDI clocks.
@@ -101,6 +103,12 @@ class Synchronizer {
 
     void getState(class OldMobiusState* state);
 	void getState(class OldMobiusTrackState* state, class Track* t);
+
+    //
+    // Sync Pulses
+    //
+
+    void syncPulse(class Track* t, class Pulse* p);
 
     //
     // Record scheduling

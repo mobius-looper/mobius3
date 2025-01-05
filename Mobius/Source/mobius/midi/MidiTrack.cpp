@@ -181,6 +181,11 @@ void MidiTrack::doAction(UIAction* a)
     scheduler.scheduleAction(a);
 }
 
+void MidiTrack::syncPulse(class Pulse* p)
+{
+    Trace(1, "MidiTrack::syncPulse not implemented");
+}
+
 /**
  * Query uses Valuator for most things but doesn't
  * for the controllers and a few important parameters which are

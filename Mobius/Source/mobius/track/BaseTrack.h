@@ -78,6 +78,9 @@ class BaseTrack
     // it might like MSL
     virtual class MslTrack* getMslTrack() = 0;
 
+    // it pays attention well
+    virtual void syncPulse(class Pulse* p) = 0;
+
   protected:
 
     class TrackManager* manager = nullptr;

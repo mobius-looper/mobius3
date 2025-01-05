@@ -29,9 +29,20 @@ class SyncMaster
     friend class Pulsator;
     
   public:
+
+    /**
+     * Used by TimeSlicer to know when leaders or followers have changed.
+     */
+    class Listener {
+      public:
+        virtual ~Listener() {}
+        void syncFollowerChanges() = 0;
+    };
     
     SyncMaster();
     ~SyncMaster();
+
+    void addListener(Listener* l);
 
     void initialize(class MobiusContainer* c);
     void loadSession(class Session* s);
@@ -53,6 +64,9 @@ class SyncMaster
     int getBeatsPerBar(Pulse::Source src);
     int getMasterBarFrames();
     Pulse* getBlockPulse(Pulse::Source src);
+
+    // what we should use now
+    Pulse* getBlockPulse(class Follower* f);
 
     //
     // internal component services
@@ -81,6 +95,8 @@ class SyncMaster
     void correctDrift(int follower, int frames);
     int getPulseFrame(int follower);
     int getPulseFrame(int followerId, Pulse::Type type);
+
+    class Follower* getFollower(int id);
 
     //////////////////////////////////////////////////////////////////////
     // Transport/MIDI Output

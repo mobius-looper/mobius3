@@ -82,6 +82,9 @@ class Pulsator
     int getPulseFrame(int follower);
     int getPulseFrame(int followerId, Pulse::Type type);
 
+    // new interface for TimeSlicer, resmove the two getPulseFrame()s when ready
+    Pulse* getBlockPulse(Follower* f);
+
     // register a follow for an external sync source
     void follow(int follower, Pulse::Source source, Pulse::Type type);
 
@@ -132,7 +135,6 @@ class Pulsator
     class SyncMaster* syncMaster = nullptr;
     juce::OwnedArray<Leader> leaders;
     juce::OwnedArray<Follower> followers;
-    juce::Array<int> orderedLeaders;
     
     // captured configuration
     int driftThreshold = 1000;
@@ -165,6 +167,7 @@ class Pulsator
     bool detectMidiBeat(class MidiSyncEvent* mse, Pulse::Source src, Pulse* pulse);
 
     int getPulseFrame(Pulse* p, Pulse::Type type);
+    bool isRelevant(Pulse* p, Pulse::Type followType);
     
     void trace();
     void trace(Pulse& p);

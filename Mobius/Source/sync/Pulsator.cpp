@@ -53,7 +53,8 @@ void Pulsator::loadSession(Session* s)
     // only when in a state of GlobalReset
     // +1 is because follower ids are 1 based and are array indexes
     // follower id 0 is reserved
-    for (int i = followers.size() ; i < numFollowers + 1 ; i++) {
+    numFollowers++;
+    for (int i = followers.size() ; i < numFollowers ; i++) {
         Follower* f = new Follower();
         f->id = i;
         followers.add(f);
@@ -61,13 +62,11 @@ void Pulsator::loadSession(Session* s)
 
     // leaders are the same as followers
     int numLeaders = numFollowers;
-    for (int i = leaders.size() ; i < numLeaders + 1 ; i++) {
+    for (int i = leaders.size() ; i < numLeaders ; i++) {
         Leader* l = new Leader();
         l->id = i;
         leaders.add(l);
     }
-
-    orderedLeaders.ensureStorageAllocated(numLeaders+1);
 }
 
 /**
@@ -445,34 +444,6 @@ juce::Array<int>* Pulsator::getOrderedLeaders()
 }
 
 /**
- * Analyze the Leader/Follower relationships and determine the
- * order in which tracks need to be advanced.
- *
- * This is hard in the general case since leaders can in theory follow
- * other leaders and there can be cycles in the dependency chain.
- */
-void Pulsator::orderLeaders()
-{
-    // empty but keep storage
-    orderedLeaders.clearQuick();
-
-    for (int i = 1 ; i < followers.size() ; i++) {
-        Follower* f = followers[i];
-        if (f->source == Pulse::SourceLeader) {
-            
-            int leader = f->leader;
-            if (leader == 0)
-              leader = trackSyncMaster;
-
-            if (leader > 0) {
-                if (!orderedLeaders.contains(leader))
-                  orderedLeaders.add(leader);
-            }
-        }
-    }
-}
-
-/**
  * Called by Leaders (tracks or other internal objects) to register the crossing
  * of a synchronization boundary after they were allowed to consume
  * this audio block.
@@ -570,10 +541,6 @@ void Pulsator::follow(int followerId, Pulse::Source source, Pulse::Type type)
             f->leader = 0;
             f->type = type;
 
-            // if we stopped following a leader, may simplify leader order
-            if (wasInternal)
-              orderLeaders();
-
             char tracebuf[1024];
             snprintf(tracebuf, sizeof(tracebuf),
                      "Pulsator: Follower %d following %s pulse %s",
@@ -612,8 +579,6 @@ void Pulsator::follow(int followerId, int leaderId, Pulse::Type type)
             f->source = Pulse::SourceLeader;
             f->leader = leaderId;
             f->type = type;
-    
-            orderLeaders();
         }
     }
 }
@@ -860,11 +825,6 @@ void Pulsator::unfollow(int followerId)
         f->frame = 0;
         f->drift = 0;
         f->shouldCheckDrift = false;
-        if (wasInternal) {
-            // once we stop following a track, the leader dependency
-            // order may simplify
-            orderLeaders();
-        }
     }
 }
 
@@ -984,6 +944,103 @@ int Pulsator::getPulseFrame(Pulse* p, Pulse::Type followType)
           frame = p->blockFrame;
     }
     return frame;
+}
+
+/**
+ * New Pulse locator used by TimeSlicer.
+ * Assuming this is all we need can remove getPulseFrame
+ */
+Pulse* Pulsator::getBlockPulse(Follower* f)
+{
+    Pulse* pulse = nullptr;
+    if (f != nullptr) {
+
+        // once the follower is locked, you can't change the source out
+        // from under it
+        // ?? why was this necessary
+        Pulse::Source source = f->source;
+        int leader = 0;
+        if (f->lockedSource != Pulse::SourceNone) {
+            source = f->lockedSource;
+            leader = f->lockedLeader;
+        }
+        else if (f->source == Pulse::SourceLeader) {
+            leader = f->leader;
+            if (leader == 0)
+              leader = trackSyncMaster;
+        }
+
+        // special case, if the leader is the follower, it means we couldn't find
+        // a leader after starting which means it self-leads and won't have pulses
+        if (leader != followerId) {
+
+            switch (source) {
+                case Pulse::SourceNone:
+                    break;
+                    
+                case Pulse::SourceMidiIn:
+                    pulse = &(midiIn.pulse);
+                    break;
+                    
+                case Pulse::SourceMidiOut: 
+                    // should not be seeing these
+                    break;
+
+                case Pulse::SourceHost:
+                    pulse = &(host.pulse);
+                    break;
+                    
+                case Pulse::SourceTransport:
+                    pulse = &(transport.pulse);
+                    break;
+                    
+                case Pulse::SourceLeader: {
+                    // leader can be zero here if there was no track sync leader
+                    // in which case there won't be a pulse
+                    // don't call getLeader with zero or it traces an error
+                    if (leader > 0) {
+                        Leader* l = getLeader(leader);
+                        if (l != nullptr) {
+                            pulse = &(l->pulse);
+                        }
+                    }
+                }
+                    break;
+                    
+            }
+
+            // filter  based on the desired pulse type
+            if (!isRelevant(p, f->type))
+              pulse = nullptr;
+        }
+    }
+    return pulse;
+}
+
+bool Pulsator::isRelevant(Pulse* p, Pulse::Type followType)
+{
+    bool relevant = false;
+    if (!p->pending && p->source != Pulse::SourceNone) {
+        // there was a pulse from this source
+        if (followType == Pulse::PulseBeat) {
+            // anything is a beat
+            relevant = true;
+        }
+        else if (followType == Pulse::PulseBar) {
+            // loops are also bars
+            relevant = (p->type == Pulse::PulseBar || p->type == Pulse::PulseLoop);
+        }
+        else {
+            // only loops will do
+            // this makes sense only when following internal leaders, if this
+            // pulse didn't come from a Leader, treat it like Bar
+            if (p->source == Pulse::SourceLeader)
+              relevant = (p->type == Pulse::PulseLoop);
+            else
+              relevant = (p->type == Pulse::PulseBar || p->type == Pulse::PulseLoop);
+        }
+    }
+    return relevant;
 }
 
 //////////////////////////////////////////////////////////////////////

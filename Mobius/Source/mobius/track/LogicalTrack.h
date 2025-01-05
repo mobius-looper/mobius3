@@ -47,6 +47,14 @@ class LogicalTrack
     class MslTrack* getMslTrack();
     class MidiTrack* getMidiTrack();
 
+    void syncPulse(class Pulse* p);
+
+    // block advance dependency state
+    bool isVisited();
+    void setVisited(bool b);
+    bool isAdvanced();
+    void setAdvanced(bool b);
+
     //
     // Subclass parameter accessors
     // 
@@ -96,6 +104,9 @@ class LogicalTrack
     int activePreset = 0;
     
     class Preset* getPreset();
+
+    bool visited = false;
+    bool advanced = false;
     
 };
 

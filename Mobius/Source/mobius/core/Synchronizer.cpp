@@ -4,15 +4,14 @@
  * There is some potentially valuable commentary in the old code but I'm not doing
  * to duplicate all of it here.  The new purpose of Synchronizer is:
  *
- *    - record the currently selected Track Sync Master and Out Sync Master
- *        (temporary)
- *
  *    - receive internal notificiations of Record start and stop actions to determine
  *      whether those need to be synchronized
  *
- *    - receive sync pulse notifications from SyncMaster to active the above synchroned events
+ *    - receive sync pulse notifications from SyncMaster/TimeSlicer to activate
+ *      the above synchroned events
  * 
  *    - receive internal notification of track boundary crossings for track sync
+ *      which are passed along to SyncMaster
  *
  *    - receive drift correction notifications from SyncMaster
  *
@@ -69,9 +68,6 @@ Synchronizer::Synchronizer(Mobius* mob)
 	mMobius = mob;
     mSyncMaster = mob->getKernel()->getSyncMaster();
 
-    mOutSyncMaster = NULL;
-	mTrackSyncMaster = NULL;
-
 	mLastInterruptMsec = 0;
 	mInterruptMsec = 0;
 	mInterruptFrames = 0;
@@ -79,14 +75,6 @@ Synchronizer::Synchronizer(Mobius* mob)
 
 Synchronizer::~Synchronizer()
 {
-}
-
-/**
- * Pull out configuration parameters we need frequently.
- */
-void Synchronizer::updateConfiguration(MobiusConfig* config)
-{
-    (void)config;
 }
 
 /**
@@ -107,12 +95,99 @@ void Synchronizer::globalReset()
 
 //////////////////////////////////////////////////////////////////////
 //
+// Configuration
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Called on initialization and whenever the configuration is edited.
+ *
+ * Should also be called whenever the user changes Setups but that
+ * may require new intervention?
+ *
+ * Dig the old sync options out of the Setup and inform SyncMaster about
+ * what the tracks want to synchronize with.
+ *
+ * Some of this could be accessed through the Track, but it all should
+ * come from the Setup so don't complicate things with more indirection.
+ *
+ */
+void Synchronizer::updateConfiguration(MobiusConfig* config)
+{
+    // doesn't really matter what else is in MobiusConfig
+    // the selected Setup is what matters
+    (void)config;
+    
+    Setup* setup = mMobius->getSetup();
+    
+    SyncSource defaultSource = setup->getSyncSource();
+    SyncUnit syncUnit = setup->getSyncUnit();
+    SyncTrackUnit defaultTrackUnit = setup->getSyncTrackUnit();
+
+    // this will be the pulse type for all sources except track sync
+    // doesn't appear to be a SetupTrack override for this one
+    Pulse::Type pulseType = Pulse::TypeBeat;
+    if (syncUnit == SYNC_UNIT_BAR)
+      pulseType = Pulse::TypeBar;
+
+    int number = 1;
+    for (SetupTrack* st = setup->getTracks() ; st != nullptr ; st = st->getNext()) {
+
+        SyncSource actualSource = defaultSource;
+        SyncSource overrideSource = st->getSyncSource();
+        if (overrideSource != SYNC_DEFAULT)
+          actualSource = overrideSource;
+        
+        if (actualSource == SYNC_TRACK) {
+            SyncTrackUnit actualTrackUnit = defaultTrackUnit;
+            SyncTrackUnit overrideTrackUnit = st->getSyncTrackUnit();
+            if (overrideTrackUnit != TRACK_UNIT_DEFAULT)
+              actualTrackUnit = overrideTrackUnit;
+
+            Pulse::Type trackPulse = Pulse::TypeNone;
+            if (actualTrackUnit == TRACK_UNIT_SUBCYCLE)
+              trackPulse = Pulse::TypeBeat;
+            else if (actualTrackUnit == TRACK_UNIT_CYCLE)
+              trackPulse = Pulse::TypeBar;
+            else if (actualTrackUnit == TRACK_UNIT_LOOP)
+              trackPulse = Pulse::TypeLoop;
+
+            // core tracks can't follow specific leaders, they can
+            // only follow the TrackSyncMaster atm
+            if (trackPulse != Pulse::TypeNone)
+              syncMaster->follow(number, 0, trackPulse);
+            else
+              syncMaster->unfollow(number);
+        }
+        else if (actualSource == SYNC_OUT || actualSource == SYNC_TRANSPORT) {
+            syncMaster->follow(number, Pulse::SourceTransport, pulseType);
+        }
+        else if (actualSource == SYNC_HOST) {
+            syncMaster->follow(number, Pulse::SourceHost, pulseType);
+        }
+        else if (actualSource == SYNC_MIDI) {
+            syncMaster->follow(number, Pulse::SourceMidiIn, pulseType);
+        }
+        else {
+            // SYNC_NONE or SYNC_DEFAULT
+            syncMaster->unfollow(number);
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // State
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
  * Called by Track to fill in the relevant sync state for a track.
+ *
+ * Most of this is redundant now with SyncMaster.  Sync related state
+ * should come form there, not the track that follows something.  But
+ * until there is a more consolidated sync display, the SyncElement pulls
+ * this from the focused track.
  *
  * This could be simplified now with SyncMaster.  All we really need to know
  * is which Pulse::Source this track follows, and the view can pull the tempo
@@ -124,35 +199,25 @@ void Synchronizer::globalReset()
  */
 void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
 {
-	SyncState* syncState = t->getSyncState();
-
-    // this is what decides between SYNC_OUT and SYNC_TRACK
-    // this should be moved up to SyncMaster
-    SyncSource source = syncState->getEffectiveSyncSource();
-	
-    state->syncSource = source;
-    state->syncUnit = syncState->getSyncUnit();
-	state->outSyncMaster = (t == mOutSyncMaster);
-	state->trackSyncMaster = (t == mTrackSyncMaster);
+    state->syncSource = SYNC_NONE;
+    state->syncUnit = SYNC_UNIT_BEAT;
+	state->outSyncMaster = false;
+	state->trackSyncMaster = false;
 	state->tempo = 0;
 	state->beat = 0;
 	state->bar = 0;
 
-	switch (source) {
+    // sigh, convert this back from what we did in updateConfiguration
+    int number = t->getDisplayNumber();
+    Follower* f = syncMaster->getFollower(number);
+    if (f != nullptr) {
 
-		case SYNC_OUT: {
-            // we have historically not displayed a tempo unless
-            // clocks were actually going out, now that we have the transport
-            // it matters less
-			if (mSyncMaster->isMidiOutSending()) {
-				state->tempo = mSyncMaster->getTempo(Pulse::SourceTransport);
-				state->beat = mSyncMaster->getBeat(Pulse::SourceTransport);
-				state->bar = mSyncMaster->getBar(Pulse::SourceTransport);
-			}
-		}
-            break;
+        if (f->type == Pulse::PulseBar || f->type == Pulse::PulseLoop)
+          state->syncUnit = SYNC_UNIT_BAR;
+        
+        if (f->source == Pulse::SourceMidiIn) {
+            state->syncSource = SYNC_MIDI;
 
-		case SYNC_MIDI: {
 			// for display purposes we use the "smooth" tempo
 			// this is a 10x integer
             // this should also be moved into SyncMaster since TempoElement
@@ -166,30 +231,28 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
 				state->beat = mSyncMaster->getBeat(Pulse::SourceMidiIn);
 				state->bar = mSyncMaster->getBar(Pulse::SourceMidiIn);
 			}
-		}
-            break;
-
-		case SYNC_HOST: {
+        }
+        else if (f->source == Pulse::SourceHost) {
+            state->syncSource = SYNC_HOST;
 			state->tempo = mSyncMaster->getTempo(Pulse::SourceHost);
 			if (mSyncMaster->isHostReceiving()) {
 				state->beat = mSyncMaster->getBeat(Pulse::SourceHost);
 				state->bar = mSyncMaster->getBar(Pulse::SourceHost);
             }
-		}
-            break;
-
-        case SYNC_TRANSPORT: {
+        }
+        
+        else if (f->source == Pulse::SourceTransport) {
+            state->syncSource = SYNC_TRANSPORT;
             state->tempo = mSyncMaster->getTempo();
             state->beat = mSyncMaster->getBeat(Pulse::SourceTransport);
             state->bar = mSyncMaster->getBar(Pulse::SourceTransport);
         }
-            break;
-
-            // have to have these or Xcode 5 bitches
-		case SYNC_DEFAULT:
-		case SYNC_NONE:
-		case SYNC_TRACK:
-			break;
+        else if (f->source == Pulse::SourceLeader) {
+            state->syncSource = SYNC_TRACK;
+        }
+        
+        state->trackSyncMaster = (number = syncMaster->getTrackSyncMaster());
+        state->outSyncMaster = (number = syncMaster->getOutSyncMaster());
 	}
 }
 
@@ -256,6 +319,23 @@ void Synchronizer::getState(OldMobiusState* state)
 //     loopRecordStop
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * Called by scheduleRecordStart to see if the start of a recording
+ * needs to be synchronized.
+ *
+ * In the new world, this is indiciated by a track that is following something.
+ */
+bool Synchronizer::isRecordStartSynchronized(Loop* l)
+{
+    bool sync = false;
+    Track* t = l->getTrack();
+    Follower* f = syncMaster->getFollower(t->getDisplayNumber);
+    if (f != nullptr) {
+        sync = (f->source != Pulse::SourceNone);
+    }
+    return sync;
+}
 
 /**
  * Schedule a recording event.
@@ -419,36 +499,6 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 }
 
 /**
- * Called by scheduleRecordStart to see if the start of a recording
- * needs to be synchronized.  When true it usually means that the start of
- * the recording needs to wait for a synchronization pulse and the
- * end may either need to wait for a pulse or be scheduled for an exact time.
- *
- * !! Need to support an option where we start recording immediately then
- * round off at the end.
- */
-bool Synchronizer::isRecordStartSynchronized(Loop* l)
-{
-	bool sync = false;
-    
-    Track* track = l->getTrack();
-    SyncState* state = track->getSyncState();
-
-    // note that we use getEffectiveSyncSource to factor
-    // in the master tracks
-    SyncSource src = state->getEffectiveSyncSource();
-
-    // SYNC_OUT implies we're going to be the out sync master and can freely
-    // record if it is not already set, this gets to control the
-    // transport tempo
-    // SYNC_TRANSPORT means we'll sync to the transport which must either be
-    // running or be manually started
-    sync = (src == SYNC_MIDI || src == SYNC_HOST || src == SYNC_TRACK || src == SYNC_TRANSPORT);
-        
-	return sync;
-}
-
-/**
  * Return true if we need to enter threshold detection mode
  * before recording.  Threshold recording is disabled if there
  * is any form of slave sync enabled.
@@ -528,13 +578,10 @@ Event* Synchronizer::schedulePendingRecord(Action* action, Loop* l,
 
 /**
  * Decide how to end Record mode.
- * Normally thigns like this would stay in the Function subclass but
- * recording is so tightly related to synchronization that we keep 
- * things over here.
  *
  * Called by RecordFunction from its scheduleModeStop method.
  * Indirectly called by Function::invoke whenever we're in Record mode
- * and a function si recieved that wants to change modes. This will be called
+ * and a function is recieved that wants to change modes. This will be called
  * from a function handler, not an event handler.
  *
  * Called by LoopTriggerFunction::scheduleTrigger, 
@@ -550,7 +597,7 @@ Event* Synchronizer::schedulePendingRecord(Action* action, Loop* l,
  * to a beat or bar boundary defined by the synchronization mode.
  * There are two ways to determine when where this boundary is:
  *
- *   - waiting until we receive a number of sync pulses
+ *   - waiting until we receive a sync pulse
  *   - calculating the end frame based on the sync tempo
  *
  * Waiting for sync pulses is used in sync modes where the pulses
@@ -558,9 +605,12 @@ Event* Synchronizer::schedulePendingRecord(Action* action, Loop* l,
  * Calculating a specific end frame is used when the pulses are not
  * stable (MIDI sync).
  *
+ * update: No it should not, use pulses always and let SyncMastser sort
+ * out the details.
+ *
  * If we use the pulse waiting approach, the RecordStopEvent is marked
- * pending and Synchronizer will activate it when the required number
- * of pulses are received.
+ * pending and Synchronizer will activate it when the appropriate pulse
+ * is received.
  *
  * If we calculate a specific end frame, the event will not be pending.
  *
@@ -727,31 +777,13 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
  *
  * Note that this does not have to return the same value as
  * isRecordStartSynchronzied.
+ *
+ * Update: this used to be more complicated, but now we're always assuming
+ * it will be pulsed if the track is following something.
  */
 bool Synchronizer::isRecordStopPulsed(Loop* l)
 {
-    bool pulsed = false;
-
-    Track* t = l->getTrack();
-    SyncState* state = t->getSyncState();
-    SyncSource src = state->getEffectiveSyncSource();
-
-    if (src == SYNC_TRACK) {
-        // always pulsed
-        pulsed = true;
-    }
-    else if (src == SYNC_HOST || src == SYNC_MIDI) {
-        // formerly only scheduled pulsed "if the tracker was locked"
-        // I don't remember what this means, maybe it required that MIDI
-        // clocks were being received so we had something to lock on to?
-        pulsed = true;
-    }
-    else if (src == SYNC_TRANSPORT) {
-        // always pulsed
-        pulsed = true;
-    }
-    
-	return pulsed;
+    return isRecordStartSynchronized(l);
 }
 
 /**
@@ -857,6 +889,8 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
         Trace(l, 2, "Sync: Added pulsed RecordStop\n");
     }
     else {
+        // update: should not be here any more since we always pulse the stop
+        
         // Should only be here for SYNC_MIDI but the logic is more general
         // than it needs to be in case we want to do this for other modes.
         // Things like this will be necessary if we want to support immediate
@@ -941,6 +975,22 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
     return stop;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Record Units
+//
+// This is used for AutoRecord and I think for increasing the cycle
+// count during a synchronized recording.
+//
+// In the new world, SyncMaster should be handling this and pulsing
+// the track when AutoRecord reaches the end and telling the track
+// whenever it crosses a cycle boundary.
+//
+// I suppose we could continue doing it based on the recording frame
+// advance but it requires a lot of knowledge of the sync source.
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * Helper for scheduleRecordStop and others, calculate the properties of
  * one synchronization "unit".  A synchronized loop will normally have a 
@@ -974,7 +1024,18 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
  * new: This should now be handled by SyncMaster which would do a similar
  * tempo to barFrames derivation as described above
  *
+ * Stub this out until we can think harder...
+ *
  */
+void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
+{
+	unit->frames = 44100.0f;
+    unit->pulses = 1;
+    unit->cycles = 1.0f;
+    unit->adjustedFrames = unit->frames;
+}
+
+#if 0
 void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
 {
     Track* t = l->getTrack();
@@ -1100,6 +1161,7 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
               (long)(speed * 100), (long)(unit->adjustedFrames * 100));
     }
 }
+#endif
 
 float Synchronizer::getSpeed(Loop* l)
 {
@@ -1162,6 +1224,7 @@ int Synchronizer::getBeatsPerBar(SyncSource src, Loop* l)
  * and gets the SyncTracker but state also captured it.  Follow this
  * mess and make sure if the tracker isn't locked we get it from the state.
  */
+#if 0
 void Synchronizer::adjustBarUnit(Loop* l, SyncState* state, SyncSource src,
                                  SyncUnitInfo* unit)
 {
@@ -1181,6 +1244,7 @@ void Synchronizer::adjustBarUnit(Loop* l, SyncState* state, SyncSource src,
           unit->cycles = 1.0f / (float)bpb;
     }
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////
 //
@@ -1307,11 +1371,11 @@ bool Synchronizer::undoRecordStop(Loop* loop)
 	return undone;
 }
 
-/****************************************************************************
- *                                                                          *
- *                              AUDIO INTERRUPT                             *
- *                                                                          *
- ****************************************************************************/
+//////////////////////////////////////////////////////////////////////
+//
+// Audio Block Advance
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Called by Mobius at the beginning of a new audio interrupt.
@@ -1335,8 +1399,9 @@ void Synchronizer::prepare(Track* t)
 {
     // this will be set by trackSyncEvent if we see boundary
     // events during this interrupt
-    SyncState* state = t->getSyncState();
-    state->setBoundaryEvent(NULL);
+    
+    //SyncState* state = t->getSyncState();
+    //state->setBoundaryEvent(NULL);
 }
 
 /**
@@ -1364,18 +1429,21 @@ void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
 {
     // new: SyncMaster is interested in all potential leaders,
     // their hopes and their dreams
-    Pulse::Type pulsatorType = Pulse::PulseBeat;
+    Pulse::Type pulseType = Pulse::PulseBeat;
     if (type == LoopEvent) 
-      pulsatorType = Pulse::PulseLoop;
+      pulseType = Pulse::PulseLoop;
+    
     else if (type == CycleEvent) 
-      pulsatorType = Pulse::PulseBar;
-    mSyncMaster->addLeaderPulse(t->getDisplayNumber(), pulsatorType, offset);
+      pulseType = Pulse::PulseBar;
+    
+    mSyncMaster->addLeaderPulse(t->getDisplayNumber(), pulseType, offset);
     
     // In all cases store the event type in the SyncState so we know
     // we reached an interesting boundary during this interrupt.  
     // This is how we detect boundary crossings for checkDrift.
-    SyncState* state = t->getSyncState();
-    state->setBoundaryEvent(type);
+    // update: not any more
+    //SyncState* state = t->getSyncState();
+    //state->setBoundaryEvent(type);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1388,279 +1456,34 @@ void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
  * TimeSlicer is telling the track about the detection of a sync pulse.
  * The track has already been advanced up to the block offset where the
  * pulse was detected.  The track now activates any pending events.
+ *
+ * The way followers work, this will only be called if the pulse
+ * comes from the source we want to follow and is of the right type.
+ * We don't need to verify this, just activate any pending record events.
  */
 void Synchronizer::syncPulse(Track* track, Pulse* pulse)
 {
-    // old crufty model
-    SyncState* state = track->getSyncState();
-    SyncSource syncmode = state->getEffectiveSyncSource();
-    bool relevant = false;
-    
-    switch (syncmode) {
+    Loop* l = track->getLoop();
+    MobiusMode* mode = l->getMode();
 
-        case SYNC_DEFAULT:
-        case SYNC_NONE:
-            // not syncing, no events to activate
-            break;
+    if (mode == SynchronizeMode)
+      startRecording(l);
 
-        case SYNC_TRACK: {
-            if (pulse->source == Pulse::SourceLeader) {
-                // a pulse from another track
-                int master = mSyncMaster->getTrackSyncMaster();
-                if (master > 0 && master != t->getDisplayNumber()) {
-                    // there is another master track
-                    // !! how are we supposed to tell this is from the requested leader?
-                    // can only follow the TrackSyncMaster right now but should be more flexible
-                    SyncTrackUnit unit = state->getSyncTrackUnit();
-                    if (unit == TRACK_UNIT_SUBCYCLE) {
-                        // any pulse will do
-                        relivant = true;
-                    }
-                    else if (unit == TRACK_UNIT_CYCLE) {
-                        // SM will model this as a "bar"
-                        relivant = (pulse->type == Pulse::PulseBar ||
-                                    pulse->type == Pulse::PulseLoop);
-                    }
-                    else if (unit == TRACK_UNIT_LOOP) {
-                        relivant = (pulse->type == Pulse::PulseLoop);
-                    }
-                }
-            }
-        }
-            break;
-
-        case SYNC_OUT: {
-            // "out" is effectively "master" it does not pulse events
-            
-        }
-            break;
-
-        case SYNC_HOST: {
-            if (pulse->source == Pulse::SourceHost) {
-                SuncUnit unit = state->getSyncUnit();
-                if (unit == SYNC_UNIT_BEAT) {
-                    // any pulse will do
-                    activate = true;
-                }
-                else {
-                    // can only be bar
-                    activate = (pulse->type == Pulse::PulseBar ||
-                                pulse->type == Pulse::PulseLoop);
-                }
-            }
-        }
-            break;
-
-        case SYNC_MIDI: {
-            if (pulse->source == Pulse::SourceMidiIn) {
-                SuncUnit unit = state->getSyncUnit();
-                if (unit == SYNC_UNIT_BEAT) {
-                    // any pulse will do
-                    activate = true;
-                }
-                else {
-                    // can only be bar
-                    activate = (pulse->type == Pulse::PulseBar ||
-                                pulse->type == Pulse::PulseLoop);
-                }
-            }
-        }
-            break;
-
-        case SYNC_TRANSPORT: {
-            if (pulse->source == Pulse::SourceTransport) {
-                SuncUnit unit = state->getSyncUnit();
-                if (unit == SYNC_UNIT_BEAT) {
-                    // any pulse will do
-                    activate = true;
-                }
-                else {
-                    // can only be bar
-                    activate = (pulse->type == Pulse::PulseBar ||
-                                pulse->type == Pulse::PulseLoop);
-                }
-            }
-        }
-            break;
-    }
-
-    if (relevant) {
-        Loop* l = track->getLoop();
-        MobiusMode* mode = l->getMode();
-
-        if (mode == SynchronizeMode)
-          syncPulseWaiting(l, e);
-
-        else if (l->isSyncRecording())
-          syncPulseRecording(l, e);
-
-        else
-          checkPulseWait(l);
-    }
-}
-
-/**
- * Called by pulse event handlers to see if the pulse
- * event matches a pending script Wait event, and if so activates
- * the wait event.
- *
- * This must be done in the SyncEvent handler rather than when we
- * first put the event in the MidiQueue.  This is so the wait ends
- * on the same frame that the Track will process the pulse event.
- *
- * This is only meaningful for MIDI and Host sync, for Out sync
- * you just wait for subcycles.
- *
- * !! Think about what this means for track sync, are these
- * different wait types?
- */
-void Synchronizer::checkPulseWait(Loop* l, Event* e)
-{
-    Track* t = l->getTrack();
-    EventManager* em = t->getEventManager();
-	Event* wait = em->findEvent(ScriptEvent);
-
-	if (wait != NULL && wait->pending) {
-
-		bool activate = false;
-		const char* type = NULL;
-
-		switch (wait->fields.script.waitType) {
-
-			case WAIT_PULSE: {
-				type = "pulse";
-				activate = true;
-			}
-			break;
-
-			case WAIT_BEAT: {
-				// wait for a full beat's worth of pulses (MIDI) or
-				// for the next beat event from the host
-				type = "beat";
-                SyncPulseType pulse = e->fields.sync.pulseType;
-				activate = (pulse == SYNC_PULSE_BEAT || pulse == SYNC_PULSE_BAR);
-			}
-			break;
-
-			case WAIT_BAR: {
-                // wait for a full bar's worth of pulses
-				type = "bar";
-                SyncPulseType pulse = e->fields.sync.pulseType;
-				activate = (pulse == SYNC_PULSE_BAR);
-			}
-            break;
-
-            case WAIT_EXTERNAL_START: {
-                type = "externalStart";
-                activate = e->fields.sync.syncStartPoint;
-            }
-            break;
-
-			default:
-				break;
-		}
-
-		if (activate) {
-			Trace(l, 2, "Sync: Activating pending Wait %s event\n", type);
-			wait->pending = false;
-			wait->immediate = true;
-			wait->frame = l->getFrame();
-		}
-	}
-}
-
-/**
- * Called on each pulse during Synchronize mode.
- * Ordinarilly we're ready to start recording on the this pulse, but
- * for the BAR and BEAT units, we may have to wait several pulses.
- */
-void Synchronizer::syncPulseWaiting(Loop* l, Event* e)
-{
-    SyncSource src = e->fields.sync.source;
-    SyncPulseType pulseType = e->fields.sync.pulseType;
-    Track* track = l->getTrack();
-    SyncState* state = track->getSyncState();
-	bool ready = true;
-    
-	if (src == SYNC_TRACK) {
-        SyncTrackUnit trackUnit = state->getSyncTrackUnit();
-
-		switch (trackUnit) {
-			case TRACK_UNIT_SUBCYCLE:
-				// finest granularity, always ready
-				break;
-			case TRACK_UNIT_CYCLE:
-				// cycle or loop
-				ready = (pulseType != SYNC_PULSE_SUBCYCLE);
-				break;
-			case TRACK_UNIT_LOOP:
-				ready = (pulseType == SYNC_PULSE_LOOP);
-				break;
-			case TRACK_UNIT_DEFAULT:
-				// xcode 5 whines if this isn't here
-				break;
-		}
-	}
-    else if (src == SYNC_TRANSPORT) {
-        // only bar or should we use SyncTrackUnit?
-        ready = (pulseType == SYNC_PULSE_BAR);
-    }
-    else if (src == SYNC_OUT) {
-        // This should never happen.  The master track can't
-        // wait on it's own pulses, and slave tracks should
-        // be waiting for SYNC_TRACK events.  Should have filtered
-        // this in getNextEvent.
-        Trace(1, "Sync: not expecting to get pulses here!\n");
-		ready = false;
-	}
-    else {
-        // MIDI and HOST, filter for beat/bar sensitivity
-        
-        if (state->getSyncUnit() == SYNC_UNIT_BAR) {
-            ready = (pulseType == SYNC_PULSE_BAR);
-        }
-        else {
-            // Host pulses are only beat/bar but MIDI pulses can be CLOCKS
-            ready = (pulseType == SYNC_PULSE_BEAT || 
-                     pulseType == SYNC_PULSE_BAR);
-        }
-    }
-            
-    // we have historically checked pulse waits before starting
-    // the recording, the loop frame will be rewound for
-    // input latency I guess that's okay
-	checkPulseWait(l, e);
-
-	if (ready)
-	  startRecording(l, e);
+    else if (l->isSyncRecording())
+      syncPulseRecording(l, e);
 }
 
 /**
  * Called when we're ready to end Synchronize mode and start recording.
- * Activate the pending Record event, initialize the SyncState, and
- * prepare for recording.
- * 
- * Calculate the number of sync pulses that will be expected in one
- * cycle and store it in the RecordCyclePulses field of the sync state.
- * This is used for three things: 
- * 
- *   1) to increment the cycle counter as we cross cycles during recording
- *   2) to determine when we've recorded enough bars in an AutoRecord
- *   3) to determine when we've recorded enough pulses for a pulsed recording
+ * Activate the pending Record event and prepare for recording.
  *
- * The last two usages only occur if we're using the pulse counting
- * method of ending the reording rather than tempo-based length method.
- * If we're using tempo, then a RecordStop event will have already been
- * scheduled at the desired frame because isRecordStopPulsed() will
- * have returned false.
+ * Formerly this did some math around how many pulses to expect during
+ * recording in order to increment the cycle count or recorded enough
+ * bars during AutoRecord.
  *
- * TrackSyncMode=SubCycle is weird.  We could try to keep the master cycle
- * size, then at the end roll it into one cycle if we end up with an uneven
- * number of subcycles.  Or we could treat subcycles like "beats" and let
- * the recordBeats parameter determine the beats per cycle.  The later
- * feels more flexible but perhaps more confusing.
+ * Need to invent something similar with SyncMaster.
  */
-void Synchronizer::startRecording(Loop* l, Event* e)
+void Synchronizer::startRecording(Loop* l)
 {
     Track* t = l->getTrack();
     EventManager* em = t->getEventManager();
@@ -1675,28 +1498,18 @@ void Synchronizer::startRecording(Loop* l, Event* e)
 		Trace(l, 1, "Sync: Record start pulse with active RecordEvent!\n");
 	}
 	else {
-        SyncState* state = t->getSyncState();
-
-        // !! TODO: Consider locking source state when recording begins
-        // rather than waiting till the end?
-        // shouldn't we be getting this from the Event?
-        SyncSource src = state->getEffectiveSyncSource();
-
-        if (e->fields.sync.syncTrackerEvent) {
-            Trace(l, 2, "Sync: RecordEvent activated on tracker pulse\n");
-        }
-        else if (src == SYNC_MIDI) {
-            // have been tracing song clock for awhile, not sure why
-            long clock = getMidiSongClock(src);
-            Trace(l, 2, "Sync: RecordEvent activated on MIDI clock %ld\n", clock);
-        }
-        else {
-            Trace(l, 2, "Sync: RecordEvent activated on external pulse\n");
-        }
-
-		// activate the event, may be latency delayed
         long startFrame = l->getFrame();
-        if (src == SYNC_MIDI && !e->fields.sync.syncTrackerEvent)
+
+        // unclear what the syncTrackerEvent flag was all about
+        // basically if this is from TrackSync we can start now, and
+        // if it is from the outside we add latency
+        // HostSync was assumed to have no latency??
+        
+        //if (src == SYNC_MIDI && !e->fields.sync.syncTrackerEvent)
+        //startFrame += l->getInputLatency();
+
+        Follower* f = syncMaster->getFollower(t->getDisplayNumber());
+        if (f != nullptr && f->source == Pulse::SourceMidiIn)
           startFrame += l->getInputLatency();
 
         start->pending = false;
@@ -1713,6 +1526,7 @@ void Synchronizer::startRecording(Loop* l, Event* e)
 		// mode to end but we may have a latency delay on the Record event.
 		// Would need some new kind of special wait type.
 
+        #if 0
 		// Calculate the number of pulses in one cycle to detect cycle
 		// crossings as we record (not used in all modes).
         // NOTE: Using pulses to determine cycles doesn't work if we're
@@ -1757,6 +1571,7 @@ void Synchronizer::startRecording(Loop* l, Event* e)
 
         state->startRecording(e->fields.sync.pulseNumber, 
                               cyclePulses, beatsPerBar, trackerLocked);
+        #endif
 	}
 }
 

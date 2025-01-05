@@ -39,7 +39,8 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     void refreshFocusedState(class FocusedTrackState* state) override;
     void dump(class StructureDumper& d) override;
     class MslTrack* getMslTrack() override;
-
+    void syncPulse(class Pulse* p) override;
+    
     //
     // MslTrack
     //

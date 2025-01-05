@@ -186,7 +186,7 @@ class Track : public TraceContext
 	long getFrame();
     void getState(class OldMobiusTrackState* s);
 	int getCurrentLevel();
-	bool isTrackSyncMaster();
+	//bool isTrackSyncMaster();
 
 	float getEffectiveSpeed();
 	float getEffectivePitch();
@@ -253,6 +253,7 @@ class Track : public TraceContext
 	void prepareForInterrupt();
 
     void processAudioStream(class MobiusAudioStream* stream);
+    void syncPulse(class Pulse* p);
     
 	//
     // Unit test interface

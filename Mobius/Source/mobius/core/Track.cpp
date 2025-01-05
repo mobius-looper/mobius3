@@ -340,6 +340,15 @@ int Track::getCycles()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * A sync pulse has been received from SyncMaster/TimeSlicer
+ * Forward to the Synchronizer.
+ */
+void Track::syncPulse(class Pulse* p)
+{
+    mSynchronizer->syncPulse(this, p);
+}
+
+/**
  * This is the first notification that requires an argument beyond
  * what is in TrackProperties.
  */

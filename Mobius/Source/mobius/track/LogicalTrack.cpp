@@ -36,6 +36,30 @@ LogicalTrack::~LogicalTrack()
 }
 
 /**
+ * State flags used by TimeSlicer to order track advance.
+ * Saves some annoying array sorting and cycle detection.
+ */
+bool LogicalTrack::isVisited()
+{
+    return visited;
+}
+
+void LogicalTrack::setVisited(bool b)
+{
+    visited = b;
+}
+
+bool LogicalTrack::isAdvanced()
+{
+    return advanced;
+}
+
+void LogicalTrack::setAdvanced(bool b)
+{
+    advanced = b;
+}
+
+/**
  * Normal initialization driven from the Session.
  */
 void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
@@ -223,6 +247,11 @@ MidiTrack* LogicalTrack::getMidiTrack()
     if (trackType == Session::TypeMidi)
       mt = static_cast<MidiTrack*>(track.get());
     return mt;
+}
+
+void LogicalTrack::syncPulse(Pulse* p)
+{
+    track->syncPulse(p);
 }
 
 //////////////////////////////////////////////////////////////////////

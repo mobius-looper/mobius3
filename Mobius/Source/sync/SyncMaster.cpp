@@ -84,6 +84,14 @@ void SyncMaster::shutdown()
     midiAnalyzer->shutdown();
 }
 
+/**
+ * Only for TimeSlicer, don't need a list yet.
+ */
+void SyncMaster::addListener(Listener* l)
+{
+    listener = l;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Advance
@@ -420,25 +428,91 @@ Pulse* SyncMaster::getBlockPulse(Pulse::Source src)
     return pulsator->getBlockPulse(src);
 }
 
+Pulse* SyncMaster::getBlockPulse(Follower* f)
+{
+    return pulsator->getBlockPulse(f);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Leader/Follower
 //
 //////////////////////////////////////////////////////////////////////
 
+Follower* SyncMaster::getFollower(int id)
+{
+    return pulsator->getFollower(id);
+}
+
+/**
+ * Adding a follower relationship changes dependency order that
+ * TimeSlicer is using to guide the track advance.  Let it know
+ */
+void SyncMaster::follow(int follower, int leader, Pulse::Type type)
+{
+    pulsator->follow(follower, leader, type);
+
+    if (listener != nullptr)
+      listener->syncFollowChanges();
+}
+
+/**
+ * Unfollowing doesn't change dependency order, though it may loosen it.
+ * This could resolve dependency cycles if we reorrder now.  Not worth bothering.
+ */
+void SyncMaster::unfollow(int follower)
+{
+    pulsator->unfollow(follower);
+}
+
+/**
+ * Changing the trackSyncMaster is similar to changing a follow.
+ * This is less likely to happen during a block advance but it's possible.
+ */
+void SyncMaster::setTrackSyncMaster(int leader, int leaderFrames)
+{
+    pulsator->setTrackSyncMaster(leader, leaderFrames);
+
+    if (listener != nullptr)
+      listener->syncFollowChanges();
+}
+
+int SyncMaster::getTrackSyncMaster()
+{
+    return pulsator->getTrackSyncMaster();
+}
+
+/**
+ * Soon to be deprecated.  Only the Transport sends MIDI clocks
+ */
+void SyncMaster::setOutSyncMaster(int leaderId, int leaderFrames)
+{
+    pulsator->setOutSyncMaster(leaderId, leaderFrames);
+}
+
+int SyncMaster::getOutSyncMaster()
+{
+    return pulsator->getOutSyncMaster();
+}
+
+/**
+ * Must be called during track advance by anything that can lead.  Will
+ * be ignored unless something is following it.
+ */
 void SyncMaster::addLeaderPulse(int leader, Pulse::Type type, int frameOffset)
 {
     pulsator->addLeaderPulse(leader, type, frameOffset);
 }
 
+/**
+ * Following a sync source does not result in track dependencies so you
+ * don't need to inform TimeSlicer and reorder.
+ */
 void SyncMaster::follow(int follower, Pulse::Source source, Pulse::Type type)
 {
     pulsator->follow(follower, source, type);
 }
-void SyncMaster::follow(int follower, int leader, Pulse::Type type)
-{
-    pulsator->follow(follower, leader, type);
-}
+
 void SyncMaster::start(int follower)
 {
     pulsator->start(follower);
@@ -450,26 +524,6 @@ void SyncMaster::lock(int follower, int frames)
 void SyncMaster::unlock(int follower)
 {
     pulsator->unlock(follower);
-}
-void SyncMaster::unfollow(int follower)
-{
-    pulsator->unfollow(follower);
-}
-void SyncMaster::setOutSyncMaster(int leaderId, int leaderFrames)
-{
-    pulsator->setOutSyncMaster(leaderId, leaderFrames);
-}
-int SyncMaster::getOutSyncMaster()
-{
-    return pulsator->getOutSyncMaster();
-}
-void SyncMaster::setTrackSyncMaster(int leader, int leaderFrames)
-{
-    pulsator->setTrackSyncMaster(leader, leaderFrames);
-}
-int SyncMaster::getTrackSyncMaster()
-{
-    return pulsator->getTrackSyncMaster();
 }
 bool SyncMaster::shouldCheckDrift(int follower)
 {
