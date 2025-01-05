@@ -54,7 +54,7 @@ class TrackMslVariableHandler
     void getScopeTrack(class MslTrack* t, class MslValue& v);
     void getGlobalMute(class MslTrack* t, class MslValue& v);
     void getTrackSyncMaster(class MslTrack* t, class MslValue& v);
-    void getOutSyncMaster(class MslTrack* t, class MslValue& v);
+    void getTransportMaster(class MslTrack* t, class MslValue& v);
     void getSyncTempo(class MslTrack* t, class MslValue& v);
     void getSyncRawBeat(class MslTrack* t, class MslValue& v);
     void getSyncBeat(class MslTrack* t, class MslValue& v);

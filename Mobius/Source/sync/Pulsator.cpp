@@ -127,13 +127,13 @@ Pulse* Pulsator::getBlockPulse(Pulse::Source src)
     
     switch (src) {
         case Pulse::SourceTransport:
-        case Pulse::SourceMidiOut: {
+        case Pulse::SourceMaster: {
             Transport* t = syncMaster->getTransport();
             pulse = t->getPulse();
         }
             break;
             
-        case Pulse::SourceMidiIn: {
+        case Pulse::SourceMidi: {
             if (midiIn.pulse.source != Pulse::SourceNone)
               pulse = &(midiIn.pulse);
         }
@@ -172,8 +172,8 @@ void Pulsator::trace(Pulse& p)
 {
     juce::String msg("Pulsator: ");
     switch (p.source) {
-        case Pulse::SourceMidiIn: msg += "MidiIn "; break;
-        case Pulse::SourceMidiOut: msg += "MidiOut "; break;
+        case Pulse::SourceMidi: msg += "Midi "; break;
+        case Pulse::SourceMaster: msg += "Master "; break;
         case Pulse::SourceHost: msg += "Host "; break;
         case Pulse::SourceTransport: msg += "Transport "; break;
         case Pulse::SourceLeader: msg += "Internal "; break;
@@ -307,7 +307,7 @@ void Pulsator::gatherMidi()
     analyzer->iterateStart();
     MidiSyncEvent* mse = analyzer->iterateNext();
     while (mse != nullptr) {
-        if (detectMidiBeat(mse, Pulse::SourceMidiIn, &(midiIn.pulse)))
+        if (detectMidiBeat(mse, Pulse::SourceMidi, &(midiIn.pulse)))
           break;
         else
           mse = analyzer->iterateNext();
@@ -319,7 +319,7 @@ void Pulsator::gatherMidi()
     realizer->iterateStart();
     mse = realizer->iterateNext();
     while (mse != nullptr) {
-        if (detectMidiBeat(mse, Pulse::SourceMidiOut, &(midiOut.pulse)))
+        if (detectMidiBeat(mse, Pulse::SourceMaster, &(midiOut.pulse)))
           break;
         else
           mse = realizer->iterateNext();
@@ -584,7 +584,7 @@ void Pulsator::traceFollowChange(Follower* f, Pulse::Source source, int leaderId
     if (f->started) {
 
         if (leaderId == 0)
-          leaderId = trackSyncMaster;
+          leaderId = syncMaster->getTrackSyncMaster();
 
         if (f->lockedSource != source) {
             snprintf(tracebuf, sizeof(tracebuf),
@@ -612,8 +612,8 @@ const char* Pulsator::getSourceName(Pulse::Source source)
     const char* name = "???";
     switch (source) {
         case Pulse::SourceNone: name = "None"; break;
-        case Pulse::SourceMidiIn: name = "MidiIn"; break;
-        case Pulse::SourceMidiOut: name = "MidiOut"; break;
+        case Pulse::SourceMidi: name = "Midi"; break;
+        case Pulse::SourceMaster: name = "Master"; break;
         case Pulse::SourceHost: name = "Host"; break;
         case Pulse::SourceLeader: name = "Leader"; break;
         case Pulse::SourceTransport: name = "Transport"; break;
@@ -662,7 +662,7 @@ void Pulsator::start(int followerId)
             if (f->source == Pulse::SourceLeader) {
                 leader = f->leader;
                 if (leader == 0)
-                  leader = trackSyncMaster;
+                  leader = syncMaster->getTrackSyncMaster();
                 if (leader == 0)
                   sourceAvailable = false;
             }
@@ -728,9 +728,6 @@ void Pulsator::lock(int followerId, int frames)
                 else {
                     Trace(2, "Pulsator: Follower %d locking after %d pulses %d frames",
                           followerId, f->pulses, frames);
-
-                    if (f->source == Pulse::SourceLeader)
-                      Trace(2, "Pulsator: Track sync master frames were %d", trackSyncMasterFrames);
                 }
                 
                 // reset drift state
@@ -851,7 +848,7 @@ int Pulsator::getPulseFrame(int followerId, Pulse::Type type)
         else if (f->source == Pulse::SourceLeader) {
             leader = f->leader;
             if (leader == 0)
-              leader = trackSyncMaster;
+              leader = syncMaster->getTrackSyncMaster();
         }
 
         // special case, if the leader is the follower, it means we couldn't find
@@ -860,8 +857,8 @@ int Pulsator::getPulseFrame(int followerId, Pulse::Type type)
         
             switch (source) {
                 case Pulse::SourceNone: /* nothing to say */ break;
-                case Pulse::SourceMidiIn: frame = getPulseFrame(&(midiIn.pulse), type); break;
-                case Pulse::SourceMidiOut: frame = getPulseFrame(&(midiOut.pulse), type); break;
+                case Pulse::SourceMidi: frame = getPulseFrame(&(midiIn.pulse), type); break;
+                case Pulse::SourceMaster: frame = getPulseFrame(&(midiOut.pulse), type); break;
                 case Pulse::SourceHost: frame = getPulseFrame(&(host.pulse), type); break;
                 case Pulse::SourceLeader: {
 
@@ -953,7 +950,7 @@ Pulse* Pulsator::getBlockPulse(Follower* f)
         else if (f->source == Pulse::SourceLeader) {
             leader = f->leader;
             if (leader == 0)
-              leader = trackSyncMaster;
+              leader = syncMaster->getTrackSyncMaster();
         }
 
         // special case, if the leader is the follower, it means we couldn't find
@@ -964,18 +961,15 @@ Pulse* Pulsator::getBlockPulse(Follower* f)
                 case Pulse::SourceNone:
                     break;
                     
-                case Pulse::SourceMidiIn:
+                case Pulse::SourceMidi:
                     pulse = &(midiIn.pulse);
                     break;
                     
-                case Pulse::SourceMidiOut: 
-                    // should not be seeing these
-                    break;
-
                 case Pulse::SourceHost:
                     pulse = &(host.pulse);
                     break;
                     
+                case Pulse::SourceMaster: 
                 case Pulse::SourceTransport:
                     pulse = &(transport.pulse);
                     break;
@@ -992,11 +986,10 @@ Pulse* Pulsator::getBlockPulse(Follower* f)
                     }
                 }
                     break;
-                    
             }
 
             // filter  based on the desired pulse type
-            if (!isRelevant(pulse, f->type))
+            if (pulse != nullptr && !isRelevant(pulse, f->type))
               pulse = nullptr;
         }
     }
@@ -1006,7 +999,7 @@ Pulse* Pulsator::getBlockPulse(Follower* f)
 bool Pulsator::isRelevant(Pulse* p, Pulse::Type followType)
 {
     bool relevant = false;
-    if (!p->pending && p->source != Pulse::SourceNone) {
+    if (p != nullptr && !p->pending && p->source != Pulse::SourceNone) {
         // there was a pulse from this source
         if (followType == Pulse::PulseBeat) {
             // anything is a beat
@@ -1035,44 +1028,6 @@ bool Pulsator::isRelevant(Pulse* p, Pulse::Type followType)
 //
 //////////////////////////////////////////////////////////////////////
 
-void Pulsator::setOutSyncMaster(int followerId, int frames)
-{
-    (void)followerId;
-    (void)frames;
-    Trace(1, "Pulsator::setOutSyncMaster not implemented");
-    outSyncMaster = followerId;
-}
-
-int Pulsator::getOutSyncMaster()
-{
-    return outSyncMaster;
-}
-
-/**
- * Set the default leader track when using track sync and the follower
- * didn't specify a specific leader.
- *
- * What the old system called the "track sync master".
- * Note: This can change randomly.  If a track starts out following
- * one track, then is reset and records again, it needs to sync to
- * the new default leader.  For that to happen, leave the Follower.leader
- * field at zero.
- */
-void Pulsator::setTrackSyncMaster(int leaderId, int leaderFrames)
-{
-    trackSyncMaster = leaderId;
-    trackSyncMasterFrames = leaderFrames;
-}
-
-/**
- * Tracks would call this to see if there is a track sync master
- * if they want to follow one, and if there isn't it can decide whether
- * to wait (unlikely) or just proceed and maybe become the master.
- */
-int Pulsator::getTrackSyncMaster()
-{
-    return trackSyncMaster;
-}
 
 //////////////////////////////////////////////////////////////////////
 //

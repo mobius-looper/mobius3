@@ -8,6 +8,7 @@
  *
  * The other fields have additional information that followers may
  * wish to respond to but are not required.
+ *
  * todo: reconsider whether to even bother with these, intelligent
  * following of external song position or transport location is enormously
  * complex.  For all practical purposes the followers shouldn't really
@@ -28,12 +29,29 @@ class Pulse
      */
     typedef enum {
         // None is used to indiciate that the pulse has not been detected
+        // or a track is not synchronizing with anything
         SourceNone,
-        SourceMidiIn,
-        SourceMidiOut,
+
+        // synchronization with MIDI clocks from the outside
+        SourceMidi,
+
+        // synchronization with the host application transport
         SourceHost,
+
+        // synchronization with the internal transport
+        // this may geneerate MIDI clocks
         SourceTransport,
-        SourceLeader
+        
+        // synchronization with another track
+        SourceLeader,
+
+        // Not a pulse source, but used in Track configuration to indiciate
+        // that this track wants to control the internal transport
+        // Since there can only be one transport master, if a track is already
+        // the transport master, other tracks will behave as SourceTransport
+        // followers.  This is appoximately the same as the old SyncSource=MIDI_OUT
+        SourceMaster
+        
     } Source;
 
     /**

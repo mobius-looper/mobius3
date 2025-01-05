@@ -370,7 +370,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {"SUSUnroundedInsert", FuncSUSUnroundedInsert},
     {"SUSUnroundedMultiply", FuncSUSUnroundedMultiply},
     {"SyncStartPoint", FuncSyncStartPoint},
-    {"SyncMasterTrack", FuncSyncMasterTrack},
     {"SelectTrack", FuncSelectTrack},
     {"TrackCopy", FuncTrackCopy},
     {"TrackCopyTiming", FuncTrackCopyTiming},
@@ -448,6 +447,11 @@ SymbolDefinition SymbolDefinitions[] = {
     {"TransportStop", FuncTransportStop},
     {"transportTempo", ParamTransportTempo},
     {"transportBeatsPerBar", ParamTransportBeatsPerBar},
+
+    // these are old names, i'd like to change them but then
+    // we would need aliases or duplicate SymbolIds
+    {"SyncMasterTrack", FuncSyncMasterTrack},
+    {"SyncMasterMidi", FuncSyncMasterTransport},
     
     //
     // Terminator

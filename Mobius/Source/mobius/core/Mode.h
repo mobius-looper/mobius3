@@ -136,7 +136,6 @@ extern MobiusMode* CaptureMode;
 extern MobiusMode* GlobalMuteMode;
 extern MobiusMode* GlobalPauseMode;
 extern MobiusMode* HalfSpeedMode;
-extern MobiusMode* MIDISyncMasterMode;
 
 extern MobiusMode* PitchOctaveMode;
 extern MobiusMode* PitchStepMode;
@@ -149,8 +148,6 @@ extern MobiusMode* TimeStretchMode;
 
 extern MobiusMode* ReverseMode;
 extern MobiusMode* SoloMode;
-extern MobiusMode* SyncMasterMode;
-extern MobiusMode* TrackSyncMasterMode;
 extern MobiusMode* WindowMode;
 
 extern MobiusMode* Modes[];

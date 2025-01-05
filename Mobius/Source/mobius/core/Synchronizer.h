@@ -138,8 +138,6 @@ class Synchronizer {
     void loadLoop(class Loop* l);
 
     // Temporary master interface for old functions
-    void setTrackSyncMaster(class Track* t);
-    void setOutSyncMaster(class Track* t);
     class Track* getTrackSyncMaster();
     class Track* getOutSyncMaster();
     

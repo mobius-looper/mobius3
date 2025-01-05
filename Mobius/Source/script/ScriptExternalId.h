@@ -50,7 +50,7 @@ typedef enum {
     VarScopeTrack,
     VarGlobalMute,
     VarTrackSyncMaster,
-    VarOutSyncMaster,
+    VarTransportMaster,
     VarSyncTempo,
     VarSyncRawBeat,
     VarSyncBeat,

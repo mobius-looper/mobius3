@@ -100,8 +100,6 @@
   <Function name="SUSUnroundedInsert" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
   <Function name="SUSUnroundedMultiply" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
   <Function name="SyncStartPoint" mayFocus='true' mayCancelMute='true' tree='Sync'/>
-  <Function name="SyncMasterTrack" tree='Sync'/>
-  <Function name="SyncMasterMidi" tree='Sync'/>
   
   <!-- Formerly TrackN, Track1, etc. -->
   <Function name="SelectTrack"
@@ -146,6 +144,8 @@
 
   <Function name='TransportStart' level='kernel' tree='Transport'/>
   <Function name='TransportStop' level='kernel' tree='Transport'/>
+  <Function name="SyncMasterTrack" level='kernel' tree='Transport'/>
+  <Function name="SyncMasterMidi" level='kernel' tree='Transport'/>
   
   <!--
   Parameter type=int is assumed unless specified
@@ -656,8 +656,8 @@
 
   <ParameterScope name='track'>
     <Parameter name='leaderType'
-               values='none,track,trackSyncMaster, outSyncMaster,focused,host,midi,transport'
-               valueLabels='None,Track Number,Track Sync Master,Out Sync Master,Focused,Host,MIDI In'/>
+               values='none,track,trackSyncMaster, transportMaster,focused,host,midi,transport'
+               valueLabels='None,Track Number,Track Sync Master,Transport Master,Focused,Host,MIDI In'/>
 
     <Parameter name='leaderSwitchLocation'
                values='none,loop,cycle,subcycle'/>

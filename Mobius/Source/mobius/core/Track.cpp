@@ -1660,13 +1660,17 @@ bool Track::checkSyncEvent(Event* e)
     bool noTrace = false;
     EventType* type = e->type;
 
+    // gone
+#if 0    
     if (type == SyncEvent) {
         // not for track sync, but suppress trace
 		noTrace = true;
     }
-    else if (type == LoopEvent || 
-             type == CycleEvent || 
-             type == SubCycleEvent) {
+#endif
+    
+    if (type == LoopEvent || 
+        type == CycleEvent || 
+        type == SubCycleEvent) {
 
 		// NOTE: the buffer offset has to be captured *after* the event 
 		// is processed so it factors in the amount of the buffer

@@ -118,7 +118,7 @@ bool TrackMslVariableHandler::get(MslTrack* t, ScriptExternalId id, MslValue& re
         case VarGlobalMute: getGlobalMute(t,result); break;
 
         case VarTrackSyncMaster: getTrackSyncMaster(t,result); break;
-        case VarOutSyncMaster: getOutSyncMaster(t,result); break;
+        case VarTransportMaster: getTransportMaster(t,result); break;
         case VarSyncTempo: getSyncTempo(t,result); break;
         case VarSyncRawBeat: getSyncRawBeat(t,result); break;
         case VarSyncBeat: getSyncBeat(t,result); break;
@@ -401,11 +401,11 @@ void TrackMslVariableHandler::getTrackSyncMaster(MslTrack* t, MslValue& v)
     v.setInt(tnum);
 }
 
-void TrackMslVariableHandler::getOutSyncMaster(MslTrack* t, MslValue& v)
+void TrackMslVariableHandler::getTransportMaster(MslTrack* t, MslValue& v)
 {
     (void)t;
     // this could have been handled at either level
-    int tnum = kernel->getSyncMaster()->getOutSyncMaster();
+    int tnum = kernel->getSyncMaster()->getTransportMaster();
     v.setInt(tnum);
 }
 

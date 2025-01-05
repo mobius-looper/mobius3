@@ -162,7 +162,8 @@ EventManager::EventManager(Track* track)
 
     // special event we can inject at sync boundaries
 	mSyncEvent = NEW1(Event, nullptr);
-	mSyncEvent->type = SyncEvent;
+    // this type no longer exists, weed out SyncEvent handling at some point
+	//mSyncEvent->type = SyncEvent;
 	// this keeps it from being returned to the free pool and
     // suppresses warnings
     // do we need this?  doesn't the lack of a pool imply ownership?

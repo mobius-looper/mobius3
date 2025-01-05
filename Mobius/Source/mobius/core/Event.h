@@ -164,7 +164,6 @@ extern EventType* SUSReturnEvent;
 extern EventType* TrackEvent;
 extern EventType* RunScriptEvent;
 extern EventType* SampleTriggerEvent;
-extern EventType* SyncEvent;
 extern EventType* SlipEvent;
 extern EventType* MoveEvent;
 extern EventType* ShuffleEvent;
@@ -178,6 +177,7 @@ extern EventType* FollowerEvent;
  *                                                                          *
  ****************************************************************************/
 
+#if 0
 /**
  * For events of type SyncEvent, we overload an argument field
  * to contain one of these which specifies the type of event.
@@ -191,6 +191,7 @@ typedef enum {
 	SYNC_EVENT_PULSE
 
 } SyncEventType;
+#endif
 
 /**
  * For events of type SyncEvent whose SyncEventType is SYNC_EVENT_PULSE, 
@@ -530,6 +531,7 @@ class Event {
             WaitType waitType;
         } script;
         
+#if 0        
         /**
          * SyncEvent
          */
@@ -545,6 +547,7 @@ class Event {
             bool syncStartPoint;
             bool syncTrackerEvent;
         } sync;
+#endif        
 
         /**
          * TrackSwitchEvent

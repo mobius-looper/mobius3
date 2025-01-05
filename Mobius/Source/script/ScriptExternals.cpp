@@ -74,7 +74,7 @@ ScriptExternalDefinition ScriptExternalDefinitions[] = {
     {"scopeTrack", VarScopeTrack, ScriptContextKernel, false},
     {"globalMute", VarGlobalMute, ScriptContextKernel, false},
     {"trackSyncMaster", VarTrackSyncMaster, ScriptContextKernel, false},
-    {"outSyncMaster", VarOutSyncMaster, ScriptContextKernel, false},
+    {"transportMaster", VarTransportMaster, ScriptContextKernel, false},
     {"syncTempo", VarSyncTempo, ScriptContextKernel, false},
     {"syncRawBeat", VarSyncRawBeat, ScriptContextKernel, false},
     {"syncBeat", VarSyncBeat, ScriptContextKernel, false},

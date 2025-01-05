@@ -131,6 +131,110 @@ void SyncMaster::notifyTrackAvailable(int number)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Masters
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * There can be one TrackSyncMaster.
+ *
+ * This becomes the default leader track when using Pulse::SourceLeader
+ * and the follower didn't specify a specific leader.
+ * 
+ * It may be changed at any time.
+ */
+void SyncMaster::setTrackSyncMaster(int leaderId)
+{
+    int oldMaster = trackSyncMaster;
+    trackSyncMaster = leaderId;
+
+    // changing this may result in reordering of tracks
+    // during an advance
+    if (oldMaster != trackSyncMaster) {
+        if (listener != nullptr)
+          listener->syncFollowerChanges();
+    }
+}
+
+int SyncMaster::getTrackSyncMaster()
+{
+    return trackSyncMaster;
+}
+
+/**
+ * Action handler for FuncSyncMasterTrack
+ * Formerly implemented as a Mobius core function.
+ * This took no arguments and made the active track the master.
+ *
+ * Now this makes the focused track the master which may include MIDI tracks.
+ * To allow more control, the action may have an argument with a track number.
+ * todo: This needs to be expanded to accept any form of trackk identifier.
+ */
+void SyncMaster::setTrackSyncMaster(UIAction* a)
+{
+    int number = a->value;
+    if (number == 0) {
+        // todo: not liking how track focus is passed around and where it lives
+        number = container->getFocusedTrackIndex() + 1;
+    }
+
+    Leader* leader = pulsator->getLeader(number);
+    if (leader == nullptr)
+      Trace(1, "SyncMaster: Invalid track id in SyncMasterTrack action");
+    else {
+        setTrackSyncMaster(number);
+    }
+}
+
+/**
+ * There can only be one Transport Master.
+ * Changing this may change the tempo of geneerated MIDI clocks if the transport
+ * has MIDI enabled.
+ */
+void SyncMaster::setTransportMaster(int id)
+{
+    transportMaster = id;
+
+    // todo: this has lots of consequences, we're going to need to query
+    // the track to get it's length and possibly other things to control
+    // the Transport
+}
+
+int SyncMaster::getTransportMaster()
+{
+    return transportMaster;
+}
+
+/**
+ * Action handler for FuncSyncMasterMidi
+ * Formerly implemented as a Mobius core function.
+ * This took no arguments and made the active track the "MIDI Master".
+ *
+ * This is now the equivalent of setting the TransportMaster.
+ * The name "SyncMasterMidi" is kept for backward compatibility but it should
+ * be made an alias of TransportMaster.
+ *
+ * Like SyncMasterTrack this now makes the focused track the master which may
+ * include MIDI tracks.
+ */
+void SyncMaster::setTransportMaster(UIAction* a)
+{
+    int number = a->value;
+    if (number == 0) {
+        // todo: not liking how track focus is passed around and where it lives
+        number = container->getFocusedTrackIndex() + 1;
+    }
+
+    Leader* leader = pulsator->getLeader(number);
+    if (leader == nullptr)
+      Trace(1, "SyncMaster: Invalid track id in TransportMaster action");
+    else {
+        setTransportMaster(number);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Advance
 //
 //////////////////////////////////////////////////////////////////////
@@ -207,6 +311,14 @@ void SyncMaster::doAction(UIAction* a)
     Symbol* s = a->symbol;
 
     switch (s->id) {
+
+        case FuncSyncMasterTrack:
+            setTrackSyncMaster(a);
+            break;
+
+        case FuncSyncMasterTransport:
+            setTransportMaster(a);
+            break;
         
         case FuncTransportStop:
             transport->stop();
@@ -236,6 +348,11 @@ void SyncMaster::doAction(UIAction* a)
     }
 }
 
+/**
+ * We don't seem to have had parameters for trackSyncMaster and outSyncMaster,
+ * those were implemented as script variables.  If they were parameters it would
+ * make it more usable for host parameter bindings.
+ */
 bool SyncMaster::doQuery(Query* q)
 {
     bool success = false;
@@ -278,7 +395,6 @@ void SyncMaster::refreshPriorityState(PriorityState* pstate)
 {
     transport->refreshPriorityState(pstate);
 }
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -334,13 +450,13 @@ float SyncMaster::getTempo(Pulse::Source src)
         }
             break;
 
-        case Pulse::SourceMidiIn: {
+        case Pulse::SourceMidi: {
             // Pulsator also tracks this but we can get it directly from the Analyzer
             tempo = midiAnalyzer->getTempo();
         }
             break;
 
-        case Pulse::SourceMidiOut:
+        case Pulse::SourceMaster:
         case Pulse::SourceTransport: {
             // these are now the same
             tempo = transport->getTempo();
@@ -370,13 +486,13 @@ int SyncMaster::getBeat(Pulse::Source src)
         }
             break;
 
-        case Pulse::SourceMidiIn: {
+        case Pulse::SourceMidi: {
             // Pulsator also tracks this but we can get it directly from the Analyzer
             beat = midiAnalyzer->getBeat();
         }
             break;
 
-        case Pulse::SourceMidiOut:
+        case Pulse::SourceMaster:
         case Pulse::SourceTransport: {
             // these are now the same
             beat = transport->getBeat();
@@ -432,7 +548,7 @@ int SyncMaster::getBar(Pulse::Source src)
         }
             break;
 
-        case Pulse::SourceMidiIn: {
+        case Pulse::SourceMidi: {
             int beat = midiAnalyzer->getBeat();
             int bpb = getBeatsPerBar(src);
             if (bpb > 0)
@@ -440,7 +556,7 @@ int SyncMaster::getBar(Pulse::Source src)
         }
             break;
 
-        case Pulse::SourceMidiOut:
+        case Pulse::SourceMaster:
         case Pulse::SourceTransport: {
             // these are now the same
             bar = transport->getBar();
@@ -500,36 +616,6 @@ void SyncMaster::follow(int follower, int leader, Pulse::Type type)
 void SyncMaster::unfollow(int follower)
 {
     pulsator->unfollow(follower);
-}
-
-/**
- * Changing the trackSyncMaster is similar to changing a follow.
- * This is less likely to happen during a block advance but it's possible.
- */
-void SyncMaster::setTrackSyncMaster(int leader, int leaderFrames)
-{
-    pulsator->setTrackSyncMaster(leader, leaderFrames);
-
-    if (listener != nullptr)
-      listener->syncFollowerChanges();
-}
-
-int SyncMaster::getTrackSyncMaster()
-{
-    return pulsator->getTrackSyncMaster();
-}
-
-/**
- * Soon to be deprecated.  Only the Transport sends MIDI clocks
- */
-void SyncMaster::setOutSyncMaster(int leaderId, int leaderFrames)
-{
-    pulsator->setOutSyncMaster(leaderId, leaderFrames);
-}
-
-int SyncMaster::getOutSyncMaster()
-{
-    return pulsator->getOutSyncMaster();
 }
 
 /**

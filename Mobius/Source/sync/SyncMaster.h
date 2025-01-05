@@ -55,6 +55,16 @@ class SyncMaster
     void refreshPriorityState(class PriorityState* s);
 
     //
+    // Masters
+    //
+
+    void setTrackSyncMaster(int id);
+    int getTrackSyncMaster();
+    
+    void setTransportMaster(int id);
+    int getTransportMaster();
+
+    //
     // Granular state
     //
     
@@ -91,10 +101,6 @@ class SyncMaster
     void lock(int follower, int frames);
     void unlock(int follower);
     void unfollow(int follower);
-    void setOutSyncMaster(int leaderId, int leaderFrames);
-    int getOutSyncMaster();
-    void setTrackSyncMaster(int leader, int leaderFrames);
-    int getTrackSyncMaster();
     bool shouldCheckDrift(int follower);
     int getDrift(int follower);
     void correctDrift(int follower, int frames);
@@ -246,6 +252,8 @@ class SyncMaster
     class MobiusContainer* container = nullptr;
     Listener* listener = nullptr;
     int sampleRate = 44100;
+    int trackSyncMaster = 0;
+    int transportMaster = 0;
     
     SyncMasterState states;
     
@@ -258,4 +266,6 @@ class SyncMaster
     void enableEventQueue();
     void disableEventQueue();
 
+    void setTrackSyncMaster(class UIAction* a);
+    void setTransportMaster(class UIAction* a);
 };

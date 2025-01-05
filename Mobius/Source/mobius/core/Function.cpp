@@ -1485,8 +1485,6 @@ void Function::initStaticFunctions()
         add(StaticFunctions, SpeedBend);
         // SpeedRestore exists but was never added to the array
         add(StaticFunctions, TimeStretch);
-        add(StaticFunctions, SyncMasterTrack);
-        add(StaticFunctions, SyncMasterMidi);
         add(StaticFunctions, ShortUndo);
         add(StaticFunctions, LongUndo);
         add(StaticFunctions, UndoOnly);

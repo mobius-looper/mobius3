@@ -100,14 +100,6 @@ class Pulsator
     bool shouldCheckDrift(int follower);
     int getDrift(int follower);
     void correctDrift(int follower, int frames);
-
-    // declare one of the tracks as the MIDI output sync master
-    void setOutSyncMaster(int leaderId, int leaderFrames);
-    int getOutSyncMaster();
-    
-    // declare one of the tracks as the default track sync leader
-    void setTrackSyncMaster(int leader, int leaderFrames);
-    int getTrackSyncMaster();
     
     // called by leaders to register a pulse in this block
     void addLeaderPulse(int leader, Pulse::Type type, int frameOffset);
@@ -129,6 +121,7 @@ class Pulsator
 
     Pulse* getBlockPulse(Pulse::Source src);
     Follower* getFollower(int id, bool warn = true);
+    Leader* getLeader(int id);
 
   private:
 
@@ -146,8 +139,6 @@ class Pulsator
 
     // master tracks
     int outSyncMaster = 0;
-    int trackSyncMaster = 0;
-    int trackSyncMasterFrames = 0;
     
     // true when the host transport was advancing in the past
     bool hostPlaying = false;
@@ -157,7 +148,6 @@ class Pulsator
     SyncState midiOut;
 
     void reset();
-    Leader* getLeader(int id);
     void advance(int blockFrames);
     
     void gatherHost(class MobiusAudioStream* stream);

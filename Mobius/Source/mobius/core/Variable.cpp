@@ -2108,7 +2108,7 @@ void OutSyncMasterVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
     SyncMaster* sm = s->getSyncMaster();
-	value->setInt(sm->getOutSyncMaster());
+	value->setInt(sm->getTransportMaster());
 }
 
 OutSyncMasterVariableType OutSyncMasterVariableObj;
@@ -2931,7 +2931,7 @@ void SyncInTempoVariableType::getTrackValue(Track* t, ExValue* value)
 {
     SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
 	//float tempo = t->getSynchronizer()->getInTempo();
-    float tempo = sm->getTempo(Pulse::SourceMidiIn);
+    float tempo = sm->getTempo(Pulse::SourceMidi);
     
 	// assume its ok to truncate this one, if you want something
 	// more accurate could have a RealTempoVariable?

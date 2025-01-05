@@ -109,7 +109,7 @@ void BaseScheduler::loadSession(Session::Track* def)
         syncMaster->follow(scheduledTrack->getNumber(), syncSource, ptype);
     }
     else if (sessionSyncSource == SYNC_MIDI) {
-        syncSource = Pulse::SourceMidiIn;
+        syncSource = Pulse::SourceMidi;
         syncMaster->follow(scheduledTrack->getNumber(), syncSource, ptype);
     }
     else if (sessionSyncSource == SYNC_TRANSPORT) {
@@ -393,8 +393,8 @@ int BaseScheduler::findLeaderTrack()
     else if (leaderType == LeaderTrackSyncMaster) {
         leader = syncMaster->getTrackSyncMaster();
     }
-    else if (leaderType == LeaderOutSyncMaster) {
-        leader = syncMaster->getOutSyncMaster();
+    else if (leaderType == LeaderTransportMaster) {
+        leader = syncMaster->getTransportMaster();
     }
     else if (leaderType == LeaderFocused) {
         // this is a "view index" which is zero based!

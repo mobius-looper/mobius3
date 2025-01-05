@@ -466,10 +466,6 @@ extern Function* SpeedBend;
 extern Function* SpeedRestore;
 extern Function* TimeStretch;
 
-// probably useful but broken
-extern Function* SyncMasterTrack;
-extern Function* SyncMasterMidi;
-
 // simulate duration behavior in a script
 extern Function* UndoOnly;
 extern Function* LongUndo;

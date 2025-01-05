@@ -682,7 +682,6 @@
             <FILE id="W2lMIy" name="StartPoint.cpp" compile="1" resource="0" file="Source/mobius/core/functions/StartPoint.cpp"/>
             <FILE id="BD9WVu" name="Stutter.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Stutter.cpp"/>
             <FILE id="nZvo45" name="Substitute.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Substitute.cpp"/>
-            <FILE id="v9vyy1" name="Sync.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Sync.cpp"/>
             <FILE id="geL4FJ" name="TrackCopy.cpp" compile="1" resource="0" file="Source/mobius/core/functions/TrackCopy.cpp"/>
             <FILE id="diKBBx" name="TrackGroup.cpp" compile="1" resource="0" file="Source/mobius/core/functions/TrackGroup.cpp"/>
             <FILE id="ZHJtYT" name="TrackSelect.cpp" compile="1" resource="0" file="Source/mobius/core/functions/TrackSelect.cpp"/>

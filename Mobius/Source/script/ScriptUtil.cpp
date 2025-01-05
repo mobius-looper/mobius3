@@ -90,7 +90,7 @@ bool ScriptUtil::expandScopeKeyword(const char* cname, juce::Array<int>& numbers
         // maybe it's better if this did context transitions in order to sxpand scopeps
         // must be a better way 
         VarQuery q;
-        q.id = VarOutSyncMaster;
+        q.id = VarTransportMaster;
         if (context->mslQuery(&q)) {
             int tnum = q.result.getInt();
             if (tnum > 0)

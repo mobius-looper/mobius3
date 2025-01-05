@@ -367,7 +367,7 @@ typedef enum {
     LeaderNone,
     LeaderTrack,
     LeaderTrackSyncMaster,
-    LeaderOutSyncMaster,
+    LeaderTransportMaster,
     LeaderFocused,
     LeaderHost,
     LeaderMidi

@@ -304,7 +304,6 @@ typedef enum {
     FuncSUSUnroundedMultiply,
 
     FuncSyncStartPoint,
-    FuncSyncMasterTrack,
 
     // Formerly TrackN, Track1, etc.
     FuncSelectTrack,
@@ -403,6 +402,9 @@ typedef enum {
     FuncTransportStop,
     ParamTransportTempo,
     ParamTransportBeatsPerBar,
+
+    FuncSyncMasterTrack,
+    FuncSyncMasterTransport,
     
     SymbolIdMax
 

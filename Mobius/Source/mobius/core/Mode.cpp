@@ -137,9 +137,6 @@ void MobiusMode::initModes()
         add(SpeedBendMode);
         add(SpeedToggleMode);
         add(TimeStretchMode);
-        add(SyncMasterMode);
-        add(TrackSyncMasterMode);
-        add(MIDISyncMasterMode);
         add(CaptureMode);
         add(SoloMode);
         add(GlobalMuteMode);

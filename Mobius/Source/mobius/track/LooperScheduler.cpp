@@ -1245,7 +1245,7 @@ bool LooperScheduler::isRecordSynced()
     bool doSync = false;
     int number = track->getNumber();
     
-    if (syncSource == Pulse::SourceHost || syncSource == Pulse::SourceMidiIn) {
+    if (syncSource == Pulse::SourceHost || syncSource == Pulse::SourceMidi) {
         //the easy one, always sync
         doSync = true;
     }
@@ -1256,11 +1256,11 @@ bool LooperScheduler::isRecordSynced()
         // sync if there is a master and it isn't us
         doSync = (master > 0 && master != number);
     }
-    else if (syncSource == Pulse::SourceMidiOut) {
+    else if (syncSource == Pulse::SourceMaster || syncSource == Pulse::SourceTransport) {
         // if another track is already the out sync master, then
         // we have in the past switched this to track sync
         // unclear if we should have more options around this
-        int outMaster = syncMaster->getOutSyncMaster();
+        int outMaster = syncMaster->getTransportMaster();
         if (outMaster > 0 && outMaster != number) {
 
             // the out sync master is normally also the track sync

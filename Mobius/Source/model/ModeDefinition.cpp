@@ -175,9 +175,6 @@ ModeDefinition* UIGlobalPauseMode = &GlobalPauseModeDef;
 ModeDefinition HalfSpeedModeDef {"HalfSpeed"};
 ModeDefinition* UIHalfSpeedMode = &HalfSpeedModeDef;
 
-ModeDefinition MIDISyncMasterModeDef {"MIDISyncMaster"};
-ModeDefinition* UIMIDISyncMasterMode = &MIDISyncMasterModeDef;
-
 ModeDefinition PitchOctaveModeDef {"PitchOctave"};
 ModeDefinition* UIPitchOctaveMode = &PitchOctaveModeDef;
 
@@ -207,12 +204,6 @@ ModeDefinition* UIReverseMode = &ReverseModeDef;
 
 ModeDefinition SoloModeDef {"Solo"};
 ModeDefinition* UISoloMode = &SoloModeDef;
-
-ModeDefinition SyncMasterModeDef {"SyncMaster"};
-ModeDefinition* UISyncMasterMode = &SyncMasterModeDef;
-
-ModeDefinition TrackSyncMasterModeDef {"TrackSyncMaster"};
-ModeDefinition* UITrackSyncMasterMode = &TrackSyncMasterModeDef;
 
 ModeDefinition WindowModeDef {"Window"};
 ModeDefinition* UIWindowMode = &WindowModeDef;
