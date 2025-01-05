@@ -96,6 +96,7 @@ class RealignFunction : public Function {
 	Event* scheduleSwitchStack(Action* action, Loop* l);
   private:
 	bool mute;
+    SyncSource getEffectiveSyncSource(Track* t);
 };
 
 RealignFunction RealignObj {false};
@@ -157,8 +158,7 @@ Event* RealignFunction::scheduleEvent(Action* action, Loop* l)
 	else {
         Setup* setup = l->getMobius()->getSetup();
         Track* t = l->getTrack();
-        SyncState* state = t->getSyncState();
-        SyncSource src = state->getEffectiveSyncSource();
+        SyncSource src = getEffectiveSyncSource(t);
 		Synchronizer* sync = l->getSynchronizer();
 
 		if (src == SYNC_NONE) {
@@ -233,6 +233,16 @@ Event* RealignFunction::scheduleSwitchStack(Action* action, Loop* l)
 
 	// have historically returned NULL here, is that important?
 	return NULL;
+}
+
+/**
+ * Formerly something like this in SyncState
+ * Needs thought, probably something for SyncMaster?
+ */
+SyncSource RealignFunction::getEffectiveSyncSource(Track* t)
+{
+    (void)t;
+    return SYNC_NONE;
 }
 
 /****************************************************************************

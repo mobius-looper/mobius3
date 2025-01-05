@@ -96,7 +96,6 @@ void Track::init(Mobius* m, Synchronizer* sync, int number)
     mMobius = m;
     mNotifier = m->getNotifier();
 	mSynchronizer = sync;
-    mSyncState = NEW1(SyncState, this);
     mSetupCache = nullptr;
     mEventManager = NEW1(EventManager, this);
 	mInput = NEW2(InputStream, sync, m->getSampleRate());
@@ -159,7 +158,6 @@ Track::~Track()
 	for (int i = 0 ; i < MAX_LOOPS ; i++)
       delete mLoops[i];
 
-    delete mSyncState;
     delete mEventManager;
 	delete mInput;
 	delete mOutput;
@@ -187,11 +185,6 @@ void Track::dump(StructureDumper& d)
 void Track::setHalting(bool b)
 {
 	mHalting = b;
-}
-
-SyncState* Track::getSyncState()
-{
-    return mSyncState;
 }
 
 /**

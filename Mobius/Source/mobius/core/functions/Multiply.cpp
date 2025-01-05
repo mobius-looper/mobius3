@@ -38,7 +38,6 @@
 #include "../Mode.h"
 #include "../Segment.h"
 #include "../Synchronizer.h"
-#include "../SyncState.h"
 #include "../Track.h"
 
 //////////////////////////////////////////////////////////////////////

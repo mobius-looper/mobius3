@@ -2,37 +2,16 @@
  * Largely gutted during the Great SyncMaster Reorganization
  */
 
-#ifndef SYNCHRONIZER_H
-#define SYNCHRONIZER_H
+#pragma once
 
 // necessary for SyncSource
 #include "../../model/Setup.h"
-
-#include "SyncState.h"
  
-/****************************************************************************
- *                                                                          *
- *   							  CONSTANTS                                 *
- *                                                                          *
- ****************************************************************************/
-
-// OBSOLETE: Should be moved somewhere under SyncMaster
-
-/**
- * The minimum tempo we allow when generating MIDI clocks.
- */
-#define SYNC_MIN_TEMPO 10
-
-/**
- * The maximum tempo we allow when generating MIDI clocks.
- */
-#define SYNC_MAX_TEMPO 400
-
-/****************************************************************************
- *                                                                          *
- *                               SYNC UNIT INFO                             *
- *                                                                          *
- ****************************************************************************/
+//////////////////////////////////////////////////////////////////////
+//
+// SyncUnitInfo
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Little structure used in the calculation of recording "units".
@@ -81,11 +60,11 @@ typedef struct {
 
 } SyncUnitInfo;
 
-/****************************************************************************
- *                                                                          *
- *   							 SYNCHRONIZER                               *
- *                                                                          *
- ****************************************************************************/
+//////////////////////////////////////////////////////////////////////
+//
+// Synchronizer
+//
+//////////////////////////////////////////////////////////////////////
 
 class Synchronizer {
 
@@ -129,6 +108,7 @@ class Synchronizer {
 	void interruptEnd();
 
     void trackSyncEvent(class Track* t, class EventType* type, int offset);
+    void syncPulse(class Track* track, class Pulse* pulse);
 
     // 
     // Loop and Function callbacks
@@ -149,25 +129,9 @@ class Synchronizer {
     void loopMidiStart(Loop* l);
     void loopMidiStop(Loop* l, bool force);
     void loopSetStartPoint(Loop* l, Event* e);
-    void loopDrift(Loop* l, int delta);
 
-    //
-    // Sync Masters
-    //
-
-    class Track* getTrackSyncMaster();
-    class Track* getOutSyncMaster();
-    void setTrackSyncMaster(class Track* master);
-    void setOutSyncMaster(class Track* master);
     void loadProject(class Project* p);
     void loadLoop(class Loop* l);
-
-    //
-    // Pulse processing
-    //
-
-    void syncEvent(class Loop* l, class Event* e);
-    
 
 	/////////////////////////////////////////////////////////////////////
 	// 
@@ -177,6 +141,12 @@ class Synchronizer {
     
   private:
 
+	// our leader
+	class Mobius* mMobius;
+
+    // our eventual upstart replacement, the ass kissing bastard
+    class SyncMaster* mSyncMaster = nullptr;
+    
     // record scheduling
     
     bool isRecordStartSynchronized(class Loop* l);
@@ -192,113 +162,17 @@ class Synchronizer {
     float getSpeed(class Loop* l);
     void traceTempo(class Loop* l, const char* type, float tempo);
     float getFramesPerBeat(float tempo);
-    void adjustBarUnit(class Loop* l, class SyncState* state, SyncSource src, 
-                       class SyncUnitInfo *unit);
-
     int getBeatsPerBar(SyncSource src, Loop* l);
 
-    // pulse processing
 
-    // weed
-    
-    void checkPulseWait(Loop* l, Event* e);
-    void syncPulseWaiting(Loop* l, Event* e);
     void startRecording(Loop* l, Event* e);
-
     void syncPulseRecording(Loop* l, Event* e);
-    void checkRecordStop(Loop* l, Event* pulse, Event* stop);
     void activateRecordStop(Loop* l, Event* pulse, Event* stop);
-
-    void syncPulsePlaying(Loop* l, Event* e);
-    void doRealign(Loop* l, Event* pulse, Event* realign);
-    void realignSlave(Loop* l, Event* pulse);
-    void traceDealign(Loop* l);
-
     
-
-    void checkDrift();
-    void correctDrift();
-    void checkDrift(class SyncTracker* tracker);
-    void correctDrift(class SyncTracker* tracker);
-    bool isDriftCorrectable(class Track* track, class SyncTracker* tracker);
-    void correctDrift(class Track* track, class SyncTracker* tracker);
-    long wrapFrame(class Loop* l, long frame);
-    void moveLoopFrame(class Loop* l, long newFrame);
-
-    bool isTrackReset(class Track* t);
-    void unlockTrackers();
-    void unlockTracker(class SyncTracker* tracker);
-    void informFollowers(SyncTracker* tracker, Loop* loop);
-    class SyncTracker* getSyncTracker(Loop* l);
-    class SyncTracker* getSyncTracker(SyncSource src);
-    void muteMidiStop(Loop* l);
-
-    void lockOutSyncTracker(class Loop* l, bool recordStop);
-    void setOutSyncMasterInternal(class Track* t);
-    class Track* findTrackSyncMaster();
-    class Track* findOutSyncMaster();
-    void resizeOutSyncTracker();
-    float calcTempo(Loop* l, int beatsPerBar, long frames, int* retPulses);
-    void sendStart(Loop* l, bool checkManual, bool checkNear);
+    bool isTransportMaster(class Loop* l);
 
     // temporary porting to SyncMaster that doesn't take a TraceContext
     void fullStop(TraceContext* l, const char* msg);
+    void muteMidiStop(Loop* l);
 
-    // new event conversion
-    class Event* getEvents(class MidiQueue* queue, class EventPool* pool, long interruptFrames);
-
-	/////////////////////////////////////////////////////////////////////
-	// 
-	// Fields
-	//
-	/////////////////////////////////////////////////////////////////////
-
-	// our leader
-	class Mobius* mMobius;
-
-    // our eventual upstart replacement, the ass kissing bastard
-    class SyncMaster* mSyncMaster = nullptr;
-    
-	// queue for external MIDI events
-	MidiQueue mMidiQueue;
-
-    // Trackers for the three sync sources
-    class SyncTracker* mHostTracker;
-    class SyncTracker* mMidiTracker;
-    class SyncTracker* mOutTracker;
-
-	// currently designated output sync master
-	class Track* mOutSyncMaster;
-
-	// currently designated track sync master
-	class Track* mTrackSyncMaster;
-
-	// cached global config
-	int mMaxSyncDrift;
-	DriftCheckPoint mDriftCheckPoint;
-	MidiRecordMode mMidiRecordMode;
-    bool mNoSyncBeatRounding;
-
-	// state captured during each interrupt
-    class EventList* mInterruptEvents;
-    Event* mReturnEvent;
-    Event* mNextAvailableEvent;
-
-	float mHostTempo;
-	int mHostBeat;
-	int mHostBeatsPerBar;
-    bool mHostTransport;
-    bool mHostTransportPending;
-	long mLastInterruptMsec;
-	long mInterruptMsec;
-	long mInterruptFrames;
-
-    // flag that may be set by the DriftCorrect function
-    // to force a drift correction on the next interrupt
-    bool mForceDriftCorrect;
-
-	// temporary debuging kludge
-	bool mKludgeBreakpoint;
 };
-
-#endif

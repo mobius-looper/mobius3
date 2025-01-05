@@ -128,7 +128,6 @@
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Synchronizer.h"
-#include "../SyncState.h"
 #include "../Track.h"
 
 /****************************************************************************

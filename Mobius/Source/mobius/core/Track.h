@@ -163,7 +163,6 @@ class Track : public TraceContext
 	//
 
 	Mobius* getMobius();
-    class SyncState* getSyncState();
 	class Synchronizer* getSynchronizer();
     class EventManager* getEventManager();
 
@@ -335,7 +334,6 @@ class Track : public TraceContext
 	class Mobius* mMobius;
     class Notifier* mNotifier = nullptr;
 	class Synchronizer* mSynchronizer;
-    class SyncState*  mSyncState;
     class SetupTrack* mSetupCache = nullptr;
     int mSetupOrdinal = -1;
     class EventManager* mEventManager;
