@@ -926,8 +926,8 @@ void MobiusViewer::refreshMinorModes(OldMobiusTrackState* tstate, OldMobiusLoopS
         refresh = true;
     }
 
-    if (tstate->outSyncMaster != tview->outSyncMaster) {
-        tview->outSyncMaster = tstate->outSyncMaster;
+    if (tstate->outSyncMaster != tview->transportMaster) {
+        tview->transportMaster = tstate->outSyncMaster;
         refresh = true;
     }
 	if (tstate->trackSyncMaster != tview->trackSyncMaster) {
@@ -1000,13 +1000,13 @@ void MobiusViewer::assembleMinorModes(MobiusViewTrack* tview)
     if (tview->timeStretch != 0) addMinorMode(tview, "TimeStretch", tview->timeStretch);
 
     // forget why I had the combo here, and why they're a mutex
-    if (tview->trackSyncMaster && tview->outSyncMaster) {
+    if (tview->trackSyncMaster && tview->transportMaster) {
         addMinorMode(tview, "Sync Master");
     }
     else if (tview->trackSyncMaster) {
         addMinorMode(tview, "Track Sync Master");
     }
-    else if (tview->outSyncMaster) {
+    else if (tview->transportMaster) {
         addMinorMode(tview, "Transport Master");
     }
     
@@ -1093,7 +1093,7 @@ void MobiusViewer::refreshAllTracks(SystemState* state, MobiusView* view)
             TrackState* tstate = state->tracks[i];
             MobiusViewTrack* tview = view->tracks[i];
 
-            refreshTrack(tstate, tview);
+            refreshTrack(state, tstate, tview);
         }
     }
 
@@ -1154,7 +1154,7 @@ void MobiusViewer::refreshMidiTracks(SystemState* state, MobiusView* view)
             TrackState* tstate = state->tracks[trackIndex];
             MobiusViewTrack* tview = view->tracks[trackIndex];
 
-            refreshTrack(tstate, tview);
+            refreshTrack(state, tstate, tview);
         }
     }
 
@@ -1175,7 +1175,7 @@ void MobiusViewer::refreshMidiTracks(SystemState* state, MobiusView* view)
 /**
  * Refresh a track view from the new TrackState model.
  */ 
-void MobiusViewer::refreshTrack(TrackState* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshTrack(SystemState* state, TrackState* tstate, MobiusViewTrack* tview)
 {
     tview->midi = true;
     tview->loopCount = tstate->loopCount;
@@ -1241,7 +1241,7 @@ void MobiusViewer::refreshTrack(TrackState* tstate, MobiusViewTrack* tview)
         tview->refreshMode = true;
     }
 
-    refreshMinorModes(tstate, tview);
+    refreshMinorModes(state, tstate, tview);
 
     // inactive loop state, can grow these dynamically
     // note that the TrackState::Loop array may be larger than the loopCount
@@ -1260,11 +1260,11 @@ void MobiusViewer::refreshTrack(TrackState* tstate, MobiusViewTrack* tview)
     tview->activeLayer = tstate->activeLayer;
     // checkpoints not implemented yet
 
-    refreshSync(tstate, tview);
+    refreshSync(state, tstate, tview);
     refreshTrackGroups(tstate, tview);
 }
 
-void MobiusViewer::refreshMinorModes(TrackState* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshMinorModes(SystemState* state, TrackState* tstate, MobiusViewTrack* tview)
 {
     bool refresh = false;
 
@@ -1283,12 +1283,15 @@ void MobiusViewer::refreshMinorModes(TrackState* tstate, MobiusViewTrack* tview)
         refresh = true;
     }
 
-    if (tstate->outSyncMaster != tview->outSyncMaster) {
-        tview->outSyncMaster = tstate->outSyncMaster;
+    bool isTransportMaster = (state->syncState.transportMaster == tstate->number);
+    bool isTrackMaster = (state->syncState.trackSyncMaster == tstate->number);
+    
+    if (isTransportMaster != tview->transportMaster) {
+        tview->transportMaster = isTransportMaster;
         refresh = true;
     }
-	if (tstate->trackSyncMaster != tview->trackSyncMaster) {
-        tview->trackSyncMaster = tstate->trackSyncMaster;
+	if (isTrackMaster != tview->trackSyncMaster) {
+        tview->trackSyncMaster = isTrackMaster;
         refresh = true;
     }
     
@@ -1392,15 +1395,34 @@ void MobiusViewer::refreshRegions(FocusedTrackState* tstate, MobiusViewTrack* tv
  * Old code only showed bars if syncUnit was SYNC_UNIT_BAR but now we always do both.
  * 
  */
-void MobiusViewer::refreshSync(TrackState* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshSync(SystemState* state, TrackState* tstate, MobiusViewTrack* tview)
 {
-    tview->syncTempo = tstate->tempo;
-    tview->syncBeat = tstate->beat;
-    tview->syncBar = tstate->bar;
-    
-    // whether we pay attention to those or not depends on the syncSource
-    SyncSource src = tstate->syncSource;
-    tview->syncShowBeat = (src == SYNC_MIDI || src == SYNC_HOST);
+    tview->syncTempo = 0.0f;
+    tview->syncBeat = 0;
+    tview->syncBar = 0;
+    tview->syncShowBeat = false;
+
+    SyncSourceState* sss = nullptr;
+    switch (tstate->syncSource) {
+        case Pulse::SourceMidi:
+            sss = &(state->syncState.midi);
+            break;
+        case Pulse::SourceHost:
+            sss = &(state->syncState.host);
+            break;
+        case Pulse::SourceTransport:
+            sss = &(state->syncState.transport);
+            break;
+        default:
+            break;
+    }
+
+    if (sss != nullptr) {
+        tview->syncTempo = sss->tempo;
+        tview->syncBeat = sss->beat;
+        tview->syncBar = sss->bar;
+        tview->syncShowBeat = true;
+    }
 }    
 
 void MobiusViewer::refreshTrackGroups(TrackState* tstate,  MobiusViewTrack* tview)

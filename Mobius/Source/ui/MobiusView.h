@@ -303,7 +303,7 @@ class MobiusViewTrack {
 	int pitchBend = 0;
 	int timeStretch = 0;
 	bool trackSyncMaster = false;
-	bool outSyncMaster = false;
+	bool transportMaster = false;
     bool window = false;
 
     // consolidations for coloring

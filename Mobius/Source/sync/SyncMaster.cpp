@@ -646,8 +646,13 @@ bool SyncMaster::doQuery(Query* q)
 void SyncMaster::refreshState(SyncMasterState* extstate)
 {
     extstate->transport = states.transport;
+    extstate->host = states.host;
 
+    // Analyzer maintains it's own fields, it doesn't use SyncSourceState
     midiAnalyzer->getState(extstate->midi);
+
+    extstate->transportMaster = transportMaster;
+    extstate->trackSyncMaster = trackSyncMaster;
 }
 
 void SyncMaster::refreshPriorityState(PriorityState* pstate)

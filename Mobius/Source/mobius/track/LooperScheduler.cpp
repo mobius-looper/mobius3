@@ -1447,7 +1447,7 @@ void LooperScheduler::doResize(UIAction* a)
     if (a->value == 0) {
         // sync based resize
         // !! should be consulting the follower here
-        if (sessionSyncSource == SYNC_TRACK) {
+        if (syncSource == Pulse::SourceLeader) {
             int otherTrack = syncMaster->getTrackSyncMaster();
             TrackProperties props = manager->getTrackProperties(otherTrack);
             track->leaderResized(props);

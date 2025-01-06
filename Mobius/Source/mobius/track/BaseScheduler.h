@@ -98,6 +98,7 @@ class BaseScheduler
     
     // configuration
     Pulse::Source syncSource = Pulse::SourceNone;
+    Pulse::Type pulseType = Pulse::PulseBeat;
     int syncLeader = 0;
     int followTrack = 0;
     bool followQuantize = false;
@@ -107,17 +108,10 @@ class BaseScheduler
     // advance and sync state
     float rateCarryover = 0.0f;
 
-    // LooperSchedulder wanted this, should be using Pulse::Source instead?
-    SyncSource sessionSyncSource = SYNC_NONE;
-    
   private:
 
     class LogicalTrack* logicalTrack = nullptr;
     class ScheduledTrack* scheduledTrack = nullptr;
-
-    // save these from the session until everything is converted to
-    // use Pulsator constants
-    SyncUnit sessionSyncUnit = SYNC_UNIT_BEAT;
 
     // leader state change detection
     LeaderType lastLeaderType = LeaderNone;

@@ -26,6 +26,10 @@ class SyncMasterState
     bool hostReceiving = false;
     SyncSourceState host;
 
+    // Masters
+    int transportMaster = 0;
+    int trackSyncMaster = 0;
+
     //
     // options for the transport
     //

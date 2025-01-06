@@ -3,6 +3,7 @@
 
 #include "../../util/Trace.h"
 #include "../../util/StructureDumper.h"
+#include "../../model/ParameterConstants.h"
 #include "../../model/Session.h"
 #include "../../model/Symbol.h"
 #include "../../model/Enumerator.h"
@@ -336,6 +337,9 @@ void LogicalTrack::clearBindings()
 //
 //////////////////////////////////////////////////////////////////////
 
+
+// !! need to start using Pulse constants here, I guess convert them till
+// why do we keep going back to the Session for this, just save them locally
 SyncSource LogicalTrack::getSyncSource()
 {
     return (SyncSource)Enumerator::getOrdinal(manager->getSymbols(),

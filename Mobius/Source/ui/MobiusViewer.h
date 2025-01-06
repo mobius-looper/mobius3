@@ -66,10 +66,10 @@ class MobiusViewer
     
     void refreshAllTracks(class SystemState* state, class MobiusView* view);
     void refreshMidiTracks(class SystemState* state, class MobiusView* view);
-    void refreshTrack(class TrackState* tstate, class MobiusViewTrack* tview);
+    void refreshTrack(class SystemState* state, class TrackState* tstate, class MobiusViewTrack* tview);
 
-    void refreshMinorModes(class TrackState* tstate, class MobiusViewTrack* tview);
-    void refreshSync(class TrackState* tstate, class MobiusViewTrack* tview);
+    void refreshMinorModes(class SystemState* state, class TrackState* tstate, class MobiusViewTrack* tview);
+    void refreshSync(class SystemState* state, class TrackState* tstate, class MobiusViewTrack* tview);
     void refreshTrackGroups(class TrackState* tstate,  class MobiusViewTrack* tview);
 
     //

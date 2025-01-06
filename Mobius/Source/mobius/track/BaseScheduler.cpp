@@ -77,44 +77,47 @@ void BaseScheduler::loadSession(Session::Track* def)
     // convert sync options into a Pulsator follow
     // ugly mappings but I want to keep use of the old constants limited
     LogicalTrack* lt = scheduledTrack->getLogicalTrack();
-    sessionSyncSource = lt->getSyncSource();
-    sessionSyncUnit = lt->getSlaveSyncUnit();
+
+    // !! need to start using the Pulse constants exclusively
+    // stop using these
+    SyncSource oldSyncSource = lt->getSyncSource();
+    SyncUnit oldSyncUnit = lt->getSlaveSyncUnit();
 
     // set this up for host and midi, track sync will be different
-    Pulse::Type ptype = Pulse::PulseBeat;
-    if (sessionSyncUnit == SYNC_UNIT_BAR)
-      ptype = Pulse::PulseBar;
+    pulseType = Pulse::PulseBeat;
+    if (oldSyncUnit == SYNC_UNIT_BAR)
+      pulseType = Pulse::PulseBar;
     
-    if (sessionSyncSource == SYNC_TRACK) {
+    if (oldSyncSource == SYNC_TRACK) {
         // track sync uses a different unit parameter
         // default for this one is the entire loop
         SyncTrackUnit stu = lt->getTrackSyncUnit();
-        ptype = Pulse::PulseLoop;
+        pulseType = Pulse::PulseLoop;
         if (stu == TRACK_UNIT_SUBCYCLE)
-          ptype = Pulse::PulseBeat;
+          pulseType = Pulse::PulseBeat;
         else if (stu == TRACK_UNIT_CYCLE)
-          ptype = Pulse::PulseBar;
+          pulseType = Pulse::PulseBar;
           
         // no specific track leader yet...
         int leader = 0;
         syncSource = Pulse::SourceLeader;
-        syncMaster->follow(scheduledTrack->getNumber(), leader, ptype);
+        syncMaster->follow(scheduledTrack->getNumber(), leader, pulseType);
     }
-    else if (sessionSyncSource == SYNC_OUT) {
+    else if (oldSyncSource == SYNC_OUT) {
         Trace(1, "BaseScheduler: MIDI tracks can't do OutSync yet");
         syncSource = Pulse::SourceNone;
     }
-    else if (sessionSyncSource == SYNC_HOST) {
+    else if (oldSyncSource == SYNC_HOST) {
         syncSource = Pulse::SourceHost;
-        syncMaster->follow(scheduledTrack->getNumber(), syncSource, ptype);
+        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseType);
     }
-    else if (sessionSyncSource == SYNC_MIDI) {
+    else if (oldSyncSource == SYNC_MIDI) {
         syncSource = Pulse::SourceMidi;
-        syncMaster->follow(scheduledTrack->getNumber(), syncSource, ptype);
+        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseType);
     }
-    else if (sessionSyncSource == SYNC_TRANSPORT) {
+    else if (oldSyncSource == SYNC_TRANSPORT) {
         syncSource = Pulse::SourceTransport;
-        syncMaster->follow(scheduledTrack->getNumber(), syncSource, ptype);
+        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseType);
     }
     else {
         syncMaster->unfollow(scheduledTrack->getNumber());
@@ -1245,18 +1248,7 @@ void BaseScheduler::refreshState(MobiusState::Track* state)
  */
 void BaseScheduler::refreshState(TrackState* state)
 {
-    // old state object uses this, continue until MobiusViewer knows about Pulsator oonstants
-    state->syncSource = sessionSyncSource;
-    state->syncUnit = sessionSyncUnit;
-
-    // what Synchronizer does
-	//state->outSyncMaster = (t == mOutSyncMaster);
-	//state->trackSyncMaster = (t == mTrackSyncMaster);
-
-    // Synchronizer has logic for this, but we need to get it in a different way
-	state->tempo = syncMaster->getTempo(syncSource);
-	state->beat = syncMaster->getBeat(syncSource);
-	state->bar = syncMaster->getBar(syncSource);
+    state->syncSource = syncSource;
 
     // loop switch, can only be one of these
     // !! this violates track type hiding but in order to share we would

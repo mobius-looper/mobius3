@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 
+#include "../../model/ParameterConstants.h"
 #include "../../model/Session.h"
 #include "../../model/ValueSet.h"
 
