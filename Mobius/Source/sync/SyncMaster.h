@@ -44,7 +44,7 @@ class SyncMaster
 
     void addListener(Listener* l);
 
-    void initialize(class MobiusContainer* c);
+    void initialize(class MobiusKernel* k);
     void loadSession(class Session* s);
     void shutdown();
 
@@ -86,6 +86,7 @@ class SyncMaster
     void sendAlert(juce::String msg);
 
     void notifyTrackReset(int id);
+    void notifyTrackRecord(int id);
     void notifyTrackAvailable(int id);
     void notifyLoopLoad(int id);
     int getBarFrames(Pulse::Source src);
@@ -249,6 +250,7 @@ class SyncMaster
 
   private:
 
+    class MobiusKernel* kernel = nullptr;
     class MobiusContainer* container = nullptr;
     Listener* listener = nullptr;
     int sampleRate = 44100;

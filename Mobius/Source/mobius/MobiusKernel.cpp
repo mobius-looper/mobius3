@@ -141,7 +141,7 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     session = ses;
 
     // this MUST happen before any tracks try to register followers
-    syncMaster.initialize(cont);
+    syncMaster.initialize(this);
     syncMaster.loadSession(ses);
 
     notifier.initialize(this);
@@ -450,6 +450,15 @@ void MobiusKernel::loadSession(KernelMessage* msg)
 Valuator* MobiusKernel::getValuator()
 {
     return &valuator;
+}
+
+/**
+ * Used by SyncMaster to get track info for the transport.
+ * Could have given it during initialization.
+ */
+TrackManager* MobiusKernel::getTrackManager()
+{
+    return mTracks.get();
 }
 
 /**

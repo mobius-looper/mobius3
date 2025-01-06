@@ -20,6 +20,7 @@
 #include <memory.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/SymbolId.h"
 
 #include "../../Notifier.h"
 #include "../Mobius.h"
@@ -130,6 +131,7 @@ UndoFunction::UndoFunction(bool dynamic, bool shortpress, bool only)
 		else {
 			setName("Undo");
             mayConfirm = true;
+            symbol = FuncUndo;
 		}
 	}
 	else if (mShort) {
@@ -282,6 +284,7 @@ RedoFunction::RedoFunction() :
 	mayCancelMute = true;
     mayConfirm = true;
 	instant = true;
+    symbol = FuncRedo;
 }
 
 Event* RedoFunction::scheduleEvent(Action* action, Loop* l)

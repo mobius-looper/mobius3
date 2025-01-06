@@ -28,6 +28,7 @@
 
 #include "../../../util/Trace.h"
 #include "../../../util/Util.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -54,6 +55,7 @@ class MoveEventType : public EventType {
 MoveEventType::MoveEventType()
 {
 	name = "Move";
+    symbol = FuncMove;
 }
 
 MoveEventType MoveEventObj;

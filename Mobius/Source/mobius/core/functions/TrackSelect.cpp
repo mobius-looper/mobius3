@@ -18,6 +18,7 @@
 
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/Preset.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -119,9 +120,11 @@ TrackSelectFunction::TrackSelectFunction(int i, bool relative)
 	if (relative) {
 		if (i > 0) {
 			setName("NextTrack");
+            symbol = FuncNextTrack;
 		}
 		else {
 			setName("PrevTrack");
+            symbol = FuncPrevTrack;
 		}
 	}
 	else if (index < 0) {
@@ -136,6 +139,7 @@ TrackSelectFunction::TrackSelectFunction(int i, bool relative)
 		//setName("Track");
         setName("SelectTrack");
         alias1 = "Track";
+        symbol = FuncSelectTrack;
 	}
 	else {
 		snprintf(fullName, sizeof(fullName), "Track%d", i + 1);

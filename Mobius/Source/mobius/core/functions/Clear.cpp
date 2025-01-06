@@ -13,6 +13,8 @@
 #include <memory.h>
 #include <string.h>
 
+#include "../../../model/SymbolId.h"
+
 #include "../Action.h"
 #include "../Event.h"
 #include "../Function.h"
@@ -37,6 +39,7 @@ class ClearEventType : public EventType {
 ClearEventType::ClearEventType()
 {
 	name = "Clear";
+    symbol = FuncClear;
 }
 
 ClearEventType ClearEventObj;

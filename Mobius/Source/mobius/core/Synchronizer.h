@@ -182,8 +182,6 @@ class Synchronizer {
     
     bool isTransportMaster(class Loop* l);
 
-    // temporary porting to SyncMaster that doesn't take a TraceContext
-    void fullStop(class TraceContext* l, const char* msg);
     void muteMidiStop(class Loop* l);
 
     void sendStart(class Loop* l, bool checkManual, bool checkNear);

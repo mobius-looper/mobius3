@@ -24,6 +24,7 @@
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
+#include "../../../model/SymbolId.h"
 
 #include "../../Notifier.h"
 
@@ -80,6 +81,7 @@ MultiplyEventType::MultiplyEventType()
 {
 	name = "Multiply";
 	reschedules = true;
+    symbol = FuncMultiply;
 }
 
 MultiplyEventType MultiplyEventObj;
@@ -101,6 +103,8 @@ MultiplyEndEventType::MultiplyEndEventType()
 {
 	name = "MultiplyEnd";
 	reschedules = true;
+    symbol = FuncMultiply;
+    ending = true;
 }
 
 MultiplyEndEventType MultiplyEndEventObj;
@@ -154,12 +158,15 @@ MultiplyFunction::MultiplyFunction(bool sus, bool unr)
 	if (!sus) {
 		setName("Multiply");
         maySustain = true;
+        symbol = FuncMultiply;
 	}
 	else if (unrounded) {
 		setName("SUSUnroundedMultiply");
+        symbol = FuncSUSUnroundedMultiply;
 	}
 	else {
 		setName("SUSMultiply");
+        symbol = FuncSUSMultiply;
 	}
 }
 

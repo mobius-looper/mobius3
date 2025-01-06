@@ -12,6 +12,8 @@
 #include <memory.h>
 #include <string.h>
 
+#include "../../../model/SymbolId.h"
+
 #include "../Action.h"
 #include "../Event.h"
 #include "../EventManager.h"
@@ -55,6 +57,7 @@ class PlayEventType : public EventType {
 PlayEventType::PlayEventType()
 {
 	name = "Play";
+    symbol = FuncPlay;
 }
 
 PlayEventType PlayEventObj;

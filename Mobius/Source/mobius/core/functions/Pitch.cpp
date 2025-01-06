@@ -23,7 +23,7 @@
 #include "../../../midi/MidiByte.h"
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
-
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -112,6 +112,8 @@ class PitchEventType : public EventType {
 PitchEventType::PitchEventType()
 {
 	name = "Pitch";
+    // sigh, the same event us used for a bunch of functions
+    // maybe it would be better to put the symbol on the Function?
 }
 
 PitchEventType PitchEventObj;
@@ -285,6 +287,7 @@ PitchFunction::PitchFunction(PitchFunctionType type)
 		case PITCH_CANCEL:
 			setName("PitchCancel");
 			alias1 = "PitchNormal";
+            symbol = FuncPitchCancel;
 			break;
 		case PITCH_OCTAVE:
 			setName("PitchOctave");
@@ -297,6 +300,7 @@ PitchFunction::PitchFunction(PitchFunctionType type)
             // Since these can be "played" rapidly keep them out of 
             // trace.  Should we disable quantization too?
             silent = true;
+            symbol = FuncPitchStep;
 			break;
 		case PITCH_BEND:
 			setName("PitchBend");
@@ -307,15 +311,19 @@ PitchFunction::PitchFunction(PitchFunctionType type)
 			break;
 		case PITCH_UP:
 			setName("PitchUp");
+            symbol = FuncPitchUp;
 			break;
 		case PITCH_DOWN:
 			setName("PitchDown");
+            symbol = FuncPitchDown;
 			break;
 		case PITCH_NEXT:
 			setName("PitchNext");
+            symbol = FuncPitchNext;
 			break;
 		case PITCH_PREV:
 			setName("PitchPrev");
+            symbol = FuncPitchPrev;
 			break;
 		case PITCH_RESTORE:
 			setName("PitchRestore");

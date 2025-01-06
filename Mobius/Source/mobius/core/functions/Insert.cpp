@@ -23,6 +23,7 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/MobiusConfig.h"
+#include "../../../model/SymbolId.h"
 
 #include "../../Notifier.h"
 
@@ -83,6 +84,7 @@ InsertEventType::InsertEventType()
 {
 	name = "Insert";
 	reschedules = true;
+    symbol = FuncInsert;
 }
 
 InsertEventType InsertEventObj;
@@ -104,6 +106,8 @@ InsertEndEventType::InsertEndEventType()
 {
 	name = "InsertEnd";
 	reschedules = true;
+    symbol = FuncInsert;
+    ending = true;
 }
 
 InsertEndEventType InsertEndEventObj;
@@ -159,12 +163,15 @@ InsertFunction::InsertFunction(bool sus, bool unrounded)
 		setName("Insert");
         // controlled by SustainFunctions parameter
         maySustain = true;
+        symbol = FuncInsert;
 	}
 	else if (unrounded) {
 		setName("SUSUnroundedInsert");
+        symbol = FuncSUSUnroundedInsert;
 	}
 	else {
 		setName("SUSInsert");
+        symbol = FuncSUSInsert;
 	}
 
 }

@@ -24,6 +24,7 @@
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
 #include "../../../model/Preset.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -233,17 +234,21 @@ WindowFunction::WindowFunction(bool edge, bool start, int direction)
         else if (mStart) {
             if (mDirection < 0) {
                 setName("WindowStartBackward");
+                symbol = FuncWindowStartBackward;
             }
             else {
                 setName("WindowStartForward");
+                symbol = FuncWindowStartForward;
             }
         }
         else {
             if (mDirection < 0) {
                 setName("WindowEndBackward");
+                symbol = FuncWindowEndBackward;
             }
             else {
                 setName("WindowEndForward");
+                symbol = FuncWindowEndForward;
             }
         }
     }
@@ -255,9 +260,11 @@ WindowFunction::WindowFunction(bool edge, bool start, int direction)
         }
         else if (mDirection < 0) {
             setName("WindowBackward");
+            symbol = FuncWindowBackward;
         }
         else {
             setName("WindowForward");
+            symbol = FuncWindowForward;
         }
     }
 }

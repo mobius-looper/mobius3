@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -39,6 +40,7 @@ class DivideEventType : public EventType {
 DivideEventType::DivideEventType()
 {
 	name = "Divide";
+    symbol = FuncDivide;
 }
 
 DivideEventType DivideEventObj;
@@ -93,12 +95,15 @@ DivideFunction::DivideFunction(int n)
         // divide by two unless there is a binding arg
 		name = "Divide";
         alias1 = "Divide2";
+        symbol = FuncDivide;
 	}
 	else if (n == 3) {
 		setName("Divide3");
+        symbol = FuncDivide3;
 	}
 	else if (n == 4) {
 		setName("Divide4");
+        symbol = FuncDivide4;
 	}
 }
 

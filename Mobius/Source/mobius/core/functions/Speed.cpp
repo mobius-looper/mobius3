@@ -381,6 +381,7 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
             alias1 = "RateNormal";
             alias2 = "Fullspeed";
             mCanRestart = true;
+            symbol = FuncSpeedCancel;
 			break;
 
         // these are access as parameters or controls
@@ -398,6 +399,7 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
             // Since these can be "played" rapidly keep them out of 
             // trace.  Should we disable quantization too?
             silent = true;
+            symbol = FuncSpeedStep;
 			break;
 		case SPEED_BEND:
             // could be spread but this is intended more for CC bindings
@@ -420,21 +422,25 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
 			setName("SpeedNext");
 			alias1 = "RateNext";
             mCanRestart = true;
+            symbol = FuncSpeedNext;
 			break;
 		case SPEED_PREV:
 			setName("SpeedPrev");
 			alias1 = "RatePrev";
             mCanRestart = true;
+            symbol = FuncSpeedPrev;
 			break;
 		case SPEED_UP:
 			setName("SpeedUp");
 			alias1 = "RateUp";
             mCanRestart = true;
+            symbol = FuncSpeedUp;
 			break;
 		case SPEED_DOWN:
 			setName("SpeedDown");
 			alias1 = "RateDown";
             mCanRestart = true;
+            symbol = FuncSpeedDown;
 			break;
 		case SPEED_TOGGLE:
 			setName("SpeedToggle");
@@ -442,14 +448,17 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
             longFunction = SUSSpeedToggle;
             maySustain = true;
             mayConfirm = true;
+            symbol = FuncSpeedToggle;
 			break;
         case SPEED_SUS_TOGGLE:
             sustain = true;
             setName("SUSSpeedToggle");
             alias1 = "SUSSpeed";
+            symbol = FuncSUSSpeedToggle;
             break;
         case SPEED_HALF:
 			setName("Halfspeed");
+            symbol = FuncHalfspeed;
             break;
         case SPEED_RESTORE:
             setName("SpeedRestore");

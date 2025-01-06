@@ -13,6 +13,8 @@
 #include <memory.h>
 #include <string.h>
 
+#include "../../../model/SymbolId.h"
+
 #include "../Action.h"
 #include "../Event.h"
 #include "../Function.h"
@@ -78,6 +80,7 @@ ResetFunction::ResetFunction(bool gen, bool glob)
 	if (gen) {
 		setName("TrackReset");
         alias1 = "GeneralReset";
+        symbol = FuncTrackReset;
 	}
 	else if (glob) {
 		setName("GlobalReset");
@@ -86,10 +89,12 @@ ResetFunction::ResetFunction(bool gen, bool glob)
         // oh shit, it's the "deferred to audio interrupt shit
         // that should no longer apply but I'm afraid of touching it
         // handle globalization in the symbol table for new code
+        symbol = FuncGlobalReset;
 	}
 	else {
 		setName("Reset");
         mayConfirm = true;
+        symbol = FuncReset;
 	}
 }
 

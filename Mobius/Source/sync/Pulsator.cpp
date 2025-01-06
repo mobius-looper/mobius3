@@ -741,12 +741,8 @@ void Pulsator::lock(int followerId, int frames)
 }
 
 /**
+ * A Follower is supposed to call this after a reset or re-record.
  * Cancel drift monitoring and return to an unstarted state
- *
- * Follower is supposed to call this after a reset or re-record
- * NOTE: MidiTracker resets tracks that aren't actually active so the
- * follower number may be higher than what was registered.  Pass false
- * to getFollower to suppress the warning.
  */
 void Pulsator::unlock(int followerId)
 {

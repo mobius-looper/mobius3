@@ -14,6 +14,8 @@
 
 // for SyncSource
 #include "../../model/Setup.h"
+#include "../../model/SymbolId.h"
+#include "../../model/TrackState.h"
 
 // for WaitType
 #include "Script.h"
@@ -122,6 +124,14 @@ class EventType {
 	 */
 	bool noMode;
 
+    // new: For TrackState::Event, the event type is mostly conveyed
+    // with a SynbolId representing the function that scheduled this event
+    // this might be less flexible than what we had before, but gets most
+    // of the way there now that event state can't contain arbitrary strings
+    SymbolId symbol = SymbolIdNone;
+    TrackState::EventType stateEventType = TrackState::EventUnknown;
+    bool ending = false;
+    
 };
 
 extern EventType* InvokeEvent;

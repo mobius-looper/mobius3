@@ -31,6 +31,8 @@
 #include <memory.h>
 #include <string.h>
 
+#include "../../../model/SymbolId.h"
+
 #include "../Action.h"
 #include "../Event.h"
 #include "../EventManager.h"
@@ -101,9 +103,11 @@ TrimFunction::TrimFunction(bool startop)
 
     if (start) {
 		setName("TrimStart");
+        symbol = FuncTrimStart;
     }
     else {
 		setName("TrimEnd");
+        symbol = FuncTrimEnd;
     }
 }
 

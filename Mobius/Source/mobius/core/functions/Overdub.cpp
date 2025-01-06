@@ -38,6 +38,7 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -83,6 +84,7 @@ class OverdubEventType : public EventType {
 OverdubEventType::OverdubEventType()
 {
 	name = "Overdub";
+    symbol = FuncOverdub;
 }
 
 OverdubEventType OverdubEventObj;
@@ -164,12 +166,14 @@ OverdubFunction::OverdubFunction(bool sus, bool tog, bool turnOff)
 	}
 	else if (sustain) {
 		setName("SUSOverdub");
+        symbol = FuncSUSOverdub;
 	}
 	else {
 		setName("Overdub");
 		longFunction = SUSOverdub;
         // sustain controlled by the SustainFunctions parameter
         maySustain = true;
+        symbol = FuncOverdub;
 	}
 }
 

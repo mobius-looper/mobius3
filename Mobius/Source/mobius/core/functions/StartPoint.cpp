@@ -15,6 +15,8 @@
 #include <memory.h>
 
 #include "../../../model/Trigger.h"
+#include "../../../model/SymbolId.h"
+
 #include "../Action.h"
 #include "../Event.h"
 #include "../EventManager.h"
@@ -95,9 +97,11 @@ StartPointFunction::StartPointFunction(bool midiop)
 
 	if (mMidi) {
 		setName("SyncStartPoint");
+        symbol = FuncSyncStartPoint;
 	}
 	else {
 		setName("StartPoint");
+        symbol = FuncStartPoint;
 	}
 }
 

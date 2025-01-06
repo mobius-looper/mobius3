@@ -15,6 +15,7 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -116,9 +117,11 @@ StutterFunction::StutterFunction(bool sus)
 		longFunction = SUSStutter;
         // check SustainFunctions
         maySustain = true;
+        symbol = FuncStutter;
 	}
 	else {
 		setName("SUSStutter");
+        symbol = FuncSUSStutter;
 	}
 }
 

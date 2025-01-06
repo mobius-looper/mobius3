@@ -47,6 +47,7 @@
 #include "../../../util/Util.h"
 #include "../../../model/MobiusConfig.h"
 #include "../../../model/Setup.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -74,6 +75,7 @@ class RealignEventType : public EventType {
 RealignEventType::RealignEventType()
 {
 	name = "Realign";
+    symbol = FuncRealign;
 }
 
 RealignEventType RealignEventObj;
@@ -116,10 +118,12 @@ RealignFunction::RealignFunction(bool b)
 
 	if (mute) {
 		setName("MuteRealign");
+        symbol = FuncMuteRealign;
 	}
 	else {
 		setName("Realign");
         mayConfirm = true;
+        symbol = FuncRealign;
 	}
 }
 

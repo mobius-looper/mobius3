@@ -63,6 +63,7 @@
 #include <string.h>
 
 #include "../../../model/ParameterConstants.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -115,6 +116,7 @@ ReverseEventType::ReverseEventType()
 	// we introduced the quantizeStack flag, but some of the calculations
 	// are still too complicated
 	reschedules = true;
+    symbol = FuncReverse;
 }
 
 ReverseEventType ReverseEventObj;
@@ -204,13 +206,16 @@ ReverseFunction::ReverseFunction(bool sus, bool tog, bool fwd)
 	if (!toggle) {
 		if (forward) {
 			setName("Forward");
+            symbol = FuncForward;
 		}
 		else {
 			setName("Backward");
+            symbol = FuncBackward;
 		}
 	}
 	else if (sustain) {
 		setName("SUSReverse");
+        symbol = FuncSUSReverse;
 	}
 	else {
 		setName("Reverse");
@@ -218,6 +223,7 @@ ReverseFunction::ReverseFunction(bool sus, bool tog, bool fwd)
         // can also force this with SustainFunctions preset parameter
         maySustain = true;
         mayConfirm = true;
+        symbol = FuncReverse;
 	}
 
 }

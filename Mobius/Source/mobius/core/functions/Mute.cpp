@@ -13,6 +13,7 @@
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -121,6 +122,7 @@ class MuteEventType : public EventType {
 MuteEventType::MuteEventType()
 {
 	name = "Mute";
+    symbol = FuncMute;
 }
 
 MuteEventType MuteEventObj;
@@ -241,25 +243,31 @@ MuteFunction::MuteFunction(bool pause, bool sus, bool start, bool glob,
 		noFocusLock = true;
 		if (mPause) {
 			setName("GlobalPause");
+            symbol = FuncGlobalPause;
 		}
 		else {
 			setName("GlobalMute");
+            symbol = FuncGlobalMute;
 		}
 	}
 	else if (mRestart) {
 		setName("SUSMuteRestart");
+        symbol = FuncSUSMuteRestart;
 	}
 	else if (mPause) {
 		if (sustain) {
 			setName("SUSPause");
+            symbol = FuncSUSPause;
 		}
 		else {
 			setName("Pause");
 			longFunction = SUSPause;
+            symbol = FuncPause;
 		}
 	}
 	else if (sustain) {
 		setName("SUSMute");
+        symbol = FuncSUSMute;
 	}
 	else if (mToggle) {
 		// toggle, or force on
@@ -277,6 +285,7 @@ MuteFunction::MuteFunction(bool pause, bool sus, bool start, bool glob,
 		// Cancel all other record modes.
 		switchStack = true;
 		switchStackMutex = true;
+        symbol = FuncMute;
 	}
 	else if (mMute) {
 		setName("MuteOn");

@@ -15,6 +15,7 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -104,9 +105,11 @@ SubstituteFunction::SubstituteFunction(bool sus)
         // can also force this with SustainFunctions parameter
         maySustain = true;
         mayConfirm = true;
+        symbol = FuncSubstitute;
 	}
 	else {
 		setName("SUSSubstitute");
+        symbol = FuncSUSSubstitute;
 	}
 }
 

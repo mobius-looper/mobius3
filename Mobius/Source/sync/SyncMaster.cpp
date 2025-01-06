@@ -10,6 +10,8 @@
 #include "../model/PriorityState.h"
 
 #include "../mobius/MobiusKernel.h"
+#include "../mobius/track/TrackManager.h"
+#include "../mobius/track/TrackProperties.h"
 
 #include "Pulsator.h"
 #include "Pulse.h"
@@ -46,9 +48,11 @@ SyncMaster::~SyncMaster()
  * dependencies MobiusContainer drags in.  The MidiRealtimeListener will be a problem
  * since that would have to move out of MidiManager.
  */
-void SyncMaster::initialize(MobiusContainer* c)
+void SyncMaster::initialize(MobiusKernel* k)
 {
-    container = c;
+    kernel = k;
+    // need this for the sample rate and alerts
+    container = kernel->getContainer();
 
     // these are now dynamically allocated to reduce header file dependencies
     midiRealizer.reset(new MidiRealizer());
@@ -94,20 +98,63 @@ void SyncMaster::addListener(Listener* l)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Stub Shit
+// Track Notifications
 //
-// These were added to get Synchronizer to compile'
-// need to deal with it
+// These are expected to be called when a track enters various states.
+// This may have side effects if this track is also the TrackSyncMaster
+// or TransportMaster.
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
  * This is called when a track is reset, if this was one of the sync masters
  * Synchronizer would try to auto-assign another one.
+ *
+ * This unlocks the follower automatically.
+ *
+ * If this was the TrackSyncMaster, this is where the old Synchronizer would choose
+ * a new one.  Unclear how I want this to work.  We would have to pick one at random
+ * which is hard to predict.   Wait until the next new recording which calls
+ * notifyTrackAvailable or make the user do it manually.
+ *
+ * todo: If this is the TransportMaster then Synchronizer is currently calling
+ * SyncMaster::midiOutStop.  There are a lot of calls to isTransportMaster down
+ * there to send MIDI events.  Those should all be moved up here so audio and MIDI
+ * tracks behave the ssame.
  */
 void SyncMaster::notifyTrackReset(int number)
 {
-    (void)number;
+    pulsator->unlock(number);
+
+    if (number == trackSyncMaster) {
+        // Synchronizer used to choose a different one automatically
+        // It looks like of confusing to see this still show as TrackSyncMaster in the UI
+        // so reset it, but don't pick a new one
+        trackSyncMaster = 0;
+    }
+
+    if (number == transportMaster) {
+        // Synchronizer would send MIDI Stop at this point
+        // it had a method fullStop that I think both sent the STOP event
+        // and stop generating clocks
+        midiRealizer->stop();
+
+        transportMaster = 0;
+    }
+}
+
+/**
+ * This is called when a track begins recording.
+ * If this is the TransportMaster, Synchronizer in the past would do a "full stop"
+ * to send a STOP event and stop sending MIDI clocks.
+ */
+void SyncMaster::notifyTrackRecord(int number)
+{
+    // continue calling MidiRealizer but this needs to be under the control of the Transport
+    if (number == transportMaster) {
+        midiRealizer->stop();
+        // unlike notifyTrackReset, we get to keep being the transportMaster
+    }
 }
 
 /**
@@ -121,12 +168,39 @@ void SyncMaster::notifyLoopLoad(int number)
 }
 
 /**
- * I think the intent here was the same as notifyLoopLoad
- * It could auto-assign masters
+ * This is supposed to be called when any track has finished recording
+ * and could serve as the track sync master.
+ *
+ * If there is already a sync master, it is not changed, though we should
+ * allow a special sync mode, maybe Pulse::SourceMasterForce or some other
+ * parameter that overrides it.
+ *
+ * Also worth considering if we need an option for tracks to not become the
+ * track sync master if they don't want to.
  */
 void SyncMaster::notifyTrackAvailable(int number)
 {
-    (void)number;
+    // verify the number is in range and can be a leader
+    Follower* f = pulsator->getFollower(number);
+    if (f == nullptr) {
+        Trace(1, "Synchronizer: Invalid track number %d", number);
+    }
+    else {
+        // anything can become the track sync master
+        if (trackSyncMaster == 0)
+          trackSyncMaster = number;
+        
+        if (f->source == Pulse::SourceMaster) {
+            // this one wants to be special
+            if (transportMaster == 0) {
+
+                TrackManager* tm = kernel->getTrackManager();
+                TrackProperties props = tm->getTrackProperties(number);
+                // todo: use the frame count to set the transport tempo
+                transportMaster = number;
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

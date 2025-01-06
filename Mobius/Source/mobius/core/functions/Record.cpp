@@ -117,6 +117,7 @@
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/Trigger.h"
 #include "../../../model/Setup.h"
+#include "../../../model/SymbolId.h"
 #include "../../Audio.h"
 
 #include "../Action.h"
@@ -149,6 +150,7 @@ class RecordEventType : public EventType {
 RecordEventType::RecordEventType()
 {
 	name = "Record";
+    symbol = FuncRecord;
 }
 
 RecordEventType RecordEventObj;
@@ -178,6 +180,8 @@ class RecordStopEventType : public EventType {
 RecordStopEventType::RecordStopEventType()
 {
 	name = "RecordStop";
+    symbol = FuncRecord;
+    ending = true;
 }
 
 RecordStopEventType RecordStopEventObj;
@@ -308,16 +312,19 @@ RecordFunction::RecordFunction(bool sus, bool aut)
 
 	if (sustain) {
 		setName("SUSRecord");
+        symbol = FuncSUSRecord;
 	}
 	else if (mAuto) {
 		setName("AutoRecord");
 		longPressable = true;
+        symbol = FuncAutoRecord;
 	}
 	else {
 		setName("Record");
 		longPressable = true;
         // controlled by RecordFunctions parameter
         maySustain = true;
+        symbol = FuncRecord;
 	}
 }
 

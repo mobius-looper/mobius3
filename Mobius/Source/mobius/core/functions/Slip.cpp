@@ -26,6 +26,7 @@
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -103,9 +104,11 @@ SlipFunction::SlipFunction(int direction)
 	}
 	else if (direction > 0) {
 		setName("SlipForward");
+        symbol = FuncSlipForward;
 	}
 	else {
 		setName("SlipBackward");
+        symbol = FuncSlipBackward;
 	}
 }
 

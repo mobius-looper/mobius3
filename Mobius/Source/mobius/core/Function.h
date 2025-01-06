@@ -14,6 +14,7 @@
 
 #include <vector>
 #include "../../model/SystemConstant.h"
+#include "../../model/SymbolId.h"
 
 /****************************************************************************
  *                                                                          *
@@ -139,6 +140,12 @@ class Function : public SystemConstant {
      * Action.expressionArgs property (note the plural).
      */
     bool variableArgs;
+
+    /**
+     * New: The associated Symbol ID
+     * This is used mostly for returning TrackState::Event information
+     */
+    SymbolId symbol = SymbolIdNone;
 
     //////////////////////////////////////////////////////////////////////
     // Methods

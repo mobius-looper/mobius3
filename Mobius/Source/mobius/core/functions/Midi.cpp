@@ -48,6 +48,7 @@ class MidiStartEventType : public EventType {
 MidiStartEventType::MidiStartEventType()
 {
 	name = "MidiStart";
+    symbol = FuncMidiStart;
 }
 
 MidiStartEventType MidiStartEventObj;
@@ -285,6 +286,7 @@ class MidiStopEventType : public EventType {
 MidiStopEventType::MidiStopEventType()
 {
 	name = "MidiStop";
+    symbol = FuncMidiStop;
 }
 
 MidiStopEventType MidiStopEventObj;

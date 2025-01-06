@@ -40,10 +40,13 @@ TimeSlicer::TimeSlicer(MobiusKernel* k, SyncMaster* sm, TrackManager* tm)
 
     // make sure this is large enough to contain a reasonably high number
     // of slices without dynamic allocation in the audio thread
-    int maxSlices = 32;
-    slices.ensureStorageAllocated(maxSlices);
+    slices.ensureStorageAllocated(32);
 
-    test();
+    // this one is a bit more variable, though Bert only goes up to 64
+    // ...so far
+    orderedTracks.ensureStorageAllocated(64);
+
+    //test();
 }
 
 TimeSlicer::~TimeSlicer()
@@ -240,6 +243,8 @@ void TimeSlicer::prepareTracks()
     
     if (!ordered)
       orderTracks();
+
+    orderedIndex = 0;
 }
 
 /**

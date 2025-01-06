@@ -22,6 +22,7 @@
 
 #include "../../util/Trace.h"
 #include "../../util/Util.h"
+#include "../../model/TrackState.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -1160,6 +1161,7 @@ class FollowerEventType : public EventType {
 FollowerEventType::FollowerEventType()
 {
 	name = "Follower";
+    stateEventType = TrackState::EventFollower;
 }
 
 void FollowerEventType::invoke(Loop* l, Event* e)

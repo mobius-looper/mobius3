@@ -1002,6 +1002,7 @@ bool Track::isPriority()
 void Track::processAudioStream(MobiusAudioStream* stream)
 {
     long frames = stream->getInterruptFrames();
+
     float* input = nullptr;
     float* output = nullptr;
     

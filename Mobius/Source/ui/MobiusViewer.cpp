@@ -1003,7 +1003,7 @@ void MobiusViewer::assembleMinorModes(MobiusViewTrack* tview)
         addMinorMode(tview, "Track Sync Master");
     }
     else if (tview->outSyncMaster) {
-        addMinorMode(tview, "MIDI Sync Master");
+        addMinorMode(tview, "Transport Master");
     }
     
     // the state flag has been "recording" but the mode was displayed

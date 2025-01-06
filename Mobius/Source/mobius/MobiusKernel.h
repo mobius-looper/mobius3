@@ -98,7 +98,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     class SyncMaster* getSyncMaster() {
         return &syncMaster;
     }
-    
+
+    class TrackManager* getTrackManager();
     class Valuator* getValuator();
 
     void initializeState(class SystemState* state);

@@ -22,6 +22,7 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -66,6 +67,7 @@ class ShuffleEventType : public EventType {
 ShuffleEventType::ShuffleEventType()
 {
 	name = "Shuffle";
+    symbol = FuncShuffle;
 }
 
 ShuffleEventType ShuffleEventObj;

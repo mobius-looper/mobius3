@@ -44,6 +44,7 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -89,6 +90,7 @@ class ReplaceEventType : public EventType {
 ReplaceEventType::ReplaceEventType()
 {
 	name = "Replace";
+    symbol = FuncReplace;
 }
 
 ReplaceEventType ReplaceEventObj;
@@ -138,9 +140,11 @@ ReplaceFunction::ReplaceFunction(bool sus)
         // can also force this with SustainFunctions parameter
         maySustain = true;
         mayConfirm = true;
+        symbol = FuncReplace;
 	}
 	else {
 		setName("SUSReplace");
+        symbol = FuncSUSReplace;
 	}
 }
 

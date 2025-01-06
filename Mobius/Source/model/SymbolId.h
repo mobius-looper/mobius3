@@ -293,6 +293,7 @@ typedef enum {
     FuncSUSMuteRestart,
     FuncSUSNextLoop,
     FuncSUSOverdub,
+    FuncSUSPause,
     FuncSUSPrevLoop,
     FuncSUSRecord,
     FuncSUSReplace,

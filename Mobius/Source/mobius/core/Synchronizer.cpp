@@ -159,6 +159,12 @@ void Synchronizer::updateConfiguration(MobiusConfig* config)
             // SYNC_NONE or SYNC_DEFAULT
             mSyncMaster->unfollow(number);
         }
+
+        // should have better range checking on this
+        // I've never seen it where the SetupTrack list doesn't match
+        // the core track count
+        // punt and wait for the Session 
+        number++;
     }
 }
 
@@ -240,8 +246,8 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
             state->syncSource = SYNC_TRACK;
         }
         
-        state->trackSyncMaster = (number = mSyncMaster->getTrackSyncMaster());
-        state->outSyncMaster = (number = mSyncMaster->getTransportMaster());
+        state->trackSyncMaster = (number == mSyncMaster->getTrackSyncMaster());
+        state->outSyncMaster = (number == mSyncMaster->getTransportMaster());
 	}
 }
 
@@ -1578,46 +1584,46 @@ void Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
     EventManager* em = t->getEventManager();
     Event* stop = em->findEvent(RecordStopEvent);
 
-    if (stop != NULL && !stop->pending) {
-        // Already scheduled the ending, nothing more to do here.
-        // old comments:
-        // This should have been caught in the test for isRounding() above,
-        // Wait for Loop to call loopRecordStop
-        //
-        // Since we no longer have an isRounding flag, may need something else?
-        Trace(l, 1, "Sync: extra pulse after end scheduled\n");
-        return;
-    }
 
-    // formerly used SyncState pulse counts to determine ending
-    // cycles, I think now we should be incrementing these as we go
-    
-    // check varous conditions to see if we're really ready to stop
     if (stop != nullptr) {
-        if (stop->function == AutoRecord) {
-            // here we looked at accumulated pulse counts to see when
-            // we had received the desired number of "units"
-            // will need something similar...
 
-            // leave stop non-null to end after one unit
+        if (!stop->pending) {
+            // Already activated the StopEvent
+            // This is unusual.  Assuming nothing is broken we could only get here
+            // if this track is syncing to an EXTREMELY short pulse, shorter than
+            // the input latency we're waiting for to end the recording.  We can safely
+            // ignore it, but it is not expected
+            Trace(l, 1, "Sync: extra pulse after record stop activated");
         }
-    }
+        else {
+            if (stop->function == AutoRecord) {
+                // here we looked at accumulated pulse counts to see when
+                // we had received the desired number of "units"
+                // will need something similar...
 
-    if (stop != nullptr) {
-        activateRecordStop(l, p, stop);
+                // leave stop non-null to end after one unit
+            }
+            
+            if (stop != nullptr)
+              activateRecordStop(l, p, stop);
+        }
     }
     else {
-        // formerly had to test cycleBoundary if we were receiving pulses
-        // at a finer grain than the stop pulse
-        // when syncing to a Beat, this probablky needs to use BeatsPerBar
-        // to determine when cycles are added
-#if 0        
-        if (cycleBoundary) {
-            if (recordedCycles != l->getCycles())
-              Trace(l, 1, "Sync: Unexpected jump in cycle count!\n");
-            l->setRecordCycles(recordedCycles + 1);
+        // we're still recording and another pulse came in
+        // if we're following Bar or Loop pulses we can use this
+        // as an indication to bump the cycle count since our cycle size
+        // will match the leader.
+        // Do NOT do this if following Beat pulses since the resulting
+        // loop size will be more random.
+        // Formerly had some complex logic here to compare the current size
+        // against the leader size and if the happened to be an exact cycle multiple
+        // it would adjust the count, not messing with this, if you sync with Beats,
+        // you get 1 cycle.
+        // For non-track sources, the bar length can be relatiely short so may want more
+        // control over whether every bar constitutes a cycle.
+        if (p->type == Pulse::PulseBar || p->type == Pulse::PulseLoop) {
+            l->setRecordCycles(l->getCycles() + 1);
         }
-#endif        
     }
 }
 
@@ -1793,24 +1799,11 @@ bool Synchronizer::isTransportMaster(Loop* l)
  *     but this may be the master track that is currently generating clocks
  *
  * Deleted a lot of SyncState pulse maintenance code. Now we just deal with MIDI clocks.
+ * Logic now handled by SyncMaster and Transport
  */
 void Synchronizer::loopRecordStart(Loop* l)
 {
-	if (isTransportMaster(l)) {
-        
-        fullStop(l, "Sync: Master track re-record: Stop clocks and send MIDI Stop\n");
-	}
-}
-
-/**
- * Old code called MidiTransport::fullStop which took a TraceContext
- * and a message.
- */
-void Synchronizer::fullStop(TraceContext* l, const char* msg)
-{
-    (void)l;
-    (void)msg;
-    mSyncMaster->midiOutStop();
+    mSyncMaster->notifyTrackRecord(l->getTrack()->getDisplayNumber());
 }
 
 /**
@@ -1867,18 +1860,12 @@ void Synchronizer::loopRecordStop(Loop* l, Event* stop)
  * Called by loop when the loop is reset.
  * If this track is the out sync master, turn off MIDI clocks.
  * If this the track sync master, then reassign a new master.
+ * This is now done by SyncMaster
  */
 void Synchronizer::loopReset(Loop* loop)
 {
     int number = loop->getTrack()->getDisplayNumber();
-
-    if (number == mSyncMaster->getTransportMaster()) {
-        fullStop(loop, "Sync: Master track reset, stop clocks and send MIDI Stop\n");
-	}
-    
-    // allow track/transport mastership to pass to another track
     mSyncMaster->notifyTrackReset(number);
-    mSyncMaster->unfollow(number);
 }
 
 //////////////////////////////////////////////////////////////////////

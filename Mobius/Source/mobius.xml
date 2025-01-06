@@ -157,7 +157,7 @@
       altFeedback='127'
       pan='64'
       syncSource='track'
-      trackSyncUnit='default'/>
+      trackSyncUnit='loop'/>
     <SetupTrack
       input='127'
       output='127'

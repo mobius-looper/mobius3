@@ -44,6 +44,8 @@
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/Trigger.h"
+#include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -131,6 +133,7 @@ class SwitchEventType : public EventType {
 SwitchEventType::SwitchEventType()
 {
 	name = "Switch";
+    stateEventType = TrackState::EventSwitch;
 }
 
 SwitchEventType SwitchEventObj;
@@ -151,6 +154,7 @@ class ReturnEventType : public EventType {
 ReturnEventType::ReturnEventType()
 {
 	name = "Return";
+    stateEventType = TrackState::EventReturn;
 }
 
 ReturnEventType ReturnEventObj;
@@ -287,17 +291,21 @@ LoopTriggerFunction::LoopTriggerFunction(int i, bool sus, bool relative)
 		if (index > 0) {
 			if (sus) {
 				setName("SUSNextLoop");
+                symbol = FuncSUSNextLoop;
 			}
 			else {
 				setName("NextLoop");
+                symbol = FuncNextLoop;
 			}
 		}
 		else {
 			if (sus) {
 				setName("SUSPrevLoop");
+                symbol = FuncSUSPrevLoop;
 			}
 			else {
 				setName("PrevLoop");
+                symbol = FuncPrevLoop;
 			}
 		}
 	}
@@ -311,6 +319,7 @@ LoopTriggerFunction::LoopTriggerFunction(int i, bool sus, bool relative)
         setName("SelectLoop");
         alias1 = "Loop";
         maySustain = false;
+        symbol = FuncSelectLoop;
 	}
 	else {
 		snprintf(fullName, sizeof(fullName), "Loop%d", i + 1);

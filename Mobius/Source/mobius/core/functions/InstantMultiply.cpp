@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -40,6 +41,7 @@ class InstantMultiplyEventType : public EventType {
 InstantMultiplyEventType::InstantMultiplyEventType()
 {
 	name = "InstantMultiply";
+    symbol = FuncInstantMultiply;
 }
 
 InstantMultiplyEventType InstantMultiplyEventObj;
@@ -91,12 +93,15 @@ InstantMultiplyFunction::InstantMultiplyFunction(int n)
 	if (n == 0) {
 		setName("InstantMultiply");
         alias1 = "InstantMultiply2";
+        symbol = FuncInstantMultiply;
 	}
 	else if (n == 3) {
 		setName("InstantMultiply3");
+        symbol = FuncInstantMultiply3;
 	}
 	else if (n == 4) {
 		setName("InstantMultiply4");
+        symbol = FuncInstantMultiply4;
 	}
 }
 

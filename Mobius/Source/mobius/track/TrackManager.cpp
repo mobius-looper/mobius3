@@ -1237,11 +1237,10 @@ void TrackManager::refreshState(SystemState* state)
     state->audioTracks = audioTracks;
     state->midiTracks = midiTracks;
 
+    // both types support the new focused state for events
     if (state->focusedTrack > 0) {
         LogicalTrack* lt = getLogicalTrack(state->focusedTrack);
-        if (lt->getType() == Session::TypeMidi) {
-            lt->refreshFocusedState(&(state->focusedState));
-        }
+        lt->refreshFocusedState(&(state->focusedState));
     }
 }
 
