@@ -144,10 +144,8 @@ void TimeSlicer::notifyPulse(LogicalTrack* track, Slice& slice)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * This is duplicating and simplifying some of the logic
- * in Pulsator::getPulseFrame which is what MIDI tracks have been using.
- * That will only return a frame if both the pulse source and pulse TYPE
- * matches (e.g. it won't return Beat pulses if the track wants Bars).
+ * Ask SyncMaster for a relevant sync pulse that was detected
+ * within this block and add a slice.
  */
 void TimeSlicer::gatherSlices(LogicalTrack* track)
 {

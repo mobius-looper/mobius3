@@ -112,8 +112,6 @@ class SyncMaster
     bool shouldCheckDrift(int follower);
     int getDrift(int follower);
     void correctDrift(int follower, int frames);
-    int getPulseFrame(int follower);
-    int getPulseFrame(int followerId, Pulse::Type type);
 
     class Follower* getFollower(int id);
 

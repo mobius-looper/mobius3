@@ -924,14 +924,6 @@ void SyncMaster::correctDrift(int follower, int frames)
 {
     pulsator->correctDrift(follower, frames);
 }
-int SyncMaster::getPulseFrame(int follower)
-{
-    return pulsator->getPulseFrame(follower);
-}
-int SyncMaster::getPulseFrame(int followerId, Pulse::Type type)
-{
-    return pulsator->getPulseFrame(followerId, type);
-}
 
 //////////////////////////////////////////////////////////////////////
 //

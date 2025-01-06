@@ -1,12 +1,19 @@
 /**
- * The main purpose of BaseScheduler is to deal with synchronization pulses
- * and the leader/follower relatinship with another track.
+ * BaseScheduler maintains an event list for each track and provides
+ * an interface for scheduling and event handling.  The block advances
+ * for each track are split around the events that are ready in this block.
  *
- * The advance for each audio block is split up around each event that is
- * ready within this block.
+ * This used to be where sync pulses were handled, but that has moved
+ * to TimeSlicer.
  *
- * !! todo: Advance carving works only for MidiTrack since it does not actually
- * send partial block content through to the track, only the size.
+ * Leader/Follower support is only accessible by MidiTrack right now which
+ * means thta leader notification events can't be used by old Mobius tracks.
+ *
+ * This needs to be pushed up a level, maybe TimeSlicer or SyncMaster like
+ * we do with sync pulses.  Leader notifications really are much like sync pulses
+ * and operate in "real time" not the rate adjusted "track time" so it makes sense
+ * for TimeSlicer to deal with those too.
+ * 
  */
 
 #include <JuceHeader.h>
@@ -570,6 +577,9 @@ void BaseScheduler::advance(MobiusAudioStream* stream)
 
     // here is where we need to ask Pulsator about drift
     // and do a correction if necessary
+    // !! rather than asking SM for this, SM should be telling
+    // us to do it before each advance, more like how pulse
+    // notifications come in
     int number = scheduledTrack->getNumber();
     if (syncMaster->shouldCheckDrift(number)) {
         int drift = syncMaster->getDrift(number);
@@ -580,36 +590,8 @@ void BaseScheduler::advance(MobiusAudioStream* stream)
 
     int currentFrame = scheduledTrack->getFrame();
 
-    // locate a sync pulse we follow within this block
-    // !! there is work to do here with rate shift
-    // unclear where the pulse should "happen" within a rate shifted
-    // track, if it is the actuall buffer offset and the track is slowed
-    // down, then the pulse frame may be beyond the track advance and won't
-    // be "reached" until the next block.  If the pulse must happen within
-    // this block, then the pulse frame in the event would need to be adjusted
-    // for track time
-    if (syncSource != Pulse::SourceNone) {
-
-        // todo: you can also pass the pulse type to getPulseFrame
-        // and it will obey it rather than the one passed to follow()
-        // might be useful if you want to change pulse types during
-        // recording
-        int pulseOffset = syncMaster->getPulseFrame(number);
-        if (pulseOffset >= 0) {
-            // sanity check before we do the math
-            if (pulseOffset >= newFrames) {
-                Trace(1, "BaseScheduler: Pulse frame is fucked");
-                pulseOffset = newFrames - 1;
-            }
-            // it dramatically cleans up the carving logic if we make this look
-            // like a scheduled event
-            TrackEvent* pulseEvent = eventPool.newEvent();
-            pulseEvent->frame = currentFrame + pulseOffset;
-            pulseEvent->type = TrackEvent::EventPulse;
-            // note priority flag so it goes before others on this frame
-            events.add(pulseEvent, true);
-        }
-    }
+    // formerly injected sync pulse events here
+    // now TimeSlicer does that
 
     // apply rate shift
     //int goalFrames = scheduledTrack->getGoalFrames();
@@ -901,12 +883,6 @@ void BaseScheduler::doEvent(TrackEvent* e)
         }
             break;
 
-        case TrackEvent::EventPulse: {
-            doPulse(e);
-            handled = true;
-        }
-            break;
-
         case TrackEvent::EventSync: {
             Trace(1, "BaseScheduler: Not expecting sync event");
             handled = true;
@@ -1001,7 +977,15 @@ void BaseScheduler::dispose(TrackEvent* e)
 }
 
 /**
- * We should only be injecting pulse events if we are following
+ * This is called by TimeSlicer/SyncMaster when a sync pulse is
+ * detected in this block.  TimeSlicer has split the audio block advance
+ * around it.
+ *
+ * Formerly this was implemented as a TrackEvent of type EventPulse that
+ * got inserted into the track's event list.  Now it's an external notification
+ * but what it does is the same.
+ * 
+ * We should only be receiving pulse notices if we are following
  * something, and have been waiting on a record start or stop pulse.
  * Events that are waiting for a pulse are called "pulsed" events.
  *
@@ -1019,9 +1003,11 @@ void BaseScheduler::dispose(TrackEvent* e)
  * Again in theory, this could be in front of other scheduled events and because
  * events must be in order, it is removed and reinserted after giving it a frame.
  */
-void BaseScheduler::doPulse(TrackEvent* e)
+void BaseScheduler::syncPulse(Pulse* p)
 {
-    (void)e;
+    // doesn't really matter what this is, SyncMaster is only supposed
+    // to provide relevant pulses for the track
+    (void)p;
     
     // todo: there could be more than one thing waiting on a pulse?
     TrackEvent* pulsed = events.consumePulsed();

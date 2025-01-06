@@ -22,7 +22,6 @@ class TrackEvent : public PooledObject
 
         // BaseScheduler events
         EventNone,
-        EventPulse,
         EventSync,
         EventAction,
         EventWait,
