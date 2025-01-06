@@ -34,6 +34,7 @@
 
 #include "../../model/MobiusConfig.h"
 #include "../../model/OldMobiusState.h"
+#include "../../model/TrackState.h"
 // TriggerScript
 #include "../../model/Trigger.h"
 
@@ -298,6 +299,73 @@ void Synchronizer::getState(OldMobiusState* state)
         sync->hostBeat = mSyncMaster->getBeat(Pulse::SourceHost);
         sync->hostBar = mSyncMaster->getBar(Pulse::SourceHost);
     }
+}
+
+/**
+ * New model for single track sync state.
+ * This was just copied from OldMobiusState, do we still need all of this?
+ * We only display this for the focused track, do this in refreshFocusedState instead?
+ */
+void Synchronizer::refreshState(TrackState* state, Track* t)
+{
+    state->syncSource = SYNC_NONE;
+    state->syncUnit = SYNC_UNIT_BEAT;
+	state->outSyncMaster = false;
+	state->trackSyncMaster = false;
+	state->tempo = 0;
+	state->beat = 0;
+	state->bar = 0;
+    state->beatsPerBar = 0;
+    
+    // sigh, convert this back from what we did in updateConfiguration
+    int number = t->getDisplayNumber();
+    Follower* f = mSyncMaster->getFollower(number);
+    if (f != nullptr) {
+
+        if (f->type == Pulse::PulseBar || f->type == Pulse::PulseLoop)
+          state->syncUnit = SYNC_UNIT_BAR;
+        
+        if (f->source == Pulse::SourceMidi) {
+            state->syncSource = SYNC_MIDI;
+
+			// for display purposes we use the "smooth" tempo
+			// this is a 10x integer
+            // this should also be moved into SyncMaster since TempoElement
+            // will likely need the same treatment
+			int smoothTempo = mSyncMaster->getMidiInSmoothTempo();
+			state->tempo = (float)smoothTempo / 10.0f;
+
+            // MIDI in sync has also only displayed beats if clocks were actively
+            // being received
+			if (mSyncMaster->isMidiInStarted()) {
+				state->beat = mSyncMaster->getBeat(Pulse::SourceMidi);
+				state->bar = mSyncMaster->getBar(Pulse::SourceMidi);
+			}
+        }
+        else if (f->source == Pulse::SourceHost) {
+            state->syncSource = SYNC_HOST;
+			state->tempo = mSyncMaster->getTempo(Pulse::SourceHost);
+
+            // not exposing this, is it necessary?
+			if (mSyncMaster->isHostReceiving()) {
+				state->beat = mSyncMaster->getBeat(Pulse::SourceHost);
+				state->bar = mSyncMaster->getBar(Pulse::SourceHost);
+            }
+        }
+        
+        else if (f->source == Pulse::SourceTransport) {
+            state->syncSource = SYNC_TRANSPORT;
+            state->tempo = mSyncMaster->getTempo();
+            state->beat = mSyncMaster->getBeat(Pulse::SourceTransport);
+            state->bar = mSyncMaster->getBar(Pulse::SourceTransport);
+        }
+        else if (f->source == Pulse::SourceLeader) {
+            state->syncSource = SYNC_TRACK;
+        }
+        
+        state->trackSyncMaster = (number == mSyncMaster->getTrackSyncMaster());
+        state->outSyncMaster = (number == mSyncMaster->getTransportMaster());
+	}
 }
 
 //////////////////////////////////////////////////////////////////////

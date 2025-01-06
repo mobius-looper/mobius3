@@ -1272,6 +1272,134 @@ long Loop::reflectFrame(long frame)
 	return (getFrames() - frame - 1);
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// New TrackState Refresh
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * New state model, this is called for the active loop.
+ */
+void Loop::refreshState(TrackState* s)
+{
+    s->frames = (int)getFrames();
+	s->cycles = (int)getCycles();
+
+	s->recording = mRecording;
+	s->pause = mPause;
+    // old state had EventManager set this
+	s->nextLoop = -1;
+	s->overdub = mOverdub;
+
+    // MobiusState has a new model for modes
+    // this wasn't done for summaries
+    s->mode = mMode->stateMode;
+
+    // ?? where does modified modified come from?
+
+	// During initial recording we're always at the end, so the current
+	// cycle is always the maximum
+	if (mMode == RecordMode) {
+		// since we're always at the end, this always tracks
+		// cycle count if we're using external sync
+		s->cycle = s->cycles;
+	}
+	else {
+		s->cycle = 1;
+		if (s->frames > 0 && s->cycles > 0) {
+			int cycleFrames = (int)(s->frames / s->cycles);
+			if (cycleFrames > 0)
+			  s->cycle = (int)((s->frame / cycleFrames) + 1);
+		}
+	}
+
+    // where is subcycles supposed to ome from?
+    // it would be in the Preset
+
+	// The frame number should be the "realtime" frame that matches what
+    // is being played and heard, since mFrame lags, have to add latency
+    // UPDATE: Hmm no, this doesn't really matter and at excessive shifts
+    // latency can be high enough to push us into a beat which looks confusing
+
+	//s->frame = mFrame + mInput->latency;
+    s->frame = mFrame;
+
+	// adding latency may have caused us to loop
+    long loopFrames = getFrames();
+	s->frame = wrapFrame(s->frame, loopFrames);
+
+	// warp this so the GUI doesn't have to deal with reverse
+	if (isReverse() && loopFrames > 0)
+		s->frame = reflectFrame(s->frame);
+
+    // loop windowing only relevant if active
+    s->windowOffset = -1;
+    if (mPlay != NULL) {
+        s->windowOffset = mPlay->getWindowOffset();
+        if (s->windowOffset >= 0) {
+            // this is a window layer, but if the window exactly covers
+            // the last real layer, pretend like we're not windowing so the
+            // UI won't draw it
+            // actually no, I don't like this because there are still
+            // implications about being in window mode
+            /*
+            Layer* prev = mPlay->getPrev();
+            if (prev != NULL && 
+                prev->getHistoryOffset() == s->windowOffset &&
+                prev->getFrames() == mPlay->getFrames()) {
+                s->windowOffset = -1;
+            }
+            */
+        }
+    }
+    // don't bother calculating this unless there is a window
+    if (s->windowOffset >= 0)
+      s->historyFrames = getHistoryFrames();
+    else
+      s->historyFrames = 0;
+    
+	// these are set during buffer processing, and are cleared when
+	// the application requests them, avoid having to have a callback
+	// or asynchronous event
+    // update: since these now "latch" don't clear them if we've
+    // advanced past the boundary or else the UI might miss it
+    // todo: does TrackState work that way?
+    // isn't this now done by PriorityState??
+    bool oldWay = false;
+    if (oldWay) {
+        s->beatLoop = mBeatLoop;
+        mBeatLoop = false;
+        s->beatCycle = mBeatCycle;
+        mBeatCycle = false;
+        s->beatSubCycle = mBeatSubCycle;
+        mBeatSubCycle = false;
+    }
+    else {
+        if (!s->beatLoop)
+          s->beatLoop = mBeatLoop;
+        mBeatLoop = false;
+        if (!s->beatCycle)
+          s->beatCycle = mBeatCycle;
+        mBeatCycle = false;
+        if (!s->beatSubCycle)
+          s->beatSubCycle = mBeatSubCycle;
+        mBeatSubCycle = false;
+    }
+
+    int undoLayers = 0;
+    for (Layer* l = mRecord ; l != nullptr ; l = l->getPrev())
+      undoLayers++;
+
+    int redoLayers = 0;
+    for (Layer* l = mRedo ; l != nullptr ; l = l->getRedo())
+      redoLayers++;
+
+    // not sure if this is right
+    s->layerCount = undoLayers + redoLayers;
+    s->activeLayer = undoLayers;
+}
+
 /****************************************************************************
  *                                                                          *
  *                                 UTILITIES                                *

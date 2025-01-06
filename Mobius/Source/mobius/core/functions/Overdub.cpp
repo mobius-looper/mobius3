@@ -39,6 +39,7 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -64,6 +65,7 @@ OverdubModeType::OverdubModeType() :
 	minor = true;
 	recording = true;
 	altFeedbackSensitive = true;
+    stateMode = TrackState::ModeOverdub;
 }
 
 OverdubModeType OverdubModeObj;

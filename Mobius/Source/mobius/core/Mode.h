@@ -13,6 +13,7 @@
 #define MOBIUS_MODE_H
 
 #include "../../model/SystemConstant.h"
+#include "../../model/TrackState.h"
 
 /****************************************************************************
  *                                                                          *
@@ -92,6 +93,11 @@ class MobiusMode : public SystemConstant {
      * The transition will be gradual.
      */
     bool invokeHandler;
+
+    /**
+     * The corresponding mode in the new TrackState model
+     */
+    TrackState::Mode stateMode = TrackState::ModeUnknown;
 
   protected:
 

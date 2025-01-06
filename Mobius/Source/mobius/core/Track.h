@@ -184,6 +184,8 @@ class Track : public TraceContext
     int getCycles();
 	long getFrame();
     void getState(class OldMobiusTrackState* s);
+    void refreshState(class TrackState* s);
+    
 	int getCurrentLevel();
 	//bool isTrackSyncMaster();
 

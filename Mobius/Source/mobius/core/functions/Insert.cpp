@@ -24,6 +24,7 @@
 #include "../../../util/Util.h"
 #include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 
 #include "../../Notifier.h"
 
@@ -63,6 +64,7 @@ InsertModeType::InsertModeType() :
 	extends = true;
 	rounding = true;
 	recording = true;
+    stateMode = TrackState::ModeInsert;
 }
 
 InsertModeType InsertModeObj;

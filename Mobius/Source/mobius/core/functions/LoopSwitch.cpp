@@ -98,6 +98,7 @@ class SwitchModeType : public MobiusMode {
 SwitchModeType::SwitchModeType() :
     MobiusMode("switch")
 {
+    stateMode = TrackState::ModeSwitch;
 }
 
 SwitchModeType SwitchModeObj;
@@ -113,6 +114,7 @@ class ConfirmModeType : public MobiusMode {
 ConfirmModeType::ConfirmModeType() :
     MobiusMode("confirm")
 {
+    stateMode = TrackState::ModeConfirm;
 }
 
 ConfirmModeType ConfirmModeObj;

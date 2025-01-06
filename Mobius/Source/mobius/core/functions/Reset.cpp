@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -38,6 +39,7 @@ class ResetModeType : public MobiusMode {
 ResetModeType::ResetModeType() :
     MobiusMode("reset")
 {
+    stateMode = TrackState::ModeReset;
 }
 
 ResetModeType ResetModeObj;

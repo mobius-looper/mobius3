@@ -776,6 +776,114 @@ void Track::refreshFocusedState(FocusedTrackState* s)
 }
 
 /**
+ * Deposit state in the new model.
+ */
+void Track::refreshState(TrackState* s)
+{
+    s->number = mRawNumber + 1;
+	s->preset = mPreset->ordinal;
+    s->inputMonitorLevel = mInput->getMonitorLevel();
+	s->outputMonitorLevel = mOutput->getMonitorLevel();
+    
+    // sync fields
+    mSynchronizer->refreshState(s, this);
+
+	s->focus = mFocusLock;
+	s->group = mGroup;
+	s->loopCount = mLoopCount;
+    s->activeLoop = mLoop->getNumber();
+    s->mute = mLoop->isMuteMode();
+    s->reverse = mLoop->isReverse();
+
+    // I guess get it here
+    s->subcycles = mPreset->getSubcycles();
+    
+    // OldMobiusState does all this in LoopState
+    // in the new model it is promoted to the track level
+    // layerCount
+    // activeLayer
+    // nextLoop
+    // beatLoop, beatCycle, beatSubCycle
+    // windowOffset
+    // historyFrames
+    // frames, subcycles, cycles, cycle
+    // mute, pause, recording, modified
+    // mode, overdub
+    mLoop->refreshState(s);
+
+	s->input = mInputLevel;
+	s->output = mOutputLevel;
+    s->feedback = mFeedbackLevel;
+    s->altFeedback = mAltFeedbackLevel;
+	s->pan = mPan;
+    s->solo = mSolo;
+    s->globalMute = mGlobalMute;
+    // where should this come from?  it's really a Mobis level setting
+    s->globalPause = false;
+
+    s->pitch = (mOutput->getPitch() != 1.0);
+    s->speed = (mOutput->getSpeed() != 1.0);
+    s->speedToggle = mSpeedToggle;
+    s->speedOctave = mInput->getSpeedOctave();
+    s->speedStep = mInput->getSpeedStep();
+    s->speedBend = mInput->getSpeedBend();
+    s->pitchOctave = mInput->getPitchOctave();
+    s->pitchStep = mInput->getPitchStep();
+    s->pitchBend = mInput->getPitchBend();
+    s->timeStretch = mInput->getTimeStretch();
+
+    // active, true if this is the active track
+    
+    // pending, doesn't seem to have been used
+    s->pending = false;
+
+    // simpler state for each loop
+	for (int i = 0 ; i < mLoopCount && i < s->loops.size() ; i++) {
+        Loop* l = mLoops[i];
+        TrackState::Loop& lstate = s->loops.getReference(i);
+        // only thing we need is the frame count
+        // why the hell do we have both of these
+        lstate.index = l->getNumber() - 1;
+        lstate.number = l->getNumber();
+        lstate.frames = l->getFrames();
+    }
+
+    if (mLoopCount > s->loops.size())
+      Trace(1, "Track::refreshState Loop state overflow");
+
+    // Mode is complicated
+#if 0    
+        Event* switche = mEventManager->getSwitchEvent();
+        if (switche != NULL) {
+            // MobiusState has a new model for modes
+            if (switche->pending)
+              lstate->mode = MapMode(ConfirmMode);
+            else
+              lstate->mode = MapMode(SwitchMode);	
+        }
+
+        // this really belongs in TrackState...
+        mEventManager->getEventSummary(lstate);
+        // in the new model activeLoop is zero based
+        // do not like the inconsistency but I want all zero based for new code
+        lstate->active = true;
+        s->activeLoop = loopIndex;
+    
+	// getting the pending status is odd because we have to work from the
+	// acive track to the target
+	int pending = mLoop->getNextLoop();
+	if (pending > 0) {
+		// remember this is 1 based
+		s->loops[pending - 1].pending = true;
+	}
+
+	s->loopCount = max;
+#endif
+}
+
+/**
+ * old way: delete when ready
+ *
  * Return an object holding the current state of this track.
  * This may be used directly by the UI and as such must be changed
  * carefully since more than one thread may be accessing it at once.

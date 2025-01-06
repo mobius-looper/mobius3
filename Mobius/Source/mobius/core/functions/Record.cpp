@@ -118,6 +118,7 @@
 #include "../../../model/Trigger.h"
 #include "../../../model/Setup.h"
 #include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 #include "../../Audio.h"
 
 #include "../Action.h"
@@ -207,6 +208,7 @@ RecordModeType::RecordModeType() :
 {
 	extends = true;
 	recording = true;
+    stateMode = TrackState::ModeRecord;
 }
 
 RecordModeType RecordModeObj;
@@ -224,6 +226,7 @@ class SynchronizeModeType : public MobiusMode {
 SynchronizeModeType::SynchronizeModeType() :
     MobiusMode("synchronize")
 {
+    stateMode = TrackState::ModeSynchronize;
 }
 
 SynchronizeModeType SynchronizeModeObj;
@@ -241,6 +244,7 @@ class ThresholdModeType : public MobiusMode {
 ThresholdModeType::ThresholdModeType() :
     MobiusMode("threshold")
 {
+    stateMode = TrackState::ModeThreshold;
 }
 
 ThresholdModeType ThresholdModeObj;
@@ -258,6 +262,7 @@ class RunModeType : public MobiusMode {
 RunModeType::RunModeType() :
     MobiusMode("run")
 {
+    stateMode = TrackState::ModeRun;
 }
 
 RunModeType RunModeObj;
@@ -788,9 +793,11 @@ RehearseModeType::RehearseModeType(bool record)
 {
 	if (record) {
 		setName("rehearseRecord");
+        stateMode = TrackState::ModeRehearseRecord;
 	}
 	else {
 		setName("rehearse");
+        stateMode = TrackState::ModeRehearse;
 	}
 
 	recording = true;

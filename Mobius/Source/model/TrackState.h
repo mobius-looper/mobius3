@@ -45,11 +45,15 @@ class TrackState
         ModeRehearse,
         ModeRehearseRecord,
         ModeRun, // what does this mean?
-        ModeSwitch, // why is this a mode?
+        ModeSwitch, // this is a mode in old tracks, not in MIDI
 
         // derived multi-track modes
         ModeGlobalReset,
-        ModeGlobalPause
+        ModeGlobalPause,
+        ModeGlobalMute,
+
+        // !! Bounce should actually be a mode, no?
+        
         
     } Mode;
 

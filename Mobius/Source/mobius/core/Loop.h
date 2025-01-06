@@ -157,7 +157,8 @@ class Loop : public TraceContext {
     //
 
 	void refreshState(class OldMobiusLoopState* s, bool active);
-
+    void refreshState(class TrackState* s);
+    
     class StreamState* getRestoreState();
 	class MobiusMode* getMode();
 	bool isEmpty();

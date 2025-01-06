@@ -25,6 +25,7 @@
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 
 #include "../../Notifier.h"
 
@@ -60,6 +61,7 @@ MultiplyModeType::MultiplyModeType() :
 	rounding = true;
 	recording = true;
 	altFeedbackSensitive = true;
+    stateMode = TrackState::ModeMultiply;
 }
 
 MultiplyModeType MultiplyModeObj;

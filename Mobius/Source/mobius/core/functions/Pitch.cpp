@@ -24,6 +24,7 @@
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 
 #include "../Action.h"
 #include "../Event.h"

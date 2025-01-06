@@ -14,6 +14,7 @@
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -43,6 +44,7 @@ class MuteModeType : public MobiusMode {
 MuteModeType::MuteModeType() :
     MobiusMode("mute")
 {
+    stateMode = TrackState::ModeMute;
 }
 
 MuteModeType MuteModeObj;
@@ -61,6 +63,7 @@ class GlobalMuteModeType : public MobiusMode {
 GlobalMuteModeType::GlobalMuteModeType() :
     MobiusMode("globalMute", "Global Mute")
 {
+    stateMode = TrackState::ModeGlobalMute;
 }
 
 GlobalMuteModeType GlobalMuteModeObj;
@@ -84,6 +87,7 @@ class PauseModeType : public MobiusMode {
 PauseModeType::PauseModeType() :
     MobiusMode("pause")
 {
+    stateMode = TrackState::ModePause;
 }
 
 PauseModeType PauseModeObj;
@@ -102,6 +106,7 @@ class GlobalPauseModeType : public MobiusMode {
 GlobalPauseModeType::GlobalPauseModeType() :
     MobiusMode("globalPause")
 {
+    stateMode = TrackState::ModeGlobalPause;
 }
 
 GlobalPauseModeType GlobalPauseModeObj;

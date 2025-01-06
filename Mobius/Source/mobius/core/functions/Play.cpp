@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -37,6 +38,7 @@ class PlayModeType : public MobiusMode {
 PlayModeType::PlayModeType() :
     MobiusMode("play")
 {
+    stateMode = TrackState::ModePlay;
 }
 
 PlayModeType PlayModeObj;

@@ -16,6 +16,7 @@
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -40,6 +41,7 @@ SubstituteModeType::SubstituteModeType() :
 {
 	recording = true;
 	altFeedbackSensitive = true;
+    stateMode = TrackState::ModeSubstitute;
 }
 
 SubstituteModeType SubstituteModeObj;

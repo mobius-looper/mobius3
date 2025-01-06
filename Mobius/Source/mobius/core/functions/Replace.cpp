@@ -45,6 +45,7 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -70,6 +71,7 @@ ReplaceModeType::ReplaceModeType() :
     MobiusMode("replace")
 {
 	recording = true;
+    stateMode = TrackState::ModeReplace;
 }
 
 ReplaceModeType ReplaceModeObj;

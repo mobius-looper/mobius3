@@ -16,6 +16,7 @@
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/SymbolId.h"
+#include "../../../model/TrackState.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -46,6 +47,7 @@ StutterModeType::StutterModeType() :
 	recording = true;
 	extends = true;
 	altFeedbackSensitive = true;
+    stateMode = TrackState::ModeStutter;
 }
 
 StutterModeType StutterModeObj;

@@ -2014,10 +2014,52 @@ void EventManager::refreshFocusedState(FocusedTrackState* state)
 void EventManager::getEventSummary(TrackState::Event& estate, Event* e, bool stacked)
 {
     estate.track = mTrack->getRawNumber() + 1;
-
-    // todo: here lies the magic to convert EventType into a symbol id, etc...
     estate.type = TrackState::EventUnknown;
-        
+
+    // most events are associated with functions, if a function
+    // defines a symbol use it, since the same event may be used for
+    // several functions
+    SymbolId symbol = SymbolIdNone;
+    if (e->function != nullptr)
+      symbol = e->function->symbol;
+
+    // simple functions may not have a symbol and put it on the EventType instead
+    if (symbol == SymbolIdNone) {
+        if (e->type != nullptr)
+          symbol = e->type->symbol;
+    }
+
+    if (symbol != SymbolIdNone) {
+        estate.type = TrackState::EventAction;
+        estate.symbol = symbol;
+    }
+    else if (e->type != nullptr) {
+        // some EventTypes are associated with functions but are the primary action events
+        // such as the few "ending" events
+        estate.type = e->type->stateEventType;
+    }
+
+    // this one is weird
+    // If the EventType has the ending flag it means it is a mode end event
+    // such as RecordEnd, MultiplyEnd, etc.
+    // MIDI tracks have presented this as an event of type Round rather than Action
+    // but the symbol still needs to be there
+    if (e->type != nullptr && e->type->ending) {
+        // I don't think this happens but don't trash e->type->stateEventType if we
+        // chose to use it
+        if (estate.type == TrackState::EventAction)
+          estate.type = TrackState::EventRound;
+    }
+
+    // final weird
+    // EventSwitch has special handling for MIDI tracks
+    // Mobius doesn't use that type, it will have an EventAction
+    // with the specific function symbol that caused the switch
+    // that should display the same, but I dislike the difference
+    // decide whether we need to model the switch function events
+    // with EventSwitch
+
+    // several events have numeric argumets, e.g. LoopSwitch 2
     estate.argument = (int)(e->number);
 
     // usually defines its own frame
@@ -2060,6 +2102,7 @@ void EventManager::getEventSummary(TrackState::Event& estate, Event* e, bool sta
  * TODO: We're leaving this in a LoopState but really this belongs
  * in TrackState.
  */
+// old way, delete when ready
 void EventManager::getEventSummary(OldMobiusLoopState* s)
 {
 	s->eventCount = 0;
@@ -2245,7 +2288,6 @@ long EventManager::reflectFrame(Loop* loop, long frame)
 {
 	return (loop->getFrames() - frame - 1);
 }
-
 
 /****************************************************************************
  *                                                                          *
