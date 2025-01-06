@@ -9,6 +9,9 @@
 #include "../model/Query.h"
 #include "../model/PriorityState.h"
 
+// for some of the old sync related modes
+#include "../model/ParameterConstants.h"
+
 #include "../mobius/MobiusKernel.h"
 #include "../mobius/track/TrackManager.h"
 #include "../mobius/track/TrackProperties.h"
@@ -201,6 +204,188 @@ void SyncMaster::notifyTrackAvailable(int number)
             }
         }
     }
+}
+
+/**
+ * Called by a track when it the loop it is playing changes in some way
+ * that may impact the generated MIDI clocks if it is the TransportMaster
+ * and the tempo follows the loop length.
+ *
+ * Examples include Multiply, Insert, Divide, Undo/Redo.
+ *
+ * Now also calling this for loop switch, which used the old option
+ * ResizeSyncAdjust from the Setup to control whether the tempo changed or not.
+ * 
+ */
+void SyncMaster::notifyTrackResize(int number)
+{
+    if (transportMaster == number) {
+
+        // todo: change tempo
+    }
+}
+
+/**
+ * Called by a track when it has jumped playback back to the beginning.
+ * Mobius does this after Unrounded Multiply and Trim, in combination
+ * with notifyTrackResize.
+ *
+ * If this is the TransportMaster we have historically sent a MIDI Start event.
+ */
+void SyncMaster::notifyTrackRestart(int number, bool force)
+{
+    if (transportMaster == number) {
+        bool checkManual = !force;
+        sendStart(checkManual, false);
+    }
+}
+
+/**
+ * Called by a track when the playback rate changes.
+ * This has adjusted the generated clock tempo controlled by
+ * the Setup parameter speedSyncAdjust
+ */
+void SyncMaster::notifyTrackSpeed(int number)
+{
+    if (transportMaster == number) {
+
+        //Setup* setup = mMobius->getActiveSetup();
+        //SyncAdjust mode = setup->getSpeedSyncAdjust();
+        //if (mode == SYNC_ADJUST_TEMPO)
+    }
+}
+
+/**
+ * Copied from the old Synchroonzer for reference
+ *
+ * It is assumed we've already checked for the track being the TransportMaster
+ * and something happened that requires a MIDI start.
+ *
+ * The checkManual flag says to look at an old config option to suppress
+ * automatic starts.
+ *
+ * The checkNear flag is stubbed and used the SyncTracker which no longer exists.
+ * I think the intent was to suppress starts when we know that we're already pretty k
+ * close to the start point, I guess to prevent flamming if you're driving a drum machine.
+ */
+void SyncMaster::sendStart(bool checkManual, bool checkNear)
+{
+	bool doStart = true;
+
+    // probably still want this, but get it from the Session
+	if (checkManual) {
+        //Setup* setup = mMobius->getActiveSetup();
+        //doStart = !(setup->isManualStart());
+	}
+
+	if (doStart) {
+		// To avoid a flam, detect if we're already at the external
+		// start point so we don't need to send a START.
+        // !! We could be a long way from the pulse, should we be
+        // checking frame advance as well?
+        
+        bool nearStart = false;
+        if (checkNear) {
+            /*
+            int pulse = mOutTracker->getPulse();
+            if (pulse == 0 || pulse == mOutTracker->getLoopPulses())
+              nearStart = true;
+            */
+        }
+
+        if (nearStart && isMidiOutStarted()) {
+			// The unit tests want to verify that we at least tried
+			// to send a start event.  If we suppressed one because we're
+			// already there, still increment the start count.
+            Trace(2, "SyncMaster: Suppressing MIDI Start since we're near\n");
+			incMidiOutStarts();
+        }
+        else {
+            Trace(2, "SyncMaster: Sending MIDI Start\n");
+            // mTransport->start(l);
+            midiOutStart();
+		}
+	}
+}
+
+/**
+ * Called when a track pauses.
+ * If this is the TransportMaster we have sent MIDI Stop
+ */
+void SyncMaster::notifyTrackStop(int number)
+{
+    if (transportMaster == number) {
+        muteMidiStop();
+    }
+}
+
+/**
+ * After entering Mute or Pause modes, decide whether to send
+ * MIDI transport commands and stop clocks.  This is controlled
+ * by an obscure option MuteSyncMode.  This is for dumb devices
+ * that don't understand STOP/START/CONTINUE messages.
+ *
+ * todo: decide if we still need this
+ */
+void SyncMaster::muteMidiStop()
+{
+
+    //Setup* setup = mMobius->getActiveSetup();
+    //MuteSyncMode mode = setup->getMuteSyncMode();
+    MuteSyncMode mode = MUTE_SYNC_TRANSPORT;
+
+    bool doTransport = (mode == MUTE_SYNC_TRANSPORT ||
+                        mode == MUTE_SYNC_TRANSPORT_CLOCKS);
+    
+    bool doClocks = (mode == MUTE_SYNC_CLOCKS ||
+                     mode == MUTE_SYNC_TRANSPORT_CLOCKS);
+
+    // mTransport->stop(l, transport, clocks);
+    midiOutStopSelective(doTransport, doClocks);
+}
+
+/**
+ * Called when a track resumes from Pause
+ */
+void SyncMaster::notifyTrackResume(int number)
+{
+    if (transportMaster == number) {
+        //Setup* setup = mMobius->getActiveSetup();
+        //MuteSyncMode mode = setup->getMuteSyncMode();
+        MuteSyncMode mode = MUTE_SYNC_TRANSPORT;
+        
+        if (mode == MUTE_SYNC_TRANSPORT ||
+            mode == MUTE_SYNC_TRANSPORT_CLOCKS) {
+            // we sent MS_STOP, now send MS_CONTINUE
+            //mTransport->midiContinue(l);
+            midiOutContinue();
+        }
+        else  {
+            // we just stopped sending clocks, resume them
+            // mTransport->startClocks(l);
+            midiOutStartClocks();
+        }
+    }
+}
+
+/**
+ * Called by Loop when it enters Mute mode.
+ * 
+ * When MuteMode=Start the EDP would stop clocks then restart them
+ * when we restart comming out of mute.  Feels like another random
+ * EDPism we don't necessarily want, should provide an option to keep
+ * clocks going and restart later.
+ */
+void SyncMaster::notifyTrackMute(int number)
+{
+	if (transportMaster == number) {
+		//Preset* p = l->getPreset();
+        //MuteMode mode = p->getMuteMode();
+        ParameterMuteMode mode = MUTE_START;
+        
+		if (mode == MUTE_START) 
+          muteMidiStop();
+	}
 }
 
 //////////////////////////////////////////////////////////////////////

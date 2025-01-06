@@ -60,9 +60,11 @@ class MobiusViewer
     void addMinorMode(class MobiusViewTrack* tview, const char* mode, int arg);
 
     //
-    // MIDI Tracks
+    // New State model
+    // Originally just MIDI tracks, now both
     //
     
+    void refreshAllTracks(class SystemState* state, class MobiusView* view);
     void refreshMidiTracks(class SystemState* state, class MobiusView* view);
     void refreshTrack(class TrackState* tstate, class MobiusViewTrack* tview);
 

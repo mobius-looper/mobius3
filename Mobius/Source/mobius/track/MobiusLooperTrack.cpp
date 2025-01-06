@@ -86,12 +86,12 @@ bool MobiusLooperTrack::isFocused()
 
 void MobiusLooperTrack::refreshState(TrackState* state)
 {
-    (void)state;
+    track->refreshState(state);
 }
 
 void MobiusLooperTrack::refreshPriorityState(PriorityState* state)
 {
-    (void)state;
+    track->refreshPriorityState(state);
 }
 
 void MobiusLooperTrack::refreshFocusedState(FocusedTrackState* state)

@@ -1846,16 +1846,6 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
  ****************************************************************************/
 
 /**
- * Return true if this track is what used to be called the OutSyncMaster
- * and what is now called the TransportMaster.
- * This can impact MIDI realtime events sent when things happen to the track.
- */
-bool Synchronizer::isTransportMaster(Loop* l)
-{
-    return (l->getTrack()->getDisplayNumber() == mSyncMaster->getTransportMaster());
-}
-
-/**
  * Called by Loop whenever the initial recording of a loop officially
  * starts.  If this is the out sync master, stop sending clocks.
  * Be careful though because we will get here in two contexts:
@@ -1975,27 +1965,10 @@ void Synchronizer::loopReset(Loop* loop)
  */
 void Synchronizer::loopResize(Loop* l, bool restart)
 {
-    if (isTransportMaster(l)) {
-
-        Trace(l, 2, "Sync: loopResize\n");
-
-        //Setup* setup = mMobius->getActiveSetup();
-        //SyncAdjust mode = setup->getResizeSyncAdjust();
-
-        // no longer have an OutSyncTracker, what did this do, change the tempo?
-		//if (mode == SYNC_ADJUST_TEMPO)
-        //resizeOutSyncTracker();
-
-        // The EDP sends START after unrounded multiply to bring
-        // the external device back in sync (at least temporarily)
-        // switching loops also often restart
-        // !! I don't think this should obey the ManualStart option?
-
-        if (restart) {
-            Trace(l, 2, "Sync: loopResize restart\n");
-            sendStart(l, true, false);
-        }
-    }
+    int number = l->getTrack()->getDisplayNumber();
+    mSyncMaster->notifyTrackResize(number);
+    if (restart)
+      mSyncMaster->notifyTrackRestart(number);
 }
 
 /**
@@ -2003,31 +1976,11 @@ void Synchronizer::loopResize(Loop* l, bool restart)
  */
 void Synchronizer::loopSwitch(Loop* l, bool restart)
 {
-    if (isTransportMaster(l)) {
-
-        Trace(l, 2, "Sync: loopSwitch\n");
-        
-#if 0
-        Setup* setup = mMobius->getActiveSetup();
-        SyncAdjust mode = setup->getResizeSyncAdjust();
-		if (mode == SYNC_ADJUST_TEMPO) {
-            if (l->getFrames() > 0)
-              resizeOutSyncTracker();
-            else {
-                // switched to an empty loop, keep the tracker going
-                Trace(l, 2, "Sync: Switch to empty loop\n");
-            }
-        }
-#endif
-        
-        // switching with one of the triggering options sends START
-        // !! I don't think this should obey the ManualStart option?
-        if (restart) {
-            Trace(l, 2, "Sync: loopSwitch restart\n");
-            sendStart(l, true, false);
-        }
-    }
-}
+    int number = l->getTrack()->getDisplayNumber();
+    mSyncMaster->notifyTrackResize(number);
+    if (restart)
+      mSyncMaster->notifyTrackRestart(number);
+}      
 
 /**
  * Called by Loop when we make a speed change.
@@ -2036,17 +1989,8 @@ void Synchronizer::loopSwitch(Loop* l, bool restart)
  */
 void Synchronizer::loopSpeedShift(Loop* l)
 {
-    if (isTransportMaster(l)) {
-        
-        Trace(l, 2, "Sync: loopSpeedShift\n");
-#if 0
-        Setup* setup = mMobius->getActiveSetup();
-        SyncAdjust mode = setup->getSpeedSyncAdjust();
-
-        if (mode == SYNC_ADJUST_TEMPO)
-          resizeOutSyncTracker();
-#endif    
-    }
+    int number = l->getTrack()->getDisplayNumber();
+    mSyncMaster->notifyTrackSpeed(number);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2068,8 +2012,8 @@ void Synchronizer::loopSpeedShift(Loop* l)
  */
 void Synchronizer::loopPause(Loop* l)
 {
-	if (isTransportMaster(l))
-      muteMidiStop(l);
+    int number = l->getTrack()->getDisplayNumber();
+    mSyncMaster->notifyTrackStop(number);
 }
 
 /**
@@ -2077,23 +2021,8 @@ void Synchronizer::loopPause(Loop* l)
  */
 void Synchronizer::loopResume(Loop* l)
 {
-	if (isTransportMaster(l)) {
-
-        Setup* setup = mMobius->getActiveSetup();
-        MuteSyncMode mode = setup->getMuteSyncMode();
-
-        if (mode == MUTE_SYNC_TRANSPORT ||
-            mode == MUTE_SYNC_TRANSPORT_CLOCKS) {
-            // we sent MS_STOP, now send MS_CONTINUE
-            //mTransport->midiContinue(l);
-            mSyncMaster->midiOutContinue();
-        }
-        else  {
-            // we just stopped sending clocks, resume them
-            // mTransport->startClocks(l);
-            mSyncMaster->midiOutStartClocks();
-        }
-	}
+    int number = l->getTrack()->getDisplayNumber();
+    mSyncMaster->notifyTrackResume(number);
 }
 
 /**
@@ -2106,35 +2035,8 @@ void Synchronizer::loopResume(Loop* l)
  */
 void Synchronizer::loopMute(Loop* l)
 {
-	if (isTransportMaster(l)) {
-
-		Preset* p = l->getPreset();
-		if (p->getMuteMode() == MUTE_START) 
-          muteMidiStop(l);
-	}
-}
-
-/**
- * After entering Mute or Pause modes, decide whether to send
- * MIDI transport commands and stop clocks.  This is controlled
- * by an obscure option MuteSyncMode.  This is for dumb devices
- * that don't understand STOP/START/CONTINUE messages.
- * 
- */
-void Synchronizer::muteMidiStop(Loop* l)
-{
-    (void)l;
-    Setup* setup = mMobius->getActiveSetup();
-    MuteSyncMode mode = setup->getMuteSyncMode();
-
-    bool transport = (mode == MUTE_SYNC_TRANSPORT ||
-                      mode == MUTE_SYNC_TRANSPORT_CLOCKS);
-    
-    bool clocks = (mode == MUTE_SYNC_CLOCKS ||
-                   mode == MUTE_SYNC_TRANSPORT_CLOCKS);
-
-    // mTransport->stop(l, transport, clocks);
-    mSyncMaster->midiOutStopSelective(transport, clocks);
+    int number = l->getTrack()->getDisplayNumber();
+    mSyncMaster->notifyTrackMute(number);
 }
 
 /**
@@ -2154,12 +2056,10 @@ void Synchronizer::muteMidiStop(Loop* l)
  */
 void Synchronizer::loopRestart(Loop* l)
 {
-	if (isTransportMaster(l)) {
-		Trace(l, 2, "Sync: loopRestart\n");
-        // we have historically tried to suppress a START message
-        // if were already near it
-        sendStart(l, true, true);
-	}
+    int number = l->getTrack()->getDisplayNumber();
+    // this one used the weird "checkNear" flag that isn't
+    // implemented by the SyncMaster interface, necessary?
+    mSyncMaster->notifyTrackRestart(number);
 }
 
 /**
@@ -2174,12 +2074,11 @@ void Synchronizer::loopRestart(Loop* l)
  */
 void Synchronizer::loopMidiStart(Loop* l)
 {
-	if (isTransportMaster(l)) {
-		// here we always send Start
-        // we have historically tried to suppress a START message
-        // if were already near it
-		sendStart(l, false, true);
-	}
+    int number = l->getTrack()->getDisplayNumber();
+    // this uses the "force" flag to bypass checking for manual
+    // start mode since we're here after they asked to do it manually
+    // this function really should be handled above Mobius?
+    mSyncMaster->notifyTrackRestart(number, true);
 }
 
 /**
@@ -2206,10 +2105,13 @@ void Synchronizer::loopMidiStart(Loop* l)
  */
 void Synchronizer::loopMidiStop(Loop* l, bool force)
 {
+    Trace(1, "Synchronizer::loopMidiStop How did we get here?");
+    #if 0
     if (force || (isTransportMaster(l))) {
         // mTransport->stop(l, true, false);
         mSyncMaster->midiOutStopSelective(true, false);
     }
+    #endif
 }
 
 /**
@@ -2221,11 +2123,8 @@ void Synchronizer::loopMidiStop(Loop* l, bool force)
  */
 void Synchronizer::loopSetStartPoint(Loop* l, Event* e)
 {
-    (void)e;
-    if (isTransportMaster(l)) {
-        Trace(l, 2, "Sync: loopChangeStartPoint\n");
-        sendStart(l, true, false);
-    }
+    int number = l->getTrack()->getDisplayNumber();
+    mSyncMaster->notifyTrackRestart(number);
 }
 
 /****************************************************************************

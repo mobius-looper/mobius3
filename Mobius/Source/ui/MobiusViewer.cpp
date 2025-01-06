@@ -240,18 +240,22 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
         view->lastFocusedTrack = view->focusedTrack;
     }
 
-    if (state != nullptr)
-      refreshAudioTracks(state, view);
+    bool tryBoth = false;
+    if (tryBoth) {
+        refreshAllTracks(sysstate, view);
+    }
+    else {
+        if (state != nullptr)
+          refreshAudioTracks(state, view);
 
-    // MIDI Tracks are glued onto the end of the audio tracks
-    refreshMidiTracks(sysstate, view);
+        refreshMidiTracks(sysstate, view);
+    }
 
     // so the display elements don't have to test for view->trackChanged
     // in addition to the element specific refresh flags, if at the end of refresh
     // trackChanged is set, force all the secondary flags on
     if (view->trackChanged)
       forceRefresh(view);
-    
 }
 
 /**
@@ -1047,6 +1051,65 @@ void MobiusViewer::addMinorMode(MobiusViewTrack* tview, const char* mode, int ar
 // MIDI Tracks
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * This is what we should be doing for all tracks as soon as core
+ * refreshes the new TrackState model properly.
+ */
+void MobiusViewer::refreshAllTracks(SystemState* state, MobiusView* view)
+{
+    // state changes along with the Session, but the view can lag
+    // if things got bigger, grow
+    if (view->midiTracks != state->midiTracks) {
+        Trace(2, "MobiusViewer: Adjusting MIDI track view to %d", state->midiTracks);
+        view->midiTracks = state->midiTracks;
+    }
+
+    if (view->audioTracks != state->audioTracks) {
+        Trace(2, "MobiusViewer: Adjusting audio tracks to %d", state->audioTracks);
+        view->audioTracks = state->audioTracks;
+    }
+    
+    // add new ones
+    int required = view->audioTracks + view->midiTracks;
+    while (required > view->tracks.size()) {
+        MobiusViewTrack *vt = new MobiusViewTrack();
+        vt->index = view->tracks.size();
+        view->tracks.add(vt);
+    }
+
+    // jump to the MIDI tracks
+    for (int i = 0 ; i < required ; i++) {
+
+        // sanity check before we start indexing
+        // neither of these should happen
+        if (i >= state->tracks.size()) {
+            Trace(1, "MobiusViewer: State track index overflow");
+        }
+        else if (i >= view->tracks.size()) {
+            Trace(1, "MobiusViewer: View track index overflow");
+        }
+        else {
+            TrackState* tstate = state->tracks[i];
+            MobiusViewTrack* tview = view->tracks[i];
+
+            refreshTrack(tstate, tview);
+        }
+    }
+
+    if (view->focusedTrack > 0) {
+        MobiusViewTrack* tview = view->tracks[view->focusedTrack];
+        if (tview == nullptr) {
+            Trace(1, "MobiusViewer: Track index overflow");
+        }
+        else {
+            FocusedTrackState* tstate = &(state->focusedState);
+            refreshRegions(tstate, tview);
+            refreshEvents(tstate, tview);
+            refreshLayers(tstate, tview);
+        }
+    }
+}
 
 /**
  * This currently refreshes only the state for MIDI tracks, but the model

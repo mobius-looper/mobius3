@@ -89,6 +89,13 @@ class SyncMaster
     void notifyTrackRecord(int id);
     void notifyTrackAvailable(int id);
     void notifyLoopLoad(int id);
+    void notifyTrackResize(int id);
+    void notifyTrackRestart(int id, bool force=false);
+    void notifyTrackSpeed(int number);
+    void notifyTrackStop(int number);
+    void notifyTrackResume(int number);
+    void notifyTrackMute(int number);
+
     int getBarFrames(Pulse::Source src);
     
     //////////////////////////////////////////////////////////////////////
@@ -270,4 +277,7 @@ class SyncMaster
 
     void setTrackSyncMaster(class UIAction* a);
     void setTransportMaster(class UIAction* a);
+    void sendStart(bool checkManual, bool checkNear);
+    void muteMidiStop();
+    
 };

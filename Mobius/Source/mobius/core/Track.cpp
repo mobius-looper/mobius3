@@ -775,6 +775,13 @@ void Track::refreshFocusedState(FocusedTrackState* s)
     // old core tracks do not support regions
 }
 
+void Track::refreshPriorityState(PriorityState* s)
+{
+    // this has transportBeat and transportBar
+    // it was intended for the three track beaters too
+    (void)s;
+}
+
 /**
  * Deposit state in the new model.
  */

@@ -166,9 +166,6 @@ class Track : public TraceContext
 	class Synchronizer* getSynchronizer();
     class EventManager* getEventManager();
 
-    // new way to export state
-    void refreshFocusedState(class FocusedTrackState* state);
-
 	int getLoopCount();
 	class Loop* getLoop(int index);
 	int getRawNumber();
@@ -185,6 +182,8 @@ class Track : public TraceContext
 	long getFrame();
     void getState(class OldMobiusTrackState* s);
     void refreshState(class TrackState* s);
+    void refreshPriorityState(class PriorityState* s);
+    void refreshFocusedState(class FocusedTrackState* state);
     
 	int getCurrentLevel();
 	//bool isTrackSyncMaster();

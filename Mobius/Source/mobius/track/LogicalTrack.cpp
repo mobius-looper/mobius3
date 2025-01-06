@@ -202,17 +202,12 @@ bool LogicalTrack::scheduleWait(MslWait* w)
 
 void LogicalTrack::refreshState(TrackState* state)
 {
-    // todo: both need to do this
-    if (trackType == Session::TypeMidi) {
-        track->refreshState(state);
-    }
+    track->refreshState(state);
 }
 
 void LogicalTrack::refreshPriorityState(PriorityState* state)
 {
-    if (trackType == Session::TypeMidi) {
-        track->refreshPriorityState(state);
-    }
+    track->refreshPriorityState(state);
 }
 
 void LogicalTrack::refreshFocusedState(FocusedTrackState* state)

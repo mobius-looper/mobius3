@@ -734,20 +734,6 @@ void MidiTrack::leaderMuteEnd(TrackProperties& props)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * This was a hack to refresh a few pieces of state that needed
- * to be faster than the goofy double buffered state refresh
- * it won't be necessary after SystemState is in place
- */
-#if 0
-void MidiTrack::refreshPriorityState(TrackState::Track* state)
-{
-    state->frames = recorder.getFrames();
-    state->frame = recorder.getFrame();
-    state->cycles = recorder.getCycles();
-}
-#endif
-
-/**
  * Calculate a number we can put in either the inputLevel or outputLevel
  * fields of the State.
  *
@@ -788,6 +774,8 @@ int MidiTrack::simulateLevel(int count)
 void MidiTrack::refreshPriorityState(PriorityState* state)
 {
     (void)state;
+    // in theory the three beaters could be here
+    // as well as the loop meter frame counter
 }
 
 void MidiTrack::refreshFocusedState(FocusedTrackState* state)
