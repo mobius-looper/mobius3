@@ -74,8 +74,9 @@ class Transport
     Pulse pulse;
 
     void correctBaseCounters();
-    int deriveTempo(int length);
-    float lengthToTempo(int length, int barCount, int beatsPerBar);
+    int deriveTempo(int tapFrames);
+    void resetLocation();
+    float lengthToTempo(int frames);
     void deriveUnitLength(float tempo);
     void deriveLocation(int oldUnit);
 
