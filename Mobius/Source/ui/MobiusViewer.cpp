@@ -251,6 +251,9 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
         refreshMidiTracks(sysstate, view);
     }
 
+    // dump the entire sync state over for now
+    view->syncState = sysstate->syncState;
+
     // so the display elements don't have to test for view->trackChanged
     // in addition to the element specific refresh flags, if at the end of refresh
     // trackChanged is set, force all the secondary flags on
@@ -1177,7 +1180,7 @@ void MobiusViewer::refreshMidiTracks(SystemState* state, MobiusView* view)
  */ 
 void MobiusViewer::refreshTrack(SystemState* state, TrackState* tstate, MobiusViewTrack* tview)
 {
-    tview->midi = true;
+    tview->midi = tstate->midi;
     tview->loopCount = tstate->loopCount;
     tview->activeLoop = tstate->activeLoop;
     
@@ -1393,6 +1396,9 @@ void MobiusViewer::refreshRegions(FocusedTrackState* tstate, MobiusViewTrack* tv
  *
  * Beats and bars have only been shown if the syncSource is SYNC_MIDI or SYNC_HOST
  * Old code only showed bars if syncUnit was SYNC_UNIT_BAR but now we always do both.
+ *
+ * !! This doesn't need to be duplicadted for every track.  Think about just
+ * sharing the SyncMasterState and letting each track remember the source.
  * 
  */
 void MobiusViewer::refreshSync(SystemState* state, TrackState* tstate, MobiusViewTrack* tview)

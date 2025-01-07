@@ -20,6 +20,7 @@
 #include "Pulse.h"
 #include "MidiRealizer.h"
 #include "MidiAnalyzer.h"
+#include "HostAnalyzer.h"
 #include "Transport.h"
 #include "SyncMasterState.h"
 
@@ -54,14 +55,18 @@ SyncMaster::~SyncMaster()
 void SyncMaster::initialize(MobiusKernel* k)
 {
     kernel = k;
-    // need this for the sample rate and alerts
+    // need for alerts, lame
     container = kernel->getContainer();
 
     // these are now dynamically allocated to reduce header file dependencies
     midiRealizer.reset(new MidiRealizer());
     midiAnalyzer.reset(new MidiAnalyzer());
+    hostAnalyzer.reset(new HostAnalyzer());
     pulsator.reset(new Pulsator(this));
     transport.reset(new Transport(this));
+
+    // reach out and touch the face of god
+    hostAnalyzer->initialize(container->getAudioProcessor());
 
     MidiManager* mm = container->getMidiManager();
     midiRealizer->initialize(this, mm);
@@ -498,6 +503,38 @@ void SyncMaster::setTransportMaster(UIAction* a)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * This must be called very early in the kernel block processing phase.
+ * It initializes the subcomponents for the call to advance() which
+ * happens after various things in the kernel, such as action handling.
+ *
+ * The decision whether to put something here or in advance() is vague.
+ * Basically this should only set things up for advance without thinking
+ * too hard, and advance does the interestingn work.
+ */
+void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
+{
+    // monitor changes to the sample rate once the audio device is pumping
+    // and adjust internal calculations
+    // this should come through MobiusAudioStream, that's where it lives
+    int newSampleRate = stream->getSampleRate();
+    if (newSampleRate != sampleRate)
+      refreshSampleRate(sampleRate);
+
+    // pull in the host information before we get very far
+    hostAnalyzer->advance(stream->getInterruptFrames());
+
+}
+
+void SyncMaster::refreshSampleRate(int rate)
+{
+    sampleRate = rate;
+    
+    hostAnalyzer->setSampleRate(rate);
+    transport->setSampleRate(rate);
+    midiRealizer->setSampleRate(rate);
+}
+
 void SyncMaster::advance(MobiusAudioStream* stream)
 {
     int frames = stream->getInterruptFrames();
@@ -509,12 +546,6 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     // after initialization, then the queue will get stuck and overflow, the maintenance
     // thread could monitor for a suspension of audio blocks and disable the queue
     enableEventQueue();
-
-    // monitor changes to the sample rate once the audio device is pumping
-    // and adjust internal calculations
-    int newSampleRate = container->getSampleRate();
-    if (newSampleRate != sampleRate)
-      refreshSampleRate(sampleRate);
     
     transport->advance(frames);
 
@@ -525,13 +556,6 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     // we can check it on every block, the granularity doesn't really matter
     // since it is based off millisecond time advance
     midiAnalyzer->checkClocks();
-}
-
-void SyncMaster::refreshSampleRate(int rate)
-{
-    sampleRate = rate;
-    transport->setSampleRate(rate);
-    midiRealizer->setSampleRate(rate);
 }
 
 /**
@@ -565,8 +589,10 @@ void SyncMaster::disableEventQueue()
  * There isn't anything about host/midi sync that is under the user's
  * control.
  */
-void SyncMaster::doAction(UIAction* a)
+bool SyncMaster::doAction(UIAction* a)
 {
+    bool handled = true;
+    
     Symbol* s = a->symbol;
 
     switch (s->id) {
@@ -602,9 +628,13 @@ void SyncMaster::doAction(UIAction* a)
             break;
 
         default:
-            Trace(1, "SyncMaster: Unhandled action %s", s->getName());
+            // don't whine about this, we may be just one of several
+            // potential LevelKernel action handlers
+            //Trace(1, "SyncMaster: Unhandled action %s", s->getName());
+            handled = false;
             break;
     }
+    return handled;
 }
 
 /**
@@ -645,8 +675,8 @@ bool SyncMaster::doQuery(Query* q)
  */
 void SyncMaster::refreshState(SyncMasterState* extstate)
 {
-    extstate->transport = states.transport;
-    extstate->host = states.host;
+    extstate->transport = *(transport->getState());
+    extstate->host = host;
 
     // Analyzer maintains it's own fields, it doesn't use SyncSourceState
     midiAnalyzer->getState(extstate->midi);
@@ -677,6 +707,11 @@ void SyncMaster::refreshPriorityState(PriorityState* pstate)
 int SyncMaster::getMilliseconds()
 {
     return juce::Time::getMillisecondCounter();
+}
+
+HostAudioTime* SyncMaster::getAudioTime()
+{
+    return hostAnalyzer->getAudioTime();
 }
 
 /**

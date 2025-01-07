@@ -193,11 +193,10 @@ int Transport::getTimelineFrame()
  * Capture the priority state from the transport.
  */
 void Transport::refreshPriorityState(PriorityState* state)
-{   
-    state->transportBar = barHit;
-    barHit = false;
-    state->transportBeat = beatHit;
-    beatHit = false;
+{
+    state->transportBeat = syncstate.beat;
+    state->transportBar = syncstate.bar;
+    state->transportLoop = syncstate.loop;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -206,6 +205,9 @@ void Transport::refreshPriorityState(PriorityState* state)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * does this "resume" or start from zero?
+ */
 void Transport::start()
 {
     syncstate.started = true;
@@ -215,6 +217,9 @@ void Transport::stop()
 {
     syncstate.started = false;
     syncstate.playFrame = 0;
+    syncstate.beat = 0;
+    syncstate.bar = 0;
+    syncstate.loop = 0;
 }
 
 void Transport::pause()
@@ -256,38 +261,44 @@ void Transport::advance(int frames)
     pulse.reset();
 
     if (syncstate.started) {
-        int masterBarFrames = syncstate.barFrames;
-        
-        if (syncstate.playFrame >= masterBarFrames) {
-            // bad dog, could wrap here but shouldn't be happening
-            Trace(1, "Transport: Play frame beyond the end");
-        }
-        else {
-            int newPlayFrame = syncstate.playFrame + frames;
-            if (newPlayFrame >= masterBarFrames) {
-                // todo: multiple bars and PulseLoop?
-                pulse.type = Pulse::PulseBar;
-                pulse.blockFrame = masterBarFrames - syncstate.playFrame;
-                newPlayFrame -= masterBarFrames;
-                if (newPlayFrame > masterBarFrames) {
-                    // something is off here, must be an extremely short block size
-                    Trace(1, "Transport: PlayFrame anomoly");
+
+        int newPlayFrame = syncstate.playFrame + frames;
+        if (newPlayFrame >= syncstate.unitFrames) {
+
+            // a unit has transpired
+            int blockOffset = syncstate.unitFrames - syncstate.playFrame;
+            if (blockOffset > frames)
+              Trace(1, "Transport: You suck at math");
+
+            syncstate.unit++;
+            syncstate.unitCounter++;
+
+            if (syncstate.unitCounter >= syncstate.unitsPerBeat) {
+
+                syncstate.unitCounter = 0;
+                syncstate.beat++;
+
+                if (syncstate.beat >= syncstate.beatsPerBar) {
+
+                    syncstate.beat = 0;
+                    syncstate.bar++;
+
+                    if (syncstate.bar >= syncstate.barsPerLoop) {
+
+                        syncstate.bar = 0;
+                        syncstate.loop++;
+
+                        pulse.type = Pulse::PulseLoop;
+                    }
+                    else {
+                        pulse.type = Pulse::PulseBar;
+                    }
                 }
-                syncstate.playFrame = newPlayFrame;
-                syncstate.beat = 0;
-                // for state refresh
-                barHit = true;
-            }
-            else if (framesPerBeat > 0) {
-                int newBeat = newPlayFrame / framesPerBeat;
-                if (newBeat != syncstate.beat) {
+                else {
                     pulse.type = Pulse::PulseBeat;
-                    int beatBase = newBeat * framesPerBeat;
-                    int beatOver = newPlayFrame - beatBase;
-                    pulse.blockFrame = frames - beatOver;
-                    syncstate.beat = newBeat;
-                    beatHit = true;
                 }
+                
+                pulse.blockFrame = blockOffset;
             }
         }
     }

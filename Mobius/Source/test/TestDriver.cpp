@@ -581,9 +581,9 @@ double TestDriver::getLastInterruptStreamTime()
     return 0.0f;
 }
 
-class AudioTime* TestDriver::getAudioTime()
+int TestDriver::getSampleRate()
 {
-    return nullptr;
+    return 44100;
 }
 
 //////////////////////////////////////////////////////////////////////

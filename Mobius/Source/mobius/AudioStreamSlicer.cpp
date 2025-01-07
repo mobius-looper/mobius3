@@ -84,10 +84,10 @@ double AudioStreamSlicer::getLastInterruptStreamTime()
     return 0.0f;
 }
     
-class AudioTime* AudioStreamSlicer::getAudioTime()
+int AudioStreamSlicer::getSampleRate()
 {
-    Trace(1, "AudioStreamSlicer::getAudioTime Unexpected call");
-    return nullptr;
+    Trace(1, "AudioStreamSlicer::getSampleRate Unexpected call");
+    return 44100;
 }
 
 /****************************************************************************/

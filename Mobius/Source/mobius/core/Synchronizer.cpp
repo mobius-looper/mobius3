@@ -2076,6 +2076,7 @@ void Synchronizer::loopMidiStop(Loop* l, bool force)
  */
 void Synchronizer::loopSetStartPoint(Loop* l, Event* e)
 {
+    (void)e;
     int number = l->getTrack()->getDisplayNumber();
     mSyncMaster->notifyTrackRestart(number);
 }

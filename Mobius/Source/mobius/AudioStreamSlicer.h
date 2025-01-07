@@ -39,7 +39,7 @@ class AudioStreamSlicer : public MobiusAudioStream
     juce::MidiBuffer* getMidiMessages() override;
     double getStreamTime() override;
     double getLastInterruptStreamTime() override;
-    class AudioTime* getAudioTime() override;
+    int getSampleRate() override;
 
   private:
 

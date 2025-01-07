@@ -10,7 +10,6 @@
 
 #include "Conditionals.h"
 #include "mobius/MobiusInterface.h"
-#include "HostSyncState.h"
 #include "PortAuthority.h"
 
 #ifdef USE_FFMETERS
@@ -54,7 +53,6 @@ class JuceAudioStream : public MobiusAudioStream
     
     double getStreamTime() override;
     double getLastInterruptStreamTime() override;
-    class AudioTime* getAudioTime() override;
     
 #ifdef USE_FFMETERS
     foleys::LevelMeterSource* getLevelMeterSource() {
@@ -72,13 +70,6 @@ class JuceAudioStream : public MobiusAudioStream
 
     PortAuthority portAuthority;
 
-    // maintains an analysis of host transport position for each block
-    HostSyncState syncState;
-    NewHostSyncState newSyncState;
-
-    // simplification of HostSyncState for Mobius
-    AudioTime audioTime;
-    
     // these are captured in prepareToPlay
     int preparedSamplesPerBlock = 0;
     double preparedSampleRate = 0.0f;
@@ -118,11 +109,4 @@ class JuceAudioStream : public MobiusAudioStream
     int getOptional(juce::Optional<uint64_t> thing);
     int getOptional(juce::Optional<double> thing);
 
-    void captureAudioTime(int blockSize);
-
-    // hacks for host sync debugging
-    bool traceppq = false;
-    double lastppq = -1.0f;
-    
-    
 };

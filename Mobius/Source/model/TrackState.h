@@ -201,6 +201,10 @@ class TrackState
     // canonical internal reference number
     int number = 0;
 
+    // flag indiciating this is a midi track
+    // should be a more general track type enumeration
+    bool midi = false;
+
     // from OldMobiusState, temporary
     int preset = 0;
         

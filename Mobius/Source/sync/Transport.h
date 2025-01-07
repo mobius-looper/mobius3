@@ -74,9 +74,6 @@ class Transport
 
     Pulse pulse;
 
-    bool beatHit = false;
-    bool barHit = false;
-
     bool metronomeEnabled = false;
     bool midiEnabled = false;
 

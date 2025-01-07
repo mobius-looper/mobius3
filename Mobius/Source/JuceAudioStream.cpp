@@ -94,6 +94,9 @@ void JuceAudioStream::setAudioListener(MobiusAudioListener* l)
 /**
  * Some parts of the synchronization system need to know the sample rate
  * in order to convert wall clock time to audio stream time.
+ *
+ * Juce gives us a float but I've always used this as an int.
+ * Under what circumstances would this have a fraction?
  */
 int JuceAudioStream::getSampleRate()
 {
@@ -122,20 +125,6 @@ double JuceAudioStream::getStreamTime()
 double JuceAudioStream::getLastInterruptStreamTime()
 {
     return 0.0;
-}
-
-/**
- * Return the object containing an analysis of the host transport time.
- * This will have been derived from AudioPlayHead by captureAudioTime
- * at the beginning of each audio block.
- */
-AudioTime* JuceAudioStream::getAudioTime()
-{
-    AudioTime* at = nullptr;
-    // only return this if we're a plugin and it has something to say
-    if (supervisor->isPlugin())
-      at = &audioTime;
-    return at;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -456,7 +445,8 @@ void JuceAudioStream::processBlockPlugin(juce::AudioBuffer<float>& buffer, juce:
 {
     processBlockCalls++;
 
-    captureAudioTime(buffer.getNumSamples());
+    // moved to sync/HostAnalyzer
+    //captureAudioTime(buffer.getNumSamples());
     //tracePlayHead();
     
     if (!audioPrepared) {
@@ -570,101 +560,6 @@ int JuceAudioStream::getOptional(juce::Optional<uint64_t> thing)
 int JuceAudioStream::getOptional(juce::Optional<double> thing)
 {
     return (thing.hasValue() ? (int)(*thing * 100) : -1);
-}
-
-/**
- * Called at the beginning of each audio block to convert state
- * from the AudioPlayHead into the AudioTime model used
- * by Synchronizer.
- *
- * See HostSyncState.cpp for more on the history of this.
- *
- * We start by feeding the state from the AudioHead through the
- * HostSyncState object which does analysis.  The results of that
- * analysis are then deposited in an AudioTime that will be returned
- * by MobiusAudioStream::getAudioTime when the Synchronizer is being used.
- */
-void JuceAudioStream::captureAudioTime(int blockSize)
-{
-    juce::AudioProcessor* processor = supervisor->getAudioProcessor();
-    juce::AudioPlayHead* head = processor->getPlayHead();
-
-    if (head != nullptr) {
-        juce::Optional<juce::AudioPlayHead::PositionInfo> pos = head->getPosition();
-        if (pos.hasValue()) {
-
-            bool isPlaying = pos->getIsPlaying();
-            
-            // haven't cared about getIsLooping in the past but that might be
-            // interesting to explore
-
-            // updateTempo needs: sampleRate, tempo, numerator, denominator
-            
-            // sample rate is expected to be an int, Juce gives
-            // us a double, under what conditions would this be fractional?
-            int sampleRate = (int)preparedSampleRate;
-
-            double tempo = 0.0;
-            juce::Optional<double> bpm = pos->getBpm();
-            if (bpm.hasValue()) tempo = *bpm;
-            
-            int tsigNumerator = 0;
-            int tsigDenominator = 0;
-            juce::Optional<juce::AudioPlayHead::TimeSignature> tsig = pos->getTimeSignature();
-            if (tsig.hasValue()) {
-                tsigNumerator = tsig->numerator;
-                tsigDenominator = tsig->denominator;
-            }
-
-            //syncState.updateTempo(sampleRate, tempo, tsigNumerator, tsigDenominator);
-            newSyncState.updateTempo(sampleRate, tempo, tsigNumerator, tsigDenominator);
-
-            // advance needs: frames, samplePosition, beatPosition,
-            // transportChanged, transportPlaying
-            
-            // transportChanged is an artifact of kVstTransportChanged in VST2
-            // and CallHostTransportState in AUv1 that don't seem to exist in
-            // VST3 and AU3
-            // so we can keep using the old HostSyncState code, derive transportChanged by
-            // comparing isPlaying to the last value
-            //bool transportChanged = isPlaying != syncState.isPlaying();
-
-            // samplePosition was only used for transport detection in old hosts
-            // that didn't support kVstTransportChanged, shouldn't need that any more
-            // but we can pass it anyway.  For reasons I don't remember samplePosition
-            // was a double, but getTimeInSamples is an int, shouldn't matter
-            double samplePosition = 0.0;
-            juce::Optional<int64_t> tis = pos->getTimeInSamples();
-            if (tis.hasValue()) samplePosition = (double)(*tis);
-            
-            // beatPosition is what is called "ppq position" everywhere else
-            double beatPosition = 0.0;
-            juce::Optional<double> ppq = pos->getPpqPosition();
-            if (ppq.hasValue()) beatPosition = *ppq;
-
-            if (traceppq) {
-                int lastq = (int)lastppq;
-                int newq = (int)beatPosition;
-                if (lastq != newq)
-                  Trace(2, "JAS: beat %d", newq);
-                lastppq = beatPosition;
-            }
-
-            // HostSyncState never tried to use "bar" information from the host
-            // because it was so unreliable as to be useless, things may have
-            // changed by now.  It will try to figure that out it's own self,
-            // would be good to verify that it matches what Juce says...
-            
-            //syncState.advance(blockSize, samplePosition, beatPosition,
-            //transportChanged, isPlaying);
-            
-            newSyncState.advance(blockSize, isPlaying, samplePosition, beatPosition);
-
-            // now dump that mess into an AudioTime for Mobius
-            //syncState.transfer(&audioTime);
-            newSyncState.transfer(&audioTime);
-        }
-    }
 }
 
 /****************************************************************************/

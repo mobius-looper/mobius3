@@ -655,6 +655,9 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     mCore->beginAudioBlock(stream);
 
     // SyncMaster prepares pulses
+    // thought we might need to separate this into a begin/advance phases
+    // but we don't really need to
+    syncMaster.beginAudioBlock(stream);
     syncMaster.advance(stream);
     
     // won't be necessary once we stop queuing actions
@@ -1215,10 +1218,18 @@ void MobiusKernel::doKernelAction(UIAction* action)
     }
     else {
         switch (symbol->id) {
+
             case FuncSamplePlay: playSample(action); break;
-            default:
-                Trace(1, "MobiusKernel::doAction Unknwon action symbol id %s %ld\n",
-                      symbol->getName(), (long)symbol->id);
+                
+            default: {
+                // SyncMaster has a few
+                if (!syncMaster.doAction(action)) {
+                    
+                    Trace(1, "MobiusKernel::doAction Unknwon action symbol %s",
+                          symbol->getName());
+                }
+            }
+                break;
         }
     }
 }

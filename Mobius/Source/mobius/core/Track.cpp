@@ -787,6 +787,7 @@ void Track::refreshPriorityState(PriorityState* s)
  */
 void Track::refreshState(TrackState* s)
 {
+    s->midi = false;
     s->number = mRawNumber + 1;
 	s->preset = mPreset->ordinal;
     s->inputMonitorLevel = mInput->getMonitorLevel();

@@ -35,7 +35,7 @@ class NewHostSyncState {
      */
     void advance(int frames, bool transportPlaying, double samplePosition, double beatPosition);
 
-    void transfer(AudioTime* autime);
+    void transfer(class HostAudioTime* autime);
     
   private:
 
@@ -86,13 +86,20 @@ class NewHostSyncState {
     
 };
 
+///////////////////////////////////////////////////////////////////////
+//
+// The first varient I started using during the Juce port
+// Don't remember why this was deprecated but it hasn't been used in awhile
+//
+///////////////////////////////////////////////////////////////////////
 
-class HostSyncState {
+
+class OldHostSyncState {
 
   public:
-
-    HostSyncState();
-    ~HostSyncState();
+    
+    OldHostSyncState();
+    ~OldHostSyncState();
 
     // temporary: maintain this in parallel for awhile
     NewHostSyncState newState;
@@ -118,7 +125,7 @@ class HostSyncState {
     /**
      * Transfer our internal state into an AudioTime for the plugin.
      */
-    void transfer(class AudioTime* autime);
+    void transfer(class HostAudioTime* autime);
 
     /**
      * new: so we can implement the transportChanged flag since
@@ -316,3 +323,6 @@ class HostSyncState {
 
 };
 
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

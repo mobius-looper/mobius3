@@ -363,6 +363,8 @@ class MobiusContainer
 
     /**
      * General information about the audio stream.
+     * This can also be accessed through MobiusAudioStream but it can be
+     * necessary before the stream is initialized.
      */
     virtual int getSampleRate() = 0;
     virtual int getBlockSize() = 0;
@@ -447,7 +449,10 @@ class MobiusContainer
 
     // another weird hole for MidiRealizer, compare with MobiusListener::mobiusAlert and combine
     virtual void addAlert(juce::String msg) = 0;
-    
+
+    // only for SyncMaster/HostAnalyzer
+    virtual juce::AudioProcessor* getAudioProcessor() = 0;
+
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -771,6 +776,11 @@ class MobiusAudioStream
     virtual ~MobiusAudioStream() {}
 
     /**
+     * Return the current sample rate.
+     */
+    virtual int getSampleRate() = 0;
+
+    /**
      * The number of frames in the next audio block.
      * This is long for historical reasons, it doesn't need to be because int and long
      * are the same size.
@@ -800,98 +810,6 @@ class MobiusAudioStream
     // probaby not necessary
     virtual double getStreamTime() = 0;
     virtual double getLastInterruptStreamTime() = 0;
-
-
-    /**
-     * This is the important part for synchronization.
-     * I don't remember why getStreamTime and getLastInterruptStreamTime
-     * were there.
-     */
-    virtual class AudioTime* getAudioTime() = 0;
-
-};
-
-/**
- * An older model that sat between Synchronizer and VstTimeInfo.
- * This is now constructed by HostSyncState.
- */
-class AudioTime {
-
-  public:
-
-	/**
-	 * Host tempo.
-	 */
-	double tempo = 0.0;
-
-	/**
-	 * The "beat position" of the current audio buffer.
-     * 
-	 * For VST hosts, this is VstTimeInfo.ppqPos.
-	 * It starts at 0.0 and increments by a fraction according
-	 * to the tempo.  When it crosses a beat boundary the integrer
-     * part is incremented.
-     *
-     * For AU host the currentBeat returned by CallHostBeatAndTempo
-     * works the same way.
-	 */
-	double beatPosition = -1.0;
-
-	/**
-	 * True if the host transport is "playing".
-	 */
-	bool playing = false;
-
-	/**
-	 * True if there is a beat boundary in this buffer.
-	 */
-	bool beatBoundary = false;
-
-	/**
-	 * True if there is a bar boundary in this buffer.
-	 */
-	bool barBoundary = false;
-
-	/**
-	 * Frame offset to the beat/bar boundary in this buffer.
-     * note: this never worked right and it will always be zero
-     * see extensive comments in HostSyncState
-	 */
-	int boundaryOffset = 0;
-
-	/**
-	 * Current beat.
-	 */
-	int beat = 0;
-
-	/**
-	 * Current bar.
-     * This is the bar the host provides if it can.
-     * For pattern-based hosts like FL Studio the bar may stay at zero all the time.
-	 */
-	int bar;
-
-    /**
-     * Number of beats in one bar.  If zero it is undefined, beat should
-     * increment without wrapping and bar should stay zero.
-     * Most hosts can convey the transport time signature but not all do.
-     */
-    int beatsPerBar = 0;
-
-    // TODO: also capture host time signture if we can
-    // may need some flags to say if it is reliable
-
-	void init() {
-		tempo = 0.0;
-		beatPosition = -1.0;
-		playing = false;
-		beatBoundary = false;
-		barBoundary = false;
-		boundaryOffset = 0;
-		beat = 0;
-		bar = 0;
-        beatsPerBar = 0;
-	}
 
 };
 

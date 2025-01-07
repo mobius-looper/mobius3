@@ -92,12 +92,19 @@ int TransportElement::getPreferredHeight()
 
 void TransportElement::highRefresh(PriorityState* s)
 {
-    if (s->transportBar) {
+    if (s->transportLoop != lastLoop) {
         light.flash(juce::Colours::red);
     }
-    else if (s->transportBeat) {
+    else if (s->transportBar != lastBar) {
         light.flash(juce::Colours::yellow);
     }
+    else if (s->transportBeat != lastBeat) {
+        light.flash(juce::Colours::green);
+    }
+
+    lastBeat = s->transportBeat;
+    lastBar = s->transportBar;
+    lastLoop = s->transportLoop;
 }
 
 void TransportElement::update(class MobiusView* v)
@@ -106,9 +113,10 @@ void TransportElement::update(class MobiusView* v)
     // only needed this to test flashing
     //tempo.advance();
 
-    // gak, need work out where this comes from...
-    //float ftempo = v->metronome.syncTempo;
-    float ftempo = 120.0f;
+    // todo: SourceMidi has the notion of the raw and "smooth" tempo
+    // figure out which one to show
+    
+    float ftempo = v->syncState.transport.tempo;
     
     // trunicate to two decimal places to prevent excessive
     // fluctuations

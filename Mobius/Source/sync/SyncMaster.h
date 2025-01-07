@@ -48,8 +48,9 @@ class SyncMaster
     void loadSession(class Session* s);
     void shutdown();
 
+    void beginAudioBlock(class MobiusAudioStream* stream);
     void advance(class MobiusAudioStream* stream);
-    void doAction(class UIAction* a);
+    bool doAction(class UIAction* a);
     bool doQuery(class Query* q);
     void refreshState(class SyncMasterState* s);
     void refreshPriorityState(class PriorityState* s);
@@ -83,6 +84,8 @@ class SyncMaster
     //
     
     int getMilliseconds();
+    class HostAudioTime* getAudioTime();
+    
     void sendAlert(juce::String msg);
 
     void notifyTrackReset(int id);
@@ -261,11 +264,12 @@ class SyncMaster
     int sampleRate = 44100;
     int trackSyncMaster = 0;
     int transportMaster = 0;
-    
-    SyncMasterState states;
+
+    SyncSourceState host;
     
     std::unique_ptr<class MidiRealizer> midiRealizer;
     std::unique_ptr<class MidiAnalyzer> midiAnalyzer;
+    std::unique_ptr<class HostAnalyzer> hostAnalyzer;
     std::unique_ptr<class Pulsator> pulsator;
     std::unique_ptr<class Transport> transport;
     

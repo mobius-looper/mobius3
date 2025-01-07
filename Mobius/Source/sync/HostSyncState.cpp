@@ -1,6 +1,6 @@
 /**
  * Utility class that sits between the plugin host and it's notion
- * of timekeeping, and the Mobius Synchronizer.
+ * of timekeeping, and the Mobius SyncMaster.
  *
  * JuceAudioStream handles interaction with the Juce objects to dig out
  * most of the available information from the AudioPlayHead and calls
@@ -121,11 +121,9 @@
  *
  */
 
-#include "util/Trace.h"
+#include "../util/Trace.h"
 
-// for AudioTime
-#include "mobius/MobiusInterface.h"
-
+#include "HostAudioTime.h"
 #include "HostSyncState.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -425,7 +423,7 @@ void NewHostSyncState::advance(int frames,
     mBarBoundary = onBar;
 }      
 
-void NewHostSyncState::transfer(AudioTime* autime)
+void NewHostSyncState::transfer(HostAudioTime* autime)
 {
 	autime->tempo = mTempo;
     autime->beatPosition = mLastBeatPosition;
@@ -443,6 +441,8 @@ void NewHostSyncState::transfer(AudioTime* autime)
 //
 // Old Implementation
 //
+// Not sure why I kept this, but it hasn't been used for awhile
+//
 //////////////////////////////////////////////////////////////////////
 
 /**
@@ -457,7 +457,7 @@ void NewHostSyncState::transfer(AudioTime* autime)
  * in a very small "unknown" state at the beginning.  Feels better just
  * to assum we're at zero?
  */
-HostSyncState::HostSyncState()
+OldHostSyncState::OldHostSyncState()
 {
 	// changes to stream state
 	mTraceChanges = true;
@@ -499,7 +499,7 @@ HostSyncState::HostSyncState()
     mLastBaseBeat = 0;
 }
 
-HostSyncState::~HostSyncState()
+OldHostSyncState::~OldHostSyncState()
 {
 }
 
@@ -508,7 +508,7 @@ HostSyncState::~HostSyncState()
  * treatment before resurrecting it.
  */
 #if 0
-void HostSyncState::setHost(HostConfigs* config)
+void OldHostSyncState::setHost(HostConfigs* config)
 {
 	if (config != NULL) {
         mHostRewindsOnResume = config->isRewindsOnResume();
@@ -518,7 +518,7 @@ void HostSyncState::setHost(HostConfigs* config)
 }
 #endif
 
-void HostSyncState::setHostRewindsOnResume(bool b)
+void OldHostSyncState::setHostRewindsOnResume(bool b)
 {
 	mHostRewindsOnResume = b;
 }
@@ -527,9 +527,9 @@ void HostSyncState::setHostRewindsOnResume(bool b)
  * Export our sync state to an AudioTime.
  * There is model redundancy here, but I don't want
  * AudioTime to contain the method implementations and there
- * is more state we need to keep in HostSyncState.
+ * is more state we need to keep in OldHostSyncState.
  */
-void HostSyncState::transfer(AudioTime* autime)
+void OldHostSyncState::transfer(HostAudioTime* autime)
 {
 	autime->tempo = mTempo;
     autime->beatPosition = mLastBeatPosition;
@@ -545,7 +545,7 @@ void HostSyncState::transfer(AudioTime* autime)
 /**
  * Update tempo state.
  */
-void HostSyncState::updateTempo(int sampleRate, double tempo, 
+void OldHostSyncState::updateTempo(int sampleRate, double tempo, 
                                 int numerator,  int denominator)
 {
     bool tempoChanged = false;
@@ -624,7 +624,7 @@ void HostSyncState::updateTempo(int sampleRate, double tempo,
  * new: Juce may do the transport detection now...
  *
  */
-void HostSyncState::advance(int frames, 
+void OldHostSyncState::advance(int frames, 
                             double newSamplePosition, 
                             double newBeatPosition,
                             bool transportChanged, 
@@ -872,7 +872,7 @@ void HostSyncState::advance(int frames,
 /**
  * Update state related to host transport changes.
  */
-void HostSyncState::updateTransport(double samplePosition, 
+void OldHostSyncState::updateTransport(double samplePosition, 
                                     double beatPosition,
                                     bool transportChanged, 
                                     bool transportPlaying)

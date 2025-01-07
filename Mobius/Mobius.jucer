@@ -12,6 +12,13 @@
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
       <GROUP id="{17D1AD70-C175-4456-F59E-2C7879A600B9}" name="sync">
         <FILE id="RXCW17" name="Follower.h" compile="0" resource="0" file="Source/sync/Follower.h"/>
+        <FILE id="N1Ldzj" name="HostAnalyzer.cpp" compile="1" resource="0"
+              file="Source/sync/HostAnalyzer.cpp"/>
+        <FILE id="AIzaaJ" name="HostAnalyzer.h" compile="0" resource="0" file="Source/sync/HostAnalyzer.h"/>
+        <FILE id="M2Rsr6" name="HostAudioTime.h" compile="0" resource="0" file="Source/sync/HostAudioTime.h"/>
+        <FILE id="hKyKNC" name="HostSyncState.cpp" compile="1" resource="0"
+              file="Source/sync/HostSyncState.cpp"/>
+        <FILE id="T4wVw2" name="HostSyncState.h" compile="0" resource="0" file="Source/sync/HostSyncState.h"/>
         <FILE id="AvwHPv" name="Leader.h" compile="0" resource="0" file="Source/sync/Leader.h"/>
         <FILE id="xCfCPz" name="MidiAnalyzer.cpp" compile="1" resource="0"
               file="Source/sync/MidiAnalyzer.cpp"/>
@@ -951,9 +958,6 @@
             file="Source/DiagnosticWindow.h"/>
       <FILE id="rjWkvK" name="FileManager.cpp" compile="1" resource="0" file="Source/FileManager.cpp"/>
       <FILE id="IggUul" name="FileManager.h" compile="0" resource="0" file="Source/FileManager.h"/>
-      <FILE id="YEqlIy" name="HostSyncState.cpp" compile="1" resource="0"
-            file="Source/HostSyncState.cpp"/>
-      <FILE id="cNUiA8" name="HostSyncState.h" compile="0" resource="0" file="Source/HostSyncState.h"/>
       <FILE id="vM6WFT" name="JuceAudioStream.cpp" compile="1" resource="0"
             file="Source/JuceAudioStream.cpp"/>
       <FILE id="biIlCl" name="JuceAudioStream.h" compile="0" resource="0"

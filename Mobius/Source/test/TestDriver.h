@@ -72,7 +72,7 @@ class TestDriver : public MobiusListener, public MobiusAudioListener, public Mob
     
     double getStreamTime() override;
     double getLastInterruptStreamTime() override;
-    class AudioTime* getAudioTime() override;
+    int getSampleRate() override;
 
     // serious hackery for AudioDifferencer
     class AudioPool* getAudioPool();

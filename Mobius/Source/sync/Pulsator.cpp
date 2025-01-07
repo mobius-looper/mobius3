@@ -19,6 +19,7 @@
 #include "MidiRealizer.h"
 #include "Transport.h"
 //#include "MidiQueue.h"
+#include "HostAudioTime.h"
 #include "SyncMaster.h"
 
 #include "Pulsator.h"
@@ -82,7 +83,7 @@ void Pulsator::interruptStart(MobiusAudioStream* stream)
 
     reset();
     
-    gatherHost(stream);
+    gatherHost();
     gatherMidi();
     gatherTransport();
 
@@ -220,10 +221,10 @@ void Pulsator::trace(Pulse& p)
  * so small not to matter though and it will balance out because both the start
  * and end pulses of a loop will be delayed by similar amounts.
  */
-void Pulsator::gatherHost(MobiusAudioStream* stream)
+void Pulsator::gatherHost()
 {
-    // this will come back nullptr if we're not a plugin
-	AudioTime* hostTime = stream->getAudioTime();
+    HostAudioTime* hostTime = syncMaster->getAudioTime();
+
     if (hostTime != nullptr) {
 		host.beat = hostTime->beat;
         host.bar = hostTime->bar;

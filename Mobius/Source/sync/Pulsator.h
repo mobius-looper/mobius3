@@ -150,7 +150,7 @@ class Pulsator
     void reset();
     void advance(int blockFrames);
     
-    void gatherHost(class MobiusAudioStream* stream);
+    void gatherHost();
     void gatherMidi();
     bool detectMidiBeat(class MidiSyncEvent* mse, Pulse::Source src, Pulse* pulse);
 
