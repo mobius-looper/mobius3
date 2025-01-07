@@ -112,6 +112,10 @@ class MidiQueue
 	 */
 	int songClock = 0;
 
+    void setTraceEnabled(bool b) {
+        traceEnabled = b;
+    }
+    
   private:
 
     MidiSyncEvent* reserveEvent();
@@ -176,6 +180,9 @@ class MidiQueue
 	 * This is It is recalcualted whenever songClock changes.
 	 */
 	int beatClock = 0;
+
+
+    bool traceEnabled = false;
 
 };
 

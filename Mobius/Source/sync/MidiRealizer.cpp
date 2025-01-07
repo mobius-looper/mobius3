@@ -184,26 +184,6 @@ void MidiRealizer::shutdown()
     stopThread();
 }
 
-/**
- * Allow enabling and disabling of MidiSyncEvents in both
- * queues in cases where Mobius/Synchronizer may not be responding
- * and we don't want to overflow the event buffer.
- */
-void MidiRealizer::disableEvents()
-{
-    outputQueue.setEnableEvents(false);
-}
-
-void MidiRealizer::enableEvents()
-{
-    outputQueue.setEnableEvents(true);
-}
-
-void MidiRealizer::flushEvents()
-{
-    outputQueue.flushEvents();
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // MIDI Clock Thread
@@ -718,17 +698,48 @@ int MidiRealizer::getSongClock()
 	return outputQueue.songClock;
 }
 
-MidiSyncEvent* MidiRealizer::nextEvent()
+//////////////////////////////////////////////////////////////////////
+//
+// Event Consumption
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiRealizer::setTraceEnabled(bool b)
+{
+    outputQueue.setTraceEnabled(b);
+}
+
+/**
+ * Allow enabling and disabling of MidiSyncEvents in both
+ * queues in cases where Mobius/Synchronizer may not be responding
+ * and we don't want to overflow the event buffer.
+ */
+void MidiRealizer::enableEvents()
+{
+    outputQueue.setEnableEvents(true);
+}
+
+void MidiRealizer::disableEvents()
+{
+    outputQueue.setEnableEvents(false);
+}
+
+void MidiRealizer::flushEvents()
+{
+    outputQueue.flushEvents();
+}
+
+MidiSyncEvent* MidiRealizer::popEvent()
 {
     return outputQueue.popEvent();
 }
 
-void MidiRealizer::iterateStart()
+void MidiRealizer::startEventIterator()
 {
     outputQueue.iterateStart();
 }
 
-MidiSyncEvent* MidiRealizer::iterateNext()
+MidiSyncEvent* MidiRealizer::nextEvent()
 {
     return outputQueue.iterateNext();
 }

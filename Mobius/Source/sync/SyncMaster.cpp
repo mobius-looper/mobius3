@@ -546,10 +546,13 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     // after initialization, then the queue will get stuck and overflow, the maintenance
     // thread could monitor for a suspension of audio blocks and disable the queue
     enableEventQueue();
-    
+
     transport->advance(frames);
 
     pulsator->interruptStart(stream);
+
+    // see commentary about why this is complicated
+    transport->checkDrift();
 
     // Supervisor formerly called this on the maintenance thread
     // interval, since we don't get a performMaintenance ping down here
@@ -870,17 +873,13 @@ int SyncMaster::getBar(Pulse::Source src)
 }
 
 /**
- * This is the main way that the old Synchronizer injects sync events
- * into the Track event timeline.
+ * Return the relevant block pulse for a follower.
+ * e.g. don't return Beat if the follower wants Bar
+ * Used by TimeSlicer to slice the block around pulses.
  */
-Pulse* SyncMaster::getBlockPulse(Pulse::Source src)
-{
-    return pulsator->getBlockPulse(src);
-}
-
 Pulse* SyncMaster::getBlockPulse(Follower* f)
 {
-    return pulsator->getBlockPulse(f);
+    return pulsator->getRelevantBlockPulse(f);
 }
 
 //////////////////////////////////////////////////////////////////////

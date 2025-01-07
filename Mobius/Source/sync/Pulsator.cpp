@@ -105,51 +105,15 @@ void Pulsator::interruptStart(MobiusAudioStream* stream)
  */
 void Pulsator::reset()
 {
-    host.pulse.source = Pulse::SourceNone;
-    midiIn.pulse.source = Pulse::SourceNone;
-    midiOut.pulse.source = Pulse::SourceNone;
-    transport.pulse.source = Pulse::SourceNone;
+    midiIn.pulse.reset();
+    midiOut.pulse.reset();
+    host.pulse.reset();
+    transport.pulse.reset();
     
     // this is where pending pulses that were just over the last block
     // are activated for this block
     for (auto leader : leaders)
       leader->reset();
-}
-
-/**
- * After interruptStart(*) has done it's analysis, return the Pulse
- * within this block for the given sync source.
- * This is the interface used by the old Synchronizer.  Newer MidiTracks get
- * to it with the leader/follower interfaces.
- */
-Pulse* Pulsator::getBlockPulse(Pulse::Source src)
-{
-    Pulse* pulse = nullptr;
-    
-    switch (src) {
-        case Pulse::SourceTransport:
-        case Pulse::SourceMaster: {
-            Transport* t = syncMaster->getTransport();
-            pulse = t->getPulse();
-        }
-            break;
-            
-        case Pulse::SourceMidi: {
-            if (midiIn.pulse.source != Pulse::SourceNone)
-              pulse = &(midiIn.pulse);
-        }
-            break;
-            
-        case Pulse::SourceHost: {
-            if (host.pulse.source != Pulse::SourceNone)
-              pulse = &(host.pulse);
-        }
-            break;
-
-        default: break;
-    }
-
-    return pulse;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -163,6 +127,7 @@ void Pulsator::trace()
     if (host.pulse.source != Pulse::SourceNone) trace(host.pulse);
     if (midiIn.pulse.source != Pulse::SourceNone) trace(midiIn.pulse);
     if (midiOut.pulse.source != Pulse::SourceNone) trace(midiOut.pulse);
+    if (transport.pulse.source != Pulse::SourceNone) trace(transport.pulse);
     for (auto leader : leaders) {
         if (leader->pulse.source != Pulse::SourceNone)
           trace(leader->pulse);
@@ -299,44 +264,46 @@ void Pulsator::gatherHost()
  * Assimilate queued MIDI realtime events from the MIDI transport.
  *
  * Old code generated events for each MIDI clock and there could be more than
- * one per block.  Now, we only care about beat pulses and stop if we find one.
+ * one per block.  Now, we only care about beat pulses.
  */
 void Pulsator::gatherMidi()
 {
+    midiIn.pulse.reset();
+    midiOut.pulse.reset();
+    
     MidiAnalyzer* analyzer = syncMaster->getMidiAnalyzer();
-
-    analyzer->iterateStart();
-    MidiSyncEvent* mse = analyzer->iterateNext();
+    analyzer->startEventIterator();
+    MidiSyncEvent* mse = analyzer->nextEvent();
     while (mse != nullptr) {
-        if (detectMidiBeat(mse, Pulse::SourceMidi, &(midiIn.pulse)))
-          break;
-        else
-          mse = analyzer->iterateNext();
+        detectMidiBeat(mse, Pulse::SourceMidi, &(midiIn.pulse));
+        mse = analyzer->nextEvent();
     }
+    analyzer->flushEvents();
 
-    // this is actually not used any more, things don't sync directly
-    // with the clock generator, they sync with the Transport
+    // the output events aren't used directly any more, but Transport
+    // needs them for drift detection
     MidiRealizer* realizer = syncMaster->getMidiRealizer();
-    realizer->iterateStart();
-    mse = realizer->iterateNext();
+    realizer->startEventIterator();
+    mse = realizer->nextEvent();
     while (mse != nullptr) {
-        if (detectMidiBeat(mse, Pulse::SourceMaster, &(midiOut.pulse)))
-          break;
-        else
-          mse = realizer->iterateNext();
+        detectMidiBeat(mse, Pulse::SourceMaster, &(midiOut.pulse));
+        mse = realizer->nextEvent();
     }
+    realizer->flushEvents();
 }
 
 /**
  * Convert a MidiSyncEvent from the MidiRealizer into a beat pulse.
  * todo: this is place where we should try to offset the event into the buffer
- * to make it align more accurately when real time.
+ * to make it align more accurately with real time.
  *
- * Note that here the MidiSyncEvent capture it's own millisecond counter so we
+ * Note that MidiSyncEvent captured it's own millisecond counter so we
  * don't use the one we got at the start of this block.
  */
 bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Pulse::Source src, Pulse* pulse)
 {
+    // not expecting more than one now that we don't return clocks
+    bool alreadyDetected = (pulse->source != Pulse::SourceNone);
     bool detected = false;
     
     if (mse->isStop) {
@@ -384,6 +351,11 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Pulse::Source src, Pulse* puls
         int bpb = syncMaster->getBeatsPerBar(src);
         if (bpb > 0 && ((pulse->beat % bpb) == 0))
           pulse->type = Pulse::PulseBar;
+    }
+
+    if (detected && alreadyDetected) {
+        // not expecting this to happen if we're only pulsing beats
+        Trace(1, "Pulsator: Pulse overflow");
     }
     
 	return detected;
@@ -808,129 +780,85 @@ void Pulsator::unfollow(int followerId)
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Pulse Detection
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
- * Called by a follower at the beginning of it's block advance
- * to see if there were any sync pulses in this block.
- *
- * This interface uses the pulse type that was registered with follow()
- * The other one allows the follower to pass in a pulse type which may change
- * between start and lock.  Don't need both, probably just the second one.
+ * Return the block pulse for the internal clock generator.
+ * This is not a Pulse source any more, it is used only by the Transport.
  */
-int Pulsator::getPulseFrame(int followerId)
+Pulse* Pulsator::getOutBlockPulse()
 {
-    int frame = -1;
-    
-    Follower* f = getFollower(followerId);
-    if (f != nullptr) {
-        frame = getPulseFrame(followerId, f->type);
-    }
-    return frame;
+    Pulse* pulse = &(midiOut.pulse);
+    // only if active
+    if (pulse->source == Pulse::SourceNone || pulse->pending)
+      pulse = nullptr;
+    return pulse;
 }
 
-int Pulsator::getPulseFrame(int followerId, Pulse::Type type)
+/**
+ * Return the pulse tracking object for a particular source.
+ */
+Pulse* Pulsator::getPulseObject(Pulse::Source source, int leader)
 {
-    int frame = -1;
-    
-    Follower* f = getFollower(followerId);
-    if (f != nullptr) {
+    Pulse* pulse = nullptr;
 
-        // once the follower is locked, you can't change the source out
-        // from under it
-        Pulse::Source source = f->source;
-        int leader = 0;
-        if (f->lockedSource != Pulse::SourceNone) {
-            source = f->lockedSource;
-            leader = f->lockedLeader;
-        }
-        else if (f->source == Pulse::SourceLeader) {
-            leader = f->leader;
-            if (leader == 0)
-              leader = syncMaster->getTrackSyncMaster();
-        }
-
-        // special case, if the leader is the follower, it means we couldn't find
-        // a leader after starting which means it self-leads and won't have pulses
-        if (leader != followerId) {
-        
-            switch (source) {
-                case Pulse::SourceNone: /* nothing to say */ break;
-                case Pulse::SourceMidi: frame = getPulseFrame(&(midiIn.pulse), type); break;
-                case Pulse::SourceMaster: frame = getPulseFrame(&(midiOut.pulse), type); break;
-                case Pulse::SourceHost: frame = getPulseFrame(&(host.pulse), type); break;
-                case Pulse::SourceLeader: {
-
-                    // leader can be zero here if there was no track sync leader
-                    // in which case there won't be a pulse
-                    // don't call getLeader with zero or it traces an error
-                    if (leader > 0) {
-                        Leader* l = getLeader(leader);
-                        if (l != nullptr) {
-                            frame = getPulseFrame(&(l->pulse), type);
-                        }
-                    }
-                }
-                    break;
+    switch (source) {
+        case Pulse::SourceNone:
+            break;
                     
-                case Pulse::SourceTransport: {
-                    Trace(1, "Pulsator::getPulseFrame for Transport not implemented");
+        case Pulse::SourceMidi:
+            pulse = &(midiIn.pulse);
+            break;
+                    
+        case Pulse::SourceHost:
+            pulse = &(host.pulse);
+            break;
+                    
+        case Pulse::SourceMaster: 
+        case Pulse::SourceTransport:
+            pulse = &(transport.pulse);
+            break;
+                    
+        case Pulse::SourceLeader: {
+            // leader can be zero here if there was no track sync leader
+            // in which case there won't be a pulse
+            // don't call getLeader with zero or it traces an error
+            if (leader > 0) {
+                Leader* l = getLeader(leader);
+                if (l != nullptr) {
+                    pulse = &(l->pulse);
                 }
-                    break;
             }
         }
+            break;
     }
-    return frame;
+
+    return pulse;
 }
 
 /**
- * Test to see if a pulse was detected and if it was
- * a given type.
- *
- * The Pulse from the source will be Beat, Bar or Loop.
- * When the pulse type of the follower is smaller than the
- * source pulse it matches even though the types aren't exact.
- *
- * For example is something is following Beat pulses, it will
- * also match Bar or Loop pulses from the source since those
- * are always beats.
- *
- * For track sync, Bar also matches Loop.
- *
+ * Return the pulse object for a source if it is active in this block.
  */
-int Pulsator::getPulseFrame(Pulse* p, Pulse::Type followType)
+Pulse* Pulsator::getBlockPulse(Pulse::Source source, int leader)
 {
-    int frame = -1;
-    if (!p->pending && p->source != Pulse::SourceNone) {
-        // there was a pulse from this source
-        bool accept = false;
-        if (followType == Pulse::PulseBeat) {
-            // anything is a beat
-            accept = true;
+    Pulse* pulse = getPulseObject(source, leader);
+    if (pulse != nullptr) {
+        if (pulse->source == Pulse::SourceNone || pulse->pending) {
+            // pulse either not detected, or spilled into the next block
+            pulse = nullptr;
         }
-        else if (followType == Pulse::PulseBar) {
-            // loops are also bars
-            accept = (p->type == Pulse::PulseBar || p->type == Pulse::PulseLoop);
-        }
-        else {
-            // only loops will do
-            // this makes sense only when following internal leaders, if this
-            // pulse didn't come from a Leader, treat it like Bar
-            if (p->source == Pulse::SourceLeader)
-              accept = (p->type == Pulse::PulseLoop);
-            else
-              accept = (p->type == Pulse::PulseBar || p->type == Pulse::PulseLoop);
-        }
-
-        if (accept)
-          frame = p->blockFrame;
     }
-    return frame;
+    return pulse;
 }
 
 /**
- * New Pulse locator used by TimeSlicer.
- * Assuming this is all we need can remove getPulseFrame
+ * Return any block pulse that may be relevant for a follower.
  */
-Pulse* Pulsator::getBlockPulse(Follower* f)
+Pulse* Pulsator::getAnyBlockPulse(Follower* f)
 {
     Pulse* pulse = nullptr;
     if (f != nullptr) {
@@ -954,42 +882,23 @@ Pulse* Pulsator::getBlockPulse(Follower* f)
         // a leader after starting which means it self-leads and won't have pulses
         if (leader != f->id) {
 
-            switch (source) {
-                case Pulse::SourceNone:
-                    break;
-                    
-                case Pulse::SourceMidi:
-                    pulse = &(midiIn.pulse);
-                    break;
-                    
-                case Pulse::SourceHost:
-                    pulse = &(host.pulse);
-                    break;
-                    
-                case Pulse::SourceMaster: 
-                case Pulse::SourceTransport:
-                    pulse = &(transport.pulse);
-                    break;
-                    
-                case Pulse::SourceLeader: {
-                    // leader can be zero here if there was no track sync leader
-                    // in which case there won't be a pulse
-                    // don't call getLeader with zero or it traces an error
-                    if (leader > 0) {
-                        Leader* l = getLeader(leader);
-                        if (l != nullptr) {
-                            pulse = &(l->pulse);
-                        }
-                    }
-                }
-                    break;
-            }
-
-            // filter  based on the desired pulse type
-            if (pulse != nullptr && !isRelevant(pulse, f->type))
-              pulse = nullptr;
+            pulse = getBlockPulse(source, leader);
         }
     }
+    return pulse;
+}
+
+/**
+ * Return the block pulse that IS relevant for a follower.
+ */
+Pulse* Pulsator::getRelevantBlockPulse(Follower* f)
+{
+    Pulse* pulse = getAnyBlockPulse(f);
+
+    // filter  based on the desired pulse type
+    if (pulse != nullptr && !isRelevant(pulse, f->type))
+      pulse = nullptr;
+
     return pulse;
 }
 
@@ -1021,13 +930,6 @@ bool Pulsator::isRelevant(Pulse* p, Pulse::Type followType)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Out Sync Master
-//
-//////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////
-//
 // Drift
 //
 //////////////////////////////////////////////////////////////////////
@@ -1054,45 +956,47 @@ void Pulsator::advance(int blockFrames)
         if (f->locked && !selfLeading) {
 
             // was there a beat in this block?
-            int offset = getPulseFrame(i, Pulse::PulseBeat);
-            if (offset >= 0)
-              f->pulse += 1;
+            Pulse* p = getAnyBlockPulse(f);
+            if (p != nullptr) {
 
-            // this is how long the follower will advance
-            // when it gets around to processing the block
-            f->frame += blockFrames;
+                f->pulse += 1;
 
-            // wrap the pulse
-            bool checkpoint = false;
-            if (f->pulse >= f->pulses) {
-                f->pulse = 0;
-                checkpoint = true;
-                // the pulse wrapped, calculate drift
-                // if the frame is beyond the end it is rushing
-                // if beyind the end it is lagging
-                f->drift = f->frame - f->frames;
-            }
+                // this is how long the follower will advance
+                // when it gets around to processing the block
+                f->frame += blockFrames;
 
-            // wrap the frame
-            if (f->frame >= f->frames) {
-                f->frame = f->frame - f->frames;
-            }
-
-            if (checkpoint) {
-                if (f->drift < driftThreshold) {
-                    // these can be noisy in the logs so may want to
-                    // disable it if the drift is small
-                    Trace(2, "Pulsator: Follower %d drift %d", i, f->drift);
+                // wrap the pulse
+                bool checkpoint = false;
+                if (f->pulse >= f->pulses) {
+                    f->pulse = 0;
+                    checkpoint = true;
+                    // the pulse wrapped, calculate drift
+                    // if the frame is beyond the end it is rushing
+                    // if beyind the end it is lagging
+                    f->drift = f->frame - f->frames;
                 }
-                else {
-                    Trace(1, "Pulsator: Follower %d drift threshold exceeded %d", f->drift);
-                    f->shouldCheckDrift = true;
 
-                    // this is the point where old Mobius would retrigger the loop to
-                    // bring it back into alignment
-                    // how should we signal that?
-                    // could register a callback or just make the track
-                    // ask for the drift and do the ajustments?
+                // wrap the frame
+                if (f->frame >= f->frames) {
+                    f->frame = f->frame - f->frames;
+                }
+
+                if (checkpoint) {
+                    if (f->drift < driftThreshold) {
+                        // these can be noisy in the logs so may want to
+                        // disable it if the drift is small
+                        Trace(2, "Pulsator: Follower %d drift %d", i, f->drift);
+                    }
+                    else {
+                        Trace(1, "Pulsator: Follower %d drift threshold exceeded %d", f->drift);
+                        f->shouldCheckDrift = true;
+
+                        // this is the point where old Mobius would retrigger the loop to
+                        // bring it back into alignment
+                        // how should we signal that?
+                        // could register a callback or just make the track
+                        // ask for the drift and do the ajustments?
+                    }
                 }
             }
         }

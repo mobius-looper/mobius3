@@ -46,11 +46,13 @@ class Transport
     bool isPaused();
 
     void advance(int frames);
+    void checkDrift();
     Pulse* getPulse();
     
   private:
 
     class SyncMaster* syncMaster = nullptr;
+    class MidiRealizer* midiRealizer = nullptr;
     int sampleRate = 44100;
     
     SyncSourceState state;
@@ -70,7 +72,8 @@ class Transport
     bool paused = false;
     bool metronomeEnabled = false;
     bool midiEnabled = false;
-
+    bool sendClocksWhenStopped = false;
+    
     Pulse pulse;
 
     void correctBaseCounters();
@@ -79,6 +82,7 @@ class Transport
     float lengthToTempo(int frames);
     void deriveUnitLength(float tempo);
     void deriveLocation(int oldUnit);
+    void setTempoInternal(float tempo);
 
 };
     

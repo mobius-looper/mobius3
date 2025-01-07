@@ -28,25 +28,6 @@ void MidiAnalyzer::shutdown()
     midiManager->removeRealtimeListener(this);
 }
 
-/**
- * Allow enabling and disabling of MidiSyncEvents in cases where
- * Mobius may not be responding and we don't want to overflow the event buffer.
- */
-void MidiAnalyzer::disableEvents()
-{
-    inputQueue.setEnableEvents(false);
-}
-
-void MidiAnalyzer::enableEvents()
-{
-    inputQueue.setEnableEvents(true);
-}
-
-void MidiAnalyzer::flushEvents()
-{
-    inputQueue.flushEvents();
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // State
@@ -117,19 +98,35 @@ void MidiAnalyzer::getState(SyncSourceState& state)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Return the next queued sync message.
+ * Allow enabling and disabling of MidiSyncEvents in cases where
+ * Mobius may not be responding and we don't want to overflow the event buffer.
  */
-MidiSyncEvent* MidiAnalyzer::nextEvent()
+void MidiAnalyzer::disableEvents()
+{
+    inputQueue.setEnableEvents(false);
+}
+
+void MidiAnalyzer::enableEvents()
+{
+    inputQueue.setEnableEvents(true);
+}
+
+void MidiAnalyzer::flushEvents()
+{
+    inputQueue.flushEvents();
+}
+
+MidiSyncEvent* MidiAnalyzer::popEvent()
 {
     return inputQueue.popEvent();
 }
 
-void MidiAnalyzer::iterateStart()
+void MidiAnalyzer::startEventIterator()
 {
     inputQueue.iterateStart();
 }
 
-MidiSyncEvent* MidiAnalyzer::iterateNext()
+MidiSyncEvent* MidiAnalyzer::nextEvent()
 {
     return inputQueue.iterateNext();
 }

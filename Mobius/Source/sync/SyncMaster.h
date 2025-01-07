@@ -27,6 +27,7 @@
 class SyncMaster
 {
     friend class Pulsator;
+    friend class Transport;
     
   public:
 
@@ -83,9 +84,11 @@ class SyncMaster
     //
     
     int getMilliseconds();
-    class HostAudioTime* getAudioTime();
-    
     void sendAlert(juce::String msg);
+
+    //
+    // Track Notifications
+    //
 
     void notifyTrackReset(int id);
     void notifyTrackRecord(int id);
@@ -254,6 +257,12 @@ class SyncMaster
     class Transport* getTransport() {
         return transport.get();
     }
+    
+    class Pulsator* getPulsator() {
+        return pulsator.get();
+    }
+    
+    class HostAudioTime* getAudioTime();
 
   private:
 

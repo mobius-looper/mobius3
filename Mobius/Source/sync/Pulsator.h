@@ -78,11 +78,9 @@ class Pulsator
     void loadSession(class Session* s);
 
     void interruptStart(class MobiusAudioStream* stream);
-    int getPulseFrame(int follower);
-    int getPulseFrame(int followerId, Pulse::Type type);
 
-    // new interface for TimeSlicer, resmove the two getPulseFrame()s when ready
-    Pulse* getBlockPulse(Follower* f);
+    Pulse* getRelevantBlockPulse(Follower* f);
+    Pulse* getOutBlockPulse();
 
     // register a follow for an external sync source
     void follow(int follower, Pulse::Source source, Pulse::Type type);
@@ -104,9 +102,6 @@ class Pulsator
     // called by leaders to register a pulse in this block
     void addLeaderPulse(int leader, Pulse::Type type, int frameOffset);
 
-    // pull information from the internal sync transport
-    void gatherTransport();
-
     //
     // State of the various sources
     //
@@ -119,7 +114,7 @@ class Pulsator
         return &midiIn;
     }
 
-    Pulse* getBlockPulse(Pulse::Source src);
+    //Pulse* getBlockPulse(Pulse::Source src);
     Follower* getFollower(int id, bool warn = true);
     Leader* getLeader(int id);
 
@@ -150,11 +145,14 @@ class Pulsator
     void reset();
     void advance(int blockFrames);
     
+    void gatherTransport();
     void gatherHost();
     void gatherMidi();
     bool detectMidiBeat(class MidiSyncEvent* mse, Pulse::Source src, Pulse* pulse);
 
-    int getPulseFrame(Pulse* p, Pulse::Type type);
+    Pulse* getPulseObject(Pulse::Source source, int leader);
+    Pulse* getBlockPulse(Pulse::Source source, int leader);
+    Pulse* getAnyBlockPulse(Follower* f);
     bool isRelevant(Pulse* p, Pulse::Type followType);
     
     void trace();
@@ -162,6 +160,10 @@ class Pulsator
     void traceFollowChange(Follower* f, Pulse::Source source, int leader,Pulse::Type type);
     const char* getSourceName(Pulse::Source source);
     const char* getPulseName(Pulse::Type type);
+
+    // formerly used by MidiTrack, now internal and some of it is unnecessary?
+    int getPulseFrame(int follower);
+    int getPulseFrame(int followerId, Pulse::Type type);
 
 };
 

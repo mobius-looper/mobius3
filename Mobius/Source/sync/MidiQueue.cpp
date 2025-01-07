@@ -100,6 +100,10 @@ void MidiQueue::setName(const char* name)
 	queueName = name;
 }
 
+/**
+ * Once events are enabled the owner MUST either pop them or
+ * flush them on every block advance or else the queue will overflow.
+ */
 void MidiQueue::setEnableEvents(bool b)
 {
     enableEvents = b;
@@ -132,60 +136,6 @@ void MidiQueue::checkClocks(int millisecond)
 void MidiQueue::setSongPosition(int pos)
 {
     songPosition = pos;
-}
-
-/**
- * Return true if we have any events to process.
- */
-bool MidiQueue::hasEvents()
-{
-    return (eventHead != eventTail);
-}
-
-/**
- * Initialize an iterator into the event list.  An alternative to popEvent
- * as we phase in the Pulsator and need to iterate over the event list
- * twice.
- */
-void MidiQueue::iterateStart()
-{
-    iterateTail = eventTail;
-    iterateHead = eventHead;
-}
-
-MidiSyncEvent* MidiQueue::iterateNext()
-{
-    MidiSyncEvent* event = nullptr;
-    if (iterateTail != iterateHead) {
-		event = &(events[iterateTail]);
-		iterateTail++;
-		if (iterateTail >= MaxSyncEvents)
-		  iterateTail = 0;
-    }
-    return event;
-}    
-
-/**
- * Return the next event in the queue.
- */
-MidiSyncEvent* MidiQueue::popEvent()
-{
-    MidiSyncEvent* event = nullptr;
-    if (eventTail != eventHead) {
-		event = &(events[eventTail]);
-		eventTail++;
-		if (eventTail >= MaxSyncEvents)
-		  eventTail = 0;
-    }
-    return event;
-}
-
-/**
- * Flush any lingering events in the queue.
- */
-void MidiQueue::flushEvents()
-{
-    eventTail = eventHead;
 }
 
 /**
@@ -317,7 +267,8 @@ void MidiQueue::add(int status, int millisecond)
 
             bool isStartClock = false;
             bool isContinueClock = false;
-
+            bool isBeatClock = false;
+            
             if (waitingStatus == MS_START) {
 				Trace(2, "MidiQueue %s: Start\n", queueName);
                 waitingStatus = 0;
@@ -352,6 +303,7 @@ void MidiQueue::add(int status, int millisecond)
 				songClock++;
 				beatClock++;
 				if (beatClock >= 24) {
+                    isBeatClock = true;
 					beat++;
 					beatClock = 0;
 				}
@@ -360,8 +312,12 @@ void MidiQueue::add(int status, int millisecond)
                         beatClock, beat);
 			}
 
-            // clocks always get an event
-            if (enableEvents) {
+            // formerly generated an event for every clock, but Pulsator doesn't
+            // care any more and can do drift correction just fine with beats
+            // only generate events on beats
+            if (enableEvents &&
+                (isStartClock || isContinueClock || isBeatClock)) {
+                
                 MidiSyncEvent* event = reserveEvent();
                 if (event != nullptr) {
                 
@@ -374,6 +330,9 @@ void MidiQueue::add(int status, int millisecond)
                     if (beatClock == 0) {
                         event->isBeat = true;
                         event->beat = beat;
+
+                        if (traceEnabled)
+                          Trace(2, "MQ: Beat");
                     }
 
                     if (SyncTraceEnabled)
@@ -385,6 +344,73 @@ void MidiQueue::add(int status, int millisecond)
 		}
 		break;
 	}
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Event Consumption
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Return true if we have any events to process.
+ */
+bool MidiQueue::hasEvents()
+{
+    return (eventHead != eventTail);
+}
+
+/**
+ * Return the next event in the queue.
+ * This is one way to iterate over events in this block.  The
+ * event can only be processed once, and it is expected that
+ * popEvent will be called until it returns null.
+ */
+MidiSyncEvent* MidiQueue::popEvent()
+{
+    MidiSyncEvent* event = nullptr;
+    if (eventTail != eventHead) {
+		event = &(events[eventTail]);
+		eventTail++;
+		if (eventTail >= MaxSyncEvents)
+		  eventTail = 0;
+    }
+    return event;
+}
+
+/**
+ * Initialize an iterator into the event list.  An alternative to popEvent
+ * for cases where something needs to iterate over the event list more than once.
+ * I forget why this was necessary, I think for the old Synchronizer that injected
+ * events for every track and need to iterate once for each track.
+ * Pulsator does not need this.
+ */
+void MidiQueue::iterateStart()
+{
+    iterateTail = eventTail;
+    iterateHead = eventHead;
+}
+
+MidiSyncEvent* MidiQueue::iterateNext()
+{
+    MidiSyncEvent* event = nullptr;
+    if (iterateTail != iterateHead) {
+		event = &(events[iterateTail]);
+		iterateTail++;
+		if (iterateTail >= MaxSyncEvents)
+		  iterateTail = 0;
+    }
+    return event;
+}    
+
+/**
+ * Flush any lingering events in the queue.
+ * If you use the iterator interface you MUST call this when
+ * all iterations have finished.
+ */
+void MidiQueue::flushEvents()
+{
+    eventTail = eventHead;
 }
 
 /****************************************************************************/

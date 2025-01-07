@@ -56,10 +56,6 @@ class MidiRealizer
     void setSampleRate(int rate);
     void shutdown();
 
-    void enableEvents();
-    void disableEvents();
-    void flushEvents();
-    
     void startThread();
     void stopThread();
     
@@ -84,13 +80,14 @@ class MidiRealizer
 
     // Events
 
+    void setTraceEnabled(bool b);
+    void enableEvents();
+    void disableEvents();
+    MidiSyncEvent* popEvent();
+    void startEventIterator();
     MidiSyncEvent* nextEvent();
-    // new non-destrictive iterator
-    // since the consumer of this, Pulsator, was moved up here, we could
-    // just expose the MidiQueue and be done with it
-    void iterateStart();
-    MidiSyncEvent* iterateNext();
-    
+    void flushEvents();
+
   protected:
 
     // this is called from the clock thread NOT the SyncMaster on audio blocks

@@ -106,13 +106,19 @@ void TransportElement::highRefresh(PriorityState* s)
 {
     if (s->transportLoop != lastLoop) {
         light.flash(juce::Colours::red);
+        // beat and bar will be back at zero
+        beat.setText(juce::String(s->transportBeat + 1));
+        bar.setText(juce::String(s->transportBar + 1));
     }
     else if (s->transportBar != lastBar) {
         light.flash(juce::Colours::yellow);
+        // beat back at zero and bar advances
+        beat.setText(juce::String(s->transportBeat + 1));
         bar.setText(juce::String(s->transportBar + 1));
     }
     else if (s->transportBeat != lastBeat) {
         light.flash(juce::Colours::green);
+        // only beat advances
         beat.setText(juce::String(s->transportBeat + 1));
     }
 

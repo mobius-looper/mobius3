@@ -24,11 +24,6 @@ class MidiAnalyzer : public MidiManager::RealtimeListener
     void initialize(class SyncMaster* sm, class MidiManager* mm);
     void shutdown();
     
-    // message accumulation can be turned on and off for testing
-    void enableEvents();
-    void disableEvents();
-    void flushEvents();
-    
     // check for termination of MIDI clocks without warning
     void checkClocks();
 
@@ -43,10 +38,16 @@ class MidiAnalyzer : public MidiManager::RealtimeListener
     bool isStarted();
 
     void getState(SyncSourceState& state);
+
+    // Events
     
+    void setTraceEnabled(bool b);
+    void enableEvents();
+    void disableEvents();
+    MidiSyncEvent* popEvent();
+    void startEventIterator();
     MidiSyncEvent* nextEvent();
-    void iterateStart();
-    MidiSyncEvent* iterateNext();
+    void flushEvents();
     
   private:
     
