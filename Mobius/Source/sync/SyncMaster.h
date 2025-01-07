@@ -73,7 +73,6 @@ class SyncMaster
     int getBeat(Pulse::Source src);
     int getBar(Pulse::Source src);
     int getBeatsPerBar(Pulse::Source src);
-    int getMasterBarFrames();
     Pulse* getBlockPulse(Pulse::Source src);
 
     // what we should use now

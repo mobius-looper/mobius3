@@ -402,6 +402,7 @@ typedef enum {
     FuncTransportStart,
     FuncTransportStop,
     ParamTransportTempo,
+    ParamTransportLength,
     ParamTransportBeatsPerBar,
 
     FuncSyncMasterTrack,

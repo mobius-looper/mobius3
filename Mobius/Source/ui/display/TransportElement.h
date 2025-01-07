@@ -44,11 +44,18 @@ class TransportElement : public UIElement, public UIAtomButton::Listener,
     UIAtomButton start;
     UIAtomButton tap;
     UIAtomText tempoAtom;
+    UIAtomLabeledText bpb;
+    UIAtomLabeledText bars;
+    UIAtomLabeledText beat;
+    UIAtomLabeledText bar;
+    
     int tempoValue = 0;
     int tapStart = 0;
     int lastBeat = 0;
     int lastBar = 0;
     int lastLoop = 0;
+    int lastBpb = 0;
+    int lastBars = 0;
     
     void sizeAtom(juce::Rectangle<int> area, juce::Component* comp);
 };

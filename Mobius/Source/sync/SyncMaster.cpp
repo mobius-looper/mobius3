@@ -623,6 +623,11 @@ bool SyncMaster::doAction(UIAction* a)
         }
             break;
             
+        case ParamTransportLength: {
+            transport->setLength(a->value);
+        }
+            break;
+            
         case ParamTransportBeatsPerBar:
             transport->setBeatsPerBar(a->value);
             break;
@@ -675,11 +680,9 @@ bool SyncMaster::doQuery(Query* q)
  */
 void SyncMaster::refreshState(SyncMasterState* extstate)
 {
-    extstate->transport = *(transport->getState());
-    extstate->host = host;
-
-    // Analyzer maintains it's own fields, it doesn't use SyncSourceState
+    transport->refreshState(extstate->transport);
     midiAnalyzer->getState(extstate->midi);
+    extstate->host = host;
 
     extstate->transportMaster = transportMaster;
     extstate->trackSyncMaster = trackSyncMaster;
@@ -864,11 +867,6 @@ int SyncMaster::getBar(Pulse::Source src)
         default: break;
     }
     return bar;
-}
-
-int SyncMaster::getMasterBarFrames()
-{
-    return transport->getMasterBarFrames();
 }
 
 /**

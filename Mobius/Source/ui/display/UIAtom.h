@@ -171,7 +171,7 @@ class UIAtomText : public UIAtom
     virtual void resized() override;
     virtual void paint(juce::Graphics& g) override;
 
-  private:
+  protected:
 
     juce::String text;
     juce::Colour onColor;
@@ -182,4 +182,24 @@ class UIAtomText : public UIAtom
     int ticks = 0;
     
     void drawTextBackground(juce::Graphics& g);
+};
+
+class UIAtomLabeledText : public UIAtomText
+{
+  public:
+
+    UIAtomLabeledText();
+    ~UIAtomLabeledText();
+
+    void setLabel(juce::String s);
+    void setLabelColor(juce::Colour c);
+    
+    virtual void resized() override;
+    virtual void paint(juce::Graphics& g) override;
+
+  private:
+
+    juce::String label;
+    juce::Colour labelColor;
+    
 };

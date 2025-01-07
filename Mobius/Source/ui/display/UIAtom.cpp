@@ -590,6 +590,73 @@ void UIAtomText::paint(juce::Graphics& g)
                      1.0f);
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// LabeledText
+//
+//////////////////////////////////////////////////////////////////////
+
+UIAtomLabeledText::UIAtomLabeledText()
+{
+    labelColor = juce::Colours::orange;
+}
+
+UIAtomLabeledText::~UIAtomLabeledText()
+{
+}
+
+void UIAtomLabeledText::setLabel(juce::String s)
+{
+    label = s;
+    repaint();
+}
+
+void UIAtomLabeledText::setLabelColor(juce::Colour c)
+{
+    labelColor = c;
+}
+
+void UIAtomLabeledText::resized()
+{
+}
+
+void UIAtomLabeledText::paint(juce::Graphics& g)
+{
+    juce::Rectangle<int> area = getLocalBounds();
+    
+    // todo: need a background color?
+    g.setColour(backColor);
+    g.fillRect(getLocalBounds());
+
+    juce::Font font(JuceUtil::getFont(getHeight()));
+    // hacking around the unpredictable truncation, if the name is beyond
+    // a certain length, reduce the font height
+    if (text.length() >= 10)
+      font = JuceUtil::getFontf(getHeight() * 0.75f);
+
+    // not sure about font sizes, we're going to use fit so I think
+    // that will size down as necessary
+    g.setFont(font);
+
+
+    int half = getWidth() / 2;
+    g.setColour(labelColor);
+    g.drawFittedText(label, 0, 0, half, getHeight(),
+                     juce::Justification::centredLeft,
+                     1, // max lines
+                     1.0f);
+
+    if (on)
+      g.setColour(onColor);
+    else
+      g.setColour(offColor);
+    
+    g.drawFittedText(text, half, 0, half, getHeight(),
+                     juce::Justification::centredLeft,
+                     1, // max lines
+                     1.0f);
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

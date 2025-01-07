@@ -689,6 +689,7 @@
   <ParameterScope name='sync'>
     
     <Parameter name='transportTempo' type='int' level='kernel'/>
+    <Parameter name='transportLength' type='int' level='kernel'/>
     <Parameter name='transportBeatsPerBar' type='int' level='kernel'/>
     
   </ParameterScope>

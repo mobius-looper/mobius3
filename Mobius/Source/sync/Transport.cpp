@@ -48,13 +48,24 @@ const float TransportMaxTempo = 1000.0f;
  */
 const float TransportMinTempo = 10.0f;
 
+/**
+ * The minimum allowable unit length.
+ * This should be around the length of one block.
+ * Mostly it just needs to be above zero.
+ */
+const int TransportMinLength = 128;
+
 Transport::Transport(SyncMaster* sm)
 {
     syncMaster = sm;
     // this will usually be wrong, setSampleRate needs to be called
     // after the audio stream is initialized to get the right one
     sampleRate = 44100;
-    syncstate.beatsPerBar = 4;
+
+    // initial time signature
+    state.unitsPerBeat = 1;
+    state.beatsPerBar = 4;
+
     setTempo(120.0f);
 }
 
@@ -70,133 +81,94 @@ Transport::~Transport()
  *
  * Since this is used for tempo calculations, go through the tempo/length calculations
  * whenever this changes.  This is okay when the system is quiet, but if there are
- * active tracks going and the masterBarLength changes, all sorts of weird things can
+ * active tracks going and the unitLength changes, all sorts of weird things can
  * happen.
  */
-void Transport::setSampleRate(int r)
+void Transport::setSampleRate(int rate)
 {
-    sampleRate = r;
-    setTempo(syncstate.tempo);
-}
-
-float Transport::getTempo()
-{
-    return syncstate.tempo;
-}
-
-SyncSourceState* Transport::getState()
-{
-    return &syncstate;
-}
-
-int Transport::getMasterBarFrames()
-{
-    return syncstate.barFrames;
-}
-
-int Transport::getBeatsPerBar()
-{
-    return syncstate.beatsPerBar;
+    sampleRate = rate;
+    setTempo(state.tempo);
 }
 
 /**
  * Set the tempo, typically specified by the user.
- * This results in a recalculation of the timeline length.
- * This becomes the "master sync unit".
+ * This results in a recalculation of the unit lengths.
+ * This is an alternative to setLength() which calculates the
+ * tempo from the length.
  */
-void Transport::setTempo(float t)
+void Transport::setTempo(float tempo)
 {
-    if (t < TransportMinTempo)
-      t = TransportMinTempo;
-    else if (t > TransportMaxTempo)
-      t = TransportMaxTempo;
-    
-    syncstate.tempo = t;
-    syncstate.barFrames = 0;
-    framesPerBeat = 0;
-
-    // correct this if unset
-    if (syncstate.beatsPerBar < 1) syncstate.beatsPerBar = 1;
-
-    float beatsPerSecond = syncstate.tempo / 60.0f;
-    framesPerBeat = (int)((float)sampleRate / beatsPerSecond);
-    int framesPerBar = framesPerBeat * syncstate.beatsPerBar;
-    // not supporting multiple bars yet
-    syncstate.barFrames = framesPerBar;
-
-    // if we were currently playing, this may have made it shorter
-    wrap();
+    deriveUnitLength(tempo);
 }
 
 /**
- * Set the length of the timeline, typically after recording the first loop.
+ * Set the length of the transport loop, typically after recording the first loop.
  * This results in a recalculation of the tempo.
  *
  * This is more complicated than setting a user-specified tempo
  * because the resulting tempo may either be unusably fast or slow, so the
  * tempo may be adjusted.
  */
-void Transport::setMasterBarFrames(int f)
+int Transport::setLength(int length)
 {
-    if (f > 0) {
-        syncstate.barFrames = f;
-        recalculateTempo();
-    }
+    return deriveTempo(length);
 }
 
 /**
- * Changing the beats per bar does not change the timeline length or the
+ * Changing the beats per bar does not change the unit length length or the
  * tempo but it will change where beat pulses are.
  *
- * todo: need to have a bounds check here so there can't be more than
- * one beat pulse per block.  bpb would have to be extremely large for
- * that to be hit.
+ * It will factor into future calculations if the tempo or length is changed.
+ * !! is this enough, feels like there should be more here.
+ *
+ * At the very least, we should recalculate all the derived bat/bar/loop counters
  */
 void Transport::setBeatsPerBar(int bpb)
 {
     if (bpb > 0) {
-        syncstate.beatsPerBar = bpb;
-        // this can result in roundoff error where framesPerBeat * beatsPerBar
-        // is not exactly equal to masterBarFrames
-        // that's okay as long as the final pulse uses masterBarFrames to trigger
-        // rather than inner beat calculations
-        framesPerBeat = syncstate.barFrames / syncstate.beatsPerBar;
+        state.beatsPerBar = bpb;
     }
 }
 
-void Transport::setTimelineFrame(int f)
-{
-    if (f >= 0) {
-        syncstate.playFrame = f;
-        wrap();
-    }
-}
+//////////////////////////////////////////////////////////////////////
+//
+// State
+//
+//////////////////////////////////////////////////////////////////////
 
-void Transport::wrap()
+void Transport::refreshState(SyncSourceState& dest)
 {
-    if (syncstate.barFrames == 0) {
-        syncstate.playFrame = 0;
-    }
-    else {
-        // hey, can't math do this?
-        while (syncstate.playFrame > syncstate.barFrames)
-          syncstate.playFrame -= syncstate.barFrames;
-    }
-}
-
-int Transport::getTimelineFrame()
-{
-    return syncstate.playFrame;
+    dest = state;
 }
 
 /**
  * Capture the priority state from the transport.
  */
-void Transport::refreshPriorityState(PriorityState* state)
+void Transport::refreshPriorityState(PriorityState* dest)
 {
-    state->transportBeat = syncstate.beat;
-    state->transportBar = syncstate.bar;
-    state->transportLoop = syncstate.loop;
+    dest->transportBeat = state.beat;
+    dest->transportBar = state.bar;
+    dest->transportLoop = state.loop;
+}
+
+float Transport::getTempo()
+{
+    return state.tempo;
+}
+
+int Transport::getBeatsPerBar()
+{
+    return state.beatsPerBar;
+}
+
+int Transport::getBeat()
+{
+    return state.beat;
+}
+
+int Transport::getBar()
+{
+    return state.bar;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -210,16 +182,32 @@ void Transport::refreshPriorityState(PriorityState* state)
  */
 void Transport::start()
 {
-    syncstate.started = true;
+    state.started = true;
+}
+
+void Transport::startClocks()
+{
 }
 
 void Transport::stop()
 {
-    syncstate.started = false;
-    syncstate.playFrame = 0;
-    syncstate.beat = 0;
-    syncstate.bar = 0;
-    syncstate.loop = 0;
+    state.started = false;
+    state.playFrame = 0;
+    state.units = 0;
+    state.beat = 0;
+    state.bar = 0;
+    state.loop = 0;
+    state.songClock = 0;
+}
+
+void Transport::stopSelective(bool sendStop, bool stopClocks)
+{
+    (void)sendStop;
+    (void)stopClocks;
+}
+
+void Transport::midiContinue()
+{
 }
 
 void Transport::pause()
@@ -229,22 +217,12 @@ void Transport::pause()
 
 bool Transport::isStarted()
 {
-    return syncstate.started;
+    return state.started;
 }
 
 bool Transport::isPaused()
 {
     return paused;
-}
-
-int Transport::getBeat()
-{
-    return syncstate.beat;
-}
-
-int Transport::getBar()
-{
-    return syncstate.bar;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -260,33 +238,35 @@ void Transport::advance(int frames)
 {
     pulse.reset();
 
-    if (syncstate.started) {
+    if (state.started) {
 
-        int newPlayFrame = syncstate.playFrame + frames;
-        if (newPlayFrame >= syncstate.unitFrames) {
+        state.playFrame = state.playFrame + frames;
+        if (state.playFrame >= state.unitFrames) {
 
             // a unit has transpired
-            int blockOffset = syncstate.unitFrames - syncstate.playFrame;
+            int blockOffset = state.unitFrames - state.playFrame;
             if (blockOffset > frames)
               Trace(1, "Transport: You suck at math");
 
-            syncstate.unit++;
-            syncstate.unitCounter++;
+            state.playFrame = state.playFrame - state.unitFrames;
 
-            if (syncstate.unitCounter >= syncstate.unitsPerBeat) {
+            state.units++;
+            state.unitCounter++;
 
-                syncstate.unitCounter = 0;
-                syncstate.beat++;
+            if (state.unitCounter >= state.unitsPerBeat) {
 
-                if (syncstate.beat >= syncstate.beatsPerBar) {
+                state.unitCounter = 0;
+                state.beat++;
 
-                    syncstate.beat = 0;
-                    syncstate.bar++;
+                if (state.beat >= state.beatsPerBar) {
 
-                    if (syncstate.bar >= syncstate.barsPerLoop) {
+                    state.beat = 0;
+                    state.bar++;
 
-                        syncstate.bar = 0;
-                        syncstate.loop++;
+                    if (state.bar >= state.barsPerLoop) {
+
+                        state.bar = 0;
+                        state.loop++;
 
                         pulse.type = Pulse::PulseLoop;
                     }
@@ -315,48 +295,190 @@ Pulse* Transport::getPulse()
 //
 //////////////////////////////////////////////////////////////////////
 
+void Transport::correctBaseCounters()
+{
+    if (state.unitsPerBeat < 1) state.unitsPerBeat = 1;
+    if (state.beatsPerBar < 1) state.beatsPerBar = 1;
+    if (state.barsPerLoop < 1) state.barsPerLoop = 1;
+}
+
 /**
  * Calculate the tempo based on a frame length from the outside.
  *
- * todo: this needs more extreme range checking because we can get
- * 32-bit float errors deriving the tempo from the length which can cause
- * drift.  It would be better to *2 or /2 the length to make the tempo fit
- * rather than the other way around?  I guess it's the same drift.
+ * There are two outcomes, depending on options: constrained tempo
+ * and locked bars.
  *
+ * With constrained tempo, the tempo will be kept within the configured minimum
+ * and maximum range, adjusting the number of bars within the length.  This may mean
+ * that in order to keep the tempo within range you end up with an odd number of bars.
+ *
+ * With locked bars, the beatsPerBar and barsPerLoop are held constant and the tempo
+ * is calculated for that and may vary widely.  The bar count is allowed to double or halve
+ * to bring the tempo into a more usable range but this will not result in an odd multiple
+ * of barsPerLoop.  This method would be used if you were generating clocks for an external
+ * sequencer such as a drum machine that is playing a sequence of known length.
  */
-void Transport::recalculateTempo()
+int Transport::deriveTempo(int length)
 {
-    if (syncstate.barFrames == 0) {
-        // degenerate case, not sure what this means
-        Trace(1, "Transport::recalculateTempo Timeline length is zero");
+    // todo, if we need to round the unit length this would be left here
+    // and returned so the caller can add or remove this amount from the recorded loop
+    int adjust = 0;
+    int oldUnit = state.unitFrames;
+    
+    // todo: would we allow setting length to zero to reset the transport?
+    if (length < TransportMinLength) {
+        Trace(1, "Transport: Length out of range %d", length);
     }
     else {
-        // correct this if it isn't by now
-        if (syncstate.beatsPerBar < 1) syncstate.beatsPerBar = 1;
-    
-        float floatFramesPerBeat = (float)(syncstate.barFrames) / (float)(syncstate.beatsPerBar);
-        float secondsPerBeat = floatFramesPerBeat / (float)sampleRate;
-        float newTempo = 60.0f / secondsPerBeat;
+        // correct these before we start dividing
+        correctBaseCounters();
 
-        // todo: need user configurable min/max tempo
-        float minTempo = 30.0f;
-        float maxTempo = 400.0f;
-        
-		while (newTempo > maxTempo) {
-			newTempo /= 2.0;
-		}
+        int barCount = state.barsPerLoop;
+        float tempo = lengthToTempo(length, barCount, state.beatsPerBar);
 
-		// if a conflicting min/max specified, min wins
-		while (newTempo < minTempo)
-          newTempo *= 2.0;
+        if (barLock) {
+            // the specified number of bars may not be changed
+            // the tempo is what it is
+        }
+        else if (barMultiply) {
+            // the bars may double or halve to bring the tempo in range
+            if (tempo < minTempo) {
+                while (tempo < minTempo) {
+                    barCount *= 2;
+                    tempo = lengthToTempo(length, barCount, state.beatsPerBar);
+                    // todo: should have a governor on the number of bars?
+                }
+            }
+            else if (tempo > maxTempo) {
+                // can only do this if the bar count is even
+                if ((barCount % 2) > 0) {
+                    Trace(2, "Transport: Unable to divide uneven bar count %d", barCount);
+                }
+                else {
+                    while (tempo > maxTempo && barCount > 1) {
+                        barCount /= 2;
+                        tempo = lengthToTempo(length, barCount, state.beatsPerBar);
+                    }
+                }
+            }
+        }
+        else {
+            // bar count may be freely adjusted to keep the tempo in range
+            if (tempo < minTempo) {
+                // math: be better
+                while (tempo < minTempo) {
+                    barCount++;
+                    tempo = lengthToTempo(length, barCount, state.beatsPerBar);
+                    // todo: should have a governor on the number of bars?
+                }
+            }
+            else if (tempo > maxTempo) {
+                while (tempo > maxTempo && barCount > 1) {
+                    barCount--;
+                    tempo = lengthToTempo(length, barCount, state.beatsPerBar);
+                }
+            }
+        }
 
-        syncstate.tempo = newTempo;
+        // now work backwards to get ingegral frame lengths and calculate
+        // the adjustment
+        int barFrames = length / barCount;
+        int beatFrames = barFrames / state.beatsPerBar;
 
-        float beatsPerSecond = newTempo / 60.0f;
-        framesPerBeat = (int)((float)sampleRate / beatsPerSecond);
+        state.unitFrames = beatFrames;
+        state.unitsPerBeat = 1;
+
+        barFrames = beatFrames * state.beatsPerBar;
+        int loopFrames = barFrames * barCount;
+
+        if (loopFrames != length) {
+            adjust = loopFrames - length;
+            Trace(2, "Transport: Adjusted loop frames from %d to %d",
+                  length, loopFrames);
+        }
+                    
+        state.tempo = tempo;
+        state.barsPerLoop = barCount;
 	}
+
+    deriveLocation(oldUnit);
+
+    return adjust;
+}
+
+float Transport::lengthToTempo(int length, int barCount, int beatsPerBar)
+{
+    float barFrames = (float)length / (float)barCount;
+    float framesPerBeat = barFrames / (float)beatsPerBar;
+    float secondsPerBeat = framesPerBeat / (float)sampleRate;
+    float tempo = 60.0f / secondsPerBeat;
+
+    return tempo;
+}
+
+/**
+ * Given the desired tempo, determine the unit lengths.
+ * The tempo may be adjusted slightly to allow for integral unitFrames.
+ */
+void Transport::deriveUnitLength(float tempo)
+{
+    int oldUnit = state.unitFrames;
+    
+    if (tempo < TransportMinTempo)
+      tempo = TransportMinTempo;
+    else if (tempo > TransportMaxTempo)
+      tempo = TransportMaxTempo;
+
+    correctBaseCounters();
+
+    float beatsPerSecond = tempo / 60.0f;
+    int framesPerBeat = (int)((float)sampleRate / beatsPerSecond);
+
+    state.tempo = tempo;
+    state.unitFrames = framesPerBeat;
+    state.unitsPerBeat = 1;
+
+    deriveLocation(oldUnit);
+}
+
+/**
+ * After deriving either the tempo or the length wrap the playFrame
+ * if necessary and reorient the counters.
+ */
+void Transport::deriveLocation(int oldUnit)
+{
+    if (state.unitFrames <= 0) {
+        Trace(1, "Transport: Wrap with empty unit frames");
+    }
+    else {
+        // playFrame must always be within the unit length
+        while (state.playFrame > state.unitFrames)
+          state.playFrame -= state.unitFrames;
+
+        // if we changed the unitLength, then the beat/bar/loop
+        // boundaries have also changed and the current boundary counts
+        // may no longer be correct
+        if (oldUnit != state.unitFrames) {
+
+            // I'm tired, punt and put them back to zero
+            
+            // determine the absolute position using the old unit
+            int oldBeatFrames = oldUnit * state.unitsPerBeat;
+            int oldBarFrames = oldBeatFrames * state.beatsPerBar;
+            int oldLoopFrames = oldBarFrames * state.barsPerLoop;
+            int oldAbsoluteFrame = oldLoopFrames * state.loop;
+
+            // now do a bunch of divides to work backward from oldAbsoluteFrame
+            // using the new unit length
+            (void)oldBeatFrames;
+            (void)oldBarFrames;
+            (void)oldLoopFrames;
+            (void)oldAbsoluteFrame;
+        }
+    }
 }
 
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
+

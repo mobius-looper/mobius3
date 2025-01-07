@@ -24,23 +24,16 @@ class Transport
     ~Transport();
 
     void setSampleRate(int r);
-    
     void setTempo(float t);
-    float getTempo();
-
+    int setLength(int l);
     void setBeatsPerBar(int bpb);
+
+    void refreshState(class SyncSourceState& dest);
+    void refreshPriorityState(class PriorityState* ps);
+    float getTempo();
     int getBeatsPerBar();
-    
-    void setBarsPerLoop(int bpl);
-    int getBarsPerLoop();
-
-    void setMasterBarFrames(int f);
-    int getMasterBarFrames();
-
-    void setTimelineFrame(int f);
-    int getTimelineFrame();
-
-    SyncSourceState* getState();
+    int getBeat();
+    int getBar();
     
     void start();
     void startClocks();
@@ -52,33 +45,39 @@ class Transport
     bool isStarted();
     bool isPaused();
 
-    int getBeat();
-    int getBar();
-
     void advance(int frames);
     Pulse* getPulse();
-    
-    void refreshPriorityState(class PriorityState* ps);
     
   private:
 
     class SyncMaster* syncMaster = nullptr;
     int sampleRate = 44100;
     
-    SyncSourceState syncstate;
-    
-    int framesPerBeat = 0;
-    int loopFrames = 0;
+    SyncSourceState state;
+
+    // the desired tempo constraints
+    // the tempo will kept in this range unless barLock is true
+    float minTempo = 30.0f;
+    float maxTempo = 300.0f;
+
+    // when true it will not adjust the bar count to fit the tempo to the length
+    bool barLock = false;
+
+    // when barLock is false and this is on, may double or halve bar counts
+    // to keep the tempo constrained
+    bool barMultiply = true;
     
     bool paused = false;
-
-    Pulse pulse;
-
     bool metronomeEnabled = false;
     bool midiEnabled = false;
 
-    void wrap();
-    void recalculateTempo();
+    Pulse pulse;
+
+    void correctBaseCounters();
+    int deriveTempo(int length);
+    float lengthToTempo(int length, int barCount, int beatsPerBar);
+    void deriveUnitLength(float tempo);
+    void deriveLocation(int oldUnit);
 
 };
     

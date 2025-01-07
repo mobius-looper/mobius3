@@ -446,6 +446,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {"TransportStart", FuncTransportStart},
     {"TransportStop", FuncTransportStop},
     {"transportTempo", ParamTransportTempo},
+    {"transportLength", ParamTransportLength},
     {"transportBeatsPerBar", ParamTransportBeatsPerBar},
 
     // these are old names, i'd like to change them but then

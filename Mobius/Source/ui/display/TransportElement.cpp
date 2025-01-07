@@ -62,6 +62,18 @@ TransportElement::TransportElement(Provider* p, UIElementDefinition* d) :
     tempoAtom.setPreferredWidth(50);
     addAndMakeVisible(tempoAtom);
 
+    bpb.setLabel("Beats/Bar");
+    addAndMakeVisible(bpb);
+
+    bars.setLabel("Bars");
+    addAndMakeVisible(bars);
+
+    beat.setLabel("Beat");
+    addAndMakeVisible(beat);
+    
+    bar.setLabel("Bar");
+    addAndMakeVisible(bar);
+
     // !! there needs to be showing() and hiding() simiilar to how the
     // ConfigPanels work so we can remove the listener if the element is disabled
     p->addHighListener(this);
@@ -97,9 +109,11 @@ void TransportElement::highRefresh(PriorityState* s)
     }
     else if (s->transportBar != lastBar) {
         light.flash(juce::Colours::yellow);
+        bar.setText(juce::String(s->transportBar + 1));
     }
     else if (s->transportBeat != lastBeat) {
         light.flash(juce::Colours::green);
+        beat.setText(juce::String(s->transportBeat + 1));
     }
 
     lastBeat = s->transportBeat;
@@ -136,6 +150,19 @@ void TransportElement::update(class MobiusView* v)
     
     // this is necessary to flash beats
     light.advance();
+
+    int newBpb = v->syncState.transport.beatsPerBar;
+    if (lastBpb != newBpb) {
+        bpb.setText(juce::String(newBpb));
+        lastBpb = newBpb;
+    }
+    
+    int newBars = v->syncState.transport.barsPerLoop;
+    if (lastBars != newBars) {
+        bars.setText(juce::String(newBars));
+        lastBars = newBars;
+    }
+
 }
 
 /**
@@ -146,17 +173,26 @@ void TransportElement::update(class MobiusView* v)
 void TransportElement::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
+
+    juce::Rectangle<int> mainRow = area.removeFromTop(getHeight() / 2);
     
-    sizeAtom(area.removeFromLeft(light.getPreferredWidth()), &light);
-    area.removeFromLeft(TransportGap);
+    sizeAtom(mainRow.removeFromLeft(light.getPreferredWidth()), &light);
+    mainRow.removeFromLeft(TransportGap);
     
-    start.setBounds(area.removeFromLeft(start.getPreferredWidth()));
-    area.removeFromLeft(TransportGap);
+    start.setBounds(mainRow.removeFromLeft(start.getPreferredWidth()));
+    mainRow.removeFromLeft(TransportGap);
     
-    tap.setBounds(area.removeFromLeft(tap.getPreferredWidth()));
-    area.removeFromLeft(TransportGap);
+    tap.setBounds(mainRow.removeFromLeft(tap.getPreferredWidth()));
+    mainRow.removeFromLeft(TransportGap);
     
-    tempoAtom.setBounds(area);
+    tempoAtom.setBounds(mainRow);
+
+    int quad = area.getWidth() / 4;
+
+    bpb.setBounds(area.removeFromLeft(quad));
+    bars.setBounds(area.removeFromLeft(quad));
+    beat.setBounds(area.removeFromLeft(quad));
+    bar.setBounds(area.removeFromLeft(quad));
 }
 
 /**
@@ -203,16 +239,33 @@ void TransportElement::atomButtonPressed(UIAtomButton* b)
         }
         else {
             int tapEnd = juce::Time::getMillisecondCounter();
-            float ftempo = 60000.0f / (float)(tapEnd - tapStart);
 
-            // sigh, UIAtion can't convey a full float yet, have to bump it up
-            // and truncate to two decimal places
-            int itempo = (int)(ftempo * 100);
+            bool tempoMethod = false;
+            if (tempoMethod) {
+                float ftempo = 60000.0f / (float)(tapEnd - tapStart);
+
+                // sigh, UIAtion can't convey a full float yet, have to bump it up
+                // and truncate to two decimal places
+                int itempo = (int)(ftempo * 100);
             
-            UIAction a;
-            a.symbol = provider->getSymbols()->getSymbol(ParamTransportTempo);
-            a.value = itempo;
-            provider->doAction(&a);
+                UIAction a;
+                a.symbol = provider->getSymbols()->getSymbol(ParamTransportTempo);
+                a.value = itempo;
+                provider->doAction(&a);
+            }
+            else {
+                // length method
+                // mostly just for testing, though this might be useful?
+                int millis = tapEnd - tapStart;
+                int sampleRate = provider->getSampleRate();
+                float samplesPerMillisecond = (float)sampleRate / 1000.0f;
+                int length = (int)((float)millis * samplesPerMillisecond);
+                
+                UIAction a;
+                a.symbol = provider->getSymbols()->getSymbol(ParamTransportLength);
+                a.value = length;
+                provider->doAction(&a);
+            }
 
             // reset this for next time
             tapStart = 0;
