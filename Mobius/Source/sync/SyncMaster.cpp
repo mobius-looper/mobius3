@@ -84,6 +84,7 @@ void SyncMaster::initialize(MobiusKernel* k)
 void SyncMaster::loadSession(Session* s)
 {
     pulsator->loadSession(s);
+    transport->loadSession(s);
 }
 
 /**
@@ -735,6 +736,29 @@ void SyncMaster::sendAlert(juce::String msg)
 // Granular State
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * Get the effective sync source for a track.
+ * The complication here is around SourceMaster which is only allowed
+ * if there is no other sync master.
+ */
+Pulse::Source SyncMaster::getEffectiveSource(int id)
+{
+    Pulse::Source source = Pulse::SourceNone;
+    
+    Follower* f = getFollower(id);
+    if (f != nullptr) {
+        source = f->source;
+        if (source == Pulse::SourceMaster) {
+            if (transportMaster > 0 && transportMaster != id) {
+                // there is already a transport master, this track
+                // reverts to following the transport
+                source = Pulse::SourceTransport;
+            }
+        }
+    }
+    return source;
+}
 
 /**
  * For the track monitoring UI, return information about the sync source this

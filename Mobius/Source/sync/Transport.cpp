@@ -100,6 +100,18 @@ void Transport::loadSession(Session* s)
 {
     midiEnabled = s->getBool(MidiEnable);
     sendClocksWhenStopped = s->getBool(ClocksWhenStopped);
+
+    if (!midiEnabled) {
+        midiRealizer->stop();
+    }
+    else if (sendClocksWhenStopped) {
+        if (!state.started)
+          midiRealizer->startClocks();
+    }
+    else {
+        if (!state.started)
+          midiRealizer->stopSelective(false, true);
+    }
 }
 
 /**

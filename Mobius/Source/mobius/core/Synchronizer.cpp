@@ -147,7 +147,10 @@ void Synchronizer::updateConfiguration(MobiusConfig* config)
             else
               mSyncMaster->unfollow(number);
         }
-        else if (actualSource == SYNC_OUT || actualSource == SYNC_TRANSPORT) {
+        else if (actualSource == SYNC_OUT) {
+            mSyncMaster->follow(number, Pulse::SourceMaster, pulseType);
+        }
+        else if (actualSource == SYNC_TRANSPORT) {
             mSyncMaster->follow(number, Pulse::SourceTransport, pulseType);
         }
         else if (actualSource == SYNC_HOST) {
@@ -203,53 +206,68 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
 
     // sigh, convert this back from what we did in updateConfiguration
     int number = t->getDisplayNumber();
+    Pulse::Source source = mSyncMaster->getEffectiveSource(number);
+
     Follower* f = mSyncMaster->getFollower(number);
     if (f != nullptr) {
-
         if (f->type == Pulse::PulseBar || f->type == Pulse::PulseLoop)
           state->syncUnit = SYNC_UNIT_BAR;
-        
-        if (f->source == Pulse::SourceMidi) {
-            state->syncSource = SYNC_MIDI;
+    }
 
-			// for display purposes we use the "smooth" tempo
-			// this is a 10x integer
+    switch (source) {
+        case Pulse::SourceMidi: {
+            state->syncSource = SYNC_MIDI;
+            // for display purposes we use the "smooth" tempo
+            // this is a 10x integer
             // this should also be moved into SyncMaster since TempoElement
             // will likely need the same treatment
-			int smoothTempo = mSyncMaster->getMidiInSmoothTempo();
-			state->tempo = (float)smoothTempo / 10.0f;
+            int smoothTempo = mSyncMaster->getMidiInSmoothTempo();
+            state->tempo = (float)smoothTempo / 10.0f;
 
             // MIDI in sync has also only displayed beats if clocks were actively
             // being received
-			if (mSyncMaster->isMidiInStarted()) {
-				state->beat = mSyncMaster->getBeat(Pulse::SourceMidi);
-				state->bar = mSyncMaster->getBar(Pulse::SourceMidi);
-			}
-        }
-        else if (f->source == Pulse::SourceHost) {
-            state->syncSource = SYNC_HOST;
-			state->tempo = mSyncMaster->getTempo(Pulse::SourceHost);
-
-            // not exposing this, is it necessary?
-			if (mSyncMaster->isHostReceiving()) {
-				state->beat = mSyncMaster->getBeat(Pulse::SourceHost);
-				state->bar = mSyncMaster->getBar(Pulse::SourceHost);
+            if (mSyncMaster->isMidiInStarted()) {
+                state->beat = mSyncMaster->getBeat(Pulse::SourceMidi);
+                state->bar = mSyncMaster->getBar(Pulse::SourceMidi);
             }
         }
-        
-        else if (f->source == Pulse::SourceTransport) {
+            break;
+
+        case Pulse::SourceHost: {
+            state->syncSource = SYNC_HOST;
+            state->tempo = mSyncMaster->getTempo(Pulse::SourceHost);
+
+            // not exposing this, is it necessary?
+            if (mSyncMaster->isHostReceiving()) {
+                state->beat = mSyncMaster->getBeat(Pulse::SourceHost);
+                state->bar = mSyncMaster->getBar(Pulse::SourceHost);
+            }
+        }
+            break;
+        case Pulse::SourceTransport: {
             state->syncSource = SYNC_TRANSPORT;
             state->tempo = mSyncMaster->getTempo();
             state->beat = mSyncMaster->getBeat(Pulse::SourceTransport);
             state->bar = mSyncMaster->getBar(Pulse::SourceTransport);
         }
-        else if (f->source == Pulse::SourceLeader) {
+            break;
+        case Pulse::SourceLeader: {
             state->syncSource = SYNC_TRACK;
         }
+            break;
+        case Pulse::SourceMaster: {
+            // hmm, is this right?  won't much matter once we get rid of OldMobiusState
+            state->syncSource = SYNC_OUT;
+            // should we show Transport tempo here?  we're going to replace it when
+            // this track finishes recording
+        }
+            break;
+        default:
+            break;
+    }
         
-        state->trackSyncMaster = (number == mSyncMaster->getTrackSyncMaster());
-        state->outSyncMaster = (number == mSyncMaster->getTransportMaster());
-	}
+    state->trackSyncMaster = (number == mSyncMaster->getTrackSyncMaster());
+    state->outSyncMaster = (number == mSyncMaster->getTransportMaster());
 }
 
 /**
@@ -310,13 +328,8 @@ void Synchronizer::getState(OldMobiusState* state)
  */
 void Synchronizer::refreshState(TrackState* state, Track* t)
 {
-    state->syncSource = Pulse::SourceNone;
-    
-    // sigh, convert this back from what we did in updateConfiguration
     int number = t->getDisplayNumber();
-    Follower* f = mSyncMaster->getFollower(number);
-    if (f != nullptr)
-      state->syncSource = f->source;
+    state->syncSource = mSyncMaster->getEffectiveSource(number);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -344,10 +357,11 @@ bool Synchronizer::isRecordStartSynchronized(Loop* l)
 {
     bool sync = false;
     Track* t = l->getTrack();
-    Follower* f = mSyncMaster->getFollower(t->getDisplayNumber());
-    if (f != nullptr) {
-        sync = (f->source != Pulse::SourceNone);
-    }
+    int number = t->getDisplayNumber();
+    Pulse::Source source = mSyncMaster->getEffectiveSource(number);
+
+    sync = (source != Pulse::SourceNone && source != Pulse::SourceMaster);
+
     return sync;
 }
 
@@ -1521,8 +1535,8 @@ void Synchronizer::startRecording(Loop* l)
         //if (src == SYNC_MIDI && !e->fields.sync.syncTrackerEvent)
         //startFrame += l->getInputLatency();
 
-        Follower* f = mSyncMaster->getFollower(t->getDisplayNumber());
-        if (f != nullptr && f->source == Pulse::SourceMidi)
+        Pulse::Source source = mSyncMaster->getEffectiveSource(t->getDisplayNumber());
+        if (source == Pulse::SourceMidi)
           startFrame += l->getInputLatency();
 
         start->pending = false;

@@ -207,7 +207,7 @@
     <Value name="outputLatency" value="0" type="int"/>
     <Value name="quickSave" value="mobiusloop"/>
     <Value name="spreadRange" value="48" type="int"/>
-    <Value name="transportMidiClocksWhenStopped" value="1" type="int"/>
+    <Value name="transportMidiClocksWhenStopped" value="0" type="int"/>
     <Value name="transportMidiEnable" value="1" type="int"/>
     <Value name="userFileFolder" value="c:\dev\mobius3\Mobius\Source\midifiles"/>
   </ValueSet>

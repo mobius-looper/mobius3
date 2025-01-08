@@ -66,6 +66,8 @@ class SyncMaster
     void setTransportMaster(int id);
     int getTransportMaster();
 
+    Pulse::Source getEffectiveSource(int id);
+
     //
     // Granular state
     //
