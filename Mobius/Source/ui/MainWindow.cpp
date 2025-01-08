@@ -277,6 +277,10 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::MidiTracks);
             }
                 break;
+            case MainMenu::EditSession: {
+                panelFactory.show(PanelFactory::Session);
+            }
+                break;
             case MainMenu::MidiControl: {
                 panelFactory.show(PanelFactory::Midi);
             }

@@ -51,6 +51,7 @@ class PanelFactory
         Properties,
         Group,
         MidiTracks,
+        Session,
 
         // Devices
         Audio,

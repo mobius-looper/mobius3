@@ -28,6 +28,7 @@
 #include "PropertiesEditor.h"
 #include "GroupEditor.h"
 #include "MidiTrackEditor.h"
+#include "SessionEditor.h"
 
 class ScriptPanel : public ConfigPanel
 {
@@ -222,4 +223,17 @@ class MidiTrackPanel : public ConfigPanel
  
   private:
     MidiTrackEditor editor;
+};
+
+class SessionPanel : public ConfigPanel
+{
+  public:
+    SessionPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
+        setName("Session");
+        setEditor(&editor);
+    }
+    ~SessionPanel() {}
+ 
+  private:
+    SessionEditor editor;
 };

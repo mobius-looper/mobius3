@@ -109,6 +109,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         Properties,
         Groups,
         MidiTracks,
+        EditSession,
 
         // Scripts
         Scripts,

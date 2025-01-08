@@ -20,10 +20,16 @@ class Transport
 {
   public:
 
+    // Session parameters
+    constexpr static const char* MidiEnable = "transportMidiEnable";
+    constexpr static const char* ClocksWhenStopped = "transportMidiClocksWhenStopped";
+    
+
     Transport(class SyncMaster* sm);
     ~Transport();
 
     void setSampleRate(int r);
+    void loadSession(class Session* s);
     void setTempo(float t);
     int setLength(int l);
     void setBeatsPerBar(int bpb);

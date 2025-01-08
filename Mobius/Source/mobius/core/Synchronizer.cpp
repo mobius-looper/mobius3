@@ -27,10 +27,6 @@
 
 // StringEqualNoCase
 #include "../../util/Util.h"
-#include "../../SyncTrace.h"
-
-#include "../../sync/SyncMaster.h"
-#include "../../sync/Pulsator.h"
 
 #include "../../model/MobiusConfig.h"
 #include "../../model/OldMobiusState.h"
@@ -42,6 +38,10 @@
 #include "../MobiusKernel.h"
 #include "../Notification.h"
 #include "../Notifier.h"
+
+#include "../../sync/SyncMaster.h"
+// for OldMobiusState
+#include "../../sync/Follower.h"
 
 #include "Action.h"
 #include "Event.h"

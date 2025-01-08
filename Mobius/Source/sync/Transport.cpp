@@ -13,6 +13,7 @@
 
 #include "../util/Trace.h"
 #include "../model/PriorityState.h"
+#include "../model/Session.h"
 
 #include "Pulse.h"
 #include "SyncSourceState.h"
@@ -69,11 +70,7 @@ Transport::Transport(SyncMaster* sm)
     state.unitsPerBeat = 1;
     state.beatsPerBar = 4;
 
-    setTempo(30.0f);
-
-    // testing, need an UI
-    midiEnabled = true;
-    sendClocksWhenStopped = true;
+    setTempo(90.0f);
 
     //midiRealizer->setTraceEnabled(true);
 }
@@ -97,6 +94,12 @@ void Transport::setSampleRate(int rate)
 {
     sampleRate = rate;
     setTempo(state.tempo);
+}
+
+void Transport::loadSession(Session* s)
+{
+    midiEnabled = s->getBool(MidiEnable);
+    sendClocksWhenStopped = s->getBool(ClocksWhenStopped);
 }
 
 /**

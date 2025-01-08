@@ -36,6 +36,8 @@
         <FILE id="G80cvL" name="SyncMaster.h" compile="0" resource="0" file="Source/sync/SyncMaster.h"/>
         <FILE id="G4AVkf" name="SyncSourceState.h" compile="0" resource="0"
               file="Source/sync/SyncSourceState.h"/>
+        <FILE id="MKxdyp" name="SyncTrace.cpp" compile="1" resource="0" file="Source/sync/SyncTrace.cpp"/>
+        <FILE id="s49iPd" name="SyncTrace.h" compile="0" resource="0" file="Source/sync/SyncTrace.h"/>
         <FILE id="r8b1tS" name="TempoMonitor.cpp" compile="1" resource="0"
               file="Source/sync/TempoMonitor.cpp"/>
         <FILE id="gYiqBB" name="TempoMonitor.h" compile="0" resource="0" file="Source/sync/TempoMonitor.h"/>
@@ -371,6 +373,9 @@
                 file="Source/ui/config/ScriptSymbolTable.cpp"/>
           <FILE id="sJ7xu7" name="ScriptSymbolTable.h" compile="0" resource="0"
                 file="Source/ui/config/ScriptSymbolTable.h"/>
+          <FILE id="gpVbiW" name="SessionEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/SessionEditor.cpp"/>
+          <FILE id="WcZ5HA" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/config/SessionEditor.h"/>
           <FILE id="pzeGck" name="SetupEditor.cpp" compile="1" resource="0" file="Source/ui/config/SetupEditor.cpp"/>
           <FILE id="dtBl3I" name="SetupEditor.h" compile="0" resource="0" file="Source/ui/config/SetupEditor.h"/>
           <FILE id="WR0iDK" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/config/SymbolTree.cpp"/>
@@ -999,8 +1004,6 @@
       <FILE id="qYO2SW" name="Supervisor.h" compile="0" resource="0" file="Source/Supervisor.h"/>
       <FILE id="BkIRFB" name="Symbolizer.cpp" compile="1" resource="0" file="Source/Symbolizer.cpp"/>
       <FILE id="acBTSd" name="Symbolizer.h" compile="0" resource="0" file="Source/Symbolizer.h"/>
-      <FILE id="hn2XN9" name="SyncTrace.cpp" compile="1" resource="0" file="Source/SyncTrace.cpp"/>
-      <FILE id="dGcedr" name="SyncTrace.h" compile="0" resource="0" file="Source/SyncTrace.h"/>
       <FILE id="Pmx2Ai" name="Upgrader.cpp" compile="1" resource="0" file="Source/Upgrader.cpp"/>
       <FILE id="w8Jhmk" name="Upgrader.h" compile="0" resource="0" file="Source/Upgrader.h"/>
       <FILE id="zYypIv" name="VariableManager.cpp" compile="1" resource="0"

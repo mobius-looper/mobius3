@@ -113,10 +113,10 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
-#include "../SyncTrace.h"
+#include "../midi/MidiByte.h"
 #include "../MidiManager.h"
 
-#include "../midi/MidiByte.h"
+#include "SyncTrace.h"
 #include "MidiQueue.h"
 #include "MidiSyncEvent.h"
 #include "SyncMaster.h"

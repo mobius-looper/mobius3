@@ -519,7 +519,7 @@ void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
     // this should come through MobiusAudioStream, that's where it lives
     int newSampleRate = stream->getSampleRate();
     if (newSampleRate != sampleRate)
-      refreshSampleRate(sampleRate);
+      refreshSampleRate(newSampleRate);
 
     // pull in the host information before we get very far
     hostAnalyzer->advance(stream->getInterruptFrames());
