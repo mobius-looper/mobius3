@@ -15,6 +15,7 @@
 
 #include "SyncSourceState.h"
 #include "Pulse.h"
+#include "DriftMonitor.h"
 
 class Transport
 {
@@ -49,9 +50,9 @@ class Transport
     void startClocks();
     void stop();
     void stopSelective(bool sendStop, bool stopClocks);
-    void midiContinue();
     void pause();
-
+    void resume();
+    
     // Granular State
 
     float getTempo();
@@ -64,7 +65,8 @@ class Transport
     // Block Lifecycle
 
     void advance(int frames);
-    void checkDrift();
+    void checkDrift(int frames);
+    
     Pulse* getPulse();
     
   private:
@@ -76,7 +78,9 @@ class Transport
     
     SyncSourceState state;
     Pulse pulse;
-
+    DriftMonitor drifter;
+    bool testCorrection = false;
+    
     // the desired tempo constraints
     // the tempo will kept in this range unless barLock is true
     float minTempo = 30.0f;

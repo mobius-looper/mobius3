@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig windowWidth="1166" windowHeight="800" activeButtonSet="Default"
+<UIConfig windowWidth="1166" windowHeight="797" activeButtonSet="Default"
           activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="172" height="40"/>
@@ -16,7 +16,7 @@
     <Element name="TempoElement" x="438" y="31"/>
     <Element name="LoopWindowElement" x="452" y="343"/>
     <Element name="RC505 Undo/Redo" x="42" y="258" width="75" height="41"/>
-    <Element name="Transport" x="483" y="365" width="656" height="42"/>
+    <Element name="Transport" x="483" y="364" width="656" height="42"/>
     <Strip name="Docked">
       <Element name="focusLock"/>
       <Element name="trackNumber"/>
@@ -142,7 +142,7 @@
     <Property name="alertDuration" value="5"/>
     <Property name="alertHeight" value="30"/>
     <Property name="buttonHeight" value="25"/>
-    <Property name="mainWindow" value="0,0,1166,800"/>
+    <Property name="mainWindow" value="0,0,1166,797"/>
     <Property name="scriptWindow" value="219,251,740,900"/>
     <Property name="symbolTreeFavorites" value="Record,AutoRecord,SpeedCancel"/>
     <Property name="trackRows" value="1"/>

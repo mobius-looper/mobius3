@@ -87,6 +87,8 @@ Transport::Transport(SyncMaster* sm)
     userSetTempo(90.0f);
 
     //midiRealizer->setTraceEnabled(true);
+
+    testCorrection = false;
 }
 
 Transport::~Transport()
@@ -107,7 +109,8 @@ Transport::~Transport()
 void Transport::setSampleRate(int rate)
 {
     sampleRate = rate;
-
+    drifter.setSampleRate(rate);
+    
     // not a user action, but sort of is because they manually changed
     // the audio interface, might need to streamline the process here
     userSetTempo(state.tempo);
@@ -461,9 +464,10 @@ void Transport::start()
     state.started = true;
 
     // going to need a lot more state here
-    if (midiEnabled)
-      midiRealizer->start();
-    
+    if (midiEnabled) {
+        midiRealizer->start();
+        drifter.resync();
+    }
 }
 
 void Transport::startClocks()
@@ -474,14 +478,7 @@ void Transport::startClocks()
 
 void Transport::stop()
 {
-    if (midiEnabled) {
-        if (sendClocksWhenStopped)
-          midiRealizer->stopSelective(true, false);
-        else
-          midiRealizer->stop();
-    }
-    
-    state.started = false;
+    pause();
     resetLocation();
 }
 
@@ -492,13 +489,22 @@ void Transport::stopSelective(bool sendStop, bool stopClocks)
     (void)stopClocks;
 }
 
-void Transport::midiContinue()
-{
-}
-
 void Transport::pause()
 {
-    paused = true;
+    if (midiEnabled) {
+        if (sendClocksWhenStopped)
+          midiRealizer->stopSelective(true, false);
+        else
+          midiRealizer->stop();
+    }
+    
+    state.started = false;
+}
+
+void Transport::resume()
+{
+    // todo: a lot more with song clocks
+    start();
 }
 
 bool Transport::isStarted()
@@ -653,9 +659,22 @@ int Transport::deriveTempo(int tapFrames)
 void Transport::setTempoInternal(float tempo)
 {
     state.tempo = tempo;
-    midiRealizer->setTempo(tempo);
+
+    // for verification, purposelfy make the tempo we send to the
+    // clock generator wrong
+    if (testCorrection)
+      midiRealizer->setTempo(tempo - 0.1f);
+    else
+      midiRealizer->setTempo(tempo);
+    
     if (midiEnabled && sendClocksWhenStopped)
       midiRealizer->startClocks();
+    
+    // update the drift monitor
+    drifter.setPulseFrames(state.unitFrames);
+    // doesn't really matter how large this is
+    drifter.setLoopFrames(state.unitFrames * state.beatsPerBar);
+    // drifter will resync on the next pulse
 }
 
 float Transport::lengthToTempo(int frames)
@@ -751,23 +770,35 @@ void Transport::deriveLocation(int oldUnit)
  * Pulsator doesn't deal with all of the various realtime events that MidiRealizer
  * can convey, this could be a problem here drift checking, might need to go against
  * MidiRealizer directly to get songClocks and things.
+ *
+ * Test Evidence 1: Loki
+ *
+ * Drift on each loop bounces regularly between 160 and 0 with rare excursions
+ * to -160 and 320.  But it always trends back to zero.
+ *
+ * Sample rate was 48000, tempo was 90, block size was 256.
+ *
+ * This feels like normal audio block jitter.
  */
-void Transport::checkDrift()
+void Transport::checkDrift(int blockFrames)
 {
+    // if we keep clocks going, could do this even when not started
     if (state.started) {
         Pulsator* pulsator = syncMaster->getPulsator();
+
+        // Pulseator will only return Beat and Bar pulses
         Pulse* p = pulsator->getOutBlockPulse();
-        if (p != nullptr) {
-            if (p->type == Pulse::PulseBeat) {
-                //Trace(2, "Transport: Beat");
+        int pulseOffset = (p != nullptr) ? p->blockFrame : -1;
+        float adjust = drifter.advance(blockFrames, pulseOffset);
+        if (adjust != 0.0f) {
+            if (testCorrection) {
+                float current = midiRealizer->getTempo();
+                (void)current;
+                // still needs work
+                midiRealizer->setTempo(current + adjust);
             }
-            else {
-                //Trace(2, "Transport: Bar");
-
-                
-
-                
-            }
+            else
+              drifter.resync();
         }
     }
 }

@@ -11,6 +11,9 @@
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
       <GROUP id="{17D1AD70-C175-4456-F59E-2C7879A600B9}" name="sync">
+        <FILE id="LIOiwp" name="DriftMonitor.cpp" compile="1" resource="0"
+              file="Source/sync/DriftMonitor.cpp"/>
+        <FILE id="HYQ3tR" name="DriftMonitor.h" compile="0" resource="0" file="Source/sync/DriftMonitor.h"/>
         <FILE id="RXCW17" name="Follower.h" compile="0" resource="0" file="Source/sync/Follower.h"/>
         <FILE id="N1Ldzj" name="HostAnalyzer.cpp" compile="1" resource="0"
               file="Source/sync/HostAnalyzer.cpp"/>

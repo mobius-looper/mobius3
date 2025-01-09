@@ -665,10 +665,12 @@ void SyncMaster::advance(MobiusAudioStream* stream)
 
     transport->advance(frames);
 
+    // unless this needs the entire Stream, should take the frame count
+    // like everything else, TMI
     pulsator->advance(stream);
 
     // see commentary about why this is complicated
-    transport->checkDrift();
+    transport->checkDrift(frames);
 
     // Supervisor formerly called this on the maintenance thread
     // interval, since we don't get a performMaintenance ping down here
