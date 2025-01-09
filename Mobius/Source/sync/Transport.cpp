@@ -12,15 +12,23 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
-#include "../model/PriorityState.h"
 #include "../model/Session.h"
+#include "../model/PriorityState.h"
+#include "../mobius/track/TrackProperties.h"
 
 #include "Pulse.h"
 #include "SyncSourceState.h"
 #include "SyncMaster.h"
 #include "MidiRealizer.h"
 #include "Pulsator.h"
+
 #include "Transport.h"
+
+//////////////////////////////////////////////////////////////////////
+//
+// Limits
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * The maximum allowed tempo.
@@ -58,6 +66,12 @@ const float TransportMinTempo = 10.0f;
  */
 const int TransportMinFrames = 128;
 
+//////////////////////////////////////////////////////////////////////
+//
+// Initialization
+//
+//////////////////////////////////////////////////////////////////////
+
 Transport::Transport(SyncMaster* sm)
 {
     syncMaster = sm;
@@ -70,7 +84,7 @@ Transport::Transport(SyncMaster* sm)
     state.unitsPerBeat = 1;
     state.beatsPerBar = 4;
 
-    setTempo(90.0f);
+    userSetTempo(90.0f);
 
     //midiRealizer->setTraceEnabled(true);
 }
@@ -93,7 +107,10 @@ Transport::~Transport()
 void Transport::setSampleRate(int rate)
 {
     sampleRate = rate;
-    setTempo(state.tempo);
+
+    // not a user action, but sort of is because they manually changed
+    // the audio interface, might need to streamline the process here
+    userSetTempo(state.tempo);
 }
 
 void Transport::loadSession(Session* s)
@@ -111,46 +128,6 @@ void Transport::loadSession(Session* s)
     else {
         if (!state.started)
           midiRealizer->stopSelective(false, true);
-    }
-}
-
-/**
- * Set the tempo, typically specified by the user.
- * This results in a recalculation of the unit lengths.
- * This is an alternative to setLength() which calculates the
- * tempo from the length.
- */
-void Transport::setTempo(float tempo)
-{
-    deriveUnitLength(tempo);
-}
-
-/**
- * Set the length of the transport loop, typically after recording the first loop.
- * This results in a recalculation of the tempo.
- *
- * This is more complicated than setting a user-specified tempo
- * because the resulting tempo may either be unusably fast or slow, so the
- * tempo may be adjusted.
- */
-int Transport::setLength(int length)
-{
-    return deriveTempo(length);
-}
-
-/**
- * Changing the beats per bar does not change the unit length length or the
- * tempo but it will change where beat pulses are.
- *
- * It will factor into future calculations if the tempo or length is changed.
- * !! is this enough, feels like there should be more here.
- *
- * At the very least, we should recalculate all the derived bat/bar/loop counters
- */
-void Transport::setBeatsPerBar(int bpb)
-{
-    if (bpb > 0) {
-        state.beatsPerBar = bpb;
     }
 }
 
@@ -197,6 +174,274 @@ int Transport::getBar()
 
 //////////////////////////////////////////////////////////////////////
 //
+// Manual Control
+//
+// These are underneath action handlers sent by the UI and provide
+// transport control directly to the user rather than automated control
+// that happens from within by restructuring around tracks.
+//
+// The UI may choose to prevent manual control when there is currentl
+// a track connected to the transport.  User commands that change the
+// tempo/unit length effectively break the connection between the transport
+// and the track.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * The user has pressed a "Start" button or taken some other action that
+ * is expected to start the transport.
+ *
+ * If the transport is already started, nothing changes.
+ * If the transport is connected to a track and paused, then it will
+ * be forcibly resumed and may drift apart from the track.
+ *
+ * todo: once we allow this, then will probably want various forms of
+ * realign to either bring the track into alignment with the transport
+ * or move the transport to align with the track.
+ */
+void Transport::userStart()
+{
+    start();
+}
+
+/**
+ * The user has pressed a "Stop" button.
+ *
+ * Like Start, this yanks control away from the connected track.
+ */
+void Transport::userStop()
+{
+    stop();
+}
+
+/**
+ * The user has requested a time signature change.
+ * If the transport is running and has a unit length, this will
+ * not change the length of the unit, but will influence the locations
+ * of beat and bar pulses.
+ *
+ * NOTE: If the number is odd, this can result in roundoff errors that cause
+ * the final beat to be a different size than the preceeding beats.
+ * And similarly if the transport has multiple bars, the final bar may be
+ * of a different size than the previous.
+ *
+ * If the transport is stopped and disconnected, we can reconfigure
+ * the unit size to match.
+ */
+void Transport::userSetBeatsPerBar(int bpb)
+{
+    if (bpb > 0 && bpb != state.beatsPerBar) {
+
+        state.beatsPerBar = bpb;
+        if (connection == 0) {
+            // todo: here we're allowed to recalculate the unit width
+        }
+        else {
+            // todo: if the transport is connected and advancing, then
+            // changing bpb can change the effective beat/bar numbers
+            // that are being displayed
+        }
+    }
+}
+
+/**
+ * Set a tempo specified by the user.
+ *
+ * There are two ways to do this, with a specific tempo number
+ * or with a duration.
+ *
+ * Using a tempo number would be done when the UI offers a place
+ * where a tempo can be entered manually or selected from a menu.
+ *
+ * Using a duration would be done when the UI provides a "tap tempo"
+ * interface where the user pushes a button several times.
+ *
+ * If the transport is currenty connected, this will restructure
+ * the transport and break the connection.
+ */
+void Transport::userSetTempo(float tempo)
+{
+    deriveUnitLength(tempo);
+}
+
+/**
+ * The tempo is being set using a tap tempo duration
+ * in milliseconds.
+ */
+void Transport::userSetTempoDuration(int millis)
+{
+    float samplesPerMillisecond = (float)sampleRate / 1000.0f;
+    int frames = (int)((float)millis * samplesPerMillisecond);
+
+    (void)deriveTempo(frames);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Internal Restructuring
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Disconnect the transport from a track.
+ * This has no effect other than clearing the connection number.
+ * If the UI is testing isConnected, this may enable the use of
+ * manual transport controls.
+ */
+void Transport::disconnect()
+{
+    connection = 0;
+}
+
+/**
+ * Connect the transport to a track.
+ *
+ * This results in a restructuring of the transport to give it a tempo
+ * and beat/bar widths that fit with the track contents.
+ *
+ * Here is where the magic happens.
+ *
+ * Try to pick the smallest basis that can be an even division of the track length.
+ * If the length is short this can be treated like tap tempo.
+ * If it is long then we have to guess how many "bars" should be in the track.
+ *
+ * This needs to be smarter, winging it ATM to get it working.
+ *
+ * There are many ways these calcultions could be performed, some more elegant
+ * than others.  I'm not worried about elegance here, but something that is
+ * obvious by reading the algorithm.
+ *
+ */
+void Transport::connect(TrackProperties& props)
+{
+    connection = props.number;
+
+    int unitFrames = props.frames;
+    int resultBars = 1;
+
+    // let's get this out of the way early
+    // if the number of frames in the loop is not even, then all sorts of
+    // assumptions get messy, this should have been prevented by now
+    // if the number of cycles and bpb is also odd, this might result in an acceptable
+    // unit, but it is sure to cause problems down the road
+    if ((unitFrames % 2) != 0) {
+        Trace(1, "Transport::connect Uneven loop frames %d, this will probably suck",
+              unitFrames);
+    }
+
+    // try to divide by cycles it if is clean
+    if (props.cycles > 1) {
+        int cycleFrames = unitFrames / props.cycles;
+        int expectedFrames = cycleFrames * props.cycles;
+        if (expectedFrames == unitFrames) {
+            // the loop divides cleanly by cycle, the cycle
+            // can be the base length
+            unitFrames = cycleFrames;
+            resultBars = props.cycles;
+        }
+        else {
+            // some number was odd in the loop's final length calculation
+            // the last cycle will not be the same size as the others
+            // the truncated cycle length can't be used as a reliable basis
+            // this isn't supposed to happen if notifyTrackRecordEnding did it's job
+            // but it could happen when loading random loops, or the user has taken
+            // manual control over the cycle count
+            // need more intelligence here
+            Trace(1, "Transport: Warning: Inconsistent cycle lengths calculating base unit");
+        }
+    }
+    
+    // try to apply the user selected beatsPerBar
+    if (state.beatsPerBar > 1) {
+        int beatFrames = unitFrames / state.beatsPerBar;
+        int expectedFrames = beatFrames * state.beatsPerBar;
+        if (expectedFrames == unitFrames) {
+            // it divides cleanly on beats
+            unitFrames = beatFrames;
+        }
+        else {
+            // not unexpected if they're Brubeking with bpb=5
+            // this is where we should have tried to round off the ending
+            // of the initial recording so it would divide clean
+            // this can't be the unit without another layer of calculations
+            // to deal with shortfalls and remainders
+            Trace(2, "Warning: Requested Beats Per Bar %d does not like math",
+                  state.beatsPerBar);
+        }
+    }
+
+    // start with the usual double/halve approach to get the tempo in range
+    // it could be a lot smarter here about dividing long loops into "bars"
+    // rather than just assuming a backing pattern is 1,2,4,8,16 bars
+    // for example if they're syncing to a 12-bar pattern and the recorded an
+    // entire 12 bar loop, then we could know that
+    // can't guess though without input, would need a barsPerLoop option as
+    // well as beatsPerBar and barsPerLoop takes the place of the cycle count
+    // if the loop wasn't already divided into cycles, that might be the easiest way
+
+    float tempo = lengthToTempo(unitFrames);
+
+    if (tempo > maxTempo) {
+        // the loop is very short, not uncommon if it was recorded like "tap tempo"
+        // and intended to be a beat length rather than a bar length
+        // we could abandon BeatsParBar at this point and just find some beat subdivision
+        // that results in a usable tempo but try to do what they asked for
+        while (tempo > maxTempo) {
+            unitFrames *= 2;
+            tempo = lengthToTempo(unitFrames);
+        }
+    }
+    else if (tempo < minTempo) {
+        // the loop is very long
+        // if the unit frames is uneven, then this will suck
+        // should have been a forced adjustment in notifyTrackRecordEnding
+        if ((unitFrames % 2) > 0) {
+            Trace(1, "Transport: Rounding odd unit length %d", unitFrames);
+            unitFrames--;
+            // adjust = unitFrames - tapFrames;
+        }
+            
+        while (tempo < minTempo) {
+            unitFrames /= 2;
+            tempo = lengthToTempo(unitFrames);
+        }
+    }
+
+    state.unitFrames = unitFrames;
+    state.unitsPerBeat = 1;
+
+    // at this point a unit is a "beat" and can calculate how many bars are in the
+    // resulting loop
+
+    int barFrames = unitFrames * state.beatsPerBar;
+    int bars = props.frames / barFrames;
+    int expectedFrames = bars * barFrames;
+    if (expectedFrames != props.frames) {
+        // roundoff error, could have used ceil() here
+        bars++;
+    }
+    state.barsPerLoop = bars;
+
+    // now we have location
+    // Connection usually happens when the loop is at the beginning, but it
+    // can also happen randomly
+    // lots of options here
+    //     - start dealligned, and make the user manuall reallign
+    //     - attempt realign and deal with MIDI song position pointer
+    //     - attempt realign and leave MIDI Start till the next loop point
+    //
+    // If we're restructuring within the same track, then it should
+    // just change the tempo without moving the MIDI position
+    // 
+    // If we're switching loops you might want this to restart the external device
+    // much to do here
+    // let SyncMaster decide
+
+    setTempoInternal(tempo);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Internal Transport Controls
 //
 //////////////////////////////////////////////////////////////////////
@@ -211,9 +456,6 @@ void Transport::resetLocation()
     state.songClock = 0;
 }
 
-/**
- * does this "resume" or start from zero?
- */
 void Transport::start()
 {
     state.started = true;
@@ -517,10 +759,14 @@ void Transport::checkDrift()
         Pulse* p = pulsator->getOutBlockPulse();
         if (p != nullptr) {
             if (p->type == Pulse::PulseBeat) {
-                Trace(2, "Transport: Beat");
+                //Trace(2, "Transport: Beat");
             }
             else {
-                Trace(2, "Transport: Bar");
+                //Trace(2, "Transport: Bar");
+
+                
+
+                
             }
         }
     }

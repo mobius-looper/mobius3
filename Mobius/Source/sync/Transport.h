@@ -21,26 +21,30 @@ class Transport
   public:
 
     // Session parameters
+    // not liking this, move to SessionConstants or something
     constexpr static const char* MidiEnable = "transportMidiEnable";
     constexpr static const char* ClocksWhenStopped = "transportMidiClocksWhenStopped";
     
-
     Transport(class SyncMaster* sm);
     ~Transport();
 
     void setSampleRate(int r);
     void loadSession(class Session* s);
-    void setTempo(float t);
-    int setLength(int l);
-    void setBeatsPerBar(int bpb);
-
     void refreshState(class SyncSourceState& dest);
     void refreshPriorityState(class PriorityState* ps);
-    float getTempo();
-    int getBeatsPerBar();
-    int getBeat();
-    int getBar();
+
+    // Manual Control
     
+    void userStop();
+    void userStart();
+    void userSetBeatsPerBar(int bpb);
+    void userSetTempo(float tempo);
+    void userSetTempoDuration(int millis);
+
+    // Internal Control
+
+    void connect(class TrackProperties& props);
+    void disconnect();
     void start();
     void startClocks();
     void stop();
@@ -48,8 +52,16 @@ class Transport
     void midiContinue();
     void pause();
 
+    // Granular State
+
+    float getTempo();
+    int getBeatsPerBar();
+    int getBeat();
+    int getBar();
     bool isStarted();
     bool isPaused();
+
+    // Block Lifecycle
 
     void advance(int frames);
     void checkDrift();
@@ -59,9 +71,11 @@ class Transport
 
     class SyncMaster* syncMaster = nullptr;
     class MidiRealizer* midiRealizer = nullptr;
+    
     int sampleRate = 44100;
     
     SyncSourceState state;
+    Pulse pulse;
 
     // the desired tempo constraints
     // the tempo will kept in this range unless barLock is true
@@ -79,9 +93,10 @@ class Transport
     bool metronomeEnabled = false;
     bool midiEnabled = false;
     bool sendClocksWhenStopped = false;
-    
-    Pulse pulse;
 
+    // the id if the connected track
+    int connection = 0;
+    
     void correctBaseCounters();
     int deriveTempo(int tapFrames);
     void resetLocation();
@@ -91,5 +106,7 @@ class Transport
     void setTempoInternal(float tempo);
 
 };
-    
 
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

@@ -147,6 +147,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
+      audioInputPort='3'
       syncSource='out'
       trackSyncUnit='loop'/>
     <SetupTrack

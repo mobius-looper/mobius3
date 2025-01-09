@@ -263,13 +263,9 @@ void TransportElement::atomButtonPressed(UIAtomButton* b)
                 // length method
                 // mostly just for testing, though this might be useful?
                 int millis = tapEnd - tapStart;
-                int sampleRate = provider->getSampleRate();
-                float samplesPerMillisecond = (float)sampleRate / 1000.0f;
-                int length = (int)((float)millis * samplesPerMillisecond);
-                
                 UIAction a;
                 a.symbol = provider->getSymbols()->getSymbol(ParamTransportLength);
-                a.value = length;
+                a.value = millis;
                 provider->doAction(&a);
             }
 
@@ -286,3 +282,7 @@ void TransportElement::atomButtonPressed(UIAtomButton* b)
         provider->doAction(&a);
     }
 }
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

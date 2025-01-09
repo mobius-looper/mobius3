@@ -769,10 +769,23 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
                 }
 
                 // Nothing to wait for except input latency
-                long stopFrame = loop->getFrame();
+                long currentFrame = loop->getFrame();
+                long stopFrame = currentFrame;
                 bool doInputLatency = !action->noLatency;
                 if (doInputLatency)
                   stopFrame += loop->getInputLatency();
+
+                // sync master may ask for rounding adjustments
+                int number = loop->getTrack()->getDisplayNumber();
+                int adjust = mSyncMaster->notifyTrackRecordEnding(number);
+                stopFrame += adjust;
+                
+                if (stopFrame < currentFrame) {
+                    // SM wants to pull the ending back, but this can't rewind
+                    // before it is now, I suppose it could but it's hard
+                    stopFrame = currentFrame;
+                    Trace(1, "Synchronizer: SyncMaster wanted a negative adjustment back in time");
+                }
 
                 // Must use Record function since the invoking function
                 // can be anything that ends Record mode.
@@ -1931,9 +1944,9 @@ void Synchronizer::loopReset(Loop* loop)
 void Synchronizer::loopResize(Loop* l, bool restart)
 {
     int number = l->getTrack()->getDisplayNumber();
-    mSyncMaster->notifyTrackResize(number);
+    mSyncMaster->notifyTrackRestructure(number);
     if (restart)
-      mSyncMaster->notifyTrackRestart(number);
+      mSyncMaster->notifyTrackStart(number);
 }
 
 /**
@@ -1942,10 +1955,10 @@ void Synchronizer::loopResize(Loop* l, bool restart)
 void Synchronizer::loopSwitch(Loop* l, bool restart)
 {
     int number = l->getTrack()->getDisplayNumber();
-    mSyncMaster->notifyTrackResize(number);
+    mSyncMaster->notifyTrackRestructure(number);
     if (restart)
-      mSyncMaster->notifyTrackRestart(number);
-}      
+      mSyncMaster->notifyTrackStart(number);
+ }      
 
 /**
  * Called by Loop when we make a speed change.
@@ -1978,7 +1991,7 @@ void Synchronizer::loopSpeedShift(Loop* l)
 void Synchronizer::loopPause(Loop* l)
 {
     int number = l->getTrack()->getDisplayNumber();
-    mSyncMaster->notifyTrackStop(number);
+    mSyncMaster->notifyTrackPause(number);
 }
 
 /**
@@ -2024,7 +2037,7 @@ void Synchronizer::loopRestart(Loop* l)
     int number = l->getTrack()->getDisplayNumber();
     // this one used the weird "checkNear" flag that isn't
     // implemented by the SyncMaster interface, necessary?
-    mSyncMaster->notifyTrackRestart(number);
+    mSyncMaster->notifyTrackStart(number);
 }
 
 /**
@@ -2043,7 +2056,7 @@ void Synchronizer::loopMidiStart(Loop* l)
     // this uses the "force" flag to bypass checking for manual
     // start mode since we're here after they asked to do it manually
     // this function really should be handled above Mobius?
-    mSyncMaster->notifyTrackRestart(number, true);
+    mSyncMaster->notifyMidiStart(number);
 }
 
 /**
@@ -2070,15 +2083,17 @@ void Synchronizer::loopMidiStart(Loop* l)
  */
 void Synchronizer::loopMidiStop(Loop* l, bool force)
 {
-    (void)l;
+    // !! awkward logic here and in SyncMaster around "force"
+    // SyncMaster shouldn't need to know details about why the
+    // stop is requested, which makes it hard to just test
+    // for this track being the transport master
+    // there are two cases: 1) if the track is the transport
+    // master then send a stop and 2) a user initiated function
+    // to stop was received do that.  For 2, I think that should
+    // be an action handled by the Transport, not something that
+    // makes it all the way down to core and back up
     (void)force;
-    Trace(1, "Synchronizer::loopMidiStop How did we get here?");
-    #if 0
-    if (force || (isTransportMaster(l))) {
-        // mTransport->stop(l, true, false);
-        mSyncMaster->midiOutStopSelective(true, false);
-    }
-    #endif
+    mSyncMaster->notifyMidiStop(l->getTrack()->getDisplayNumber());
 }
 
 /**
@@ -2092,7 +2107,9 @@ void Synchronizer::loopSetStartPoint(Loop* l, Event* e)
 {
     (void)e;
     int number = l->getTrack()->getDisplayNumber();
-    mSyncMaster->notifyTrackRestart(number);
+    // this isn't a Restructure, but it looks like the track
+    // jumped to the start
+    mSyncMaster->notifyTrackStart(number);
 }
 
 /****************************************************************************
@@ -2125,7 +2142,7 @@ void Synchronizer::loadLoop(Loop* l)
         Track* track = l->getTrack();
 
         // tell SM that we have something and can be one of a master
-        mSyncMaster->notifyLoopLoad(track->getDisplayNumber());
+        mSyncMaster->notifyTrackRestructure(track->getDisplayNumber());
     }
 }
 
@@ -2208,12 +2225,14 @@ void Synchronizer::sendStart(Loop* l, bool checkManual, bool checkNear)
 			// to send a start event.  If we suppressed one because we're
 			// already there, still increment the start count.
             Trace(l, 2, "Sync: Suppressing MIDI Start since we're near\n");
-			mSyncMaster->incMidiOutStarts();
+
+            
+			//mSyncMaster->incMidiOutStarts();
         }
         else {
             Trace(l, 2, "Sync: Sending MIDI Start\n");
             // mTransport->start(l);
-            mSyncMaster->midiOutStart();
+            //mSyncMaster->midiOutStart();
 		}
 	}
 }

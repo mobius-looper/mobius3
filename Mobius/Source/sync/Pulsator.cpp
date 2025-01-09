@@ -74,7 +74,7 @@ void Pulsator::loadSession(Session* s)
  * Called at the beginning of each audio block to detect sync
  * pulses from the various sources.
  */
-void Pulsator::interruptStart(MobiusAudioStream* stream)
+void Pulsator::advance(MobiusAudioStream* stream)
 {
     // capture some statistics
 	lastMillisecond = millisecond;

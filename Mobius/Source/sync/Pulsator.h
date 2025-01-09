@@ -77,7 +77,7 @@ class Pulsator
 
     void loadSession(class Session* s);
 
-    void interruptStart(class MobiusAudioStream* stream);
+    void advance(class MobiusAudioStream* stream);
 
     Pulse* getRelevantBlockPulse(Follower* f);
     Pulse* getOutBlockPulse();

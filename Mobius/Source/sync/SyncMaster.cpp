@@ -116,7 +116,89 @@ void SyncMaster::addListener(Listener* l)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * This is called when a track is reset, if this was one of the sync masters
+ * This is called when a track begins recording.
+ * If this is the TransportMaster, Synchronizer in the past would do a "full stop"
+ * to send a STOP event and stop sending MIDI clocks.
+ */
+void SyncMaster::notifyTrackRecord(int number)
+{
+    // continue calling MidiRealizer but this needs to be under the control of the Transport
+    if (number == transportMaster) {
+        transport->stop();
+        // unlike notifyTrackReset, we get to keep being the transportMaster
+    }
+}
+
+/**
+ * This is called when a track is preparing to end a recording.
+ * If the track is not following another track, the ending may need to be adjusted
+ * so that it have a final length that is even and results in the calculation
+ * of a stable unit length.
+ *
+ * The adjustment if any is returned and the final loop length should be shorter
+ * or longer at the time notifyTrackAvailable is called.
+ *
+ * This requires all the same calculations that Transport::connect does allowing
+ * it to return the ideal length.  Needs work...
+ */
+int SyncMaster::notifyTrackRecordEnding(int number)
+{
+    (void)number;
+    return 0;
+}
+
+/**
+ * Called when a track has finished recording and may serve as a sync master.
+ *
+ * If there is already a sync master, it is not changed, though we should
+ * allow a special sync mode, maybe Pulse::SourceMasterForce or some other
+ * parameter that overrides it.
+ *
+ * Also worth considering if we need an option for tracks to not become the
+ * track sync master if they don't want to.
+ */
+void SyncMaster::notifyTrackAvailable(int number)
+{
+    // verify the number is in range and can be a leader
+    Follower* f = pulsator->getFollower(number);
+    if (f != nullptr) {
+        // anything can become the track sync master
+        if (trackSyncMaster == 0)
+          trackSyncMaster = number;
+        
+        if (f->source == Pulse::SourceMaster) {
+            // this one wants to be special
+            if (transportMaster == 0) {
+
+                connectTransport(number);
+                
+                transportMaster = number;
+
+                // until we have manual options ready, auto start
+                transport->start();
+            }
+            else {
+                // this can't be the sync master, it will revert
+                // to either SourceLeader or SourceTransport
+                // can make that decision later
+            }
+        }
+    }
+}
+
+/**
+ * Connection between a track and the transport is done
+ * by giving Transport the TrackProperties.
+ */
+void SyncMaster::connectTransport(int id)
+{
+    TrackManager* tm = kernel->getTrackManager();
+    TrackProperties props = tm->getTrackProperties(id);
+    transport->connect(props);
+}
+
+/**
+ * Called when a track is reset, if this was one of the sync masters
  * Synchronizer would try to auto-assign another one.
  *
  * This unlocks the follower automatically.
@@ -126,10 +208,7 @@ void SyncMaster::addListener(Listener* l)
  * which is hard to predict.   Wait until the next new recording which calls
  * notifyTrackAvailable or make the user do it manually.
  *
- * todo: If this is the TransportMaster then Synchronizer is currently calling
- * SyncMaster::midiOutStop.  There are a lot of calls to isTransportMaster down
- * there to send MIDI events.  Those should all be moved up here so audio and MIDI
- * tracks behave the ssame.
+ * If this was the TransportMaster, old Synchronizer would send a MIDI Stop command.
  */
 void SyncMaster::notifyTrackReset(int number)
 {
@@ -146,120 +225,142 @@ void SyncMaster::notifyTrackReset(int number)
         // Synchronizer would send MIDI Stop at this point
         // it had a method fullStop that I think both sent the STOP event
         // and stop generating clocks
-        midiRealizer->stop();
+        transport->stop();
 
         transportMaster = 0;
     }
 }
 
 /**
- * This is called when a track begins recording.
- * If this is the TransportMaster, Synchronizer in the past would do a "full stop"
- * to send a STOP event and stop sending MIDI clocks.
+ * Called when a track has restructured in some way.  Mostly we care about
+ * the length of the track loop, but might also be sensitive to cycle counts.
+ *
+ * This is very similar to notifyTrackAvailable in that when a track moves
+ * from Reset to Play after various actions like Switch, Load, or Undo, it could
+ * also become a sync master.  Not doing that yet.
+ *
+ * If the track IS ALREADY the TransportMaster, then the transport must be
+ * reconfigured and the tempo may change.
  */
-void SyncMaster::notifyTrackRecord(int number)
+void SyncMaster::notifyTrackRestructure(int number)
 {
-    // continue calling MidiRealizer but this needs to be under the control of the Transport
     if (number == transportMaster) {
-        midiRealizer->stop();
-        // unlike notifyTrackReset, we get to keep being the transportMaster
+        // we don't need to distinguish between restructuring
+        // and establishing a connection right now
+        connectTransport(number);
     }
 }
 
 /**
- * Called after a loop or project load in a track.
- * If the track now has content and there was no track out out sync master,
- * Synchronizer would auto-assign this one.
+ * Called when a track Restarts.
+ * This can happen for several reasons:  The Start or Retrigger functions,
+ * a Switch with the restart option, exiting Mute with the retrigger option,
+ * the StartPoint function, etc.
+ *
+ * It means that the track made a jump back to the beginning rather than playing
+ * to the beginning normally.  When this happens old Synchronizer had options
+ * to send a MIDI Start event to keep external devices in sync.
+ *
+ * Now we inform the Transport which may choose to send MIDI Start.
  */
-void SyncMaster::notifyLoopLoad(int number)
+void SyncMaster::notifyTrackStart(int number)
+{
+    if (number == transportMaster) {
+        transport->start();
+    }
+}
+
+/**
+ * Called when the track has entered a state of Pause.
+ * This can happen with the Pause or GlobalPause functions, or the Stop
+ * function which both pauses and rewinds.
+ */
+void SyncMaster::notifyTrackPause(int number)
+{
+    if (number == transportMaster) {
+
+        // !! here is where we need to be a lot smarter about the difference
+        // between MIDI Start and MIDI Continue, exiting a Pause does not
+        // necessarily mean we send Start
+        // The complication is that MIDI Continue requires a song position pointer,
+        // and these are coarser grained than an audio stream frame location
+        // the MIDI Continue would need to be delayed until the Transport actually
+        // reaches that song position
+        transport->stop();
+    }
+}
+
+/**
+ * Called when the track exists Pause.
+ * See commentary in notifyTrackPause about why MIDI Continue is hard.
+ */
+void SyncMaster::notifyTrackResume(int number)
+{
+    if (number == transportMaster) {
+        // probably wrong
+        transport->start();
+    }
+}
+
+/**
+ * Called when a track enters Mute mode.
+ *
+ * Old Synchronizer had options to send a MIDI Stop event when this happened,
+ * and then other options about what happened when the track unmuted.
+ * Those should be moved to Transport parameters?  As it stands now, unmute
+ * options are internal to Mobius and it will call back to Start or Resume.
+ */
+void SyncMaster::notifyTrackMute(int number)
+{
+    // punt for now
+    (void)number;
+}
+
+/**
+ * Called when a track jumps to a new location rather than advancing normally.
+ * This could be used to send MIDI song position pointers which is hard.
+ *
+ * Making this different than notifyTrackStart which is overloaded with other options.
+ */
+void SyncMaster::notifyTrackMove(int number)
 {
     (void)number;
 }
 
 /**
- * This is supposed to be called when any track has finished recording
- * and could serve as the track sync master.
+ * Called when a track changes playback rate.
  *
- * If there is already a sync master, it is not changed, though we should
- * allow a special sync mode, maybe Pulse::SourceMasterForce or some other
- * parameter that overrides it.
- *
- * Also worth considering if we need an option for tracks to not become the
- * track sync master if they don't want to.
- */
-void SyncMaster::notifyTrackAvailable(int number)
-{
-    // verify the number is in range and can be a leader
-    Follower* f = pulsator->getFollower(number);
-    if (f == nullptr) {
-        Trace(1, "Synchronizer: Invalid track number %d", number);
-    }
-    else {
-        // anything can become the track sync master
-        if (trackSyncMaster == 0)
-          trackSyncMaster = number;
-        
-        if (f->source == Pulse::SourceMaster) {
-            // this one wants to be special
-            if (transportMaster == 0) {
-
-                TrackManager* tm = kernel->getTrackManager();
-                TrackProperties props = tm->getTrackProperties(number);
-                // todo: use the frame count to set the transport tempo
-                transportMaster = number;
-            }
-        }
-    }
-}
-
-/**
- * Called by a track when it the loop it is playing changes in some way
- * that may impact the generated MIDI clocks if it is the TransportMaster
- * and the tempo follows the loop length.
- *
- * Examples include Multiply, Insert, Divide, Undo/Redo.
- *
- * Now also calling this for loop switch, which used the old option
- * ResizeSyncAdjust from the Setup to control whether the tempo changed or not.
- * 
- */
-void SyncMaster::notifyTrackResize(int number)
-{
-    if (transportMaster == number) {
-
-        // todo: change tempo
-    }
-}
-
-/**
- * Called by a track when it has jumped playback back to the beginning.
- * Mobius does this after Unrounded Multiply and Trim, in combination
- * with notifyTrackResize.
- *
- * If this is the TransportMaster we have historically sent a MIDI Start event.
- */
-void SyncMaster::notifyTrackRestart(int number, bool force)
-{
-    if (transportMaster == number) {
-        bool checkManual = !force;
-        sendStart(checkManual, false);
-    }
-}
-
-/**
- * Called by a track when the playback rate changes.
- * This has adjusted the generated clock tempo controlled by
- * the Setup parameter speedSyncAdjust
+ * In theory this could adjust the tempo of the Transport and MIDI clocks.
+ * Don't remember what old Synchronizer did, it probably tried to change the tempo
+ * poorly.
  */
 void SyncMaster::notifyTrackSpeed(int number)
 {
-    if (transportMaster == number) {
-
-        //Setup* setup = mMobius->getActiveSetup();
-        //SyncAdjust mode = setup->getSpeedSyncAdjust();
-        //if (mode == SYNC_ADJUST_TEMPO)
-    }
+    (void)number;
 }
+
+/**
+ * This is a special handler for some old MIDI event generation options.
+ * Needs thought.
+ */
+void SyncMaster::notifyMidiStart(int number)
+{
+    (void)number;
+}
+
+void SyncMaster::notifyMidiStop(int number)
+{
+    (void)number;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Old Synchronizer Code
+//
+// This is here for reference only, showing what it used to do and we
+// need to replicate in some way.
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Copied from the old Synchroonzer for reference
@@ -274,6 +375,7 @@ void SyncMaster::notifyTrackSpeed(int number)
  * I think the intent was to suppress starts when we know that we're already pretty k
  * close to the start point, I guess to prevent flamming if you're driving a drum machine.
  */
+#if 0
 void SyncMaster::sendStart(bool checkManual, bool checkNear)
 {
 	bool doStart = true;
@@ -304,12 +406,12 @@ void SyncMaster::sendStart(bool checkManual, bool checkNear)
 			// to send a start event.  If we suppressed one because we're
 			// already there, still increment the start count.
             Trace(2, "SyncMaster: Suppressing MIDI Start since we're near\n");
-			incMidiOutStarts();
+			midiRealizer->incStarts();
         }
         else {
             Trace(2, "SyncMaster: Sending MIDI Start\n");
             // mTransport->start(l);
-            midiOutStart();
+            midiRealizer->start();
 		}
 	}
 }
@@ -347,7 +449,8 @@ void SyncMaster::muteMidiStop()
                      mode == MUTE_SYNC_TRANSPORT_CLOCKS);
 
     // mTransport->stop(l, transport, clocks);
-    midiOutStopSelective(doTransport, doClocks);
+    // what "transport" means here is sending MIDI start/stop messages
+    midiRealizer->stopSelective(doTransport, doClocks);
 }
 
 /**
@@ -364,12 +467,12 @@ void SyncMaster::notifyTrackResume(int number)
             mode == MUTE_SYNC_TRANSPORT_CLOCKS) {
             // we sent MS_STOP, now send MS_CONTINUE
             //mTransport->midiContinue(l);
-            midiOutContinue();
+            midiRealizer->midiContinue();
         }
         else  {
             // we just stopped sending clocks, resume them
             // mTransport->startClocks(l);
-            midiOutStartClocks();
+            midiRealizer->startClocks();
         }
     }
 }
@@ -393,12 +496,16 @@ void SyncMaster::notifyTrackMute(int number)
           muteMidiStop();
 	}
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
 // Masters
 //
 //////////////////////////////////////////////////////////////////////
+
+// !! Need to think more about the concepts of Connect and Disconnect
+// for the TransportMaster
 
 /**
  * There can be one TrackSyncMaster.
@@ -458,11 +565,19 @@ void SyncMaster::setTrackSyncMaster(UIAction* a)
  */
 void SyncMaster::setTransportMaster(int id)
 {
-    transportMaster = id;
+    if (transportMaster != id) {
 
-    // todo: this has lots of consequences, we're going to need to query
-    // the track to get it's length and possibly other things to control
-    // the Transport
+        if (transportMaster > 0 && id == 0) {
+            // unusual, they are asking to not have a sync master
+            // what else should happen here?  Stop it?
+            transport->disconnect();
+        }
+
+        if (id > 0)
+          connectTransport(id);
+        
+        transportMaster = id;
+    }
 }
 
 int SyncMaster::getTransportMaster()
@@ -550,7 +665,7 @@ void SyncMaster::advance(MobiusAudioStream* stream)
 
     transport->advance(frames);
 
-    pulsator->interruptStart(stream);
+    pulsator->advance(stream);
 
     // see commentary about why this is complicated
     transport->checkDrift();
@@ -610,30 +725,28 @@ bool SyncMaster::doAction(UIAction* a)
             break;
         
         case FuncTransportStop:
-            transport->stop();
+            transport->userStop();
             break;
 
         case FuncTransportStart:
-            transport->start();
+            transport->userStart();
             break;
 
-            // todo FuncTransportPause
-            
         case ParamTransportTempo: {
             // Action doesn't have a way to pass floats right now so the
             // integer value is x100
             float tempo = (float)(a->value) / 100.0f;
-            transport->setTempo(tempo);
+            transport->userSetTempo(tempo);
         }
             break;
             
         case ParamTransportLength: {
-            transport->setLength(a->value);
+            transport->userSetTempoDuration(a->value);
         }
             break;
             
         case ParamTransportBeatsPerBar:
-            transport->setBeatsPerBar(a->value);
+            transport->userSetBeatsPerBar(a->value);
             break;
 
         default:
@@ -918,6 +1031,15 @@ Follower* SyncMaster::getFollower(int id)
 }
 
 /**
+ * Following a sync source does not result in track dependencies so you
+ * don't need to inform TimeSlicer and reorder.
+ */
+void SyncMaster::follow(int follower, Pulse::Source source, Pulse::Type type)
+{
+    pulsator->follow(follower, source, type);
+}
+
+/**
  * Adding a follower relationship changes dependency order that
  * TimeSlicer is using to guide the track advance.  Let it know
  */
@@ -948,13 +1070,18 @@ void SyncMaster::addLeaderPulse(int leader, Pulse::Type type, int frameOffset)
 }
 
 /**
- * Following a sync source does not result in track dependencies so you
- * don't need to inform TimeSlicer and reorder.
+ * A track is informing us that it has corrected drift after being notified
+ * that the drift threshold was exceeded.
+ * Here we need to reset the drift tracker for this follower.
  */
-void SyncMaster::follow(int follower, Pulse::Source source, Pulse::Type type)
+void SyncMaster::correctDrift(int follower, int frames)
 {
-    pulsator->follow(follower, source, type);
+    pulsator->correctDrift(follower, frames);
 }
+
+//
+// These we should try to hide as much as possible and do them automatically
+//
 
 void SyncMaster::start(int follower)
 {
@@ -976,10 +1103,6 @@ int SyncMaster::getDrift(int follower)
 {
     return pulsator->getDrift(follower);
 }
-void SyncMaster::correctDrift(int follower, int frames)
-{
-    pulsator->correctDrift(follower, frames);
-}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -996,11 +1119,6 @@ float SyncMaster::getTempo()
 {
     return transport->getTempo();
 }
-void SyncMaster::setTempo(float tempo)
-{
-    transport->setTempo(tempo);
-}
-
 bool SyncMaster::isMidiOutSending()
 {
     return midiRealizer->isSending();
@@ -1013,10 +1131,6 @@ int SyncMaster::getMidiOutStarts()
 {
     return midiRealizer->getStarts();
 }
-void SyncMaster::incMidiOutStarts()
-{
-    midiRealizer->incStarts();
-}
 int SyncMaster::getMidiOutSongClock()
 {
     return midiRealizer->getSongClock();
@@ -1025,49 +1139,6 @@ int SyncMaster::getMidiOutRawBeat()
 {
     return midiRealizer->getBeat();
 }
-void SyncMaster::midiOutStart()
-{
-    midiRealizer->start();
-}
-void SyncMaster::midiOutStartClocks()
-{
-    midiRealizer->startClocks();
-}
-void SyncMaster::midiOutStop()
-{
-    midiRealizer->stop();
-}
-void SyncMaster::midiOutStopSelective(bool sendStop, bool stopClocks)
-{
-    midiRealizer->stopSelective(sendStop, stopClocks);
-}
-void SyncMaster::midiOutContinue()
-{
-    // todo: several issues here, what does this mean for transport?
-    // what does pause() do?
-    midiRealizer->midiContinue();
-}
-
-// Synchronizer needs to be using pulses now
-#if 0
-/**
- * The event interface should no longer be used.  The clock generator
- * thread will be adjusted to match the advance of the transport bar, not the
- * other way around.  Still needed for legacy code in Synchronizer.
- */
-class MidiSyncEvent* SyncMaster::midiOutNextEvent()
-{
-    return midiRealizer->nextEvent();
-}
-class MidiSyncEvent* SyncMaster::midiOutIterateNext()
-{
-    return midiRealizer->iterateNext();
-}
-void SyncMaster::midiOutIterateStart()
-{
-    midiRealizer->iterateStart();
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1075,21 +1146,6 @@ void SyncMaster::midiOutIterateStart()
 //
 //////////////////////////////////////////////////////////////////////
     
-#if 0
-class MidiSyncEvent* SyncMaster::midiInNextEvent()
-{
-    return midiAnalyzer->nextEvent();
-}
-class MidiSyncEvent* SyncMaster::midiInIterateNext()
-{
-    return midiAnalyzer->iterateNext();
-}
-void SyncMaster::midiInIterateStart()
-{
-    midiAnalyzer->iterateStart();
-}
-#endif
-
 float SyncMaster::getMidiInTempo()
 {
     return midiAnalyzer->getTempo();
@@ -1131,33 +1187,6 @@ bool SyncMaster::isHostStarted()
     //return midiAnalyzer->isStarted();
     return false;
 }
-
-#if 0
-class MidiSyncEvent* SyncMaster::hostNextEvent()
-{
-    //return midiAnalyzer->nextEvent();
-    return nullptr;
-}
-class MidiSyncEvent* SyncMaster::hostIterateNext()
-{
-    //return midiAnalyzer->iterateNext();
-    return nullptr;
-}
-void SyncMaster::hostIterateStart()
-{
-    //midiAnalyzer->iterateStart();
-}
-
-float SyncMaster::getHostTempo()
-{
-    return states.host.tempo;
-}
-int SyncMaster::getHostBeat()
-{
-    return states.host.beat;
-}
-
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //
