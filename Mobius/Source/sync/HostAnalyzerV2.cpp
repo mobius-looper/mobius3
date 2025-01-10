@@ -32,21 +32,22 @@
 #include "../util/Trace.h"
 
 #include "SyncMaster.h"
-#include "HostAnalyzer.h"
+#include "HostAnalyzerV2.h"
 
-HostAnalyzer::HostAnalyzer()
+HostAnalyzerV2::HostAnalyzerV2()
 {
 }
 
-HostAnalyzer::~HostAnalyzer()
+HostAnalyzerV2::~HostAnalyzerV2()
 {
+    traceppq = true;
 }
 
 /**
  * If we're standalone, then AP will be nullptr and needs
  * to be checked on advance.
  */
-void HostAnalyzer::initialize(juce::AudioProcessor* ap)
+void HostAnalyzerV2::initialize(juce::AudioProcessor* ap)
 {
     audioProcessor = ap;
 }
@@ -55,7 +56,7 @@ void HostAnalyzer::initialize(juce::AudioProcessor* ap)
  * Sample rate is expected to be an int, Juce gives
  * us a double, under what conditions would this be fractional?
  */
-void HostAnalyzer::setSampleRate(int rate)
+void HostAnalyzerV2::setSampleRate(int rate)
 {
     sampleRate = rate;
 }
@@ -66,8 +67,9 @@ void HostAnalyzer::setSampleRate(int rate)
  * than that exposes, so go directly to the juce::AudioProcessor and
  * don't you dare pass go.
  */
-void HostAnalyzer::advance(int blockSize)
+void HostAnalyzerV2::advance(int blockSize)
 {
+    (void)blockSize;
     pulse.reset();
     
     bool transportChanged = false;
@@ -75,7 +77,6 @@ void HostAnalyzer::advance(int blockSize)
     bool tsigChanged = false;
     bool beatChanged = false;
     bool beatOffset = 0;
-    int newBeat = 0;
     
     if (audioProcessor != nullptr) {
         juce::AudioPlayHead* head = audioProcessor->getPlayHead();
@@ -88,6 +89,19 @@ void HostAnalyzer::advance(int blockSize)
                 if (newPlaying != playing) {
                     playing = newPlaying;
                     transportChanged = true;
+
+                    if (playing) {
+                        Trace(2, "HostAnalyzer: Start");
+                        // assume start is always on a beat, valid?
+                        beat = -1;
+
+                        // trace the next 10 blocks
+                        traceppqFine = true;
+                        ppqCount = 0;
+                    }
+                    else {
+                        Trace(2, "HostAnalyzer: Stop");
+                    }
                 }
                 
                 // haven't cared about getIsLooping in the past but that might be
@@ -101,17 +115,21 @@ void HostAnalyzer::advance(int blockSize)
                     if (tempo != newTempo) {
                         tempo = newTempo;
                         tempoChanged = true;
+                        Trace(2, "HostAnalyzer: Tempo %d (x1000)", (int)(tempo * 1000.0f));
                     }
                 }
 
                 juce::Optional<juce::AudioPlayHead::TimeSignature> tsig = pos->getTimeSignature();
                 if (tsig.hasValue()) {
                     if (tsig->numerator != timeSignatureNumerator ||
-                        tsig->denominator != timeSignatureDenminator) {
+                        tsig->denominator != timeSignatureDenominator) {
 
                         timeSignatureNumerator = tsig->numerator;
                         timeSignatureDenominator = tsig->denominator;
                         tsigChanged = true;
+
+                        Trace(2, "HostAnalyzer: Time signature %d / %d",
+                              timeSignatureNumerator, timeSignatureDenominator);
                     }
                 }
 
@@ -122,48 +140,42 @@ void HostAnalyzer::advance(int blockSize)
                 //double samplePosition = 0.0;
                 //juce::Optional<int64_t> tis = pos->getTimeInSamples();
                 //if (tis.hasValue()) samplePosition = (double)(*tis);
-            
-                // beatPosition is what is called "ppq position" everywhere else
-                // this could also be used to detect transport play/stop
-                double beatPosition = 0.0;
-                juce::Optional<double> ppq = pos->getPpqPosition();
-                if (ppq.hasValue()) beatPosition = *ppq;
 
-                if (traceppq) {
-                    int lastq = (int)lastppq;
-                    int newq = (int)beatPosition;
-                    if (lastq != newq)
-                      Trace(2, "HostAnalyzer: beat %d", newq);
-                    lastppq = beatPosition;
+                juce::Optional<double> ppq = pos->getPpqPosition();
+                if (ppq.hasValue()) {
+                    double beatPosition = *ppq;
+
+                    // now the meat
+                    // experiment with two methods, the "detect late" "detect early"
+                    bool detectLate = true;
+                    if (detectLate) {
+                        int newBeat = (int)beatPosition;
+                        if (newBeat != beat) {
+                            beat = newBeat;
+                            beatChanged = true;
+                            if (traceppq) {
+                                char buf[128];
+                                snprintf(buf, sizeof(buf), "HostAnalyzer: Beat %f", (float)beatPosition);
+                                Trace(2, buf);
+                            }
+                            // it was behind us so process it at the beginning
+                            beatOffset = 0;
+                        }
+                    }
+                    else {
+                    }
+                    if (!beatChanged && traceppqFine && ppqCount < 10) {
+                        char buf[128];
+                        snprintf(buf, sizeof(buf), "HostAnalyzer: PPQ %f", (float)beatPosition);
+                        Trace(2, buf);
+                        ppqCount++;
+                    }
                 }
 
                 // old code never tried to use "bar" information from the host
                 // because it was so unreliable as to be useless, things may have
-                // changed by now.  It will try to figure that out it's own self,
-                // would be good to verify that it matches what Juce says...
-
-                // now the meat
-                // experiment with two methods, the "detect late" "detect early"
-                bool detectLate = true;
-                if (detectLate) {
-                    int newBeat = (int)beatPosition;
-                    if (lastBeat != beat) {
-                        beat = newBeat;
-                        beatChanged = true;
-                    }
-                    // it was behind us so process it at the beginning
-                    beatOffset = 0;
-                }
-                else {
-                    
-                        
-
-                        
-                
-
-
-                
-            
+                // changed by now.  Though forum chatter suggests ProTools still doesn't
+                // do it through Juce.
             }
         }
     }

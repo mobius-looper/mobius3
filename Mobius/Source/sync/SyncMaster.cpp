@@ -21,6 +21,7 @@
 #include "MidiRealizer.h"
 #include "MidiAnalyzer.h"
 #include "HostAnalyzer.h"
+#include "HostAnalyzerV2.h"
 #include "Transport.h"
 #include "SyncMasterState.h"
 
@@ -62,11 +63,13 @@ void SyncMaster::initialize(MobiusKernel* k)
     midiRealizer.reset(new MidiRealizer());
     midiAnalyzer.reset(new MidiAnalyzer());
     hostAnalyzer.reset(new HostAnalyzer());
+    hostAnalyzer2.reset(new HostAnalyzerV2());
     pulsator.reset(new Pulsator(this));
     transport.reset(new Transport(this));
 
     // reach out and touch the face of god
     hostAnalyzer->initialize(container->getAudioProcessor());
+    hostAnalyzer2->initialize(container->getAudioProcessor());
 
     MidiManager* mm = container->getMidiManager();
     midiRealizer->initialize(this, mm);
@@ -639,7 +642,7 @@ void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
 
     // pull in the host information before we get very far
     hostAnalyzer->advance(stream->getInterruptFrames());
-
+    hostAnalyzer2->advance(stream->getInterruptFrames());
 }
 
 void SyncMaster::refreshSampleRate(int rate)
@@ -647,6 +650,7 @@ void SyncMaster::refreshSampleRate(int rate)
     sampleRate = rate;
     
     hostAnalyzer->setSampleRate(rate);
+    hostAnalyzer2->setSampleRate(rate);
     transport->setSampleRate(rate);
     midiRealizer->setSampleRate(rate);
 }

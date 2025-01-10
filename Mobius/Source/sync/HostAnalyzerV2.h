@@ -40,15 +40,17 @@ class HostAnalyzerV2
     int timeSignatureDenominator = 0;
     int beatsPerBar = 0;
     bool playing = false;
-    int beat = 0;
-    int bar = 0;
+    int beat = -1;
+    int bar = -1;
 
     // the pulse we export
     Pulse pulse;
     
     // hacks for host sync debugging
-    bool traceppq = false;
+    bool traceppq = true;
     double lastppq = -1.0f;
-    
+
+    bool traceppqFine = false;
+    int ppqCount = 0;
 };
 

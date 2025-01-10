@@ -18,6 +18,10 @@
         <FILE id="N1Ldzj" name="HostAnalyzer.cpp" compile="1" resource="0"
               file="Source/sync/HostAnalyzer.cpp"/>
         <FILE id="AIzaaJ" name="HostAnalyzer.h" compile="0" resource="0" file="Source/sync/HostAnalyzer.h"/>
+        <FILE id="CS31aD" name="HostAnalyzerV2.cpp" compile="1" resource="0"
+              file="Source/sync/HostAnalyzerV2.cpp"/>
+        <FILE id="RkNfTv" name="HostAnalyzerV2.h" compile="0" resource="0"
+              file="Source/sync/HostAnalyzerV2.h"/>
         <FILE id="M2Rsr6" name="HostAudioTime.h" compile="0" resource="0" file="Source/sync/HostAudioTime.h"/>
         <FILE id="hKyKNC" name="HostSyncState.cpp" compile="1" resource="0"
               file="Source/sync/HostSyncState.cpp"/>

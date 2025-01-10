@@ -261,6 +261,7 @@ class SyncMaster
     std::unique_ptr<class MidiRealizer> midiRealizer;
     std::unique_ptr<class MidiAnalyzer> midiAnalyzer;
     std::unique_ptr<class HostAnalyzer> hostAnalyzer;
+    std::unique_ptr<class HostAnalyzerV2> hostAnalyzer2;
     std::unique_ptr<class Pulsator> pulsator;
     std::unique_ptr<class Transport> transport;
     
