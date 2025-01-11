@@ -12,7 +12,7 @@
 
 #include <JuceHeader.h>
 
-#include "SyncConstants.h"
+#include "SyncSourceResult.h"
 
 class HostAnalyzerV2
 {
@@ -34,8 +34,13 @@ class HostAnalyzerV2
     // it too?
     int sampleRate = 44100;
 
+    /**
+     * The results of the analysis of each block.
+     */
+    SyncSourceResult result;
+    
     //
-    // Thives we derive from the AudioProcessor
+    // Things we derive from the AudioProcessor
     //
 
     double tempo = 0.0f;
@@ -48,11 +53,6 @@ class HostAnalyzerV2
     long streamTime = 0;
 
     //
-    // SyncEvent that may be generated in a block
-    //
-    SyncEvent event;
-    
-    //
     // Locked unit and drift state
     //
 
@@ -60,32 +60,26 @@ class HostAnalyzerV2
     // when this is zero, it means there is no tempo lock
     int unitLength = 0;
 
-    // length of the tracking loop in frames
-    int loopLength = 0;
-
     // position within the tracking loop in the audio stream
-    int audioFrame = 0;
+    int streamFrame = 0;
     
-    // position within the tracking loop in the beat stream
-    int beatFrame = 0;
-
-    int units = 0;
-    int unitCounter = 0;
+    int streamUnits = 0;
+    int streamUnitCounter = 0;
     int unitsPerBeat = 1;
-    int loop = 0;
+    int streamBeat = 0;
+    int streamBar = 0;
+    int streamLoop = 0;
     
     void resync(double beatPosition);
+    void advanceAudioStream(int blockFrames);
 
     //
     // State derived on each block when significant events happen
     //
 
-    bool beatEncountered = false;
-    int beatOffset = 0;
-    
     void ponderTempo(double newTempo);
     int tempoToUnit(double newTempo);
-    bool ponderPpq(double beatPosition, int blockSize);
+    void ponderPpq(double beatPosition, int blockSize);
     void deriveTempo(double beatPosition, int blockSize);
 
     //

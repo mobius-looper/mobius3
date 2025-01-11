@@ -101,9 +101,7 @@ void HostAnalyzerV2::advance(int blockSize)
     bool tsigChanged = false;
     int initialUnit = unitLength;
     
-    beatEncountered = false;
-    beatOffset = 0;
-    event.reset();
+    result.reset();
 
     if (audioProcessor != nullptr) {
         juce::AudioPlayHead* head = audioProcessor->getPlayHead();
@@ -112,10 +110,10 @@ void HostAnalyzerV2::advance(int blockSize)
             juce::Optional<juce::AudioPlayHead::PositionInfo> pos = head->getPosition();
             if (pos.hasValue()) {
 
+                // Determine whether we started or stopped in this block
                 bool newPlaying = pos->getIsPlaying();
                 if (newPlaying != playing) {
                     playing = newPlaying;
-                    transportChanged = true;
 
                     if (playing) {
                         Trace(2, "HostAnalyzer: Start");
@@ -130,9 +128,11 @@ void HostAnalyzerV2::advance(int blockSize)
 
                         // reset the derived tempo monitor
                         resetTempoMonitor();
+                        result.started = true;
                     }
                     else {
                         Trace(2, "HostAnalyzer: Stop");
+                        result.stopped = true;
                     }
                 }
                 
@@ -193,7 +193,7 @@ void HostAnalyzerV2::advance(int blockSize)
     if (playing) {
         if (transportChanged)
           resync();
-        advanceTrackingLoop(blockSize);
+        advanceAudioStream(blockSize);
     }
 
     // do this last, deriveTempo needs to know what it is at the start
@@ -244,6 +244,9 @@ void HostAnalyzerV2::ponderTempo(double newTempo)
             // monitor will be invalid, so reset it so it starts seeing
             // the new tempo ppq width
             resetTempoMonitor();
+
+            result.tempoChange = true;
+            result.newUnitLength = newUnit;
         }
     }
 
@@ -290,44 +293,82 @@ int HostAnalyzerV2::tempoToUnit(double newTempo)
  * Returns true if there was a beat in this block and
  * sets the blockOffset.
  */
-bool HostAnalyzerV2::ponderPpq(double beatPosition, int blockSize)
+void HostAnalyzerV2::ponderPpq(double beatPosition, int blockSize)
 {
-    bool changed = false;
-
     // if the transport is stopped, then the ppqPosition won't be advancing
     if (playing) {
 
-        deriveTempo(beatPosition, blockSize);
+        // monitor tempo changes, and return a useful number
+        double beatsPerSample = deriveTempo(beatPosition, blockSize);
     
         // now the meat
-        // experiment with two methods, the "detect late" "detect early"
-        bool detectLate = true;
-        if (detectLate) {
-            int newBeat = (int)beatPosition;
-            if (newBeat != beat) {
-                beat = newBeat;
-                changed = true;
-                if (traceppq) {
-                    char buf[128];
-                    snprintf(buf, sizeof(buf), "HostAnalyzer: Beat %f", (float)beatPosition);
-                    Trace(2, buf);
+        // attempt to find the location of the next beat start within this block
+        // since ppqPosition doesn't roll it's integral part until after it happens
+        int newBeat = (int)beatPosition;
+        if (newBeat != beat) {
+            // not expecting to get here with early detection
+            Trace(1, "HostAnalyer: Missed a beat detection");
+            result.sourceBeatDetected = true;
+            result.sourceBeatOffset = 0;
+            beat = newBeat;
+        }
+        else {
+            // several ways to detect this, this is one
+            double nextPpqPosition = beatPosition + (beatsPerSample * blockSize);
+            int nextBeat = (int)nextPpqPosition;
+            if (nextBeat != beat) {
+
+                // the beat hanged in this block, try to locate the location it changed
+
+                // the number of ppq units between the next beat integral and where we are now
+                double ppqDelta = (double)nextBeat - beatPosition;
+
+                if (lastPpq > 0.0f) {
+                    // calculate the number of ppq units each frame in the prior block represented
+                    // then use that to calculate the offset in this block
+                    int lastBlockSize = streamTime - lastPpqSTreamTime;
+                    double ppqFrameUnit = (beatPosition - lastPPq) / (double)lastBlockSize;
+                    int blockOffset = (int)(ppqFrameUnit * ppqDelta);
+                    if (blockOffset < blockSize) {
+                        result.sourceBeatDetected = true;
+                        result.sourceBeatOffset = blockOffset;
+                    }
+                    else {
+                        // host is sending odd sized blocks, and the pulse will actually
+                        // happen in the next one
+                    }
                 }
-                // it was behind us so process it at the beginning
-                beatOffset = 0;
+                else {
+                    // don't have a reference point to calculate ppqFrameUnit
+                    // this is very unusual, would have to come out of Stop one block
+                    // before the start of the beat
+                    // these are other ways to calculate this, but just let it be picked
+                    // up on the next block which will be late, but drift will tend
+                    // to even out
+                        
+                    // there are other ways to do this, but just let it get picked up
+                }
+            }
+        }
+
+        // if we found a beat, optional trace
+        if (result.sourceBeatDetected) {
+            if (traceppq) {
+                char buf[128];
+                snprintf(buf, sizeof(buf), "HostAnalyzer: Beat %f", (float)beatPosition);
+                Trace(2, buf);
             }
         }
         else {
-        }
-    
-        if (!changed && traceppqFine && ppqCount < 10) {
-            char buf[128];
-            snprintf(buf, sizeof(buf), "HostAnalyzer: PPQ %f", (float)beatPosition);
-            Trace(2, buf);
-            ppqCount++;
+            if (traceppqFine && ppqCount < 10) {
+                traceFloat("HostAnalyzer: PPQ %f", beatPosition);
+                ppqCount++;
+            }
         }
     }
-    
-    return changed;
+
+    lastPpq = beatPosition;
+    lastPpqStreamTime = streamTime;
 }
 
 /**
@@ -357,6 +398,9 @@ void HostAnalyzerV2::deriveTempo(double beatPosition, int blockSize)
             tempo = bpm;
             unitLength = tempoToUnit(tempo);
             Trace(2, "HostAnalyzer: Unit length %d", unitLength);
+
+            result.tempoChanged = true;
+            result.newUnitLength = unitLength;
         }
         else if (tempoSpecified) {
             // We had a host provided tempo
@@ -402,6 +446,8 @@ void HostAnalyzerV2::deriveTempo(double beatPosition, int blockSize)
                     Trace(2, "HostAnalyzer: Unit length %d", derivedUnitLength);
                     tempo = bpm;
                     unitLength = derivedUnitLength;
+                    result.tempoChanged = true;
+                    result.newUnitLength = unitLength;
                 }
                 
                 // todo: if the length exceeds some threshold, resync
@@ -409,8 +455,6 @@ void HostAnalyzerV2::deriveTempo(double beatPosition, int blockSize)
         }
     }
 
-    lastPpq = beatPosition;
-    lastPpqStreamTime = streamTime;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -432,8 +476,11 @@ void HostAnalyzerV2::resync(double beatPosition, bool starting)
     // here is where it gets magic
     // you should not be assuming that when we start the transport
     // is exactly on a beat.  Ableton seems to do this but others might now
-    audioFrame = 0;
-    beatFrame = 0;
+    streamFrame = 0;
+    sourceFrame = 0;
+    streamBeat = 0;
+    streamBar = 0;
+    streamLoop = 0;
     units = 0;
     unitCounter = 0;
 }
@@ -451,51 +498,74 @@ void HostAnalyzerV2::advanceAudioStream(int blockFrames)
     int barsPerLoop = 1;
 
     // almost identical logic here to Transport
-    
+
     if (playing) {
 
-        playFrame = playFrame + blockFrames;
-        if (playFrame >= unitLength) {
+        streamFrame = streamFrame + blockFrames;
+        if (streamFrame >= unitLength) {
 
             // a unit has transpired
-            int blockOffset = playFrame - unitLength;
+            int blockOffset = streamFrame - unitLength;
             if (blockOffset > blockFrames || blockOffset < 0)
               Trace(1, "Transport: You suck at math");
 
             // effectively a frame wrap too
-            playFrame = blockOffset;
+            streamFrame = blockOffset;
 
             units++;
             unitCounter++;
 
             if (unitCounter >= unitsPerBeat) {
 
+                result.beatDetected = true;
+                result.blockOffset = blockOffset;
+
                 unitCounter = 0;
-                beat++;
+                streamBeat++;
+                
+                if (streamBeat >= beatsPerBar) {
 
-                if (beat >= beatsPerBar) {
+                    streamBeat = 0;
+                    streamBar++;
 
-                    beat = 0;
-                    bar++;
+                    if (streamBar >= barsPerLoop) {
 
-                    if (bar >= barsPerLoop) {
-
-                        bar = 0;
-                        loop++;
-
-                        event.loop = true;
+                        streamBar = 0;
+                        streamLoop++;
+                        
+                        result.loop = true;
                     }
                     else {
-                        event.bar = true;
+                        result.bar = true;
                     }
                 }
                 else {
-                    event.beat = true;
+                    result.beat = true;
                 }
-                
-                event.blockOffset = blockOffset;
+
             }
         }
+
+        // do a similar advance into the imaginary loop that the
+        // source beats are playing
+        sourceFrame = sourceFrame + blockFrames;
+        if (sourceFrame >= unitLength) {
+            // "loop" 
+                sourceFrame = sourceFrame - unitLength;
+        }
+    }
+
+    // when the stream tracking loop reaches the loop point
+    // that's as good a place as any to check drift
+    if (result.loop) {
+
+        // result.blockOffset has the location of the tracking loop
+        // frame where the loop occurred
+        // there will normally be a source beat near the same location
+        drift = sourceFrame - streamFrame;
+        // here is where need to look at which end of the unit we're on and calculate
+        // the minimum length from each side
+        Trace(2, "HostAnalyzer: Drift %d", drift);
     }
 }
 
