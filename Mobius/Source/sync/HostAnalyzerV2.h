@@ -12,7 +12,7 @@
 
 #include <JuceHeader.h>
 
-#include "Pulse.h"
+#include "SyncConstants.h"
 
 class HostAnalyzerV2
 {
@@ -34,23 +34,78 @@ class HostAnalyzerV2
     // it too?
     int sampleRate = 44100;
 
-    // things we derive from AudioProcessor
-    float tempo = 0.0f;
+    //
+    // Thives we derive from the AudioProcessor
+    //
+
+    double tempo = 0.0f;
+    // whether the tempo was given to us by the host or derived from beat distance
+    bool tempoSpecified = false;
     int timeSignatureNumerator = 0;
     int timeSignatureDenominator = 0;
-    int beatsPerBar = 0;
     bool playing = false;
     int beat = -1;
-    int bar = -1;
+    long streamTime = 0;
 
-    // the pulse we export
-    Pulse pulse;
+    //
+    // SyncEvent that may be generated in a block
+    //
+    SyncEvent event;
     
-    // hacks for host sync debugging
+    //
+    // Locked unit and drift state
+    //
+
+    // once tempo lock has been achieved the length of the base unit
+    // when this is zero, it means there is no tempo lock
+    int unitLength = 0;
+
+    // length of the tracking loop in frames
+    int loopLength = 0;
+
+    // position within the tracking loop in the audio stream
+    int audioFrame = 0;
+    
+    // position within the tracking loop in the beat stream
+    int beatFrame = 0;
+
+    int units = 0;
+    int unitCounter = 0;
+    int unitsPerBeat = 1;
+    int loop = 0;
+    
+    void resync(double beatPosition);
+
+    //
+    // State derived on each block when significant events happen
+    //
+
+    bool beatEncountered = false;
+    int beatOffset = 0;
+    
+    void ponderTempo(double newTempo);
+    int tempoToUnit(double newTempo);
+    bool ponderPpq(double beatPosition, int blockSize);
+    void deriveTempo(double beatPosition, int blockSize);
+
+    //
+    // Tempo monitoring from beats
+    //
+
+    double lastPpq = 0.0f;
+    int lastPpqStreamTime = 0;
+    void resetTempoMonitor();
+    
+    //
+    // Trace options
+    //
+    
     bool traceppq = true;
     double lastppq = -1.0f;
-
     bool traceppqFine = false;
     int ppqCount = 0;
+    
+    void traceFloat(const char* format, double value);
+
 };
 
