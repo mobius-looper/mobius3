@@ -92,14 +92,13 @@ void HostAnalyzerV2::setSampleRate(int rate)
  * don't you dare pass go.
  *
  * It is important that the blockSize be the full block size provided by the
- * host, not a partial sliced block segment that is used for pulse processing.
- *
+ * host, not a partial sliced block segment that is used for track scheduling
+ * around sync pulses.
  */
 void HostAnalyzerV2::advance(int blockSize)
 {
-    bool transportChanged = false;
-    bool tsigChanged = false;
     int initialUnit = unitLength;
+    bool tsigChanged = false;
     
     result.reset();
 
@@ -110,76 +109,56 @@ void HostAnalyzerV2::advance(int blockSize)
             juce::Optional<juce::AudioPlayHead::PositionInfo> pos = head->getPosition();
             if (pos.hasValue()) {
 
-                // Determine whether we started or stopped in this block
-                bool newPlaying = pos->getIsPlaying();
-                if (newPlaying != playing) {
-                    playing = newPlaying;
-
-                    if (playing) {
-                        Trace(2, "HostAnalyzer: Start");
-                        // assume start is always on a beat, valid?
-                        // no, need to use the initial ppqPosition to orient the
-                        // play frame
-                        beat = -1;
-
-                        // temporary: trace the next 10 blocks
-                        traceppqFine = true;
-                        ppqCount = 0;
-
-                        // reset the derived tempo monitor
-                        resetTempoMonitor();
-                        result.started = true;
-                    }
-                    else {
-                        Trace(2, "HostAnalyzer: Stop");
-                        result.stopped = true;
-                    }
-                }
-                
-                // haven't cared about getIsLooping in the past but that might be
-                // interesting to explore
-
-                juce::Optional<double> bpm = pos->getBpm();
-                if (bpm.hasValue()) {
-                    ponderTempo(*bpm);
-                }
-                
-                juce::Optional<juce::AudioPlayHead::TimeSignature> tsig = pos->getTimeSignature();
-                if (tsig.hasValue()) {
-                    if (tsig->numerator != timeSignatureNumerator ||
-                        tsig->denominator != timeSignatureDenominator) {
-
-                        timeSignatureNumerator = tsig->numerator;
-                        timeSignatureDenominator = tsig->denominator;
-                        tsigChanged = true;
-
-                        Trace(2, "HostAnalyzer: Time signature %d / %d",
-                              timeSignatureNumerator, timeSignatureDenominator);
-                    }
-                }
-
-                // in the olden days samplePosition was used to detect whether or not
-                // the transport was playing for a few hosts that didn't set some of the VST2
-                // flags correctly, assuming that is no longer an issue, but here's
-                // how to get it
-                //double samplePosition = 0.0;
-                //juce::Optional<int64_t> tis = pos->getTimeInSamples();
-                //if (tis.hasValue()) samplePosition = (double)(*tis);
-
-                // While ppqpos is technically optional, every host has it, and I'm
-                // not seeing the need to adapt to those that don't
-
+                // If the host doesn't give us PPQ, then everything falls apart
                 juce::Optional<double> ppq = pos->getPpqPosition();
                 if (ppq.hasValue()) {
-                    beatEncountered = ponderPpq(*ppq, blockSize);
-                }
 
-                // old code never tried to use "bar" information from the host
-                // because it was so unreliable as to be useless, things may have
-                // changed by now.  Though Juce forum chatter suggests ProTools still doesn't
-                // provide it.  Unlike beats, bars are more abstract and while we can
-                // default to what the host provides, it is still necessary to allow the
-                // user to define their own time signature independent of the host.
+                    double beatPosition = *ppq;
+
+                    // Track changes to the time signature
+                    juce::Optional<juce::AudioPlayHead::TimeSignature> tsig = pos->getTimeSignature();
+                    if (tsig.hasValue()) {
+                        if (tsig->numerator != timeSignatureNumerator ||
+                            tsig->denominator != timeSignatureDenominator) {
+
+                            timeSignatureNumerator = tsig->numerator;
+                            timeSignatureDenominator = tsig->denominator;
+                            tsigChanged = true;
+
+                            Trace(2, "HostAnalyzer: Time signature %d / %d",
+                                  timeSignatureNumerator, timeSignatureDenominator);
+                        }
+                    }
+
+                    // Determine whether we started or stopped in this block
+                    // in the olden days samplePosition was used to detect whether or not
+                    // the transport was playing for a few hosts that didn't set some of the VST2
+                    // flags correctly, assuming that is no longer an issue, but here's
+                    // how to get it
+                    //double samplePosition = 0.0;
+                    //juce::Optional<int64_t> tis = pos->getTimeInSamples();
+                    //if (tis.hasValue()) samplePosition = (double)(*tis);
+                    
+                    detectStart(pos->getIsPlaying(), beatPosition);
+                
+                    // haven't cared about getIsLooping in the past but that might be
+                    // interesting to explore
+
+                    // Adapt to a tempo change if the host provides one
+                    juce::Optional<double> bpm = pos->getBpm();
+                    if (bpm.hasValue())
+                      ponderTempo(*bpm);
+
+                    // Watch for host beat changes and detect tempo
+                    ponderPpq(beatPosition, blockSize);
+
+                    // old code never tried to use "bar" information from the host
+                    // because it was so unreliable as to be useless, things may have
+                    // changed by now.  Though Juce forum chatter suggests ProTools still doesn't
+                    // provide it.  Unlike beats, bars are more abstract and while we can
+                    // default to what the host provides, it is still necessary to allow the
+                    // user to define their own time signature independent of the host.
+                }
             }
         }
     }
@@ -190,33 +169,79 @@ void HostAnalyzerV2::advance(int blockSize)
         // more to do here...
     }
 
-    if (playing) {
-        if (transportChanged)
-          resync();
-        advanceAudioStream(blockSize);
-    }
+    if (playing)
+      advanceAudioStream(blockSize);
 
-    // do this last, deriveTempo needs to know what it is at the start
+    // do this last, deriveTempo and DriftMonitor need to know what it is at the start
     // of the block, not the end
-    streamTime += blockSize;
+    audioStreamTime += blockSize;
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Start and Stop
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
- * When the transport starts after having been stopped, the last
- * captured stream and ppq position won't be valid, so begin again.
+ * Called first during block analysis to determine when the host transport
+ * starts and stops.
+ *
+ * The isPlaying flag comes from the juce::AudioStream PlayHead.
  */
-void HostAnalyzerV2::resetTempoMonitor()
+void HostAnalyzerV2::detectStart(bool newPlaying, double beatPosition)
 {
-    lastPpq = 0;
-    lastPpqStreamTime = 0;
+    if (newPlaying != playing) {
+        
+        playing = newPlaying;
+        
+        if (playing) {
+            Trace(2, "HostAnalyzer: Start");
+            result.started = true;
+
+            drifter.orient();
+
+            // some people use floor() any better?
+            hostBeat = (int)beatPosition;
+            
+            double remainder = beatPosition - (double)hostBeat;
+
+            if (remainder > 0) {
+                // need to deal with this and set the unitPlayHead accordinaly
+                Trace(1, "HostAnalyzer: Starting in the middle of a beat");
+            }
+
+            unitPlayHead = 0;
+            normalizedBeat = hostBeat;
+
+            // just start this over, if we're not following host
+            // time signature, then this could get weird
+            normalizedBar = 0;
+
+            // this doesn't really matter, it's only for debugging
+            normalizedLoop = 0;
+
+            elapsedUnits = 0;
+            unitCounter = 0;
+            
+            resetTempoMonitor();
+            
+            // temporary: trace the next 10 blocks
+            traceppqFine = true;
+            ppqCount = 0;
+        }
+        else {
+            Trace(2, "HostAnalyzer: Stop");
+            result.stopped = true;
+        }
+    }
 }
 
-void HostAnalyzerV2::traceFloat(const char* format, double value)
-{
-    char buf[128];
-    snprintf(buf, sizeof(buf), format, value);
-    Trace(2, buf);
-}
+//////////////////////////////////////////////////////////////////////
+//
+// Tempo Analysis
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * The host has given us an explicit tempo.
@@ -238,14 +263,15 @@ void HostAnalyzerV2::ponderTempo(double newTempo)
             // the tempo changed enough to change the unit
             // here we could reuqire it change above a small threshold
             traceFloat("HostAnalyzer: New host tempo %f", tempo);
-            Trace(2, "HostAnalyzer: Unit length %d", newUnit);
-            unitLength = newUnit;
+
+            setUnitLength(newUnit);
+            
             // whenever the tempo changes the last data point for the
             // monitor will be invalid, so reset it so it starts seeing
             // the new tempo ppq width
             resetTempoMonitor();
 
-            result.tempoChange = true;
+            result.tempoChanged = true;
             result.newUnitLength = newUnit;
         }
     }
@@ -289,116 +315,34 @@ int HostAnalyzerV2::tempoToUnit(double newTempo)
 }
 
 /**
- * Examine the PPQ position on each block.
- * Returns true if there was a beat in this block and
- * sets the blockOffset.
- */
-void HostAnalyzerV2::ponderPpq(double beatPosition, int blockSize)
-{
-    // if the transport is stopped, then the ppqPosition won't be advancing
-    if (playing) {
-
-        // monitor tempo changes, and return a useful number
-        double beatsPerSample = deriveTempo(beatPosition, blockSize);
-    
-        // now the meat
-        // attempt to find the location of the next beat start within this block
-        // since ppqPosition doesn't roll it's integral part until after it happens
-        int newBeat = (int)beatPosition;
-        if (newBeat != beat) {
-            // not expecting to get here with early detection
-            Trace(1, "HostAnalyer: Missed a beat detection");
-            result.sourceBeatDetected = true;
-            result.sourceBeatOffset = 0;
-            beat = newBeat;
-        }
-        else {
-            // several ways to detect this, this is one
-            double nextPpqPosition = beatPosition + (beatsPerSample * blockSize);
-            int nextBeat = (int)nextPpqPosition;
-            if (nextBeat != beat) {
-
-                // the beat hanged in this block, try to locate the location it changed
-
-                // the number of ppq units between the next beat integral and where we are now
-                double ppqDelta = (double)nextBeat - beatPosition;
-
-                if (lastPpq > 0.0f) {
-                    // calculate the number of ppq units each frame in the prior block represented
-                    // then use that to calculate the offset in this block
-                    int lastBlockSize = streamTime - lastPpqSTreamTime;
-                    double ppqFrameUnit = (beatPosition - lastPPq) / (double)lastBlockSize;
-                    int blockOffset = (int)(ppqFrameUnit * ppqDelta);
-                    if (blockOffset < blockSize) {
-                        result.sourceBeatDetected = true;
-                        result.sourceBeatOffset = blockOffset;
-                    }
-                    else {
-                        // host is sending odd sized blocks, and the pulse will actually
-                        // happen in the next one
-                    }
-                }
-                else {
-                    // don't have a reference point to calculate ppqFrameUnit
-                    // this is very unusual, would have to come out of Stop one block
-                    // before the start of the beat
-                    // these are other ways to calculate this, but just let it be picked
-                    // up on the next block which will be late, but drift will tend
-                    // to even out
-                        
-                    // there are other ways to do this, but just let it get picked up
-                }
-            }
-        }
-
-        // if we found a beat, optional trace
-        if (result.sourceBeatDetected) {
-            if (traceppq) {
-                char buf[128];
-                snprintf(buf, sizeof(buf), "HostAnalyzer: Beat %f", (float)beatPosition);
-                Trace(2, buf);
-            }
-        }
-        else {
-            if (traceppqFine && ppqCount < 10) {
-                traceFloat("HostAnalyzer: PPQ %f", beatPosition);
-                ppqCount++;
-            }
-        }
-    }
-
-    lastPpq = beatPosition;
-    lastPpqStreamTime = streamTime;
-}
-
-/**
  * The host has not given us a tempo and we've started receiving ppqs.
  * Try to guess the tempo by watching a few of them.
  */
-void HostAnalyzerV2::deriveTempo(double beatPosition, int blockSize)
+double HostAnalyzerV2::deriveTempo(double beatPosition, int blockSize)
 {
+    double beatsPerSample = 0.0f;
+    
     if (lastPpq > 0.0f) {
 
         double ppqAdvance = beatPosition - lastPpq;
-        int sampleAdvance = streamTime - lastPpqStreamTime;
+        int sampleAdvance = audioStreamTime - lastPpqStreamTime;
 
         // normally the block size
         if (sampleAdvance != blockSize) {
             Trace(2, "HostAnalyzer: Host is giving us random blocks");
         }
-        
-        double beatsPerSample = ppqAdvance / (double)sampleAdvance;
+
+        // return this for ponderPpq
+        beatsPerSample = ppqAdvance / (double)sampleAdvance;
         double samplesPerBeat = 1 / beatsPerSample;
         double beatsPerSecond = (double)sampleRate / samplesPerBeat;
         double bpm = beatsPerSecond * 60.0f;
-
+        
         if (tempo == 0.0f) {
             // never had a tempo
             traceFloat("HostAnalyzer: Derived tempo %f", bpm);
             tempo = bpm;
-            unitLength = tempoToUnit(tempo);
-            Trace(2, "HostAnalyzer: Unit length %d", unitLength);
-
+            setUnitLength(tempoToUnit(tempo));
             result.tempoChanged = true;
             result.newUnitLength = unitLength;
         }
@@ -443,9 +387,8 @@ void HostAnalyzerV2::deriveTempo(double beatPosition, int blockSize)
                 int delta = abs(derivedUnitLength - unitLength);
                 if (delta > 2) {
                     traceFloat("HostAnalyzer: New derived tempo %f", bpm);
-                    Trace(2, "HostAnalyzer: Unit length %d", derivedUnitLength);
                     tempo = bpm;
-                    unitLength = derivedUnitLength;
+                    setUnitLength(derivedUnitLength);
                     result.tempoChanged = true;
                     result.newUnitLength = unitLength;
                 }
@@ -454,39 +397,151 @@ void HostAnalyzerV2::deriveTempo(double beatPosition, int blockSize)
             }
         }
     }
+    return beatsPerSample;
+}
 
+/**
+ * If the unit length changes, the unit play position may need to wrap.
+ */
+void HostAnalyzerV2::setUnitLength(int newLength)
+{
+    if (newLength != unitLength) {
+
+        Trace(2, "HostAnalyzer: Changing unit length %d", newLength);
+        unitLength = newLength;
+
+        // !! there is more to do here
+        // if this wraps is that a "beat", what about bar boundary adjustments
+        unitPlayHead = (int)(unitPlayHead / unitLength);
+    }
+}
+
+/**
+ * When the transport starts after having been stopped, the last
+ * captured stream and ppq position won't be valid, so begin again.
+ */
+void HostAnalyzerV2::resetTempoMonitor()
+{
+    lastPpq = 0;
+    lastPpqStreamTime = 0;
+}
+
+void HostAnalyzerV2::traceFloat(const char* format, double value)
+{
+    char buf[128];
+    snprintf(buf, sizeof(buf), format, value);
+    Trace(2, buf);
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// Tracking Loop
+// PPQ Analysis
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Once the unit has been set, we need to flesh out a "loop" that
- * plays as the audio stream advances.  And compare the audio stream location
- * within that loop to another imaginary loop that is playing in time with
- * beat signals.  Due to rounding when the unit is calculated, they
- * can be very slightly off and may require periodic but rare drift adjustments.
- * 
+ * Examine the PPQ position on each block.
+ *
+ * This is where we detect host beat changes, determine their offset
+ * into the current audio block, and advance the host beat stream in
+ * the DriftMonitor.
+ *
  */
-void HostAnalyzerV2::resync(double beatPosition, bool starting)
+void HostAnalyzerV2::ponderPpq(double beatPosition, int blockSize)
 {
-    // here is where it gets magic
-    // you should not be assuming that when we start the transport
-    // is exactly on a beat.  Ableton seems to do this but others might now
-    streamFrame = 0;
-    sourceFrame = 0;
-    streamBeat = 0;
-    streamBar = 0;
-    streamLoop = 0;
-    units = 0;
-    unitCounter = 0;
+    // if the transport is stopped, then the ppqPosition won't be advancing
+    if (playing) {
+        int startingBeat = hostBeat;
+
+        // monitor tempo changes, and return a useful number
+        double beatsPerSample = deriveTempo(beatPosition, blockSize);
+    
+        // now the meat
+        // attempt to find the location of the next beat start within this block
+        // since ppqPosition doesn't roll it's integral part until after it happens
+        int newBeat = (int)beatPosition;
+        if (newBeat != hostBeat) {
+            // not expecting to get here with early detection
+            Trace(1, "HostAnalyer: Missed a beat detection");
+            hostBeat = newBeat;
+            drifter.addSourceBeat(0);
+        }
+        else {
+            // several ways to detect this, this is one
+            double nextPpqPosition = beatPosition + (beatsPerSample * blockSize);
+            int nextBeat = (int)nextPpqPosition;
+            if (nextBeat != hostBeat) {
+                // the beat happened in this block, try to locate the location it changed
+
+                // the number of ppq units between the next beat integral and where we are now
+                double ppqDelta = (double)nextBeat - beatPosition;
+
+                if (lastPpq > 0.0f) {
+                    // calculate the number of ppq units each frame in the prior block represented
+                    // then use that to calculate the offset in this block
+                    int lastBlockSize = audioStreamTime - lastPpqStreamTime;
+                    double ppqFrameUnit = (beatPosition - lastPpq) / (double)lastBlockSize;
+                    int blockOffset = (int)(ppqFrameUnit * ppqDelta);
+                    
+                    if (blockOffset < blockSize) {
+                        hostBeat = nextBeat;
+                        drifter.addSourceBeat(blockOffset);
+                    }
+                    else {
+                        // host is sending odd sized blocks, and the pulse will actually
+                        // happen in the next one
+                    }
+                }
+                else {
+                    // don't have a reference point to calculate ppqFrameUnit
+                    // this is very unusual, would have to come out of Stop one block
+                    // before the start of the beat
+                    // these are other ways to calculate this, but just let it be picked
+                    // up on the next block which will be late, but drift will tend
+                    // to even out
+                    //
+                    // there are other ways to do this, but just let it get picked up
+                    // late on the next block
+                }
+            }
+        }
+
+        // if we found a beat, optional trace
+        if (startingBeat != hostBeat) {
+            if (traceppq) {
+                char buf[128];
+                snprintf(buf, sizeof(buf), "HostAnalyzer: Beat %f", (float)beatPosition);
+                Trace(2, buf);
+            }
+        }
+        else {
+            if (traceppqFine && ppqCount < 10) {
+                traceFloat("HostAnalyzer: PPQ %f", beatPosition);
+                ppqCount++;
+            }
+        }
+    }
+
+    lastPpq = beatPosition;
+    lastPpqStreamTime = audioStreamTime;
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Normalized Beat Generation
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * This is what actually generates sync pulses for the outside world.
+ *
+ * As blocks in the audio stream come in, a "play head" within the
+ * syncronization unit is advanced as if it were a short loop.
+ * When the play head crosses the loop boundary, a beat is generated,
+ * and this cascades into advancing bar and loop counters.
+ *
+ * The determination of bar boundaries needs more options, at the moment
+ * it just counts beats from the beginning of the Start Point.
  */
 void HostAnalyzerV2::advanceAudioStream(int blockFrames)
 {
@@ -501,18 +556,18 @@ void HostAnalyzerV2::advanceAudioStream(int blockFrames)
 
     if (playing) {
 
-        streamFrame = streamFrame + blockFrames;
-        if (streamFrame >= unitLength) {
+        unitPlayHead = unitPlayHead + blockFrames;
+        if (unitPlayHead >= unitLength) {
 
             // a unit has transpired
-            int blockOffset = streamFrame - unitLength;
+            int blockOffset = unitPlayHead - unitLength;
             if (blockOffset > blockFrames || blockOffset < 0)
               Trace(1, "Transport: You suck at math");
 
             // effectively a frame wrap too
-            streamFrame = blockOffset;
+            unitPlayHead = blockOffset;
 
-            units++;
+            elapsedUnits++;
             unitCounter++;
 
             if (unitCounter >= unitsPerBeat) {
@@ -521,63 +576,41 @@ void HostAnalyzerV2::advanceAudioStream(int blockFrames)
                 result.blockOffset = blockOffset;
 
                 unitCounter = 0;
-                streamBeat++;
+                normalizedBeat++;
                 
-                if (streamBeat >= beatsPerBar) {
+                if (normalizedBeat >= beatsPerBar) {
 
-                    streamBeat = 0;
-                    streamBar++;
+                    normalizedBeat = 0;
+                    normalizedBar++;
+                    result.bar = true;
 
-                    if (streamBar >= barsPerLoop) {
+                    if (normalizedBar >= barsPerLoop) {
 
-                        streamBar = 0;
-                        streamLoop++;
+                        normalizedBar = 0;
+                        normalizedLoop++;
                         
                         result.loop = true;
                     }
-                    else {
-                        result.bar = true;
-                    }
-                }
-                else {
-                    result.beat = true;
                 }
 
             }
         }
-
-        // do a similar advance into the imaginary loop that the
-        // source beats are playing
-        sourceFrame = sourceFrame + blockFrames;
-        if (sourceFrame >= unitLength) {
-            // "loop" 
-                sourceFrame = sourceFrame - unitLength;
-        }
     }
+
+    // if we found a beat, tell the drift monitor
+    if (result.beatDetected)
+      drifter.addNormalizedBeat(result.blockOffset);
 
     // when the stream tracking loop reaches the loop point
     // that's as good a place as any to check drift
     if (result.loop) {
 
-        // result.blockOffset has the location of the tracking loop
-        // frame where the loop occurred
-        // there will normally be a source beat near the same location
-        drift = sourceFrame - streamFrame;
-        // here is where need to look at which end of the unit we're on and calculate
-        // the minimum length from each side
+        int drift = drifter.getDrift();
+        
         Trace(2, "HostAnalyzer: Drift %d", drift);
     }
-}
 
-/**
- * At this point both the audio stream and the host stream have advanced.
- * If the audio stream hit a "loop" compare the loop start frame offset with
- * the expected beat offset from the host.
- */
-void HostAnalyzerV2::checkDrift()
-{
-    
-    
+    drifter.advance(blockFrames);
 }
 
 /****************************************************************************/

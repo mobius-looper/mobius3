@@ -7,19 +7,19 @@
  *
  */
 
-#include "DriftMonitor.h"
+#include "DriftMonitor2.h"
 
 void DriftMonitor2::orient()
 {
     streamTime = 0;
-    hostBeat = 0;
-    hostBeatTime = 0;
+    sourceBeat = 0;
+    sourceBeatTime = 0;
     normalizedBeat = 0;
     normalizedBeatTime = 0;
     drift = 0;
 }
 
-void DriftMonitor2::sourceBeat(int blockOffset)
+void DriftMonitor2::addSourceBeat(int blockOffset)
 {
     sourceBeat++;
     sourceBeatTime = streamTime + blockOffset;
@@ -30,10 +30,10 @@ void DriftMonitor2::sourceBeat(int blockOffset)
     }
 }
 
-void DriftMonitor2::normalizedBeat(int blockOffset)
+void DriftMonitor2::addNormalizedBeat(int blockOffset)
 {
-    int normalizedBeat++;
-    int normalizedBeatTime = streamTime + blockOffset;
+    normalizedBeat++;
+    normalizedBeatTime = streamTime + blockOffset;
 
     if (normalizedBeat <= sourceBeat) {
         // I was behind calculate drift

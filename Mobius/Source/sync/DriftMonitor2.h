@@ -51,10 +51,10 @@ class DriftMonitor2
 
     // record the reception of a source beat
     // the beat is timestamped with the current stream time plus the block offset
-    void sourceBeat(int blockOffset);
+    void addSourceBeat(int blockOffset);
 
     // record the generation of a normalized beat
-    void normalizedBeat(int blockoffset);
+    void addNormalizedBeat(int blockoffset);
     
     // advance the shared stream time by some number of samples
     // this is normally the block length of the audio stream
@@ -68,10 +68,10 @@ class DriftMonitor2
     int streamTime = 0;
 
     // the number of source beats that have elapsed
-    int hostBeat = 0;
+    int sourceBeat = 0;
 
     // the stream time of the last host beat
-    int hostBeatTime = 0;
+    int sourceBeatTime = 0;
 
     // beat number and stream time of the last normalized beat
     int normalizedBeat = 0;
