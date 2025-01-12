@@ -226,6 +226,10 @@ class SyncMaster
     // Accessors for cross-component usage
     // Could also just pass these during initialization
 
+    class HostAnalyzer* getHostAnalyzer() {
+        return hostAnalyzer.get();
+    }
+
     class MidiAnalyzer* getMidiAnalyzer() {
         return midiAnalyzer.get();
     }
@@ -241,8 +245,6 @@ class SyncMaster
     class Pulsator* getPulsator() {
         return pulsator.get();
     }
-    
-    class HostAudioTime* getAudioTime();
 
   private:
 
@@ -261,7 +263,6 @@ class SyncMaster
     std::unique_ptr<class MidiRealizer> midiRealizer;
     std::unique_ptr<class MidiAnalyzer> midiAnalyzer;
     std::unique_ptr<class HostAnalyzer> hostAnalyzer;
-    std::unique_ptr<class HostAnalyzerV2> hostAnalyzer2;
     std::unique_ptr<class Pulsator> pulsator;
     std::unique_ptr<class Transport> transport;
     

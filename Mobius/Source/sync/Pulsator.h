@@ -8,7 +8,7 @@
  * core class Synchronizer which is too horribly complex for words.
  *
  * Pulsator does it's analysis at the begining of each audio block, consuming events
- * for MIDI clocks (MidiRealizer) and the plugin host (HostSyncState).
+ * for MIDI clocks (MidiAnalyzer) and the plugin host (HostAnalyzer).
  * It may later have pulses added to it by the audio/midi tracks as they cross synchronization
  * boundaries during their block advance.  These are called Followers and Leaders.
  *

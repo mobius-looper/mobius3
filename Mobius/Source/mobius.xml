@@ -138,7 +138,7 @@
     outRealign='midiStart'
     realignTime='start'
     resizeSyncAdjust='none'
-    slaveSyncUnit='bar'
+    slaveSyncUnit='beat'
     speedSyncAdjust='none'>
     <SetupTrack
       name='sadf'
@@ -148,7 +148,7 @@
       altFeedback='127'
       pan='64'
       audioInputPort='3'
-      syncSource='out'
+      syncSource='host'
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'

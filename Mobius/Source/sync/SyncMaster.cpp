@@ -21,7 +21,6 @@
 #include "MidiRealizer.h"
 #include "MidiAnalyzer.h"
 #include "HostAnalyzer.h"
-#include "HostAnalyzerV2.h"
 #include "Transport.h"
 #include "SyncMasterState.h"
 
@@ -63,13 +62,11 @@ void SyncMaster::initialize(MobiusKernel* k)
     midiRealizer.reset(new MidiRealizer());
     midiAnalyzer.reset(new MidiAnalyzer());
     hostAnalyzer.reset(new HostAnalyzer());
-    hostAnalyzer2.reset(new HostAnalyzerV2());
     pulsator.reset(new Pulsator(this));
     transport.reset(new Transport(this));
 
     // reach out and touch the face of god
     hostAnalyzer->initialize(container->getAudioProcessor());
-    hostAnalyzer2->initialize(container->getAudioProcessor());
 
     MidiManager* mm = container->getMidiManager();
     midiRealizer->initialize(this, mm);
@@ -642,7 +639,6 @@ void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
 
     // pull in the host information before we get very far
     hostAnalyzer->advance(stream->getInterruptFrames());
-    hostAnalyzer2->advance(stream->getInterruptFrames());
 }
 
 void SyncMaster::refreshSampleRate(int rate)
@@ -650,7 +646,6 @@ void SyncMaster::refreshSampleRate(int rate)
     sampleRate = rate;
     
     hostAnalyzer->setSampleRate(rate);
-    hostAnalyzer2->setSampleRate(rate);
     transport->setSampleRate(rate);
     midiRealizer->setSampleRate(rate);
 }
@@ -669,6 +664,9 @@ void SyncMaster::advance(MobiusAudioStream* stream)
 
     transport->advance(frames);
 
+    // MidiAnalyzer doesn't "advance", it has been accumulating events
+    // as they came in, Pulsator will pull them out
+
     // unless this needs the entire Stream, should take the frame count
     // like everything else, TMI
     pulsator->advance(stream);
@@ -676,6 +674,8 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     // see commentary about why this is complicated
     transport->checkDrift(frames);
 
+    // Detect whether MIDI clocks have stopped comming in
+    //
     // Supervisor formerly called this on the maintenance thread
     // interval, since we don't get a performMaintenance ping down here
     // we can check it on every block, the granularity doesn't really matter
@@ -833,11 +833,6 @@ void SyncMaster::refreshPriorityState(PriorityState* pstate)
 int SyncMaster::getMilliseconds()
 {
     return juce::Time::getMillisecondCounter();
-}
-
-HostAudioTime* SyncMaster::getAudioTime()
-{
-    return hostAnalyzer->getAudioTime();
 }
 
 /**

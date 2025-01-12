@@ -23,14 +23,7 @@
         <FILE id="AtAkEW" name="HostAnalyzer.cpp" compile="1" resource="0"
               file="../Mobius/Source/sync/HostAnalyzer.cpp"/>
         <FILE id="MXVW2d" name="HostAnalyzer.h" compile="0" resource="0" file="../Mobius/Source/sync/HostAnalyzer.h"/>
-        <FILE id="L0uUy3" name="HostAnalyzerV2.cpp" compile="1" resource="0"
-              file="../Mobius/Source/sync/HostAnalyzerV2.cpp"/>
-        <FILE id="mDeJNI" name="HostAnalyzerV2.h" compile="0" resource="0"
-              file="../Mobius/Source/sync/HostAnalyzerV2.h"/>
         <FILE id="v3u2sx" name="HostAudioTime.h" compile="0" resource="0" file="../Mobius/Source/sync/HostAudioTime.h"/>
-        <FILE id="k9ZYMU" name="HostSyncState.cpp" compile="1" resource="0"
-              file="../Mobius/Source/sync/HostSyncState.cpp"/>
-        <FILE id="ZThMYx" name="HostSyncState.h" compile="0" resource="0" file="../Mobius/Source/sync/HostSyncState.h"/>
         <FILE id="hPhfXu" name="Leader.h" compile="0" resource="0" file="../Mobius/Source/sync/Leader.h"/>
         <FILE id="kwKtlF" name="MidiAnalyzer.cpp" compile="1" resource="0"
               file="../Mobius/Source/sync/MidiAnalyzer.cpp"/>

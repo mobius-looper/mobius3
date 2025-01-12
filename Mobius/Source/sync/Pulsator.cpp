@@ -17,9 +17,10 @@
 
 #include "MidiAnalyzer.h"
 #include "MidiRealizer.h"
+#include "HostAnalyzer.h"
 #include "Transport.h"
 //#include "MidiQueue.h"
-#include "HostAudioTime.h"
+#include "SyncSourceResult.h"
 #include "SyncMaster.h"
 
 #include "Pulsator.h"
@@ -174,82 +175,57 @@ void Pulsator::trace(Pulse& p)
 
 /**
  * Host events
- * 
- * Unlike MIDI events which are quantized by the MidiQueue, these
- * will have been created in the *same* interrupt and will have frame
- * values that are offsets into the current interrupt.
- *
- * It's actually a bit more complicated than this, the "ppqpos" changed the
- * integer value during this block, but when we detect the difference this
- * is a few frames AFTER the pulse actually happened.  So technically we should
- * have caught it on the previous block and anticipated the change.  The delta is
- * so small not to matter though and it will balance out because both the start
- * and end pulses of a loop will be delayed by similar amounts.
  */
 void Pulsator::gatherHost()
 {
-    HostAudioTime* hostTime = syncMaster->getAudioTime();
+    HostAnalyzer* analyzer = syncMaster->getHostAnalyzer();
+    SyncSourceResult* result = analyzer->getResult();
 
-    if (hostTime != nullptr) {
-		host.beat = hostTime->beat;
-        host.bar = hostTime->bar;
+    if (result != nullptr) {
 
-        // trace these since I want to know which hosts can provide them
-        if (host.tempo != hostTime->tempo) {
-            // historically this has been a double, not necessary
-            host.tempo = (float)(hostTime->tempo);
-            Trace(2, "Pulsator: Host tempo %d (x100)", (int)(host.tempo * 100));
-        }
-        if (host.beatsPerBar != hostTime->beatsPerBar) {
-            host.beatsPerBar = hostTime->beatsPerBar;
-            Trace(2, "Pulsator: Host beatsPerBar %d", host.beatsPerBar);
-        }
-        
-        bool starting = false;
-        bool stopping = false;
-        
-        // monitor the host transport
-        if (hostPlaying && !hostTime->playing) {
-            // the host transport stopped
-            stopping = true;
-            // generate a pulse for this, may be replace if there is also a beat here
+        // pulsator has yet another model for this, SyncState
+        // start reorganizing this to reduce overlap between:
+        // SyncSourceResult, SyncState, SyncSourceState, Pulse and on and on
+
+        // SyncSourceResult doesn't return beat/bar numbers
+        // it should return the beat number, but bars are ambiguous
+
+        // these are just for display in the UI
+		host.beat = result->beat;
+        host.bar = result->bar;
+        host.tempo = result->tempo;
+        host.beatsPerBar = result->beatsPerBar;
+
+        if (result->stopped) {
+            // we've been generaing a Pulse for stop, unclear if that's necessary
+            // if there is also a beat flag, may replace the type
             host.pulse.reset(Pulse::SourceHost, millisecond);
-            host.pulse.blockFrame = 0;
-            // doesn't really matter what this is
             host.pulse.type = Pulse::PulseBeat;
             host.pulse.stop = true;
-            hostPlaying = false;
-        }
-        else if (!hostPlaying && hostTime->playing) {
-            // the host transport is starting
-            starting = true;
-            // what old code did is save a "transportPending" flag and on the
-            // next beat boundary it would generate Start events
-            // skipping the generation of these since FL and other pattern
-            // based hosts like to jump around and may send spurious transport
-            // start/stop that don't mean anything
-            hostPlaying = true;
+            // doesn't really matter what this is
+            host.pulse.blockFrame = 0;
         }
 
-        // what if they stopped the transport at the same time as it reached
-        // a beat boundary?  if we're waiting on one, we'll wait forever,
-        // but since we can't keep more than one pulse per block, just overwrite it
-        if (hostTime->beatBoundary || hostTime->barBoundary) {
+        if (result->beatDetected) {
 
             host.pulse.reset(Pulse::SourceHost, millisecond);
-            host.pulse.blockFrame = hostTime->boundaryOffset;
-            if (hostTime->barBoundary)
+            host.pulse.blockFrame = result->blockOffset;
+
+            if (result->onLoop)
+              host.pulse.type = Pulse::PulseLoop;
+            else if (result->onBar)
               host.pulse.type = Pulse::PulseBar;
             else
               host.pulse.type = Pulse::PulseBeat;
 
-            host.pulse.beat = hostTime->beat;
-            host.pulse.bar = hostTime->bar;
+            // why the fuck do we have this in the Pulse too, to many duplicates
+            host.pulse.beat = result->beat;
+            host.pulse.bar = result->bar;
 
-            // convey these, though start may be unreliable
+            // convey these, if they happen at the same time
             // blow off continue, too hard
-            host.pulse.start = starting;
-            host.pulse.stop = stopping;
+            host.pulse.start = result->started;
+            host.pulse.stop = result->stopped;
         }
     }
 }
