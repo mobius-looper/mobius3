@@ -1,52 +1,67 @@
 /**
- * The tricky part here is knowing when to compare the stream times
- * to calculate drift.
+ * This doesn't do much, but it's a good place to keep more analysis
+ * like source beat length averaging which is effectively the same
+ * as tempo smoothing.
  *
- * Each stream is advancing at it's own rate, and either of them may be more than one beat
- * ahead of or beind the other.
+ * Also should be measuring the rate of change.  If the drift accumulates
+ * slowly, it is a small difference in the two tempos and is suitable
+ * for occasional correction of the audio loops.
  *
+ * If the drift accumulates repidly then it is more likely a tempo change
+ * in the source that should cause recalculation of the unit length.
+ * And a disconnect betweeen the following loops and the sync source.
  */
-
 #include "DriftMonitor2.h"
 
-void DriftMonitor2::orient()
+/**
+ * This assumes orientation will happen at the beginning of a host beat.
+ * If it doesn't the first beat will be quite off and should not factor into
+ * drift.  We can either ignore the first beat and start tracking on the next one
+ * or somehow calculate where the host actually is in the audio stream and
+ * seed the streamTime to compensate for that.
+ */
+void DriftMonitor2::orient(int unitLength)
 {
     streamTime = 0;
-    sourceBeat = 0;
-    sourceBeatTime = 0;
-    normalizedBeat = 0;
-    normalizedBeatTime = 0;
+    normalizedUnit = unitLength;
+    lastBeatTime = 0;
     drift = 0;
 }
 
-void DriftMonitor2::addSourceBeat(int blockOffset)
-{
-    sourceBeat++;
-    sourceBeatTime = streamTime + blockOffset;
-
-    if (sourceBeat <= normalizedBeat) {
-        // I was behind calculate drift
-        drift = normalizedBeatTime - sourceBeatTime;
-    }
-}
-
-void DriftMonitor2::addNormalizedBeat(int blockOffset)
-{
-    normalizedBeat++;
-    normalizedBeatTime = streamTime + blockOffset;
-
-    if (normalizedBeat <= sourceBeat) {
-        // I was behind calculate drift
-        drift = normalizedBeatTime - sourceBeatTime;
-    }
-}
-
-void DriftMonitor2::advance(int blockSize)
+void DriftMonitor2::advanceStreamTime(int blockSize)
 {
     streamTime += blockSize;
+}
+
+/**
+ * Record a beat from the sync source and calculate drift
+ * away from the normalizedUnit.
+ *
+ * If the beat length is greater than the normalized unit length
+ * the beat came in slower than expected.  The normalied "loop"
+ * is playing faster than the source beats and the drift is positive.
+ */
+void DriftMonitor2::addBeat(int blockOffset)
+{
+    // unit may be zero on startup with hosts that don't give
+    // an initial ttransport tempo and before we start deriving the
+    // tempo from beat distance
+    if (normalizedUnit > 0) {
+        int beatTime = streamTime + blockOffset;
+        int beatLength = beatTime - lastBeatTime;
+
+        int delta = beatLength - normalizedUnit;
+        drift += delta;
+
+        lastBeatTime = beatTime;
+    }
 }
 
 int DriftMonitor2::getDrift()
 {
     return drift;
 }
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

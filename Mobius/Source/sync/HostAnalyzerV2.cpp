@@ -169,9 +169,11 @@ void HostAnalyzerV2::advance(int blockSize)
         // more to do here...
     }
 
-    if (playing)
-      advanceAudioStream(blockSize);
-
+    if (playing) {
+        drifter.advanceStreamTime(blockSize);
+        advanceAudioStream(blockSize);
+    }
+    
     // do this last, deriveTempo and DriftMonitor need to know what it is at the start
     // of the block, not the end
     audioStreamTime += blockSize;
@@ -199,7 +201,7 @@ void HostAnalyzerV2::detectStart(bool newPlaying, double beatPosition)
             Trace(2, "HostAnalyzer: Start");
             result.started = true;
 
-            drifter.orient();
+            drifter.orient(unitLength);
 
             // some people use floor() any better?
             hostBeat = (int)beatPosition;
@@ -317,6 +319,9 @@ int HostAnalyzerV2::tempoToUnit(double newTempo)
 /**
  * The host has not given us a tempo and we've started receiving ppqs.
  * Try to guess the tempo by watching a few of them.
+ *
+ * !! This is more or less what DriftMonitor is doing, consider moving it there
+ * since the same calculations will be needed for MIDI.
  */
 double HostAnalyzerV2::deriveTempo(double beatPosition, int blockSize)
 {
@@ -413,6 +418,13 @@ void HostAnalyzerV2::setUnitLength(int newLength)
         // !! there is more to do here
         // if this wraps is that a "beat", what about bar boundary adjustments
         unitPlayHead = (int)(unitPlayHead / unitLength);
+
+        // !! drift monitor needs to know this
+        // orient assumes we're exactly on a beat, which is the case if
+        // we're doing tempo derivation by watching beats, but not necessarily
+        // if the user is changing the host tempo while it plays
+        // more to do here
+        drifter.orient(unitLength);
     }
 }
 
@@ -464,7 +476,7 @@ void HostAnalyzerV2::ponderPpq(double beatPosition, int blockSize)
             // not expecting to get here with early detection
             Trace(1, "HostAnalyer: Missed a beat detection");
             hostBeat = newBeat;
-            drifter.addSourceBeat(0);
+            drifter.addBeat(0);
         }
         else {
             // several ways to detect this, this is one
@@ -485,7 +497,7 @@ void HostAnalyzerV2::ponderPpq(double beatPosition, int blockSize)
                     
                     if (blockOffset < blockSize) {
                         hostBeat = nextBeat;
-                        drifter.addSourceBeat(blockOffset);
+                        drifter.addBeat(blockOffset);
                     }
                     else {
                         // host is sending odd sized blocks, and the pulse will actually
@@ -597,10 +609,6 @@ void HostAnalyzerV2::advanceAudioStream(int blockFrames)
         }
     }
 
-    // if we found a beat, tell the drift monitor
-    if (result.beatDetected)
-      drifter.addNormalizedBeat(result.blockOffset);
-
     // when the stream tracking loop reaches the loop point
     // that's as good a place as any to check drift
     if (result.loop) {
@@ -609,8 +617,6 @@ void HostAnalyzerV2::advanceAudioStream(int blockFrames)
         
         Trace(2, "HostAnalyzer: Drift %d", drift);
     }
-
-    drifter.advance(blockFrames);
 }
 
 /****************************************************************************/
