@@ -422,6 +422,9 @@ void MidiRealizer::advance()
                 // the interrupt which we can prevent if we queue tempo changes
                 if (pulseWait <= 0.0f) {
                     Trace(1, "MidiRealizer: pulseWait overflow!\n");
+
+                    // this commonly happens during debugging, would be nice
+                    // to be able to detect this and suppress it
                 }
             }
         }

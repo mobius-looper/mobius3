@@ -55,6 +55,11 @@ class HostAnalyzerV2
 
     // this starts zero and increases on every block, used to timestamp things
     int audioStreamTime = 0;
+    // used to derive beat widths and tempo
+    int lastAudioStreamTime = 0;
+
+    // the stream time of the last host beat
+    int lastBeatTime = 0;
 
     // once tempo lock has been achieved the length of the base unit in samples
     // when this is zero, it means there is no tempo lock
@@ -79,7 +84,6 @@ class HostAnalyzerV2
 
     // tempo monitoring
     double lastPpq = 0.0f;
-    int lastPpqStreamTime = 0;
     
     // Trace options
     bool traceppq = true;
@@ -92,11 +96,13 @@ class HostAnalyzerV2
     void ponderTempo(double newTempo);
     int tempoToUnit(double newTempo);
     void setUnitLength(int newLength);
-    double deriveTempo(double beatPosition, int blockSize);
     void resetTempoMonitor();
     void traceFloat(const char* format, double value);
 
     void ponderPpq(double beatPosition, int blockSize);
+    double getBeatsPerSample(double currentPpq, int currentBlockSize);
+    void deriveTempo(double beatPosition, int blockSize, double samplesPerBeat);
+    void checkUnitMath(int tempoUnit, double samplesPerBeat);
     
     void advanceAudioStream(int blockFrames);
 
