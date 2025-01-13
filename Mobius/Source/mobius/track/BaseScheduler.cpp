@@ -27,6 +27,7 @@
 #include "../../model/SystemState.h"
 #include "../../model/TrackState.h"
 
+#include "../../sync/SyncConstants.h"
 #include "../../sync/SyncMaster.h"
 #include "../../script/MslWait.h"
 // only for MobiusAudioStream
@@ -87,48 +88,48 @@ void BaseScheduler::loadSession(Session::Track* def)
 
     // !! need to start using the Pulse constants exclusively
     // stop using these
-    SyncSource oldSyncSource = lt->getSyncSource();
-    SyncUnit oldSyncUnit = lt->getSlaveSyncUnit();
+    OldSyncSource oldSyncSource = lt->getSyncSource();
+    OldSyncUnit oldSyncUnit = lt->getSlaveSyncUnit();
 
     // set this up for host and midi, track sync will be different
-    pulseType = Pulse::PulseBeat;
+    pulseUnit = SyncUnitBeat;
     if (oldSyncUnit == SYNC_UNIT_BAR)
-      pulseType = Pulse::PulseBar;
+      pulseUnit = SyncUnitBar;
     
     if (oldSyncSource == SYNC_TRACK) {
         // track sync uses a different unit parameter
         // default for this one is the entire loop
         SyncTrackUnit stu = lt->getTrackSyncUnit();
-        pulseType = Pulse::PulseLoop;
+        pulseUnit = SyncUnitLoop;
         if (stu == TRACK_UNIT_SUBCYCLE)
-          pulseType = Pulse::PulseBeat;
+          pulseUnit = SyncUnitBeat;
         else if (stu == TRACK_UNIT_CYCLE)
-          pulseType = Pulse::PulseBar;
+          pulseUnit = SyncUnitBar;
           
         // no specific track leader yet...
         int leader = 0;
-        syncSource = Pulse::SourceLeader;
-        syncMaster->follow(scheduledTrack->getNumber(), leader, pulseType);
+        syncSource = SyncSourceTrack;
+        syncMaster->follow(scheduledTrack->getNumber(), leader, pulseUnit);
     }
     else if (oldSyncSource == SYNC_OUT) {
         Trace(1, "BaseScheduler: MIDI tracks can't do OutSync yet");
-        syncSource = Pulse::SourceNone;
+        syncSource = SyncSourceNone;
     }
     else if (oldSyncSource == SYNC_HOST) {
-        syncSource = Pulse::SourceHost;
-        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseType);
+        syncSource = SyncSourceHost;
+        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseUnit);
     }
     else if (oldSyncSource == SYNC_MIDI) {
-        syncSource = Pulse::SourceMidi;
-        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseType);
+        syncSource = SyncSourceMidi;
+        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseUnit);
     }
     else if (oldSyncSource == SYNC_TRANSPORT) {
-        syncSource = Pulse::SourceTransport;
-        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseType);
+        syncSource = SyncSourceTransport;
+        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseUnit);
     }
     else {
         syncMaster->unfollow(scheduledTrack->getNumber());
-        syncSource = Pulse::SourceNone;
+        syncSource = SyncSourceNone;
     }
 
     // follower options

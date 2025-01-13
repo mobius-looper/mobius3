@@ -340,9 +340,9 @@ void LogicalTrack::clearBindings()
 
 // !! need to start using Pulse constants here, I guess convert them till
 // why do we keep going back to the Session for this, just save them locally
-SyncSource LogicalTrack::getSyncSource()
+OldSyncSource LogicalTrack::getSyncSource()
 {
-    return (SyncSource)Enumerator::getOrdinal(manager->getSymbols(),
+    return (OldSyncSource)Enumerator::getOrdinal(manager->getSymbols(),
                                               ParamSyncSource,
                                               session->getParameters(),
                                               SYNC_NONE);
@@ -356,9 +356,9 @@ SyncTrackUnit LogicalTrack::getTrackSyncUnit()
                                                  TRACK_UNIT_LOOP);
 }
 
-SyncUnit LogicalTrack::getSlaveSyncUnit()
+OldSyncUnit LogicalTrack::getSlaveSyncUnit()
 {
-    return (SyncUnit)Enumerator::getOrdinal(manager->getSymbols(),
+    return (OldSyncUnit)Enumerator::getOrdinal(manager->getSymbols(),
                                             ParamSlaveSyncUnit,
                                             session->getParameters(),
                                             SYNC_UNIT_BEAT);

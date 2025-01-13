@@ -14,7 +14,6 @@
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 
-#include "../../sync/Pulse.h"
 #include "../Notification.h"
 
 #include "../track/BaseTrack.h"

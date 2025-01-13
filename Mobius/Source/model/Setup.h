@@ -33,7 +33,7 @@
  *                                                                          *
  ****************************************************************************/
 
-extern const char* GetSyncSourceName(SyncSource src);
+extern const char* GetSyncSourceName(OldSyncSource src);
 
 /****************************************************************************
  *                                                                          *
@@ -79,11 +79,11 @@ class Setup : public Structure {
 
     // Sync options
 
-    SyncSource getSyncSource();
-    void setSyncSource(SyncSource src);
+    OldSyncSource getSyncSource();
+    void setSyncSource(OldSyncSource src);
 
-    SyncUnit getSyncUnit();
-    void setSyncUnit(SyncUnit unit);
+    OldSyncUnit getSyncUnit();
+    void setSyncUnit(OldSyncUnit unit);
 
     SyncTrackUnit getSyncTrackUnit();
     void setSyncTrackUnit(SyncTrackUnit unit);
@@ -160,13 +160,13 @@ class Setup : public Structure {
     /**
      * The default sync source for all tracks.
      */
-    SyncSource mSyncSource;
+    OldSyncSource mSyncSource;
 
     /**
      * The sync unit for MIDI and HOST.
      * Tracks can't override this, should they be able to?
      */
-    SyncUnit mSyncUnit;
+    OldSyncUnit mSyncUnit;
 
     /**
      * The default track sync unit for all tracks.
@@ -302,8 +302,8 @@ class SetupTrack {
 	void setPluginOutputPort(int i);
 	int getPluginOutputPort();
 
-    SyncSource getSyncSource();
-    void setSyncSource(SyncSource src);
+    OldSyncSource getSyncSource();
+    void setSyncSource(OldSyncSource src);
     SyncTrackUnit getSyncTrackUnit();
     void setSyncTrackUnit(SyncTrackUnit unit);
 
@@ -334,7 +334,7 @@ class SetupTrack {
 
     // Sync overrides
 
-    SyncSource mSyncSource;
+    OldSyncSource mSyncSource;
     SyncTrackUnit mSyncTrackUnit;
 
 	/**

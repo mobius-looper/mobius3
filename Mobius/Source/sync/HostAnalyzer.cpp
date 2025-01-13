@@ -468,7 +468,7 @@ void HostAnalyzer::ponderPpq(double beatPosition, int blockSize)
         double beatsPerSample = getBeatsPerSample(beatPosition, blockSize);
 
         // monitor tempo changes
-        deriveTempo(beatPosition, blockSize, beatsPerSample);
+        deriveTempo(beatsPerSample);
     
         // now the meat
         // attempt to find the location of the next beat start within this block
@@ -547,7 +547,7 @@ void HostAnalyzer::ponderPpq(double beatPosition, int blockSize)
  * The host has not given us a tempo and we've started receiving ppqs.
  * Try to guess the tempo by watching a few of them.
  */
-void HostAnalyzer::deriveTempo(double beatPosition, int blockSize, double beatsPerSample)
+void HostAnalyzer::deriveTempo(double beatsPerSample)
 {
     // ignore if we haven't received enough blocks to calculate this
     if (beatsPerSample > 0.0f) {

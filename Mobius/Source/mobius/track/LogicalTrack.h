@@ -65,9 +65,9 @@ class LogicalTrack
     
     int getParameterOrdinal(SymbolId id);
     
-    SyncSource getSyncSource();
+    OldSyncSource getSyncSource();
     SyncTrackUnit getTrackSyncUnit();
-    SyncUnit getSlaveSyncUnit();
+    OldSyncUnit getSlaveSyncUnit();
     int getLoopCount();
     LeaderType getLeaderType();
     LeaderLocation getLeaderSwitchLocation();

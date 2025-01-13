@@ -19,8 +19,8 @@
 
 #include <JuceHeader.h>
 
+#include "SyncConstants.h"
 #include "SyncMasterState.h"
-#include "Pulse.h"
 
 class SyncMaster
 {
@@ -68,7 +68,7 @@ class SyncMaster
     void setTransportMaster(int id);
     int getTransportMaster();
 
-    Pulse::Source getEffectiveSource(int id);
+    SyncSource getEffectiveSource(int id);
 
     //
     // Track Notifications
@@ -101,19 +101,19 @@ class SyncMaster
     // is complete, these can be removed
     //
     
-    float getTempo(Pulse::Source src);
-    int getBeat(Pulse::Source src);
-    int getBar(Pulse::Source src);
-    int getBeatsPerBar(Pulse::Source src);
+    float getTempo(SyncSource src);
+    int getBeat(SyncSource src);
+    int getBar(SyncSource src);
+    int getBeatsPerBar(SyncSource src);
 
     // used by Synchronizer for AutoRecord
-    int getBarFrames(Pulse::Source src);
+    int getBarFrames(SyncSource src);
     
     //
     // TimeSlicer Interface
     //
 
-    Pulse* getBlockPulse(class Follower* f);
+    class Pulse* getBlockPulse(class Follower* f);
 
     //
     // Internal Component Services
@@ -127,12 +127,12 @@ class SyncMaster
     //////////////////////////////////////////////////////////////////////
 
     // register the intent to follow
-    void follow(int follower, Pulse::Source source, Pulse::Type type);
-    void follow(int follower, int leader, Pulse::Type type);
+    void follow(int follower, SyncSource source, SyncUnit unit);
+    void follow(int follower, int leader, SyncUnit unit);
     void unfollow(int follower);
 
     // notify that a leader pulse has been reached
-    void addLeaderPulse(int leader, Pulse::Type type, int frameOffset);
+    void addLeaderPulse(int leader, SyncUnit unit, int frameOffset);
 
     // notify that drift has been corrected
     void correctDrift(int follower, int frames);

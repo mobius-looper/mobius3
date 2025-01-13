@@ -39,6 +39,8 @@
 #include "../Notification.h"
 #include "../Notifier.h"
 
+#include "../../sync/SyncConstants.h"
+#include "../../sync/Pulse.h"
 #include "../../sync/SyncMaster.h"
 // for OldMobiusState
 #include "../../sync/Follower.h"
@@ -54,10 +56,6 @@
 #include "Script.h"
 #include "Stream.h"
 #include "Track.h"
-
-// new
-#include "../../sync/Pulse.h"
-#include "../../sync/SyncMaster.h"
 
 #include "Synchronizer.h"
 
@@ -108,21 +106,21 @@ void Synchronizer::updateConfiguration(MobiusConfig* config)
     
     Setup* setup = mMobius->getSetup();
     
-    SyncSource defaultSource = setup->getSyncSource();
-    SyncUnit syncUnit = setup->getSyncUnit();
+    OldSyncSource defaultSource = setup->getSyncSource();
+    OldSyncUnit oldSyncUnit = setup->getSyncUnit();
     SyncTrackUnit defaultTrackUnit = setup->getSyncTrackUnit();
 
     // this will be the pulse type for all sources except track sync
     // doesn't appear to be a SetupTrack override for this one
-    Pulse::Type pulseType = Pulse::PulseBeat;
-    if (syncUnit == SYNC_UNIT_BAR)
-      pulseType = Pulse::PulseBar;
+    SyncUnit pulseUnit = SyncUnitBeat;
+    if (oldSyncUnit == SYNC_UNIT_BAR)
+      pulseUnit = SyncUnitBar;
 
     int number = 1;
     for (SetupTrack* st = setup->getTracks() ; st != nullptr ; st = st->getNext()) {
 
-        SyncSource actualSource = defaultSource;
-        SyncSource overrideSource = st->getSyncSource();
+        OldSyncSource actualSource = defaultSource;
+        OldSyncSource overrideSource = st->getSyncSource();
         if (overrideSource != SYNC_DEFAULT)
           actualSource = overrideSource;
         
@@ -132,32 +130,32 @@ void Synchronizer::updateConfiguration(MobiusConfig* config)
             if (overrideTrackUnit != TRACK_UNIT_DEFAULT)
               actualTrackUnit = overrideTrackUnit;
 
-            Pulse::Type trackPulse = Pulse::PulseNone;
+            SyncUnit trackPulse = SyncUnitNone;
             if (actualTrackUnit == TRACK_UNIT_SUBCYCLE)
-              trackPulse = Pulse::PulseBeat;
+              trackPulse = SyncUnitBeat;
             else if (actualTrackUnit == TRACK_UNIT_CYCLE)
-              trackPulse = Pulse::PulseBar;
+              trackPulse = SyncUnitBar;
             else if (actualTrackUnit == TRACK_UNIT_LOOP)
-              trackPulse = Pulse::PulseLoop;
+              trackPulse = SyncUnitLoop;
 
             // core tracks can't follow specific leaders, they can
             // only follow the TrackSyncMaster atm
-            if (trackPulse != Pulse::PulseNone)
+            if (trackPulse != SyncUnitNone)
               mSyncMaster->follow(number, 0, trackPulse);
             else
               mSyncMaster->unfollow(number);
         }
         else if (actualSource == SYNC_OUT) {
-            mSyncMaster->follow(number, Pulse::SourceMaster, pulseType);
+            mSyncMaster->follow(number, SyncSourceMaster, pulseUnit);
         }
         else if (actualSource == SYNC_TRANSPORT) {
-            mSyncMaster->follow(number, Pulse::SourceTransport, pulseType);
+            mSyncMaster->follow(number, SyncSourceTransport, pulseUnit);
         }
         else if (actualSource == SYNC_HOST) {
-            mSyncMaster->follow(number, Pulse::SourceHost, pulseType);
+            mSyncMaster->follow(number, SyncSourceHost, pulseUnit);
         }
         else if (actualSource == SYNC_MIDI) {
-            mSyncMaster->follow(number, Pulse::SourceMidi, pulseType);
+            mSyncMaster->follow(number, SyncSourceMidi, pulseUnit);
         }
         else {
             // SYNC_NONE or SYNC_DEFAULT
@@ -187,7 +185,7 @@ void Synchronizer::updateConfiguration(MobiusConfig* config)
  * this from the focused track.
  *
  * This could be simplified now with SyncMaster.  All we really need to know
- * is which Pulse::Source this track follows, and the view can pull the tempo
+ * is which SyncSource this track follows, and the view can pull the tempo
  * and location from the common sync state.
  *
  * Historically, the tempo, beat, and bar values are left zero unless we are
@@ -206,16 +204,16 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
 
     // sigh, convert this back from what we did in updateConfiguration
     int number = t->getDisplayNumber();
-    Pulse::Source source = mSyncMaster->getEffectiveSource(number);
+    SyncSource source = mSyncMaster->getEffectiveSource(number);
 
     Follower* f = mSyncMaster->getFollower(number);
     if (f != nullptr) {
-        if (f->type == Pulse::PulseBar || f->type == Pulse::PulseLoop)
+        if (f->unit == SyncUnitBar || f->unit == SyncUnitLoop)
           state->syncUnit = SYNC_UNIT_BAR;
     }
 
     switch (source) {
-        case Pulse::SourceMidi: {
+        case SyncSourceMidi: {
             state->syncSource = SYNC_MIDI;
             // for display purposes we use the "smooth" tempo
             // this is a 10x integer
@@ -227,35 +225,35 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
             // MIDI in sync has also only displayed beats if clocks were actively
             // being received
             if (mSyncMaster->isMidiInStarted()) {
-                state->beat = mSyncMaster->getBeat(Pulse::SourceMidi);
-                state->bar = mSyncMaster->getBar(Pulse::SourceMidi);
+                state->beat = mSyncMaster->getBeat(SyncSourceMidi);
+                state->bar = mSyncMaster->getBar(SyncSourceMidi);
             }
         }
             break;
 
-        case Pulse::SourceHost: {
+        case SyncSourceHost: {
             state->syncSource = SYNC_HOST;
-            state->tempo = mSyncMaster->getTempo(Pulse::SourceHost);
+            state->tempo = mSyncMaster->getTempo(SyncSourceHost);
 
             // not exposing this, is it necessary?
             if (mSyncMaster->isHostReceiving()) {
-                state->beat = mSyncMaster->getBeat(Pulse::SourceHost);
-                state->bar = mSyncMaster->getBar(Pulse::SourceHost);
+                state->beat = mSyncMaster->getBeat(SyncSourceHost);
+                state->bar = mSyncMaster->getBar(SyncSourceHost);
             }
         }
             break;
-        case Pulse::SourceTransport: {
+        case SyncSourceTransport: {
             state->syncSource = SYNC_TRANSPORT;
             state->tempo = mSyncMaster->getTempo();
-            state->beat = mSyncMaster->getBeat(Pulse::SourceTransport);
-            state->bar = mSyncMaster->getBar(Pulse::SourceTransport);
+            state->beat = mSyncMaster->getBeat(SyncSourceTransport);
+            state->bar = mSyncMaster->getBar(SyncSourceTransport);
         }
             break;
-        case Pulse::SourceLeader: {
+        case SyncSourceTrack: {
             state->syncSource = SYNC_TRACK;
         }
             break;
-        case Pulse::SourceMaster: {
+        case SyncSourceMaster: {
             // hmm, is this right?  won't much matter once we get rid of OldMobiusState
             state->syncSource = SYNC_OUT;
             // should we show Transport tempo here?  we're going to replace it when
@@ -286,8 +284,8 @@ void Synchronizer::getState(OldMobiusState* state)
     sync->outBar = 0;
     if (sync->outStarted) {
         sync->outTempo = mSyncMaster->getTempo();
-        sync->outBeat = mSyncMaster->getBeat(Pulse::SourceTransport);
-        sync->outBar = mSyncMaster->getBar(Pulse::SourceTransport);
+        sync->outBeat = mSyncMaster->getBeat(SyncSourceTransport);
+        sync->outBar = mSyncMaster->getBar(SyncSourceTransport);
     }
 
     // MIDI input sync
@@ -304,18 +302,18 @@ void Synchronizer::getState(OldMobiusState* state)
     // TODO: should we save the last known beat/bar values
     // so we can keep displaying them till the next start/continue?
     if (sync->inStarted) {
-        sync->inBeat = mSyncMaster->getBeat(Pulse::SourceMidi);
-        sync->inBar = mSyncMaster->getBar(Pulse::SourceMidi);
+        sync->inBeat = mSyncMaster->getBeat(SyncSourceMidi);
+        sync->inBar = mSyncMaster->getBar(SyncSourceMidi);
     }
 
     // Host sync
     sync->hostStarted = mSyncMaster->isHostReceiving();
-    sync->hostTempo = mSyncMaster->getTempo(Pulse::SourceHost);
+    sync->hostTempo = mSyncMaster->getTempo(SyncSourceHost);
     sync->hostBeat = 0;
     sync->hostBar = 0;
     if (sync->hostStarted) {
-        sync->hostBeat = mSyncMaster->getBeat(Pulse::SourceHost);
-        sync->hostBar = mSyncMaster->getBar(Pulse::SourceHost);
+        sync->hostBeat = mSyncMaster->getBeat(SyncSourceHost);
+        sync->hostBar = mSyncMaster->getBar(SyncSourceHost);
     }
 }
 
@@ -358,9 +356,9 @@ bool Synchronizer::isRecordStartSynchronized(Loop* l)
     bool sync = false;
     Track* t = l->getTrack();
     int number = t->getDisplayNumber();
-    Pulse::Source source = mSyncMaster->getEffectiveSource(number);
+    SyncSource source = mSyncMaster->getEffectiveSource(number);
 
-    sync = (source != Pulse::SourceNone && source != Pulse::SourceMaster);
+    sync = (source != SyncSourceNone && source != SyncSourceMaster);
 
     return sync;
 }
@@ -1081,7 +1079,7 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
     SyncState* state = t->getSyncState();
 
     // note that this must be the *effective* source
-    SyncSource src = state->getEffectiveSyncSource();
+    OldSyncSource src = state->getEffectiveSyncSource();
 
 	unit->frames = 0.0f;
     unit->pulses = 1;
@@ -1143,12 +1141,12 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
         // formerly asked the Host tracker for PulseFrames
         // or derived FramesPerBeat from the HostTempo
         // SyncMaster can do this now
-        unit->frames = (float)(mSyncMaster->getBarFrames(Pulse::SourceHost));
+        unit->frames = (float)(mSyncMaster->getBarFrames(SyncSourceHost));
         adjustBarUnit(l, state, src, unit);
     }
     else if (src == SYNC_MIDI) {
 
-        unit->frames = (float)(mSyncMaster->getBarFrames(Pulse::SourceMidi));
+        unit->frames = (float)(mSyncMaster->getBarFrames(SyncSourceMidi));
         adjustBarUnit(l, state, src, unit);
     }
     else {
@@ -1250,11 +1248,11 @@ float Synchronizer::getFramesPerBeat(float tempo)
  * Unclear where this should come from now, always get it from the transport or
  * allow the old Preset/Setup parameters?
  */
-int Synchronizer::getBeatsPerBar(SyncSource src, Loop* l)
+int Synchronizer::getBeatsPerBar(OldSyncSource src, Loop* l)
 {
     (void)src;
     (void)l;
-    return mSyncMaster->getBeatsPerBar(Pulse::SourceTransport);
+    return mSyncMaster->getBeatsPerBar(SyncSourceTransport);
 }
 
 /**
@@ -1267,7 +1265,7 @@ int Synchronizer::getBeatsPerBar(SyncSource src, Loop* l)
  * mess and make sure if the tracker isn't locked we get it from the state.
  */
 #if 0
-void Synchronizer::adjustBarUnit(Loop* l, SyncState* state, SyncSource src,
+void Synchronizer::adjustBarUnit(Loop* l, SyncState* state, OldSyncSource src,
                                  SyncUnitInfo* unit)
 {
     int bpb = getBeatsPerBar(src, l);
@@ -1469,14 +1467,14 @@ void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
 {
     // new: SyncMaster is interested in all potential leaders,
     // their hopes and their dreams
-    Pulse::Type pulseType = Pulse::PulseBeat;
+    SyncUnit pulseUnit = SyncUnitBeat;
     if (type == LoopEvent) 
-      pulseType = Pulse::PulseLoop;
+      pulseUnit = SyncUnitLoop;
     
     else if (type == CycleEvent) 
-      pulseType = Pulse::PulseBar;
+      pulseUnit = SyncUnitBar;
     
-    mSyncMaster->addLeaderPulse(t->getDisplayNumber(), pulseType, offset);
+    mSyncMaster->addLeaderPulse(t->getDisplayNumber(), pulseUnit, offset);
     
     // In all cases store the event type in the SyncState so we know
     // we reached an interesting boundary during this interrupt.  
@@ -1548,8 +1546,8 @@ void Synchronizer::startRecording(Loop* l)
         //if (src == SYNC_MIDI && !e->fields.sync.syncTrackerEvent)
         //startFrame += l->getInputLatency();
 
-        Pulse::Source source = mSyncMaster->getEffectiveSource(t->getDisplayNumber());
-        if (source == Pulse::SourceMidi)
+        SyncSource source = mSyncMaster->getEffectiveSource(t->getDisplayNumber());
+        if (source == SyncSourceMidi)
           startFrame += l->getInputLatency();
 
         start->pending = false;
@@ -1594,7 +1592,7 @@ void Synchronizer::startRecording(Loop* l)
             cyclePulses = mp->getSubcycles();
         }
         else if (src == SYNC_TRANSPORT) {
-            cyclePulses = mSyncMaster->getBeatsPerBar(Pulse::SourceTransport);
+            cyclePulses = mSyncMaster->getBeatsPerBar(SyncSourceTransport);
         }
         else {
             // not expecting to be here for SYNC_OUT 
@@ -1667,7 +1665,7 @@ void Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
         // you get 1 cycle.
         // For non-track sources, the bar length can be relatiely short so may want more
         // control over whether every bar constitutes a cycle.
-        if (p->type == Pulse::PulseBar || p->type == Pulse::PulseLoop) {
+        if (p->unit == SyncUnitBar || p->unit == SyncUnitLoop) {
             l->setRecordCycles(l->getCycles() + 1);
         }
     }
@@ -1696,7 +1694,7 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
     // which is what Loop::getFrames will return.  If we're following raw
     // MIDI pulses have to adjust for latency.
 
-    bool inputLatency = (pulse->source == Pulse::SourceMidi);
+    bool inputLatency = (pulse->source == SyncSourceMidi);
 
     // since we almost always want even loops for division, round up
     // if necessary
@@ -1740,7 +1738,7 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
     // an even cycle bound or not, and if not need to collapse to one cycle.
     // needs more work...
 #if 0    
-    if (pulse->source == Pulse::SourceLeader) {
+    if (pulse->source == SyncSourceTrack) {
         // get the number of frames recorded
         // sanity check an old differece we shouldn't have any more
         long slaveFrames = l->getRecordedFrames();
@@ -2457,7 +2455,7 @@ void Synchronizer::doRealign(Loop* loop, Event* pulse, Event* realign)
 
         // formerly adjusted for MIDI pulse latency, this should
         // no longer be necessary if we're following the SyncTracker
-        SyncSource source = pulse->fields.sync.source;
+        OldSyncSource source = pulse->fields.sync.source;
         if (source == SYNC_MIDI && !pulse->fields.sync.syncTrackerEvent) {
             Trace(loop, 1, "Sync: Not expecting raw event for MIDI Realign\n");
             newFrame += loop->getInputLatency();

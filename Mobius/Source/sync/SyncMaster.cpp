@@ -151,7 +151,7 @@ int SyncMaster::notifyTrackRecordEnding(int number)
  * Called when a track has finished recording and may serve as a sync master.
  *
  * If there is already a sync master, it is not changed, though we should
- * allow a special sync mode, maybe Pulse::SourceMasterForce or some other
+ * allow a special sync mode, maybe SyncSourceMasterForce or some other
  * parameter that overrides it.
  *
  * Also worth considering if we need an option for tracks to not become the
@@ -166,7 +166,7 @@ void SyncMaster::notifyTrackAvailable(int number)
         if (trackSyncMaster == 0)
           trackSyncMaster = number;
         
-        if (f->source == Pulse::SourceMaster) {
+        if (f->source == SyncSourceMaster) {
             // this one wants to be special
             if (transportMaster == 0) {
 
@@ -510,7 +510,7 @@ void SyncMaster::notifyTrackMute(int number)
 /**
  * There can be one TrackSyncMaster.
  *
- * This becomes the default leader track when using Pulse::SourceLeader
+ * This becomes the default leader track when using SyncSourceLeader
  * and the follower didn't specify a specific leader.
  * 
  * It may be changed at any time.
@@ -856,18 +856,18 @@ void SyncMaster::sendAlert(juce::String msg)
  * The complication here is around SourceMaster which is only allowed
  * if there is no other sync master.
  */
-Pulse::Source SyncMaster::getEffectiveSource(int id)
+SyncSource SyncMaster::getEffectiveSource(int id)
 {
-    Pulse::Source source = Pulse::SourceNone;
+    SyncSource source = SyncSourceNone;
     
     Follower* f = getFollower(id);
     if (f != nullptr) {
         source = f->source;
-        if (source == Pulse::SourceMaster) {
+        if (source == SyncSourceMaster) {
             if (transportMaster > 0 && transportMaster != id) {
                 // there is already a transport master, this track
                 // reverts to following the transport
-                source = Pulse::SourceTransport;
+                source = SyncSourceTransport;
             }
         }
     }
@@ -881,26 +881,26 @@ Pulse::Source SyncMaster::getEffectiveSource(int id)
  * For MIDI do we want to return the fluctuationg tempo or smooth tempo
  * with only one decimal place?
  */
-float SyncMaster::getTempo(Pulse::Source src)
+float SyncMaster::getTempo(SyncSource src)
 {
     float tempo = 0.0f;
     switch (src) {
         
-        case Pulse::SourceHost: {
+        case SyncSourceHost: {
             // Pulsator tracks this
             Pulsator::SyncState* state = pulsator->getHostState();
             tempo = state->tempo;
         }
             break;
 
-        case Pulse::SourceMidi: {
+        case SyncSourceMidi: {
             // Pulsator also tracks this but we can get it directly from the Analyzer
             tempo = midiAnalyzer->getTempo();
         }
             break;
 
-        case Pulse::SourceMaster:
-        case Pulse::SourceTransport: {
+        case SyncSourceMaster:
+        case SyncSourceTransport: {
             // these are now the same
             tempo = transport->getTempo();
         }
@@ -917,26 +917,26 @@ float SyncMaster::getTempo(Pulse::Source src)
  *
  * This currently returns raw beats for MidiIn.  May need to differentiate this.
  */
-int SyncMaster::getBeat(Pulse::Source src)
+int SyncMaster::getBeat(SyncSource src)
 {
     int beat = 0;
     switch (src) {
     
-        case Pulse::SourceHost: {
+        case SyncSourceHost: {
             // Pulsator tracks this
             Pulsator::SyncState* state = pulsator->getHostState();
             beat = state->beat;
         }
             break;
 
-        case Pulse::SourceMidi: {
+        case SyncSourceMidi: {
             // Pulsator also tracks this but we can get it directly from the Analyzer
             beat = midiAnalyzer->getBeat();
         }
             break;
 
-        case Pulse::SourceMaster:
-        case Pulse::SourceTransport: {
+        case SyncSourceMaster:
+        case SyncSourceTransport: {
             // these are now the same
             beat = transport->getBeat();
         }
@@ -959,11 +959,11 @@ int SyncMaster::getBeat(Pulse::Source src)
  * can continue doing that if it wants, but it would be best to standardize
  * on getting it from the Transport.
  */
-int SyncMaster::getBeatsPerBar(Pulse::Source src)
+int SyncMaster::getBeatsPerBar(SyncSource src)
 {
     int bpb = transport->getBeatsPerBar();
 
-    if (src == Pulse::SourceHost) {
+    if (src == SyncSourceHost) {
         Pulsator::SyncState* state = pulsator->getHostState();
         int hbpb = state->beatsPerBar;
         if (hbpb > 0)
@@ -977,21 +977,21 @@ int SyncMaster::getBeatsPerBar(Pulse::Source src)
  * Transport will have this and host usually will, but we have to guess
  * for MIDI.
  */
-int SyncMaster::getBar(Pulse::Source src)
+int SyncMaster::getBar(SyncSource src)
 {
     // is this supposed to be zero relative like beat?
     // older code assumed 1 relative
     int bar = 1;
     switch (src) {
     
-        case Pulse::SourceHost: {
+        case SyncSourceHost: {
             // Pulsator tracks this
             Pulsator::SyncState* state = pulsator->getHostState();
             bar = state->bar;
         }
             break;
 
-        case Pulse::SourceMidi: {
+        case SyncSourceMidi: {
             int beat = midiAnalyzer->getBeat();
             int bpb = getBeatsPerBar(src);
             if (bpb > 0)
@@ -999,8 +999,8 @@ int SyncMaster::getBar(Pulse::Source src)
         }
             break;
 
-        case Pulse::SourceMaster:
-        case Pulse::SourceTransport: {
+        case SyncSourceMaster:
+        case SyncSourceTransport: {
             // these are now the same
             bar = transport->getBar();
         }
@@ -1035,18 +1035,18 @@ Follower* SyncMaster::getFollower(int id)
  * Following a sync source does not result in track dependencies so you
  * don't need to inform TimeSlicer and reorder.
  */
-void SyncMaster::follow(int follower, Pulse::Source source, Pulse::Type type)
+void SyncMaster::follow(int follower, SyncSource source, SyncUnit unit)
 {
-    pulsator->follow(follower, source, type);
+    pulsator->follow(follower, source, unit);
 }
 
 /**
  * Adding a follower relationship changes dependency order that
  * TimeSlicer is using to guide the track advance.  Let it know
  */
-void SyncMaster::follow(int follower, int leader, Pulse::Type type)
+void SyncMaster::follow(int follower, int leader, SyncUnit unit)
 {
-    pulsator->follow(follower, leader, type);
+    pulsator->follow(follower, leader, unit);
 
     if (listener != nullptr)
       listener->syncFollowerChanges();
@@ -1065,9 +1065,9 @@ void SyncMaster::unfollow(int follower)
  * Must be called during track advance by anything that can lead.  Will
  * be ignored unless something is following it.
  */
-void SyncMaster::addLeaderPulse(int leader, Pulse::Type type, int frameOffset)
+void SyncMaster::addLeaderPulse(int leader, SyncUnit unit, int frameOffset)
 {
-    pulsator->addLeaderPulse(leader, type, frameOffset);
+    pulsator->addLeaderPulse(leader, unit, frameOffset);
 }
 
 /**
@@ -1198,7 +1198,7 @@ bool SyncMaster::isHostStarted()
 /**
  * Old code scraped from Synchronizer, we need to do something similar here.
  */
-int SyncMaster::getBarFrames(Pulse::Source src)
+int SyncMaster::getBarFrames(SyncSource src)
 {
     (void)src;
     

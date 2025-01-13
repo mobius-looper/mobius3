@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "../../sync/Pulse.h"
+#include "../../sync/SyncConstants.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 #include "../../model/SymbolId.h"
@@ -98,8 +98,8 @@ class BaseScheduler
     void finishWaitAndDispose(TrackEvent* e, bool canceled);
     
     // configuration
-    Pulse::Source syncSource = Pulse::SourceNone;
-    Pulse::Type pulseType = Pulse::PulseBeat;
+    SyncSource syncSource = SyncSourceNone;
+    SyncUnit pulseUnit = SyncUnitBeat;
     int syncLeader = 0;
     int followTrack = 0;
     bool followQuantize = false;

@@ -69,7 +69,7 @@
 // Global functions to return trace names for Setup enumerations
 // !! figure out a way to share these with Parameter definitions
 
-const char* GetSyncSourceName(SyncSource src) 
+const char* GetSyncSourceName(OldSyncSource src) 
 {
     const char* name = "???";
     switch (src) {
@@ -314,22 +314,22 @@ bool Setup::isResetRetain(const char* parameterName)
 }
 #endif
 
-SyncSource Setup::getSyncSource()
+OldSyncSource Setup::getSyncSource()
 {
     return mSyncSource;
 }
 
-void Setup::setSyncSource(SyncSource src)
+void Setup::setSyncSource(OldSyncSource src)
 {
     mSyncSource = src;
 }
 
-SyncUnit Setup::getSyncUnit()
+OldSyncUnit Setup::getSyncUnit()
 {
     return mSyncUnit;
 }
 
-void Setup::setSyncUnit(SyncUnit src)
+void Setup::setSyncUnit(OldSyncUnit src)
 {
     mSyncUnit = src;
 }
@@ -747,12 +747,12 @@ int SetupTrack::getPluginOutputPort()
 	return mPluginOutputPort;
 }
 
-SyncSource SetupTrack::getSyncSource()
+OldSyncSource SetupTrack::getSyncSource()
 {
     return mSyncSource;
 }
 
-void SetupTrack::setSyncSource(SyncSource src)
+void SetupTrack::setSyncSource(OldSyncSource src)
 {
     mSyncSource = src;
 }

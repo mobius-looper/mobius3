@@ -19,77 +19,20 @@
 
 #pragma once
 
+#include "SyncConstants.h"
+
 class Pulse
 {
   public:
 
-    /**
-     * Things within the system that may generate sync pulses.
-     * A Follower track may choose to respond to one of these.
-     */
-    typedef enum {
-        // None is used to indiciate that the pulse has not been detected
-        // or a track is not synchronizing with anything
-        SourceNone,
-
-        // synchronization with MIDI clocks from the outside
-        SourceMidi,
-
-        // synchronization with the host application transport
-        SourceHost,
-
-        // synchronization with the internal transport
-        // this may geneerate MIDI clocks
-        SourceTransport,
-        
-        // synchronization with another track
-        SourceLeader,
-
-        // Not a pulse source, but used in Track configuration to indiciate
-        // that this track wants to control the internal transport
-        // Since there can only be one transport master, if a track is already
-        // the transport master, other tracks will behave as SourceTransport
-        // followers.  This is appoximately the same as the old SyncSource=MIDI_OUT
-        SourceMaster
-        
-    } Source;
-
-    /**
-     * Each source may generate several types of pulses.  While logically
-     * every pulse represents a "beat" some beat pulses have more
-     * significance than others.
-     */
-    typedef enum {
-
-        PulseNone,
-        
-        // the smallest pulse a source can provide
-        // for Midi this is determined by the PPQ of the clocks
-        // for Host this is determined by ppqPosition from the host
-        // for internal Mobius tracks, this corresponds to the Subcycle
-        PulseBeat,
-
-        // the pulse represents the location of a time signature bar if
-        // the source can supply a time signature
-        // for internal Mobius tracks, this corresponds to the Cycle
-        PulseBar,
-
-        // the pulse represents the end of a larger collection of beats or bars
-        // that has a known length in pulses
-        // for internal Mobius tracks, this corresponds to the end of a loop
-        // there is no correspondence in MIDI or host pulses
-        PulseLoop
-        
-    } Type;
-    
     Pulse() {}
     ~Pulse() {}
 
     // where the pulse came from
-    Source source = SourceNone;
+    SyncSource source = SyncSourceNone;
 
     // the pulse granularity
-    Type type = PulseBeat;
+    SyncUnit unit = SyncUnitBeat;
     
     // system time this pulse was detected, mostly for debugging
     int millisecond = 0;
@@ -100,10 +43,6 @@ class Pulse
 
     // special flag for sync events that happen just after the end of the block
     bool pending = false;
-
-    // the beat and bar numbers of the external transport if known
-    int beat = 0;
-    int bar = 0;
 
     // this pulse also represents the host transport or MIDI clocks
     // moving to their start point
@@ -121,13 +60,13 @@ class Pulse
     // we're continuing from, aka the "song position pointer"
     int continuePulse = 0;
 
-    void reset(Source s, int msec) {
+    void reset(SyncSource s, int msec) {
         source = s;
         millisecond = msec;
         blockFrame = 0;
         pending = false;
-        beat = 0;
-        bar = 0;
+        //beat = 0;
+        //bar = 0;
         start = false;
         stop = false;
         mcontinue = false;
@@ -135,7 +74,7 @@ class Pulse
     }
 
     void reset() {
-        reset(SourceNone, 0);
+        reset(SyncSourceNone, 0);
     }
     
 };

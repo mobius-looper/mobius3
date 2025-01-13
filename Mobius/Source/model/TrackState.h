@@ -10,7 +10,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../sync/Pulse.h"
+#include "../sync/SyncConstants.h"
 #include "SymbolId.h"
 
 class TrackState
@@ -213,7 +213,7 @@ class TrackState
     int outputMonitorLevel = 0;
 
     // sync
-    Pulse::Source syncSource;
+    SyncSource syncSource;
     //int beat = 0;
     //int	bar = 0;
 

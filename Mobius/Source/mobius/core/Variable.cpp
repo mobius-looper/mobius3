@@ -37,8 +37,8 @@
 
 // for getLastSampleFrames
 #include "../MobiusKernel.h"
+#include "../../sync/SyncConstants.h"
 #include "../../sync/SyncMaster.h"
-#include "../../sync/Pulse.h"
 
 #include "Event.h"
 #include "EventManager.h"
@@ -2146,7 +2146,7 @@ void SyncTempoVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
     SyncMaster* sm = s->getSyncMaster();
-	float tempo = sm->getTempo(Pulse::SourceTransport);
+	float tempo = sm->getTempo(SyncSourceTransport);
 
 	// assume its ok to truncate this one, if you want something
 	// more accurate could have a RealSyncTempoVariable?
@@ -2182,7 +2182,7 @@ void SyncRawBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
     SyncMaster* sm = s->getSyncMaster();
-    value->setInt(sm->getBeat(Pulse::SourceTransport));
+    value->setInt(sm->getBeat(SyncSourceTransport));
 }
 
 SyncRawBeatVariableType SyncRawBeatVariableObj;
@@ -2214,7 +2214,7 @@ void SyncBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
     SyncMaster* sm = s->getSyncMaster();
-    value->setInt(sm->getBeat(Pulse::SourceTransport));
+    value->setInt(sm->getBeat(SyncSourceTransport));
 }
 
 SyncBeatVariableType SyncBeatVariableObj;
@@ -2246,7 +2246,7 @@ void SyncBarVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	Synchronizer* s = t->getSynchronizer();
     SyncMaster* sm = s->getSyncMaster();
-    value->setInt(sm->getBar(Pulse::SourceTransport));
+    value->setInt(sm->getBar(SyncSourceTransport));
 }
 
 SyncBarVariableType SyncBarVariableObj;
@@ -2702,7 +2702,7 @@ void SyncOutTempoVariableType::getTrackValue(Track* t, ExValue* value)
 {
 	//float tempo = t->getSynchronizer()->getOutTempo();
     SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
-    float tempo = sm->getTempo(Pulse::SourceTransport);
+    float tempo = sm->getTempo(SyncSourceTransport);
     
 	// assume its ok to truncate this one, if you want something
 	// more accurate could have a RealTempoVariable?
@@ -2739,7 +2739,7 @@ void SyncOutRawBeatVariableType::getTrackValue(Track* t, ExValue* value)
     //value->setInt(s->getOutRawBeat());
     
     SyncMaster* sm = s->getSyncMaster();
-    value->setInt(sm->getBeat(Pulse::SourceTransport));
+    value->setInt(sm->getBeat(SyncSourceTransport));
 }
 
 SyncOutRawBeatVariableType SyncOutRawBeatVariableObj;
@@ -2771,7 +2771,7 @@ void SyncOutBeatVariableType::getTrackValue(Track* t, ExValue* value)
 	Synchronizer* s = t->getSynchronizer();
     //value->setInt(s->getOutBeat());
     SyncMaster* sm = s->getSyncMaster();
-    value->setInt(sm->getBeat(Pulse::SourceTransport));
+    value->setInt(sm->getBeat(SyncSourceTransport));
 }
 
 SyncOutBeatVariableType SyncOutBeatVariableObj;
@@ -2802,7 +2802,7 @@ void SyncOutBarVariableType::getTrackValue(Track* t, ExValue* value)
 	Synchronizer* s = t->getSynchronizer();
     //value->setInt(s->getOutBar());
     SyncMaster* sm = s->getSyncMaster();
-    value->setInt(sm->getBar(Pulse::SourceTransport));
+    value->setInt(sm->getBar(SyncSourceTransport));
 }
 
 SyncOutBarVariableType SyncOutBarVariableObj;
@@ -2931,7 +2931,7 @@ void SyncInTempoVariableType::getTrackValue(Track* t, ExValue* value)
 {
     SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
 	//float tempo = t->getSynchronizer()->getInTempo();
-    float tempo = sm->getTempo(Pulse::SourceMidi);
+    float tempo = sm->getTempo(SyncSourceMidi);
     
 	// assume its ok to truncate this one, if you want something
 	// more accurate could have a RealTempoVariable?
@@ -3118,7 +3118,7 @@ SyncHostTempoVariableType::SyncHostTempoVariableType()
 void SyncHostTempoVariableType::getTrackValue(Track* t, ExValue* value)
 {
     SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
-	float tempo = sm->getTempo(Pulse::SourceHost);
+	float tempo = sm->getTempo(SyncSourceHost);
 
 	// assume its ok to truncate this one, if you want something
 	// more accurate could have a RealTempoVariable?
@@ -3151,7 +3151,7 @@ SyncHostRawBeatVariableType::SyncHostRawBeatVariableType()
 void SyncHostRawBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
     SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
-    value->setInt(sm->getBeat(Pulse::SourceHost));
+    value->setInt(sm->getBeat(SyncSourceHost));
 }
 
 SyncHostRawBeatVariableType SyncHostRawBeatVariableObj;
@@ -3180,7 +3180,7 @@ SyncHostBeatVariableType::SyncHostBeatVariableType()
 void SyncHostBeatVariableType::getTrackValue(Track* t, ExValue* value)
 {
     SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
-    value->setInt(sm->getBeat(Pulse::SourceHost));
+    value->setInt(sm->getBeat(SyncSourceHost));
 }
 
 SyncHostBeatVariableType SyncHostBeatVariableObj;
@@ -3209,7 +3209,7 @@ SyncHostBarVariableType::SyncHostBarVariableType()
 void SyncHostBarVariableType::getTrackValue(Track* t, ExValue* value)
 {
     SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
-    value->setInt(sm->getBar(Pulse::SourceHost));
+    value->setInt(sm->getBar(SyncSourceHost));
 }
 
 SyncHostBarVariableType SyncHostBarVariableObj;

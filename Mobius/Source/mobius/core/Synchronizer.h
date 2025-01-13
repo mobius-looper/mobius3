@@ -174,7 +174,7 @@ class Synchronizer {
     float getSpeed(class Loop* l);
     void traceTempo(class Loop* l, const char* type, float tempo);
     float getFramesPerBeat(float tempo);
-    int getBeatsPerBar(SyncSource src, Loop* l);
+    int getBeatsPerBar(OldSyncSource src, Loop* l);
 
 
     void startRecording(class Loop* l);

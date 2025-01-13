@@ -747,7 +747,7 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             break;
             
         case ParamDefaultSyncSource:
-            ((Setup*)obj)->setSyncSource((SyncSource)value->getInt());
+            ((Setup*)obj)->setSyncSource((OldSyncSource)value->getInt());
             break;
             
         case ParamDefaultTrackSyncUnit:
@@ -755,7 +755,7 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             break;
             
         case ParamSlaveSyncUnit:
-            ((Setup*)obj)->setSyncUnit((SyncUnit)value->getInt());
+            ((Setup*)obj)->setSyncUnit((OldSyncUnit)value->getInt());
             break;
             
         case ParamManualStart:
@@ -844,7 +844,7 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             break;
             
         case ParamSyncSource:
-            ((SetupTrack*)obj)->setSyncSource((SyncSource)value->getInt());
+            ((SetupTrack*)obj)->setSyncSource((OldSyncSource)value->getInt());
             break;
             
         case ParamTrackSyncUnit:

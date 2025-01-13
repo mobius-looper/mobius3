@@ -273,7 +273,7 @@ typedef enum {
     SYNC_MIDI,
     SYNC_TRANSPORT
 
-} SyncSource;
+} OldSyncSource;
 
 /**
  * Defines the granularity of MIDI and HOST quantization.
@@ -286,7 +286,7 @@ typedef enum {
     SYNC_UNIT_BEAT,
     SYNC_UNIT_BAR
 
-} SyncUnit;
+} OldSyncUnit;
 
 /**
  * Defines the granularity of SYNC_TRACK quantization.

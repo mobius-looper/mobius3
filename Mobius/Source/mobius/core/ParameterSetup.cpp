@@ -195,10 +195,10 @@ void DefaultSyncSourceParameterType::setValue(Setup* s, ExValue* value)
 {
     // the enumeration has "Default" as the first item, we hide that
     if (value->getType() == EX_INT)
-      s->setSyncSource((SyncSource)(value->getInt() + 1));
+      s->setSyncSource((OldSyncSource)(value->getInt() + 1));
     else {
         int index = getEnum(value) + 1;
-        s->setSyncSource((SyncSource)index);
+        s->setSyncSource((OldSyncSource)index);
     }
 }
 
@@ -299,7 +299,7 @@ void SlaveSyncUnitParameterType::getValue(Setup* s, ExValue* value)
 
 void SlaveSyncUnitParameterType::setValue(Setup* s, ExValue* value)
 {
-	s->setSyncUnit((SyncUnit)getEnum(value));
+	s->setSyncUnit((OldSyncUnit)getEnum(value));
 }
 
 SlaveSyncUnitParameterType SlaveSyncUnitParameterTypeObj;

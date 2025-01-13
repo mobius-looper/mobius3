@@ -13,7 +13,7 @@
 #define MOBIUS_EVENT_H
 
 // for SyncSource
-#include "../../model/Setup.h"
+//#include "../../model/Setup.h"
 #include "../../model/SymbolId.h"
 #include "../../model/TrackState.h"
 
@@ -191,7 +191,7 @@ extern EventType* FollowerEvent;
 /**
  * For events of type SyncEvent, we overload an argument field
  * to contain one of these which specifies the type of event.
- * Another argument will have the SyncSource code.
+ * Another argument will have the OldSyncSource code.
  */
 typedef enum {
 
@@ -546,7 +546,7 @@ class Event {
          * SyncEvent
          */
         struct {
-            SyncSource source;
+            OldSyncSource source;
             SyncEventType eventType;
             SyncPulseType pulseType;
             long pulseFrame;

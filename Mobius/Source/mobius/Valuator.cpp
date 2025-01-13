@@ -254,15 +254,15 @@ Session::Track* Valuator::getSessionTrack(int number)
     return result;
 }
 
-SyncSource Valuator::getSyncSource(int number)
+OldSyncSource Valuator::getSyncSource(int number)
 {
-    SyncSource result = SYNC_NONE;
+    OldSyncSource result = SYNC_NONE;
     Session::Track* st = getSessionTrack(number);
     if (st != nullptr)
-      result = (SyncSource)Enumerator::getOrdinal(symbols,
-                                                  ParamSyncSource,
-                                                  st->getParameters(),
-                                                  result);
+      result = (OldSyncSource)Enumerator::getOrdinal(symbols,
+                                                     ParamSyncSource,
+                                                     st->getParameters(),
+                                                     result);
     return result;
 }
 
@@ -278,15 +278,15 @@ SyncTrackUnit Valuator::getTrackSyncUnit(int number)
     return result;
 }
 
-SyncUnit Valuator::getSlaveSyncUnit(int number)
+OldSyncUnit Valuator::getSlaveSyncUnit(int number)
 {
-    SyncUnit result = SYNC_UNIT_BEAT;
+    OldSyncUnit result = SYNC_UNIT_BEAT;
     Session::Track* st = getSessionTrack(number);
     if (st != nullptr)
-      result = (SyncUnit)Enumerator::getOrdinal(symbols,
-                                                ParamSlaveSyncUnit,
-                                                st->getParameters(),
-                                                result);
+      result = (OldSyncUnit)Enumerator::getOrdinal(symbols,
+                                                   ParamSlaveSyncUnit,
+                                                   st->getParameters(),
+                                                   result);
     return result;
 }
 

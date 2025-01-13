@@ -21,6 +21,8 @@
 #include "MobiusInterface.h"
 #include "MobiusKernel.h"
 
+#include "../sync/SyncConstants.h"
+#include "../sync/Pulse.h"
 #include "../sync/SyncMaster.h"
 #include "../sync/Follower.h"
 #include "track/LogicalTrack.h"
@@ -268,7 +270,7 @@ void TimeSlicer::orderTracks(LogicalTrack* t)
     if (!t->isVisited()) {
         t->setVisited(true);
         Follower* f = syncMaster->getFollower(t->getNumber());
-        if (f != nullptr && f->source == Pulse::SourceLeader) {
+        if (f != nullptr && f->source == SyncSourceTrack) {
             
             int leader = f->leader;
             if (leader == 0)

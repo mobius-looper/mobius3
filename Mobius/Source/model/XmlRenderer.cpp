@@ -833,7 +833,7 @@ void XmlRenderer::parse(XmlElement* e, Setup* setup)
     setup->setResetRetains(e->getAttribute(ATT_RESET_RETAINS));
 
     setup->setBeatsPerBar(parse(e, UIParameterBeatsPerBar));
-    setup->setSyncSource((SyncSource)parse(e, UIParameterDefaultSyncSource));
+    setup->setSyncSource((OldSyncSource)parse(e, UIParameterDefaultSyncSource));
     setup->setSyncTrackUnit((SyncTrackUnit)parse(e, UIParameterDefaultTrackSyncUnit));
     setup->setManualStart(parse(e, UIParameterManualStart));
     setup->setMaxTempo(parse(e, UIParameterMaxTempo));
@@ -842,7 +842,7 @@ void XmlRenderer::parse(XmlElement* e, Setup* setup)
     setup->setOutRealignMode(parse(e, UIParameterOutRealign));
     setup->setRealignTime(parse(e, UIParameterRealignTime));
     setup->setResizeSyncAdjust(parse(e, UIParameterResizeSyncAdjust));
-    setup->setSyncUnit((SyncUnit)parse(e, UIParameterSlaveSyncUnit));
+    setup->setSyncUnit((OldSyncUnit)parse(e, UIParameterSlaveSyncUnit));
     setup->setSpeedSyncAdjust(parse(e, UIParameterSpeedSyncAdjust));
 
     SetupTrack* tracks = nullptr;
@@ -944,7 +944,7 @@ void XmlRenderer::parse(XmlElement* e, SetupTrack* t)
     t->setPluginInputPort(parse(e, UIParameterPluginInputPort));
     t->setPluginOutputPort(parse(e, UIParameterPluginOutputPort));
 
-    t->setSyncSource((SyncSource)parse(e, UIParameterSyncSource));
+    t->setSyncSource((OldSyncSource)parse(e, UIParameterSyncSource));
     t->setSyncTrackUnit((SyncTrackUnit)parse(e, UIParameterTrackSyncUnit));
 
     // should only have a single UserVariables 

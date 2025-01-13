@@ -470,7 +470,7 @@ void MobiusViewer::refreshSync(OldMobiusTrackState* tstate, MobiusViewTrack* tvi
     tview->syncBar = tstate->bar;
     
     // whether we pay attention to those or not depends on the syncSource
-    SyncSource src = tstate->syncSource;
+    OldSyncSource src = tstate->syncSource;
     tview->syncShowBeat = (src == SYNC_MIDI || src == SYNC_HOST);
 }    
 
@@ -1410,13 +1410,13 @@ void MobiusViewer::refreshSync(SystemState* state, TrackState* tstate, MobiusVie
 
     SyncSourceState* sss = nullptr;
     switch (tstate->syncSource) {
-        case Pulse::SourceMidi:
+        case SyncSourceMidi:
             sss = &(state->syncState.midi);
             break;
-        case Pulse::SourceHost:
+        case SyncSourceHost:
             sss = &(state->syncState.host);
             break;
-        case Pulse::SourceTransport:
+        case SyncSourceTransport:
             sss = &(state->syncState.transport);
             break;
         default:

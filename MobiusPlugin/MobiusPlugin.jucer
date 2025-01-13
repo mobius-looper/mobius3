@@ -23,7 +23,6 @@
         <FILE id="AtAkEW" name="HostAnalyzer.cpp" compile="1" resource="0"
               file="../Mobius/Source/sync/HostAnalyzer.cpp"/>
         <FILE id="MXVW2d" name="HostAnalyzer.h" compile="0" resource="0" file="../Mobius/Source/sync/HostAnalyzer.h"/>
-        <FILE id="v3u2sx" name="HostAudioTime.h" compile="0" resource="0" file="../Mobius/Source/sync/HostAudioTime.h"/>
         <FILE id="hPhfXu" name="Leader.h" compile="0" resource="0" file="../Mobius/Source/sync/Leader.h"/>
         <FILE id="kwKtlF" name="MidiAnalyzer.cpp" compile="1" resource="0"
               file="../Mobius/Source/sync/MidiAnalyzer.cpp"/>
@@ -36,6 +35,7 @@
         <FILE id="lIHzPI" name="MidiSyncEvent.h" compile="0" resource="0" file="../Mobius/Source/sync/MidiSyncEvent.h"/>
         <FILE id="bdGuSH" name="Pulsator.cpp" compile="1" resource="0" file="../Mobius/Source/sync/Pulsator.cpp"/>
         <FILE id="EXmxth" name="Pulsator.h" compile="0" resource="0" file="../Mobius/Source/sync/Pulsator.h"/>
+        <FILE id="b0gyUV" name="SyncConstants.h" compile="0" resource="0" file="../Mobius/Source/sync/SyncConstants.h"/>
         <FILE id="cKcIct" name="SyncMaster.cpp" compile="1" resource="0" file="../Mobius/Source/sync/SyncMaster.cpp"/>
         <FILE id="pelkmH" name="SyncMaster.h" compile="0" resource="0" file="../Mobius/Source/sync/SyncMaster.h"/>
         <FILE id="Ljw2Vp" name="SyncMasterState.h" compile="0" resource="0"

@@ -105,7 +105,7 @@ class HostAnalyzer
 
     void ponderPpq(double beatPosition, int blockSize);
     double getBeatsPerSample(double currentPpq, int currentBlockSize);
-    void deriveTempo(double beatPosition, int blockSize, double samplesPerBeat);
+    void deriveTempo(double samplesPerBeat);
     void checkUnitMath(int tempoUnit, double samplesPerBeat);
     
     void advanceAudioStream(int blockFrames);

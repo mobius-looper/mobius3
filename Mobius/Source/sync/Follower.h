@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "Pulse.h"
+#include "SyncConstants.h"
 
 class Follower
 {
@@ -30,7 +30,7 @@ class Follower
     int id = 0;
         
     // the source this follower wants to follow
-    Pulse::Source source = Pulse::SourceNone;
+    SyncSource source = SyncSourceNone;
 
     // for SourceInternal an optional specific leader id
     // if left zero, a designated default leader is used (aka. the TrackSyncMaster)
@@ -42,7 +42,7 @@ class Follower
     // that would make it possible to start the record on one pulse type and
     // end it on another?
     // once started, the tracker will always count the smallest unit, beats
-    Pulse::Type type = Pulse::PulseBeat;
+    SyncUnit unit = SyncUnitBeat;
 
     // true when the follower has begun recording on a pulse
     // once started the source may not be changed until the follow is stopped
@@ -51,7 +51,7 @@ class Follower
     // the source information captured when the follow was started
     // the follower may ask to follow something else while the recording
     // is in progress, but this will not be used
-    Pulse::Source lockedSource = Pulse::SourceNone;
+    SyncSource lockedSource = SyncSourceNone;
     int lockedLeader = 0;
 
     // true when this follow has finished recording and drift checking begins

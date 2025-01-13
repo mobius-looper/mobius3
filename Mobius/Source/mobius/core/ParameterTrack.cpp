@@ -1525,7 +1525,7 @@ void SyncSourceParameterType::getValue(SetupTrack* s, ExValue* value)
 
 void SyncSourceParameterType::setValue(SetupTrack* s, ExValue* value)
 {
-	s->setSyncSource((SyncSource)getEnum(value));
+	s->setSyncSource((OldSyncSource)getEnum(value));
 }
 
 /**

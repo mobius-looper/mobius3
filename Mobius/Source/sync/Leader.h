@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "Pulse.h"
+#include "SyncConstants.h"
 
 class Leader
 {
@@ -38,7 +38,7 @@ class Leader
             pulse.pending = false;
         }
         else {
-            pulse.source = Pulse::SourceNone;
+            pulse.source = SyncSourceNone;
         }
     }
     

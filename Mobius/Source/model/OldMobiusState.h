@@ -292,8 +292,8 @@ class OldMobiusTrackState
 	// Sync state
 	// Tracks can't have different tempos, but it's convenient
 	// to put global things in here too.
-    SyncSource syncSource;
-    SyncUnit syncUnit;
+    OldSyncSource syncSource;
+    OldSyncUnit syncUnit;
 	float   tempo;
 	int 	beat;
 	int 	bar;

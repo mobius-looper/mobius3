@@ -52,6 +52,7 @@
 
 #include <JuceHeader.h>
 
+#include "SyncConstants.h"
 #include "Pulse.h"
 #include "Leader.h"
 #include "Follower.h"
@@ -83,10 +84,10 @@ class Pulsator
     Pulse* getOutBlockPulse();
 
     // register a follow for an external sync source
-    void follow(int follower, Pulse::Source source, Pulse::Type type);
+    void follow(int follower, SyncSource source, SyncUnit unit);
 
     // register a follow for an internal leader
-    void follow(int follower, int leader, Pulse::Type type);
+    void follow(int follower, int leader, SyncUnit unit);
 
     void start(int follower);
     void lock(int follower, int frames);
@@ -100,7 +101,7 @@ class Pulsator
     void correctDrift(int follower, int frames);
     
     // called by leaders to register a pulse in this block
-    void addLeaderPulse(int leader, Pulse::Type type, int frameOffset);
+    void addLeaderPulse(int leader, SyncUnit unit, int frameOffset);
 
     //
     // State of the various sources
@@ -114,7 +115,6 @@ class Pulsator
         return &midiIn;
     }
 
-    //Pulse* getBlockPulse(Pulse::Source src);
     Follower* getFollower(int id, bool warn = true);
     Leader* getLeader(int id);
 
@@ -148,22 +148,22 @@ class Pulsator
     void gatherTransport();
     void gatherHost();
     void gatherMidi();
-    bool detectMidiBeat(class MidiSyncEvent* mse, Pulse::Source src, Pulse* pulse);
+    bool detectMidiBeat(class MidiSyncEvent* mse, SyncSource source, Pulse* pulse);
 
-    Pulse* getPulseObject(Pulse::Source source, int leader);
-    Pulse* getBlockPulse(Pulse::Source source, int leader);
+    Pulse* getPulseObject(SyncSource source, int leader);
+    Pulse* getBlockPulse(SyncSource source, int leader);
     Pulse* getAnyBlockPulse(Follower* f);
-    bool isRelevant(Pulse* p, Pulse::Type followType);
+    bool isRelevant(Pulse* p, SyncUnit followUnit);
     
     void trace();
     void trace(Pulse& p);
-    void traceFollowChange(Follower* f, Pulse::Source source, int leader,Pulse::Type type);
-    const char* getSourceName(Pulse::Source source);
-    const char* getPulseName(Pulse::Type type);
+    void traceFollowChange(Follower* f, SyncSource source, int leader, SyncUnit unit);
+    const char* getSourceName(SyncSource source);
+    const char* getPulseName(SyncUnit unit);
 
     // formerly used by MidiTrack, now internal and some of it is unnecessary?
     int getPulseFrame(int follower);
-    int getPulseFrame(int followerId, Pulse::Type type);
+    int getPulseFrame(int followerId, SyncUnit unit);
 
 };
 

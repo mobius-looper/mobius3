@@ -2123,7 +2123,7 @@ void UIParameterDefaultSyncSourceClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterDefaultSyncSourceClass::setValue(void* obj, ExValue* value)
 {
-    ((Setup*)obj)->setSyncSource((SyncSource)value->getInt());
+    ((Setup*)obj)->setSyncSource((OldSyncSource)value->getInt());
 }
 UIParameterDefaultSyncSourceClass UIParameterDefaultSyncSourceObj;
 UIParameter* UIParameterDefaultSyncSource = &UIParameterDefaultSyncSourceObj;
@@ -2185,7 +2185,7 @@ void UIParameterSlaveSyncUnitClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterSlaveSyncUnitClass::setValue(void* obj, ExValue* value)
 {
-    ((Setup*)obj)->setSyncUnit((SyncUnit)value->getInt());
+    ((Setup*)obj)->setSyncUnit((OldSyncUnit)value->getInt());
 }
 UIParameterSlaveSyncUnitClass UIParameterSlaveSyncUnitObj;
 UIParameter* UIParameterSlaveSyncUnit = &UIParameterSlaveSyncUnitObj;
@@ -2893,7 +2893,7 @@ void UIParameterSyncSourceClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterSyncSourceClass::setValue(void* obj, ExValue* value)
 {
-    ((SetupTrack*)obj)->setSyncSource((SyncSource)value->getInt());
+    ((SetupTrack*)obj)->setSyncSource((OldSyncSource)value->getInt());
 }
 UIParameterSyncSourceClass UIParameterSyncSourceObj;
 UIParameter* UIParameterSyncSource = &UIParameterSyncSourceObj;

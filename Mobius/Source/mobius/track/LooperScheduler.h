@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../../sync/Pulse.h"
+#include "../../sync/SyncConstants.h"
 #include "../../model/TrackState.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"

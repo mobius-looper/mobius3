@@ -16,7 +16,7 @@
 #include "../model/PriorityState.h"
 #include "../mobius/track/TrackProperties.h"
 
-#include "Pulse.h"
+#include "SyncConstants.h"
 #include "SyncSourceState.h"
 #include "SyncMaster.h"
 #include "MidiRealizer.h"
@@ -561,14 +561,14 @@ void Transport::advance(int frames)
                         state.bar = 0;
                         state.loop++;
 
-                        pulse.type = Pulse::PulseLoop;
+                        pulse.unit = SyncUnitLoop;
                     }
                     else {
-                        pulse.type = Pulse::PulseBar;
+                        pulse.unit = SyncUnitBar;
                     }
                 }
                 else {
-                    pulse.type = Pulse::PulseBeat;
+                    pulse.unit = SyncUnitBeat;
                 }
                 
                 pulse.blockFrame = blockOffset;
