@@ -804,8 +804,8 @@ bool SyncMaster::doQuery(Query* q)
 void SyncMaster::refreshState(SyncMasterState* extstate)
 {
     transport->refreshState(extstate->transport);
-    midiAnalyzer->getState(extstate->midi);
-    extstate->host = host;
+    midiAnalyzer->refreshState(extstate->midi);
+    hostAnalyzer->refreshState(extstate->host);
 
     extstate->transportMaster = transportMaster;
     extstate->trackSyncMaster = trackSyncMaster;

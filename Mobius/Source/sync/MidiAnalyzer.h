@@ -11,7 +11,7 @@
 
 #include "MidiQueue.h"
 #include "TempoMonitor.h"
-#include "SyncSourceState.h"
+#include "SyncMasterState.h"
 #include "MidiSyncEvent.h"
 
 class MidiAnalyzer : public MidiManager::RealtimeListener
@@ -37,7 +37,7 @@ class MidiAnalyzer : public MidiManager::RealtimeListener
     bool isReceiving();
     bool isStarted();
 
-    void getState(SyncSourceState& state);
+    void refreshState(SyncMasterState::Source& state);
 
     // Events
     

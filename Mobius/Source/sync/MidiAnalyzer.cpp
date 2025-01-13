@@ -80,15 +80,14 @@ bool MidiAnalyzer::isStarted()
 /**
  * Package the state bits into a single thing.
  */
-void MidiAnalyzer::getState(SyncSourceState& state)
+void MidiAnalyzer::refreshState(SyncMasterState::Source& state)
 {
+    state.receiving = inputQueue.receivingClocks;
     state.tempo = tempoMonitor.getTempo();
-    state.smoothTempo = tempoMonitor.getSmoothTempo();
-
     // this is the raw beat from the last known START or CONTINUE
     state.beat = inputQueue.beat;
-    state.songClock = inputQueue.songClock;
-    state.started = inputQueue.started;
+
+    // bars, beatsPerBar, and barsPerLoop must be done at a higher level
 }
 
 //////////////////////////////////////////////////////////////////////

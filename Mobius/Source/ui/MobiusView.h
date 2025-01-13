@@ -396,8 +396,6 @@ class MobiusView
     // Counter needs this for time calculations
     int sampleRate = 44100;
 
-    // tired of parallel models, just copy the whole thing
-    // and figure out what we don't need
     SyncMasterState syncState;
     
   protected:

@@ -129,7 +129,6 @@ void TransportElement::highRefresh(PriorityState* s)
 
 void TransportElement::update(class MobiusView* v)
 {
-    (void)v;
     // only needed this to test flashing
     //tempo.advance();
 

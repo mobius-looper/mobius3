@@ -1,31 +1,44 @@
 /**
  * State the SyncMaster contributes to SystemState
  * model/PriorityState has flash flags for the high-resolution beat flashers.
+ *
+ * This is a simplification of lots of internal state and must only contain things
+ * the UI might want to display. It will be copied entirely into MobiusView.
  */
 
 #pragma once
-
-#include "SyncSourceState.h"
 
 class SyncMasterState
 {
   public:
 
+    // things each SyncSource may contribute
+    class Source {
+      public:
+        // for MIDI, true if clocks are being received
+        // for Host, true valid if this is a plugin, and the transport has been started
+        // ignored for Transport and Track
+        // this can be used to suppress the display of tempo/beat/bar if they are irrelevant
+        bool receiving = false;
+        
+        float tempo = 0.0f;
+        int beat = 0;
+        int bar = 0;
+
+        // probably want the full time signature from the host if it has one
+        int beatsPerBar = 0;
+        // only used for the Transport
+        int barsPerLoop = 0;
+    };
+
     //
-    // state for each source
+    // State for each source
     //
 
-    // Transport state will always be returned
-    SyncSourceState transport;
-
-    // MIDI state will only be valid if clocks are being received
-    bool midiReceiving = false;
-    SyncSourceState midi;
+    Source transport;
+    Source midi;
+    Source host;
     
-    // Host state will only be valid when running as a plugin
-    bool hostReceiving = false;
-    SyncSourceState host;
-
     // Masters
     int transportMaster = 0;
     int trackSyncMaster = 0;

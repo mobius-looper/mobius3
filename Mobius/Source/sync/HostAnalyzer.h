@@ -14,6 +14,7 @@
 
 #include "SyncSourceResult.h"
 #include "DriftMonitor2.h"
+#include "SyncMasterState.h"
 
 class HostAnalyzer
 {
@@ -29,6 +30,8 @@ class HostAnalyzer
     SyncSourceResult* getResult() {
         return &result;
     }
+
+    void refreshState(SyncMasterState::Source& state);
 
   private:
 

@@ -1,3 +1,8 @@
+// UPDATE: This used to be the public state model, now it is only used
+// inside Transport, need to refactor and figure out what needs to be shared
+// and what can be moved inside Transport
+// SyncMasterState::Source is the simplified external state model
+
 /**
  * State maintained for one sync source.
  *

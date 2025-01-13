@@ -732,6 +732,23 @@ void HostAnalyzer::advanceAudioStream(int blockFrames)
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Public State
+//
+//////////////////////////////////////////////////////////////////////
+
+void HostAnalyzer::refreshState(SyncMasterState::Source& state)
+{
+    state.receiving = playing;
+    state.tempo = (float)tempo;
+    state.beat = normalizedBeat;
+    state.bar = normalizedBar;
+
+    // need to work out how bpb overrides are handled, down here
+    state.beatsPerBar = timeSignatureDenominator;
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

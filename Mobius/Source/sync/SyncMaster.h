@@ -256,10 +256,6 @@ class SyncMaster
     int trackSyncMaster = 0;
     int transportMaster = 0;
 
-    // MidiAnalyzer and Transport manage their own state
-    // Now that HostAnalyzer is here, it could handle this
-    SyncSourceState host;
-    
     std::unique_ptr<class MidiRealizer> midiRealizer;
     std::unique_ptr<class MidiAnalyzer> midiAnalyzer;
     std::unique_ptr<class HostAnalyzer> hostAnalyzer;

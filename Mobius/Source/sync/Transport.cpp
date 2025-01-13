@@ -140,9 +140,13 @@ void Transport::loadSession(Session* s)
 //
 //////////////////////////////////////////////////////////////////////
 
-void Transport::refreshState(SyncSourceState& dest)
+void Transport::refreshState(SyncMasterState::Source& extstate)
 {
-    dest = state;
+    extstate.tempo = state.tempo;
+    extstate.beat = state.beat;
+    extstate.bar = state.bar;
+    extstate.beatsPerBar = state.beatsPerBar;
+    extstate.barsPerLoop = state.barsPerLoop;
 }
 
 /**
