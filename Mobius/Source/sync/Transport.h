@@ -26,11 +26,6 @@
 class Transport
 {
   public:
-
-    // Session parameters
-    // not liking this, move to SessionConstants or something
-    constexpr static const char* MidiEnable = "transportMidiEnable";
-    constexpr static const char* ClocksWhenStopped = "transportMidiClocksWhenStopped";
     
     Transport(class SyncMaster* sm);
     ~Transport();

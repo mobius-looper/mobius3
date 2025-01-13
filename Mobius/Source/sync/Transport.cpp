@@ -12,6 +12,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../model/SessionConstants.h"
 #include "../model/Session.h"
 #include "../model/PriorityState.h"
 #include "../mobius/track/TrackProperties.h"
@@ -118,8 +119,8 @@ void Transport::setSampleRate(int rate)
 
 void Transport::loadSession(Session* s)
 {
-    midiEnabled = s->getBool(MidiEnable);
-    sendClocksWhenStopped = s->getBool(ClocksWhenStopped);
+    midiEnabled = s->getBool(SessionTransportMidiEnable);
+    sendClocksWhenStopped = s->getBool(SessionTransportClocksWhenStopped);
 
     if (!midiEnabled) {
         midiRealizer->stop();

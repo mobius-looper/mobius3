@@ -43,6 +43,16 @@ Pulsator::~Pulsator()
  * In current use, followers and leaders are always audio or midi tracks
  * and ids are always track numbers.  This simplification may not always
  * hold true.
+ *
+ * !! Ugh, with BarTender the notion that followers are abstract things that
+ * aren't Tracks goes out the window.  This is becomming less general than originally
+ * designed, also now that follower arrays are allocated based on track counts.
+ *
+ * There are no followers that aren't tracks, and BarTender parameters from the
+ * session have to correlate to Followers with the same track number.
+ * I suppose the assumption could be that follower ids are always track numbers
+ * and if we have non-track followers those need to use a special id range and would
+ * pull their configutration from elsewhere int he Session.
  */
 void Pulsator::loadSession(Session* s)
 {
@@ -70,6 +80,19 @@ void Pulsator::loadSession(Session* s)
         l->id = i;
         leaders.add(l);
     }
+
+    // todo: Pull beatsPerBar and barsPerLoop overrides from the Session
+    // and give them to the BarTender of the corresponding Followers
+
+    // Followers of SyncSourceHost will either get BPB from the HostAnalyzer or
+    // the Session depending
+#if 0    
+    HostAnalyzer* analyzer = syncMaster->getHostAnalyzer();
+    int hostBpb = analyzer->getBeatsPerBar();
+    if (hostBpb == 0 || s->getBool(SessionOverrideHostTimeSignature))
+      hostBpb = s->getInt(SessionBeatsPerBar);
+#endif        
+    
 }
 
 /**
