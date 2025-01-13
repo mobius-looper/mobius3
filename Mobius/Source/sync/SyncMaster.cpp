@@ -887,9 +887,7 @@ float SyncMaster::getTempo(SyncSource src)
     switch (src) {
         
         case SyncSourceHost: {
-            // Pulsator tracks this
-            Pulsator::SyncState* state = pulsator->getHostState();
-            tempo = state->tempo;
+            tempo = (float)hostAnalyzer->getTempo();
         }
             break;
 
@@ -923,9 +921,7 @@ int SyncMaster::getBeat(SyncSource src)
     switch (src) {
     
         case SyncSourceHost: {
-            // Pulsator tracks this
-            Pulsator::SyncState* state = pulsator->getHostState();
-            beat = state->beat;
+            beat = hostAnalyzer->getBeat();
         }
             break;
 
@@ -964,8 +960,7 @@ int SyncMaster::getBeatsPerBar(SyncSource src)
     int bpb = transport->getBeatsPerBar();
 
     if (src == SyncSourceHost) {
-        Pulsator::SyncState* state = pulsator->getHostState();
-        int hbpb = state->beatsPerBar;
+        int hbpb = hostAnalyzer->getBeatsPerBar();
         if (hbpb > 0)
           bpb = hbpb;
     }
@@ -985,9 +980,7 @@ int SyncMaster::getBar(SyncSource src)
     switch (src) {
     
         case SyncSourceHost: {
-            // Pulsator tracks this
-            Pulsator::SyncState* state = pulsator->getHostState();
-            bar = state->bar;
+            bar = hostAnalyzer->getBar();
         }
             break;
 

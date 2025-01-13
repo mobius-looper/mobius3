@@ -33,6 +33,23 @@ class HostAnalyzer
 
     void refreshState(SyncMasterState::Source& state);
 
+    // various things SyncMaster passes to other things
+    double getTempo() {
+        return tempo;
+    }
+
+    int getBeatsPerBar() {
+        return timeSignatureDenominator;
+    }
+
+    int getBeat() {
+        return normalizedBeat;
+    }
+
+    int getBar() {
+        return normalizedBar;
+    }
+
   private:
 
     juce::AudioProcessor* audioProcessor = nullptr;

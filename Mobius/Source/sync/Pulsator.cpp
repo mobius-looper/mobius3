@@ -107,10 +107,10 @@ void Pulsator::advance(MobiusAudioStream* stream)
  */
 void Pulsator::reset()
 {
-    midiIn.pulse.reset();
-    midiOut.pulse.reset();
-    host.pulse.reset();
-    transport.pulse.reset();
+    midiPulse.reset();
+    midiOutPulse.reset();
+    hostPulse.reset();
+    transportPulse.reset();
     
     // this is where pending pulses that were just over the last block
     // are activated for this block
@@ -126,10 +126,10 @@ void Pulsator::reset()
 
 void Pulsator::trace()
 {
-    if (host.pulse.source != SyncSourceNone) trace(host.pulse);
-    if (midiIn.pulse.source != SyncSourceNone) trace(midiIn.pulse);
-    if (midiOut.pulse.source != SyncSourceNone) trace(midiOut.pulse);
-    if (transport.pulse.source != SyncSourceNone) trace(transport.pulse);
+    if (hostPulse.source != SyncSourceNone) trace(hostPulse);
+    if (midiPulse.source != SyncSourceNone) trace(midiPulse);
+    if (midiOutPulse.source != SyncSourceNone) trace(midiOutPulse);
+    if (transportPulse.source != SyncSourceNone) trace(transportPulse);
     for (auto leader : leaders) {
         if (leader->pulse.source != SyncSourceNone)
           trace(leader->pulse);
@@ -178,43 +178,35 @@ void Pulsator::gatherHost()
 
     if (result != nullptr) {
 
-        // pulsator has yet another model for this, SyncState
-        // start reorganizing this to reduce overlap between:
-        // SyncSourceResult, SyncState, SyncSourceState, Pulse and on and on
-
         // SyncSourceResult doesn't return beat/bar numbers
         // it should return the beat number, but bars are ambiguous
-
-        // these are just for display in the UI
-        host.tempo = result->tempo;
-        host.beatsPerBar = result->beatsPerBar;
 
         if (result->stopped) {
             // we've been generaing a Pulse for stop, unclear if that's necessary
             // if there is also a beat flag, may replace the unit
-            host.pulse.reset(SyncSourceHost, millisecond);
-            host.pulse.unit = SyncUnitBeat;
-            host.pulse.stop = true;
+            hostPulse.reset(SyncSourceHost, millisecond);
+            hostPulse.unit = SyncUnitBeat;
+            hostPulse.stop = true;
             // doesn't really matter what this is
-            host.pulse.blockFrame = 0;
+            hostPulse.blockFrame = 0;
         }
 
         if (result->beatDetected) {
 
-            host.pulse.reset(SyncSourceHost, millisecond);
-            host.pulse.blockFrame = result->blockOffset;
+            hostPulse.reset(SyncSourceHost, millisecond);
+            hostPulse.blockFrame = result->blockOffset;
 
             if (result->onLoop)
-              host.pulse.unit = SyncUnitLoop;
+              hostPulse.unit = SyncUnitLoop;
             else if (result->onBar)
-              host.pulse.unit = SyncUnitBar;
+              hostPulse.unit = SyncUnitBar;
             else
-              host.pulse.unit = SyncUnitBeat;
+              hostPulse.unit = SyncUnitBeat;
 
             // convey these, if they happen at the same time
             // blow off continue, too hard
-            host.pulse.start = result->started;
-            host.pulse.stop = result->stopped;
+            hostPulse.start = result->started;
+            hostPulse.stop = result->stopped;
         }
     }
 }
@@ -233,14 +225,14 @@ void Pulsator::gatherHost()
  */
 void Pulsator::gatherMidi()
 {
-    midiIn.pulse.reset();
-    midiOut.pulse.reset();
+    midiPulse.reset();
+    midiOutPulse.reset();
     
     MidiAnalyzer* analyzer = syncMaster->getMidiAnalyzer();
     analyzer->startEventIterator();
     MidiSyncEvent* mse = analyzer->nextEvent();
     while (mse != nullptr) {
-        detectMidiBeat(mse, SyncSourceMidi, &(midiIn.pulse));
+        detectMidiBeat(mse, SyncSourceMidi, &(midiPulse));
         mse = analyzer->nextEvent();
     }
     analyzer->flushEvents();
@@ -251,7 +243,7 @@ void Pulsator::gatherMidi()
     realizer->startEventIterator();
     mse = realizer->nextEvent();
     while (mse != nullptr) {
-        detectMidiBeat(mse, SyncSourceMaster, &(midiOut.pulse));
+        detectMidiBeat(mse, SyncSourceMaster, &(midiOutPulse));
         mse = realizer->nextEvent();
     }
     realizer->flushEvents();
@@ -340,12 +332,12 @@ void Pulsator::gatherTransport()
 {
     Transport* t = syncMaster->getTransport();
     
-    transport.tempo = t->getTempo();
-    transport.pulse = *(t->getPulse());
+    //transport.tempo = t->getTempo();
+    transportPulse = *(t->getPulse());
 
     // Transport has historically not set this, it could
-    if (transport.pulse.source != SyncSourceNone)
-      transport.pulse.millisecond = millisecond;
+    if (transportPulse.source != SyncSourceNone)
+      transportPulse.millisecond = millisecond;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -755,7 +747,7 @@ void Pulsator::unfollow(int followerId)
  */
 Pulse* Pulsator::getOutBlockPulse()
 {
-    Pulse* pulse = &(midiOut.pulse);
+    Pulse* pulse = &(midiOutPulse);
     // only if active
     if (pulse->source == SyncSourceNone || pulse->pending)
       pulse = nullptr;
@@ -774,16 +766,16 @@ Pulse* Pulsator::getPulseObject(SyncSource source, int leader)
             break;
                     
         case SyncSourceMidi:
-            pulse = &(midiIn.pulse);
+            pulse = &(midiPulse);
             break;
                     
         case SyncSourceHost:
-            pulse = &(host.pulse);
+            pulse = &(hostPulse);
             break;
                     
         case SyncSourceMaster: 
         case SyncSourceTransport:
-            pulse = &(transport.pulse);
+            pulse = &(transportPulse);
             break;
                     
         case SyncSourceTrack: {

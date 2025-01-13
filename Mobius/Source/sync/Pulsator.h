@@ -61,18 +61,6 @@ class Pulsator
 {
   public:
 
-    /**
-     * The sync state maintained for each source
-     */
-    class SyncState {
-      public:
-        float tempo = 0.0f;
-        int beat = 0;
-        int bar = 0;
-        int beatsPerBar = 0;
-        Pulse pulse;
-    };
-    
     Pulsator(SyncMaster* sm);
     ~Pulsator();
 
@@ -107,14 +95,6 @@ class Pulsator
     // State of the various sources
     //
 
-    SyncState* getHostState() {
-        return &host;
-    }
-
-    SyncState* getMidiInState() {
-        return &midiIn;
-    }
-
     Follower* getFollower(int id, bool warn = true);
     Leader* getLeader(int id);
 
@@ -134,13 +114,11 @@ class Pulsator
 
     // master tracks
     int outSyncMaster = 0;
-    
-    // true when the host transport was advancing in the past
-    bool hostPlaying = false;
-    SyncState host;
-    SyncState transport;
-    SyncState midiIn;
-    SyncState midiOut;
+
+    Pulse hostPulse;
+    Pulse transportPulse;
+    Pulse midiPulse;
+    Pulse midiOutPulse;
 
     void reset();
     void advance(int blockFrames);
