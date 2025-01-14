@@ -37,7 +37,7 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     bool isRunning() override;
     // actually, this can be true if we do SongPositionPointer properly
     bool hasNativeBeat() override {return false;}
-    int getNativeBeat() override {return 0;}
+    int getNativeBeat() override {return getElapsedBeats();}
     bool hasNativeBar() override {return false;}
     int getNativeBar() override {return 0;}
     int getElapsedBeats() override;
