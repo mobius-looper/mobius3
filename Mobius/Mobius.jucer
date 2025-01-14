@@ -11,21 +11,18 @@
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
       <GROUP id="{17D1AD70-C175-4456-F59E-2C7879A600B9}" name="sync">
+        <FILE id="b8WpS8" name="BarTender.cpp" compile="1" resource="0" file="Source/sync/BarTender.cpp"/>
+        <FILE id="p3yoLU" name="BarTender.h" compile="0" resource="0" file="Source/sync/BarTender.h"/>
         <FILE id="LIOiwp" name="DriftMonitor.cpp" compile="1" resource="0"
               file="Source/sync/DriftMonitor.cpp"/>
         <FILE id="HYQ3tR" name="DriftMonitor.h" compile="0" resource="0" file="Source/sync/DriftMonitor.h"/>
+        <FILE id="AZqiNe" name="DriftMonitor2.cpp" compile="1" resource="0"
+              file="Source/sync/DriftMonitor2.cpp"/>
+        <FILE id="YLDnw3" name="DriftMonitor2.h" compile="0" resource="0" file="Source/sync/DriftMonitor2.h"/>
         <FILE id="RXCW17" name="Follower.h" compile="0" resource="0" file="Source/sync/Follower.h"/>
         <FILE id="N1Ldzj" name="HostAnalyzer.cpp" compile="1" resource="0"
               file="Source/sync/HostAnalyzer.cpp"/>
         <FILE id="AIzaaJ" name="HostAnalyzer.h" compile="0" resource="0" file="Source/sync/HostAnalyzer.h"/>
-        <FILE id="CS31aD" name="HostAnalyzerV2.cpp" compile="1" resource="0"
-              file="Source/sync/HostAnalyzerV2.cpp"/>
-        <FILE id="RkNfTv" name="HostAnalyzerV2.h" compile="0" resource="0"
-              file="Source/sync/HostAnalyzerV2.h"/>
-        <FILE id="M2Rsr6" name="HostAudioTime.h" compile="0" resource="0" file="Source/sync/HostAudioTime.h"/>
-        <FILE id="hKyKNC" name="HostSyncState.cpp" compile="1" resource="0"
-              file="Source/sync/HostSyncState.cpp"/>
-        <FILE id="T4wVw2" name="HostSyncState.h" compile="0" resource="0" file="Source/sync/HostSyncState.h"/>
         <FILE id="AvwHPv" name="Leader.h" compile="0" resource="0" file="Source/sync/Leader.h"/>
         <FILE id="xCfCPz" name="MidiAnalyzer.cpp" compile="1" resource="0"
               file="Source/sync/MidiAnalyzer.cpp"/>
@@ -39,6 +36,7 @@
         <FILE id="blqXw9" name="Pulsator.cpp" compile="1" resource="0" file="Source/sync/Pulsator.cpp"/>
         <FILE id="bLVZYB" name="Pulsator.h" compile="0" resource="0" file="Source/sync/Pulsator.h"/>
         <FILE id="efK3Bv" name="Pulse.h" compile="0" resource="0" file="Source/sync/Pulse.h"/>
+        <FILE id="G5Wugr" name="SyncConstants.h" compile="0" resource="0" file="Source/sync/SyncConstants.h"/>
         <FILE id="XnnDpK" name="SyncMaster.cpp" compile="1" resource="0" file="Source/sync/SyncMaster.cpp"/>
         <FILE id="G80cvL" name="SyncMaster.h" compile="0" resource="0" file="Source/sync/SyncMaster.h"/>
         <FILE id="G4AVkf" name="SyncSourceState.h" compile="0" resource="0"
