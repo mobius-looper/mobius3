@@ -110,8 +110,7 @@ class HostAnalyzer : public SyncAnalyzer
     // don't need this to be more than one, but might be interesting someday
     int unitsPerBeat = 1;
 
-    // normalized beat counters
-    int normalizedBeat = 0;
+    int elapsedBeats = 0;
 
     // tempo monitoring
     double lastPpq = 0.0f;

@@ -17,32 +17,32 @@ class SyncAnalyzer
      * Perform analysis on a logical audio block of the given length.
      * The contents of the block are not important, only the size.
      */
-    void analyze(int blockFrames) = 0;
+    virtual void analyze(int blockFrames) = 0;
 
     /**
      * Return the results of the previous block analysis.
      */
-    SyncSourceResult* getResult() = 0;
+    virtual class SyncSourceResult* getResult() = 0;
 
     /**
      * True if the source is in a a Running state.
      * This means it can be expected to produce beat pulses
      * at the defined tempo.
      */
-    bool isRunning() = 0;
+    virtual bool isRunning() = 0;
 
     /**
      * True if the source supports native Beat numbers.
      * This is true for Host and Transport, false for Midi.
      */
-    bool hasNativeBeat() = 0;
+    virtual bool hasNativeBeat() = 0;
 
     /**
      * Return the native beat count if one is defined.
      * Beats start from zero so hasNativeBeat must be used to
      * determine if this number is meaningful.
      */
-    int getNativeBeat() = 0;
+    virtual int getNativeBeat() = 0;
 
     /**
      * True if the source supports native Bar numberes.
@@ -50,28 +50,28 @@ class SyncAnalyzer
      * for Host, though not all hosts support native bars, to a degree
      * that it is all but useless.
      */
-    bool hasNativeBar() = 0;
+    virtual bool hasNativeBar() = 0;
       
     /**
      * Return the native bar count if one is defined.
      * Bar numbers start from zero so hasNativeBar must be used to determine
      * if this is meeaningful.
      */
-    int getNativeBar() = 0;
+    virtual int getNativeBar() = 0;
 
     /**
      * For sources that do not support native beat counts, this
      * will be the number of beats that have elapsed sine the last
      * Start Point.  All sources support this.
      */
-    int getElapsedBeats() = 0;
+    virtual int getElapsedBeats() = 0;
 
     /**
      * Return true if this host supports a native time signature.
      * When this is true and the time signature changes, the
      * timeSignatureChanged flag is set in the SyncSourceResult.
      */
-    bool hasNativeTimeSignature() = 0;
+    virtual bool hasNativeTimeSignature() = 0;
 
     /**
      * For sources that support a native time signature, the number
@@ -79,7 +79,7 @@ class SyncAnalyzer
      * For hosts that do not reliably return a NativeBar this can be
      * combined with the NativeBeat number to derive native bar locations.
      */
-    int getNativeBeatsPerBar() = 0;
+    virtual int getNativeBeatsPerBar() = 0;
 
     /**
      * All sources must provide a tempo.  This will either be a fixed
@@ -88,7 +88,7 @@ class SyncAnalyzer
      * Tempo may fluctuate over time.  This is intended for display purposes
      * only, for synchronization, you must use unitLength.
      */
-    float getTempo() = 0;
+    virtual float getTempo() = 0;
 
     /**
      * All sources monitor a fluctuating tempo and derive a unitLength
@@ -99,7 +99,7 @@ class SyncAnalyzer
      * accurate tempo determination.  During this period getUnitLenght returns zero
      * and the application should not expect to receive accurate beat pulses.
      */
-    int getUnitLength() = 0;
+    virtual int getUnitLength() = 0;
 
     // todo: Consider we need sub-beet units
 
@@ -117,7 +117,7 @@ class SyncAnalyzer
      *
      * There is a difference between drift correction and tempo changes.
      */
-    int getDrift() = 0;
+    virtual int getDrift() = 0;
 
     //
     // Section of Necessary Thought

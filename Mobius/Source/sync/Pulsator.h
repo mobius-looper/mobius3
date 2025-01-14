@@ -43,10 +43,10 @@ class Pulsator
 
     // Block Lifecycle
 
-    void advance(class MobiusAudioStream* stream);
+    void advance(int blockSize);
     
     // called by leaders to register a pulse in this block
-    void addLeaderPulse(int leader, SyncUnit unit, int frameOffset);
+    void addLeaderPulse(int leader, SyncUnit unit, int blockOffset);
 
     Pulse* getRelevantBlockPulse(int follower);
 
@@ -66,41 +66,29 @@ class Pulsator
   private:
 
     class SyncMaster* syncMaster = nullptr;
+    class BarTender* barTender = nullptr;
     juce::OwnedArray<Leader> leaders;
     juce::OwnedArray<Follower> followers;
-    
-    // random statistics
-    int lastMillisecond = 0;
-    int millisecond = 0;
-    int interruptFrames = 0;
 
-    // things from the session
-    int sessionBeatsPerBar = 0;
-    bool sessionOverrideHostBar = false;
+    // captured during advance
+    int millisecond = 0;
+    int blockFrames = 0;
 
     Pulse hostPulse;
-    BarTender hostBarTender;
-    
     Pulse midiPulse;
-    BarTender midiBarTender;
-    
     Pulse transportPulse;
-    BarTender transportBarTender;
     
     void reset();
     
-    void propagateHostTimeSignature(int bpb);
-    void updateFollowerTimeSignatures();
-    
+    void convertPulse(class SyncSourceResult* result, Pulse& pulse);
     void gatherTransport();
     void gatherHost();
     void gatherMidi();
-    void gatherFollowerPulses();
 
     Pulse* getPulseObject(SyncSource source, int leader);
     Pulse* getBlockPulse(SyncSource source, int leader);
     Pulse* getAnyBlockPulse(Follower* f);
-    bool isRelevant(Pulse* p, SyncUnit followUnit);
+    bool isRelevant(Follower* f, Pulse* p);
 
     void trace();
     void trace(Pulse& p);

@@ -52,7 +52,13 @@ class SyncSourceResult
      * to ignore this.
      * todo: decide if this is necessary
      */
-    //bool barDetected = false;
+    bool barDetected = false;
+
+    /**
+     * True if a native loop was detected.  Supported only by Transport
+     * but might use this for Host if the transport is looping.
+     */
+    bool loopDetected = false;
 
     /**
      * True when the source beats have changed tempo and therefore the unit length.
@@ -72,6 +78,8 @@ class SyncSourceResult
         stopped = false;
         beatDetected = false;
         blockOffset = 0;
+        barDetected = false;
+        loopDetected = false;
         tempoChanged = false;
         timeSignatureChanged = false;
     }

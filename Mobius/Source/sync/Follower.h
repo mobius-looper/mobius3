@@ -38,11 +38,5 @@ class Follower
     // the type of pulse to follow
     SyncUnit unit = SyncUnitBeat;
 
-    // manager of bar analysis for each follower
-    BarTender barTender;
-
-    // the relevant pulse detected for this follower in the current audio block
-    Pulse pulse;
-
 };
 

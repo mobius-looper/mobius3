@@ -1,4 +1,12 @@
 /**
+ * Older tool that provided a global flag for some of the sync code to test
+ * before it would spew volumes of trace log entries.
+ *
+ * Use was more widespread than it is now, get rid of it after MidiRealizer and
+ * MidiQueue get redesigned
+ *
+ * ---
+ * 
  * Trace utilities for high-speed synchronization events.
  *
  * The format of a sync trace message is:

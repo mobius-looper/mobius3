@@ -24,8 +24,9 @@
 
 class SyncMaster
 {
-    friend class Pulsator;
     friend class Transport;
+    friend class Pulsator;
+    friend class BarTender;
     
   public:
 
@@ -57,6 +58,13 @@ class SyncMaster
     bool doQuery(class Query* q);
     void refreshState(class SyncMasterState* s);
     void refreshPriorityState(class PriorityState* s);
+
+    //
+    // TimeSlicer Interface
+    // This is really the entire reason we exist
+    //
+
+    class Pulse* getBlockPulse(int trackNumber);
 
     //
     // Masters
@@ -102,25 +110,19 @@ class SyncMaster
     // Also used by some old script Variables
     //
     
+    float getTempo(int number);
+    int getBeat(int number);
+    int getBar(int number);
+    int getBeatsPerBar(int number);
+    
     float varGetTempo(SyncSource src);
     int varGetBeat(SyncSource src);
     int varGetBar(SyncSource src);
     int varGetBeatsPerBar(SyncSource src);
 
-    float getTempo(int number);
-    int getBeat(int number);
-    int getBar(int number);
-    int getBeatsPerBar(int number);
-
     // used by Synchronizer for AutoRecord
     int getBarFrames(SyncSource src);
     
-    //
-    // TimeSlicer Interface
-    //
-
-    class Pulse* getBlockPulse(int trackNumber);
-
     //
     // Internal Component Services
     //
@@ -239,6 +241,10 @@ class SyncMaster
         return pulsator.get();
     }
 
+    class BarTender* getBarTender() {
+        return barTender.get();
+    }
+
   private:
 
     class MobiusKernel* kernel = nullptr;
@@ -252,8 +258,9 @@ class SyncMaster
     std::unique_ptr<class MidiRealizer> midiRealizer;
     std::unique_ptr<class MidiAnalyzer> midiAnalyzer;
     std::unique_ptr<class HostAnalyzer> hostAnalyzer;
-    std::unique_ptr<class Pulsator> pulsator;
     std::unique_ptr<class Transport> transport;
+    std::unique_ptr<class BarTender> barTender;
+    std::unique_ptr<class Pulsator> pulsator;
     
     void refreshSampleRate(int rate);
     void enableEventQueue();

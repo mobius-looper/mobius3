@@ -12,6 +12,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+
 #include "../model/SessionConstants.h"
 #include "../model/Session.h"
 #include "../model/SyncState.h"
@@ -19,10 +20,9 @@
 #include "../mobius/track/TrackProperties.h"
 
 #include "SyncConstants.h"
-#include "SyncSourceState.h"
-#include "SyncMaster.h"
+#include "SyncSourceResult.h"
 #include "MidiRealizer.h"
-#include "Pulsator.h"
+#include "SyncMaster.h"
 
 #include "Transport.h"
 
@@ -134,6 +134,12 @@ void Transport::loadSession(Session* s)
         if (!started)
           midiRealizer->stopSelective(false, true);
     }
+
+    // !! here's the fun one, see commentary in BarTender for why this is complicated
+    sessionBeatsPerBar = s->getInt(SessionBeatsPerBar);
+    // does this slam in or must we check for lockness?
+    if (!isLocked())
+      beatsPerBar = sessionBeatsPerBar;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -177,6 +183,11 @@ void Transport::analyze(int blockFrames)
     advance(blockFrames);
 }
 
+SyncSourceResult* Transport::getResult()
+{
+    return &result;
+}
+
 bool Transport::isRunning()
 {
     return started;
@@ -195,7 +206,7 @@ int Transport::getNativeBar()
 int Transport::getElapsedBeats()
 {
     // need this?
-    return getBeeat();
+    return getBeat();
 }
 
 int Transport::getNativeBeatsPerBar()
@@ -321,9 +332,9 @@ void Transport::userSetBeatsPerBar(int bpb)
  * If the transport is currenty connected, this will restructure
  * the transport and break the connection.
  */
-void Transport::userSetTempo(float tempo)
+void Transport::userSetTempo(float newTempo)
 {
-    deriveUnitLength(tempo);
+    deriveUnitLength(newTempo);
 }
 
 /**
@@ -441,19 +452,19 @@ void Transport::connect(TrackProperties& props)
     // well as beatsPerBar and barsPerLoop takes the place of the cycle count
     // if the loop wasn't already divided into cycles, that might be the easiest way
 
-    float tempo = lengthToTempo(unitFrames);
+    float newTempo = lengthToTempo(unitFrames);
 
-    if (tempo > maxTempo) {
+    if (newTempo > maxTempo) {
         // the loop is very short, not uncommon if it was recorded like "tap tempo"
         // and intended to be a beat length rather than a bar length
         // we could abandon BeatsParBar at this point and just find some beat subdivision
         // that results in a usable tempo but try to do what they asked for
-        while (tempo > maxTempo) {
+        while (newTempo > maxTempo) {
             unitFrames *= 2;
-            tempo = lengthToTempo(unitFrames);
+            newTempo = lengthToTempo(unitFrames);
         }
     }
-    else if (tempo < minTempo) {
+    else if (newTempo < minTempo) {
         // the loop is very long
         // if the unit frames is uneven, then this will suck
         // should have been a forced adjustment in notifyTrackRecordEnding
@@ -463,9 +474,9 @@ void Transport::connect(TrackProperties& props)
             // adjust = unitFrames - tapFrames;
         }
             
-        while (tempo < minTempo) {
+        while (newTempo < minTempo) {
             unitFrames /= 2;
-            tempo = lengthToTempo(unitFrames);
+            newTempo = lengthToTempo(unitFrames);
         }
     }
 
@@ -499,7 +510,7 @@ void Transport::connect(TrackProperties& props)
     // much to do here
     // let SyncMaster decide
 
-    setTempoInternal(tempo);
+    setTempoInternal(newTempo);
 }
 
 bool Transport::isLocked()
@@ -516,11 +527,11 @@ bool Transport::isLocked()
 void Transport::resetLocation()
 {
     unitPlayHead = 0;
-    units = 0;
+    elapsedUnits = 0;
+    unitCounter = 0;
     beat = 0;
     bar = 0;
     loop = 0;
-    songClock = 0;
 }
 
 void Transport::start()
@@ -583,11 +594,11 @@ bool Transport::isPaused()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Advance the transport and detect whether a pulse was encountered.
+ * Advance the transport and detect whether a beat pulse was encountered.
  */
 void Transport::advance(int frames)
 {
-    pulse.reset();
+    result.reset();
 
     if (started) {
 
@@ -609,36 +620,25 @@ void Transport::advance(int frames)
 
                 unitCounter = 0;
                 beat++;
+                result.beatDetected = true;
+                result.blockOffset = blockOffset;
 
                 if (beat >= beatsPerBar) {
 
                     beat = 0;
                     bar++;
+                    result.barDetected = true;
 
                     if (bar >= barsPerLoop) {
 
                         bar = 0;
                         loop++;
-
-                        pulse.unit = SyncUnitLoop;
-                    }
-                    else {
-                        pulse.unit = SyncUnitBar;
+                        result.loopDetected = true;
                     }
                 }
-                else {
-                    pulse.unit = SyncUnitBeat;
-                }
-                
-                pulse.blockFrame = blockOffset;
             }
         }
     }
-}
-
-Pulse* Transport::getPulse()
-{
-    return &pulse;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -682,15 +682,15 @@ int Transport::deriveTempo(int tapFrames)
     }
     else {
         int unitFrames = tapFrames;
-        float tempo = lengthToTempo(unitFrames);
+        float newTempo = lengthToTempo(unitFrames);
 
-        if (tempo > maxTempo) {
-            while (tempo > maxTempo) {
+        if (newTempo > maxTempo) {
+            while (newTempo > maxTempo) {
                 unitFrames *= 2;
-                tempo = lengthToTempo(unitFrames);
+                newTempo = lengthToTempo(unitFrames);
             }
         }
-        else if (tempo < minTempo) {
+        else if (newTempo < minTempo) {
 
             if ((unitFrames % 2) > 0) {
                 Trace(2, "Transport: Rounding odd unit length %d", unitFrames);
@@ -698,15 +698,15 @@ int Transport::deriveTempo(int tapFrames)
                 adjust = unitFrames - tapFrames;
             }
             
-            while (tempo < minTempo) {
+            while (newTempo < minTempo) {
                 unitFrames /= 2;
-                tempo = lengthToTempo(unitFrames);
+                newTempo = lengthToTempo(unitFrames);
             }
         }
 
         unitLength = unitFrames;
         unitsPerBeat = 1;
-        setTempoInternal(tempo);
+        setTempoInternal(newTempo);
 	}
 
     //deriveLocation(oldUnit);
@@ -739,26 +739,26 @@ void Transport::setTempoInternal(float newTempo)
 float Transport::lengthToTempo(int frames)
 {
     float secondsPerUnit = (float)frames / (float)sampleRate;
-    float tempo = 60.0f / secondsPerUnit;
-    return tempo;
+    float newTempo = 60.0f / secondsPerUnit;
+    return newTempo;
 }
 
 /**
  * Given the desired tempo, determine the unit lengths.
  * The tempo may be adjusted slightly to allow for integral unitFrames.
  */
-void Transport::deriveUnitLength(float tempo)
+void Transport::deriveUnitLength(float newTempo)
 {
     int oldUnit = unitLength;
     
-    if (tempo < TransportMinTempo)
-      tempo = TransportMinTempo;
-    else if (tempo > TransportMaxTempo)
-      tempo = TransportMaxTempo;
+    if (newTempo < TransportMinTempo)
+      newTempo = TransportMinTempo;
+    else if (newTempo > TransportMaxTempo)
+      newTempo = TransportMaxTempo;
 
     correctBaseCounters();
 
-    float beatsPerSecond = tempo / 60.0f;
+    float beatsPerSecond = newTempo / 60.0f;
     int framesPerBeat = (int)((float)sampleRate / beatsPerSecond);
 
     unitLength = framesPerBeat;

@@ -15,13 +15,8 @@
 
 #include "../model/SyncState.h"
 
-// this is what used to be in SyncMasterState, but now we use it
-// for a large amount of internal state, need to clean this up and move
-// what isn't general inside the Transport
-#include "SyncSourceState.h"
-
 #include "SyncAnalyzer.h"
-#include "Pulse.h"
+#include "SyncSourceResult.h"
 #include "DriftMonitor.h"
 
 class Transport : public SyncAnalyzer
@@ -53,6 +48,16 @@ class Transport : public SyncAnalyzer
     float getTempo() override;
     int getUnitLength() override;
     int getDrift() {return 0;}
+
+    //
+    // Internal Public Interface
+    //
+
+    int getBeatsPerBar();
+    int getBeat();
+    int getBar();
+    bool isStarted();
+    bool isPaused();
     
     // Manual Control
     
@@ -72,22 +77,12 @@ class Transport : public SyncAnalyzer
     void stopSelective(bool sendStop, bool stopClocks);
     void pause();
     void resume();
-
     bool isLocked();
     
-    // Granular State
-
-    int getBeat();
-    int getBar();
-    bool isStarted();
-    bool isPaused();
-
     // Block Lifecycle
 
     void advance(int frames);
     void checkDrift(int frames);
-    
-    Pulse* getPulse();
     
   private:
 
@@ -96,7 +91,7 @@ class Transport : public SyncAnalyzer
     
     int sampleRate = 44100;
     
-    Pulse pulse;
+    SyncSourceResult result;
     DriftMonitor drifter;
     bool testCorrection = false;
     
@@ -124,7 +119,7 @@ class Transport : public SyncAnalyzer
     // Internal play state
     //
 
-    double tempo = 0.0f;
+    float tempo = 0.0f;
     bool started = false;
     int unitLength = 0;
     int unitPlayHead = 0;
@@ -142,6 +137,8 @@ class Transport : public SyncAnalyzer
     // !! NO, think about this
     int beatsPerBar = 4;
     int barsPerLoop = 1;
+
+    int sessionBeatsPerBar = 0;
     
     void correctBaseCounters();
     int deriveTempo(int tapFrames);

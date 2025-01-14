@@ -1,81 +1,61 @@
 /**
- * Utility class that manages the notion of "bars" within a track and
+ * Utility class that organizes the notion of "bars" within a track and
  * synchronization beats from a synchronization source.
  *
- * This is mostly a placeholder for Bar computation which is a surprisingly complex
- * problem.  It doesn't do much right now beyond hold track-specific time signatures
- * and the math necessary to calculate normalized beat/bar counts for the UI.
+ * What a "bar" is is surpsignly complicated among the sync sources, and
+ * the various configuration options desired to let the user decide where
+ * usable sync boundaries are.
  *
- * Thoughts:
- *
- * Tracks receive synchronization pulses (beats) from a SyncSource 
- * Some SyncSources may have a native notion of beatsPerBar which may
- * be used by the track, or it may be overridden.  The priority for determining
- * beatsPerBar within a track are:
- *
- *      1) BPB defined on the track
- *      2) Native BPB defined by the sync source
- *      3) BPB defined by the Transport
- *      4) BPB defined globaly in the Session
- *
+ * BarTender encapsulates that mess into one place, and provides the model for
+ * tracks to define their own ideas for what "beats per bar" and "bars per loop"
+ * look like.
  */
 
 #pragma once
+
+#include "Pulse.h"
 
 class BarTender
 {
   public:
 
-    BarTender() {}
-    ~BarTender() {}
+    /**
+     * Each track may override the system default time signature
+     * and/or any time signature advertised by the sync source.
+     * This will be loaded from the Session.
+     */
+    class Track {
+      public:
+        // when non-zero, this track defines it's own bar length
+        int beatsPerBar = 0;
+        // when non-zero, this track defines it's own loop length
+        // the default is one bar per loop
+        int barsPerLoop = 0;
+    };
 
-    // the track number this is associated with
-    // this is used in callbacks to SyncMaster to find information about the track
-    // and used in Trace
-    void setNumber(int n);
+    BarTender(class SyncMaster* sm);
+    ~BarTender();
 
-    void setBeatsPerBar(int n);
+    void loadSession(class Session* s);
+    void updateBeatsPerBar(int bpb);
 
-    // optional setting that gives the owner the notion of a loop pulse
-    // consistenting of multiple bars
-    void setBarsPerLoop(int n);
+    void advance(int blockFrames);
+    Pulse* annotate(class Follower* f, Pulse* p);
 
-    // reorient counters and position on this raw beat number
-    void orient(int rawBeat);
-
-    // consume one beat pulse, adjust the internal counters, and
-    // annotate the Pulse with bar markers
-    void annotate(class Pulse* p);
-
-
-    int getBeat();
-    int getBar();
-    int getBeatsPerBar();
-    int getBarsPerLoop();
+    int getBeat(int trackNumber);
+    int getBar(int trackNumber);
+    int getBeatsPerBar(int trackNumber);
+    int getBarsPerLoop(int trackNumber);
 
   private:
 
-    int number = 0;
+    class SyncMaster* syncMaster = nullptr;
 
-    // the beatsPerBar override
-    // when zero it defaults to the common BPB defined by the session
-    int beatsPerBar = 0;
+    // options captured from the Session
+    int sessionBeatsPerBar = 0;
+    bool sessionHostOverride = false;
 
-    // number of bars in a loop
-    int barsPerLoop = 0;
-
-    // unaltered elapsed number of beats
-    int rawBeat = 0;
-
-    // the relative beat number we are currently on
-    int beat = 0;
-
-    // normalized bar number we are currently in
-    int bar = 0;
-
-    // the loop number if barsPerLoop is specified
-    int loop = 0;
-
-    void reconfigure();
+    // the annotated Pulse passed back to TimeSlicer
+    Pulse annotated;
 
 };

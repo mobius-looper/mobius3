@@ -62,8 +62,10 @@ void SyncMaster::initialize(MobiusKernel* k)
     midiRealizer.reset(new MidiRealizer());
     midiAnalyzer.reset(new MidiAnalyzer());
     hostAnalyzer.reset(new HostAnalyzer());
-    pulsator.reset(new Pulsator(this));
     transport.reset(new Transport(this));
+
+    barTender.reset(new BarTender(this));
+    pulsator.reset(new Pulsator(this));
 
     // reach out and touch the face of god
     hostAnalyzer->initialize(container->getAudioProcessor());
@@ -83,6 +85,7 @@ void SyncMaster::initialize(MobiusKernel* k)
  */
 void SyncMaster::loadSession(Session* s)
 {
+    barTender->loadSession(s);
     pulsator->loadSession(s);
     transport->loadSession(s);
 }
@@ -636,7 +639,7 @@ void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
       refreshSampleRate(newSampleRate);
 
     // pull in the host information before we get very far
-    hostAnalyzer->advance(stream->getInterruptFrames());
+    hostAnalyzer->analyze(stream->getInterruptFrames());
 }
 
 void SyncMaster::refreshSampleRate(int rate)
@@ -660,8 +663,9 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     // thread could monitor for a suspension of audio blocks and disable the queue
     enableEventQueue();
 
-    // host was advance in beginAudioBlock
-    midiAnalyzer->advance(frames);
+    // host was advanced in beginAudioBlock
+    
+    midiAnalyzer->analyze(frames);
 
     // Transport should be controlling this but until it does it is important
     // to get the event queue consumed, Transport can just ask for the Result
@@ -670,9 +674,9 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     
     transport->advance(frames);
 
-    // unless this needs the entire Stream, should take the frame count
-    // like everything else, TMI
-    pulsator->advance(stream);
+    barTender->advance(frames);
+    
+    pulsator->advance(frames);
 
     // see commentary about why this is complicated
     transport->checkDrift(frames);
@@ -757,9 +761,12 @@ bool SyncMaster::doAction(UIAction* a)
         }
             break;
             
-        case ParamTransportBeatsPerBar:
-            // this impacts more than just the Transport
-            pulsator->userSetBeatsPerBar(a->value, true);
+        case ParamTransportBeatsPerBar: {
+            transport->userSetBeatsPerBar(a->value);
+            // transport may need to notify BarTender whenever BPB changes
+            // if it can happen through another means besides a user action
+            barTender->updateBeatsPerBar(a->value);
+        }
             break;
             
         default:
@@ -852,12 +859,6 @@ void SyncMaster::sendAlert(juce::String msg)
     container->addAlert(msg);
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Granular State
-//
-//////////////////////////////////////////////////////////////////////
-
 /**
  * Return the relevant block pulse for a follower.
  * e.g. don't return Beat if the follower wants Bar
@@ -890,6 +891,12 @@ SyncSource SyncMaster::getEffectiveSource(int id)
     }
     return source;
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Granular State
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * For the track monitoring UI, return information about the sync source a track
@@ -932,73 +939,44 @@ float SyncMaster::varGetTempo(SyncSource src)
     return tempo;
 }
 
-/**
- * HostAnalyzer has two beats, the one the host is telling us it's at and the
- * "normalized" beat derived from the synchronization unit.  Host beats are usually
- * unbounded raw beats that don't wrap on bar boundaries, though I think this is unspecified
- * and host dependent.
- *
- * Get beat/bar from the BarTenders in pulsator.
- * This is still messy.
- *
- * If we allow tracks to override the time signature, then these are of limited
- * use.  Some of the older core Variable handlers use it, but need to weed those out.
- */
+//
+// Interfaces that take just a SyncSource are obsolete and
+// only used by old core/Variable and core/Synchronizer code
+// These will be phased out
+//
+
 int SyncMaster::varGetBeat(SyncSource src)
 {
-    int beat = 0;
-    BarTender* tender = pulsator->getBarTender(src);
-    if (tender != nullptr)
-      beat = tender->getBeat();
-    return beat;
+    return barTender->getBeat(0);
 }
 
 int SyncMaster::varGetBar(SyncSource src)
 {
-    int bar = 0;
-    BarTender* tender = pulsator->getBarTender(src);
-    if (tender != nullptr)
-      bar = tender->getBar();
-    return bar;
+    return barTender->getBar(0);
 }
 
 int SyncMaster::varGetBeatsPerBar(SyncSource src)
 {
-    int bpb = 4;
-    BarTender* tender = pulsator->getBarTender(src);
-    if (tender != nullptr)
-      bpb = tender->getBeatsPerBar();
-    return bpb;
+    return barTender->getBeatsPerBar(0);
 }
 
-/**
- * The track specific time accessors are what should be used.
- */
+//
+// Track-specific accessors are what should be used
+//
+
 int SyncMaster::getBeat(int number)
 {
-    int beat = 0;
-    BarTender* tender = pulsator->getBarTender(number);
-    if (tender != nullptr)
-      beat = tender->getBeat();
-    return beat;
+    return barTender->getBeat(number);
 }
 
 int SyncMaster::getBar(int number)
 {
-    int bar = 0;
-    BarTender* tender = pulsator->getBarTender(number);
-    if (tender != nullptr)
-      bar = tender->getBar();
-    return bar;
+    return barTender->getBar(number);
 }
 
 int SyncMaster::getBeatsPerBar(int number)
 {
-    int bpb = 4;
-    BarTender* tender = pulsator->getBarTender(number);
-    if (tender != nullptr)
-      bpb = tender->getBeatsPerBar();
-    return bpb;
+    return barTender->getBeatsPerBar(number);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1104,7 +1082,7 @@ int SyncMaster::varGetMidiInSmoothTempo()
 }
 int SyncMaster::varGetMidiInRawBeat()
 {
-    return midiAnalyzer->getBeat();
+    return midiAnalyzer->getElapsedBeats();
 }
 int SyncMaster::varGetMidiInSongClock()
 {
@@ -1116,7 +1094,7 @@ bool SyncMaster::varIsMidiInReceiving()
 }
 bool SyncMaster::varIsMidiInStarted()
 {
-    return midiAnalyzer->isStarted();
+    return midiAnalyzer->isRunning();
 }
 
 //////////////////////////////////////////////////////////////////////

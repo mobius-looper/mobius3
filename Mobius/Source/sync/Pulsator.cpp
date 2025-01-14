@@ -27,6 +27,8 @@
 Pulsator::Pulsator(SyncMaster* sm)
 {
     syncMaster = sm;
+    // annoying dependency
+    barTender = syncMaster->getBarTender();
 }
 
 Pulsator::~Pulsator()
@@ -41,16 +43,6 @@ Pulsator::~Pulsator()
  * In current use, followers and leaders are always audio or midi tracks
  * and ids are always track numbers.  This simplification may not always
  * hold true.
- *
- * !! Ugh, with BarTender the notion that followers are abstract things that
- * aren't Tracks goes out the window.  This is becomming less general than originally
- * designed, also now that follower arrays are allocated based on track counts.
- *
- * There are no followers that aren't tracks, and BarTender parameters from the
- * session have to correlate to Followers with the same track number.
- * I suppose the assumption could be that follower ids are always track numbers
- * and if we have non-track followers those need to use a special id range and would
- * pull their configutration from elsewhere int he Session.
  */
 void Pulsator::loadSession(Session* s)
 {
@@ -78,156 +70,6 @@ void Pulsator::loadSession(Session* s)
         l->id = i;
         leaders.add(l);
     }
-
-    // propagate session parameters related to the time signature
-
-    sessionOverrideHostBar = s->getBool(SessionHostOverrideTimeSignature);
-    userSetBeatsPerBar(s->getInt(SessionBeatsPerBar), false);
-    
-    // if the override flag is cleared, revert the host to it's native time signature
-    if (!sessionOverrideHostBar) {
-        HostAnalyzer* analyzer = syncMaster->getHostAnalyzer();
-        int hostBpb = analyzer->getBeatsPerBar();
-        if (hostBpb > 0)
-          hostBarTender.setBeatsPerBar(hostBpb);
-    }
-
-    // todo: Pull beatsPerBar and barsPerLoop overrides from the Session
-    // and give them to the BarTenders
-
-    // keep the follower's private BarTender in sync
-    updateFollowerTimeSignatures();
-}
-
-/**
- * Called when a session is loaded or the user submits a UIAction
- * to change the transport time signature.
- *
- * !! Problem: We can get here from loadSession and from SyncMaster::doAction.
- * If the transport is locked onto a master track, we shouldn't lose the track's
- * time signature (derived from the cycle count) unless the user explicitly asks
- * for it.  A UIAction is an explicit request.
- *
- * loadSession however happens for all sorts of reasons and we don't necessarily
- * want it to take away the locked beat count.  Assume session reloads don't
- * update the transport unless it is unlocked, but will need more here.
- * If the user is editing the session and only changes the BPB number then that
- * should be taken as an explicit request.  Can't tell the intent at this level.
- */
-void Pulsator::userSetBeatsPerBar(int bpb, bool action)
-{
-    // it is always rememberd here
-    sessionBeatsPerBar = bpb;
-    if (sessionBeatsPerBar == 0)
-      sessionBeatsPerBar = 4;
-
-    Transport* t = syncMaster->getTransport();
-    bool doIt = (action || !t->isLocked());
-
-    if (doIt) {
-        t->userSetBeatsPerBar(bpb);
-        transportBarTender.setBeatsPerBar(bpb);
-        midiBarTender.setBeatsPerBar(bpb);
-    }
-
-    // !! the notion that the Host always follows the Transport
-    // when the override flag is set is probably wrong, when
-    // Transport BPB changes due to track lock this will somewhat arbitrarily
-    // change bar numbers for the host which may or may not be what you want
-    // do we need an explicit SessionHostBeatsPerBar value that is
-    // independent of SessionBeatsPerBar?
-    
-    if (sessionOverrideHostBar && doIt)
-      hostBarTender.setBeatsPerBar(bpb);
-
-    updateFollowerTimeSignatures();
-}
-
-/**
- * This is called during advance() when HostAnalyzer says it detected
- * a Host time signature change.  
- */
-void Pulsator::propagateHostTimeSignature(int bpb)
-{
-    if (!sessionOverrideHostBar) {
-        if (bpb == 0) bpb = 4;
-        hostBarTender.setBeatsPerBar(bpb);
-        updateFollowerTimeSignatures();
-    }
-}
-
-/**
- * This is called when the Transport locks onto a master track, which
- * may change the bpb.
- *
- * Unlike host tsigs, this can happen at any time during theh block advance.
- */
-void Pulsator::propagateTransportTimeSignature(int bpb)
-{
-    transportBarTender.setBeatsPerBar(bpb);
-    midiBarTender.setBeatsPerBar(bpb);
-    if (sessionOverrideHostBar)
-      hostBarTender.setBeatsPerBar(bpb);
-
-    updateFollowerTimeSignatures();
-}
-
-/**
- * After the time signature has been altered in one of the main source
- * BarTenders, copy it to each follower.
- *
- * !! no, this is wrong.  When we get to the point where tracks can have
- * their own private time signature, that needs to be identifable in some way
- * to PREVENT session propagation from happening to them.
- */
-void Pulsator::updateFollowerTimeSignatures()
-{
-    for (auto follower : followers) {
-        
-        if (follower->source == SyncSourceHost)
-          follower->barTender.setBeatsPerBar(hostBarTender.getBeatsPerBar());
-
-        else if (follower->source == SyncSourceTrack) {
-            // unclear what this means
-        }
-        else
-          follower->barTender.setBeatsPerBar(transportBarTender.getBeatsPerBar());
-    }
-}
-
-/**
- * Get the shared BarTender for a sync source.
- */
-BarTender* Pulsator::getBarTender(SyncSource src)
-{
-    BarTender* tender = nullptr;
-    
-    switch (src) {
-        case SyncSourceNone: break;
-        case SyncSourceHost: tender = &hostBarTender; break;
-        case SyncSourceMidi: tender = &midiBarTender; break;
-        case SyncSourceTransport:
-        case SyncSourceMaster:
-            tender = &transportBarTender;
-            break;
-        case SyncSourceTrack:
-            // unclear what this is supposed to mean
-            // I guess sthe subcycle/cycle
-            break;
-    }
-    return tender;
-}
-
-/**
- * Get the private BarTender for a track.
- */
-BarTender* Pulsator::getBarTender(int number)
-{
-    BarTender* tender = nullptr;
-    Follower* f = getFollower(number);
-    if (f != nullptr)
-      tender = &(f->barTender);
-    return tender;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -240,29 +82,22 @@ BarTender* Pulsator::getBarTender(int number)
  * Called at the beginning of each audio block to gather sync pulses from various
  * sources and identify the ones of interest to the followers.
  */
-void Pulsator::advance(MobiusAudioStream* stream)
+void Pulsator::advance(int frames)
 {
-    // capture some statistics
-	lastMillisecond = millisecond;
+    // used to timestamp Pulses, not sure why I felt it necessary to
+    // ensure that they all had the same timestamp, but if this is
+    // important, it should be a higher level capture, in SyncMaster or Kernel
 	millisecond = juce::Time::getMillisecondCounter();
-	interruptFrames = stream->getInterruptFrames();
+
+    // used for verification in addLeaderPulse
+	blockFrames = frames;
 
     reset();
-
-    // reflect changes in the Host time signature if they were detected
-    HostAnalyzer* ha = syncMaster->getHostAnalyzer();
-    SyncSourceResult* res = ha->getResult();
-    if (res->timeSignatureChanged) {
-        propagateHostTimeSignature(ha->getBeatsPerBar());
-    }
 
     gatherHost();
     gatherMidi();
     gatherTransport();
-
-    // prepare pulses for each follower
-    gatherFollowerPulses();
-
+    
     // leader pulses are added as the tracks advance
 }
 
@@ -309,10 +144,10 @@ void Pulsator::addLeaderPulse(int leaderId, SyncUnit unit, int frameOffset)
         l->pulse.unit = unit;
         l->pulse.blockFrame = frameOffset;
 
-        if (frameOffset >= interruptFrames) {
+        if (frameOffset >= blockFrames) {
             // leave it pending and adjust for the next block
             l->pulse.pending = true;
-            int wrapped = frameOffset - interruptFrames;
+            int wrapped = frameOffset - blockFrames;
             l->pulse.blockFrame = wrapped;
             if (wrapped != 0){
                 // went beyond just the end of the block, I don't
@@ -326,16 +161,25 @@ void Pulsator::addLeaderPulse(int leaderId, SyncUnit unit, int frameOffset)
 }
 
 /**
- * After follower Pulses have been gathered, TimeSlicer will call this
- * to get the pulse for each follower track that is relevant in the block.
- * It should only be calling this once but because BarTender has state,
- * the pulses are copied and annotated once by gatherFollowerPulses,
- * so this could in theory be called more than once if necessary.
+ * This is where it all comes together...
  *
- * Twist: gatherFollowerPulses handled pulses from the sync sources,
- * but for SyncSourceTrack, those pulses won't be known until tracks
- * start advancing.  So we need to do the refresh here when they
- * are neeeded, which assumes that TimeSlider is ordering the track advance.
+ * TimeSlicer wants to know if a given track has any sync pulses in this block
+ * that are RELEVANT to what this track is synchronizing on.  Relevance involves
+ * both the SyncSource and the SyncUnit.   SyncAnalyzers give us beat pulses
+ * that have been captured and converted into Pulse objects for each source.
+ *
+ * Those pulses now pass through BarTender which determines whether those pulses
+ * are more than just beats.  A massaged pulse is then returned for TimeSlicer
+ * to do its thing.
+ *
+ * Note: For SyncSourceTrack, leader pulses will not be available until the
+ * leader tracks advance so TimeSlicer needs to order them according to
+ * leader dependencies.
+ *
+ * Control flow is annoying here.  SyncMaster owns BarTender which we
+ * need, in order to pass a result back to SyncMaster.  Perhaps it would
+ * be better if Pulsator was just in charge of getAnyBlockPulse,
+ * then let SyncMaster and/or BarTender be in control over relevance checking.
  */
 Pulse* Pulsator::getRelevantBlockPulse(int trackNumber)
 {
@@ -343,18 +187,25 @@ Pulse* Pulsator::getRelevantBlockPulse(int trackNumber)
     
     Follower* f = getFollower(trackNumber);
     if (f != nullptr) {
-        pulse = &(f->pulse);
-        if (pulse->source == SyncSourceTrack) {
-            // deferred gathering and relevance checking
-            // for leader pulses
-            // these don't need BarTender mutations (yet anyway)
-            // so if we have one that matches the follow unit we can
-            // just return the shared pulse object rather than the Follower copy
-            Pulse* available = getAnyBlockPulse(f);
-            if (isRelevant(available, f->unit))
-              pulse = available;
-            else
-              pulse = nullptr;
+
+        // start by locating the base pulse for the source this
+        // track is following
+        Pulse* base = getAnyBlockPulse(f);
+
+        if (base != nullptr) {
+
+            // derive a track-specific Pulse with bar awareness
+            // this object is transient and maintained by BarTender,
+            // it must be consumed before calling BarTender again
+            Pulse* annotated = barTender->annotate(f, base);
+
+            if (annotated != nullptr) {
+
+                if (isRelevant(f, annotated)) {
+
+                    pulse = annotated;
+                }
+            }
         }
     }
     return pulse;
@@ -366,127 +217,83 @@ Pulse* Pulsator::getRelevantBlockPulse(int trackNumber)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Convert a SyncSourceResult from an analyzer into a Pulse
+ */
+void Pulsator::convertPulse(SyncSourceResult* result, Pulse& pulse)
+{
+    if (result != nullptr) {
+
+        // SyncSourceResult doesn't return beat/bar numbers
+        // it should return the beat number, but bars are ambiguous
+        
+        if (result->beatDetected) {
+
+            pulse.reset(SyncSourceHost, millisecond);
+            pulse.blockFrame = result->blockOffset;
+
+            // it's starts as a Beat, BarTender may change this later
+            pulse.unit = SyncUnitBeat;
+
+            // convey these, if they happen at the same time
+            // blow off continue, too hard
+            pulse.start = result->started;
+            pulse.stop = result->stopped;
+
+            // Transport and in theory Host can detect
+            // bars natively, pass those along and let
+            // BarTender sort it out
+            if (result->loopDetected)
+              pulse.unit = SyncUnitLoop;
+            else if (result->barDetected)
+              pulse.unit = SyncUnitBar;
+        }
+        else if (result->started) {
+            // start without a beat, this can be okay, it just
+            // means we're starting in the middle of a beat
+            // !! don't have a Pulse for start that isn't also
+            // a UnitBeat, may need one
+            pulse.reset(SyncSourceHost, millisecond);
+            pulse.unit = SyncUnitBeat;
+            pulse.start = true;
+            // doesn't really matter what this is
+            pulse.blockFrame = 0;
+        }
+        else if (result->stopped) {
+            // do we actually need a pulse for these?
+            // unlike Start, Stop can happen pretty randomly
+            // let BarTender sort it out
+            pulse.reset(SyncSourceHost, millisecond);
+            pulse.unit = SyncUnitBeat;
+            pulse.stop = true;
+            // doesn't really matter what this is
+            pulse.blockFrame = 0;
+        }
+    }
+}
+
 void Pulsator::gatherHost()
 {
     HostAnalyzer* analyzer = syncMaster->getHostAnalyzer();
     SyncSourceResult* result = analyzer->getResult();
 
-    if (result != nullptr) {
-
-        // SyncSourceResult doesn't return beat/bar numbers
-        // it should return the beat number, but bars are ambiguous
-
-        if (result->stopped) {
-            // we've been generaing a Pulse for stop, unclear if that's necessary
-            // if there is also a beat flag, may replace the unit
-            hostPulse.reset(SyncSourceHost, millisecond);
-            hostPulse.unit = SyncUnitBeat;
-            hostPulse.stop = true;
-            // doesn't really matter what this is
-            hostPulse.blockFrame = 0;
-        }
-
-        if (result->beatDetected) {
-
-            hostPulse.reset(SyncSourceHost, millisecond);
-            hostPulse.blockFrame = result->blockOffset;
-
-            // changed to Bar or Loop later by BarTender
-            hostPulse.unit = SyncUnitBeat;
-            
-            // convey these, if they happen at the same time
-            // blow off continue, too hard
-            hostPulse.start = result->started;
-            hostPulse.stop = result->stopped;
-        }
-    }
+    convertPulse(result, hostPulse);
 }
 
-/**
- * This is now just like HostAnalyzer, merge them!
- * Also make Transport behave the same way.
- */
 void Pulsator::gatherMidi()
 {
     MidiAnalyzer* analyzer = syncMaster->getMidiAnalyzer();
     SyncSourceResult* result = analyzer->getResult();
 
-    if (result != nullptr) {
+    convertPulse(result, midiPulse);
+}    
 
-        if (result->stopped) {
-            // we've been generaing a Pulse for stop, unclear if that's necessary
-            // if there is also a beat flag, may replace the unit
-            hostPulse.reset(SyncSourceHost, millisecond);
-            hostPulse.unit = SyncUnitBeat;
-            hostPulse.stop = true;
-            // doesn't really matter what this is
-            hostPulse.blockFrame = 0;
-        }
-
-        if (result->beatDetected) {
-
-            hostPulse.reset(SyncSourceHost, millisecond);
-            hostPulse.blockFrame = result->blockOffset;
-
-            // changed to Bar or Loop later by BarTender
-            hostPulse.unit = SyncUnitBeat;
-
-            // convey these, if they happen at the same time
-            // blow off continue, too hard
-            hostPulse.start = result->started;
-            hostPulse.stop = result->stopped;
-        }
-    }
-}
-
-/**
- * Transport maintains it's own Pulse so we don't really need to copy
- * it over here, but make it look like everything else.
- */
 void Pulsator::gatherTransport()
 {
     Transport* t = syncMaster->getTransport();
-    
-    //transport.tempo = t->getTempo();
-    transportPulse = *(t->getPulse());
+    SyncSourceResult* result = t->getResult();
 
-    // Transport has historically not set this, it could
-    if (transportPulse.source != SyncSourceNone)
-      transportPulse.millisecond = millisecond;
-}
-
-/**
- * After pulse gathering, for every follower that wants a pulse,
- * copy the source pulse to the follower and allow BarTender
- * to annotate it for bar/loop boundaries.  Then do relevance checking
- * and if this pulse isn't being followed reset the pulse.
- *
- * This is what will be returned to TimeSlicer when it eventually
- * calls getRelevantBlockPulse.
- *
- * Subtlety: while the code this calls looks like it handles Leader
- * pulses, those won't actually be defined at the time this is called.
- * Leader pulses are added incrementally as tracks advance.
- * getRelevantBlockPulse deals with that.
- */
-void Pulsator::gatherFollowerPulses()
-{
-    // update the BarTenders for the shared sources first
-    
-
-    
-    for (auto follower : followers) {
-        Pulse* available = getAnyBlockPulse(follower);
-        if (available != nullptr) {
-
-            follower->pulse = *available;
-            follower->barTender.annotate(&(follower->pulse));
-
-            // verify relevance
-            if (!isRelevant(&(follower->pulse), follower->unit))
-              follower->pulse.source = SyncSourceNone;
-        }
-    }
+    convertPulse(result, transportPulse);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -553,9 +360,6 @@ Pulse* Pulsator::getBlockPulse(SyncSource source, int leader)
 
 /**
  * Return any block pulse that may be relevant for a follower.
- *
- * !! Do we really need this locked source shit?
- * Get rid of it unless there is a good reason for it.
  */
 Pulse* Pulsator::getAnyBlockPulse(Follower* f)
 {
@@ -583,27 +387,36 @@ Pulse* Pulsator::getAnyBlockPulse(Follower* f)
     return pulse;
 }
 
-bool Pulsator::isRelevant(Pulse* p, SyncUnit followUnit)
+bool Pulsator::isRelevant(Follower* f, Pulse* p)
 {
     bool relevant = false;
     if (p != nullptr && !p->pending && p->source != SyncSourceNone) {
         // there was a pulse from this source
-        if (followUnit == SyncUnitBeat) {
+        if (f->unit == SyncUnitBeat) {
             // anything is a beat
             relevant = true;
         }
-        else if (followUnit == SyncUnitBar) {
+        else if (f->unit == SyncUnitBar) {
             // loops are also bars
             relevant = (p->unit == SyncUnitBar || p->unit == SyncUnitLoop);
         }
         else {
             // only loops will do
-            // this makes sense only when following internal leaders, if this
-            // pulse didn't come from a Leader, treat it like Bar
-            if (p->source == SyncSourceTrack)
-              relevant = (p->unit == SyncUnitLoop);
-            else
-              relevant = (p->unit == SyncUnitBar || p->unit == SyncUnitLoop);
+            if (p->unit == SyncUnitLoop) {
+                relevant = true;
+            }
+            else {
+                // ugh, this only makes sense for sources that support loops
+                // but you can configure the follower to watch for them even though
+                // the source doesn't support it
+                // when that happens, treat bars as loops
+                // might be better to let BarTender sort that out?
+                if (p->source != SyncSourceTrack &&
+                    p->source != SyncSourceTransport) {
+
+                    relevant = (p->unit == SyncUnitBar);
+                }
+            }
         }
     }
     return relevant;

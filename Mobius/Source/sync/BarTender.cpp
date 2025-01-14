@@ -1,17 +1,14 @@
 /**
- * The general control flow for SyncSources is this:
- * 
- * 1) An Analyzer advances and detects beats, Start/Stop, SongPosition.
- *    The Analyzer results are left in a SyncSourceResult.
+ * Gather the incredible mess into one place and sort it out.
  *
- * 2) Pulsator advances and converts the SyncSourceResults from all sources
- *    into a Pulse for each source.
+ * There are two fundaantal things BarTender does:
  *
- * 3) Pulsator gives the Pulse to BarTender for bar derivation and annotation of the Pulse.
+ *    1) Knows what each track considers to be the "beats per bar" and massages
+ *       raw Pulses from the sync sources into pulses that have bar and loop flags
+ *       set on them correctly
  *
- * !! This doesn't do anything beyond what divide and modulo can do so if this is all
- * it ever is, we don't need the added complexity.  All it really does is save some repetative
- * math.  
+ *    2) Knows what the normalized beat and bar numbers are for each track
+ *       and provides them through SystemState for display purposes
  *
  */
 
@@ -19,111 +16,128 @@
 
 #include "../util/Trace.h"
 
+#include "../model/SessionConstants.h"
+#include "../model/Session.h"
+
 #include "Pulse.h"
+#include "HostAnalyzer.h"
+#include "SyncSourceResult.h"
 #include "SyncMaster.h"
+
 #include "BarTender.h"
 
-/**
- * Transport will have one of these and it isn't a track, so use the
- * convention that number 0 means the Transport.
- */
-void BarTender::setNumber(int n)
+BarTender::BarTender(SyncMaster* sm)
 {
-    number = n;
+    syncMaster = sm;
 }
 
-void BarTender::setBeatsPerBar(int n)
+BarTender::~BarTender()
 {
-    if (beatsPerBar != n) {
-        beatsPerBar = n;
-        reconfigure();
-    }
-}
-
-void BarTender::setBarsPerLoop(int n)
-{
-    if (barsPerLoop != n) {
-        barsPerLoop = n;
-        reconfigure();
-    }
 }
 
 /**
- * Called when the SyncSource changes the current native beat location.
- * This is only applicable for SyncSourceHost
+ * Problem 1: Where is the default beatsPerBar defined?
+ *
+ * The Session has two parameters related to time sigatures:
+ *
+ *     SessionBeatsPerBar
+ *     SessionHostOverrideTimeSignature
+ *
+ * The first was intended to be the BPB for the Transport, but that can
+ * go out the window if the Transport locks onto a master track.  That new
+ * value isn't in the Session so if you edit the Session that will get pushed
+ * back to the Transport.
+ * Needs thought...
+ *
+ * Problem 2: Pulsator assumes followers are abstract things that aren't
+ * necessarily tracks but BarTender does assume they are tracks and follower
+ * numbers can be used as indexes in to the Session.  For all purposes, there
+ * is no difference between a follower and a track, but may need more here.
+ *
  */
-void BarTender::orient(int newRawBeat)
+void BarTender::loadSession(Session* s)
 {
-    rawBeat = newRawBeat;
-    reconfigure();
+    // save these
+    sessionBeatsPerBar = s->getInt(SessionBeatsPerBar);
+    sessionHostOverride = s->getBool(SessionHostOverrideTimeSignature);
 }
 
 /**
- * Called when the session is edited or a user action changes either
- * of the beatsPerBar or barsPerLoop values.
+ * Called by SyncMaster when it receives a UIAction to change
+ * the transport time signature.
+ * Like loadSession, could use this to recalculate track normalized beats.
  */
-void BarTender::reconfigure()
+void BarTender::updateBeatsPerBar(int bpb)
 {
-    beat = rawBeat;
-    bar = 0;
-    loop = 0;
+    sessionBeatsPerBar = bpb;
+}
+
+/**
+ * During the advance phase we can detect whether the Host
+ * made a native time signature change.  If the BPB for the host
+ * is not overridden, this could adjust bar counters for tracks that
+ * follow the host.
+ */
+void BarTender::advance(int frames)
+{
+    (void)frames;
     
-    if (beatsPerBar > 0) {
-        
-        beat = rawBeat % beatsPerBar;
-        bar = rawBeat / beatsPerBar;
-   
-        if (barsPerLoop > 1) {
-            int rawBar = bar;
-            bar = rawBar % barsPerLoop;
-            loop = rawBar / barsPerLoop;
-        }
+    // reflect changes in the Host time signature if they were detected
+    HostAnalyzer* anal = syncMaster->getHostAnalyzer();
+    SyncSourceResult* result = anal->getResult();
+    if (result->timeSignatureChanged) {
+
+        // what exactly would we do with this?
+        // if we compute beat/bar numbers when accessed then
+        // we don't really need to adjust anything, if they are
+        // saved in each BarTender::Track then we would adjust them now
     }
+
+    // the Transport can also manage a time signature, if you need to
+    // do it for Host, you need it there too
+    
 }
 
-void BarTender::annotate(Pulse* pulse)
+//////////////////////////////////////////////////////////////////////
+//
+// Pulse Annotation
+//
+//////////////////////////////////////////////////////////////////////
+
+Pulse* BarTender::annotate(Follower* f, Pulse* src)
 {
-    rawBeat++;
-    beat++;
-                
-    if (beatsPerBar > 0 && beat >= beatsPerBar) {
-
-        beat = 0;
-        bar++;
-
-        pulse->unit = SyncUnitBar;
-
-        if (barsPerLoop > 1) {
-
-            if (bar >= barsPerLoop) {
-
-                bar = 0;
-                loop++;
-
-                pulse->unit = SyncUnitLoop;
-            }
-        }
-    }
+    (void)f;
+    return src;
 }
 
-int BarTender::getBeat()
+//////////////////////////////////////////////////////////////////////
+//
+// Normalized Beats
+//
+//////////////////////////////////////////////////////////////////////
+
+int BarTender::getBeat(int trackNumber)
 {
-    return beat;
+    (void)trackNumber;
+    return 0;
 }
 
-int BarTender::getBar()
+int BarTender::getBar(int trackNumber)
 {
-    return bar;
+    (void)trackNumber;
+    return 0;
 }
 
-int BarTender::getBeatsPerBar()
+int BarTender::getBeatsPerBar(int trackNumber)
 {
-    return beatsPerBar;
+    (void)trackNumber;
+    return 4;
 }
 
-int BarTender::getBarsPerLoop()
+int BarTender::getBarsPerLoop(int trackNumber)
 {
-    return barsPerLoop;
+    (void)trackNumber;
+    return 1;
 }
 
 /****************************************************************************/

@@ -152,12 +152,17 @@ int HostAnalyzer::getNativeBeatsPerBar()
     
 float HostAnalyzer::getTempo()
 {
-    return tempo;
+    return (float)tempo;
 }
     
 int HostAnalyzer::getUnitLength()
 {
     return unitLength;
+}
+
+int HostAnalyzer::getDrift()
+{
+    return drifter.getDrift();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -263,6 +268,11 @@ void HostAnalyzer::analyze(int blockSize)
     // of the block, not the end
     lastAudioStreamTime = audioStreamTime;
     audioStreamTime += blockSize;
+}
+
+SyncSourceResult* HostAnalyzer::getResult()
+{
+    return &result;
 }
 
 //////////////////////////////////////////////////////////////////////
