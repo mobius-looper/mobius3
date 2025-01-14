@@ -1772,9 +1772,8 @@ int Mobius::getTrackGroup(int index)
     return group;
 }
 
-TrackProperties Mobius::getTrackProperties(int number)
+void Mobius::getTrackProperties(int number, TrackProperties& props)
 {
-    TrackProperties props;
     Track* track = getTrack(number - 1);
     if (track != nullptr) {
         props.frames = track->getFrames();
@@ -1784,7 +1783,6 @@ TrackProperties Mobius::getTrackProperties(int number)
     else {
         props.invalid = true;
     }
-    return props;
 }
 
 //

@@ -718,7 +718,8 @@ void BaseScheduler::checkDrift()
     // track only for now
     int leader = findLeaderTrack();
     if (leader > 0) {
-        TrackProperties props = manager->getTrackProperties(leader);
+        TrackProperties props;
+        manager->getTrackProperties(leader, props);
         // ignore if the leader is empty
         if (props.frames > 0) {
             int myFrames = scheduledTrack->getFrames();
@@ -752,7 +753,8 @@ void BaseScheduler::checkDrift()
 void BaseScheduler::traceFollow()
 {
     if (followTrack > 0) {
-        TrackProperties props = manager->getTrackProperties(followTrack);
+        TrackProperties props;
+        manager->getTrackProperties(followTrack, props);
         Trace(2, "BaseScheduler: Loop frame %d follow frame %d",
               scheduledTrack->getFrame(), props.currentFrame);
     }
@@ -1060,7 +1062,7 @@ void BaseScheduler::detectLeaderChange()
             // ignore
         }
         else {
-            props = manager->getTrackProperties(leader);
+            manager->getTrackProperties(leader, props);
             if (props.invalid) {
                 // something is messed up with track numbering
                 Trace(1, "BaseScheduler: Unable to determine leader track properties");

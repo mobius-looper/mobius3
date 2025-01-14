@@ -58,7 +58,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     class SyncMaster* getSyncMaster();
     class Valuator* getValuator();
     class SymbolTable* getSymbols();
-    TrackProperties getTrackProperties(int number);
+    void getTrackProperties(int number, TrackProperties& props);
     class MidiEvent* getHeldNotes();
     class MslEnvironment* getMsl();
     class Mobius* getAudioEngine();

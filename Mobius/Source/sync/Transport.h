@@ -54,6 +54,7 @@ class Transport : public SyncAnalyzer
     //
 
     int getBeatsPerBar();
+    int getBarsPerLoop();
     int getBeat();
     int getBar();
     bool isStarted();

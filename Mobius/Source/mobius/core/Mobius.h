@@ -197,7 +197,7 @@ class Mobius
      */
     void loadProject(class Project* p);
 
-    TrackProperties getTrackProperties(int number);
+    void getTrackProperties(int number, TrackProperties& props);
 
     // needed by TrackManager
     bool isTrackFocused(int index);

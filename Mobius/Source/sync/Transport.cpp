@@ -235,6 +235,11 @@ int Transport::getBeatsPerBar()
     return beatsPerBar;
 }
 
+int Transport::getBarsPerLoop()
+{
+    return barsPerLoop;
+}
+
 int Transport::getBeat()
 {
     return beat;

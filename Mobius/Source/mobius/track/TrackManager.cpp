@@ -278,10 +278,8 @@ LogicalTrack* TrackManager::getLogicalTrack(int number)
     return track;
 }
 
-TrackProperties TrackManager::getTrackProperties(int number)
+void TrackManager::getTrackProperties(int number, TrackProperties& props)
 {
-    TrackProperties props;
-
     LogicalTrack* lt = getLogicalTrack(number);
     if (lt != nullptr)
       lt->getTrackProperties(props);
@@ -290,8 +288,6 @@ TrackProperties TrackManager::getTrackProperties(int number)
     
     // Mobius doesn't set this, caller should get it consistently
     props.number = number;
-    
-    return props;
 }
 
 //////////////////////////////////////////////////////////////////////

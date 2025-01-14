@@ -1051,7 +1051,8 @@ int LooperScheduler::findQuantizationLeader()
     if (leader > 0) {
         // if the leader over an empty loop, ignore it and fall
         // back to the usual SwitchQuantize parameter
-        TrackProperties props = manager->getTrackProperties(leader);
+        TrackProperties props;
+        manager->getTrackProperties(leader, props);
         if (props.frames == 0) {
             // ignore the leader
             leader = 0;
@@ -1450,7 +1451,8 @@ void LooperScheduler::doResize(UIAction* a)
         // !! should be consulting the follower here
         if (syncSource == SyncSourceTrack) {
             int otherTrack = syncMaster->getTrackSyncMaster();
-            TrackProperties props = manager->getTrackProperties(otherTrack);
+            TrackProperties props;
+            manager->getTrackProperties(otherTrack, props);
             track->leaderResized(props);
             followTrack = otherTrack;
         }
@@ -1469,7 +1471,8 @@ void LooperScheduler::doResize(UIAction* a)
             Trace(1, "LooperScheduler: Track number out of range %d", otherTrack);
         }
         else {
-            TrackProperties props = manager->getTrackProperties(otherTrack);
+            TrackProperties props;
+            manager->getTrackProperties(otherTrack, props);
             track->leaderResized(props);
             // I think this can reset?
             // actually no, it probably needs to be a component of the

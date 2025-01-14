@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "SyncConstants.h"
 #include "Pulse.h"
 
 class BarTender
@@ -58,4 +59,9 @@ class BarTender
     // the annotated Pulse passed back to TimeSlicer
     Pulse annotated;
 
+    bool detectHostBar();
+    int getHostBeatsPerBar();
+    
+    SyncSource getSyncSource(int trackNumber);
+    void getLeaderProperties(int follower, class TrackProperties& props);
 };

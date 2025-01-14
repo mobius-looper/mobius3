@@ -41,6 +41,7 @@ class SyncAnalyzer
      * Return the native beat count if one is defined.
      * Beats start from zero so hasNativeBeat must be used to
      * determine if this number is meaningful.
+     * Returns getElapsedBeats if not defined.
      */
     virtual int getNativeBeat() = 0;
 

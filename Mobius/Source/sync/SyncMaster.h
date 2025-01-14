@@ -245,6 +245,8 @@ class SyncMaster
         return barTender.get();
     }
 
+    class TrackManager* getTrackManager();
+
   private:
 
     class MobiusKernel* kernel = nullptr;
@@ -270,6 +272,8 @@ class SyncMaster
     void setTransportMaster(class UIAction* a);
     
     void connectTransport(int id);
+
+    void checkDrifts();
 };
 
 /****************************************************************************/

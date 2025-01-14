@@ -328,7 +328,8 @@ void MidiTrack::followLeaderSize()
         // !! not enough for host/midi leaders
         int leaderTrack = scheduler.findLeaderTrack();
         if (leaderTrack > 0) {
-            TrackProperties props = manager->getTrackProperties(leaderTrack);
+            TrackProperties props;
+            manager->getTrackProperties(leaderTrack, props);
             if (props.invalid) {
                 Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
             }
@@ -366,7 +367,8 @@ void MidiTrack::followLeaderLocation()
         // !! not enough for host/midi leaders
         int leaderTrack = scheduler.findLeaderTrack();
         if (leaderTrack > 0) {
-            TrackProperties props = manager->getTrackProperties(leaderTrack);
+            TrackProperties props;
+            manager->getTrackProperties(leaderTrack, props);
             if (props.invalid) {
                 Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
             }
@@ -402,7 +404,8 @@ void MidiTrack::reorientFollower(int previousFrames, int previousFrame)
     // !! not enough for host/midi leaders
     int leaderTrack = scheduler.findLeaderTrack();
     if (leaderTrack > 0) {
-        TrackProperties props = manager->getTrackProperties(leaderTrack);
+        TrackProperties props;
+        manager->getTrackProperties(leaderTrack, props);
         if (props.invalid) {
             Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
         }
@@ -442,7 +445,8 @@ void MidiTrack::clipStart(int audioTrack, int newIndex)
     }
     else {
         // we could have just passed all this shit up from where it came from
-        TrackProperties props = manager->getTrackProperties(audioTrack);
+        TrackProperties props;
+        manager->getTrackProperties(audioTrack, props);
         if (props.invalid) {
             Trace(1, "MidiTrack: clipStart was given an invalid audio track number %d", audioTrack);
         }

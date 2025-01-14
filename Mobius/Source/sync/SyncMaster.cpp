@@ -108,6 +108,14 @@ void SyncMaster::addListener(Listener* l)
     listener = l;
 }
 
+/**
+ * Needed by BarTender, and eventually TimeSlicer if you move it under here.
+ */
+class TrackManager* SyncMaster::getTrackManager()
+{
+    return kernel->getTrackManager();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Track Notifications
@@ -196,7 +204,8 @@ void SyncMaster::notifyTrackAvailable(int number)
 void SyncMaster::connectTransport(int id)
 {
     TrackManager* tm = kernel->getTrackManager();
-    TrackProperties props = tm->getTrackProperties(id);
+    TrackProperties props;
+    tm->getTrackProperties(id, props);
     transport->connect(props);
 }
 
@@ -688,6 +697,9 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     // we can check it on every block, the granularity doesn't really matter
     // since it is based off millisecond time advance
     midiAnalyzer->checkClocks();
+
+    // temporary diagnostics
+    checkDrifts();
 }
 
 /**
@@ -1184,6 +1196,33 @@ int SyncMaster::getBarFrames(SyncSource src)
 
        return 4;
 
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Drift Testing
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * At the end of each block, look at the various sync sources that
+ * can have drift and if they have reached a loop or bar point in this
+ * block, trace the current drift.
+ *
+ * It doesn't really matter when we trace drift, it just needs to come
+ * out at interesting moments and not too fast.o
+ */
+void SyncMaster::checkDrifts()
+{
+    SyncAnalyzerResult* res = hostAnalyzer->getResult();
+    if (res->beatDetected) {
+        // every 4 beats is good enough for now
+        int beat = hostAnalyzer->getElapsedBeats();
+        if ((beat % 4) == 0) {
+            int drift = hostAnalyzer->getDrift();
+            Trace(2, "SyncMaster: Host drift %d", drift);
+        }
+    }
 }
 
 /****************************************************************************/
