@@ -148,16 +148,17 @@ void TimeSlicer::notifyPulse(LogicalTrack* track, Slice& slice)
 /**
  * Ask SyncMaster for a relevant sync pulse that was detected
  * within this block and add a slice.
+ *
+ * In current practice, there will only ever be one sync pulse
+ * for a given track in a block. It will be Beat, Bar, or Loop
+ * depending on what the track wanted to follow.
  */
 void TimeSlicer::gatherSlices(LogicalTrack* track)
 {
     slices.clearQuick();
 
     // first the sync pulses
-    // since these are rare, could have SM just set a flag if any
-    // pulses were received on this block and save some effort
-    Follower* f = syncMaster->getFollower(track->getNumber());
-    insertPulse(syncMaster->getBlockPulse(f));
+    insertPulse(syncMaster->getBlockPulse(track->getNumber()));
                 
     // todo: now add slices for external quantization points
     // or other more obscure things

@@ -575,20 +575,6 @@ void BaseScheduler::advance(MobiusAudioStream* stream)
     }
 
     int newFrames = stream->getInterruptFrames();
-
-    // here is where we need to ask Pulsator about drift
-    // and do a correction if necessary
-    // !! rather than asking SM for this, SM should be telling
-    // us to do it before each advance, more like how pulse
-    // notifications come in
-    int number = scheduledTrack->getNumber();
-    if (syncMaster->shouldCheckDrift(number)) {
-        int drift = syncMaster->getDrift(number);
-        (void)drift;
-        //  scheduledTrack->doSomethingMagic()
-        syncMaster->correctDrift(number, 0);
-    }
-
     int currentFrame = scheduledTrack->getFrame();
 
     // formerly injected sync pulse events here

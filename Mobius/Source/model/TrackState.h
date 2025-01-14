@@ -11,6 +11,7 @@
 
 #include <JuceHeader.h>
 #include "../sync/SyncConstants.h"
+#include "SyncState.h"
 #include "SymbolId.h"
 
 class TrackState
@@ -212,11 +213,12 @@ class TrackState
     int inputMonitorLevel = 0;
     int outputMonitorLevel = 0;
 
-    // sync
+    // most sync info comes from the common SyncState
     SyncSource syncSource;
-    //int beat = 0;
-    //int	bar = 0;
-
+    // but tracks may override beatsPerBar
+    int syncBeat;
+    int syncBar;
+    
     // action sensitivity
     bool focus = false;
     int group = 0;

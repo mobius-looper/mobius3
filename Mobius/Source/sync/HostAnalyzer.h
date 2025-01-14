@@ -31,9 +31,13 @@ class HostAnalyzer
         return &result;
     }
 
-    void refreshState(SyncMasterState::Source& state);
+    void refreshState(SyncState& state);
 
     // various things SyncMaster passes to other things
+
+    /**
+     * The tempo as reported by the host or measured.
+     */
     double getTempo() {
         return tempo;
     }
@@ -42,12 +46,16 @@ class HostAnalyzer
         return timeSignatureDenominator;
     }
 
-    int getBeat() {
+    int getHostBeat() {
+        return hostBeat;
+    }
+    
+    int getNormalizedBeat() {
         return normalizedBeat;
     }
 
-    int getBar() {
-        return normalizedBar;
+    int getHostBar() {
+        return hostBar;
     }
 
   private:
@@ -76,7 +84,8 @@ class HostAnalyzer
     int timeSignatureDenominator = 0;
     bool playing = false;
     int hostBeat = -1;
-
+    int hostBar = -1;
+    
     // this starts zero and increases on every block, used to timestamp things
     int audioStreamTime = 0;
     // used to derive beat widths and tempo
@@ -98,8 +107,6 @@ class HostAnalyzer
 
     // normalized beat counters
     int normalizedBeat = 0;
-    int normalizedBar = 0;
-    int normalizedLoop = 0;
 
     // total number of units that have elapsed since the start point
     int elapsedUnits = 0;

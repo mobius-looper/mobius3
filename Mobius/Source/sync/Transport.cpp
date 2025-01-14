@@ -14,6 +14,7 @@
 #include "../util/Trace.h"
 #include "../model/SessionConstants.h"
 #include "../model/Session.h"
+#include "../model/SyncState.h"
 #include "../model/PriorityState.h"
 #include "../mobius/track/TrackProperties.h"
 
@@ -141,7 +142,7 @@ void Transport::loadSession(Session* s)
 //
 //////////////////////////////////////////////////////////////////////
 
-void Transport::refreshState(SyncMasterState::Source& extstate)
+void Transport::refreshState(SyncState& extstate)
 {
     extstate.tempo = state.tempo;
     extstate.beat = state.beat;
@@ -759,6 +760,9 @@ void Transport::deriveLocation(int oldUnit)
 //
 //////////////////////////////////////////////////////////////////////
 
+// this is obsolete, revisit now that we control MidiRealizer
+// rather than Pulsator
+
 /**
  * The relationship between Transport and Pulsator is awkward now that
  * Transport controls MidiRealizer but Pulsator consumes the MidiQueue event
@@ -787,6 +791,9 @@ void Transport::deriveLocation(int oldUnit)
  */
 void Transport::checkDrift(int blockFrames)
 {
+    (void)blockFrames;
+
+#if 0    
     // if we keep clocks going, could do this even when not started
     if (state.started) {
         Pulsator* pulsator = syncMaster->getPulsator();
@@ -806,6 +813,8 @@ void Transport::checkDrift(int blockFrames)
               drifter.resync();
         }
     }
+#endif
+    
 }
 
 /****************************************************************************/

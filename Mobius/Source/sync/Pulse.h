@@ -52,6 +52,8 @@ class Pulse
     // not really a pulse but conveyed as one
     bool stop = false;
 
+    // !! much more work to do here for MIDI Continue and song position
+#if 0
     // this pulse also represents the movement of the external transport
     // to a random location
     bool mcontinue = false;
@@ -59,6 +61,7 @@ class Pulse
     // when continue is true, the logical pulse in the external sequence
     // we're continuing from, aka the "song position pointer"
     int continuePulse = 0;
+#endif    
 
     void reset(SyncSource s, int msec) {
         source = s;
@@ -69,8 +72,8 @@ class Pulse
         //bar = 0;
         start = false;
         stop = false;
-        mcontinue = false;
-        continuePulse = 0;
+        //mcontinue = false;
+        //continuePulse = 0;
     }
 
     void reset() {

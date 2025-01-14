@@ -113,7 +113,7 @@ class SyncMaster
     // TimeSlicer Interface
     //
 
-    class Pulse* getBlockPulse(class Follower* f);
+    class Pulse* getBlockPulse(int trackNumber);
 
     //
     // Internal Component Services
@@ -126,25 +126,14 @@ class SyncMaster
     // Leader/Follower Pulsator passthroughs
     //////////////////////////////////////////////////////////////////////
 
-    // register the intent to follow
+    class Follower* getFollower(int id);
+    
     void follow(int follower, SyncSource source, SyncUnit unit);
     void follow(int follower, int leader, SyncUnit unit);
     void unfollow(int follower);
 
     // notify that a leader pulse has been reached
     void addLeaderPulse(int leader, SyncUnit unit, int frameOffset);
-
-    // notify that drift has been corrected
-    void correctDrift(int follower, int frames);
-    
-    // Mostly historical, try to move most of this inside
-
-    class Follower* getFollower(int id);
-    void start(int follower);
-    void lock(int follower, int frames);
-    void unlock(int follower);
-    bool shouldCheckDrift(int follower);
-    int getDrift(int follower);
 
     //////////////////////////////////////////////////////////////////////
     // Host State

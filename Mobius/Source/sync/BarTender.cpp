@@ -9,6 +9,10 @@
  *
  * 3) Pulsator gives the Pulse to BarTender for bar derivation and annotation of the Pulse.
  *
+ * !! This doesn't do anything beyond what divide and modulo can do so if this is all
+ * it ever is, we don't need the added complexity.  All it really does is save some repetative
+ * math.  
+ *
  */
 
 #include <JuceHeader.h>
@@ -30,14 +34,18 @@ void BarTender::setNumber(int n)
 
 void BarTender::setBeatsPerBar(int n)
 {
-    beatsPerBar = n;
-    reconfigure();
+    if (beatsPerBar != n) {
+        beatsPerBar = n;
+        reconfigure();
+    }
 }
 
 void BarTender::setBarsPerLoop(int n)
 {
-    barsPerLoop = n;
-    reconfigure();
+    if (barsPerLoop != n) {
+        barsPerLoop = n;
+        reconfigure();
+    }
 }
 
 /**
@@ -92,10 +100,30 @@ void BarTender::annotate(Pulse* pulse)
                 bar = 0;
                 loop++;
 
-                pulse->unit = SyncUnitLoop
+                pulse->unit = SyncUnitLoop;
             }
         }
     }
+}
+
+int BarTender::getBeat()
+{
+    return beat;
+}
+
+int BarTender::getBar()
+{
+    return bar;
+}
+
+int BarTender::getBeatsPerBar()
+{
+    return beatsPerBar;
+}
+
+int BarTender::getBarsPerLoop()
+{
+    return barsPerLoop;
 }
 
 /****************************************************************************/

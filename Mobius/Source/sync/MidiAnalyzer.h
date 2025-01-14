@@ -9,10 +9,13 @@
 
 #include "../MidiManager.h"
 
+// old stuff, weed
 #include "MidiQueue.h"
 #include "TempoMonitor.h"
-#include "SyncMasterState.h"
 #include "MidiSyncEvent.h"
+
+#include "../model/SyncState.h"
+#include "SyncSourceResult.h"
 
 class MidiAnalyzer : public MidiManager::RealtimeListener
 {
@@ -23,6 +26,9 @@ class MidiAnalyzer : public MidiManager::RealtimeListener
 
     void initialize(class SyncMaster* sm, class MidiManager* mm);
     void shutdown();
+
+    void advance(int blockFrames);
+    SyncSourceResult* getResult();
     
     // check for termination of MIDI clocks without warning
     void checkClocks();
@@ -37,7 +43,7 @@ class MidiAnalyzer : public MidiManager::RealtimeListener
     bool isReceiving();
     bool isStarted();
 
-    void refreshState(SyncMasterState::Source& state);
+    void refreshState(SyncState& state);
 
     // Events
     
@@ -56,6 +62,11 @@ class MidiAnalyzer : public MidiManager::RealtimeListener
     
     MidiQueue inputQueue;
     TempoMonitor tempoMonitor;
+    SyncSourceResult result;
+
+    void detectBeat(MidiSyncEvent* mse);
+    
+    
 };
 
 /****************************************************************************/

@@ -1,6 +1,7 @@
 
 #include <JuceHeader.h>
 
+#include "../util/Trace.h"
 #include "../midi/MidiByte.h"
 
 #include "MidiQueue.h"
@@ -33,16 +34,6 @@ void MidiAnalyzer::shutdown()
 // State
 //
 //////////////////////////////////////////////////////////////////////
-
-/**
- * Expected to be called periodically to check whather clocks are still
- * being received.
- */
-void MidiAnalyzer::checkClocks()
-{
-    int now = juce::Time::getMillisecondCounter();
-    inputQueue.checkClocks(now);
-}
 
 bool MidiAnalyzer::isReceiving()
 {
@@ -80,7 +71,7 @@ bool MidiAnalyzer::isStarted()
 /**
  * Package the state bits into a single thing.
  */
-void MidiAnalyzer::refreshState(SyncMasterState::Source& state)
+void MidiAnalyzer::refreshState(SyncState& state)
 {
     state.receiving = inputQueue.receivingClocks;
     state.tempo = tempoMonitor.getTempo();
@@ -113,21 +104,6 @@ void MidiAnalyzer::enableEvents()
 void MidiAnalyzer::flushEvents()
 {
     inputQueue.flushEvents();
-}
-
-MidiSyncEvent* MidiAnalyzer::popEvent()
-{
-    return inputQueue.popEvent();
-}
-
-void MidiAnalyzer::startEventIterator()
-{
-    inputQueue.iterateStart();
-}
-
-MidiSyncEvent* MidiAnalyzer::nextEvent()
-{
-    return inputQueue.iterateNext();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -187,6 +163,97 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
 		}
 		break;
 	}
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// SyncMaster Interaction
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Consume any queued events at the beginning of an audio block
+ * and prepare the SyncSourceResult
+ */
+void MidiAnalyzer::advance(int blockFrames)
+{
+    (void)blockFrames;
+    
+    result.reset();
+
+    inputQueue.iterateStart();
+    MidiSyncEvent* mse = inputQueue.iterateNext();
+    while (mse != nullptr) {
+        detectBeat(mse);
+        mse = inputQueue.iterateNext();
+    }
+    inputQueue.flushEvents();
+}
+
+/**
+ * Convert a queued MidiSyncEvent into fields in the SyncSourceResult
+ * for later consumption by Pulsator.
+ * 
+ * todo: this is place where we should try to offset the event into the buffer
+ * to make it align more accurately with real time.
+ *
+ * This still queues queues MidiSyncEvents for each clock although only
+ * one of them should have the beat flag set within one audio block.
+ */
+void MidiAnalyzer::detectBeat(MidiSyncEvent* mse)
+{
+    bool detected = false;
+    
+    if (mse->isStop) {
+        result.stopped = true;
+    }
+    else if (mse->isStart) {
+        // MidiRealizer deferred this until the first clock
+        // after the start message, so it is a true beat
+        detected = true;
+        result.started = true;
+    }
+    else if (mse->isContinue) {
+        // !! this needs a shit ton of work
+        // only pay attention to this if this is also a beat pulse
+        // not sure if this will work, but I don't want to fuck with continue right now
+        // treat it like a Start and ignore song position
+        if (mse->isBeat) {
+            detected = true;
+            result.started = true;
+
+            // this is how older code adjusted the Pulse
+            //pulse->mcontinue = true;
+            //pulse->continuePulse = mse->songClock;
+        }
+    }
+    else {
+        // ordinary clock
+        // ignore if this isn't also a beat
+        detected = (mse->isBeat);
+    }
+
+    if (detected && result.beatDetected) {
+        // more than one beat in this block, bad
+        Trace(1, "MidiAnalyzer: Multiple beats detected in block");
+    }
+    
+    result.beatDetected = detected;
+}
+
+SyncSourceResult* MidiAnalyzer::getResult()
+{
+    return &result;
+}
+
+/**
+ * Expected to be called periodically to check whather clocks are still
+ * being received.
+ */
+void MidiAnalyzer::checkClocks()
+{
+    int now = juce::Time::getMillisecondCounter();
+    inputQueue.checkClocks(now);
 }
 
 /****************************************************************************/

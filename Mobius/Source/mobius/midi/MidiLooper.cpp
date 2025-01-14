@@ -70,9 +70,6 @@ void MidiTrack::doPartialReset()
 
     // script bindings?
     logicalTrack->clearBindings();
-
-    // normally wouldn't have a pulsator lock on a MIDI follower?
-    syncMaster->unlock(number);
 }
 
 /**
@@ -121,8 +118,6 @@ void MidiTrack::doReset(bool full)
     // todo: that whole "reset retains" thing
     logicalTrack->clearBindings();
 
-    syncMaster->unlock(number);
-
     // force a refresh of the loop stack
     loopsLoaded = true;
 }
@@ -148,14 +143,6 @@ void MidiTrack::startRecord()
     mode = TrackState::ModeRecord;
     recorder.begin();
 
-    // todo: I'd like Scheduler to be the only thing that
-    // has to deal with SyncMaster
-    // we may not have gone through a formal reset process
-    // so make sure pulsator is unlocked first to prevent a log error
-    // !! this feels wrong, who is forgetting to unlock
-    //syncMaster->unlock(number);
-    syncMaster->start(number);
-    
     Trace(2, "MidiTrack: %d Recording", number);
 }
 
@@ -175,8 +162,6 @@ void MidiTrack::finishRecord()
     
     mode = TrackState::ModePlay;
     
-    syncMaster->lock(number, recorder.getFrames());
-
     Trace(2, "MidiTrack: %d Finished recording with %d events", number, eventCount);
 }
 

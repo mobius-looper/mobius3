@@ -267,7 +267,7 @@ void MidiClockThread::run()
         // this seems to be innacurate, in testing my delta was frequently
         // 2 and as high as 5 comparing getMilliseondCounter
         wait(1);
-        realizer->advance();
+        realizer->clockThreadAdvance();
     }
 }
 
@@ -295,7 +295,7 @@ void MidiClockThread::run()
  * doing it the suggested way and see how that shakes out.  Need to closely
  * monitor jitter and drift tolerance...
  */
-void MidiRealizer::advance()
+void MidiRealizer::clockThreadAdvance()
 {
     if (running) {
         // I starated using this, but web chatter suggests that the HiRes variant
@@ -732,19 +732,86 @@ void MidiRealizer::flushEvents()
     outputQueue.flushEvents();
 }
 
-MidiSyncEvent* MidiRealizer::popEvent()
-{
-    return outputQueue.popEvent();
-}
+//////////////////////////////////////////////////////////////////////
+//
+// New SyncMaster/Transport Interaction
+//
+//////////////////////////////////////////////////////////////////////
 
-void MidiRealizer::startEventIterator()
+/**
+ * Consume any queued events at the beginning of an audio block
+ * and prepare the SyncSourceResult
+ *
+ * !! This is basically identical to what MidiAnalyzer does.
+ * Could factor out something in common that could be shared, but
+ * in current usage, Transport doesn't really care about beat detection
+ * so most of this can go away.
+ */
+void MidiRealizer::advance(int blockFrames)
 {
+    (void)blockFrames;
+    
+    result.reset();
+
     outputQueue.iterateStart();
+    MidiSyncEvent* mse = outputQueue.iterateNext();
+    while (mse != nullptr) {
+        detectBeat(mse);
+        mse = outputQueue.iterateNext();
+    }
+    outputQueue.flushEvents();
 }
 
-MidiSyncEvent* MidiRealizer::nextEvent()
+/**
+ * Convert a queued MidiSyncEvent into fields in the SyncSourceResult
+ * for later consumption by Pulsator.
+ * 
+ * todo: this is place where we should try to offset the event into the buffer
+ * to make it align more accurately with real time.
+ *
+ * This still queues queues MidiSyncEvents for each clock although only
+ * one of them should have the beat flag set within one audio block.
+ */
+void MidiRealizer::detectBeat(MidiSyncEvent* mse)
 {
-    return outputQueue.iterateNext();
+    bool detected = false;
+    
+    if (mse->isStop) {
+        result.stopped = true;
+    }
+    else if (mse->isStart) {
+        // MidiRealizer deferred this until the first clock
+        // after the start message, so it is a true beat
+        detected = true;
+        result.started = true;
+    }
+    else if (mse->isContinue) {
+        // !! this needs a shit ton of work
+        // only pay attention to this if this is also a beat pulse
+        // not sure if this will work, but I don't want to fuck with continue right now
+        // treat it like a Start and ignore song position
+        if (mse->isBeat) {
+            detected = true;
+            result.started = true;
+        }
+    }
+    else {
+        // ordinary clock
+        // ignore if this isn't also a beat
+        detected = (mse->isBeat);
+    }
+
+    if (detected && result.beatDetected) {
+        // more than one beat in this block, bad
+        Trace(1, "MidiRealizer: Multiple beats detected in block");
+    }
+    
+    result.beatDetected = detected;
+}
+
+SyncSourceResult* MidiRealizer::getResult()
+{
+    return &result;
 }
 
 /****************************************************************************/

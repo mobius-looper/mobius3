@@ -13,7 +13,7 @@
 
 #include <JuceHeader.h>
 
-#include "SyncMasterState.h"
+#include "../model/SyncState.h"
 
 // this is what used to be in SyncMasterState, but now we use it
 // for a large amount of internal state, need to clean this up and move
@@ -32,7 +32,7 @@ class Transport
 
     void setSampleRate(int r);
     void loadSession(class Session* s);
-    void refreshState(SyncMasterState::Source& state);
+    void refreshState(SyncState& state);
     void refreshPriorityState(class PriorityState* ps);
 
     // Manual Control

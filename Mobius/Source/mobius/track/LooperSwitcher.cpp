@@ -444,15 +444,10 @@ void LooperSwitcher::doSwitchEvent(TrackEvent* e, int target)
         }
     }
 
-    // If we ended up in an empty loop and did not initiate a new Record
-    // unlock the pulse follower
-    if (newFrames == 0) {
-        scheduler.syncMaster->unlock(track->getNumber());
-    }
-    else if (newFrames != startingFrames) {
+    if (newFrames != startingFrames) {
         // we switched to a loop of a different size
-        // the pulse follower can continue as it did before, but if we're the out sync
-        // master, this is where it should be changing the MIDI clock speed
+        // the pulse follower can continue as it did before, but if we're the Transport Master
+        // this is where it should be changing the MIDI clock speed
     }
     
     // if we started a Record because the loop was empty and there were stacked events,

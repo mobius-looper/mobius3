@@ -261,7 +261,7 @@ typedef enum {
  * An eumeration defining the possible synchronization sources.
  * This is what older releases called SyncMode.
  * DEFAULT is only a valid value in SetupTrack, it will never be seen
- * in a SyncState.
+ * in a OldSyncState.
  */
 typedef enum {
 
@@ -291,7 +291,7 @@ typedef enum {
 /**
  * Defines the granularity of SYNC_TRACK quantization.
  * DEFAULT is only a valid value in SetupTrack, it will never be seen
- * in a SyncState.
+ * in a OldSyncState.
  */
 typedef enum {
 

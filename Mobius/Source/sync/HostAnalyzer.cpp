@@ -54,6 +54,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../model/SyncState.h"
 
 #include "HostAnalyzer.h"
 
@@ -97,7 +98,6 @@ void HostAnalyzer::setSampleRate(int rate)
 void HostAnalyzer::advance(int blockSize)
 {
     int initialUnit = unitLength;
-    bool tsigChanged = false;
     
     result.reset();
 
@@ -123,7 +123,8 @@ void HostAnalyzer::advance(int blockSize)
 
                             timeSignatureNumerator = tsig->numerator;
                             timeSignatureDenominator = tsig->denominator;
-                            tsigChanged = true;
+
+                            result.timeSignatureChanged = true;
 
                             Trace(2, "HostAnalyzer: Time signature %d / %d",
                                   timeSignatureNumerator, timeSignatureDenominator);
@@ -176,9 +177,7 @@ void HostAnalyzer::advance(int blockSize)
 
     // copy these to the result until we fix how awful this is
     result.tempo = (float)tempo;
-    result.beatsPerBar = timeSignatureDenominator;
-    result.beat = normalizedBeat;
-    result.bar = normalizedBar;
+    //result.beat = normalizedBeat;
     
     // do this last, deriveTempo and DriftMonitor need to know what it is at the start
     // of the block, not the end
@@ -222,13 +221,6 @@ void HostAnalyzer::detectStart(bool newPlaying, double beatPosition)
 
             unitPlayHead = 0;
             normalizedBeat = hostBeat;
-
-            // just start this over, if we're not following host
-            // time signature, then this could get weird
-            normalizedBar = 0;
-
-            // this doesn't really matter, it's only for debugging
-            normalizedLoop = 0;
 
             elapsedUnits = 0;
             unitCounter = 0;
@@ -662,23 +654,17 @@ void HostAnalyzer::checkUnitMath(int tempoUnit, double samplesPerBeat)
  *
  * As blocks in the audio stream come in, a "play head" within the
  * syncronization unit is advanced as if it were a short loop.
- * When the play head crosses the loop boundary, a beat is generated,
- * and this cascades into advancing bar and loop counters.
+ * When the play head crosses the loop boundary, a beat is generated.
  *
- * The determination of bar boundaries needs more options, at the moment
- * it just counts beats from the beginning of the Start Point.
+ * The determination of where "bars" are is deferred to the BarTender
+ * managed by Pulsator for each Follower.
+ *
+ * The normalizedBeat normally parallels the hostBeat unless the host
+ * tempo and the unit length are way out of alignment.
+ *
  */
 void HostAnalyzer::advanceAudioStream(int blockFrames)
 {
-    // start with the loop length being one "bar"
-    int beatsPerBar = timeSignatureNumerator;
-    if (beatsPerBar == 0)
-      beatsPerBar = 4;
-
-    int barsPerLoop = 1;
-
-    // almost identical logic here to Transport
-
     if (playing) {
 
         unitPlayHead = unitPlayHead + blockFrames;
@@ -702,34 +688,21 @@ void HostAnalyzer::advanceAudioStream(int blockFrames)
 
                 unitCounter = 0;
                 normalizedBeat++;
-                
-                if (normalizedBeat >= beatsPerBar) {
-
-                    normalizedBeat = 0;
-                    normalizedBar++;
-                    result.onBar = true;
-
-                    if (normalizedBar >= barsPerLoop) {
-
-                        normalizedBar = 0;
-                        normalizedLoop++;
-                        
-                        result.onLoop = true;
-                    }
-                }
-
             }
         }
     }
 
-    // when the stream tracking loop reaches the loop point
-    // that's as good a place as any to check drift
+    // this used to rely on bar/loop tracking to trace drift
+    // do it at a higher level now
+#if 0    
     if (result.onLoop) {
 
         int drift = drifter.getDrift();
         
         Trace(2, "HostAnalyzer: Drift %d", drift);
     }
+#endif
+    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -738,15 +711,19 @@ void HostAnalyzer::advanceAudioStream(int blockFrames)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Only refresh the things we control, Pulsator adds the rest
+ */
 void HostAnalyzer::refreshState(SyncMasterState::Source& state)
 {
     state.receiving = playing;
     state.tempo = (float)tempo;
+    
+    // this will normally be overridden by Pulsator
     state.beat = normalizedBeat;
-    state.bar = normalizedBar;
 
-    // need to work out how bpb overrides are handled, down here
-    state.beatsPerBar = timeSignatureDenominator;
+    // beat/bar/bpb comes from BarTender maintained by Pulsator
+    // might want to include hostBeat, hostBar here but let Pulsator decide
 }
 
 /****************************************************************************/

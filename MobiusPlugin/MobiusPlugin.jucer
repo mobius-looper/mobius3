@@ -13,6 +13,8 @@
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
       <GROUP id="{7E4F6DE8-BEDA-A57D-B5AA-F850B2E3CC96}" name="sync">
+        <FILE id="wuIGfq" name="BarTender.cpp" compile="1" resource="0" file="../Mobius/Source/sync/BarTender.cpp"/>
+        <FILE id="NSMKxC" name="BarTender.h" compile="0" resource="0" file="../Mobius/Source/sync/BarTender.h"/>
         <FILE id="nO87Dw" name="DriftMonitor.cpp" compile="1" resource="0"
               file="../Mobius/Source/sync/DriftMonitor.cpp"/>
         <FILE id="JEISWZ" name="DriftMonitor.h" compile="0" resource="0" file="../Mobius/Source/sync/DriftMonitor.h"/>
@@ -244,6 +246,8 @@
               file="../Mobius/Source/model/ScriptProperties.h"/>
         <FILE id="Ze6wwW" name="Session.cpp" compile="1" resource="0" file="../Mobius/Source/model/Session.cpp"/>
         <FILE id="HVwlHy" name="Session.h" compile="0" resource="0" file="../Mobius/Source/model/Session.h"/>
+        <FILE id="A8okrK" name="SessionConstants.h" compile="0" resource="0"
+              file="../Mobius/Source/model/SessionConstants.h"/>
         <FILE id="gUPJrL" name="Setup.cpp" compile="1" resource="0" file="../Mobius/Source/model/Setup.cpp"/>
         <FILE id="J4bzxZ" name="Setup.h" compile="0" resource="0" file="../Mobius/Source/model/Setup.h"/>
         <FILE id="GefmGv" name="Structure.cpp" compile="1" resource="0" file="../Mobius/Source/model/Structure.cpp"/>

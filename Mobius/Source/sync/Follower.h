@@ -16,6 +16,7 @@
 
 #include "SyncConstants.h"
 #include "BarTender.h"
+#include "Pulse.h"
 
 class Follower
 {
@@ -40,38 +41,8 @@ class Follower
     // manager of bar analysis for each follower
     BarTender barTender;
 
-    //
-    // Old state related to source "locking", get rid of this
-    //
-    
-    // true when the follower has begun recording on a pulse
-    // once started the source may not be changed until the follow is stopped
-    bool started = false;
-
-    // the source information captured when the follow was started
-    // the follower may ask to follow something else while the recording
-    // is in progress, but this will not be used
-    SyncSource lockedSource = SyncSourceNone;
-    int lockedLeader = 0;
-
-    // true when this follow has finished recording and drift checking begins
-    bool locked = false;
-
-    // the number of beat pulses in the follower's "loop"
-    int pulses = 0;
-
-    // the number of frames in the followers loop
-    int frames = 0;
-
-    // after locking, the current pulse count being monitored
-    int pulse = 0;
-
-    // after locking, the current frame position being monitored
-    int frame = 0;
-
-    // last calculated drift
-    int drift = 0;
-    bool shouldCheckDrift = false;
+    // the relevant pulse detected for this follower in the current audio block
+    Pulse pulse;
 
 };
 

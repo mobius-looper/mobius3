@@ -5,6 +5,7 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
+#include "../../model/SessionConstants.h"
 #include "../../model/Session.h"
 #include "../../model/MobiusConfig.h"
 #include "../../Supervisor.h"
@@ -94,14 +95,14 @@ void SessionEditor::revert()
  */
 void SessionEditor::loadSession()
 {
-    midiOut.setValue(session->getBool(Transport::MidiEnable));
-    midiClocks.setValue(session->getBool(Transport::ClocksWhenStopped));
+    midiOut.setValue(session->getBool(SessionTransportMidiEnable));
+    midiClocks.setValue(session->getBool(SessionTransportClocksWhenStopped));
 }
 
 void SessionEditor::saveSession(Session* dest)
 {
-    dest->setBool(Transport::MidiEnable, midiOut.getValue());
-    dest->setBool(Transport::ClocksWhenStopped, midiClocks.getValue());
+    dest->setBool(SessionTransportMidiEnable, midiOut.getValue());
+    dest->setBool(SessionTransportClocksWhenStopped, midiClocks.getValue());
 }
 
 //////////////////////////////////////////////////////////////////////

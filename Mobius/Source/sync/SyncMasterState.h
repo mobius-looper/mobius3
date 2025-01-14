@@ -8,36 +8,22 @@
 
 #pragma once
 
+#include "../model/SyncState.h"
+
 class SyncMasterState
 {
   public:
-
-    // things each SyncSource may contribute
-    class Source {
-      public:
-        // for MIDI, true if clocks are being received
-        // for Host, true valid if this is a plugin, and the transport has been started
-        // ignored for Transport and Track
-        // this can be used to suppress the display of tempo/beat/bar if they are irrelevant
-        bool receiving = false;
-        
-        float tempo = 0.0f;
-        int beat = 0;
-        int bar = 0;
-
-        // probably want the full time signature from the host if it has one
-        int beatsPerBar = 0;
-        // only used for the Transport
-        int barsPerLoop = 0;
-    };
 
     //
     // State for each source
     //
 
-    Source transport;
-    Source midi;
-    Source host;
+    SyncState transport;
+    SyncState midi;
+    SyncState host;
+
+    // todo: could maintain track overrides here but
+    // for now they are in TrackState
     
     // Masters
     int transportMaster = 0;

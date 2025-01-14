@@ -212,8 +212,6 @@ void SyncMaster::connectTransport(int id)
  */
 void SyncMaster::notifyTrackReset(int number)
 {
-    pulsator->unlock(number);
-
     if (number == trackSyncMaster) {
         // Synchronizer used to choose a different one automatically
         // It looks like of confusing to see this still show as TrackSyncMaster in the UI
@@ -662,10 +660,24 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     // thread could monitor for a suspension of audio blocks and disable the queue
     enableEventQueue();
 
+    // host was advance in beginAudioBlock
+    midiAnalyzer->advance(frames);
+
+    // Transport should be controlling this but until it does it is important
+    // to get the event queue consumed, Transport can just ask for the Result
+    // when it advances
+    midiRealizer->advance(frames);
+    
     transport->advance(frames);
 
-    // MidiAnalyzer doesn't "advance", it has been accumulating events
-    // as they came in, Pulsator will pull them out
+    // before pulsator advances and thinks about bars, need to tell it if any
+    // sources changed time signaure on their own
+    // the only one that can do that is Host
+    SyncSourceResult* r = hostAnalyzer->getResult();
+    if (r->timeSignatureChanged) {
+        int bpb = hostAnalyzer->getBeatsPerBar();
+        pulsator->setBeatsPerBar(SyncSourceHost, bpb);
+    }
 
     // unless this needs the entire Stream, should take the frame count
     // like everything else, TMI
@@ -852,6 +864,16 @@ void SyncMaster::sendAlert(juce::String msg)
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Return the relevant block pulse for a follower.
+ * e.g. don't return Beat if the follower wants Bar
+ * Used by TimeSlicer to slice the block around pulses.
+ */
+Pulse* SyncMaster::getBlockPulse(int trackNumber)
+{
+    return pulsator->getRelevantBlockPulse(trackNumber);
+}
+
+/**
  * Get the effective sync source for a track.
  * The complication here is around SourceMaster which is only allowed
  * if there is no other sync master.
@@ -877,9 +899,6 @@ SyncSource SyncMaster::getEffectiveSource(int id)
 /**
  * For the track monitoring UI, return information about the sync source this
  * track is following.
- *
- * For MIDI do we want to return the fluctuationg tempo or smooth tempo
- * with only one decimal place?
  */
 float SyncMaster::getTempo(SyncSource src)
 {
@@ -910,50 +929,33 @@ float SyncMaster::getTempo(SyncSource src)
 }
 
 /**
- * Todo: old code had the notion of "raw beat" which advanced without wrapping
- * and regular beat which wrapped according to beatsPerBar.
+ * HostAnalyzer has two beats, the one the host is telling us it's at and the
+ * "normalized" beat derived from the synchronization unit.  Host beats are usually
+ * unbounded raw beats that don't wrap on bar boundaries, though I think this is unspecified
+ * and host dependent.
  *
- * This currently returns raw beats for MidiIn.  May need to differentiate this.
+ * MidiAnalyzer has only raw beats.
+ *
+ * Transport is smart about it.
+ *
+ * !! For Host and Midi there is some variability over what beatsPerBar can be
+ * and the display beat/bar numbers are maintained by BarTender for each Follower.
+ * To get the accurate numbers you can't just call this any more, need to pass in the
+ * trackId or Follower.
  */
 int SyncMaster::getBeat(SyncSource src)
 {
-    int beat = 0;
-    switch (src) {
-    
-        case SyncSourceHost: {
-            beat = hostAnalyzer->getBeat();
-        }
-            break;
+    return pulsator->getBeat(src);
+}
 
-        case SyncSourceMidi: {
-            // Pulsator also tracks this but we can get it directly from the Analyzer
-            beat = midiAnalyzer->getBeat();
-        }
-            break;
-
-        case SyncSourceMaster:
-        case SyncSourceTransport: {
-            // these are now the same
-            beat = transport->getBeat();
-        }
-            break;
-
-        default: break;
-    }
-    return beat;
+int SyncMaster::getBar(SyncSource src)
+{
+    return pulsator->getBar(src);
 }
 
 /**
- * The host usually has a reliable time signature but not always.
- * MIDI doesn't have a time signature at all.
- * The Transport has one under user control.
- *
- * Fall back to the Transport which will get it from the Session.
- *
- * In old code, the BPB for internal tracks was annoyingly complex, getting it from
- * the Setup or the current value of the subcycles parameter.  Mobius core
- * can continue doing that if it wants, but it would be best to standardize
- * on getting it from the Transport.
+ * Bar numbers is where all hell breaks loose.  BeatsPerBar can be different for
+ * every track, so need to be passing in the trackId here!
  */
 int SyncMaster::getBeatsPerBar(SyncSource src)
 {
@@ -965,52 +967,6 @@ int SyncMaster::getBeatsPerBar(SyncSource src)
           bpb = hbpb;
     }
     return bpb;
-}
-
-/**
- * What bar you're on depends on an accurate value for beatsPerBar.
- * Transport will have this and host usually will, but we have to guess
- * for MIDI.
- */
-int SyncMaster::getBar(SyncSource src)
-{
-    // is this supposed to be zero relative like beat?
-    // older code assumed 1 relative
-    int bar = 1;
-    switch (src) {
-    
-        case SyncSourceHost: {
-            bar = hostAnalyzer->getBar();
-        }
-            break;
-
-        case SyncSourceMidi: {
-            int beat = midiAnalyzer->getBeat();
-            int bpb = getBeatsPerBar(src);
-            if (bpb > 0)
-              bar = (beat / bpb) + 1;
-        }
-            break;
-
-        case SyncSourceMaster:
-        case SyncSourceTransport: {
-            // these are now the same
-            bar = transport->getBar();
-        }
-
-        default: break;
-    }
-    return bar;
-}
-
-/**
- * Return the relevant block pulse for a follower.
- * e.g. don't return Beat if the follower wants Bar
- * Used by TimeSlicer to slice the block around pulses.
- */
-Pulse* SyncMaster::getBlockPulse(Follower* f)
-{
-    return pulsator->getRelevantBlockPulse(f);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1061,41 +1017,6 @@ void SyncMaster::unfollow(int follower)
 void SyncMaster::addLeaderPulse(int leader, SyncUnit unit, int frameOffset)
 {
     pulsator->addLeaderPulse(leader, unit, frameOffset);
-}
-
-/**
- * A track is informing us that it has corrected drift after being notified
- * that the drift threshold was exceeded.
- * Here we need to reset the drift tracker for this follower.
- */
-void SyncMaster::correctDrift(int follower, int frames)
-{
-    pulsator->correctDrift(follower, frames);
-}
-
-//
-// These we should try to hide as much as possible and do them automatically
-//
-
-void SyncMaster::start(int follower)
-{
-    pulsator->start(follower);
-}
-void SyncMaster::lock(int follower, int frames)
-{
-    pulsator->lock(follower, frames);
-}
-void SyncMaster::unlock(int follower)
-{
-    pulsator->unlock(follower);
-}
-bool SyncMaster::shouldCheckDrift(int follower)
-{
-    return pulsator->shouldCheckDrift(follower);
-}
-int SyncMaster::getDrift(int follower)
-{
-    return pulsator->getDrift(follower);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1190,6 +1111,8 @@ bool SyncMaster::isHostStarted()
 
 /**
  * Old code scraped from Synchronizer, we need to do something similar here.
+ *
+ * This is part of AutoRecord, see notes
  */
 int SyncMaster::getBarFrames(SyncSource src)
 {

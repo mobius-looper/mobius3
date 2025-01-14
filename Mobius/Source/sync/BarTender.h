@@ -41,6 +41,12 @@ class BarTender
     // annotate the Pulse with bar markers
     void annotate(class Pulse* p);
 
+
+    int getBeat();
+    int getBar();
+    int getBeatsPerBar();
+    int getBarsPerLoop();
+
   private:
 
     int number = 0;
@@ -63,5 +69,7 @@ class BarTender
 
     // the loop number if barsPerLoop is specified
     int loop = 0;
+
+    void reconfigure();
 
 };

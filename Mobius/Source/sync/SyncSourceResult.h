@@ -21,6 +21,9 @@ class SyncSourceResult
     // true if a tempo change was detected
     bool tempoChanged = false;
 
+    // true if a time signature change was detected (host only in practice)
+    bool timeSignatureChanged = false;
+
     // the new unit length if the tempo changed
     int newUnitLength = 0;
 
@@ -34,12 +37,6 @@ class SyncSourceResult
     // the offset within the block to the beat
     int blockOffset = 0;
 
-    // true if this beat represented a bar
-    bool onBar = false;
-
-    // true if this beat represented a virtual loop point
-    bool onLoop = false;
-
     //
     // General information
     // These are for display purposes and not crucial for synchronization
@@ -47,40 +44,20 @@ class SyncSourceResult
 
     float tempo = 0.0f;
 
-    // the number of beats in one bar
-    // plugin hosts may or may not provide this, MIDI never will
-    int beatsPerBar = 0;
-    
-    // the current beat number
-    int beat = 0;
-
-    // the current bar number (if known)
-    int bar = 0;
-
     void reset() {
         
         started = false;
         stopped = false;
         tempoChanged = false;
+        timeSignatureChanged = false;
         newUnitLength = 0;
 
         beatDetected = false;
         blockOffset = 0;
-        onBar = false;
-        onLoop = false;
 
         tempo = 0.0f;
-        beatsPerBar = 0;
-        beat = 0;
-        bar = 0;
     }
 
 };
-    
-
-    
-    
-
-    
     
     
