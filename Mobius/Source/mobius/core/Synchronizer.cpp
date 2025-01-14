@@ -219,34 +219,34 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
             // this is a 10x integer
             // this should also be moved into SyncMaster since TempoElement
             // will likely need the same treatment
-            int smoothTempo = mSyncMaster->getMidiInSmoothTempo();
+            int smoothTempo = mSyncMaster->varGetMidiInSmoothTempo();
             state->tempo = (float)smoothTempo / 10.0f;
 
             // MIDI in sync has also only displayed beats if clocks were actively
             // being received
-            if (mSyncMaster->isMidiInStarted()) {
-                state->beat = mSyncMaster->getBeat(SyncSourceMidi);
-                state->bar = mSyncMaster->getBar(SyncSourceMidi);
+            if (mSyncMaster->varIsMidiInStarted()) {
+                state->beat = mSyncMaster->varGetBeat(SyncSourceMidi);
+                state->bar = mSyncMaster->varGetBar(SyncSourceMidi);
             }
         }
             break;
 
         case SyncSourceHost: {
             state->syncSource = SYNC_HOST;
-            state->tempo = mSyncMaster->getTempo(SyncSourceHost);
+            state->tempo = mSyncMaster->varGetTempo(SyncSourceHost);
 
             // not exposing this, is it necessary?
-            if (mSyncMaster->isHostReceiving()) {
-                state->beat = mSyncMaster->getBeat(SyncSourceHost);
-                state->bar = mSyncMaster->getBar(SyncSourceHost);
+            if (mSyncMaster->varIsHostReceiving()) {
+                state->beat = mSyncMaster->varGetBeat(SyncSourceHost);
+                state->bar = mSyncMaster->varGetBar(SyncSourceHost);
             }
         }
             break;
         case SyncSourceTransport: {
             state->syncSource = SYNC_TRANSPORT;
-            state->tempo = mSyncMaster->getTempo();
-            state->beat = mSyncMaster->getBeat(SyncSourceTransport);
-            state->bar = mSyncMaster->getBar(SyncSourceTransport);
+            state->tempo = mSyncMaster->varGetTempo(SyncSourceTransport);
+            state->beat = mSyncMaster->varGetBeat(SyncSourceTransport);
+            state->bar = mSyncMaster->varGetBar(SyncSourceTransport);
         }
             break;
         case SyncSourceTrack: {
@@ -278,42 +278,42 @@ void Synchronizer::getState(OldMobiusState* state)
     OldMobiusSyncState* sync = &(state->sync);
 
     // MIDI output sync
-    sync->outStarted = mSyncMaster->isMidiOutSending();
+    sync->outStarted = mSyncMaster->varIsMidiOutSending();
     sync->outTempo = 0.0f;
     sync->outBeat = 0;
     sync->outBar = 0;
     if (sync->outStarted) {
-        sync->outTempo = mSyncMaster->getTempo();
-        sync->outBeat = mSyncMaster->getBeat(SyncSourceTransport);
-        sync->outBar = mSyncMaster->getBar(SyncSourceTransport);
+        sync->outTempo = mSyncMaster->varGetTempo(SyncSourceTransport);
+        sync->outBeat = mSyncMaster->varGetBeat(SyncSourceTransport);
+        sync->outBar = mSyncMaster->varGetBar(SyncSourceTransport);
     }
 
     // MIDI input sync
-    sync->inStarted = mSyncMaster->isMidiInStarted();
+    sync->inStarted = mSyncMaster->varIsMidiInStarted();
     sync->inBeat = 0;
     sync->inBar = 0;
     
     // for display purposes we use the "smooth" tempo
     // this is a 10x integer
-    int smoothTempo = mSyncMaster->getMidiInSmoothTempo();
+    int smoothTempo = mSyncMaster->varGetMidiInSmoothTempo();
     sync->inTempo = (float)smoothTempo / 10.0f;
 
     // only display advance beats when started,
     // TODO: should we save the last known beat/bar values
     // so we can keep displaying them till the next start/continue?
     if (sync->inStarted) {
-        sync->inBeat = mSyncMaster->getBeat(SyncSourceMidi);
-        sync->inBar = mSyncMaster->getBar(SyncSourceMidi);
+        sync->inBeat = mSyncMaster->varGetBeat(SyncSourceMidi);
+        sync->inBar = mSyncMaster->varGetBar(SyncSourceMidi);
     }
 
     // Host sync
-    sync->hostStarted = mSyncMaster->isHostReceiving();
-    sync->hostTempo = mSyncMaster->getTempo(SyncSourceHost);
+    sync->hostStarted = mSyncMaster->varIsHostReceiving();
+    sync->hostTempo = mSyncMaster->varGetTempo(SyncSourceHost);
     sync->hostBeat = 0;
     sync->hostBar = 0;
     if (sync->hostStarted) {
-        sync->hostBeat = mSyncMaster->getBeat(SyncSourceHost);
-        sync->hostBar = mSyncMaster->getBar(SyncSourceHost);
+        sync->hostBeat = mSyncMaster->varGetBeat(SyncSourceHost);
+        sync->hostBar = mSyncMaster->varGetBar(SyncSourceHost);
     }
 }
 
@@ -1252,7 +1252,7 @@ int Synchronizer::getBeatsPerBar(OldSyncSource src, Loop* l)
 {
     (void)src;
     (void)l;
-    return mSyncMaster->getBeatsPerBar(SyncSourceTransport);
+    return mSyncMaster->varGetBeatsPerBar(SyncSourceTransport);
 }
 
 /**
@@ -1592,7 +1592,7 @@ void Synchronizer::startRecording(Loop* l)
             cyclePulses = mp->getSubcycles();
         }
         else if (src == SYNC_TRANSPORT) {
-            cyclePulses = mSyncMaster->getBeatsPerBar(SyncSourceTransport);
+            cyclePulses = mSyncMaster->varGetBeatsPerBar(SyncSourceTransport);
         }
         else {
             // not expecting to be here for SYNC_OUT 
@@ -2218,7 +2218,7 @@ void Synchronizer::sendStart(Loop* l, bool checkManual, bool checkNear)
             */
         }
 
-        if (nearStart && mSyncMaster->isMidiOutStarted()) {
+        if (nearStart && mSyncMaster->varIsMidiOutStarted()) {
 			// The unit tests want to verify that we at least tried
 			// to send a start event.  If we suppressed one because we're
 			// already there, still increment the start count.

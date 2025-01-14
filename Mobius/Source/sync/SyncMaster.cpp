@@ -670,15 +670,6 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     
     transport->advance(frames);
 
-    // before pulsator advances and thinks about bars, need to tell it if any
-    // sources changed time signaure on their own
-    // the only one that can do that is Host
-    SyncSourceResult* r = hostAnalyzer->getResult();
-    if (r->timeSignatureChanged) {
-        int bpb = hostAnalyzer->getBeatsPerBar();
-        pulsator->setBeatsPerBar(SyncSourceHost, bpb);
-    }
-
     // unless this needs the entire Stream, should take the frame count
     // like everything else, TMI
     pulsator->advance(stream);
@@ -753,20 +744,24 @@ bool SyncMaster::doAction(UIAction* a)
         case ParamTransportTempo: {
             // Action doesn't have a way to pass floats right now so the
             // integer value is x100
+            
+            // !! if the Transport is locked to a Master track, this should be ignored
             float tempo = (float)(a->value) / 100.0f;
             transport->userSetTempo(tempo);
         }
             break;
             
         case ParamTransportLength: {
+            // !! if the Transport is locked to a Master track, this should be ignored
             transport->userSetTempoDuration(a->value);
         }
             break;
             
         case ParamTransportBeatsPerBar:
-            transport->userSetBeatsPerBar(a->value);
+            // this impacts more than just the Transport
+            pulsator->userSetBeatsPerBar(a->value, true);
             break;
-
+            
         default:
             // don't whine about this, we may be just one of several
             // potential LevelKernel action handlers
@@ -897,10 +892,19 @@ SyncSource SyncMaster::getEffectiveSource(int id)
 }
 
 /**
- * For the track monitoring UI, return information about the sync source this
- * track is following.
+ * For the track monitoring UI, return information about the sync source a track
+ * is following.
  */
-float SyncMaster::getTempo(SyncSource src)
+float SyncMaster::getTempo(int trackNumber)
+{
+    float tempo = 0.0f;
+    Follower* f = pulsator->getFollower(trackNumber);
+    if (f != nullptr)
+      tempo = varGetTempo(f->source);
+    return tempo;
+}
+
+float SyncMaster::varGetTempo(SyncSource src)
 {
     float tempo = 0.0f;
     switch (src) {
@@ -934,38 +938,66 @@ float SyncMaster::getTempo(SyncSource src)
  * unbounded raw beats that don't wrap on bar boundaries, though I think this is unspecified
  * and host dependent.
  *
- * MidiAnalyzer has only raw beats.
+ * Get beat/bar from the BarTenders in pulsator.
+ * This is still messy.
  *
- * Transport is smart about it.
- *
- * !! For Host and Midi there is some variability over what beatsPerBar can be
- * and the display beat/bar numbers are maintained by BarTender for each Follower.
- * To get the accurate numbers you can't just call this any more, need to pass in the
- * trackId or Follower.
+ * If we allow tracks to override the time signature, then these are of limited
+ * use.  Some of the older core Variable handlers use it, but need to weed those out.
  */
-int SyncMaster::getBeat(SyncSource src)
+int SyncMaster::varGetBeat(SyncSource src)
 {
-    return pulsator->getBeat(src);
+    int beat = 0;
+    BarTender* tender = pulsator->getBarTender(src);
+    if (tender != nullptr)
+      beat = tender->getBeat();
+    return beat;
 }
 
-int SyncMaster::getBar(SyncSource src)
+int SyncMaster::varGetBar(SyncSource src)
 {
-    return pulsator->getBar(src);
+    int bar = 0;
+    BarTender* tender = pulsator->getBarTender(src);
+    if (tender != nullptr)
+      bar = tender->getBar();
+    return bar;
+}
+
+int SyncMaster::varGetBeatsPerBar(SyncSource src)
+{
+    int bpb = 4;
+    BarTender* tender = pulsator->getBarTender(src);
+    if (tender != nullptr)
+      bpb = tender->getBeatsPerBar();
+    return bpb;
 }
 
 /**
- * Bar numbers is where all hell breaks loose.  BeatsPerBar can be different for
- * every track, so need to be passing in the trackId here!
+ * The track specific time accessors are what should be used.
  */
-int SyncMaster::getBeatsPerBar(SyncSource src)
+int SyncMaster::getBeat(int number)
 {
-    int bpb = transport->getBeatsPerBar();
+    int beat = 0;
+    BarTender* tender = pulsator->getBarTender(number);
+    if (tender != nullptr)
+      beat = tender->getBeat();
+    return beat;
+}
 
-    if (src == SyncSourceHost) {
-        int hbpb = hostAnalyzer->getBeatsPerBar();
-        if (hbpb > 0)
-          bpb = hbpb;
-    }
+int SyncMaster::getBar(int number)
+{
+    int bar = 0;
+    BarTender* tender = pulsator->getBarTender(number);
+    if (tender != nullptr)
+      bar = tender->getBar();
+    return bar;
+}
+
+int SyncMaster::getBeatsPerBar(int number)
+{
+    int bpb = 4;
+    BarTender* tender = pulsator->getBarTender(number);
+    if (tender != nullptr)
+      bpb = tender->getBeatsPerBar();
     return bpb;
 }
 
@@ -1023,6 +1055,11 @@ void SyncMaster::addLeaderPulse(int leader, SyncUnit unit, int frameOffset)
 //
 // Transport/MIDI Out
 //
+// These are old and should only be used for some core script Variables.
+// Weed these out in time.
+// I put "var" in front of them to make it clear what they're intended for
+// the rest of the system shouldn't be using these.
+//
 //////////////////////////////////////////////////////////////////////
 
 //
@@ -1030,27 +1067,23 @@ void SyncMaster::addLeaderPulse(int leader, SyncUnit unit, int frameOffset)
 // as the Transport status, don't think we need those to be independent
 // 
 
-float SyncMaster::getTempo()
-{
-    return transport->getTempo();
-}
-bool SyncMaster::isMidiOutSending()
+bool SyncMaster::varIsMidiOutSending()
 {
     return midiRealizer->isSending();
 }
-bool SyncMaster::isMidiOutStarted()
+bool SyncMaster::varIsMidiOutStarted()
 {
     return midiRealizer->isStarted();
 }
-int SyncMaster::getMidiOutStarts()
+int SyncMaster::varGetMidiOutStarts()
 {
     return midiRealizer->getStarts();
 }
-int SyncMaster::getMidiOutSongClock()
+int SyncMaster::varGetMidiOutSongClock()
 {
     return midiRealizer->getSongClock();
 }
-int SyncMaster::getMidiOutRawBeat()
+int SyncMaster::varGetMidiOutRawBeat()
 {
     return midiRealizer->getBeat();
 }
@@ -1061,27 +1094,27 @@ int SyncMaster::getMidiOutRawBeat()
 //
 //////////////////////////////////////////////////////////////////////
     
-float SyncMaster::getMidiInTempo()
+float SyncMaster::varGetMidiInTempo()
 {
     return midiAnalyzer->getTempo();
 }
-int SyncMaster::getMidiInSmoothTempo()
+int SyncMaster::varGetMidiInSmoothTempo()
 {
     return midiAnalyzer->getSmoothTempo();
 }
-int SyncMaster::getMidiInRawBeat()
+int SyncMaster::varGetMidiInRawBeat()
 {
     return midiAnalyzer->getBeat();
 }
-int SyncMaster::getMidiInSongClock()
+int SyncMaster::varGetMidiInSongClock()
 {
     return midiAnalyzer->getSongClock();
 }
-bool SyncMaster::isMidiInReceiving()
+bool SyncMaster::varIsMidiInReceiving()
 {
     return midiAnalyzer->isReceiving();
 }
-bool SyncMaster::isMidiInStarted()
+bool SyncMaster::varIsMidiInStarted()
 {
     return midiAnalyzer->isStarted();
 }
@@ -1092,12 +1125,12 @@ bool SyncMaster::isMidiInStarted()
 //
 //////////////////////////////////////////////////////////////////////
     
-bool SyncMaster::isHostReceiving()
+bool SyncMaster::varIsHostReceiving()
 {
     //return midiAnalyzer->isReceiving();
     return false;
 }
-bool SyncMaster::isHostStarted()
+bool SyncMaster::varIsHostStarted()
 {
     //return midiAnalyzer->isStarted();
     return false;

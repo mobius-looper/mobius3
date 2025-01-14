@@ -83,8 +83,8 @@ Transport::Transport(SyncMaster* sm)
     sampleRate = 44100;
 
     // initial time signature
-    state.unitsPerBeat = 1;
-    state.beatsPerBar = 4;
+    unitsPerBeat = 1;
+    beatsPerBar = 4;
 
     userSetTempo(90.0f);
 
@@ -115,7 +115,7 @@ void Transport::setSampleRate(int rate)
     
     // not a user action, but sort of is because they manually changed
     // the audio interface, might need to streamline the process here
-    userSetTempo(state.tempo);
+    userSetTempo(tempo);
 }
 
 void Transport::loadSession(Session* s)
@@ -127,11 +127,11 @@ void Transport::loadSession(Session* s)
         midiRealizer->stop();
     }
     else if (sendClocksWhenStopped) {
-        if (!state.started)
+        if (!started)
           midiRealizer->startClocks();
     }
     else {
-        if (!state.started)
+        if (!started)
           midiRealizer->stopSelective(false, true);
     }
 }
@@ -144,11 +144,11 @@ void Transport::loadSession(Session* s)
 
 void Transport::refreshState(SyncState& extstate)
 {
-    extstate.tempo = state.tempo;
-    extstate.beat = state.beat;
-    extstate.bar = state.bar;
-    extstate.beatsPerBar = state.beatsPerBar;
-    extstate.barsPerLoop = state.barsPerLoop;
+    extstate.tempo = tempo;
+    extstate.beat = beat;
+    extstate.bar = bar;
+    extstate.beatsPerBar = beatsPerBar;
+    extstate.barsPerLoop = barsPerLoop;
 }
 
 /**
@@ -156,29 +156,82 @@ void Transport::refreshState(SyncState& extstate)
  */
 void Transport::refreshPriorityState(PriorityState* dest)
 {
-    dest->transportBeat = state.beat;
-    dest->transportBar = state.bar;
-    dest->transportLoop = state.loop;
+    // !! move this to Pulsator and transportBarTender
+    dest->transportBeat = beat;
+    dest->transportBar = bar;
+    dest->transportLoop = loop;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// SyncAnalyzer Interface
+//
+// We're not really an "analyzer" we're a source that creates it's own
+// reality and self-analyzes.  But need to implement this interface
+// for consistency dealing with other sources.
+//
+//////////////////////////////////////////////////////////////////////
+
+void Transport::analyze(int blockFrames)
+{
+    advance(blockFrames);
+}
+
+bool Transport::isRunning()
+{
+    return started;
+}
+
+int Transport::getNativeBeat()
+{
+    return getBeat();
+}
+
+int Transport::getNativeBar()
+{
+    return getBar();
+}
+
+int Transport::getElapsedBeats()
+{
+    // need this?
+    return getBeeat();
+}
+
+int Transport::getNativeBeatsPerBar()
+{
+    return getBeatsPerBar();
 }
 
 float Transport::getTempo()
 {
-    return state.tempo;
+    return tempo;
 }
+
+int Transport::getUnitLength()
+{
+    return unitLength;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Extended Public Interface
+//
+//////////////////////////////////////////////////////////////////////
 
 int Transport::getBeatsPerBar()
 {
-    return state.beatsPerBar;
+    return beatsPerBar;
 }
 
 int Transport::getBeat()
 {
-    return state.beat;
+    return beat;
 }
 
 int Transport::getBar()
 {
-    return state.bar;
+    return bar;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -239,9 +292,9 @@ void Transport::userStop()
  */
 void Transport::userSetBeatsPerBar(int bpb)
 {
-    if (bpb > 0 && bpb != state.beatsPerBar) {
+    if (bpb > 0 && bpb != beatsPerBar) {
 
-        state.beatsPerBar = bpb;
+        beatsPerBar = bpb;
         if (connection == 0) {
             // todo: here we're allowed to recalculate the unit width
         }
@@ -361,9 +414,9 @@ void Transport::connect(TrackProperties& props)
     }
     
     // try to apply the user selected beatsPerBar
-    if (state.beatsPerBar > 1) {
-        int beatFrames = unitFrames / state.beatsPerBar;
-        int expectedFrames = beatFrames * state.beatsPerBar;
+    if (beatsPerBar > 1) {
+        int beatFrames = unitFrames / beatsPerBar;
+        int expectedFrames = beatFrames * beatsPerBar;
         if (expectedFrames == unitFrames) {
             // it divides cleanly on beats
             unitFrames = beatFrames;
@@ -375,7 +428,7 @@ void Transport::connect(TrackProperties& props)
             // this can't be the unit without another layer of calculations
             // to deal with shortfalls and remainders
             Trace(2, "Warning: Requested Beats Per Bar %d does not like math",
-                  state.beatsPerBar);
+                  beatsPerBar);
         }
     }
 
@@ -416,20 +469,20 @@ void Transport::connect(TrackProperties& props)
         }
     }
 
-    state.unitFrames = unitFrames;
-    state.unitsPerBeat = 1;
+    unitLength = unitFrames;
+    unitsPerBeat = 1;
 
     // at this point a unit is a "beat" and can calculate how many bars are in the
     // resulting loop
 
-    int barFrames = unitFrames * state.beatsPerBar;
+    int barFrames = unitFrames * beatsPerBar;
     int bars = props.frames / barFrames;
     int expectedFrames = bars * barFrames;
     if (expectedFrames != props.frames) {
         // roundoff error, could have used ceil() here
         bars++;
     }
-    state.barsPerLoop = bars;
+    barsPerLoop = bars;
 
     // now we have location
     // Connection usually happens when the loop is at the beginning, but it
@@ -449,6 +502,11 @@ void Transport::connect(TrackProperties& props)
     setTempoInternal(tempo);
 }
 
+bool Transport::isLocked()
+{
+    return (connection != 0);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Internal Transport Controls
@@ -457,17 +515,17 @@ void Transport::connect(TrackProperties& props)
 
 void Transport::resetLocation()
 {
-    state.playFrame = 0;
-    state.units = 0;
-    state.beat = 0;
-    state.bar = 0;
-    state.loop = 0;
-    state.songClock = 0;
+    unitPlayHead = 0;
+    units = 0;
+    beat = 0;
+    bar = 0;
+    loop = 0;
+    songClock = 0;
 }
 
 void Transport::start()
 {
-    state.started = true;
+    started = true;
 
     // going to need a lot more state here
     if (midiEnabled) {
@@ -504,18 +562,13 @@ void Transport::pause()
           midiRealizer->stop();
     }
     
-    state.started = false;
+    started = false;
 }
 
 void Transport::resume()
 {
     // todo: a lot more with song clocks
     start();
-}
-
-bool Transport::isStarted()
-{
-    return state.started;
 }
 
 bool Transport::isPaused()
@@ -536,36 +589,36 @@ void Transport::advance(int frames)
 {
     pulse.reset();
 
-    if (state.started) {
+    if (started) {
 
-        state.playFrame = state.playFrame + frames;
-        if (state.playFrame >= state.unitFrames) {
+        unitPlayHead = unitPlayHead + frames;
+        if (unitPlayHead >= unitLength) {
 
             // a unit has transpired
-            int blockOffset = state.playFrame - state.unitFrames;
+            int blockOffset = unitPlayHead - unitLength;
             if (blockOffset > frames || blockOffset < 0)
               Trace(1, "Transport: You suck at math");
 
             // effectively a frame wrap too
-            state.playFrame = blockOffset;
+            unitPlayHead = blockOffset;
 
-            state.units++;
-            state.unitCounter++;
+            elapsedUnits++;
+            unitCounter++;
 
-            if (state.unitCounter >= state.unitsPerBeat) {
+            if (unitCounter >= unitsPerBeat) {
 
-                state.unitCounter = 0;
-                state.beat++;
+                unitCounter = 0;
+                beat++;
 
-                if (state.beat >= state.beatsPerBar) {
+                if (beat >= beatsPerBar) {
 
-                    state.beat = 0;
-                    state.bar++;
+                    beat = 0;
+                    bar++;
 
-                    if (state.bar >= state.barsPerLoop) {
+                    if (bar >= barsPerLoop) {
 
-                        state.bar = 0;
-                        state.loop++;
+                        bar = 0;
+                        loop++;
 
                         pulse.unit = SyncUnitLoop;
                     }
@@ -596,9 +649,9 @@ Pulse* Transport::getPulse()
 
 void Transport::correctBaseCounters()
 {
-    if (state.unitsPerBeat < 1) state.unitsPerBeat = 1;
-    if (state.beatsPerBar < 1) state.beatsPerBar = 1;
-    if (state.barsPerLoop < 1) state.barsPerLoop = 1;
+    if (unitsPerBeat < 1) unitsPerBeat = 1;
+    if (beatsPerBar < 1) beatsPerBar = 1;
+    if (barsPerLoop < 1) barsPerLoop = 1;
 }
 
 /**
@@ -651,8 +704,8 @@ int Transport::deriveTempo(int tapFrames)
             }
         }
 
-        state.unitFrames = unitFrames;
-        state.unitsPerBeat = 1;
+        unitLength = unitFrames;
+        unitsPerBeat = 1;
         setTempoInternal(tempo);
 	}
 
@@ -662,10 +715,10 @@ int Transport::deriveTempo(int tapFrames)
     return adjust;
 }
 
-void Transport::setTempoInternal(float tempo)
+void Transport::setTempoInternal(float newTempo)
 {
-    state.tempo = tempo;
-
+    tempo = newTempo;
+    
     // for verification, purposelfy make the tempo we send to the
     // clock generator wrong
     if (testCorrection)
@@ -677,9 +730,9 @@ void Transport::setTempoInternal(float tempo)
       midiRealizer->startClocks();
     
     // update the drift monitor
-    drifter.setPulseFrames(state.unitFrames);
+    drifter.setPulseFrames(unitLength);
     // doesn't really matter how large this is
-    drifter.setLoopFrames(state.unitFrames * state.beatsPerBar);
+    drifter.setLoopFrames(unitLength * beatsPerBar);
     // drifter will resync on the next pulse
 }
 
@@ -696,7 +749,7 @@ float Transport::lengthToTempo(int frames)
  */
 void Transport::deriveUnitLength(float tempo)
 {
-    int oldUnit = state.unitFrames;
+    int oldUnit = unitLength;
     
     if (tempo < TransportMinTempo)
       tempo = TransportMinTempo;
@@ -708,8 +761,8 @@ void Transport::deriveUnitLength(float tempo)
     float beatsPerSecond = tempo / 60.0f;
     int framesPerBeat = (int)((float)sampleRate / beatsPerSecond);
 
-    state.unitFrames = framesPerBeat;
-    state.unitsPerBeat = 1;
+    unitLength = framesPerBeat;
+    unitsPerBeat = 1;
     setTempoInternal(tempo);
 
     //deriveLocation(oldUnit);
@@ -723,26 +776,26 @@ void Transport::deriveUnitLength(float tempo)
  */
 void Transport::deriveLocation(int oldUnit)
 {
-    if (state.unitFrames <= 0) {
+    if (unitLength <= 0) {
         Trace(1, "Transport: Wrap with empty unit frames");
     }
     else {
         // playFrame must always be within the unit length
-        while (state.playFrame > state.unitFrames)
-          state.playFrame -= state.unitFrames;
+        while (unitPlayHead > unitLength)
+          unitPlayHead -= unitLength;
 
         // if we changed the unitLength, then the beat/bar/loop
         // boundaries have also changed and the current boundary counts
         // may no longer be correct
-        if (oldUnit != state.unitFrames) {
+        if (oldUnit != unitLength) {
 
             // I'm tired, punt and put them back to zero
             
             // determine the absolute position using the old unit
-            int oldBeatFrames = oldUnit * state.unitsPerBeat;
-            int oldBarFrames = oldBeatFrames * state.beatsPerBar;
-            int oldLoopFrames = oldBarFrames * state.barsPerLoop;
-            int oldAbsoluteFrame = oldLoopFrames * state.loop;
+            int oldBeatFrames = oldUnit * unitsPerBeat;
+            int oldBarFrames = oldBeatFrames * beatsPerBar;
+            int oldLoopFrames = oldBarFrames * barsPerLoop;
+            int oldAbsoluteFrame = oldLoopFrames * loop;
 
             // now do a bunch of divides to work backward from oldAbsoluteFrame
             // using the new unit length
@@ -795,7 +848,7 @@ void Transport::checkDrift(int blockFrames)
 
 #if 0    
     // if we keep clocks going, could do this even when not started
-    if (state.started) {
+    if (started) {
         Pulsator* pulsator = syncMaster->getPulsator();
 
         // Pulseator will only return Beat and Bar pulses

@@ -98,13 +98,19 @@ class SyncMaster
     // Granular state
     // This is temporary for Synchronizer to build
     // the OldMobiusTrackState, once the state model transition
-    // is complete, these can be removed
+    // is complete, these can be removed.
+    // Also used by some old script Variables
     //
     
-    float getTempo(SyncSource src);
-    int getBeat(SyncSource src);
-    int getBar(SyncSource src);
-    int getBeatsPerBar(SyncSource src);
+    float varGetTempo(SyncSource src);
+    int varGetBeat(SyncSource src);
+    int varGetBar(SyncSource src);
+    int varGetBeatsPerBar(SyncSource src);
+
+    float getTempo(int number);
+    int getBeat(int number);
+    int getBar(int number);
+    int getBeatsPerBar(int number);
 
     // used by Synchronizer for AutoRecord
     int getBarFrames(SyncSource src);
@@ -143,8 +149,8 @@ class SyncMaster
     // Synchronizer uses this to assemble OldMobiusState and there
     // are old core Variables that expose it to MOS scripts
 
-    bool isHostReceiving();
-    bool isHostStarted();
+    bool varIsHostReceiving();
+    bool varIsHostStarted();
     
     //////////////////////////////////////////////////////////////////////
     // Transport/MIDI Output
@@ -153,30 +159,28 @@ class SyncMaster
     // Little of this should be necessary
     // Some is used by old Mobius to assemble State
 
-    float getTempo();
-
     /**
      * Return the raw beat counter.  This will be zero if the clock is not running.
      */
-    int getMidiOutRawBeat();
+    int varGetMidiOutRawBeat();
 
     /**
      * True if we're actively sending MIDI clocks.
      */
-    bool isMidiOutSending();
+    bool varIsMidiOutSending();
 
     /**
      * True if we've sent MIDI Start and are sending clocks.
      * Not sure why we have both, I guess we could have been sending clocks
      * to prepare the receiver, but sent start/stop independently.
      */
-    bool isMidiOutStarted();
+    bool varIsMidiOutStarted();
 
     /**
      * The number of Start messages sent since the last Stop.
      * Old notes say "used by the unit tests to verify we're sending starts".
      */
-    int getMidiOutStarts();
+    int varGetMidiOutStarts();
 
     /**
      * Old notes:
@@ -185,7 +189,7 @@ class SyncMaster
      * Be sure to return the ITERATOR clock, not the global one that hasn't
      * been incremented yet.
      */
-    int getMidiOutSongClock();
+    int varGetMidiOutSongClock();
 
     //////////////////////////////////////////////////////////////////////
     // MIDI Input
@@ -196,19 +200,19 @@ class SyncMaster
     /**
      * The raw measured tempo of the incomming clock stream.
      */
-    float getMidiInTempo();
+    float varGetMidiInTempo();
 
     /**
      * For display purposes, a filtered tempo that can jitter
      * less than getInputTempo.  This is a 10x integer to remove
      * long floating fractions.
      */
-    int getMidiInSmoothTempo();
+    int varGetMidiInSmoothTempo();
 
-    int getMidiInRawBeat();
-    int getMidiInSongClock();
-    bool isMidiInReceiving();
-    bool isMidiInStarted();
+    int varGetMidiInRawBeat();
+    int varGetMidiInSongClock();
+    bool varIsMidiInReceiving();
+    bool varIsMidiInStarted();
 
   protected:
 

@@ -1,9 +1,14 @@
 /**
- * State calculated on each block of audio by analyzing the a source.
- * Currently produced only by HostAnalyzer and MidiAnalyzer.
- *
+ * State calculated by a SyncSource at the beginning of each audio block.
+ * 
  * This is used internally by Pulsator to determine when the sync source
- * starts and stops, when beats happen, and when beats represent bar boundaries.
+ * starts and stops, when beats happen, and provides used to determine
+ * where "bars" are.
+ *
+ * The state returned here is transient and meaningful only for duration of
+ * one block.  Additional information about the SyncSource is obtained from
+ * the SyncSource object and persists across block, e.g. tempo, unitLength
+ * time signature.
  */
 
 #pragma once
@@ -12,50 +17,63 @@ class SyncSourceResult
 {
   public:
 
-    // true if the source started 
+    /**
+     * True if the host went from a Stopped to Running state in this block.
+     * This is typically used to reorient things that want to track the
+     * sync sources location.
+     *
+     * This is often but not necessarily the same has receiving a Beat.
+     * The beatDetected flag must be used to determine whether simply starting
+     * should be considered a synchronization beat.
+     */
     bool started = false;
 
-    // true if the source stopped
+    /**
+     * True if the host went from a Running to a Stopped state in this block.
+     * This does not usually mean there is a Beat in this block.
+     */
     bool stopped = false;
 
-    // true if a tempo change was detected
-    bool tempoChanged = false;
-
-    // true if a time signature change was detected (host only in practice)
-    bool timeSignatureChanged = false;
-
-    // the new unit length if the tempo changed
-    int newUnitLength = 0;
-
-    //
-    // Normalized beat events
-    //
-
-    // true if there was a beat detected in this block
+    /**
+     * True if there was a beat detected in this block.
+     */
     bool beatDetected = false;
 
-    // the offset within the block to the beat
+    /**
+     * When beatDetected is true, this is the offsets within the
+     * block in samples where the beat ocurred.
+     */
     int blockOffset = 0;
 
-    //
-    // General information
-    // These are for display purposes and not crucial for synchronization
-    // 
+    /**
+     * True if a native bar was detected.  beatDetected will also be true.
+     * This is supported only by sources that also support a native beat count
+     * and a native time signature, e.g. Host and Transport.  Pulsator may choose
+     * to ignore this.
+     * todo: decide if this is necessary
+     */
+    //bool barDetected = false;
 
-    float tempo = 0.0f;
+    /**
+     * True when the source beats have changed tempo and therefore the unit length.
+     * Host and Midi sources may change tempo under user control.
+     */
+    bool tempoChanged = false;
 
+    /**
+     * True when the host supports a native time signature (e.g. beatsPerBar)
+     * and the time signature changed.
+     */
+    bool timeSignatureChanged = false;
+    
     void reset() {
         
         started = false;
         stopped = false;
-        tempoChanged = false;
-        timeSignatureChanged = false;
-        newUnitLength = 0;
-
         beatDetected = false;
         blockOffset = 0;
-
-        tempo = 0.0f;
+        tempoChanged = false;
+        timeSignatureChanged = false;
     }
 
 };

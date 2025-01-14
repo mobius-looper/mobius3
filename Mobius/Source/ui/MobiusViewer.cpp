@@ -1408,29 +1408,29 @@ void MobiusViewer::refreshSync(SystemState* state, TrackState* tstate, MobiusVie
     tview->syncBar = 0;
     tview->syncShowBeat = false;
 
-    SyncMasterState::Source* sms = nullptr;
+    SyncState* ss = nullptr;
     switch (tstate->syncSource) {
         case SyncSourceMidi:
-            sms = &(state->syncState.midi);
+            ss = &(state->syncState.midi);
             // suppress if no clocks
-            if (!sms->receiving) sms = nullptr;
+            if (!ss->receiving) ss = nullptr;
             break;
         case SyncSourceHost:
-            sms = &(state->syncState.host);
+            ss = &(state->syncState.host);
             // suppress if host transport is stopped?
-            if (!sms->receiving) sms = nullptr;
+            if (!ss->receiving) ss = nullptr;
             break;
         case SyncSourceTransport:
-            sms = &(state->syncState.transport);
+            ss = &(state->syncState.transport);
             break;
         default:
             break;
     }
 
-    if (sms != nullptr) {
-        tview->syncTempo = sms->tempo;
-        tview->syncBeat = sms->beat;
-        tview->syncBar = sms->bar;
+    if (ss != nullptr) {
+        tview->syncTempo = ss->tempo;
+        tview->syncBeat = ss->beat;
+        tview->syncBar = ss->bar;
         tview->syncShowBeat = true;
     }
 }    

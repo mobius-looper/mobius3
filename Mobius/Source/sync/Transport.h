@@ -20,10 +20,11 @@
 // what isn't general inside the Transport
 #include "SyncSourceState.h"
 
+#include "SyncAnalyzer.h"
 #include "Pulse.h"
 #include "DriftMonitor.h"
 
-class Transport
+class Transport : public SyncAnalyzer
 {
   public:
     
@@ -35,6 +36,24 @@ class Transport
     void refreshState(SyncState& state);
     void refreshPriorityState(class PriorityState* ps);
 
+    //
+    // SyncAnalyzer Interface
+    //
+    
+    void analyze(int blockFrames) override;
+    SyncSourceResult* getResult() override;
+    bool isRunning() override;
+    bool hasNativeBeat() override {return true;}
+    int getNativeBeat() override;
+    bool hasNativeBar() override {return true;}
+    int getNativeBar() override;
+    int getElapsedBeats() override;
+    bool hasNativeTimeSignature() {return true;}
+    int getNativeBeatsPerBar();
+    float getTempo() override;
+    int getUnitLength() override;
+    int getDrift() {return 0;}
+    
     // Manual Control
     
     void userStop();
@@ -53,11 +72,11 @@ class Transport
     void stopSelective(bool sendStop, bool stopClocks);
     void pause();
     void resume();
+
+    bool isLocked();
     
     // Granular State
 
-    float getTempo();
-    int getBeatsPerBar();
     int getBeat();
     int getBar();
     bool isStarted();
@@ -77,7 +96,6 @@ class Transport
     
     int sampleRate = 44100;
     
-    SyncSourceState state;
     Pulse pulse;
     DriftMonitor drifter;
     bool testCorrection = false;
@@ -101,6 +119,29 @@ class Transport
 
     // the id if the connected track
     int connection = 0;
+
+    //
+    // Internal play state
+    //
+
+    double tempo = 0.0f;
+    bool started = false;
+    int unitLength = 0;
+    int unitPlayHead = 0;
+    int unitsPerBeat = 1;
+    int elapsedUnits = 0;
+    int unitCounter = 0;
+
+    // raw beat counter, there is no "normalized" beat like HostAnalyzer
+    // Transport gets to control the beat number, and MidiRealizer follows it
+    int beat = 0;
+    int bar = 0;
+    int loop = 0;
+    
+    // Time signature from the connected track
+    // !! NO, think about this
+    int beatsPerBar = 4;
+    int barsPerLoop = 1;
     
     void correctBaseCounters();
     int deriveTempo(int tapFrames);

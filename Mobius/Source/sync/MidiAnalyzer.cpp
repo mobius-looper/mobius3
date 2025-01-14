@@ -8,6 +8,12 @@
 #include "MidiSyncEvent.h"
 #include "MidiAnalyzer.h"
 
+//////////////////////////////////////////////////////////////////////
+//
+// Configuration
+//
+//////////////////////////////////////////////////////////////////////
+
 MidiAnalyzer::MidiAnalyzer()
 {
 	inputQueue.setName("external");
@@ -29,48 +35,6 @@ void MidiAnalyzer::shutdown()
     midiManager->removeRealtimeListener(this);
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// State
-//
-//////////////////////////////////////////////////////////////////////
-
-bool MidiAnalyzer::isReceiving()
-{
-    return inputQueue.receivingClocks;
-}
-
-float MidiAnalyzer::getTempo()
-{
-    return tempoMonitor.getTempo();
-}
-
-int MidiAnalyzer::getSmoothTempo()
-{
-    return tempoMonitor.getSmoothTempo();
-}
-
-int MidiAnalyzer::getBeat()
-{
-    return inputQueue.beat;
-}
-
-int MidiAnalyzer::getSongClock()
-{
-    return inputQueue.songClock;
-}
-
-/**
- * True if we have received a MIDI start or continue message.
- */
-bool MidiAnalyzer::isStarted()
-{
-    return inputQueue.started;
-}
-
-/**
- * Package the state bits into a single thing.
- */
 void MidiAnalyzer::refreshState(SyncState& state)
 {
     state.receiving = inputQueue.receivingClocks;
@@ -83,9 +47,69 @@ void MidiAnalyzer::refreshState(SyncState& state)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Events
+// SyncAnalyzer Interface
 //
 //////////////////////////////////////////////////////////////////////
+
+SyncSourceResult* MidiAnalyzer::getResult()
+{
+    return &result;
+}
+
+/**
+ * True if we have received a MIDI start or continue message.
+ */
+bool MidiAnalyzer::isRunning()
+{
+    return inputQueue.started;
+}
+
+/**
+ * !! Is this really elapsed or did MidiQueue orient it for SongPosition?
+ */
+int MidiAnalyzer::getElapsedBeats()
+{
+    return inputQueue.beat;
+}
+
+float MidiAnalyzer::getTempo()
+{
+    return tempoMonitor.getTempo();
+}
+
+/**
+ * !! Not doing units and drift yet.
+ */
+int MidiAnalyzer::getUnitLength()
+{
+    return 0;
+}
+
+int MidiAnalyzer::getDrift()
+{
+    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Extended Public Interface
+//
+//////////////////////////////////////////////////////////////////////
+
+bool MidiAnalyzer::isReceiving()
+{
+    return inputQueue.receivingClocks;
+}
+
+int MidiAnalyzer::getSmoothTempo()
+{
+    return tempoMonitor.getSmoothTempo();
+}
+
+int MidiAnalyzer::getSongClock()
+{
+    return inputQueue.songClock;
+}
 
 /**
  * Allow enabling and disabling of MidiSyncEvents in cases where
@@ -104,6 +128,16 @@ void MidiAnalyzer::enableEvents()
 void MidiAnalyzer::flushEvents()
 {
     inputQueue.flushEvents();
+}
+
+/**
+ * Expected to be called periodically to check whather clocks are still
+ * being received.
+ */
+void MidiAnalyzer::checkClocks()
+{
+    int now = juce::Time::getMillisecondCounter();
+    inputQueue.checkClocks(now);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -167,7 +201,7 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
 
 //////////////////////////////////////////////////////////////////////
 //
-// SyncMaster Interaction
+// Analysis
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -175,7 +209,7 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
  * Consume any queued events at the beginning of an audio block
  * and prepare the SyncSourceResult
  */
-void MidiAnalyzer::advance(int blockFrames)
+void MidiAnalyzer::analyze(int blockFrames)
 {
     (void)blockFrames;
     
@@ -239,21 +273,6 @@ void MidiAnalyzer::detectBeat(MidiSyncEvent* mse)
     }
     
     result.beatDetected = detected;
-}
-
-SyncSourceResult* MidiAnalyzer::getResult()
-{
-    return &result;
-}
-
-/**
- * Expected to be called periodically to check whather clocks are still
- * being received.
- */
-void MidiAnalyzer::checkClocks()
-{
-    int now = juce::Time::getMillisecondCounter();
-    inputQueue.checkClocks(now);
 }
 
 /****************************************************************************/

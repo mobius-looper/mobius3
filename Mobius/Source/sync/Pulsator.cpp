@@ -79,65 +79,155 @@ void Pulsator::loadSession(Session* s)
         leaders.add(l);
     }
 
-    // todo: Pull beatsPerBar and barsPerLoop overrides from the Session
-    // and give them to the BarTender of the corresponding Followers
+    // propagate session parameters related to the time signature
 
-    sessionBeatsPerBar = s->getInt(SessionBeatsPerBar);
+    sessionOverrideHostBar = s->getBool(SessionHostOverrideTimeSignature);
+    userSetBeatsPerBar(s->getInt(SessionBeatsPerBar), false);
+    
+    // if the override flag is cleared, revert the host to it's native time signature
+    if (!sessionOverrideHostBar) {
+        HostAnalyzer* analyzer = syncMaster->getHostAnalyzer();
+        int hostBpb = analyzer->getBeatsPerBar();
+        if (hostBpb > 0)
+          hostBarTender.setBeatsPerBar(hostBpb);
+    }
+
+    // todo: Pull beatsPerBar and barsPerLoop overrides from the Session
+    // and give them to the BarTenders
+
+    // keep the follower's private BarTender in sync
+    updateFollowerTimeSignatures();
+}
+
+/**
+ * Called when a session is loaded or the user submits a UIAction
+ * to change the transport time signature.
+ *
+ * !! Problem: We can get here from loadSession and from SyncMaster::doAction.
+ * If the transport is locked onto a master track, we shouldn't lose the track's
+ * time signature (derived from the cycle count) unless the user explicitly asks
+ * for it.  A UIAction is an explicit request.
+ *
+ * loadSession however happens for all sorts of reasons and we don't necessarily
+ * want it to take away the locked beat count.  Assume session reloads don't
+ * update the transport unless it is unlocked, but will need more here.
+ * If the user is editing the session and only changes the BPB number then that
+ * should be taken as an explicit request.  Can't tell the intent at this level.
+ */
+void Pulsator::userSetBeatsPerBar(int bpb, bool action)
+{
+    // it is always rememberd here
+    sessionBeatsPerBar = bpb;
     if (sessionBeatsPerBar == 0)
       sessionBeatsPerBar = 4;
 
-    sessionOverrideHostBar = s->getBool(SessionHostOverrideTimeSignature);
+    Transport* t = syncMaster->getTransport();
+    bool doIt = (action || !t->isLocked());
 
-    // Followers of SyncSourceHost will either get BPB from the HostAnalyzer or
-    // the Session depending
+    if (doIt) {
+        t->userSetBeatsPerBar(bpb);
+        transportBarTender.setBeatsPerBar(bpb);
+        midiBarTender.setBeatsPerBar(bpb);
+    }
+
+    // !! the notion that the Host always follows the Transport
+    // when the override flag is set is probably wrong, when
+    // Transport BPB changes due to track lock this will somewhat arbitrarily
+    // change bar numbers for the host which may or may not be what you want
+    // do we need an explicit SessionHostBeatsPerBar value that is
+    // independent of SessionBeatsPerBar?
     
-    HostAnalyzer* analyzer = syncMaster->getHostAnalyzer();
-    int hostBpb = analyzer->getBeatsPerBar();
-    if (hostBpb == 0 || sessionOverrideHostBar)
-      hostBpb = sessionBeatsPerBar;
+    if (sessionOverrideHostBar && doIt)
+      hostBarTender.setBeatsPerBar(bpb);
 
+    updateFollowerTimeSignatures();
+}
+
+/**
+ * This is called during advance() when HostAnalyzer says it detected
+ * a Host time signature change.  
+ */
+void Pulsator::propagateHostTimeSignature(int bpb)
+{
+    if (!sessionOverrideHostBar) {
+        if (bpb == 0) bpb = 4;
+        hostBarTender.setBeatsPerBar(bpb);
+        updateFollowerTimeSignatures();
+    }
+}
+
+/**
+ * This is called when the Transport locks onto a master track, which
+ * may change the bpb.
+ *
+ * Unlike host tsigs, this can happen at any time during theh block advance.
+ */
+void Pulsator::propagateTransportTimeSignature(int bpb)
+{
+    transportBarTender.setBeatsPerBar(bpb);
+    midiBarTender.setBeatsPerBar(bpb);
+    if (sessionOverrideHostBar)
+      hostBarTender.setBeatsPerBar(bpb);
+
+    updateFollowerTimeSignatures();
+}
+
+/**
+ * After the time signature has been altered in one of the main source
+ * BarTenders, copy it to each follower.
+ *
+ * !! no, this is wrong.  When we get to the point where tracks can have
+ * their own private time signature, that needs to be identifable in some way
+ * to PREVENT session propagation from happening to them.
+ */
+void Pulsator::updateFollowerTimeSignatures()
+{
     for (auto follower : followers) {
+        
         if (follower->source == SyncSourceHost)
-          follower->barTender.setBeatsPerBar(hostBpb);
+          follower->barTender.setBeatsPerBar(hostBarTender.getBeatsPerBar());
+
+        else if (follower->source == SyncSourceTrack) {
+            // unclear what this means
+        }
         else
-          follower->barTender.setBeatsPerBar(sessionBeatsPerBar);
+          follower->barTender.setBeatsPerBar(transportBarTender.getBeatsPerBar());
     }
 }
 
 /**
- * beatsPerBar can be changed away from the session in two ways.
- *
- * If overrideHostTimeSignature is off and the user manually changes
- * the host time signature, HostAnalyzer must set the timeSignatureChanged
- * flag in the SyncSourceResult and SM will call this to update the bars
- * in the followers.
- *
- * The Transport may have it's beatsPerBar changed through user interaction
- * and conveys this the same way.
+ * Get the shared BarTender for a sync source.
  */
-void Pulsator::setBeatsPerBar(SyncSource src, int bpb)
+BarTender* Pulsator::getBarTender(SyncSource src)
 {
-    // todo: track specific overrides
+    BarTender* tender = nullptr;
     
-    for (auto follower : followers) {
-        if (follower->source == src) {
-            if (src != SyncSourceHost || sessionOverrideHostBar)
-              follower->barTender.setBeatsPerBar(bpb);
-        }
+    switch (src) {
+        case SyncSourceNone: break;
+        case SyncSourceHost: tender = &hostBarTender; break;
+        case SyncSourceMidi: tender = &midiBarTender; break;
+        case SyncSourceTransport:
+        case SyncSourceMaster:
+            tender = &transportBarTender;
+            break;
+        case SyncSourceTrack:
+            // unclear what this is supposed to mean
+            // I guess sthe subcycle/cycle
+            break;
     }
+    return tender;
 }
 
 /**
- * Bars per loop is only set by the Transport, but I suppose others
- * might want this someday.
+ * Get the private BarTender for a track.
  */
-void Pulsator::setBarsPerLoop(SyncSource src, int bpl)
+BarTender* Pulsator::getBarTender(int number)
 {
-    for (auto follower : followers) {
-        if (follower->source == src) {
-            follower->barTender.setBarsPerLoop(bpl);
-        }
-    }
+    BarTender* tender = nullptr;
+    Follower* f = getFollower(number);
+    if (f != nullptr)
+      tender = &(f->barTender);
+    return tender;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -158,7 +248,14 @@ void Pulsator::advance(MobiusAudioStream* stream)
 	interruptFrames = stream->getInterruptFrames();
 
     reset();
-    
+
+    // reflect changes in the Host time signature if they were detected
+    HostAnalyzer* ha = syncMaster->getHostAnalyzer();
+    SyncSourceResult* res = ha->getResult();
+    if (res->timeSignatureChanged) {
+        propagateHostTimeSignature(ha->getBeatsPerBar());
+    }
+
     gatherHost();
     gatherMidi();
     gatherTransport();
@@ -374,6 +471,10 @@ void Pulsator::gatherTransport()
  */
 void Pulsator::gatherFollowerPulses()
 {
+    // update the BarTenders for the shared sources first
+    
+
+    
     for (auto follower : followers) {
         Pulse* available = getAnyBlockPulse(follower);
         if (available != nullptr) {
@@ -506,97 +607,6 @@ bool Pulsator::isRelevant(Pulse* p, SyncUnit followUnit)
         }
     }
     return relevant;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Granular State
-//
-//////////////////////////////////////////////////////////////////////
-
-// ugh, get this working and revisit how this needs to hang together
-
-BarTender* Pulsator::getBarTender(SyncSource src)
-{
-    BarTender* tender = nullptr;
-    
-    switch (src) {
-        case SyncSourceNone: break;
-        case SyncSourceHost: tender = &hostBarTender; break;
-        case SyncSourceMidi: tender = &midiBarTender; break;
-        case SyncSourceTransport:
-        case SyncSourceMaster:
-            // todo: Transport needs one of these
-            break;
-        case SyncSourceTrack:
-            // unclear what this is supposed to mean
-            // I guess sthe subcycle/cycle
-            break;
-    }
-    return tender;
-}
-
-int Pulsator::getBeat(SyncSource src)
-{
-    int beat = 0;
-    BarTender* tender = getBarTender(src);
-    if (tender != nullptr)
-      beat = tender->getBeat();
-    else
-      beat = syncMaster->getTransport()->getBeat();
-    
-    return beat;
-}
-
-int Pulsator::getBar(SyncSource src)
-{
-    int bar = 0;
-    BarTender* tender = getBarTender(src);
-    if (tender != nullptr)
-      bar = tender->getBar();
-    else
-      bar = syncMaster->getTransport()->getBar();
-    return bar;
-}
-
-int Pulsator::getBeatsPerBar(SyncSource src)
-{
-    int bpb = 0;
-    BarTender* tender = getBarTender(src);
-    if (tender != nullptr)
-      bpb = tender->getBeatsPerBar();
-    else
-      bpb = syncMaster->getTransport()->getBeatsPerBar();
-    return bpb;
-}
-
-// todo: forward to the Follower BarTender
-
-int Pulsator::getBeatsPerBar(int id)
-{
-    int bpb = 4;
-    Follower* f = getFollower(id);
-    if (f != nullptr)
-      bpb = getBeatsPerBar(f->source);
-    return bpb;
-}
-
-int Pulsator::getBeat(int id)
-{
-    int beat = 0;
-    Follower* f = getFollower(id);
-    if (f != nullptr)
-      beat = getBeat(f->source);
-    return beat;
-}
-
-int Pulsator::getBar(int id)
-{
-    int bar = 4;
-    Follower* f = getFollower(id);
-    if (f != nullptr)
-      bar = getBar(f->source);
-    return bar;
 }
 
 //////////////////////////////////////////////////////////////////////

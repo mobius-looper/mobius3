@@ -58,6 +58,12 @@
 
 #include "HostAnalyzer.h"
 
+//////////////////////////////////////////////////////////////////////
+//
+// Configuration
+//
+//////////////////////////////////////////////////////////////////////
+
 HostAnalyzer::HostAnalyzer()
 {
 }
@@ -86,6 +92,81 @@ void HostAnalyzer::setSampleRate(int rate)
 }
 
 /**
+ * Only refresh the things we control, Pulsator adds the rest
+ */
+void HostAnalyzer::refreshState(SyncState& state)
+{
+    state.receiving = playing;
+    
+    // this will normally be overridden by Pulsator
+    state.beat = elapsedBeats;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// SyncAnalyzer Properties
+//
+//////////////////////////////////////////////////////////////////////
+
+bool HostAnalyzer::isRunning()
+{
+    return playing;
+}
+
+/**
+ * hasNativeBeat returns true in the .h
+ */
+int HostAnalyzer::getNativeBeat()
+{
+    return hostBeat;
+}
+
+/**
+ * Punt for now, I suppose if an interesting combination of Ableton, Logic,
+ * Mainstage, or Bitwig support bars, we could provide this.
+ */
+bool HostAnalyzer::hasNativeBar()
+{
+    return false;
+}
+    
+int HostAnalyzer::getNativeBar()
+{
+    return 0;
+}
+    
+int HostAnalyzer::getElapsedBeats()
+{
+    return elapsedBeats;
+}
+    
+bool HostAnalyzer::hasNativeTimeSignature()
+{
+    return timeSignatureSpecified;
+}
+    
+int HostAnalyzer::getNativeBeatsPerBar()
+{
+    return timeSignatureDenominator;
+}
+    
+float HostAnalyzer::getTempo()
+{
+    return tempo;
+}
+    
+int HostAnalyzer::getUnitLength()
+{
+    return unitLength;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Analysis
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
  * This must be called at the beginning of every audio block.
  * Though most internal code deals with MobiusAudioStream, we need more
  * than that exposes, so go directly to the juce::AudioProcessor and
@@ -95,7 +176,7 @@ void HostAnalyzer::setSampleRate(int rate)
  * host, not a partial sliced block segment that is used for track scheduling
  * around sync pulses.
  */
-void HostAnalyzer::advance(int blockSize)
+void HostAnalyzer::analyze(int blockSize)
 {
     int initialUnit = unitLength;
     
@@ -118,6 +199,7 @@ void HostAnalyzer::advance(int blockSize)
                     // Track changes to the time signature
                     juce::Optional<juce::AudioPlayHead::TimeSignature> tsig = pos->getTimeSignature();
                     if (tsig.hasValue()) {
+                        timeSignatureSpecified = true;
                         if (tsig->numerator != timeSignatureNumerator ||
                             tsig->denominator != timeSignatureDenominator) {
 
@@ -147,8 +229,9 @@ void HostAnalyzer::advance(int blockSize)
 
                     // Adapt to a tempo change if the host provides one
                     juce::Optional<double> bpm = pos->getBpm();
-                    if (bpm.hasValue())
-                      ponderTempo(*bpm);
+                    if (bpm.hasValue()) {
+                        ponderTempo(*bpm);
+                    }
 
                     // Watch for host beat changes and detect tempo
                     ponderPpq(beatPosition, blockSize);
@@ -168,6 +251,7 @@ void HostAnalyzer::advance(int blockSize)
         // the tempo was adjusted, this will have side
         // effects if application recordings were following this source
         // more to do here...
+        result.tempoChanged = true;
     }
 
     if (playing) {
@@ -175,10 +259,6 @@ void HostAnalyzer::advance(int blockSize)
         advanceAudioStream(blockSize);
     }
 
-    // copy these to the result until we fix how awful this is
-    result.tempo = (float)tempo;
-    //result.beat = normalizedBeat;
-    
     // do this last, deriveTempo and DriftMonitor need to know what it is at the start
     // of the block, not the end
     lastAudioStreamTime = audioStreamTime;
@@ -215,18 +295,22 @@ void HostAnalyzer::detectStart(bool newPlaying, double beatPosition)
             double remainder = beatPosition - (double)hostBeat;
 
             if (remainder > 0) {
-                // need to deal with this and set the unitPlayHead accordinaly
+                // need to deal with this and set the unitPlayHead accordingly
                 Trace(1, "HostAnalyzer: Starting in the middle of a beat");
+            }
+            else {
+                // this can be considered a beat
+                result.beatDetected = true;
+                result.blockOffset = 0;
             }
 
             unitPlayHead = 0;
-            normalizedBeat = hostBeat;
-
             elapsedUnits = 0;
             unitCounter = 0;
+            elapsedBeats = 0;
+            lastBeatTime = 0;
             
             resetTempoMonitor();
-            lastBeatTime = 0;
             
             // temporary: trace the next 10 blocks
             traceppqFine = true;
@@ -235,13 +319,16 @@ void HostAnalyzer::detectStart(bool newPlaying, double beatPosition)
         else {
             Trace(2, "HostAnalyzer: Stop");
             result.stopped = true;
+
+            // Stop is not considered a beat, application needs
+            // to decide what to do in this case if a recording is in progress
         }
     }
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// Tempo Analysis
+// Tempo
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -272,9 +359,6 @@ void HostAnalyzer::ponderTempo(double newTempo)
             // monitor will be invalid, so reset it so it starts seeing
             // the new tempo ppq width
             resetTempoMonitor();
-
-            result.tempoChanged = true;
-            result.newUnitLength = newUnit;
         }
     }
 
@@ -366,7 +450,7 @@ void HostAnalyzer::traceFloat(const char* format, double value)
 
 //////////////////////////////////////////////////////////////////////
 //
-// PPQ Analysis
+// Beats
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -448,6 +532,15 @@ double HostAnalyzer::getBeatsPerSample(double currentPpq, int currentBlockSize)
  * into the current audio block, and advance the host beat stream in
  * the DriftMonitor.
  *
+ * !! What this will not do right is handle hosts that "loop" like FL Studio.
+ * There the next beat number may be less than the current beat, and this
+ * is often expected to become a "bar" for synchronization.  Once we've sent the
+ * beat pulse out though we can't retroactively change the beat number so the host
+ * can check it.  This may require a new result flag "transportLooped" or something
+ * that can be used as a deferred indicator to signal a bar boundary.  The tricky part
+ * is that we've already consumed (blocksize - blockOffset) samples of time that would
+ * need to be added to the end of the synchronized recording to make it match the unitLength.
+ * Or I suppose we could just round up the ending to compensate.
  */
 void HostAnalyzer::ponderPpq(double beatPosition, int blockSize)
 {
@@ -558,8 +651,6 @@ void HostAnalyzer::deriveTempo(double beatsPerSample)
             checkUnitMath(tempoUnit, samplesPerBeat);
             
             setUnitLength(tempoUnit);
-            result.tempoChanged = true;
-            result.newUnitLength = unitLength;
         }
         else if (tempoSpecified) {
             // We had a host provided tempo
@@ -606,8 +697,6 @@ void HostAnalyzer::deriveTempo(double beatsPerSample)
                     traceFloat("HostAnalyzer: New derived tempo %f", bpm);
                     tempo = bpm;
                     setUnitLength(derivedUnitLength);
-                    result.tempoChanged = true;
-                    result.newUnitLength = unitLength;
                 }
                 
                 // todo: if the length exceeds some threshold, resync
@@ -659,8 +748,8 @@ void HostAnalyzer::checkUnitMath(int tempoUnit, double samplesPerBeat)
  * The determination of where "bars" are is deferred to the BarTender
  * managed by Pulsator for each Follower.
  *
- * The normalizedBeat normally parallels the hostBeat unless the host
- * tempo and the unit length are way out of alignment.
+ * The elapsedBeat count normally parallels the hostBeat advance unless
+ * the host tempo and the unit length are way out of alignment.
  *
  */
 void HostAnalyzer::advanceAudioStream(int blockFrames)
@@ -687,7 +776,7 @@ void HostAnalyzer::advanceAudioStream(int blockFrames)
                 result.blockOffset = blockOffset;
 
                 unitCounter = 0;
-                normalizedBeat++;
+                elapsedBeats++;
             }
         }
     }
@@ -703,27 +792,6 @@ void HostAnalyzer::advanceAudioStream(int blockFrames)
     }
 #endif
     
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Public State
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Only refresh the things we control, Pulsator adds the rest
- */
-void HostAnalyzer::refreshState(SyncMasterState::Source& state)
-{
-    state.receiving = playing;
-    state.tempo = (float)tempo;
-    
-    // this will normally be overridden by Pulsator
-    state.beat = normalizedBeat;
-
-    // beat/bar/bpb comes from BarTender maintained by Pulsator
-    // might want to include hostBeat, hostBar here but let Pulsator decide
 }
 
 /****************************************************************************/

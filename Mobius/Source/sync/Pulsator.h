@@ -32,8 +32,14 @@ class Pulsator
     
     void loadSession(class Session* s);
 
-    void setBeatsPerBar(SyncSource src, int bpb);
-    void setBarsPerLoop(SyncSource src, int bpl);
+    void userSetBeatsPerBar(int bpb, bool action);
+    void propagateTransportTimeSignature(int bpb);
+
+    // granular state
+    // hating how this is falling out
+
+    class BarTender* getBarTender(SyncSource src);
+    class BarTender* getBarTender(int trackNumber);
 
     // Block Lifecycle
 
@@ -43,7 +49,6 @@ class Pulsator
     void addLeaderPulse(int leader, SyncUnit unit, int frameOffset);
 
     Pulse* getRelevantBlockPulse(int follower);
-
 
     // Following
 
@@ -57,18 +62,6 @@ class Pulsator
 
     Follower* getFollower(int id, bool warn = true);
     Leader* getLeader(int id);
-
-    // granular state
-    // hating how this is falling out
-    
-    int getBeat(int trackId);
-    int getBeat(SyncSource src);
-    
-    int getBar(int trackId);
-    int getBar(SyncSource src);
-    
-    int getBeatsPerBar(int trackId);
-    int getBeatsPerBar(SyncSource src);
 
   private:
 
@@ -92,8 +85,12 @@ class Pulsator
     BarTender midiBarTender;
     
     Pulse transportPulse;
-
+    BarTender transportBarTender;
+    
     void reset();
+    
+    void propagateHostTimeSignature(int bpb);
+    void updateFollowerTimeSignatures();
     
     void gatherTransport();
     void gatherHost();
@@ -105,8 +102,6 @@ class Pulsator
     Pulse* getAnyBlockPulse(Follower* f);
     bool isRelevant(Pulse* p, SyncUnit followUnit);
 
-    class BarTender* getBarTender(SyncSource src);
-    
     void trace();
     void trace(Pulse& p);
     const char* getSourceName(SyncSource source);

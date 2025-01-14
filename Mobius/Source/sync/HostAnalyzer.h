@@ -12,11 +12,13 @@
 
 #include <JuceHeader.h>
 
+#include "../model/SyncState.h"
+
+#include "SyncAnalyzer.h"
 #include "SyncSourceResult.h"
 #include "DriftMonitor2.h"
-#include "SyncMasterState.h"
 
-class HostAnalyzer
+class HostAnalyzer : public SyncAnalyzer
 {
   public:
 
@@ -25,38 +27,31 @@ class HostAnalyzer
 
     void initialize(juce::AudioProcessor* ap);
     void setSampleRate(int rate);
-    void advance(int blockFrames);
 
-    SyncSourceResult* getResult() {
-        return &result;
-    }
+    //
+    // SyncAnalyzer Interface
+    //
 
-    void refreshState(SyncState& state);
-
-    // various things SyncMaster passes to other things
-
-    /**
-     * The tempo as reported by the host or measured.
-     */
-    double getTempo() {
-        return tempo;
-    }
-
-    int getBeatsPerBar() {
-        return timeSignatureDenominator;
-    }
-
-    int getHostBeat() {
-        return hostBeat;
-    }
+    void analyze(int blockFrames) override;
+    SyncSourceResult* getResult() override;
+    bool isRunning() override;
+    bool hasNativeBeat() override {return true;}
+    int getNativeBeat() override;
+    bool hasNativeBar() override;
+    int getNativeBar() override;
+    int getElapsedBeats() override;
+    bool hasNativeTimeSignature() override;
+    int getNativeBeatsPerBar() override;
+    float getTempo() override;
+    int getUnitLength() override;
+    int getDrift() override;
     
-    int getNormalizedBeat() {
-        return normalizedBeat;
-    }
-
-    int getHostBar() {
-        return hostBar;
-    }
+    //
+    // SyncMaster Interface
+    // some of this could be moved to SyncAnayzer?
+    //
+    
+    void refreshState(SyncState& state);
 
   private:
 
@@ -80,11 +75,16 @@ class HostAnalyzer
     double tempo = 0.0f;
     // whether the tempo was given to us by the host or derived from beat distance
     bool tempoSpecified = false;
+    bool timeSignatureSpecified = false;
     int timeSignatureNumerator = 0;
     int timeSignatureDenominator = 0;
     bool playing = false;
     int hostBeat = -1;
     int hostBar = -1;
+
+    //
+    // Running Analysis
+    //
     
     // this starts zero and increases on every block, used to timestamp things
     int audioStreamTime = 0;
@@ -102,16 +102,16 @@ class HostAnalyzer
     // to generate normalized beats
     int unitPlayHead = 0;
 
+    // total number of units that have elapsed since the start point
+    int elapsedUnits = 0;
+    // counter when unitsPerBeat is greater than 1
+    int unitCounter = 0;
+    
     // don't need this to be more than one, but might be interesting someday
     int unitsPerBeat = 1;
 
     // normalized beat counters
     int normalizedBeat = 0;
-
-    // total number of units that have elapsed since the start point
-    int elapsedUnits = 0;
-    // counter when unitsPerBeat is greater than 1
-    int unitCounter = 0;
 
     // tempo monitoring
     double lastPpq = 0.0f;

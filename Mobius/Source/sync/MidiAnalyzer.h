@@ -8,16 +8,17 @@
 #include <JuceHeader.h>
 
 #include "../MidiManager.h"
+#include "../model/SyncState.h"
 
 // old stuff, weed
 #include "MidiQueue.h"
 #include "TempoMonitor.h"
 #include "MidiSyncEvent.h"
 
-#include "../model/SyncState.h"
+#include "SyncAnalyzer.h"
 #include "SyncSourceResult.h"
 
-class MidiAnalyzer : public MidiManager::RealtimeListener
+class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
 {
   public:
 
@@ -27,32 +28,45 @@ class MidiAnalyzer : public MidiManager::RealtimeListener
     void initialize(class SyncMaster* sm, class MidiManager* mm);
     void shutdown();
 
-    void advance(int blockFrames);
-    SyncSourceResult* getResult();
+    //
+    // SyncAnslyzer Interface
+    //
     
-    // check for termination of MIDI clocks without warning
-    void checkClocks();
+    void analyze(int blockFrames) override;
+    SyncSourceResult* getResult() override;
+    bool isRunning() override;
+    // actually, this can be true if we do SongPositionPointer properly
+    bool hasNativeBeat() override {return false;}
+    int getNativeBeat() override {return 0;}
+    bool hasNativeBar() override {return false;}
+    int getNativeBar() override {return 0;}
+    int getElapsedBeats() override;
+    bool hasNativeTimeSignature() {return false;}
+    int getNativeBeatsPerBar() {return 0;}
+    float getTempo() override;
+    int getUnitLength() override;
+    int getDrift() override;
 
+    //
+    // SyncMster Interface
+    //
+    
+    void refreshState(SyncState& state);
+    
     // MidiManager::RealtimeListener
     void midiRealtime(const juce::MidiMessage& msg, juce::String& source) override;
 
-    float getTempo();
-    int getSmoothTempo();
-    int getBeat();
-    int getSongClock();
+    // check for termination of MIDI clocks without warning
+    void checkClocks();
+
+    // this is different than isRunning, it means we are receiving clocks
     bool isReceiving();
-    bool isStarted();
+    int getSmoothTempo();
+    int getSongClock();
 
-    void refreshState(SyncState& state);
-
-    // Events
-    
     void setTraceEnabled(bool b);
     void enableEvents();
     void disableEvents();
-    MidiSyncEvent* popEvent();
-    void startEventIterator();
-    MidiSyncEvent* nextEvent();
     void flushEvents();
     
   private:
@@ -65,7 +79,6 @@ class MidiAnalyzer : public MidiManager::RealtimeListener
     SyncSourceResult result;
 
     void detectBeat(MidiSyncEvent* mse);
-    
     
 };
 

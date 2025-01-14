@@ -1,16 +1,22 @@
 /**
- * Utility class that manages the notion of "bars" from a synchronization source,
- * including Tracks.
+ * Utility class that manages the notion of "bars" within a track and
+ * synchronization beats from a synchronization source.
  *
- * Bars are defined with a beatsPerBar setting and various session parameters.
- * There is a session default beatsPerBar and each Track may override this to
- * define bars of different lengths for polyrhythms.
+ * This is mostly a placeholder for Bar computation which is a surprisingly complex
+ * problem.  It doesn't do much right now beyond hold track-specific time signatures
+ * and the math necessary to calculate normalized beat/bar counts for the UI.
  *
- * Some SyncSources may have a native bar number, notably HostAnalyzer, and this
- * may be used or overridden.
+ * Thoughts:
  *
- * One of these will be maintained by SyncMaster for each track (follower)
- * and one will be maintained within the Transport.
+ * Tracks receive synchronization pulses (beats) from a SyncSource 
+ * Some SyncSources may have a native notion of beatsPerBar which may
+ * be used by the track, or it may be overridden.  The priority for determining
+ * beatsPerBar within a track are:
+ *
+ *      1) BPB defined on the track
+ *      2) Native BPB defined by the sync source
+ *      3) BPB defined by the Transport
+ *      4) BPB defined globaly in the Session
  *
  */
 
