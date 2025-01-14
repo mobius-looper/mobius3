@@ -13,7 +13,7 @@
  * Not seeing a reason to generate clocks at a tempo independent of the Transport
  * but it's possible.
  *
- * This was given the newer SyncSourceResult for tracking beats like
+ * This was given the newer SyncAnalyzerResult for tracking beats like
  * MidiAnalyzer.  But Transport doesn't really care where this thinks beats
  * are, it is only used to detect drift.
  */
@@ -25,7 +25,7 @@
 #include "../MidiManager.h"
 
 #include "MidiQueue.h"
-#include "SyncSourceResult.h"
+#include "SyncAnalyzerResult.h"
 
 /**
  * High resolution thread used when generating MIDI clocks and sending
@@ -67,7 +67,7 @@ class MidiRealizer
 
     // SyncMaster interaction
     void advance(int blockFrames);
-    SyncSourceResult* getResult();
+    SyncAnalyzerResult* getResult();
     
     // Transport control
     
@@ -110,7 +110,7 @@ class MidiRealizer
     
     MidiClockThread* thread = nullptr;
     MidiQueue outputQueue;
-    SyncSourceResult result;
+    SyncAnalyzerResult result;
 
     /**
      * The system millisecond counter on the last advance.

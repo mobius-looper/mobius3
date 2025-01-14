@@ -19,7 +19,7 @@
 #include "MidiRealizer.h"
 #include "HostAnalyzer.h"
 #include "Transport.h"
-#include "SyncSourceResult.h"
+#include "SyncAnalyzerResult.h"
 #include "SyncMaster.h"
 
 #include "Pulsator.h"
@@ -218,13 +218,13 @@ Pulse* Pulsator::getRelevantBlockPulse(int trackNumber)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Convert a SyncSourceResult from an analyzer into a Pulse
+ * Convert a SyncAnalyzerResult from an analyzer into a Pulse
  */
-void Pulsator::convertPulse(SyncSourceResult* result, Pulse& pulse)
+void Pulsator::convertPulse(SyncAnalyzerResult* result, Pulse& pulse)
 {
     if (result != nullptr) {
 
-        // SyncSourceResult doesn't return beat/bar numbers
+        // SyncAnalyzerResult doesn't return beat/bar numbers
         // it should return the beat number, but bars are ambiguous
         
         if (result->beatDetected) {
@@ -275,7 +275,7 @@ void Pulsator::convertPulse(SyncSourceResult* result, Pulse& pulse)
 void Pulsator::gatherHost()
 {
     HostAnalyzer* analyzer = syncMaster->getHostAnalyzer();
-    SyncSourceResult* result = analyzer->getResult();
+    SyncAnalyzerResult* result = analyzer->getResult();
 
     convertPulse(result, hostPulse);
 }
@@ -283,7 +283,7 @@ void Pulsator::gatherHost()
 void Pulsator::gatherMidi()
 {
     MidiAnalyzer* analyzer = syncMaster->getMidiAnalyzer();
-    SyncSourceResult* result = analyzer->getResult();
+    SyncAnalyzerResult* result = analyzer->getResult();
 
     convertPulse(result, midiPulse);
 }    
@@ -291,7 +291,7 @@ void Pulsator::gatherMidi()
 void Pulsator::gatherTransport()
 {
     Transport* t = syncMaster->getTransport();
-    SyncSourceResult* result = t->getResult();
+    SyncAnalyzerResult* result = t->getResult();
 
     convertPulse(result, transportPulse);
 }

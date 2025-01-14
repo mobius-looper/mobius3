@@ -15,7 +15,7 @@
 #include "../model/SyncState.h"
 
 #include "SyncAnalyzer.h"
-#include "SyncSourceResult.h"
+#include "SyncAnalyzerResult.h"
 #include "DriftMonitor2.h"
 
 class HostAnalyzer : public SyncAnalyzer
@@ -33,7 +33,7 @@ class HostAnalyzer : public SyncAnalyzer
     //
 
     void analyze(int blockFrames) override;
-    SyncSourceResult* getResult() override;
+    SyncAnalyzerResult* getResult() override;
     bool isRunning() override;
     bool hasNativeBeat() override {return true;}
     int getNativeBeat() override;
@@ -63,7 +63,7 @@ class HostAnalyzer : public SyncAnalyzer
     int sampleRate = 44100;
 
     // The results of the analysis of each block.
-    SyncSourceResult result;
+    SyncAnalyzerResult result;
 
     // Utility to monitor tempo drift
     DriftMonitor2 drifter;

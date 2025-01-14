@@ -16,7 +16,7 @@
 #include "MidiSyncEvent.h"
 
 #include "SyncAnalyzer.h"
-#include "SyncSourceResult.h"
+#include "SyncAnalyzerResult.h"
 
 class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
 {
@@ -33,7 +33,7 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     //
     
     void analyze(int blockFrames) override;
-    SyncSourceResult* getResult() override;
+    SyncAnalyzerResult* getResult() override;
     bool isRunning() override;
     // actually, this can be true if we do SongPositionPointer properly
     bool hasNativeBeat() override {return false;}
@@ -76,7 +76,7 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     
     MidiQueue inputQueue;
     TempoMonitor tempoMonitor;
-    SyncSourceResult result;
+    SyncAnalyzerResult result;
 
     void detectBeat(MidiSyncEvent* mse);
     

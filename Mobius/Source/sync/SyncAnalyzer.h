@@ -22,7 +22,7 @@ class SyncAnalyzer
     /**
      * Return the results of the previous block analysis.
      */
-    virtual class SyncSourceResult* getResult() = 0;
+    virtual class SyncAnalyzerResult* getResult() = 0;
 
     /**
      * True if the source is in a a Running state.
@@ -69,7 +69,7 @@ class SyncAnalyzer
     /**
      * Return true if this host supports a native time signature.
      * When this is true and the time signature changes, the
-     * timeSignatureChanged flag is set in the SyncSourceResult.
+     * timeSignatureChanged flag is set in the SyncAnalyzerResult.
      */
     virtual bool hasNativeTimeSignature() = 0;
 
@@ -108,7 +108,7 @@ class SyncAnalyzer
      * This is the amount of the drift.
      *
      * When the drift exceeds a threshold the unitLength will be recalculated
-     * and the tempoChanged flag will be set in SyncSourceResult.
+     * and the tempoChanged flag will be set in SyncAnalyzerResult.
      *
      * todo: needs work, it may be best to not allow sources to jump tempos
      * by themselves.  They report drift and the application may then decide
@@ -131,7 +131,7 @@ class SyncAnalyzer
     // This is basically the MIDI "song position" which for Host would be the
     // starting beat number when the transport started.
     //
-    // Would this go here or in the SyncSourceResult?
+    // Would this go here or in the SyncAnalyzerResult?
     //
 
     //int getStartingBeat() = 0;

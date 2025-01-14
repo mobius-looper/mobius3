@@ -947,16 +947,19 @@ float SyncMaster::varGetTempo(SyncSource src)
 
 int SyncMaster::varGetBeat(SyncSource src)
 {
+    (void)src;
     return barTender->getBeat(0);
 }
 
 int SyncMaster::varGetBar(SyncSource src)
 {
+    (void)src;
     return barTender->getBar(0);
 }
 
 int SyncMaster::varGetBeatsPerBar(SyncSource src)
 {
+    (void)src;
     return barTender->getBeatsPerBar(0);
 }
 

@@ -16,7 +16,7 @@
 #include "../model/SyncState.h"
 
 #include "SyncAnalyzer.h"
-#include "SyncSourceResult.h"
+#include "SyncAnalyzerResult.h"
 #include "DriftMonitor.h"
 
 class Transport : public SyncAnalyzer
@@ -36,7 +36,7 @@ class Transport : public SyncAnalyzer
     //
     
     void analyze(int blockFrames) override;
-    SyncSourceResult* getResult() override;
+    SyncAnalyzerResult* getResult() override;
     bool isRunning() override;
     bool hasNativeBeat() override {return true;}
     int getNativeBeat() override;
@@ -91,7 +91,7 @@ class Transport : public SyncAnalyzer
     
     int sampleRate = 44100;
     
-    SyncSourceResult result;
+    SyncAnalyzerResult result;
     DriftMonitor drifter;
     bool testCorrection = false;
     

@@ -36,11 +36,12 @@
         <FILE id="blqXw9" name="Pulsator.cpp" compile="1" resource="0" file="Source/sync/Pulsator.cpp"/>
         <FILE id="bLVZYB" name="Pulsator.h" compile="0" resource="0" file="Source/sync/Pulsator.h"/>
         <FILE id="efK3Bv" name="Pulse.h" compile="0" resource="0" file="Source/sync/Pulse.h"/>
+        <FILE id="dUI2f1" name="SyncAnalyzer.h" compile="0" resource="0" file="Source/sync/SyncAnalyzer.h"/>
+        <FILE id="VRIuUf" name="SyncAnalyzerResult.h" compile="0" resource="0"
+              file="Source/sync/SyncAnalyzerResult.h"/>
         <FILE id="G5Wugr" name="SyncConstants.h" compile="0" resource="0" file="Source/sync/SyncConstants.h"/>
         <FILE id="XnnDpK" name="SyncMaster.cpp" compile="1" resource="0" file="Source/sync/SyncMaster.cpp"/>
         <FILE id="G80cvL" name="SyncMaster.h" compile="0" resource="0" file="Source/sync/SyncMaster.h"/>
-        <FILE id="G4AVkf" name="SyncSourceState.h" compile="0" resource="0"
-              file="Source/sync/SyncSourceState.h"/>
         <FILE id="MKxdyp" name="SyncTrace.cpp" compile="1" resource="0" file="Source/sync/SyncTrace.cpp"/>
         <FILE id="s49iPd" name="SyncTrace.h" compile="0" resource="0" file="Source/sync/SyncTrace.h"/>
         <FILE id="r8b1tS" name="TempoMonitor.cpp" compile="1" resource="0"

@@ -13,7 +13,7 @@
 
 #pragma once
 
-class SyncSourceResult
+class SyncAnalyzerResult
 {
   public:
 

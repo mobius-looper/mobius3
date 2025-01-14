@@ -740,7 +740,7 @@ void MidiRealizer::flushEvents()
 
 /**
  * Consume any queued events at the beginning of an audio block
- * and prepare the SyncSourceResult
+ * and prepare the SyncAnalyzerResult
  *
  * !! This is basically identical to what MidiAnalyzer does.
  * Could factor out something in common that could be shared, but
@@ -763,7 +763,7 @@ void MidiRealizer::advance(int blockFrames)
 }
 
 /**
- * Convert a queued MidiSyncEvent into fields in the SyncSourceResult
+ * Convert a queued MidiSyncEvent into fields in the SyncAnalyzerResult
  * for later consumption by Pulsator.
  * 
  * todo: this is place where we should try to offset the event into the buffer
@@ -809,7 +809,7 @@ void MidiRealizer::detectBeat(MidiSyncEvent* mse)
     result.beatDetected = detected;
 }
 
-SyncSourceResult* MidiRealizer::getResult()
+SyncAnalyzerResult* MidiRealizer::getResult()
 {
     return &result;
 }

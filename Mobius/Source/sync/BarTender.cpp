@@ -21,7 +21,7 @@
 
 #include "Pulse.h"
 #include "HostAnalyzer.h"
-#include "SyncSourceResult.h"
+#include "SyncAnalyzerResult.h"
 #include "SyncMaster.h"
 
 #include "BarTender.h"
@@ -84,7 +84,7 @@ void BarTender::advance(int frames)
     
     // reflect changes in the Host time signature if they were detected
     HostAnalyzer* anal = syncMaster->getHostAnalyzer();
-    SyncSourceResult* result = anal->getResult();
+    SyncAnalyzerResult* result = anal->getResult();
     if (result->timeSignatureChanged) {
 
         // what exactly would we do with this?

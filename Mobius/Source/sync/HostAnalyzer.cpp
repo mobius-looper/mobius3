@@ -270,7 +270,7 @@ void HostAnalyzer::analyze(int blockSize)
     audioStreamTime += blockSize;
 }
 
-SyncSourceResult* HostAnalyzer::getResult()
+SyncAnalyzerResult* HostAnalyzer::getResult()
 {
     return &result;
 }

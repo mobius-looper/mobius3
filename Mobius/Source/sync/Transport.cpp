@@ -20,7 +20,7 @@
 #include "../mobius/track/TrackProperties.h"
 
 #include "SyncConstants.h"
-#include "SyncSourceResult.h"
+#include "SyncAnalyzerResult.h"
 #include "MidiRealizer.h"
 #include "SyncMaster.h"
 
@@ -183,7 +183,7 @@ void Transport::analyze(int blockFrames)
     advance(blockFrames);
 }
 
-SyncSourceResult* Transport::getResult()
+SyncAnalyzerResult* Transport::getResult()
 {
     return &result;
 }
