@@ -2,17 +2,12 @@
  * Subcomponent of SyncMaster that analyzes synchronization state from the plugin host.
  *
  * This has somewhat unusual layering because it requires access to the juce::AudioProcessor
- * which can't easilly be abstracted away.  What it does is maintain HostSyncState and
- * AudioTime which are reasonably independent of Juce, though at this point the prospect
- * of moving to another plugin framework is unlikely.
- *
+ * which can't easilly be abstracted away.  
  */
 
 #pragma once
 
 #include <JuceHeader.h>
-
-#include "../model/SyncState.h"
 
 #include "SyncAnalyzer.h"
 #include "SyncAnalyzerResult.h"
@@ -46,13 +41,6 @@ class HostAnalyzer : public SyncAnalyzer
     int getUnitLength() override;
     int getDrift() override;
     
-    //
-    // SyncMaster Interface
-    // some of this could be moved to SyncAnayzer?
-    //
-    
-    void refreshState(SyncState& state);
-
   private:
 
     juce::AudioProcessor* audioProcessor = nullptr;

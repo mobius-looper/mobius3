@@ -135,7 +135,7 @@ void TransportElement::update(class MobiusView* v)
     // todo: SourceMidi has the notion of the raw and "smooth" tempo
     // figure out which one to show
     
-    float ftempo = v->syncState.transport.tempo;
+    float ftempo = v->syncState.transportTempo;
     
     // trunicate to two decimal places to prevent excessive
     // fluctuations
@@ -156,13 +156,13 @@ void TransportElement::update(class MobiusView* v)
     // this is necessary to flash beats
     light.advance();
 
-    int newBpb = v->syncState.transport.beatsPerBar;
+    int newBpb = v->syncState.transportBeatsPerBar;
     if (lastBpb != newBpb) {
         bpb.setText(juce::String(newBpb));
         lastBpb = newBpb;
     }
     
-    int newBars = v->syncState.transport.barsPerLoop;
+    int newBars = v->syncState.transportBarsPerLoop;
     if (lastBars != newBars) {
         bars.setText(juce::String(newBars));
         lastBars = newBars;

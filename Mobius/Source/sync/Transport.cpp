@@ -148,24 +148,25 @@ void Transport::loadSession(Session* s)
 //
 //////////////////////////////////////////////////////////////////////
 
-void Transport::refreshState(SyncState& extstate)
+void Transport::refreshState(SyncState* state)
 {
-    extstate.tempo = tempo;
-    extstate.beat = beat;
-    extstate.bar = bar;
-    extstate.beatsPerBar = beatsPerBar;
-    extstate.barsPerLoop = barsPerLoop;
+    state->transportTempo = tempo;
+    state->transportBeat = beat;
+    state->transportBar = bar;
+    state->transportLoop = loop;
+    state->transportBeatsPerBar = beatsPerBar;
+    state->transportBarsPerLoop = barsPerLoop;
 }
 
 /**
  * Capture the priority state from the transport.
  */
-void Transport::refreshPriorityState(PriorityState* dest)
+void Transport::refreshPriorityState(PriorityState* state)
 {
     // !! move this to Pulsator and transportBarTender
-    dest->transportBeat = beat;
-    dest->transportBar = bar;
-    dest->transportLoop = loop;
+    state->transportBeat = beat;
+    state->transportBar = bar;
+    state->transportLoop = loop;
 }
 
 //////////////////////////////////////////////////////////////////////

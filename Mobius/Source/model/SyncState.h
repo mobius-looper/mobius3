@@ -1,35 +1,41 @@
 /**
- * A simplification of the synchronization state that is associated
- * with each track.
+ * State for the various synchronization sources included in SystemState.
  *
- * Usually this is the same for every track that follows the same SyncSource
- * but if the track overrides beatsPerBar it may be different.
+ * Each TrackState also has a set of track-specific fields related to synchronization,
+ * notably the beat and bar counters since each track is allowed to define an independent
+ * beatsPerBar value to control bar boundaries.
  *
- * This is the model that feeds the TempoElement which has become an inappropriate name.
- * But it's the thing that shows the tempo beat and bar numbers when a track is focused.
+ * This will be built by SyncMaster
+ * 
  */
 
 #pragma once
-
-#include "../sync/SyncConstants.h"
 
 class SyncState
 {
   public:
 
-    float tempo = 0.0f;
-    int beat = 0;
-    int bar = 0;
+    // Masters
+    int transportMaster = 0;
+    int trackSyncMaster = 0;
     
-    // only TransportElement needs this
-    int beatsPerBar = 0;
-    int barsPerLoop = 0;
-    
-    // for MIDI, true if clocks are being received
-    // for Host, true valid if this is a plugin, and the transport has been started
-    // ignored for Transport and Track
-    // this can be used to suppress the display of tempo/beat/bar if they are irrelevant
-    bool receiving = false;
+    // Transport
+    // some of this is duplicated in PriorityState
+    float transportTempo = 0.0f;
+    int transportBeat = 0;
+    int transportBar = 0;
+    int transportLoop = 0;
+    int transportBeatsPerBar = 0;
+    int transportBarsPerLoop = 0;
+
+    // Other Sources
+
+    bool midiReceiving = false;
+    bool midiStarted = false;
+    float midiTempo = 0.0f;
+
+    bool hostStarted = false;
+    float hostTempo = 0.0f;
     
 };
 

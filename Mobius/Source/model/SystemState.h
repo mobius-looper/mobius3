@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "../sync/SyncMasterState.h"
+#include "SyncState.h"
 #include "TrackState.h"
 
 class SystemState
@@ -44,8 +44,8 @@ class SystemState
     // details for the focused track only
     FocusedTrackState focusedState;
 
-    // state for various non-track components
-    SyncMasterState syncState;
+    // common synchronization state that is not track related
+    SyncState syncState;
 
     // until the old core is converted, return a pointer to the old state model
     class OldMobiusState* oldState = nullptr;

@@ -54,7 +54,6 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
-#include "../model/SyncState.h"
 
 #include "HostAnalyzer.h"
 
@@ -89,17 +88,6 @@ void HostAnalyzer::initialize(juce::AudioProcessor* ap)
 void HostAnalyzer::setSampleRate(int rate)
 {
     sampleRate = rate;
-}
-
-/**
- * Only refresh the things we control, Pulsator adds the rest
- */
-void HostAnalyzer::refreshState(SyncState& state)
-{
-    state.receiving = playing;
-    
-    // this will normally be overridden by Pulsator
-    state.beat = elapsedBeats;
 }
 
 //////////////////////////////////////////////////////////////////////

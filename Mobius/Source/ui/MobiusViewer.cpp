@@ -1396,42 +1396,35 @@ void MobiusViewer::refreshRegions(FocusedTrackState* tstate, MobiusViewTrack* tv
  *
  * Beats and bars have only been shown if the syncSource is SYNC_MIDI or SYNC_HOST
  * Old code only showed bars if syncUnit was SYNC_UNIT_BAR but now we always do both.
- *
- * !! This doesn't need to be duplicadted for every track.  Think about just
- * sharing the SyncMasterState and letting each track remember the source.
- * 
  */
 void MobiusViewer::refreshSync(SystemState* state, TrackState* tstate, MobiusViewTrack* tview)
 {
     tview->syncTempo = 0.0f;
-    tview->syncBeat = 0;
-    tview->syncBar = 0;
+    tview->syncBeat = tstate->syncBeat;
+    tview->syncBar = tstate->syncBar;
+
+    // what the hell does this do?
     tview->syncShowBeat = false;
 
     SyncState* ss = nullptr;
     switch (tstate->syncSource) {
         case SyncSourceMidi:
-            ss = &(state->syncState.midi);
             // suppress if no clocks
-            if (!ss->receiving) ss = nullptr;
+            if (!ss->midiReceiving)
+              tview->syncTempo = ss->midiTempo;
             break;
         case SyncSourceHost:
-            ss = &(state->syncState.host);
-            // suppress if host transport is stopped?
-            if (!ss->receiving) ss = nullptr;
+            // suppress if transport is stopped?
+            if (!ss->hostStarted)
+              tview->syncTempo = ss->hostTempo;
             break;
         case SyncSourceTransport:
-            ss = &(state->syncState.transport);
+            // todo: don't really need to display this, the TransportElement
+            // will almost always be visible
+            tview->syncTempo = ss->transportTempo;
             break;
         default:
             break;
-    }
-
-    if (ss != nullptr) {
-        tview->syncTempo = ss->tempo;
-        tview->syncBeat = ss->beat;
-        tview->syncBar = ss->bar;
-        tview->syncShowBeat = true;
     }
 }    
 

@@ -7,6 +7,7 @@
 #include "../model/Session.h"
 #include "../model/UIAction.h"
 #include "../model/Query.h"
+#include "../model/SyncState.h"
 #include "../model/PriorityState.h"
 
 // for some of the old sync related modes
@@ -22,7 +23,6 @@
 #include "MidiAnalyzer.h"
 #include "HostAnalyzer.h"
 #include "Transport.h"
-#include "SyncMasterState.h"
 
 #include "SyncMaster.h"
 
@@ -823,18 +823,22 @@ bool SyncMaster::doQuery(Query* q)
 }
 
 /**
- * Unclear whether we need to be including the state for the
- * non-transport sources.  Some of that will also be returned
- * through the TrackState for each track that follows a sync source.
+ * Add state for each sync source.
+ * Beat/Bar counts will be in TrackState for each track.
  */
-void SyncMaster::refreshState(SyncMasterState* extstate)
+void SyncMaster::refreshState(SyncState* state)
 {
-    transport->refreshState(extstate->transport);
-    midiAnalyzer->refreshState(extstate->midi);
-    hostAnalyzer->refreshState(extstate->host);
+    state->transportMaster = transportMaster;
+    state->trackSyncMaster = trackSyncMaster;
 
-    extstate->transportMaster = transportMaster;
-    extstate->trackSyncMaster = trackSyncMaster;
+    state->midiReceiving = midiAnalyzer->isReceiving();
+    state->midiStarted = midiAnalyzer->isRunning();
+    state->midiTempo = midiAnalyzer->getTempo();
+
+    state->hostStarted = hostAnalyzer->isRunning();
+    state->hostTempo = hostAnalyzer->getTempo();
+
+    transport->refreshState(state);
 }
 
 void SyncMaster::refreshPriorityState(PriorityState* pstate)

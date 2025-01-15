@@ -43,8 +43,6 @@
         <FILE id="b0gyUV" name="SyncConstants.h" compile="0" resource="0" file="../Mobius/Source/sync/SyncConstants.h"/>
         <FILE id="cKcIct" name="SyncMaster.cpp" compile="1" resource="0" file="../Mobius/Source/sync/SyncMaster.cpp"/>
         <FILE id="pelkmH" name="SyncMaster.h" compile="0" resource="0" file="../Mobius/Source/sync/SyncMaster.h"/>
-        <FILE id="Ljw2Vp" name="SyncMasterState.h" compile="0" resource="0"
-              file="../Mobius/Source/sync/SyncMasterState.h"/>
         <FILE id="cQJfMI" name="SyncTrace.cpp" compile="1" resource="0" file="../Mobius/Source/sync/SyncTrace.cpp"/>
         <FILE id="oYqlKi" name="SyncTrace.h" compile="0" resource="0" file="../Mobius/Source/sync/SyncTrace.h"/>
         <FILE id="bXAFrx" name="TempoMonitor.cpp" compile="1" resource="0"

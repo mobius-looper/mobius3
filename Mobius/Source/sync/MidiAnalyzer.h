@@ -8,7 +8,6 @@
 #include <JuceHeader.h>
 
 #include "../MidiManager.h"
-#include "../model/SyncState.h"
 
 // old stuff, weed
 #include "MidiQueue.h"
@@ -50,9 +49,7 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     //
     // SyncMster Interface
     //
-    
-    void refreshState(SyncState& state);
-    
+
     // MidiManager::RealtimeListener
     void midiRealtime(const juce::MidiMessage& msg, juce::String& source) override;
 

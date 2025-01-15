@@ -13,8 +13,6 @@
 
 #include <JuceHeader.h>
 
-#include "../model/SyncState.h"
-
 #include "SyncAnalyzer.h"
 #include "SyncAnalyzerResult.h"
 #include "DriftMonitor.h"
@@ -28,7 +26,7 @@ class Transport : public SyncAnalyzer
 
     void setSampleRate(int r);
     void loadSession(class Session* s);
-    void refreshState(SyncState& state);
+    void refreshState(class SyncState* state);
     void refreshPriorityState(class PriorityState* ps);
 
     //

@@ -20,7 +20,6 @@
 #include <JuceHeader.h>
 
 #include "SyncConstants.h"
-#include "SyncMasterState.h"
 
 class SyncMaster
 {
@@ -56,7 +55,7 @@ class SyncMaster
     void advance(class MobiusAudioStream* stream);
     bool doAction(class UIAction* a);
     bool doQuery(class Query* q);
-    void refreshState(class SyncMasterState* s);
+    void refreshState(class SyncState* s);
     void refreshPriorityState(class PriorityState* s);
 
     //

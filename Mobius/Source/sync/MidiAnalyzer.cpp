@@ -35,16 +35,6 @@ void MidiAnalyzer::shutdown()
     midiManager->removeRealtimeListener(this);
 }
 
-void MidiAnalyzer::refreshState(SyncState& state)
-{
-    state.receiving = inputQueue.receivingClocks;
-    state.tempo = tempoMonitor.getTempo();
-    // this is the raw beat from the last known START or CONTINUE
-    state.beat = inputQueue.beat;
-
-    // bars, beatsPerBar, and barsPerLoop must be done at a higher level
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // SyncAnalyzer Interface

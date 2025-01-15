@@ -26,8 +26,8 @@
 
 #include <JuceHeader.h>
 
+#include "../model/SyncState.h"
 #include "../model/TrackState.h"
-#include "../sync/SyncMasterState.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -396,7 +396,7 @@ class MobiusView
     // Counter needs this for time calculations
     int sampleRate = 44100;
 
-    SyncMasterState syncState;
+    SyncState syncState;
     
   protected:
 
