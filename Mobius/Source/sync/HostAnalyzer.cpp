@@ -70,7 +70,7 @@ HostAnalyzer::HostAnalyzer()
 
 HostAnalyzer::~HostAnalyzer()
 {
-    traceppq = true;
+    traceppq = false;
 }
 
 /**
@@ -323,8 +323,10 @@ void HostAnalyzer::detectStart(bool newPlaying, double beatPosition)
             resetTempoMonitor();
             
             // temporary: trace the next 10 blocks
-            traceppqFine = true;
-            ppqCount = 0;
+            if (traceppq) {
+                traceppqFine = true;
+                ppqCount = 0;
+            }
         }
         else {
             Trace(2, "HostAnalyzer: Stop");
