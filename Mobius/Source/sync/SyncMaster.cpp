@@ -690,7 +690,8 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     pulsator->advance(frames);
 
     // see commentary about why this is complicated
-    transport->checkDrift(frames);
+    // no longer necessary, Transport does it's own drift checking
+    //transport->checkDrift(frames);
 
     // Detect whether MIDI clocks have stopped comming in
     //

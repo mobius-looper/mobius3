@@ -1239,6 +1239,8 @@ void TrackManager::refreshState(SystemState* state)
     state->midiTracks = midiTracks;
 
     // both types support the new focused state for events
+    // this must have been set by Supervisor when the SystemState
+    // was passed down for refresh
     if (state->focusedTrack > 0) {
         LogicalTrack* lt = getLogicalTrack(state->focusedTrack);
         lt->refreshFocusedState(&(state->focusedState));

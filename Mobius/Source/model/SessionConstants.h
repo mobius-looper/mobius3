@@ -6,11 +6,13 @@
  * in the code.
  *
  * This is a hack to get new things added quickly, it is likely that most things
- * here actually do need formal Parameter definitions.
+ * here actually do need formal Parameter definitions with Symbols.
  *
  */
 
 static const char* SessionBeatsPerBar = "beatsPerBar";
+
+// not liking this, see notes on host bar ideas
 static const char* SessionHostOverrideTimeSignature = "hostOverrideTimeSignature";
 
 static const char* SessionTransportMidiEnable = "transportMidiEnable";

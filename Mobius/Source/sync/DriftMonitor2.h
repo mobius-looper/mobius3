@@ -63,6 +63,10 @@ class DriftMonitor2
 
     int getDrift();
 
+    int getStreamTime() {
+        return streamTime;
+    }
+
   private:
 
     // the number of samples that have elapsed since the Start Point

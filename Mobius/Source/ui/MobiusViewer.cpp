@@ -1051,7 +1051,10 @@ void MobiusViewer::refreshAllTracks(SystemState* state, MobiusView* view)
         }
     }
 
-    if (view->focusedTrack > 0) {
+    if (view->focusedTrack < 0 || view->focusedTrack >= view->tracks.size()) {
+        Trace(1, "MobiusViewer: view->focused track out of range");
+    }
+    else {
         MobiusViewTrack* tview = view->tracks[view->focusedTrack];
         if (tview == nullptr) {
             Trace(1, "MobiusViewer: Track index overflow");

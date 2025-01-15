@@ -16,6 +16,7 @@
 #include "SyncAnalyzer.h"
 #include "SyncAnalyzerResult.h"
 #include "DriftMonitor.h"
+#include "DriftMonitor2.h"
 
 class Transport : public SyncAnalyzer
 {
@@ -29,6 +30,9 @@ class Transport : public SyncAnalyzer
     void refreshState(class SyncState* state);
     void refreshPriorityState(class PriorityState* ps);
 
+    void globalReset();
+    int getConnection();
+    
     //
     // SyncAnalyzer Interface
     //
@@ -45,7 +49,7 @@ class Transport : public SyncAnalyzer
     int getNativeBeatsPerBar();
     float getTempo() override;
     int getUnitLength() override;
-    int getDrift() {return 0;}
+    int getDrift() override;
 
     //
     // Internal Public Interface
@@ -92,19 +96,13 @@ class Transport : public SyncAnalyzer
     
     SyncAnalyzerResult result;
     DriftMonitor drifter;
+    DriftMonitor2 drifter2;
     bool testCorrection = false;
     
     // the desired tempo constraints
     // the tempo will kept in this range unless barLock is true
     float minTempo = 30.0f;
     float maxTempo = 300.0f;
-
-    // when true it will not adjust the bar count to fit the tempo to the length
-    bool barLock = false;
-
-    // when barLock is false and this is on, may double or halve bar counts
-    // to keep the tempo constrained
-    bool barMultiply = true;
     
     bool paused = false;
     bool metronomeEnabled = false;
@@ -119,12 +117,12 @@ class Transport : public SyncAnalyzer
     //
 
     float tempo = 0.0f;
-    bool started = false;
     int unitLength = 0;
     int unitPlayHead = 0;
     int unitsPerBeat = 1;
     int elapsedUnits = 0;
     int unitCounter = 0;
+    bool started = false;
 
     // raw beat counter, there is no "normalized" beat like HostAnalyzer
     // Transport gets to control the beat number, and MidiRealizer follows it
@@ -132,21 +130,24 @@ class Transport : public SyncAnalyzer
     int bar = 0;
     int loop = 0;
     
-    // Time signature from the connected track
-    // !! NO, think about this
+    // Time signature from the Session or the user
     int beatsPerBar = 4;
+
+    // loop length when connected to a track
     int barsPerLoop = 1;
 
+    // default bpb from the session to be restored on GlobalReset
     int sessionBeatsPerBar = 0;
     
-    void correctBaseCounters();
     int deriveTempo(int tapFrames);
     void resetLocation();
     float lengthToTempo(int frames);
     void deriveUnitLength(float tempo);
     void deriveLocation(int oldUnit);
-    void setTempoInternal(float tempo);
+    void setTempoInternal(float newTempo, int newUnitLength);
 
+    void consumeMidiBeats();
+    void checkDrift();
 };
 
 /****************************************************************************/
