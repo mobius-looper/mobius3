@@ -11,7 +11,7 @@
 
 #include "SyncAnalyzer.h"
 #include "SyncAnalyzerResult.h"
-#include "DriftMonitor2.h"
+#include "DriftMonitor.h"
 
 class HostAnalyzer : public SyncAnalyzer
 {
@@ -54,7 +54,7 @@ class HostAnalyzer : public SyncAnalyzer
     SyncAnalyzerResult result;
 
     // Utility to monitor tempo drift
-    DriftMonitor2 drifter;
+    DriftMonitor drifter;
     
     //
     // Things we pull from the AudioProcessor

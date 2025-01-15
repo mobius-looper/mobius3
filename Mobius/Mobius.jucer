@@ -16,9 +16,6 @@
         <FILE id="LIOiwp" name="DriftMonitor.cpp" compile="1" resource="0"
               file="Source/sync/DriftMonitor.cpp"/>
         <FILE id="HYQ3tR" name="DriftMonitor.h" compile="0" resource="0" file="Source/sync/DriftMonitor.h"/>
-        <FILE id="AZqiNe" name="DriftMonitor2.cpp" compile="1" resource="0"
-              file="Source/sync/DriftMonitor2.cpp"/>
-        <FILE id="YLDnw3" name="DriftMonitor2.h" compile="0" resource="0" file="Source/sync/DriftMonitor2.h"/>
         <FILE id="RXCW17" name="Follower.h" compile="0" resource="0" file="Source/sync/Follower.h"/>
         <FILE id="N1Ldzj" name="HostAnalyzer.cpp" compile="1" resource="0"
               file="Source/sync/HostAnalyzer.cpp"/>

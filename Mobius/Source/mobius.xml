@@ -138,7 +138,7 @@
     outRealign='midiStart'
     realignTime='start'
     resizeSyncAdjust='none'
-    slaveSyncUnit='beat'
+    slaveSyncUnit='bar'
     speedSyncAdjust='none'>
     <SetupTrack
       name='sadf'

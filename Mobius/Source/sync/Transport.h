@@ -16,7 +16,6 @@
 #include "SyncAnalyzer.h"
 #include "SyncAnalyzerResult.h"
 #include "DriftMonitor.h"
-#include "DriftMonitor2.h"
 
 class Transport : public SyncAnalyzer
 {
@@ -96,7 +95,6 @@ class Transport : public SyncAnalyzer
     
     SyncAnalyzerResult result;
     DriftMonitor drifter;
-    DriftMonitor2 drifter2;
     bool testCorrection = false;
     
     // the desired tempo constraints

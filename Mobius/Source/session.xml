@@ -197,7 +197,6 @@
     <Value name="driftCheckPoint" value="loop" type="enum" ordinal="0"/>
     <Value name="fadeFrames" value="128" type="int"/>
     <Value name="inputLatency" value="0" type="int"/>
-    <Value name="longDisable" value="1" type="int"/>
     <Value name="longPress" value="500" type="int"/>
     <Value name="maxLoops" value="2" type="int"/>
     <Value name="maxSyncDrift" value="50" type="int"/>

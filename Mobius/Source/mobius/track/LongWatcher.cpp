@@ -108,7 +108,8 @@ void LongWatcher::watch(UIAction* a)
                     // this is normal if you decide to remove the press state
                     // when the long press is detected,
                     // abnormal if it was left there
-                    Trace(1, "LongWatcher: Release transition not tracked");
+                    // see advance() we're removing it
+                    //Trace(1, "LongWatcher: Release transition not tracked");
                 }
                 else {
                     // going down...
@@ -195,6 +196,7 @@ void LongWatcher::advance(int frames)
                 state->notifications++;
             }
             else {
+                // remove it from the list
                 if (prev != nullptr)
                   prev->next = next;
                 else
