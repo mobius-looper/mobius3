@@ -43,8 +43,12 @@ class BarTender
     void advance(int blockFrames);
     Pulse* annotate(class Follower* f, Pulse* p);
 
+    // should this take numbers or a follower?  Follower is
+    // more common internally
     int getBeat(int trackNumber);
+    int getBeat(Follower* f);
     int getBar(int trackNumber);
+    int getBar(Follower* f);
     int getBeatsPerBar(int trackNumber);
     int getBarsPerLoop(int trackNumber);
 

@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 
+#include "../../sync/SyncConstants.h"
 #include "StatusElement.h"
 
 class TempoElement : public StatusElement
@@ -25,10 +26,11 @@ class TempoElement : public StatusElement
 
   private:
 
+    SyncSource mSyncSource = SyncSourceNone;
+    SyncUnit mSyncUnit = SyncUnitNone;
 	int mTempo = 0;
 	int mBeat = 0;
 	int mBar = 0;
-    bool mShowBeat = false;
 
 };
 

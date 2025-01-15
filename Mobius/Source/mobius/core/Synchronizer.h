@@ -85,9 +85,9 @@ class Synchronizer {
     // Misc status
     //
 
-    void getState(class OldMobiusState* state);
-	void getState(class OldMobiusTrackState* state, class Track* t);
-    void refreshState(class TrackState* state, class Track* t);
+    //void getState(class OldMobiusState* state);
+	//void getState(class OldMobiusTrackState* state, class Track* t);
+    //void refreshState(class TrackState* state, class Track* t);
     
     //
     // Sync Pulses
@@ -104,21 +104,11 @@ class Synchronizer {
     void extendRecordStop(class Action* action, class Loop* loop, class Event* stop);
     bool undoRecordStop(class Loop* loop);
 
+    // 
+    // Loop and Function notifications
     //
-    // Interrupt Lifecycle
-    //
-
-	void interruptStart(class MobiusAudioStream* stream);
-    void prepare(class Track* t);
-    void finish(class Track* t);
-	void interruptEnd();
 
     void trackSyncEvent(class Track* t, class EventType* type, int offset);
-
-    // 
-    // Loop and Function callbacks
-    //
-
     void loopRealignSlave(class Loop* l);
     void loopLocalStartPoint(class Loop* l);
     void loopReset(class Loop* loop);
@@ -174,7 +164,7 @@ class Synchronizer {
     float getSpeed(class Loop* l);
     void traceTempo(class Loop* l, const char* type, float tempo);
     float getFramesPerBeat(float tempo);
-    int getBeatsPerBar(OldSyncSource src, Loop* l);
+    //int getBeatsPerBar(OldSyncSource src, Loop* l);
 
 
     void startRecording(class Loop* l);

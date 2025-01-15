@@ -21,7 +21,7 @@ class LogicalTrack
     LogicalTrack(class TrackManager* tm);
     ~LogicalTrack();
 
-    void loadSession(class Session::Track* def, int number);
+    void loadSession(class Session::Track* def);
     
     Session::TrackType getType();
     int getSessionId();

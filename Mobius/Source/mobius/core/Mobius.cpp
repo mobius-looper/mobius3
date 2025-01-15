@@ -936,8 +936,9 @@ void Mobius::beginAudioBlock(MobiusAudioStream* stream)
             // so we can move on
         }
     }
-    
-	mSynchronizer->interruptStart(stream);
+
+    // no longer need this
+	//mSynchronizer->interruptStart(stream);
 
 	// prepare the tracks before running scripts
     // this is a holdover from the old days, do we still need
@@ -973,6 +974,8 @@ void Mobius::beginAudioBlockAfterActions()
 /**
  * Called by Kernel when everything is reaady to start receiving audio
  * block content.
+ *
+ * update: no longer used, TimeSlicer handles ordering and track advance
  */
 #if 0
 void Mobius::processAudioStream(MobiusAudioStream* stream)
@@ -1073,7 +1076,8 @@ void Mobius::endAudioInterrupt(MobiusAudioStream* stream)
 
     long frames = stream->getInterruptFrames();
 
-	mSynchronizer->interruptEnd();
+    // no longer need this
+	//mSynchronizer->interruptEnd();
 	
 	// if we're recording, capture whatever was left in the output buffer
 	// !! need to support merging of all of the output buffers for
@@ -1918,7 +1922,7 @@ OldMobiusState* Mobius::getState()
     
 	mState.globalRecording = mCapturing;
 
-    mSynchronizer->getState(&mState);
+    //mSynchronizer->getState(&mState);
 
     // OG Mobius only refreshed the active track, now we do all of them
     // since the TrackStrips will want most things
@@ -1932,6 +1936,16 @@ OldMobiusState* Mobius::getState()
     mState.setupOrdinal = mSetup->ordinal;
     
 	return &mState;
+}
+
+bool Mobius::isCapturing()
+{
+    return mCapturing;
+}
+
+int Mobius::getSetupOrdinal()
+{
+    return mSetup->ordinal;
 }
 
 // kludge for drag and drop

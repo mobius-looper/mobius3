@@ -40,24 +40,21 @@ class MobiusViewer
                       class MobiusView* mview, class MobiusViewTrack* vt,
                       bool active);
 
-    void refreshTrackName(class OldMobiusState* state, class OldMobiusTrackState* tstate,
-                          class MobiusView* mview, class MobiusViewTrack* tview);
+    //void refreshTrackName(class OldMobiusState* state, class OldMobiusTrackState* tstate,
+    //class MobiusView* mview, class MobiusViewTrack* tview);
 
-    void refreshTrackProperties(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);
-    void refreshSync(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);
-    void refreshTrackGroups(class OldMobiusTrackState* tstate,  class MobiusViewTrack* tview);
+    //void refreshTrackProperties(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);
+    //void refreshSync(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);
+    //void refreshTrackGroups(class OldMobiusTrackState* tstate,  class MobiusViewTrack* tview);
     void refreshInactiveLoops(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);
     void refreshActiveLoop(class OldMobiusTrackState* tstate, class OldMobiusLoopState* lstate,
                            bool activeTrack, class MobiusViewTrack* tview);
-    void refreshMode(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);
+    //void refreshMode(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);
     void refreshSubcycles(class MobiusViewTrack* tview);
     void refreshLayers(class OldMobiusLoopState* lstate, class MobiusViewTrack* tview);
-    void refreshEvents(class OldMobiusLoopState* lstate, class MobiusViewTrack* tview);
-    void refreshMinorModes(class OldMobiusTrackState* tstate, class OldMobiusLoopState* lstate,
-                           class MobiusViewTrack* tview);
-    void assembleMinorModes(class MobiusViewTrack* tview);
-    void addMinorMode(class MobiusViewTrack* tview, const char* mode);
-    void addMinorMode(class MobiusViewTrack* tview, const char* mode, int arg);
+    //void refreshEvents(class OldMobiusLoopState* lstate, class MobiusViewTrack* tview);
+    //void refreshMinorModes(class OldMobiusTrackState* tstate, class OldMobiusLoopState* lstate,
+    //class MobiusViewTrack* tview);
 
     //
     // New State model
@@ -65,10 +62,16 @@ class MobiusViewer
     //
     
     void refreshAllTracks(class SystemState* state, class MobiusView* view);
-    void refreshMidiTracks(class SystemState* state, class MobiusView* view);
-    void refreshTrack(class SystemState* state, class TrackState* tstate, class MobiusViewTrack* tview);
-
+    //void refreshMidiTracks(class SystemState* state, class MobiusView* view);
+    void refreshTrack(class SystemState* state, class TrackState* tstate,
+                      class MobiusView* mview, class MobiusViewTrack* tview);
+    void refreshTrackName(class SystemState* state, class TrackState* tstate,
+                          class MobiusView* mview, class MobiusViewTrack* tview);
     void refreshMinorModes(class SystemState* state, class TrackState* tstate, class MobiusViewTrack* tview);
+    void assembleMinorModes(class MobiusViewTrack* tview);
+    void addMinorMode(class MobiusViewTrack* tview, const char* mode);
+    void addMinorMode(class MobiusViewTrack* tview, const char* mode, int arg);
+    
     void refreshSync(class SystemState* state, class TrackState* tstate, class MobiusViewTrack* tview);
     void refreshTrackGroups(class TrackState* tstate,  class MobiusViewTrack* tview);
 

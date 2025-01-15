@@ -13,7 +13,7 @@
     <Element name="LayerElement" x="447" y="299" width="246" height="63"/>
     <Element name="AlertElement" x="131" y="372" width="666" height="46"/>
     <Element name="MinorModesElement" x="437" y="57"/>
-    <Element name="TempoElement" x="438" y="31"/>
+    <Element name="TempoElement" x="429" y="31"/>
     <Element name="LoopWindowElement" x="452" y="343"/>
     <Element name="RC505 Undo/Redo" x="42" y="258" width="75" height="41"/>
     <Element name="Transport" x="481" y="364" width="656" height="42"/>

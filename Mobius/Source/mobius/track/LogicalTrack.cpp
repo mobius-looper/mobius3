@@ -63,7 +63,7 @@ void LogicalTrack::setAdvanced(bool b)
 /**
  * Normal initialization driven from the Session.
  */
-void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
+void LogicalTrack::loadSession(Session::Track* trackdef)
 {
     // assumes it is okay to hang onto this until the next one is loaded
     session = trackdef;
@@ -78,14 +78,6 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
             // this one will call back for the BaseScheduler and wire it in
             // with a LooperScheduler
             // not sure I like the handoff here
-            // !! Engine::newTrack will cause the Session::Track to be loaded
-            // which needs the track number to initialize things
-            // really hating how tracks are identified, the "id" generated at runtime
-            // stays the same after reording but the number is the visible number and is how
-            // tracks are identified in bindings and what not....
-            // set the logical number on the definition here so it can be used from this point forward
-            trackdef->number = argNumber;
-            
             track.reset(engine.newTrack(manager, this, trackdef));
         }
         else if (trackType == Session::TypeAudio) {
@@ -93,13 +85,13 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
             // these have to be done in order at the front
             // if they can be out of order then will need to "allocate" engine
             // numbers as they are encountered
-            engineNumber = argNumber - 1;
+            engineNumber = trackdef->number - 1;
             Mobius* m = manager->getAudioEngine();
             Track* mt = m->getTrack(engineNumber);
             track.reset(new MobiusLooperTrack(manager, this, m, mt));
             // Mobius tracks don't use the Session so we have to put the number
             // there for it
-            track->setNumber(argNumber);
+            track->setNumber(trackdef->number);
         }
         else {
             Trace(1, "LogicalTrack: Unknown track type");
@@ -107,8 +99,8 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
     }
     else {
         track->loadSession(trackdef);
-        // number can't change?
-        if (track->getNumber() != argNumber)
+        // sanity check on numbers
+        if (track->getNumber() != trackdef->number)
           Trace(1, "LogicalTrack::loadSession Track number mismatch");
     }
 }

@@ -202,6 +202,11 @@ class Mobius
     // needed by TrackManager
     bool isTrackFocused(int index);
     int getTrackGroup(int index);
+
+    // now used by MobiusKernel to build the new MobiusState model
+    // and include things that were in OldMobiusState
+    bool isCapturing();
+    int getSetupOrdinal();
         
     //////////////////////////////////////////////////////////////////////
     //

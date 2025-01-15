@@ -7,7 +7,9 @@
 #include "../model/Session.h"
 #include "../model/UIAction.h"
 #include "../model/Query.h"
+#include "../model/SystemState.h"
 #include "../model/SyncState.h"
+#include "../model/TrackState.h"
 #include "../model/PriorityState.h"
 
 // for some of the old sync related modes
@@ -824,10 +826,13 @@ bool SyncMaster::doQuery(Query* q)
 
 /**
  * Add state for each sync source.
- * Beat/Bar counts will be in TrackState for each track.
+ * Also handling sync state for each Track since we're in a good position to do that
+ * and don't need to bother the BaseTracks with knowing the details.
  */
-void SyncMaster::refreshState(SyncState* state)
+void SyncMaster::refreshState(SystemState* sysstate)
 {
+    SyncState* state = &(sysstate->syncState);
+    
     state->transportMaster = transportMaster;
     state->trackSyncMaster = trackSyncMaster;
 
@@ -839,6 +844,42 @@ void SyncMaster::refreshState(SyncState* state)
     state->hostTempo = hostAnalyzer->getTempo();
 
     transport->refreshState(state);
+
+    int totalTracks = sysstate->audioTracks + sysstate->midiTracks;
+    int maxStates = sysstate->tracks.size();
+    if (maxStates < totalTracks)
+      Trace(1, "SyncMaster: Not enough TrackStates for sync state");
+    
+    for (int i = 0 ; i < totalTracks ; i++) {
+        if (i < maxStates) {
+            TrackState* tstate = sysstate->tracks[i];
+            int trackNumber = i+1;
+            Follower* f = pulsator->getFollower(trackNumber);
+            if (f != nullptr) {
+                tstate->syncSource = f->source;
+                tstate->syncUnit = f->unit;
+
+                // old convention was to suppress beat/bar display
+                // if the source was not in a started state
+                bool running = true;
+                if (f->source == SyncSourceMidi)
+                  running = midiAnalyzer->isRunning();
+                else if (f->source == SyncSourceHost)
+                  running = hostAnalyzer->isRunning();
+
+                // the convention has been that if beat or bar are
+                // zero they are undefined and not shown, TempoElement assumes this
+                if (running) {
+                    tstate->syncBeat = barTender->getBeat(f) + 1;
+                    tstate->syncBar = barTender->getBar(f) + 1;
+                }
+                else {
+                    tstate->syncBeat = 0;
+                    tstate->syncBar = 0;
+                }
+            }
+        }
+    }
 }
 
 void SyncMaster::refreshPriorityState(PriorityState* pstate)
@@ -914,90 +955,6 @@ SyncSource SyncMaster::getEffectiveSource(int id)
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * For the track monitoring UI, return information about the sync source a track
- * is following.
- */
-float SyncMaster::getTempo(int trackNumber)
-{
-    float tempo = 0.0f;
-    Follower* f = pulsator->getFollower(trackNumber);
-    if (f != nullptr)
-      tempo = varGetTempo(f->source);
-    return tempo;
-}
-
-float SyncMaster::varGetTempo(SyncSource src)
-{
-    float tempo = 0.0f;
-    switch (src) {
-        
-        case SyncSourceHost: {
-            tempo = (float)hostAnalyzer->getTempo();
-        }
-            break;
-
-        case SyncSourceMidi: {
-            // Pulsator also tracks this but we can get it directly from the Analyzer
-            tempo = midiAnalyzer->getTempo();
-        }
-            break;
-
-        case SyncSourceMaster:
-        case SyncSourceTransport: {
-            // these are now the same
-            tempo = transport->getTempo();
-        }
-            break;
-
-        default: break;
-    }
-    return tempo;
-}
-
-//
-// Interfaces that take just a SyncSource are obsolete and
-// only used by old core/Variable and core/Synchronizer code
-// These will be phased out
-//
-
-int SyncMaster::varGetBeat(SyncSource src)
-{
-    (void)src;
-    return barTender->getBeat(0);
-}
-
-int SyncMaster::varGetBar(SyncSource src)
-{
-    (void)src;
-    return barTender->getBar(0);
-}
-
-int SyncMaster::varGetBeatsPerBar(SyncSource src)
-{
-    (void)src;
-    return barTender->getBeatsPerBar(0);
-}
-
-//
-// Track-specific accessors are what should be used
-//
-
-int SyncMaster::getBeat(int number)
-{
-    return barTender->getBeat(number);
-}
-
-int SyncMaster::getBar(int number)
-{
-    return barTender->getBar(number);
-}
-
-int SyncMaster::getBeatsPerBar(int number)
-{
-    return barTender->getBeatsPerBar(number);
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Leader/Follower
@@ -1050,7 +1007,7 @@ void SyncMaster::addLeaderPulse(int leader, SyncUnit unit, int frameOffset)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Transport/MIDI Out
+// Old core Variable Support
 //
 // These are old and should only be used for some core script Variables.
 // Weed these out in time.
@@ -1058,11 +1015,6 @@ void SyncMaster::addLeaderPulse(int leader, SyncUnit unit, int frameOffset)
 // the rest of the system shouldn't be using these.
 //
 //////////////////////////////////////////////////////////////////////
-
-//
-// This is all temporary, MIDI out status will be the same thing
-// as the Transport status, don't think we need those to be independent
-// 
 
 bool SyncMaster::varIsMidiOutSending()
 {
@@ -1072,40 +1024,10 @@ bool SyncMaster::varIsMidiOutStarted()
 {
     return midiRealizer->isStarted();
 }
-int SyncMaster::varGetMidiOutStarts()
-{
-    return midiRealizer->getStarts();
-}
-int SyncMaster::varGetMidiOutSongClock()
-{
-    return midiRealizer->getSongClock();
-}
-int SyncMaster::varGetMidiOutRawBeat()
-{
-    return midiRealizer->getBeat();
-}
 
-//////////////////////////////////////////////////////////////////////
-//
-// MIDI Input
-//
-//////////////////////////////////////////////////////////////////////
-    
-float SyncMaster::varGetMidiInTempo()
-{
-    return midiAnalyzer->getTempo();
-}
-int SyncMaster::varGetMidiInSmoothTempo()
-{
-    return midiAnalyzer->getSmoothTempo();
-}
 int SyncMaster::varGetMidiInRawBeat()
 {
     return midiAnalyzer->getElapsedBeats();
-}
-int SyncMaster::varGetMidiInSongClock()
-{
-    return midiAnalyzer->getSongClock();
 }
 bool SyncMaster::varIsMidiInReceiving()
 {
@@ -1116,21 +1038,56 @@ bool SyncMaster::varIsMidiInStarted()
     return midiAnalyzer->isRunning();
 }
 
-//////////////////////////////////////////////////////////////////////
 //
-// Host
+// Interfaces that take just a SyncSource are obsolete and
+// only used by old core/Variable and core/Synchronizer code
+// These will be phased out
 //
-//////////////////////////////////////////////////////////////////////
-    
-bool SyncMaster::varIsHostReceiving()
+
+int SyncMaster::varGetBeat(SyncSource src)
 {
-    //return midiAnalyzer->isReceiving();
-    return false;
+    (void)src;
+    return barTender->getBeat(0);
 }
-bool SyncMaster::varIsHostStarted()
+
+int SyncMaster::varGetBar(SyncSource src)
 {
-    //return midiAnalyzer->isStarted();
-    return false;
+    (void)src;
+    return barTender->getBar(0);
+}
+
+int SyncMaster::varGetBeatsPerBar(SyncSource src)
+{
+    (void)src;
+    return barTender->getBeatsPerBar(0);
+}
+
+float SyncMaster::varGetTempo(SyncSource src)
+{
+    float tempo = 0.0f;
+    switch (src) {
+        
+        case SyncSourceHost: {
+            tempo = (float)hostAnalyzer->getTempo();
+        }
+            break;
+
+        case SyncSourceMidi: {
+            // Pulsator also tracks this but we can get it directly from the Analyzer
+            tempo = midiAnalyzer->getTempo();
+        }
+            break;
+
+        case SyncSourceMaster:
+        case SyncSourceTransport: {
+            // these are now the same
+            tempo = transport->getTempo();
+        }
+            break;
+
+        default: break;
+    }
+    return tempo;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -35,12 +35,6 @@ class Pulsator
     void userSetBeatsPerBar(int bpb, bool action);
     void propagateTransportTimeSignature(int bpb);
 
-    // granular state
-    // hating how this is falling out
-
-    class BarTender* getBarTender(SyncSource src);
-    class BarTender* getBarTender(int trackNumber);
-
     // Block Lifecycle
 
     void advance(int blockSize);

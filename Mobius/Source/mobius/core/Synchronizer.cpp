@@ -162,172 +162,18 @@ void Synchronizer::updateConfiguration(MobiusConfig* config)
             mSyncMaster->unfollow(number);
         }
 
-        // should have better range checking on this
-        // I've never seen it where the SetupTrack list doesn't match
-        // the core track count
-        // punt and wait for the Session 
+        // I've seen cases where there are more SetupTracks than there
+        // are actual audio tracks, maybe after I was playing around with
+        // increasing the track count then dropping it
+        // if this exceeds the actual audio track range, the numbers
+        // get into MIDI tracks, and we must NOT mess those up
         number++;
-    }
-}
 
-//////////////////////////////////////////////////////////////////////
-//
-// State
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Called by Track to fill in the relevant sync state for a track.
- *
- * Most of this is redundant now with SyncMaster.  Sync related state
- * should come form there, not the track that follows something.  But
- * until there is a more consolidated sync display, the SyncElement pulls
- * this from the focused track.
- *
- * This could be simplified now with SyncMaster.  All we really need to know
- * is which SyncSource this track follows, and the view can pull the tempo
- * and location from the common sync state.
- *
- * Historically, the tempo, beat, and bar values are left zero unless we are
- * actively sending or receiving MIDI clocks, or the host transport is advancing.
- * Assuming the TransportElement is usually visible, the need for this is less.
- */
-void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
-{
-    state->syncSource = SYNC_NONE;
-    state->syncUnit = SYNC_UNIT_BEAT;
-	state->outSyncMaster = false;
-	state->trackSyncMaster = false;
-	state->tempo = 0;
-	state->beat = 0;
-	state->bar = 0;
-
-    // sigh, convert this back from what we did in updateConfiguration
-    int number = t->getDisplayNumber();
-    SyncSource source = mSyncMaster->getEffectiveSource(number);
-
-    Follower* f = mSyncMaster->getFollower(number);
-    if (f != nullptr) {
-        if (f->unit == SyncUnitBar || f->unit == SyncUnitLoop)
-          state->syncUnit = SYNC_UNIT_BAR;
-    }
-
-    switch (source) {
-        case SyncSourceMidi: {
-            state->syncSource = SYNC_MIDI;
-            // for display purposes we use the "smooth" tempo
-            // this is a 10x integer
-            // this should also be moved into SyncMaster since TempoElement
-            // will likely need the same treatment
-            int smoothTempo = mSyncMaster->varGetMidiInSmoothTempo();
-            state->tempo = (float)smoothTempo / 10.0f;
-
-            // MIDI in sync has also only displayed beats if clocks were actively
-            // being received
-            if (mSyncMaster->varIsMidiInStarted()) {
-                state->beat = mSyncMaster->varGetBeat(SyncSourceMidi);
-                state->bar = mSyncMaster->varGetBar(SyncSourceMidi);
-            }
+        if (number > config->getCoreTracks()) {
+            Trace(2, "Synchronizer: Ignoring extra SetupTracks");
+            break;
         }
-            break;
-
-        case SyncSourceHost: {
-            state->syncSource = SYNC_HOST;
-            state->tempo = mSyncMaster->varGetTempo(SyncSourceHost);
-
-            // not exposing this, is it necessary?
-            if (mSyncMaster->varIsHostReceiving()) {
-                state->beat = mSyncMaster->varGetBeat(SyncSourceHost);
-                state->bar = mSyncMaster->varGetBar(SyncSourceHost);
-            }
-        }
-            break;
-        case SyncSourceTransport: {
-            state->syncSource = SYNC_TRANSPORT;
-            state->tempo = mSyncMaster->varGetTempo(SyncSourceTransport);
-            state->beat = mSyncMaster->varGetBeat(SyncSourceTransport);
-            state->bar = mSyncMaster->varGetBar(SyncSourceTransport);
-        }
-            break;
-        case SyncSourceTrack: {
-            state->syncSource = SYNC_TRACK;
-        }
-            break;
-        case SyncSourceMaster: {
-            // hmm, is this right?  won't much matter once we get rid of OldMobiusState
-            state->syncSource = SYNC_OUT;
-            // should we show Transport tempo here?  we're going to replace it when
-            // this track finishes recording
-        }
-            break;
-        default:
-            break;
     }
-        
-    state->trackSyncMaster = (number == mSyncMaster->getTrackSyncMaster());
-    state->outSyncMaster = (number == mSyncMaster->getTransportMaster());
-}
-
-/**
- * Newer state shared by all tracks.
- *
- * !! Redundancies with the previous state filler.
- */
-void Synchronizer::getState(OldMobiusState* state)
-{
-    OldMobiusSyncState* sync = &(state->sync);
-
-    // MIDI output sync
-    sync->outStarted = mSyncMaster->varIsMidiOutSending();
-    sync->outTempo = 0.0f;
-    sync->outBeat = 0;
-    sync->outBar = 0;
-    if (sync->outStarted) {
-        sync->outTempo = mSyncMaster->varGetTempo(SyncSourceTransport);
-        sync->outBeat = mSyncMaster->varGetBeat(SyncSourceTransport);
-        sync->outBar = mSyncMaster->varGetBar(SyncSourceTransport);
-    }
-
-    // MIDI input sync
-    sync->inStarted = mSyncMaster->varIsMidiInStarted();
-    sync->inBeat = 0;
-    sync->inBar = 0;
-    
-    // for display purposes we use the "smooth" tempo
-    // this is a 10x integer
-    int smoothTempo = mSyncMaster->varGetMidiInSmoothTempo();
-    sync->inTempo = (float)smoothTempo / 10.0f;
-
-    // only display advance beats when started,
-    // TODO: should we save the last known beat/bar values
-    // so we can keep displaying them till the next start/continue?
-    if (sync->inStarted) {
-        sync->inBeat = mSyncMaster->varGetBeat(SyncSourceMidi);
-        sync->inBar = mSyncMaster->varGetBar(SyncSourceMidi);
-    }
-
-    // Host sync
-    sync->hostStarted = mSyncMaster->varIsHostReceiving();
-    sync->hostTempo = mSyncMaster->varGetTempo(SyncSourceHost);
-    sync->hostBeat = 0;
-    sync->hostBar = 0;
-    if (sync->hostStarted) {
-        sync->hostBeat = mSyncMaster->varGetBeat(SyncSourceHost);
-        sync->hostBar = mSyncMaster->varGetBar(SyncSourceHost);
-    }
-}
-
-/**
- * New model for single track sync state.
- * All we have to do now is remember the sync source, the rest comes from
- * shared state managed by SyncMaster.
- *
- * Really, SyncMaster should be able to do this for all tracks.
- */
-void Synchronizer::refreshState(TrackState* state, Track* t)
-{
-    int number = t->getDisplayNumber();
-    state->syncSource = mSyncMaster->getEffectiveSource(number);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1248,12 +1094,14 @@ float Synchronizer::getFramesPerBeat(float tempo)
  * Unclear where this should come from now, always get it from the transport or
  * allow the old Preset/Setup parameters?
  */
+#if 0
 int Synchronizer::getBeatsPerBar(OldSyncSource src, Loop* l)
 {
     (void)src;
     (void)l;
     return mSyncMaster->varGetBeatsPerBar(SyncSourceTransport);
 }
+#endif
 
 /**
  * Helper for getRecordUnit.
@@ -1416,46 +1264,6 @@ bool Synchronizer::undoRecordStop(Loop* loop)
 // Audio Block Advance
 //
 //////////////////////////////////////////////////////////////////////
-
-/**
- * Called by Mobius at the beginning of a new audio interrupt.
- * This is where we used to prepare Events for insertion into each
- * track's event list.  That is no longer done, and there isn't much left
- * behind except some trace statistics.
- */
-void Synchronizer::interruptStart(MobiusAudioStream* stream)
-{
-    (void)stream;
-}
-
-/**
- * Called as each Track is about to be processed.
- * Reset the sync event iterator.
- */
-void Synchronizer::prepare(Track* t)
-{
-    (void)t;
-    // this will be set by trackSyncEvent if we see boundary
-    // events during this interrupt
-    
-    //SyncState* state = t->getSyncState();
-    //state->setBoundaryEvent(NULL);
-}
-
-/**
- * Called after each track has finished processing.
- */
-void Synchronizer::finish(Track* t)
-{
-    (void)t;
-}
-
-/**
- * Called when we're done with one audio interrupt.
- */
-void Synchronizer::interruptEnd()
-{
-}
 
 /**
  * As Tracks are processed and reach interesting sync boundaries,

@@ -113,6 +113,9 @@ class MobiusViewTrack {
      * The number space for audio and midi tracks is combined.
      * To use in Query.scope or UIAction.scope you need to add 1
      * since zero means "none" or "active track".
+     *
+     * !! since we're using number almost everywhere else now, just make this
+     * number, but have a lot of usages to change
      */
     int index = 0;
 
@@ -285,11 +288,11 @@ class MobiusViewTrack {
     //
     // Synchronization
     //
+    SyncSource syncSource;
+    SyncUnit syncUnit;
     float syncTempo = 0.0f;
     int syncBeat = 0;
     int syncBar = 0;
-    int syncBeatsPerBar = 0;
-    bool syncShowBeat = false;
     
     //
     // Minor Modes

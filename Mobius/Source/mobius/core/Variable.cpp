@@ -2868,37 +2868,6 @@ void SyncOutStartedVariableType::getTrackValue(Track* t, ExValue* value)
 SyncOutStartedVariableType SyncOutStartedVariableObj;
 ScriptInternalVariable* SyncOutStartedVariable = &SyncOutStartedVariableObj;
 
-//////////////////////////////////////////////////////////////////////
-//
-// syncOutStarts
-//
-// The number of MIDI Start messages we've sent since the last
-// time we were stopped.
-//
-//////////////////////////////////////////////////////////////////////
-
-class SyncOutStartsVariableType : public ScriptInternalVariable {
-  public:
-    virtual ~SyncOutStartsVariableType() {}
-    SyncOutStartsVariableType();
-    void getTrackValue(Track* t, ExValue* value);
-};
-
-SyncOutStartsVariableType::SyncOutStartsVariableType()
-{
-    setName("syncOutStarts");
-}
-
-void SyncOutStartsVariableType::getTrackValue(Track* t, ExValue* value)
-{
-    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
-	//value->setInt(t->getSynchronizer()->getStarts());
-    value->setInt(sm->varGetMidiOutStarts());
-}
-
-SyncOutStartsVariableType SyncOutStartsVariableObj;
-ScriptInternalVariable* SyncOutStartsVariable = &SyncOutStartsVariableObj;
-
 /****************************************************************************
  *                                                                          *
  *   							  MIDI SYNC                                 *
@@ -3215,39 +3184,6 @@ void SyncHostBarVariableType::getTrackValue(Track* t, ExValue* value)
 SyncHostBarVariableType SyncHostBarVariableObj;
 ScriptInternalVariable* SyncHostBarVariable = &SyncHostBarVariableObj;
 
-//////////////////////////////////////////////////////////////////////
-//
-// syncHostReceiving
-//
-// True if we are currently receiving sync events from the host.
-// Note that this means VST beat/bar events, not MIDI clocks routed
-// into the plugin.
-// 
-// Currently this is unreliable and unused.
-//
-//////////////////////////////////////////////////////////////////////
-
-class SyncHostReceivingVariableType : public ScriptInternalVariable {
-  public:
-    virtual ~SyncHostReceivingVariableType() {}
-    SyncHostReceivingVariableType();
-	void getTrackValue(Track* t, ExValue* value);
-};
-
-SyncHostReceivingVariableType::SyncHostReceivingVariableType()
-{
-    setName("syncHostReceiving");
-}
-
-void SyncHostReceivingVariableType::getTrackValue(Track* t, ExValue* value)
-{
-    SyncMaster* sm = t->getSynchronizer()->getSyncMaster();
-	value->setBool(sm->varIsHostReceiving());
-}
-
-SyncHostReceivingVariableType SyncHostReceivingVariableObj;
-ScriptInternalVariable* SyncHostReceivingVariable = &SyncHostReceivingVariableObj;
-
 /****************************************************************************
  *                                                                          *
  *                                INSTALLATION                              *
@@ -3443,7 +3379,6 @@ ScriptInternalVariable* InternalVariables[] = {
 	SyncOutBarVariable,
 	SyncOutSendingVariable,
 	SyncOutStartedVariable,
-	SyncOutStartsVariable,
 
 	// MIDI Sync
 
@@ -3460,7 +3395,6 @@ ScriptInternalVariable* InternalVariables[] = {
 	SyncHostRawBeatVariable,
 	SyncHostBeatVariable,
 	SyncHostBarVariable,
-	SyncHostReceivingVariable,
 
     // Installation
 

@@ -201,17 +201,22 @@ bool BarTender::detectHostBar()
 //
 //////////////////////////////////////////////////////////////////////
 
+int BarTender::getBeat(int trackNumber)
+{
+    Follower* f = syncMaster->getFollower(trackNumber);
+    return getBeat(f);
+}
+
 /**
  * Should be maintaining these on each advance, watching for sync pulses
  * for each track and advancing our own counters in Track.  But until then
  * just math the damn things every time.
  */
-int BarTender::getBeat(int trackNumber)
+int BarTender::getBeat(Follower* f)
 {
     int beat = 0;
     
     Transport* transport = syncMaster->getTransport();
-    Follower* f = syncMaster->getFollower(trackNumber);
     
     if (f != nullptr) {
         switch (f->source) {
@@ -264,10 +269,15 @@ int BarTender::getBeat(int trackNumber)
 
 int BarTender::getBar(int trackNumber)
 {
+    Follower* f = syncMaster->getFollower(trackNumber);
+    return getBar(f);
+}
+
+int BarTender::getBar(Follower* f)
+{
     int bar = 0;
     
     Transport* transport = syncMaster->getTransport();
-    Follower* f = syncMaster->getFollower(trackNumber);
     
     if (f != nullptr) {
         switch (f->source) {

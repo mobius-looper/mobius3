@@ -15,6 +15,7 @@ TempoElement::TempoElement(StatusArea* area) :
     StatusElement(area, "TempoElement")
 {
     mouseEnterIdentify = true;
+    resizes = true;
 }
 
 TempoElement::~TempoElement()
@@ -38,13 +39,15 @@ void TempoElement::update(MobiusView* view)
 	// normalize tempo to two decimal places to reduce jitter
 	int newTempo = (int)(track->syncTempo * 100.0f);
 
-	if (newTempo != mTempo ||  
-		track->syncShowBeat != mShowBeat ||
-		(track->syncShowBeat && (track->syncBeat != mBeat)) ||
-		(track->syncShowBeat && (track->syncBar != mBar))) {
-
+	if (newTempo != mTempo ||
+        track->syncSource != mSyncSource ||
+        track->syncUnit != mSyncUnit ||
+		track->syncBeat != mBeat ||
+        track->syncBar != mBar) {
+    
+        mSyncSource = track->syncSource;
+        mSyncUnit = track->syncUnit;
 		mTempo = newTempo;
-        mShowBeat = track->syncShowBeat;
 		mBeat = track->syncBeat;
 		mBar = track->syncBar;
 
@@ -54,6 +57,8 @@ void TempoElement::update(MobiusView* view)
 
 void TempoElement::resized()
 {
+    // necessary to get the resizer
+    StatusElement::resized();
 }
 
 void TempoElement::paint(juce::Graphics& g)
@@ -62,27 +67,49 @@ void TempoElement::paint(juce::Graphics& g)
     StatusElement::paint(g);
     if (isIdentify()) return;
     
-    // TODO: we've got two decimal places of precision, only
-    // show one
-    int tempo = (int)((float)mTempo / 100.0f);
-    // this gets you the fraction * 100
-    int frac = (int)(mTempo - (tempo * 100));
-    // cut off the hundredths
-    frac /= 10;
-
-    if (tempo > 0) {
-        juce::String status;
+    juce::String status;
         
-        // note that if mBeat is zero it should not be displayed
-        // if mBeat is zero, then mBar will also be zero
-        // jebus, explore one of the newer sprintf alternatives here
-
-        if (!mShowBeat || mBeat == 0) {
-            status += "Tempo " + juce::String(tempo) + "." + juce::String(frac);
+    bool showIt = true;
+    switch (mSyncSource) {
+        case SyncSourceMidi: status += "Sync MIDI "; break;
+        case SyncSourceHost: status += "Sync Host "; break;
+        case SyncSourceTransport: status += "Sync Transport "; break;
+        default:
+            showIt = false;
+    }
+    
+    if (showIt) {
+        
+        switch (mSyncUnit) {
+            case SyncUnitBeat: status += "Beat "; break;
+            case SyncUnitBar: status += "Bar "; break;
+            case SyncUnitLoop: status += "Loop "; break;
+            default: break;
         }
-        else {
-            status += "Tempo " + juce::String(tempo) + "." + juce::String(frac) +
-                " Bar " + juce::String(mBar) + " Beat " + juce::String(mBeat);
+
+        // TODO: we've got two decimal places of precision, only
+        // show one
+        int tempo = (int)((float)mTempo / 100.0f);
+        // this gets you the fraction * 100
+        int frac = (int)(mTempo - (tempo * 100));
+        // cut off the hundredths
+        frac /= 10;
+
+        // If the source has no tempo, we have not displayed the beat/bar either
+        // assumign that you can't have beats without a tempo
+
+        if (tempo > 0) {
+
+            // we've used a Beat of zero to mean it should not be displayed
+            // because MIDI Start has not been received or the Host transport is stopped
+
+            if (mBeat == 0) {
+                status += "Tempo " + juce::String(tempo) + "." + juce::String(frac);
+            }
+            else {
+                status += "Tempo " + juce::String(tempo) + "." + juce::String(frac) +
+                    " Bar " + juce::String(mBar) + " Beat " + juce::String(mBeat);
+            }
         }
 
         g.setColour(juce::Colour(MobiusBlue));

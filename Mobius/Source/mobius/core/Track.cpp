@@ -793,8 +793,8 @@ void Track::refreshState(TrackState* s)
     s->inputMonitorLevel = mInput->getMonitorLevel();
 	s->outputMonitorLevel = mOutput->getMonitorLevel();
     
-    // sync fields
-    mSynchronizer->refreshState(s, this);
+    // sync fields will be added by SyncMaster
+    //mSynchronizer->refreshState(s, this);
 
 	s->focus = mFocusLock;
 	s->group = mGroup;
@@ -825,6 +825,8 @@ void Track::refreshState(TrackState* s)
     s->altFeedback = mAltFeedbackLevel;
 	s->pan = mPan;
     s->solo = mSolo;
+
+    // these shouldn't be part of TrackState
     s->globalMute = mGlobalMute;
     // where should this come from?  it's really a Mobis level setting
     s->globalPause = false;
@@ -949,7 +951,8 @@ void Track::getState(OldMobiusTrackState* s)
     s->globalPause = false;
 	s->group = mGroup;
 
-	mSynchronizer->getState(s, this);
+    // sync fields are handled by SyncMaster now
+	//mSynchronizer->getState(s, this);
 
 	// !! race condition, we might have just processed a parameter
     // that changed the number of loops, the current value of mLoop
@@ -1079,7 +1082,11 @@ void Track::prepareForInterrupt()
  * recording has the potential to become the master and should be done
  * first.  Note that, checking the frame count isn't enough since the
  * loop may already have content, we're just waiting to start a new
- * recording and throw that away.  
+ * recording and throw that away.
+ *
+ * update: this is no longer used, track advance ordering is handled
+ * by TimeSlicer.
+ * Gak! Loop calls this for some strange reason, figure out why
  */
 bool Track::isPriority()
 {
@@ -1189,7 +1196,8 @@ void Track::processBuffers(MobiusAudioStream* stream,
     }
 
    	// we're beginning a new track iteration for the synchronizer
-	mSynchronizer->prepare(this);
+    // no longer need this
+	//mSynchronizer->prepare(this);
 
 	mInput->setInputBuffer(stream, inbuf, frames, echo);
     mOutput->setOutputBuffer(stream, outbuf, frames);
@@ -1282,7 +1290,8 @@ void Track::processBuffers(MobiusAudioStream* stream,
 	  Trace(this, 1, "Output buffer not fully consumed!\n");
 
    	// tell Synchronizer we're done
-	mSynchronizer->finish(this);
+    // no longer need this
+	//mSynchronizer->finish(this);
 
     if (TraceFrameAdvance && mRawNumber == 0) {
         long frame = mLoop->getFrame();

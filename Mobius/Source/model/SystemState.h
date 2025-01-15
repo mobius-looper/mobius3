@@ -38,6 +38,20 @@ class SystemState
     int audioTracks = 0;
     int midiTracks = 0;
 
+    // ordinal of the active Setup
+    // used to trigger track name refresh
+    // needs to be phased out for the Session
+    int setupOrdinal = 0;
+
+    // an OldMobiusState flag
+    // true if Mobius is in "capturing" mode, OldMobiusState called
+    // this "globalRecording"
+    bool audioCapturing = false;
+
+    // another OldMobiusState holdover
+    // among the audio tracks only, this one is considered active
+    int activeAudioTrack = 0;
+
     // full state for each track
     juce::OwnedArray<TrackState> tracks;
 

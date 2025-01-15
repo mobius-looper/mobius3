@@ -138,17 +138,18 @@
     outRealign='midiStart'
     realignTime='start'
     resizeSyncAdjust='none'
-    slaveSyncUnit='bar'
+    slaveSyncUnit='beat'
     speedSyncAdjust='none'>
     <SetupTrack
       name='sadf'
+      groupName='Groupuu'
       input='127'
       output='127'
       feedback='127'
       altFeedback='127'
       pan='64'
       audioInputPort='3'
-      syncSource='host'
+      syncSource='out'
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'
@@ -159,6 +160,22 @@
       pan='64'
       syncSource='out'
       trackSyncUnit='loop'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
     <SetupTrack
       input='127'
       output='127'

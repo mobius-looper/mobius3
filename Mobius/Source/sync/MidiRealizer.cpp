@@ -420,11 +420,12 @@ void MidiRealizer::clockThreadAdvance()
                 // "tick" counter and drop clocks, can this really happen?
                 // I think it was due to the tempo pulse width changing out from under
                 // the interrupt which we can prevent if we queue tempo changes
-                if (pulseWait <= 0.0f) {
+                if (pulseWait <= 0.0f && !pulseWaitWarning) {
                     Trace(1, "MidiRealizer: pulseWait overflow!\n");
 
                     // this commonly happens during debugging, would be nice
                     // to be able to detect this and suppress it
+                    pulseWaitWarning = true;
                 }
             }
         }

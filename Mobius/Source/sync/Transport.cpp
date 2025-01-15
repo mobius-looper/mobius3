@@ -395,6 +395,22 @@ void Transport::connect(TrackProperties& props)
 {
     connection = props.number;
 
+    // bad things happen if the track is empty
+    // see this when the track was the TransportMaster then
+    // switched to an empty loop
+    // I guess leave things as they were, but also need some governors
+    // elsewhere for divide by zero and that tempo resizing loop went
+    // infinite
+    if (props.frames == 0)
+      return;
+
+    // while we're here, if this is really short we're going to spin trying
+    // to get the tempo in range
+    if (props.frames < 1000) {
+        Trace(1, "Transport: Attempt to connect to an extremly short loop");
+        return;
+    }
+    
     int unitFrames = props.frames;
     int resultBars = 1;
 
@@ -448,7 +464,13 @@ void Transport::connect(TrackProperties& props)
                   beatsPerBar);
         }
     }
-
+    
+    // before we start looping should have caught this but be extra safe
+    if (unitFrames < 1) {
+        Trace(1, "Transport: Unit frames reached the singularity");
+        return;
+    }
+    
     // start with the usual double/halve approach to get the tempo in range
     // it could be a lot smarter here about dividing long loops into "bars"
     // rather than just assuming a backing pattern is 1,2,4,8,16 bars
@@ -465,6 +487,7 @@ void Transport::connect(TrackProperties& props)
         // and intended to be a beat length rather than a bar length
         // we could abandon BeatsParBar at this point and just find some beat subdivision
         // that results in a usable tempo but try to do what they asked for
+
         while (newTempo > maxTempo) {
             unitFrames *= 2;
             newTempo = lengthToTempo(unitFrames);
@@ -479,9 +502,13 @@ void Transport::connect(TrackProperties& props)
             unitFrames--;
             // adjust = unitFrames - tapFrames;
         }
-            
+
         while (newTempo < minTempo) {
             unitFrames /= 2;
+            if (unitFrames < 2) {
+                Trace(1, "Transport: Unit frames reached the singularity");
+                return;
+            }
             newTempo = lengthToTempo(unitFrames);
         }
     }
@@ -744,6 +771,10 @@ void Transport::setTempoInternal(float newTempo)
 
 float Transport::lengthToTempo(int frames)
 {
+    if (frames == 0) {
+        Trace(1, "Transport::lengthToTempo Frames is zero and is angry");
+        return 60.0f;
+    }
     float secondsPerUnit = (float)frames / (float)sampleRate;
     float newTempo = 60.0f / secondsPerUnit;
     return newTempo;
@@ -769,7 +800,7 @@ void Transport::deriveUnitLength(float newTempo)
 
     unitLength = framesPerBeat;
     unitsPerBeat = 1;
-    setTempoInternal(tempo);
+    setTempoInternal(newTempo);
 
     //deriveLocation(oldUnit);
     (void)oldUnit;

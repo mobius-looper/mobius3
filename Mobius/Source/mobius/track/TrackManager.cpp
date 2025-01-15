@@ -122,10 +122,12 @@ void TrackManager::loadSession(Session* session)
  * Mobius tracks always go at the front and can't be changed without a restart.
  * Other track types can come and go.
  *
- * This needs to eventually let the Session::Track list be the guide for
- * what the LogicalTracks are and which logical numbers are assigned.
- * For Mobius tracks, these then map between the logical track numbers and
- * the internal Mobius track numbers.
+ * Internal track numbers are assigned here and have no correspondence to the
+ * order of track definitions in the Session.  By convention, all the audio tracks
+ * are numbered first followed by the MIDI tracks.  This may or may not be display order.
+ * Track number is stable for the duration of the Session, but if the Session is edited
+ * tracks may be renumbered.
+ *
  */
 void TrackManager::configureTracks(Session* session)
 {
@@ -148,7 +150,8 @@ void TrackManager::configureTracks(Session* session)
         LogicalTrack* lt = new LogicalTrack(this);
         // really want to do this?
         Session::Track* def = session->ensureTrack(Session::TypeAudio, i);
-        lt->loadSession(def, i+1);
+        def->number = i+1;
+        lt->loadSession(def);
         tracks.add(lt);
     }
 
@@ -174,7 +177,8 @@ void TrackManager::configureTracks(Session* session)
         }
         if (lt == nullptr)
           lt = new LogicalTrack(this);
-        lt->loadSession(def, baseNumber + i);
+        def->number = baseNumber + i;
+        lt->loadSession(def);
         tracks.add(lt);
     }
 
@@ -1208,26 +1212,27 @@ juce::StringArray TrackManager::saveLoop(int trackNumber, int loopNumber, juce::
 
 void TrackManager::refreshState(SystemState* state)
 {
-    // only MIDI tracks return state this way atm
     int audioTracks = 0;
     int midiTracks = 0;
     for (auto track : tracks) {
-        if (track->getType() == Session::TypeMidi) {
-            int trackIndex = track->getNumber() - 1;
-            if (trackIndex >= state->tracks.size()) {
-                // this should have been pre-sized
-                Trace(1, "TrackManager: Not enough SystemState tracks");
-            }
-            else {
-                TrackState* tstate = state->tracks[trackIndex];
-                if (tstate != nullptr)
-                  track->refreshState(tstate);
-            }
-            midiTracks++;
+        int trackIndex = track->getNumber() - 1;
+        if (trackIndex >= state->tracks.size()) {
+            // this should have been pre-sized
+            Trace(1, "TrackManager: Not enough SystemState tracks");
         }
         else {
-            audioTracks++;
+            TrackState* tstate = state->tracks[trackIndex];
+            if (tstate != nullptr) {
+                // make sure this is set properly the BaseTracks may forget
+                tstate->number = track->getNumber();
+                track->refreshState(tstate);
+            }
         }
+
+        if (track->getType() == Session::TypeMidi)
+          midiTracks++;
+        else
+          audioTracks++;
     }
 
     state->audioTracks = audioTracks;

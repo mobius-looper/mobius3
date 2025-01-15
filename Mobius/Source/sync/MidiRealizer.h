@@ -167,6 +167,11 @@ class MidiRealizer
      */
 	long mInterruptMsec = 0;
 
+    /**
+     * Flag to suppress warning flood when debugging.
+     */
+    bool pulseWaitWarning = false; 
+
     void detectBeat(MidiSyncEvent* mse);
 };
 

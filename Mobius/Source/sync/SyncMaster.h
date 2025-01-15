@@ -55,7 +55,7 @@ class SyncMaster
     void advance(class MobiusAudioStream* stream);
     bool doAction(class UIAction* a);
     bool doQuery(class Query* q);
-    void refreshState(class SyncState* s);
+    void refreshState(class SystemState* s);
     void refreshPriorityState(class PriorityState* s);
 
     //
@@ -101,24 +101,6 @@ class SyncMaster
     void notifyMidiStart(int id);
     void notifyMidiStop(int id);
     
-    //
-    // Granular state
-    // This is temporary for Synchronizer to build
-    // the OldMobiusTrackState, once the state model transition
-    // is complete, these can be removed.
-    // Also used by some old script Variables
-    //
-    
-    float getTempo(int number);
-    int getBeat(int number);
-    int getBar(int number);
-    int getBeatsPerBar(int number);
-    
-    float varGetTempo(SyncSource src);
-    int varGetBeat(SyncSource src);
-    int varGetBar(SyncSource src);
-    int varGetBeatsPerBar(SyncSource src);
-
     // used by Synchronizer for AutoRecord
     int getBarFrames(SyncSource src);
     
@@ -143,75 +125,23 @@ class SyncMaster
     void addLeaderPulse(int leader, SyncUnit unit, int frameOffset);
 
     //////////////////////////////////////////////////////////////////////
-    // Host State
+    //
+    // Old Variable Support
+    // These are for old core script variables.  We don't necessarily need
+    // to support these any more, I don't think many if any user scripts
+    // used these
+    //
     //////////////////////////////////////////////////////////////////////
-
-    // It shouldn't be necessary to expose these to the outside
-    // Synchronizer uses this to assemble OldMobiusState and there
-    // are old core Variables that expose it to MOS scripts
-
-    bool varIsHostReceiving();
-    bool varIsHostStarted();
     
-    //////////////////////////////////////////////////////////////////////
-    // Transport/MIDI Output
-    //////////////////////////////////////////////////////////////////////
+    float varGetTempo(SyncSource src);
+    int varGetBeat(SyncSource src);
+    int varGetBar(SyncSource src);
+    int varGetBeatsPerBar(SyncSource src);
 
-    // Little of this should be necessary
-    // Some is used by old Mobius to assemble State
-
-    /**
-     * Return the raw beat counter.  This will be zero if the clock is not running.
-     */
-    int varGetMidiOutRawBeat();
-
-    /**
-     * True if we're actively sending MIDI clocks.
-     */
     bool varIsMidiOutSending();
-
-    /**
-     * True if we've sent MIDI Start and are sending clocks.
-     * Not sure why we have both, I guess we could have been sending clocks
-     * to prepare the receiver, but sent start/stop independently.
-     */
     bool varIsMidiOutStarted();
-
-    /**
-     * The number of Start messages sent since the last Stop.
-     * Old notes say "used by the unit tests to verify we're sending starts".
-     */
-    int varGetMidiOutStarts();
-
-    /**
-     * Old notes:
-     * For Synchronizer::getMidiSongClock, not exposed as a variable.
-     * Used only for trace messages.
-     * Be sure to return the ITERATOR clock, not the global one that hasn't
-     * been incremented yet.
-     */
-    int varGetMidiOutSongClock();
-
-    //////////////////////////////////////////////////////////////////////
-    // MIDI Input
-    //////////////////////////////////////////////////////////////////////
-
-    // Also unnecessary after the SystemState transition
-
-    /**
-     * The raw measured tempo of the incomming clock stream.
-     */
-    float varGetMidiInTempo();
-
-    /**
-     * For display purposes, a filtered tempo that can jitter
-     * less than getInputTempo.  This is a 10x integer to remove
-     * long floating fractions.
-     */
-    int varGetMidiInSmoothTempo();
-
+    
     int varGetMidiInRawBeat();
-    int varGetMidiInSongClock();
     bool varIsMidiInReceiving();
     bool varIsMidiInStarted();
 
