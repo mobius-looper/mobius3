@@ -789,6 +789,7 @@ void Track::refreshPriorityState(PriorityState* s)
 void Track::refreshState(TrackState* s)
 {
     s->midi = false;
+    // RawNumber starts from 0, the cannonical numbers start from 1
     s->number = mRawNumber + 1;
 	s->preset = mPreset->ordinal;
     s->inputMonitorLevel = mInput->getMonitorLevel();
@@ -800,7 +801,8 @@ void Track::refreshState(TrackState* s)
 	s->focus = mFocusLock;
 	s->group = mGroup;
 	s->loopCount = mLoopCount;
-    s->activeLoop = mLoop->getNumber();
+    // loop numbers start from 1, state wants the index
+    s->activeLoop = mLoop->getNumber() - 1;
 
     // layerCount, activeLayer added by Loop
     
