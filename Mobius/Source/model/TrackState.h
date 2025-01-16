@@ -270,6 +270,7 @@ class TrackState
     bool mute = false;
     bool pause = false;
     bool recording = false;
+    // seems to be unused
     bool modified = false;
 
     // from OldMobiusState
@@ -304,6 +305,71 @@ class TrackState
     bool needsRefresh = false;
 };
 
+///////////////////////////////////////////////////////////////////////
+//
+// Old Layer Model
+//
+///////////////////////////////////////////////////////////////////////
+
+const int ShittyMaxLayers = 32;
+const int ShittyMaxRedoLayers = 10;
+
+class ShittyLayerState
+{
+  public:
+
+    ShittyLayerState() {
+        init();
+    }
+    
+    void init() {
+        checkpoint = false;
+    }
+
+    bool checkpoint;
+};
+
+/**
+ * The Layer model, and the corresponding OldMobiusLayerState model
+ * is just to fucking terrible to contemplate.  So we can get the majority
+ * of OldMobiusState out of here, capture this small portion of it and let the old
+ * code refresh it, just to figure out what the hell it is doing.
+ * It is probably best to redesign the entire Checkpoint concept anyway.
+ */
+class ShittyOldState
+{
+  public:
+
+    void init() {
+        layerCount = 0;
+        lostLayers = 0;
+        for (int i = 0 ; i < ShittyMaxLayers ; i++)
+          layers[i].init();
+    
+        redoCount = 0;
+        lostRedo = 0;
+        for (int i = 0 ; i < ShittyMaxRedoLayers ; i++)
+          redoLayers[i].init();
+    }
+    
+    ShittyLayerState layers[ShittyMaxLayers];
+	int		layerCount;
+	int 	lostLayers;
+
+    // would be nice if we could keep arrays the same
+    // and just have the redo point an index within it
+    ShittyLayerState redoLayers[ShittyMaxRedoLayers];
+	int		redoCount;
+	int 	lostRedo;
+
+};
+
+///////////////////////////////////////////////////////////////////////
+//
+// FousedTrackState
+//
+///////////////////////////////////////////////////////////////////////
+
 /**
  * Additional details about a track, releant only when it has UI focus.
  */
@@ -327,6 +393,9 @@ class FocusedTrackState
     
     juce::Array<TrackState::Layer> layers;
     int layerCount = 0;
+
+    // stick this mess here until we get it sorted out
+    ShittyOldState oldState;
 
 };
 

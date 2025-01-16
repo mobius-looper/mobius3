@@ -771,7 +771,8 @@ void Track::refreshFocusedState(FocusedTrackState* s)
     mEventManager->refreshFocusedState(s);
 
     // todo: summarize the layer checkpoints
-
+    mLoop->refreshFocusedState(s);
+    
     // old core tracks do not support regions
 }
 
@@ -794,33 +795,26 @@ void Track::refreshState(TrackState* s)
 	s->outputMonitorLevel = mOutput->getMonitorLevel();
     
     // sync fields will be added by SyncMaster
-    //mSynchronizer->refreshState(s, this);
+    // syncSource, syncUnit, syncBeat, syncBar
 
 	s->focus = mFocusLock;
 	s->group = mGroup;
 	s->loopCount = mLoopCount;
     s->activeLoop = mLoop->getNumber();
-    s->mute = mLoop->isMuteMode();
-    s->reverse = mLoop->isReverse();
 
-    // I guess get it here
-    s->subcycles = mPreset->getSubcycles();
-
+    // layerCount, activeLayer added by Loop
+    
     // this gives us nextLoop and returnLoop
     // event details are handled by refreshFocusedState
     mEventManager->refreshEventState(s);
-    
-    // OldMobiusState does all this in LoopState
-    // in the new model it is promoted to the track level
-    // layerCount
-    // activeLayer
+
     // beatLoop, beatCycle, beatSubCycle
-    // windowOffset
-    // historyFrames
-    // frames, subcycles, cycles, cycle
-    // mute, pause, recording, modified
-    // mode, overdub
-    mLoop->refreshState(s);
+    // windowOffset, historyFrames
+    // frames, frame, subcycles, subcycle, cycles, cycle
+    // added by Loop
+
+    // Loop never did set this, I guess get it here
+    s->subcycles = mPreset->getSubcycles();
 
 	s->input = mInputLevel;
 	s->output = mOutputLevel;
@@ -828,11 +822,16 @@ void Track::refreshState(TrackState* s)
     s->altFeedback = mAltFeedbackLevel;
 	s->pan = mPan;
     s->solo = mSolo;
-
+    
     // these shouldn't be part of TrackState
     s->globalMute = mGlobalMute;
     // where should this come from?  it's really a Mobis level setting
     s->globalPause = false;
+
+    // now back to Loop for
+    // mode, overdub, reverse, mute, pause, recording, modified
+    // beatLoop, beatCycle, beatSubCycle
+    // windowOffset, historyFrames
 
     s->pitch = (mOutput->getPitch() != 1.0);
     s->speed = (mOutput->getSpeed() != 1.0);
@@ -846,10 +845,14 @@ void Track::refreshState(TrackState* s)
     s->timeStretch = mInput->getTimeStretch();
 
     // active, true if this is the active track
+    // !? who sets this?
+    //s->active = ???
     
     // pending, doesn't seem to have been used
     s->pending = false;
 
+    // Loop adds layerCount, activeLayer
+    
     // simpler state for each loop
 	for (int i = 0 ; i < mLoopCount && i < s->loops.size() ; i++) {
         Loop* l = mLoops[i];
@@ -864,7 +867,7 @@ void Track::refreshState(TrackState* s)
     if (mLoopCount > s->loops.size())
       Trace(1, "Track::refreshState Loop state overflow");
 
-    // Mode is complicated
+    // Mode was complicated
 #if 0    
         Event* switche = mEventManager->getSwitchEvent();
         if (switche != NULL) {
@@ -892,6 +895,17 @@ void Track::refreshState(TrackState* s)
 
 	s->loopCount = max;
 #endif
+
+    // refreshLoopContent
+    // comments say "latching flag indiciating that loops were loaded from files
+    // or otherwise had their size adjusted when not active"
+    // wasn't set by either Track or Loop
+
+    // needsRefresh
+    // "set after loading projects"
+    
+    // add the stuff commented above
+    mLoop->refreshState(s);
 }
 
 /**

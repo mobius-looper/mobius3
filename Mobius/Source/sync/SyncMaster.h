@@ -184,7 +184,6 @@ class SyncMaster
     
     int sampleRate = 44100;
     int trackSyncMaster = 0;
-    int transportMaster = 0;
 
     std::unique_ptr<class MidiRealizer> midiRealizer;
     std::unique_ptr<class MidiAnalyzer> midiAnalyzer;

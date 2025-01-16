@@ -30,7 +30,7 @@ class Transport : public SyncAnalyzer
     void refreshPriorityState(class PriorityState* ps);
 
     void globalReset();
-    int getConnection();
+    int getMaster();
     
     //
     // SyncAnalyzer Interface
@@ -107,8 +107,8 @@ class Transport : public SyncAnalyzer
     bool midiEnabled = false;
     bool sendClocksWhenStopped = false;
 
-    // the id if the connected track
-    int connection = 0;
+    // the id if the connected transport master track
+    int master = 0;
 
     //
     // Internal play state
@@ -141,8 +141,10 @@ class Transport : public SyncAnalyzer
     void resetLocation();
     float lengthToTempo(int frames);
     void deriveUnitLength(float tempo);
-    void deriveLocation(int oldUnit);
+    void wrapPlayHead();
     void setTempoInternal(float newTempo, int newUnitLength);
+
+    void doConnectionActions();
 
     void consumeMidiBeats();
     void checkDrift();

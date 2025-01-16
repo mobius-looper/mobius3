@@ -227,32 +227,6 @@ void Transport::globalReset()
     beatsPerBar = sessionBeatsPerBar;
 }
 
-/**
- * The "connection" is in current practice a track number and having
- * a non-zero value means this track is the TransportMaster.
- *
- * When we get the point of implementing Tempo Lock to the Host or MIDI,
- * This could either be a special Connection number or something else.
- *
- * This is actually what should be driving what SyncMaster thinks of as
- * the TransportMaster, unless we can force everything to go through SM for this.
- */
-int Transport::getConnection()
-{
-    return connection;
-}
-
-/**
- * Disconnect the transport from a track.
- * This has no effect other than clearing the connection number.
- * If the UI is testing isConnected, this may enable the use of
- * manual transport controls.
- */
-void Transport::disconnect()
-{
-    connection = 0;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // State
@@ -453,7 +427,7 @@ void Transport::userSetTempo(float newTempo)
     if (newTempo >= TransportMinTempo && newTempo <= TransportMaxTempo) {
         deriveUnitLength(newTempo);
         // the master track if any is disconnected
-        connection = 0;
+        master = 0;
     }
     else {
         Trace(1, "Transport::userSetTempo Tempo out of range %d", (int)newTempo);
@@ -471,7 +445,7 @@ void Transport::userSetTempoDuration(int millis)
     if (frames >= TransportMinUnitLength) {
         (void)deriveTempo(frames);
         // the master track if any is disconnected
-        connection = 0;
+        master = 0;
     }
     else {
         Trace(1, "Transport::userSetTempoDuration Duration out of range %d", millis);
@@ -576,7 +550,10 @@ void Transport::setTempoInternal(float newTempo, int newUnitLength)
     //   if the user is changing the host tempo while it plays
     //   more to do here
     // For Transport it's going to be more complicated.  MidiRealizer doesn't
-    // apply tempo until the next cycle, may need some handshaking?
+    // apply tempo until the next timer thread cycle, may need some handshaking?
+    // !! or record the fact that we want to orient, and then orient on the next beat
+    // since the reception of the next beat is delayed by at least one block, will need
+    // accurate measurements to know where the drifter's playHead location should be
     drifter.orient(unitLength);
     
     // doesn't really matter how large this is
@@ -585,13 +562,9 @@ void Transport::setTempoInternal(float newTempo, int newUnitLength)
         beatsPerBar = 4;
     }
 
-    // And now the location problem...if you change tempo while the Transport
-    // is playing it can change the unitLength making the current playHead
-    // out of range, setTempoInternal must catch this
-    //
-    // It may make sense to rewind in some conditions
-    //resetLocation();
-    deriveLocation(oldUnit);
+    // if you change tempo while the transport is playing the playHead can be
+    // beyond the new unit length and needs to be wrapped
+    wrapPlayHead();
 }
 
 /**
@@ -622,14 +595,9 @@ void Transport::deriveUnitLength(float newTempo)
 /**
  * After deriving either the tempo or the unit length wrap the playFrame
  * if necessary.
- *
- * Originally this was a lot more complicatred but now that bar/loop counting
- * is done by BarTender we don't have much to do.  If the tempo/BPB/BPL had
- * previously been done by connect() then we might want to be smarter here?
  */
-void Transport::deriveLocation(int oldUnit)
+void Transport::wrapPlayHead()
 {
-    (void)oldUnit;
     if (unitLength <= 0) {
         Trace(1, "Transport: Wrap with empty unit frames");
     }
@@ -638,6 +606,7 @@ void Transport::deriveLocation(int oldUnit)
         // but if we're in a multi-bar loop keep it as high as possible?
         if (unitPlayHead > unitLength) {
             unitPlayHead = (int)(unitPlayHead % unitLength);
+            
             // unclear what beat/bar/loop these should mean now
             // changing the unit length doesn't change the relative location
             // within a multi-bar loop so just leave them
@@ -652,7 +621,9 @@ void Transport::deriveLocation(int oldUnit)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Tempo via Track Connection
+// Connection
+//
+// Also knows as "setting the transport master".
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -693,6 +664,10 @@ void Transport::connect(TrackProperties& props)
         Trace(1, "Transport: Attempt to connect to an extremly short track");
     }
     else {
+
+        // if another track is currently connected, disconnect it
+        if (master > 0 && master != props.number)
+          disconnect();
     
         int newUnitLength = props.frames;
         int resultBars = 1;
@@ -829,13 +804,54 @@ void Transport::connect(TrackProperties& props)
         //resetLocation();
 
         setTempoInternal(newTempo, newUnitLength);
-        connection = props.number;
+        master = props.number;
 
-        // When a track connects and is running, this should normally
-        // start the transport and send MIDI clocks.  Let SyncMaster handle that
-        // because connections can happen for various reasons and not all of them
-        // want to start clocks
+        doConnectionActions();
     }
+}
+
+/**
+ * After a track has successfully connected as the master and adjusted the
+ * tempo and unit length, we can do various things to the transport play head
+ * and generated MIDI.
+ */
+void Transport::doConnectionActions()
+{
+    // if MIDI is enabled and clocks are not being sent, AND the master is
+    // at the start point, send MIDI start
+
+    // !! more to do here
+    if (!started)
+      start();
+}
+
+
+/**
+ * The Master is in current practice a track number and having
+ * a non-zero value means this track is the TransportMaster.
+ *
+ * When we get the point of implementing Tempo Lock to the Host or MIDI,
+ * This could either be a special Connection number or something else.
+ */
+int Transport::getMaster()
+{
+    return master;
+}
+
+/**
+ * Disconnect the transport from a track.
+ * 
+ * This has no effect other than clearing the connection number.
+ * Might want to have side effects here, like stopping clocks, but we are often
+ * also in the process of reconnecting to a different track so defer that.
+ *
+ * If we need to support "disconnect without assigning a new master" then there
+ * should be a public disconnect() for that purpose and an internalDisconnect()
+ * that has fewer side effects.
+ */
+void Transport::disconnect()
+{
+    master = 0;
 }
 
 //////////////////////////////////////////////////////////////////////

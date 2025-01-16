@@ -1990,7 +1990,7 @@ void EventManager::refreshEventState(TrackState* state)
 {
 	Event* events = mEvents->getEvents();
     
-    for (Event* e = events ; e != nullptr && count < maxEvents ; e = e->getNext()) {
+    for (Event* e = events ; e != nullptr ; e = e->getNext()) {
 
         Loop* nextLoop = e->fields.loopSwitch.nextLoop;
         

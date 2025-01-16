@@ -136,9 +136,9 @@ class TrackManager* SyncMaster::getTrackManager()
 void SyncMaster::notifyTrackRecord(int number)
 {
     // continue calling MidiRealizer but this needs to be under the control of the Transport
-    if (number == transportMaster) {
+    if (number == transport->getMaster()) {
         transport->stop();
-        // unlike notifyTrackReset, we get to keep being the transportMaster
+        // unlike notifyTrackReset, the master connection remains
     }
 }
 
@@ -181,16 +181,12 @@ void SyncMaster::notifyTrackAvailable(int number)
         
         if (f->source == SyncSourceMaster) {
             // this one wants to be special
-            if (transportMaster == 0) {
+            int currentMaster = transport->getMaster();
+            if (currentMaster == 0) {
 
                 connectTransport(number);
-                
-                transportMaster = number;
-
-                // until we have manual options ready, auto start
-                transport->start();
             }
-            else if (transportMaster == number) {
+            else if (currentMaster == number) {
                 // this track was already the transport master
                 // and we're being told it was re-recorded
                 // this can happen if you switch to an empty loop then start
@@ -200,8 +196,6 @@ void SyncMaster::notifyTrackAvailable(int number)
                 // to have this track continue as the master rather than assign
                 // another one at random
                 connectTransport(number);
-                
-                transport->start();
             }
             else {
                 // this can't be the sync master, it will revert
@@ -246,13 +240,13 @@ void SyncMaster::notifyTrackReset(int number)
         trackSyncMaster = 0;
     }
 
-    if (number == transportMaster) {
+    if (number == transport->getMaster()) {
         // Synchronizer would send MIDI Stop at this point
         // it had a method fullStop that I think both sent the STOP event
         // and stop generating clocks
         transport->stop();
 
-        transportMaster = 0;
+        transport->disconnect();
     }
 }
 
@@ -269,7 +263,7 @@ void SyncMaster::notifyTrackReset(int number)
  */
 void SyncMaster::notifyTrackRestructure(int number)
 {
-    if (number == transportMaster) {
+    if (number == transport->getMaster()) {
         // we don't need to distinguish between restructuring
         // and establishing a connection right now
         connectTransport(number);
@@ -287,10 +281,13 @@ void SyncMaster::notifyTrackRestructure(int number)
  * to send a MIDI Start event to keep external devices in sync.
  *
  * Now we inform the Transport which may choose to send MIDI Start.
+ * !! this needs work, this should be transport->notifyMasterStart or something
+ * that makes it clear what is happening.  Right now we're the only thing that
+ * directly touches Transport so it is assumed.
  */
 void SyncMaster::notifyTrackStart(int number)
 {
-    if (number == transportMaster) {
+    if (number == transport->getMaster()) {
         transport->start();
     }
 }
@@ -302,7 +299,7 @@ void SyncMaster::notifyTrackStart(int number)
  */
 void SyncMaster::notifyTrackPause(int number)
 {
-    if (number == transportMaster) {
+    if (number == transport->getMaster()) {
 
         // !! here is where we need to be a lot smarter about the difference
         // between MIDI Start and MIDI Continue, exiting a Pause does not
@@ -321,8 +318,8 @@ void SyncMaster::notifyTrackPause(int number)
  */
 void SyncMaster::notifyTrackResume(int number)
 {
-    if (number == transportMaster) {
-        // probably wrong
+    if (number == transport->getMaster()) {
+        // !! probably wrong
         transport->start();
     }
 }
@@ -444,10 +441,11 @@ void SyncMaster::sendStart(bool checkManual, bool checkNear)
 /**
  * Called when a track pauses.
  * If this is the TransportMaster we have sent MIDI Stop
+ * !! this needs to be moved inside Transport
  */
 void SyncMaster::notifyTrackStop(int number)
 {
-    if (transportMaster == number) {
+    if (transport->getMaster() == number) {
         muteMidiStop();
     }
 }
@@ -483,7 +481,8 @@ void SyncMaster::muteMidiStop()
  */
 void SyncMaster::notifyTrackResume(int number)
 {
-    if (transportMaster == number) {
+    // !! this needs to be moved inside Transport
+    if (transport->getMaster() == number) {
         //Setup* setup = mMobius->getActiveSetup();
         //MuteSyncMode mode = setup->getMuteSyncMode();
         MuteSyncMode mode = MUTE_SYNC_TRANSPORT;
@@ -512,7 +511,7 @@ void SyncMaster::notifyTrackResume(int number)
  */
 void SyncMaster::notifyTrackMute(int number)
 {
-	if (transportMaster == number) {
+	if (transport->getMaster() == number) {
 		//Preset* p = l->getPreset();
         //MuteMode mode = p->getMuteMode();
         ParameterMuteMode mode = MUTE_START;
@@ -590,24 +589,21 @@ void SyncMaster::setTrackSyncMaster(UIAction* a)
  */
 void SyncMaster::setTransportMaster(int id)
 {
-    if (transportMaster != id) {
+    if (transport->getMaster() != id) {
 
-        if (transportMaster > 0 && id == 0) {
+        if (id > 0)
+          connectTransport(id);
+        else {
             // unusual, they are asking to not have a sync master
             // what else should happen here?  Stop it?
             transport->disconnect();
         }
-
-        if (id > 0)
-          connectTransport(id);
-        
-        transportMaster = id;
     }
 }
 
 int SyncMaster::getTransportMaster()
 {
-    return transportMaster;
+    return transport->getMaster();
 }
 
 /**
@@ -847,7 +843,7 @@ void SyncMaster::refreshState(SystemState* sysstate)
 {
     SyncState* state = &(sysstate->syncState);
     
-    state->transportMaster = transportMaster;
+    state->transportMaster = transport->getMaster();
     state->trackSyncMaster = trackSyncMaster;
 
     state->midiReceiving = midiAnalyzer->isReceiving();
@@ -953,6 +949,7 @@ SyncSource SyncMaster::getEffectiveSource(int id)
     if (f != nullptr) {
         source = f->source;
         if (source == SyncSourceMaster) {
+            int transportMaster = transport->getMaster();
             if (transportMaster > 0 && transportMaster != id) {
                 // there is already a transport master, this track
                 // reverts to following the transport

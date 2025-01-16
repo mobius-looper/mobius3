@@ -1283,19 +1283,41 @@ long Loop::reflectFrame(long frame)
  */
 void Loop::refreshState(TrackState* s)
 {
+    // try to keep these in the order defined in TrackState
+    // and the comments in Track::refreshState
+    
     s->frames = (int)getFrames();
+
+	// The frame number should be the "realtime" frame that matches what
+    // is being played and heard, since mFrame lags, have to add latency
+    // UPDATE: Hmm no, this doesn't really matter and at excessive shifts
+    // latency can be high enough to push us into a beat which looks confusing
+
+	//s->frame = mFrame + mInput->latency;
+	// adding latency may have caused us to loop
+    s->frame = mFrame;
+    // since we didn't add latency, don't need this, but this is what happened for awhile
+#if 0    
+    long loopFrames = getFrames();
+	s->frame = wrapFrame(s->frame, loopFrames);
+
+#endif
+	// warp this so the GUI doesn't have to deal with reverse
+    long loopFrames = getFrames();
+	if (isReverse() && loopFrames > 0)
+		s->frame = reflectFrame(s->frame);
+    
+    // subcycles
+    // this is a new field, it wasn't in OldMobiusState
+
+    // subcycle
+    // this IS in OldMobiusState but I didn't see it set anywhere
+    // Viewer and View both have it but it is apparently not used for display
+
 	s->cycles = (int)getCycles();
-
-	s->recording = mRecording;
-	s->pause = mPause;
-	s->overdub = mOverdub;
-
-    // MobiusState has a new model for modes
-    // this wasn't done for summaries
-    s->mode = mMode->stateMode;
-
-    // ?? where does modified modified come from?
-
+    
+    // cycle
+    //
 	// During initial recording we're always at the end, so the current
 	// cycle is always the maximum
 	if (mMode == RecordMode) {
@@ -1312,26 +1334,20 @@ void Loop::refreshState(TrackState* s)
 		}
 	}
 
-    // where is subcycles supposed to ome from?
-    // it would be in the Preset
-
-	// The frame number should be the "realtime" frame that matches what
-    // is being played and heard, since mFrame lags, have to add latency
-    // UPDATE: Hmm no, this doesn't really matter and at excessive shifts
-    // latency can be high enough to push us into a beat which looks confusing
-
-	//s->frame = mFrame + mInput->latency;
-    s->frame = mFrame;
-
-	// adding latency may have caused us to loop
-    long loopFrames = getFrames();
-	s->frame = wrapFrame(s->frame, loopFrames);
-
-	// warp this so the GUI doesn't have to deal with reverse
-	if (isReverse() && loopFrames > 0)
-		s->frame = reflectFrame(s->frame);
-
-    // loop windowing only relevant if active
+    // now Track takes over
+    
+    // MobiusState has a new model for modes
+    // this wasn't done for summaries
+    s->mode = mMode->stateMode;
+	s->overdub = mOverdub;
+    s->reverse = isReverse();
+    s->mute = isMuteMode();
+	s->pause = mPause;
+	s->recording = mRecording;
+    // never seemed to be set
+    s->modified = false;
+    
+    // this is actually higher in TrackState
     s->windowOffset = -1;
     if (mPlay != NULL) {
         s->windowOffset = mPlay->getWindowOffset();
@@ -1385,17 +1401,132 @@ void Loop::refreshState(TrackState* s)
         mBeatSubCycle = false;
     }
 
+    // layer links are a mess, the following is wrong
+    // but gets the basic stats
+    
     int undoLayers = 0;
-    for (Layer* l = mRecord ; l != nullptr ; l = l->getPrev())
-      undoLayers++;
+    for (Layer* l = mRecord ; l != nullptr ; l = l->getPrev()) {
+        undoLayers++;
+    }
 
     int redoLayers = 0;
-    for (Layer* l = mRedo ; l != nullptr ; l = l->getRedo())
-      redoLayers++;
+    for (Layer* l = mRedo ; l != nullptr ; l = l->getRedo()) {
+        redoLayers++;
+    }
 
     // not sure if this is right
     s->layerCount = undoLayers + redoLayers;
     s->activeLayer = undoLayers;
+}
+
+/**
+ * Layer details exist only in the FocusedTrackState
+ *
+ * This is using the original code that does an incomprehensible iteration
+ * over the layer lists.  Just get this working outside the OldMobiusState
+ * figure out what it does, take it behind the shed and burn it.
+ *
+ * I THINK if we're iterating over the Undo list, then there won't be a Redo
+ * pointer so the outer loop only has one thing, but the inner loop will
+ * iterate over the Prev list which is how the Undo list is chained.
+ *
+ * If this IS the Redo list, then the outer loop will do the work and the inner
+ * loop won't have anything.  Maybe.
+ *
+ * In the new model there is just a flat list of layers numbered from 0 to N
+ * (or is it 1 to N) and for each of those numbers we want to know if there is
+ * a checkpoint.
+ *
+ * Fuck, this is terrible.
+ */
+void Loop::refreshFocusedState(FocusedTrackState* state)
+{
+    // abandoned attempt to simplifiy this
+#if 0    
+    int undoCount = 0;
+    if (mRecord != nullptr) {
+        for (Layer* l = mRecord->getPrev() ; l != nullptr ; l = l->getPrev())
+          undoCount++;
+
+        // again adding the checkpoints
+        if (undoCount > 0) {
+            for (Layer* l = mRecord->getPrev(), int position = 0 ; l != nullptr ;
+                 l = l->getPrev(), position++) {
+                if (l->isCheckpoint) {
+                    int virtualNumber = undoCount - position;
+                    TrackState::Layer& lstate = state.layers.getReference(state.layerCount);
+                    lstate.number = virtualNumber;
+                    lstate.checkpoint = true;
+                    state.layerCount++;
+                }
+            }
+        }
+    }
+#endif
+
+    // replicate the old model inside the new one
+    ShittyOldState* s = &(state->oldState);
+    
+    // calculate the number of layers, the record loop is invisible
+    int added = 0;
+    int lost = 0;
+    if (mRecord != NULL)
+      getLayerState(mRecord->getPrev(), s->layers, ShittyMaxLayers,
+                    &added, &lost);
+
+    s->layerCount = added;
+    s->lostLayers = lost;
+
+    // same for redo layers
+    getLayerState(mRedo, s->redoLayers, ShittyMaxRedoLayers, &added, &lost);
+    s->redoCount = added;
+    s->lostRedo = lost;
+}
+
+/**
+ * Capture layer state.
+ * Used for both normal layers and redo layers.
+ * Return via pointers the number of entries in the array and the number
+ * of layers that wouldn't fit.
+ *
+ * Layers are added in reverse order, with the most recent first.
+ * The lost layer count represents old layers that would not fit in the
+ * summary array.  
+ *
+ * The redo layers are in the order in which they will be redone.
+ */
+void Loop::getLayerState(Layer* layers, ShittyLayerState* states, int max,
+                         int *retAdded, int* retLost)
+{
+	int added = 0;
+	int lost = 0;
+
+	// if this is the redo list, we'll have a redo pointer
+	for (Layer* links = layers ; links != NULL ; links = links->getRedo()) {
+		bool inCheckpoint = false;
+
+		// with the introduction of redo links, this logic is overcomplicated
+		// since if there are non-null links this must by definition
+		// be a checkpoint so we don't need to scan, but trying to
+		// share the same scanner for both the undo and redo lists
+
+		for (Layer* l = links ; l != NULL ; l = l->getPrev()) {
+			bool check = l->isCheckpoint();
+			if (!inCheckpoint || check) {
+				if (added >= max)
+				  lost++;
+				else {
+					l->getState(&(states[added]));
+					added++;
+				}
+				// once set, this doesn't turn off in the inner loop
+				inCheckpoint = check;
+			}
+		}
+	}
+
+	*retAdded = added;
+	*retLost = lost;
 }
 
 /****************************************************************************

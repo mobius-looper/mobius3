@@ -329,6 +329,7 @@
 #include "Mobius.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/OldMobiusState.h"
+#include "../../model/TrackState.h"
 #include "Mode.h"
 #include "Project.h"
 #include "Script.h"
@@ -1390,6 +1391,11 @@ Layer* Layer::getTail()
  * Return interesting things about this layer.
  */
 void Layer::getState(OldMobiusLayerState* s)
+{
+	s->checkpoint = isCheckpoint();
+}
+
+void Layer::getState(ShittyLayerState* s)
 {
 	s->checkpoint = isCheckpoint();
 }
