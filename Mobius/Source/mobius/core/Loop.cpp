@@ -1288,8 +1288,6 @@ void Loop::refreshState(TrackState* s)
 
 	s->recording = mRecording;
 	s->pause = mPause;
-    // old state had EventManager set this
-	s->nextLoop = -1;
 	s->overdub = mOverdub;
 
     // MobiusState has a new model for modes

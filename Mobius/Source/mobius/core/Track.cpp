@@ -805,12 +805,15 @@ void Track::refreshState(TrackState* s)
 
     // I guess get it here
     s->subcycles = mPreset->getSubcycles();
+
+    // this gives us nextLoop and returnLoop
+    // event details are handled by refreshFocusedState
+    mEventManager->refreshEventState(s);
     
     // OldMobiusState does all this in LoopState
     // in the new model it is promoted to the track level
     // layerCount
     // activeLayer
-    // nextLoop
     // beatLoop, beatCycle, beatSubCycle
     // windowOffset
     // historyFrames

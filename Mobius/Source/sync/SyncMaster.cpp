@@ -190,6 +190,19 @@ void SyncMaster::notifyTrackAvailable(int number)
                 // until we have manual options ready, auto start
                 transport->start();
             }
+            else if (transportMaster == number) {
+                // this track was already the transport master
+                // and we're being told it was re-recorded
+                // this can happen if you switch to an empty loop then start
+                // a new recording in that loop, 
+                // notifyTrackRecord will stop the clocks but it won't take
+                // away mastership, it could but I think the intent would be
+                // to have this track continue as the master rather than assign
+                // another one at random
+                connectTransport(number);
+                
+                transport->start();
+            }
             else {
                 // this can't be the sync master, it will revert
                 // to either SourceLeader or SourceTransport

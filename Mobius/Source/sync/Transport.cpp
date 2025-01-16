@@ -830,6 +830,11 @@ void Transport::connect(TrackProperties& props)
 
         setTempoInternal(newTempo, newUnitLength);
         connection = props.number;
+
+        // When a track connects and is running, this should normally
+        // start the transport and send MIDI clocks.  Let SyncMaster handle that
+        // because connections can happen for various reasons and not all of them
+        // want to start clocks
     }
 }
 

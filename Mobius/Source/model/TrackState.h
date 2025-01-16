@@ -231,7 +231,7 @@ class TrackState
     int activeLayer = 0;
     int nextLoop = 0;
     // OldMobiusState has this, don't think we need both this and nextLoop
-    // int returnLoop = 0;
+    int returnLoop = 0;
 
     // latching flags set when the loop crosses boundaries
     bool beatLoop = false;

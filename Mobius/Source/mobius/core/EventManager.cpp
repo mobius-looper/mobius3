@@ -1978,7 +1978,32 @@ void EventManager::cleanReturnEvents()
  ****************************************************************************/
 
 /**
- * New way to show events.
+ * Deposit event state that needs to be collected for all tracks, not just
+ * the focused one.
+ * 
+ * This requires another event list iteration which isn't bad, but it's annoying.
+ * To combine this with getFocusedState, we would need to pass both TrackState
+ * and FocusedTrackState, and set a flag to indiciate whether the focused state should
+ * be populated as well.  Which is also annoying.
+ */
+void EventManager::refreshEventState(TrackState* state)
+{
+	Event* events = mEvents->getEvents();
+    
+    for (Event* e = events ; e != nullptr && count < maxEvents ; e = e->getNext()) {
+
+        Loop* nextLoop = e->fields.loopSwitch.nextLoop;
+        
+        if (e->type == ReturnEvent)
+          state->returnLoop = nextLoop->getNumber();
+        
+        else if (e->type == SwitchEvent)
+          state->nextLoop = nextLoop->getNumber();
+    }
+}
+
+/**
+ * Deposit event details for just the focused track.
  */
 void EventManager::refreshFocusedState(FocusedTrackState* state)
 {

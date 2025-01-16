@@ -106,6 +106,7 @@ class EventManager {
 
     // Summary
 
+    void refreshEventState(class TrackState* state);
     void refreshFocusedState(class FocusedTrackState* s);
     void getEventSummary(class OldMobiusLoopState* s);
 

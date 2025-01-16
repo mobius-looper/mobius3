@@ -46,7 +46,7 @@ class MobiusViewer
     //void refreshTrackProperties(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);
     //void refreshSync(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);
     //void refreshTrackGroups(class OldMobiusTrackState* tstate,  class MobiusViewTrack* tview);
-    void refreshInactiveLoops(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);
+    //void refreshInactiveLoops(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);
     void refreshActiveLoop(class OldMobiusTrackState* tstate, class OldMobiusLoopState* lstate,
                            bool activeTrack, class MobiusViewTrack* tview);
     //void refreshMode(class OldMobiusTrackState* tstate, class MobiusViewTrack* tview);

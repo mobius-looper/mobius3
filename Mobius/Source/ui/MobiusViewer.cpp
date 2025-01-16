@@ -398,7 +398,7 @@ void MobiusViewer::refreshTrack(OldMobiusState* state, OldMobiusTrackState* tsta
     (void)state;
     (void)mview;
     //refreshTrackName(state, tstate, mview, tview);
-    refreshInactiveLoops(tstate, tview);
+    //refreshInactiveLoops(tstate, tview);
     //refreshTrackProperties(tstate, tview);
 
     // getting sync from the new model now
@@ -545,6 +545,7 @@ void MobiusViewer::refreshTrackGroups(OldMobiusTrackState* tstate,  MobiusViewTr
  * The old model called these the "loop summaries" which was merged
  * with OldMobiusLoopState during 3 development.
  */
+#if 0
 void MobiusViewer::refreshInactiveLoops(OldMobiusTrackState* tstate, MobiusViewTrack* tview)
 {
     tview->loopCount = tstate->loopCount;
@@ -571,6 +572,7 @@ void MobiusViewer::refreshInactiveLoops(OldMobiusTrackState* tstate, MobiusViewT
         //lview->pending = (i == (tview->nextLoop - 1));
     }
 }
+#endif
 
 /**
  * Refresh state related to the active loop in a track.
@@ -1188,6 +1190,10 @@ void MobiusViewer::refreshTrack(SystemState* state, TrackState* tstate,
 
     if (tview->nextLoopNumber != tstate->nextLoop) {
         tview->nextLoopNumber = tstate->nextLoop;
+        tview->refreshSwitch = true;
+    }
+    if (tview->returnLoopNumber != tstate->returnLoop) {
+        tview->returnLoopNumber = tstate->returnLoop;
         tview->refreshSwitch = true;
     }
 
