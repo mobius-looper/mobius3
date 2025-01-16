@@ -27,7 +27,10 @@ class SyncState
     int transportLoop = 0;
     int transportBeatsPerBar = 0;
     int transportBarsPerLoop = 0;
-
+    int transportUnitLength = 0;
+    int transportPlayHead = 0;
+    bool transportStarted = false;
+    
     // Other Sources
 
     bool midiReceiving = false;

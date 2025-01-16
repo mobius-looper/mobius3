@@ -1141,7 +1141,13 @@ void MobiusViewer::refreshTrack(SystemState* state, TrackState* tstate,
 {
     tview->midi = tstate->midi;
     tview->loopCount = tstate->loopCount;
-    tview->activeLoop = tstate->activeLoop;
+    if (tstate->activeLoop != tview->activeLoop) {
+        tview->activeLoop = tstate->activeLoop;
+        // todo: the CounterElement watches this instead of the activeLoop number
+        // for some reason, it's the only thing triggered by loopChanged
+        // so unless there is more here we don't need the flag, just test the number
+        tview->loopChanged = true;
+    }
     
     tview->frame = tstate->frame;
     // having trouble tracking reset for some reason
@@ -1453,9 +1459,34 @@ void MobiusViewer::addMinorMode(MobiusViewTrack* tview, const char* mode, int ar
 {
     tview->minorModes.add(juce::String(mode) + " " + juce::String(arg));
 }
-    
+
+/**
+ * To get events refreshed you're supposed to set tview->refreshEvents.
+ * OldMobiusState code did some analysis of the event names to figure this
+ * out but it's annoying.  In practice it didn't matter because events are
+ * displayed by the LoopMeterElement which fully repains itself whenever the
+ * play frame changes, and it normally changes all the time.  What would be missed
+ * if you don't set refreshEvents is events that get added while the loop is in Pause.
+ *
+ * Looking for refreshable differences at this level is ugly, would be better if the
+ * engine could keep track of when events are added/removed in each block but that's
+ * also error prone.
+ *
+ * todo: LoopMeterElement is is one of the worst repainters, need to break this up and
+ * keep the event list seperate at which point this flag becomes important.
+ */
 void MobiusViewer::refreshEvents(FocusedTrackState* tstate, MobiusViewTrack* tview)
 {
+    int newCount = tstate->eventCount;
+    int oldCount = tview->events.size();
+
+    // the easiest thing here is to refresh every time when the count is greater than zero
+    // and refresh once when it goes from non-zero to zero
+    // most of the time it will do nothing, it will refresh too often once there are
+    // events but there aren't usually any events
+    if (newCount > 0 || oldCount > 0)
+      tview->refreshEvents = true;
+    
     tview->events.clearQuick();
     for (int i = 0 ; i < tstate->eventCount ; i++) {
         TrackState::Event& e = tstate->events.getReference(i);

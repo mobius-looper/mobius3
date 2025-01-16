@@ -203,3 +203,24 @@ class UIAtomLabeledText : public UIAtomText
     juce::Colour labelColor;
     
 };
+
+class UIAtomRadar : public UIAtom
+{
+  public:
+
+    UIAtomRadar();
+    ~UIAtomRadar();
+
+    void setColor(juce::Colour c);
+    void setRange(int r);
+    void setLocation(int r);
+    
+    virtual void paint(juce::Graphics& g) override;
+
+  private:
+
+    juce::Colour color;
+    int range = 0;
+    int location = 0;
+    
+};

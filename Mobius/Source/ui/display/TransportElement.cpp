@@ -40,6 +40,10 @@ const int TransportGap = 4;
 TransportElement::TransportElement(Provider* p, UIElementDefinition* d) :
     UIElement(p, d)
 {
+    radar.setColor(juce::Colours::red);
+    radar.setPreferredWidth(30);
+    addAndMakeVisible(radar);
+    
     light.setShape(UIAtomLight::Circle);
     light.setOnColor(juce::Colours::red);
     light.setOffColor(juce::Colours::black);
@@ -91,6 +95,7 @@ void TransportElement::configure()
 int TransportElement::getPreferredWidth()
 {
     return
+        radar.getPreferredWidth() + TransportGap +
         light.getPreferredWidth() + TransportGap +
         start.getPreferredWidth() + TransportGap +
         tap.getPreferredWidth() + TransportGap +
@@ -127,10 +132,12 @@ void TransportElement::highRefresh(PriorityState* s)
     lastLoop = s->transportLoop;
 }
 
-void TransportElement::update(class MobiusView* v)
+void TransportElement::update(MobiusView* v)
 {
     // only needed this to test flashing
     //tempo.advance();
+
+    updateRadar(v);
 
     // todo: SourceMidi has the notion of the raw and "smooth" tempo
     // figure out which one to show
@@ -171,6 +178,47 @@ void TransportElement::update(class MobiusView* v)
 }
 
 /**
+ * Several option for the range here depending on how fast you want
+ * it to spin.
+ *
+ * beat/bar/loop numbers start from zero
+ */
+void TransportElement::updateRadar(MobiusView* v)
+{
+    if (!v->syncState.transportStarted) {
+        // leave range zero to keep it off
+        radar.setRange(0);
+    }
+    else {
+        // 0=beat, 1=bar, 2=loop
+        // could have this configurable
+        int option = 1;
+
+        int unit = v->syncState.transportUnitLength;
+        int head = v->syncState.transportPlayHead;
+        int barLength = unit * v->syncState.transportBeatsPerBar;
+    
+        int range = unit;
+        int location = head;
+    
+        if (option == 1) {
+            // bars
+            range = barLength;
+            location = head + (v->syncState.transportBeat * unit);
+        }
+        else {
+            // loop
+            int bpl = v->syncState.transportBarsPerLoop;
+            range = barLength * bpl;
+            location = head + (v->syncState.transportBar * barLength);
+        }
+
+        radar.setRange(range);
+        radar.setLocation(location);
+    }
+}
+
+/**
  * Need to work out a decent layout manager for things like this.
  * Each Atom has a minimum size, but if the bounding box grows larger
  * we should expand them to have similar proportional sizes.
@@ -180,6 +228,9 @@ void TransportElement::resized()
     juce::Rectangle<int> area = getLocalBounds();
 
     juce::Rectangle<int> mainRow = area.removeFromTop(getHeight() / 2);
+
+    sizeAtom(mainRow.removeFromLeft(radar.getPreferredWidth()), &radar);
+    mainRow.removeFromLeft(TransportGap);
     
     sizeAtom(mainRow.removeFromLeft(light.getPreferredWidth()), &light);
     mainRow.removeFromLeft(TransportGap);

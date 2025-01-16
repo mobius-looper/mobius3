@@ -40,6 +40,7 @@ class TransportElement : public UIElement, public UIAtomButton::Listener,
     
   private:
 
+    UIAtomRadar radar;
     UIAtomFlash light;
     UIAtomButton start;
     UIAtomButton tap;
@@ -58,6 +59,7 @@ class TransportElement : public UIElement, public UIAtomButton::Listener,
     int lastBars = 0;
     
     void sizeAtom(juce::Rectangle<int> area, juce::Component* comp);
+    void updateRadar(class MobiusView* v);
 };
 
     

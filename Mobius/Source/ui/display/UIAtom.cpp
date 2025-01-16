@@ -657,6 +657,86 @@ void UIAtomLabeledText::paint(juce::Graphics& g)
                      1.0f);
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Radar
+//
+//////////////////////////////////////////////////////////////////////
+
+UIAtomRadar::UIAtomRadar()
+{
+}
+
+UIAtomRadar::~UIAtomRadar()
+{
+}
+
+void UIAtomRadar::setColor(juce::Colour c)
+{
+    color = c;
+}
+
+void UIAtomRadar::setRange(int r)
+{
+    if (range != r) {
+        range = r;
+        repaint();
+    }
+}
+
+void UIAtomRadar::setLocation(int l)
+{
+    if (location != l) {
+        location = l;
+        repaint();
+    }
+}
+
+/**
+ * The old StripLoopRadar had a fixed Diameter and Padding.
+ * Diameter was used to draw the pie segment, and padding was
+ * a border around the outside and the bounding box.  Preferred
+ * width and height were: LoopRadarDiameter + (LoopRadarPadding * 2)
+ * Padding was 4 for the TrackStrip and Diameter was 40.
+ *
+ * Here we adapt to whatever size we're given but may want some
+ * min/max values.
+ *
+ * For small circles, "endrad" may change but the net effect when
+ * it is drawn might be unchanged, would save a bit of overhead if
+ * we triggered repaing only when there was a significant change.
+ */
+void UIAtomRadar::paint(juce::Graphics& g)
+{
+    // this is where you would put a background color
+    g.setColour(juce::Colours::black);
+    g.fillRect(0.0f, 0.0f, (float)getWidth(), (float)getHeight());
+
+    float padding = 2.0f;
+    float diameter = (float)getHeight() - (padding * 2);
+
+    if (range > 0) {
+        g.setColour(color);
+        if (location > 0) {
+            float fraction = (float)location / (float)range;
+            float twopi = 6.28318f;
+            float endrad = twopi * fraction;
+            float startrad = 0.0f;
+
+            // this I think leaves a "hole" in the middle
+            int innerCircle = 0;
+        
+            juce::Path path;
+            path.addPieSegment(padding, padding, diameter, diameter,
+                               startrad, endrad, (float)innerCircle);
+            g.fillPath(path);
+        }
+        else {
+            g.fillEllipse(padding, padding, diameter, diameter);
+        }
+    }
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

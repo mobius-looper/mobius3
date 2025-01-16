@@ -241,6 +241,16 @@ void Transport::refreshState(SyncState* state)
     state->transportLoop = loop;
     state->transportBeatsPerBar = beatsPerBar;
     state->transportBarsPerLoop = barsPerLoop;
+    state->transportUnitLength = unitLength;
+    state->transportPlayHead = unitPlayHead;
+    state->transportStarted = started;
+
+    // todo: paused might be interesting, but won't happen till
+    // we get SongPosition
+
+    // metronomeEnable and midiEnable should always track the Session options
+    // until they can be controlled from scripts, then we'll need to include them here
+    
 }
 
 /**
@@ -253,7 +263,6 @@ void Transport::refreshPriorityState(PriorityState* state)
     // and barsPerLoop that match
     state->transportBeat = beat;
     state->transportBar = bar;
-
     state->transportLoop = loop;
 }
 
@@ -528,7 +537,6 @@ float Transport::lengthToTempo(int frames)
 
 void Transport::setTempoInternal(float newTempo, int newUnitLength)
 {
-    int oldUnit = unitLength;
     tempo = newTempo;
     unitLength = newUnitLength;
     // get rid of this if we don't need it
@@ -789,20 +797,13 @@ void Transport::connect(TrackProperties& props)
         // now we have location
         // Connection usually happens when the loop is at the beginning, but it
         // can also happen randomly
-        // lots of options here
-        //     - start dealligned, and make the user manually reallign
-        //     - attempt realign and deal with MIDI song position pointer
-        //     - attempt realign and leave MIDI Start till the next loop point
+        // until we support SongPosition, connection only sets the tempo and relies
+        // on Realign to bring either side into alignment
+        // old Mobius had various options for this, need to break away from EDP-ness
+        // and make this far more flexible
         //
-        // If we're restructuring within the same track, then it should
-        // just change the tempo without moving the MIDI position
-        // 
-        // If we're switching loops you might want this to restart the external device
-        // much to do here
-        // let SyncMaster decide?
-        // setTempoInternal will wrap the playHead only
-        //resetLocation();
-
+        // All setTempoInternal does is wrap the playHead in case it is currently
+        // beyond the new unitLength
         setTempoInternal(newTempo, newUnitLength);
         master = props.number;
 
@@ -814,6 +815,12 @@ void Transport::connect(TrackProperties& props)
  * After a track has successfully connected as the master and adjusted the
  * tempo and unit length, we can do various things to the transport play head
  * and generated MIDI.
+ *
+ * The most obvioius is to send MS_START clocks.  Old Mobius had some options
+ * here around "manual start" that need to be restored.
+ *
+ * SyncMaster is also doing things around this that need to be moved down here,
+ * Transport should be the only thing decididing the fate of MidiRealizer.
  */
 void Transport::doConnectionActions()
 {
