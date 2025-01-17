@@ -41,29 +41,29 @@ TransportElement::TransportElement(Provider* p, UIElementDefinition* d) :
     UIElement(p, d)
 {
     radar.setColor(juce::Colours::red);
-    radar.setPreferredWidth(30);
+    radar.setMinWidth(30);
     addAndMakeVisible(radar);
     
     light.setShape(UIAtomLight::Circle);
     light.setOnColor(juce::Colours::red);
     light.setOffColor(juce::Colours::black);
-    light.setPreferredWidth(30);
+    light.setMinWidth(30);
     addAndMakeVisible(light);
 
     start.setText("Start");
     start.setOnText("Stop");
     start.setToggle(true);
     start.setListener(this);
-    start.setPreferredWidth(60);
+    start.setMinWidth(60);
     addAndMakeVisible(start);
     
     tap.setText("Tap");
     tap.setListener(this);
-    tap.setPreferredWidth(40);
+    tap.setMinWidth(40);
     addAndMakeVisible(tap);
 
     // tempo.setFlash(true);
-    tempoAtom.setPreferredWidth(50);
+    tempoAtom.setMinWidth(50);
     addAndMakeVisible(tempoAtom);
 
     bpb.setLabel("Beats/Bar");
@@ -95,11 +95,11 @@ void TransportElement::configure()
 int TransportElement::getPreferredWidth()
 {
     return
-        radar.getPreferredWidth() + TransportGap +
-        light.getPreferredWidth() + TransportGap +
-        start.getPreferredWidth() + TransportGap +
-        tap.getPreferredWidth() + TransportGap +
-        tempoAtom.getPreferredWidth();
+        radar.getMinWidth() + TransportGap +
+        light.getMinWidth() + TransportGap +
+        start.getMinWidth() + TransportGap +
+        tap.getMinWidth() + TransportGap +
+        tempoAtom.getMinWidth();
 }
 
 int TransportElement::getPreferredHeight()
@@ -229,16 +229,16 @@ void TransportElement::resized()
 
     juce::Rectangle<int> mainRow = area.removeFromTop(getHeight() / 2);
 
-    sizeAtom(mainRow.removeFromLeft(radar.getPreferredWidth()), &radar);
+    sizeAtom(mainRow.removeFromLeft(radar.getMinWidth()), &radar);
     mainRow.removeFromLeft(TransportGap);
     
-    sizeAtom(mainRow.removeFromLeft(light.getPreferredWidth()), &light);
+    sizeAtom(mainRow.removeFromLeft(light.getMinWidth()), &light);
     mainRow.removeFromLeft(TransportGap);
     
-    start.setBounds(mainRow.removeFromLeft(start.getPreferredWidth()));
+    start.setBounds(mainRow.removeFromLeft(start.getMinWidth()));
     mainRow.removeFromLeft(TransportGap);
     
-    tap.setBounds(mainRow.removeFromLeft(tap.getPreferredWidth()));
+    tap.setBounds(mainRow.removeFromLeft(tap.getMinWidth()));
     mainRow.removeFromLeft(TransportGap);
     
     tempoAtom.setBounds(mainRow);

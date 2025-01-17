@@ -484,6 +484,8 @@
                 file="Source/ui/display/TransportElement.h"/>
           <FILE id="hFRw08" name="UIAtom.cpp" compile="1" resource="0" file="Source/ui/display/UIAtom.cpp"/>
           <FILE id="fpO9ne" name="UIAtom.h" compile="0" resource="0" file="Source/ui/display/UIAtom.h"/>
+          <FILE id="fL1P6y" name="UIAtomList.cpp" compile="1" resource="0" file="Source/ui/display/UIAtomList.cpp"/>
+          <FILE id="Rz863d" name="UIAtomList.h" compile="0" resource="0" file="Source/ui/display/UIAtomList.h"/>
           <FILE id="AT7paa" name="UIElement.cpp" compile="1" resource="0" file="Source/ui/display/UIElement.cpp"/>
           <FILE id="eqEj1r" name="UIElement.h" compile="0" resource="0" file="Source/ui/display/UIElement.h"/>
           <FILE id="lA4sic" name="UIElementFactory.cpp" compile="1" resource="0"

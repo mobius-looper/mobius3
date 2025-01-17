@@ -14,15 +14,21 @@ class UIAtom : public juce::Component
     UIAtom();
     ~UIAtom();
 
-    int getPreferredWidth();
-    void setPreferredWidth(int w);
-    int getPreferredHeight();
-    void setPreferredHeight(int h);
-    
-    int getMinWidth();
+    virtual int getMinWidth();
     void setMinWidth(int w);
-    int getMinHeight();
+    virtual int getMinHeight();
     void setMinHeight(int h);
+    
+    virtual int getMaxWidth();
+    void setMaxWidth(int w);
+    virtual int getMaxHeight();
+    void setMaxHeight(int h);
+
+    // try to avoid these
+    //int getPreferredWidth();
+    //void setPreferredWidth(int w);
+    //int getPreferredHeight();
+    //void setPreferredHeight(int h);
     
     // do Jucy things
     virtual void resized() override;
@@ -34,12 +40,17 @@ class UIAtom : public juce::Component
     void mouseDrag(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& e) override;
 
+    // layout manager state, think...
+    float proportion =  0.0f;
+
   protected:
 
-    int preferredWidth = 0;
-    int preferredHeight = 0;
     int minWidth = 0;
     int minHeight = 0;
+    int maxWidth = 0;
+    int maxHeight = 0;
+    //int preferredWidth = 0;
+    //int preferredHeight = 0;
 
 };
 

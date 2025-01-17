@@ -19,26 +19,6 @@ UIAtom::~UIAtom()
 {
 }
 
-int UIAtom::getPreferredWidth()
-{
-    return preferredWidth;
-}
-
-int UIAtom::getPreferredHeight()
-{
-    return preferredHeight;
-}
-
-void UIAtom::setPreferredWidth(int w)
-{
-    preferredWidth = w;
-}
-
-void UIAtom::setPreferredHeight(int h)
-{
-    preferredHeight = h;
-}
-
 int UIAtom::getMinWidth()
 {
     return minWidth;
@@ -58,6 +38,49 @@ void UIAtom::setMinHeight(int h)
 {
     minHeight = h;
 }
+
+int UIAtom::getMaxWidth()
+{
+    return maxWidth;
+}
+
+void UIAtom::setMaxWidth(int w)
+{
+    maxWidth = w;
+}
+
+int UIAtom::getMaxHeight()
+{
+    return maxHeight;
+}
+
+void UIAtom::setMaxHeight(int h)
+{
+    maxHeight = h;
+}
+
+// don't think we need these, get rid of them
+#if 0
+int UIAtom::getPreferredWidth()
+{
+    return preferredWidth;
+}
+
+int UIAtom::getPreferredHeight()
+{
+    return preferredHeight;
+}
+
+void UIAtom::setPreferredWidth(int w)
+{
+    preferredWidth = w;
+}
+
+void UIAtom::setPreferredHeight(int h)
+{
+    preferredHeight = h;
+}
+#endif
 
 void UIAtom::resized()
 {
