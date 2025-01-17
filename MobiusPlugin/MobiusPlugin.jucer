@@ -18,9 +18,6 @@
         <FILE id="nO87Dw" name="DriftMonitor.cpp" compile="1" resource="0"
               file="../Mobius/Source/sync/DriftMonitor.cpp"/>
         <FILE id="JEISWZ" name="DriftMonitor.h" compile="0" resource="0" file="../Mobius/Source/sync/DriftMonitor.h"/>
-        <FILE id="IoLZw5" name="DriftMonitor2.cpp" compile="1" resource="0"
-              file="../Mobius/Source/sync/DriftMonitor2.cpp"/>
-        <FILE id="EADg3M" name="DriftMonitor2.h" compile="0" resource="0" file="../Mobius/Source/sync/DriftMonitor2.h"/>
         <FILE id="FK7DXx" name="Follower.h" compile="0" resource="0" file="../Mobius/Source/sync/Follower.h"/>
         <FILE id="AtAkEW" name="HostAnalyzer.cpp" compile="1" resource="0"
               file="../Mobius/Source/sync/HostAnalyzer.cpp"/>
@@ -557,6 +554,8 @@
                 file="../Mobius/Source/ui/display/TransportElement.h"/>
           <FILE id="GCBxi6" name="UIAtom.cpp" compile="1" resource="0" file="../Mobius/Source/ui/display/UIAtom.cpp"/>
           <FILE id="PWdTQo" name="UIAtom.h" compile="0" resource="0" file="../Mobius/Source/ui/display/UIAtom.h"/>
+          <FILE id="Xzxf6c" name="UIAtomList.cpp" compile="1" resource="0" file="../Mobius/Source/ui/display/UIAtomList.cpp"/>
+          <FILE id="dtoFgP" name="UIAtomList.h" compile="0" resource="0" file="../Mobius/Source/ui/display/UIAtomList.h"/>
           <FILE id="TI7ylq" name="UIElement.cpp" compile="1" resource="0" file="../Mobius/Source/ui/display/UIElement.cpp"/>
           <FILE id="IqeHUJ" name="UIElement.h" compile="0" resource="0" file="../Mobius/Source/ui/display/UIElement.h"/>
           <FILE id="tUU7gF" name="UIElementFactory.cpp" compile="1" resource="0"
