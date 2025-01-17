@@ -10,6 +10,7 @@
 #include <JuceHeader.h>
 
 #include "UIAtom.h"
+#include "UIAtomList.h"
 #include "UIElement.h"
 #include "../../Provider.h"
 
@@ -45,10 +46,14 @@ class TransportElement : public UIElement, public UIAtomButton::Listener,
     UIAtomButton start;
     UIAtomButton tap;
     UIAtomText tempoAtom;
-    UIAtomLabeledText bpb;
-    UIAtomLabeledText bars;
-    UIAtomLabeledText beat;
-    UIAtomLabeledText bar;
+    UIAtomLabeledText2 bpb;
+    UIAtomLabeledText2 bars;
+    UIAtomLabeledText2 beat;
+    UIAtomLabeledText2 bar;
+
+    UIAtomList topRow;
+    UIAtomList bottomRow;
+    UIAtomList column;
     
     int tempoValue = 0;
     int tapStart = 0;

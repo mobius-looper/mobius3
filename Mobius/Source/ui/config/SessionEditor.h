@@ -14,6 +14,8 @@
 #include "../common/YanForm.h"
 #include "../common/YanField.h"
 
+#include "SymbolTree.h"
+
 #include "ConfigEditor.h"
 
 class SessionEditor : public ConfigEditor,
@@ -52,6 +54,7 @@ class SessionEditor : public ConfigEditor,
     std::unique_ptr<class Session> revertSession;
 
     BasicTabs tabs;
+    SymbolTree tree;
 
     YanForm transportForm;
     YanCheckbox midiOut {"MIDI Out"};

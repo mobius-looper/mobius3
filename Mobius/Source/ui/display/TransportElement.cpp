@@ -28,6 +28,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/PriorityState.h"
 
+#include "../JuceUtil.h"
 #include "../MobiusView.h"
 #include "../../Provider.h"
 
@@ -37,11 +38,12 @@
 const int TransportHeight = 30;
 const int TransportGap = 4;
 
+#if 0
 TransportElement::TransportElement(Provider* p, UIElementDefinition* d) :
     UIElement(p, d)
 {
     radar.setColor(juce::Colours::red);
-    radar.setMinWidth(30);
+    //radar.setMinWidth(30);
     addAndMakeVisible(radar);
     
     light.setShape(UIAtomLight::Circle);
@@ -63,7 +65,7 @@ TransportElement::TransportElement(Provider* p, UIElementDefinition* d) :
     addAndMakeVisible(tap);
 
     // tempo.setFlash(true);
-    tempoAtom.setMinWidth(50);
+    //tempoAtom.setMinWidth(50);
     addAndMakeVisible(tempoAtom);
 
     bpb.setLabel("Beats/Bar");
@@ -82,6 +84,56 @@ TransportElement::TransportElement(Provider* p, UIElementDefinition* d) :
     // ConfigPanels work so we can remove the listener if the element is disabled
     p->addHighListener(this);
 }
+#endif
+
+TransportElement::TransportElement(Provider* p, UIElementDefinition* d) :
+    UIElement(p, d)
+{
+    topRow.setHorizontal();
+    bottomRow.setHorizontal();
+    column.setVertical();
+    column.add(&bottomRow);
+    column.add(&topRow);
+    
+    radar.setColor(juce::Colours::red);
+    topRow.add(&radar);
+    
+    light.setShape(UIAtomLight::Circle);
+    light.setOnColor(juce::Colours::red);
+    light.setOffColor(juce::Colours::black);
+    topRow.add(&light);
+    
+    start.setText("Start");
+    start.setOnText("Stop");
+    start.setToggle(true);
+    start.setListener(this);
+    topRow.add(&start);
+    
+    tap.setText("Tap");
+    tap.setListener(this);
+    topRow.add(&tap);
+
+    // tempo.setFlash(true);
+    topRow.add(&tempoAtom);
+
+    bpb.setLabel("Beats/Bar");
+    bottomRow.add(&bpb);
+
+    bars.setLabel("Bars");
+    bottomRow.add(&bars);
+
+    beat.setLabel("Beat");
+    bottomRow.add(&beat);
+    
+    bar.setLabel("Bar");
+    bottomRow.add(&bar);
+
+    addAndMakeVisible(column);
+
+    // !! there needs to be showing() and hiding() simiilar to how the
+    // ConfigPanels work so we can remove the listener if the element is disabled
+    p->addHighListener(this);
+}
 
 TransportElement::~TransportElement()
 {
@@ -94,17 +146,21 @@ void TransportElement::configure()
 
 int TransportElement::getPreferredWidth()
 {
+#if 0
     return
         radar.getMinWidth() + TransportGap +
         light.getMinWidth() + TransportGap +
         start.getMinWidth() + TransportGap +
         tap.getMinWidth() + TransportGap +
         tempoAtom.getMinWidth();
+#endif
+    return column.getMinWidth();
 }
 
 int TransportElement::getPreferredHeight()
 {
-    return TransportHeight;
+    // return TransportHeight;
+    return column.getMinHeight();
 }
 
 void TransportElement::highRefresh(PriorityState* s)
@@ -225,6 +281,7 @@ void TransportElement::updateRadar(MobiusView* v)
  */
 void TransportElement::resized()
 {
+#if 0    
     juce::Rectangle<int> area = getLocalBounds();
 
     juce::Rectangle<int> mainRow = area.removeFromTop(getHeight() / 2);
@@ -249,6 +306,9 @@ void TransportElement::resized()
     bars.setBounds(area.removeFromLeft(quad));
     beat.setBounds(area.removeFromLeft(quad));
     bar.setBounds(area.removeFromLeft(quad));
+#endif
+    column.setBounds(getLocalBounds());
+    JuceUtil::dumpComponent(this);
 }
 
 /**

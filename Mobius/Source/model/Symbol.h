@@ -260,6 +260,7 @@ class Symbol
     bool hidden = false;
 
     juce::String treePath;
+    juce::String treeInclude;
     
   private:
 

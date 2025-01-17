@@ -24,6 +24,8 @@ class UIAtom : public juce::Component
     virtual int getMaxHeight();
     void setMaxHeight(int h);
 
+    virtual void setLayoutHeight(int h);
+
     // try to avoid these
     //int getPreferredWidth();
     //void setPreferredWidth(int w);
@@ -31,8 +33,8 @@ class UIAtom : public juce::Component
     //void setPreferredHeight(int h);
     
     // do Jucy things
-    virtual void resized() override;
-    virtual void paint(juce::Graphics& g) override;
+    void resized() override;
+    void paint(juce::Graphics& g) override;
 
     void mouseEnter(const juce::MouseEvent& event) override;
     void mouseExit(const juce::MouseEvent& event) override;
@@ -51,6 +53,35 @@ class UIAtom : public juce::Component
     int maxHeight = 0;
     //int preferredWidth = 0;
     //int preferredHeight = 0;
+
+};
+
+class UIAtomList : public UIAtom
+{
+  public:
+
+    void setVertical();
+    void setHorizontal();
+
+    int getMinHeight() override;
+    int getMinWidth() override;
+    void setLayoutHeight(int h) override;
+    
+    void add(UIAtom* a);
+
+    void resized() override;
+    void paint(juce::Graphics& g) override;
+
+  private:
+
+    // could just use the component list, but might want other
+    // things in there
+    juce::Array<UIAtom*> atoms;
+
+    bool vertical = false;
+
+    void layoutHorizontal(juce::Rectangle<int> area);
+    void layoutVertical(juce::Rectangle<int> area);
 
 };
 
@@ -74,9 +105,10 @@ class UIAtomLight : public UIAtom
     void setOutlineColor(juce::Colour c);
     void setOn(bool b);
     bool isOn();
+    int getMinWidth() override;
     
-    virtual void resized() override;
-    virtual void paint(juce::Graphics& g) override;
+    void resized() override;
+    void paint(juce::Graphics& g) override;
 
   private:
 
@@ -135,8 +167,9 @@ class UIAtomButton : public UIAtom
     void setOn(bool b);
     bool isOn();
     
-    virtual void resized() override;
-    virtual void paint(juce::Graphics& g) override;
+    int getMinWidth() override;
+    void resized() override;
+    void paint(juce::Graphics& g) override;
 
     void mouseEnter(const juce::MouseEvent& event) override;
     void mouseExit(const juce::MouseEvent& event) override;
@@ -179,8 +212,9 @@ class UIAtomText : public UIAtom
     void setFlash(bool b);
     void advance();
     
-    virtual void resized() override;
-    virtual void paint(juce::Graphics& g) override;
+    int getMinWidth() override;
+    void resized() override;
+    void paint(juce::Graphics& g) override;
 
   protected:
 
@@ -204,15 +238,38 @@ class UIAtomLabeledText : public UIAtomText
 
     void setLabel(juce::String s);
     void setLabelColor(juce::Colour c);
+    int getMinWidth() override;
     
-    virtual void resized() override;
-    virtual void paint(juce::Graphics& g) override;
+    void resized() override;
+    void paint(juce::Graphics& g) override;
 
   private:
 
     juce::String label;
     juce::Colour labelColor;
     
+};
+
+class UIAtomLabeledText2 : public UIAtom
+{
+  public:
+
+    UIAtomLabeledText2();
+    ~UIAtomLabeledText2();
+
+    void setLabel(juce::String s);
+    void setText(juce::String s);
+    void setLabelColor(juce::Colour c);
+    int getMinWidth() override;
+    int getMinHeight() override;
+    
+    void resized() override;
+
+  private:
+
+    UIAtomList row;
+    UIAtomText label;
+    UIAtomText text;
 };
 
 class UIAtomRadar : public UIAtom
@@ -225,8 +282,9 @@ class UIAtomRadar : public UIAtom
     void setColor(juce::Colour c);
     void setRange(int r);
     void setLocation(int r);
+    int getMinWidth() override;
     
-    virtual void paint(juce::Graphics& g) override;
+    void paint(juce::Graphics& g) override;
 
   private:
 

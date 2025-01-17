@@ -299,6 +299,7 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         parseTrackTypes(root, s);
 
         s->treePath = root->getStringAttribute("tree");
+        s->treeInclude = root->getStringAttribute("treeInclude");
         s->hidden = root->getBoolAttribute("hidden");
         
         // Trace(2, "Symbolizer: Installed function %s\n", name.toUTF8());
@@ -444,6 +445,7 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
         
         Symbol* s = supervisor->getSymbols()->intern(name);
         s->parameterProperties.reset(props);
+                
         // this seems to be necessary for some things
         s->behavior = BehaviorParameter;
         // Supervisor whines if this isn't set for the newer parameters
@@ -454,6 +456,9 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
             s->level = level;
         }
 
+        s->treePath = el->getStringAttribute("tree");
+        s->treeInclude = el->getStringAttribute("treeInclude");
+        
         parseTrackTypes(el, s);
     }
 }

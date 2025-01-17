@@ -8,6 +8,7 @@
 #include "../../model/SessionConstants.h"
 #include "../../model/Session.h"
 #include "../../model/MobiusConfig.h"
+#include "../../model/UIConfig.h"
 #include "../../Supervisor.h"
 
 #include "../common/BasicTabs.h"
@@ -16,6 +17,8 @@
 #include "../common/SimpleRadio.h"
 
 #include "../../sync/Transport.h"
+
+#include "SymbolTree.h"
 
 #include "SessionEditor.h"
 
@@ -50,6 +53,10 @@ void SessionEditor::load()
     Session* src = supervisor->getSession();
     session.reset(new Session(src));
     revertSession.reset(new Session(src));
+    
+    UIConfig* config = supervisor->getUIConfig();
+    juce::String favorites = config->get("symbolTreeFavorites");
+    tree.loadSymbols(supervisor->getSymbols(), favorites);
     
     loadSession();
 }
@@ -118,7 +125,8 @@ void SessionEditor::render()
     transportForm.add(&midiClocks);
     
     tabs.add("Transport", &transportForm);
-
+    tabs.add("Parameters", &tree);
+    
     addAndMakeVisible(tabs);
 }
 

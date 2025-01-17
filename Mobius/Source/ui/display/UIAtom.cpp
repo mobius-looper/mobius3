@@ -21,7 +21,7 @@ UIAtom::~UIAtom()
 
 int UIAtom::getMinWidth()
 {
-    return minWidth;
+    return (minWidth > 0) ? minWidth : 8;
 }
 
 void UIAtom::setMinWidth(int w)
@@ -31,7 +31,7 @@ void UIAtom::setMinWidth(int w)
 
 int UIAtom::getMinHeight()
 {
-    return minHeight;
+    return (minHeight > 0) ? minHeight : 8;
 }
 
 void UIAtom::setMinHeight(int h)
@@ -57,6 +57,11 @@ int UIAtom::getMaxHeight()
 void UIAtom::setMaxHeight(int h)
 {
     maxHeight = h;
+}
+
+void UIAtom::setLayoutHeight(int h)
+{
+    setSize(getWidth(), h);
 }
 
 // don't think we need these, get rid of them
@@ -179,6 +184,16 @@ bool UIAtomLight::isOn()
 
 void UIAtomLight::resized()
 {
+}
+
+int UIAtomLight::getMinWidth()
+{
+    int min = minWidth;
+    // keep it square
+    int height = getHeight();
+    if (height > 0)
+      min = height;
+    return min;
 }
 
 void UIAtomLight::paint(juce::Graphics& g)
@@ -375,6 +390,20 @@ bool UIAtomButton::isOn()
 
 void UIAtomButton::resized()
 {
+}
+
+int UIAtomButton::getMinWidth()
+{
+    int min = minWidth;
+    if (text.length() > 0) {
+        int height = getHeight();
+        if (height == 0) height = 10;
+        juce::Font f(JuceUtil::getFont(height));
+        int twidth = f.getStringWidth(text);
+        if (twidth > min)
+          min = twidth;
+    }
+    return min;
 }
 
 /**
@@ -586,6 +615,20 @@ void UIAtomText::resized()
 {
 }
 
+int UIAtomText::getMinWidth()
+{
+    int min = minWidth;
+    if (text.length() > 0) {
+        int height = getHeight();
+        if (height == 0) height = 10;
+        juce::Font f(JuceUtil::getFont(height));
+        int twidth = f.getStringWidth(text);
+        if (twidth > min)
+          min = twidth;
+    }
+    return min;
+}
+
 void UIAtomText::paint(juce::Graphics& g)
 {
     // todo: need a background color?
@@ -600,8 +643,8 @@ void UIAtomText::paint(juce::Graphics& g)
     juce::Font font(JuceUtil::getFont(getHeight()));
     // hacking around the unpredictable truncation, if the name is beyond
     // a certain length, reduce the font height
-    if (text.length() >= 10)
-      font = JuceUtil::getFontf(getHeight() * 0.75f);
+    //if (text.length() >= 10)
+    //font = JuceUtil::getFontf(getHeight() * 0.75f);
           
     // not sure about font sizes, we're going to use fit so I think
     // that will size down as necessary
@@ -643,6 +686,38 @@ void UIAtomLabeledText::resized()
 {
 }
 
+int UIAtomLabeledText::getMinWidth()
+{
+    int min = minWidth;
+
+    int lwidth = 0;
+    int height = getHeight();
+    if (height == 0) height = 10;
+    juce::Font f(JuceUtil::getFont(height));
+                 
+    if (label.length() > 0) {
+        lwidth = f.getStringWidth(label);
+    }
+
+    int twidth = 0;
+    if (text.length() > 0) {
+        twidth = f.getStringWidth(text);
+    }
+    else {
+        // for text that gets set later, will need to configure a min size
+        twidth = 30;
+    }
+
+    int total = lwidth + twidth;
+    // gap
+    if (lwidth > 0 && twidth > 0) total += 8;
+
+    if (total > min)
+      min = total;
+    
+    return min;
+}
+
 void UIAtomLabeledText::paint(juce::Graphics& g)
 {
     juce::Rectangle<int> area = getLocalBounds();
@@ -654,30 +729,82 @@ void UIAtomLabeledText::paint(juce::Graphics& g)
     juce::Font font(JuceUtil::getFont(getHeight()));
     // hacking around the unpredictable truncation, if the name is beyond
     // a certain length, reduce the font height
-    if (text.length() >= 10)
-      font = JuceUtil::getFontf(getHeight() * 0.75f);
+    //if (text.length() >= 10)
+    //font = JuceUtil::getFontf(getHeight() * 0.75f);
 
     // not sure about font sizes, we're going to use fit so I think
     // that will size down as necessary
     g.setFont(font);
 
-
-    int half = getWidth() / 2;
-    g.setColour(labelColor);
-    g.drawFittedText(label, 0, 0, half, getHeight(),
-                     juce::Justification::centredLeft,
-                     1, // max lines
-                     1.0f);
-
+    int textLeft = 0;
+    if (label.length() > 0) {
+        int width = font.getStringWidth(label);
+        g.setColour(labelColor);
+        g.drawFittedText(label, 0, 0, width, getHeight(),
+                         juce::Justification::centredLeft,
+                         1, // max lines
+                         1.0f);
+        textLeft = width + 8;
+    }
+    
     if (on)
       g.setColour(onColor);
     else
       g.setColour(offColor);
-    
-    g.drawFittedText(text, half, 0, half, getHeight(),
+
+    int width = font.getStringWidth(text);
+    g.drawFittedText(text, textLeft, 0, width, getHeight(),
                      juce::Justification::centredLeft,
                      1, // max lines
                      1.0f);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// LabeledText - second
+//
+//////////////////////////////////////////////////////////////////////
+
+UIAtomLabeledText2::UIAtomLabeledText2()
+{
+    label.setOnColor(juce::Colours::orange);
+    row.add(&label);
+    row.add(&text);
+    addAndMakeVisible(row);
+}
+
+UIAtomLabeledText2::~UIAtomLabeledText2()
+{
+}
+
+int UIAtomLabeledText2::getMinHeight()
+{
+    return row.getMinHeight();
+}
+
+int UIAtomLabeledText2::getMinWidth()
+{
+    return row.getMinWidth();
+}
+
+void UIAtomLabeledText2::setLabel(juce::String s)
+{
+    label.setText(s);
+}
+
+void UIAtomLabeledText2::setText(juce::String s)
+{
+    text.setText(s);
+}
+
+void UIAtomLabeledText2::setLabelColor(juce::Colour c)
+{
+    label.setOnColor(c);
+}
+
+void UIAtomLabeledText2::resized()
+{
+    row.setBounds(getLocalBounds());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -715,6 +842,15 @@ void UIAtomRadar::setLocation(int l)
     }
 }
 
+int UIAtomRadar::getMinWidth()
+{
+    int min = minWidth;
+    // keep it square
+    int height = getHeight();
+    if (height > 0)
+      min = height;
+    return min;
+}
 /**
  * The old StripLoopRadar had a fixed Diameter and Padding.
  * Diameter was used to draw the pie segment, and padding was
