@@ -34,66 +34,27 @@
 
 #include "TransportElement.h"
 
-// dimensions of the colored bar that represents the loop position
-const int TransportHeight = 30;
-const int TransportGap = 4;
-
-#if 0
-TransportElement::TransportElement(Provider* p, UIElementDefinition* d) :
-    UIElement(p, d)
-{
-    radar.setColor(juce::Colours::red);
-    //radar.setMinWidth(30);
-    addAndMakeVisible(radar);
-    
-    light.setShape(UIAtomLight::Circle);
-    light.setOnColor(juce::Colours::red);
-    light.setOffColor(juce::Colours::black);
-    light.setMinWidth(30);
-    addAndMakeVisible(light);
-
-    start.setText("Start");
-    start.setOnText("Stop");
-    start.setToggle(true);
-    start.setListener(this);
-    start.setMinWidth(60);
-    addAndMakeVisible(start);
-    
-    tap.setText("Tap");
-    tap.setListener(this);
-    tap.setMinWidth(40);
-    addAndMakeVisible(tap);
-
-    // tempo.setFlash(true);
-    //tempoAtom.setMinWidth(50);
-    addAndMakeVisible(tempoAtom);
-
-    bpb.setLabel("Beats/Bar");
-    addAndMakeVisible(bpb);
-
-    bars.setLabel("Bars");
-    addAndMakeVisible(bars);
-
-    beat.setLabel("Beat");
-    addAndMakeVisible(beat);
-    
-    bar.setLabel("Bar");
-    addAndMakeVisible(bar);
-
-    // !! there needs to be showing() and hiding() simiilar to how the
-    // ConfigPanels work so we can remove the listener if the element is disabled
-    p->addHighListener(this);
-}
-#endif
+// these were arbitrarily pulled form UIConfig after some
+// experimentation, ideally elements and atoms should have
+// intelligent initial sizing if they are being used for the first time
+const int TransportDefaultHeight = 50;
+const int TransportDefaultWidth = 320;
 
 TransportElement::TransportElement(Provider* p, UIElementDefinition* d) :
     UIElement(p, d)
 {
+    // this will normally be overridden by UIConfig after construction
+    setSize(TransportDefaultWidth, TransportDefaultHeight);
+    
     topRow.setHorizontal();
+    topRow.setGap(4);
     bottomRow.setHorizontal();
+    bottomRow.verticalProportion = 0.4f;
+    bottomRow.setGap(4);
     column.setVertical();
-    column.add(&bottomRow);
+    column.setGap(2);
     column.add(&topRow);
+    column.add(&bottomRow);
     
     radar.setColor(juce::Colours::red);
     topRow.add(&radar);
@@ -113,19 +74,27 @@ TransportElement::TransportElement(Provider* p, UIElementDefinition* d) :
     tap.setListener(this);
     topRow.add(&tap);
 
+    spacer.setGap(12);
+    topRow.add(&spacer);
+
     // tempo.setFlash(true);
+    tempoAtom.setDigits(3, 1);
     topRow.add(&tempoAtom);
 
     bpb.setLabel("Beats/Bar");
+    bpb.setDigits(2);
     bottomRow.add(&bpb);
 
     bars.setLabel("Bars");
+    bars.setDigits(2);
     bottomRow.add(&bars);
 
     beat.setLabel("Beat");
+    beat.setDigits(2);
     bottomRow.add(&beat);
     
     bar.setLabel("Bar");
+    bar.setDigits(2);
     bottomRow.add(&bar);
 
     addAndMakeVisible(column);
@@ -146,46 +115,50 @@ void TransportElement::configure()
 
 int TransportElement::getPreferredWidth()
 {
-#if 0
-    return
-        radar.getMinWidth() + TransportGap +
-        light.getMinWidth() + TransportGap +
-        start.getMinWidth() + TransportGap +
-        tap.getMinWidth() + TransportGap +
-        tempoAtom.getMinWidth();
-#endif
     return column.getMinWidth();
 }
 
 int TransportElement::getPreferredHeight()
 {
-    // return TransportHeight;
     return column.getMinHeight();
 }
 
 void TransportElement::highRefresh(PriorityState* s)
 {
-    if (s->transportLoop != lastLoop) {
+    // state numbers are all base zero, we display base 1
+    int newBeat = s->transportBeat + 1;
+    int newBar = s->transportBar + 1;
+    int newLoop = s->transportLoop + 1;
+
+    // lol, on the initial display we want all the "last" numbers
+    // to start at zero so we can trigger the initial display
+    // for things like beat/bar that have a zero based value
+    // doing this causes the iniital number display but ALSO
+    // flashes the light once
+    // could pass transport started state in PriorityState to prevent this
+    // or keep an "I am starting, shut up" flag
+   
+    if (newLoop != lastLoop) {
         light.flash(juce::Colours::red);
         // beat and bar will be back at zero
-        beat.setText(juce::String(s->transportBeat + 1));
-        bar.setText(juce::String(s->transportBar + 1));
+        beat.setValue(newBeat);
+        bar.setValue(newBar);
     }
-    else if (s->transportBar != lastBar) {
+    else if (newBar != lastBar) {
         light.flash(juce::Colours::yellow);
         // beat back at zero and bar advances
-        beat.setText(juce::String(s->transportBeat + 1));
-        bar.setText(juce::String(s->transportBar + 1));
+        beat.setValue(newBeat);
+        bar.setValue(newBar);
     }
-    else if (s->transportBeat != lastBeat) {
+    else if (newBeat != lastBeat) {
         light.flash(juce::Colours::green);
         // only beat advances
-        beat.setText(juce::String(s->transportBeat + 1));
+        beat.setValue(newBeat);
     }
 
-    lastBeat = s->transportBeat;
-    lastBar = s->transportBar;
-    lastLoop = s->transportLoop;
+    lastBeat = newBeat;
+    lastBar = newBar;
+    lastLoop = newLoop;
 }
 
 void TransportElement::update(MobiusView* v)
@@ -204,30 +177,22 @@ void TransportElement::update(MobiusView* v)
     // fluctuations
     int itempo = (int)(ftempo * 100);
     if (itempo != tempoValue) {
-        int decimal = (int)ftempo;
-        int fraction = (int)((ftempo - (float)decimal) * 10.0f);
-        juce::String stempo = juce::String(decimal);
-        stempo += ".";
-        stempo += juce::String(fraction);
-        // this will repaing()
-        tempoAtom.setText(stempo);
+        tempoAtom.setValue(ftempo);
         tempoValue = itempo;
     }
 
-    // todo: a display for beatsPerBar
-    
     // this is necessary to flash beats
     light.advance();
 
     int newBpb = v->syncState.transportBeatsPerBar;
     if (lastBpb != newBpb) {
-        bpb.setText(juce::String(newBpb));
+        bpb.setValue(newBpb);
         lastBpb = newBpb;
     }
     
     int newBars = v->syncState.transportBarsPerLoop;
     if (lastBars != newBars) {
-        bars.setText(juce::String(newBars));
+        bars.setValue(newBars);
         lastBars = newBars;
     }
 
@@ -281,34 +246,8 @@ void TransportElement::updateRadar(MobiusView* v)
  */
 void TransportElement::resized()
 {
-#if 0    
-    juce::Rectangle<int> area = getLocalBounds();
-
-    juce::Rectangle<int> mainRow = area.removeFromTop(getHeight() / 2);
-
-    sizeAtom(mainRow.removeFromLeft(radar.getMinWidth()), &radar);
-    mainRow.removeFromLeft(TransportGap);
-    
-    sizeAtom(mainRow.removeFromLeft(light.getMinWidth()), &light);
-    mainRow.removeFromLeft(TransportGap);
-    
-    start.setBounds(mainRow.removeFromLeft(start.getMinWidth()));
-    mainRow.removeFromLeft(TransportGap);
-    
-    tap.setBounds(mainRow.removeFromLeft(tap.getMinWidth()));
-    mainRow.removeFromLeft(TransportGap);
-    
-    tempoAtom.setBounds(mainRow);
-
-    int quad = area.getWidth() / 4;
-
-    bpb.setBounds(area.removeFromLeft(quad));
-    bars.setBounds(area.removeFromLeft(quad));
-    beat.setBounds(area.removeFromLeft(quad));
-    bar.setBounds(area.removeFromLeft(quad));
-#endif
     column.setBounds(getLocalBounds());
-    JuceUtil::dumpComponent(this);
+    //JuceUtil::dumpComponent(this);
 }
 
 /**

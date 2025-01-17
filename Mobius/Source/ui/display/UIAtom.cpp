@@ -1,6 +1,8 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/Trace.h"
+
 #include "../JuceUtil.h"
 #include "Colors.h"
 #include "UIAtom.h"
@@ -64,29 +66,6 @@ void UIAtom::setLayoutHeight(int h)
     setSize(getWidth(), h);
 }
 
-// don't think we need these, get rid of them
-#if 0
-int UIAtom::getPreferredWidth()
-{
-    return preferredWidth;
-}
-
-int UIAtom::getPreferredHeight()
-{
-    return preferredHeight;
-}
-
-void UIAtom::setPreferredWidth(int w)
-{
-    preferredWidth = w;
-}
-
-void UIAtom::setPreferredHeight(int h)
-{
-    preferredHeight = h;
-}
-#endif
-
 void UIAtom::resized()
 {
 }
@@ -97,6 +76,42 @@ void UIAtom::paint(juce::Graphics& g)
     // is supposed to overload this
     g.setColour(juce::Colours::yellow);
     g.fillRect(0, 0, getWidth(), getHeight());
+}
+
+//
+// String sizing tools
+//
+
+int UIAtom::getStringWidth(juce::String& s)
+{
+    int width = 0;
+    if (s.length() > 0) {
+        int height = getHeight();
+        if (height == 0) {
+            Trace(2, "UIAtom: String sizing default height");
+            height = 10;
+        }
+        
+        juce::Font f (JuceUtil::getFont(height));
+        width = f.getStringWidth(s);
+        Trace(2, "UIAtom: String %s height %d width %d", s.toUTF8(), height, width);
+    }
+    return width;
+}
+
+/**
+ * Get the expected width for numeric fields with the given precision.
+ */
+int UIAtom::getNumberTextWidth(int digits)
+{
+    int width = 0;
+    if (digits > 0) {
+        // pick a digit, 8 seems to be suitably wide and is lucky
+        juce::String reference("8");
+        int dwidth = getStringWidth(reference);
+        width = dwidth * 2;
+    }
+    return width;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -394,15 +409,8 @@ void UIAtomButton::resized()
 
 int UIAtomButton::getMinWidth()
 {
-    int min = minWidth;
-    if (text.length() > 0) {
-        int height = getHeight();
-        if (height == 0) height = 10;
-        juce::Font f(JuceUtil::getFont(height));
-        int twidth = f.getStringWidth(text);
-        if (twidth > min)
-          min = twidth;
-    }
+    int min = getStringWidth(text);
+    if (minWidth > min) min = minWidth;
     return min;
 }
 
@@ -617,15 +625,8 @@ void UIAtomText::resized()
 
 int UIAtomText::getMinWidth()
 {
-    int min = minWidth;
-    if (text.length() > 0) {
-        int height = getHeight();
-        if (height == 0) height = 10;
-        juce::Font f(JuceUtil::getFont(height));
-        int twidth = f.getStringWidth(text);
-        if (twidth > min)
-          min = twidth;
-    }
+    int min = getStringWidth(text);
+    if (minWidth > min) min = minWidth;
     return min;
 }
 
@@ -646,114 +647,13 @@ void UIAtomText::paint(juce::Graphics& g)
     //if (text.length() >= 10)
     //font = JuceUtil::getFontf(getHeight() * 0.75f);
           
-    // not sure about font sizes, we're going to use fit so I think
-    // that will size down as necessary
     g.setFont(font);
-    
+
+    // now that we're sizing these properly during layout, don't really need Fitted
+    // if that makes a difference
     g.drawFittedText(text, 0, 0, getWidth(), getHeight(),
-                     juce::Justification::centred,
-                     1, // max lines
-                     1.0f);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// LabeledText
-//
-//////////////////////////////////////////////////////////////////////
-
-UIAtomLabeledText::UIAtomLabeledText()
-{
-    labelColor = juce::Colours::orange;
-}
-
-UIAtomLabeledText::~UIAtomLabeledText()
-{
-}
-
-void UIAtomLabeledText::setLabel(juce::String s)
-{
-    label = s;
-    repaint();
-}
-
-void UIAtomLabeledText::setLabelColor(juce::Colour c)
-{
-    labelColor = c;
-}
-
-void UIAtomLabeledText::resized()
-{
-}
-
-int UIAtomLabeledText::getMinWidth()
-{
-    int min = minWidth;
-
-    int lwidth = 0;
-    int height = getHeight();
-    if (height == 0) height = 10;
-    juce::Font f(JuceUtil::getFont(height));
-                 
-    if (label.length() > 0) {
-        lwidth = f.getStringWidth(label);
-    }
-
-    int twidth = 0;
-    if (text.length() > 0) {
-        twidth = f.getStringWidth(text);
-    }
-    else {
-        // for text that gets set later, will need to configure a min size
-        twidth = 30;
-    }
-
-    int total = lwidth + twidth;
-    // gap
-    if (lwidth > 0 && twidth > 0) total += 8;
-
-    if (total > min)
-      min = total;
-    
-    return min;
-}
-
-void UIAtomLabeledText::paint(juce::Graphics& g)
-{
-    juce::Rectangle<int> area = getLocalBounds();
-    
-    // todo: need a background color?
-    g.setColour(backColor);
-    g.fillRect(getLocalBounds());
-
-    juce::Font font(JuceUtil::getFont(getHeight()));
-    // hacking around the unpredictable truncation, if the name is beyond
-    // a certain length, reduce the font height
-    //if (text.length() >= 10)
-    //font = JuceUtil::getFontf(getHeight() * 0.75f);
-
-    // not sure about font sizes, we're going to use fit so I think
-    // that will size down as necessary
-    g.setFont(font);
-
-    int textLeft = 0;
-    if (label.length() > 0) {
-        int width = font.getStringWidth(label);
-        g.setColour(labelColor);
-        g.drawFittedText(label, 0, 0, width, getHeight(),
-                         juce::Justification::centredLeft,
-                         1, // max lines
-                         1.0f);
-        textLeft = width + 8;
-    }
-    
-    if (on)
-      g.setColour(onColor);
-    else
-      g.setColour(offColor);
-
-    int width = font.getStringWidth(text);
-    g.drawFittedText(text, textLeft, 0, width, getHeight(),
+                     // todo: should have some options here but this is almost
+                     // always what you want
                      juce::Justification::centredLeft,
                      1, // max lines
                      1.0f);
@@ -761,50 +661,75 @@ void UIAtomLabeledText::paint(juce::Graphics& g)
 
 //////////////////////////////////////////////////////////////////////
 //
-// LabeledText - second
+// Number
 //
 //////////////////////////////////////////////////////////////////////
 
-UIAtomLabeledText2::UIAtomLabeledText2()
-{
-    label.setOnColor(juce::Colours::orange);
-    row.add(&label);
-    row.add(&text);
-    addAndMakeVisible(row);
-}
-
-UIAtomLabeledText2::~UIAtomLabeledText2()
+UIAtomNumber::UIAtomNumber()
 {
 }
 
-int UIAtomLabeledText2::getMinHeight()
+UIAtomNumber::~UIAtomNumber()
 {
-    return row.getMinHeight();
 }
 
-int UIAtomLabeledText2::getMinWidth()
+void UIAtomNumber::setDigits(int d)
 {
-    return row.getMinWidth();
+    digits = d;
 }
 
-void UIAtomLabeledText2::setLabel(juce::String s)
+void UIAtomNumber::setValue(int v)
 {
-    label.setText(s);
+    // todo: should make sure that the value is within digits
+    setText(juce::String(v));
 }
 
-void UIAtomLabeledText2::setText(juce::String s)
+int UIAtomNumber::getMinWidth()
 {
-    text.setText(s);
+    return getNumberTextWidth(digits);
 }
 
-void UIAtomLabeledText2::setLabelColor(juce::Colour c)
+//////////////////////////////////////////////////////////////////////
+//
+// Float
+//
+//////////////////////////////////////////////////////////////////////
+
+UIAtomFloat::UIAtomFloat()
 {
-    label.setOnColor(c);
 }
 
-void UIAtomLabeledText2::resized()
+UIAtomFloat::~UIAtomFloat()
 {
-    row.setBounds(getLocalBounds());
+}
+
+void UIAtomFloat::setDigits(int d, int f)
+{
+    decimals = d;
+    fractions = f;
+}
+
+int UIAtomFloat::getMinWidth()
+{
+    // actual width will be the combined number of digits
+    // plus a little extra for the '.'
+    // this allows the use of a single Text atom for the value
+    // rather than a container with three strings
+    return getNumberTextWidth(decimals) + getNumberTextWidth(fractions) + 6;
+}
+
+void UIAtomFloat::setValue(float f)
+{
+    int dpart = (int)f;
+    int fpart = (int)((f - dpart) * (fractions * 10));
+    
+    juce::String s (dpart);
+    if (fpart > 0) {
+        s += ".";
+        s += fpart;
+    }
+    
+    setText(s);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -871,7 +796,8 @@ void UIAtomRadar::paint(juce::Graphics& g)
     g.setColour(juce::Colours::black);
     g.fillRect(0.0f, 0.0f, (float)getWidth(), (float)getHeight());
 
-    float padding = 2.0f;
+    // don't need padding, the container gap can handle this
+    float padding = 0.0f;
     float diameter = (float)getHeight() - (padding * 2);
 
     if (range > 0) {

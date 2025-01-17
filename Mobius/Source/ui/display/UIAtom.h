@@ -26,12 +26,10 @@ class UIAtom : public juce::Component
 
     virtual void setLayoutHeight(int h);
 
-    // try to avoid these
-    //int getPreferredWidth();
-    //void setPreferredWidth(int w);
-    //int getPreferredHeight();
-    //void setPreferredHeight(int h);
-    
+    // sizing tools
+    int getStringWidth(juce::String& s);
+    int getNumberTextWidth(int digits);
+
     // do Jucy things
     void resized() override;
     void paint(juce::Graphics& g) override;
@@ -42,7 +40,16 @@ class UIAtom : public juce::Component
     void mouseDrag(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& e) override;
 
-    // layout manager state, think...
+    //
+    // Layout State
+    // All very experimental...
+    //
+    
+    // vertical scaling factor that will be applied to this atom when
+    // it is in a container with vertical orientation, must be a fraction under 0
+    float verticalProportion = 0.0f;
+    
+    // transient state used by the layout manager
     float proportion =  0.0f;
 
   protected:
@@ -51,37 +58,6 @@ class UIAtom : public juce::Component
     int minHeight = 0;
     int maxWidth = 0;
     int maxHeight = 0;
-    //int preferredWidth = 0;
-    //int preferredHeight = 0;
-
-};
-
-class UIAtomList : public UIAtom
-{
-  public:
-
-    void setVertical();
-    void setHorizontal();
-
-    int getMinHeight() override;
-    int getMinWidth() override;
-    void setLayoutHeight(int h) override;
-    
-    void add(UIAtom* a);
-
-    void resized() override;
-    void paint(juce::Graphics& g) override;
-
-  private:
-
-    // could just use the component list, but might want other
-    // things in there
-    juce::Array<UIAtom*> atoms;
-
-    bool vertical = false;
-
-    void layoutHorizontal(juce::Rectangle<int> area);
-    void layoutVertical(juce::Rectangle<int> area);
 
 };
 
@@ -229,47 +205,40 @@ class UIAtomText : public UIAtom
     void drawTextBackground(juce::Graphics& g);
 };
 
-class UIAtomLabeledText : public UIAtomText
+class UIAtomNumber : public UIAtomText
 {
   public:
 
-    UIAtomLabeledText();
-    ~UIAtomLabeledText();
+    UIAtomNumber();
+    ~UIAtomNumber();
 
-    void setLabel(juce::String s);
-    void setLabelColor(juce::Colour c);
+    void setDigits(int d);
+    void setValue(int v);
+    
     int getMinWidth() override;
     
-    void resized() override;
-    void paint(juce::Graphics& g) override;
+  protected:
 
-  private:
-
-    juce::String label;
-    juce::Colour labelColor;
-    
+    int digits = 0;
 };
 
-class UIAtomLabeledText2 : public UIAtom
+class UIAtomFloat : public UIAtomText
 {
   public:
 
-    UIAtomLabeledText2();
-    ~UIAtomLabeledText2();
+    UIAtomFloat();
+    ~UIAtomFloat();
 
-    void setLabel(juce::String s);
-    void setText(juce::String s);
-    void setLabelColor(juce::Colour c);
-    int getMinWidth() override;
-    int getMinHeight() override;
+    void setDigits(int decimal, int fraction);
+    void setValue(float v);
     
-    void resized() override;
+    int getMinWidth() override;
+    
+  protected:
 
-  private:
+    int decimals = 0;
+    int fractions = 0;
 
-    UIAtomList row;
-    UIAtomText label;
-    UIAtomText text;
 };
 
 class UIAtomRadar : public UIAtom
@@ -293,3 +262,7 @@ class UIAtomRadar : public UIAtom
     int location = 0;
     
 };
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

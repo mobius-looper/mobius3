@@ -45,15 +45,16 @@ class TransportElement : public UIElement, public UIAtomButton::Listener,
     UIAtomFlash light;
     UIAtomButton start;
     UIAtomButton tap;
-    UIAtomText tempoAtom;
-    UIAtomLabeledText2 bpb;
-    UIAtomLabeledText2 bars;
-    UIAtomLabeledText2 beat;
-    UIAtomLabeledText2 bar;
+    UIAtomFloat tempoAtom;
+    UIAtomLabeledNumber bpb;
+    UIAtomLabeledNumber bars;
+    UIAtomLabeledNumber beat;
+    UIAtomLabeledNumber bar;
 
     UIAtomList topRow;
     UIAtomList bottomRow;
     UIAtomList column;
+    UIAtomSpacer spacer;
     
     int tempoValue = 0;
     int tapStart = 0;
