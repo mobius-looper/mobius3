@@ -222,6 +222,37 @@
         <FILE id="lTQjDK" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
+        <GROUP id="{DF1301BF-7977-3AF9-2F74-88DD7CDC5689}" name="session">
+          <FILE id="FT6Mg2" name="MidiTrackEditor.cpp" compile="1" resource="0"
+                file="Source/ui/session/MidiTrackEditor.cpp"/>
+          <FILE id="FVJZ8a" name="MidiTrackEditor.h" compile="0" resource="0"
+                file="Source/ui/session/MidiTrackEditor.h"/>
+          <FILE id="o5GJM2" name="ParameterCategoryTree.cpp" compile="1" resource="0"
+                file="Source/ui/session/ParameterCategoryTree.cpp"/>
+          <FILE id="AJrVaW" name="ParameterCategoryTree.h" compile="0" resource="0"
+                file="Source/ui/session/ParameterCategoryTree.h"/>
+          <FILE id="h5SWoP" name="SessionEditor.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionEditor.cpp"/>
+          <FILE id="YLdxmd" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/session/SessionEditor.h"/>
+          <FILE id="IllGre" name="SessionEditorForm.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionEditorForm.cpp"/>
+          <FILE id="ButKbC" name="SessionEditorForm.h" compile="0" resource="0"
+                file="Source/ui/session/SessionEditorForm.h"/>
+          <FILE id="za4YnZ" name="SessionTrackEditor.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionTrackEditor.cpp"/>
+          <FILE id="bxa5u6" name="SessionTrackEditor.h" compile="0" resource="0"
+                file="Source/ui/session/SessionTrackEditor.h"/>
+          <FILE id="yWWva8" name="SessionTrackTable.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionTrackTable.cpp"/>
+          <FILE id="jADQbN" name="SessionTrackTable.h" compile="0" resource="0"
+                file="Source/ui/session/SessionTrackTable.h"/>
+          <FILE id="fh3vdM" name="SessionTrackTrees.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionTrackTrees.cpp"/>
+          <FILE id="C57wUV" name="SessionTrackTrees.h" compile="0" resource="0"
+                file="Source/ui/session/SessionTrackTrees.h"/>
+          <FILE id="uzUdnw" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/session/SymbolTree.cpp"/>
+          <FILE id="rYvScn" name="SymbolTree.h" compile="0" resource="0" file="Source/ui/session/SymbolTree.h"/>
+        </GROUP>
         <FILE id="hLBOHa" name="MobiusView.cpp" compile="1" resource="0" file="Source/ui/MobiusView.cpp"/>
         <FILE id="GkrLrx" name="MobiusViewer.cpp" compile="1" resource="0"
               file="Source/ui/MobiusViewer.cpp"/>
@@ -331,10 +362,6 @@
                 file="Source/ui/config/MidiDeviceEditor.h"/>
           <FILE id="cLSRUC" name="MidiEditor.cpp" compile="1" resource="0" file="Source/ui/config/MidiEditor.cpp"/>
           <FILE id="KlGcL4" name="MidiEditor.h" compile="0" resource="0" file="Source/ui/config/MidiEditor.h"/>
-          <FILE id="EAPV6a" name="MidiTrackEditor.cpp" compile="1" resource="0"
-                file="Source/ui/config/MidiTrackEditor.cpp"/>
-          <FILE id="Q90H6M" name="MidiTrackEditor.h" compile="0" resource="0"
-                file="Source/ui/config/MidiTrackEditor.h"/>
           <FILE id="CqcHvV" name="MultiSelectDrag.cpp" compile="1" resource="0"
                 file="Source/ui/config/MultiSelectDrag.cpp"/>
           <FILE id="DzO444" name="MultiSelectDrag.h" compile="0" resource="0"
@@ -343,10 +370,6 @@
                 file="Source/ui/config/ObjectSelector.cpp"/>
           <FILE id="IRESL5" name="ObjectSelector.h" compile="0" resource="0"
                 file="Source/ui/config/ObjectSelector.h"/>
-          <FILE id="NVQFua" name="ParameterCategoryTree.cpp" compile="1" resource="0"
-                file="Source/ui/config/ParameterCategoryTree.cpp"/>
-          <FILE id="xReOAv" name="ParameterCategoryTree.h" compile="0" resource="0"
-                file="Source/ui/config/ParameterCategoryTree.h"/>
           <FILE id="aY7LcN" name="ParameterField.cpp" compile="1" resource="0"
                 file="Source/ui/config/ParameterField.cpp"/>
           <FILE id="Olbaad" name="ParameterField.h" compile="0" resource="0"
@@ -383,29 +406,8 @@
                 file="Source/ui/config/ScriptSymbolTable.cpp"/>
           <FILE id="sJ7xu7" name="ScriptSymbolTable.h" compile="0" resource="0"
                 file="Source/ui/config/ScriptSymbolTable.h"/>
-          <FILE id="gpVbiW" name="SessionEditor.cpp" compile="1" resource="0"
-                file="Source/ui/config/SessionEditor.cpp"/>
-          <FILE id="WcZ5HA" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/config/SessionEditor.h"/>
-          <FILE id="tPtUlY" name="SessionEditorForm.cpp" compile="1" resource="0"
-                file="Source/ui/config/SessionEditorForm.cpp"/>
-          <FILE id="UMt59T" name="SessionEditorForm.h" compile="0" resource="0"
-                file="Source/ui/config/SessionEditorForm.h"/>
-          <FILE id="ng1Ftu" name="SessionTrackEditor.cpp" compile="1" resource="0"
-                file="Source/ui/config/SessionTrackEditor.cpp"/>
-          <FILE id="HNRi5u" name="SessionTrackEditor.h" compile="0" resource="0"
-                file="Source/ui/config/SessionTrackEditor.h"/>
-          <FILE id="zjDDPh" name="SessionTrackTable.cpp" compile="1" resource="0"
-                file="Source/ui/config/SessionTrackTable.cpp"/>
-          <FILE id="Sz0o41" name="SessionTrackTable.h" compile="0" resource="0"
-                file="Source/ui/config/SessionTrackTable.h"/>
-          <FILE id="h8DgFe" name="SessionTrackTrees.cpp" compile="1" resource="0"
-                file="Source/ui/config/SessionTrackTrees.cpp"/>
-          <FILE id="yWpwKy" name="SessionTrackTrees.h" compile="0" resource="0"
-                file="Source/ui/config/SessionTrackTrees.h"/>
           <FILE id="pzeGck" name="SetupEditor.cpp" compile="1" resource="0" file="Source/ui/config/SetupEditor.cpp"/>
           <FILE id="dtBl3I" name="SetupEditor.h" compile="0" resource="0" file="Source/ui/config/SetupEditor.h"/>
-          <FILE id="WR0iDK" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/config/SymbolTree.cpp"/>
-          <FILE id="VOlHeq" name="SymbolTree.h" compile="0" resource="0" file="Source/ui/config/SymbolTree.h"/>
           <FILE id="ImU9ao" name="TargetSelectorWrapper.cpp" compile="1" resource="0"
                 file="Source/ui/config/TargetSelectorWrapper.cpp"/>
           <FILE id="MuAGqD" name="TargetSelectorWrapper.h" compile="0" resource="0"
@@ -414,13 +416,6 @@
                 file="Source/ui/config/TreeTargetSelector.cpp"/>
           <FILE id="OOMFyO" name="TreeTargetSelector.h" compile="0" resource="0"
                 file="Source/ui/config/TreeTargetSelector.h"/>
-          <FILE id="xPiHJd" name="YanParameter.cpp" compile="1" resource="0"
-                file="Source/ui/config/YanParameter.cpp"/>
-          <FILE id="RppSPz" name="YanParameter.h" compile="0" resource="0" file="Source/ui/config/YanParameter.h"/>
-          <FILE id="JFauUG" name="YanParameterForm.cpp" compile="1" resource="0"
-                file="Source/ui/config/YanParameterForm.cpp"/>
-          <FILE id="UEwkkd" name="YanParameterForm.h" compile="0" resource="0"
-                file="Source/ui/config/YanParameterForm.h"/>
         </GROUP>
         <GROUP id="{506F264E-A601-E29C-91E6-134CCA9C4AAA}" name="display">
           <FILE id="NZymdN" name="ActionButton.cpp" compile="1" resource="0"
@@ -590,6 +585,13 @@
           <FILE id="xYsipx" name="YanField.h" compile="0" resource="0" file="Source/ui/common/YanField.h"/>
           <FILE id="f2zY9Q" name="YanForm.cpp" compile="1" resource="0" file="Source/ui/common/YanForm.cpp"/>
           <FILE id="QtLbZf" name="YanForm.h" compile="0" resource="0" file="Source/ui/common/YanForm.h"/>
+          <FILE id="bZ5HFu" name="YanParameter.cpp" compile="1" resource="0"
+                file="Source/ui/common/YanParameter.cpp"/>
+          <FILE id="M0KOLA" name="YanParameter.h" compile="0" resource="0" file="Source/ui/common/YanParameter.h"/>
+          <FILE id="YH3ixI" name="YanParameterForm.cpp" compile="1" resource="0"
+                file="Source/ui/common/YanParameterForm.cpp"/>
+          <FILE id="erADRG" name="YanParameterForm.h" compile="0" resource="0"
+                file="Source/ui/common/YanParameterForm.h"/>
         </GROUP>
         <FILE id="i40dnE" name="AboutPanel.cpp" compile="1" resource="0" file="Source/ui/AboutPanel.cpp"/>
         <FILE id="Cgk0He" name="AboutPanel.h" compile="0" resource="0" file="Source/ui/AboutPanel.h"/>

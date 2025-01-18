@@ -10,7 +10,7 @@
 
 #include <JuceHeader.h>
 
-#include "../common/YanField.h"
+#include "YanField.h"
 
 class YanParameter : public YanField
 {

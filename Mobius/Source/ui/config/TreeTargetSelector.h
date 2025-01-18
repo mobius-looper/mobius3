@@ -4,7 +4,7 @@
 #include <JuceHeader.h>
 
 #include "BindingTargetSelector.h"
-#include "SymbolTree.h"
+#include "../session/SymbolTree.h"
 
 class TreeTargetSelector : public juce::Component
 {

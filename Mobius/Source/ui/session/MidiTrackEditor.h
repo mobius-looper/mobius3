@@ -13,10 +13,11 @@
 #include "../common/BasicTabs.h"
 #include "../common/YanForm.h"
 #include "../common/YanField.h"
-#include "YanParameterForm.h"
+#include "../common/YanParameterForm.h"
+
 #include "SymbolTree.h"
 
-#include "ConfigEditor.h"
+#include "../config/ConfigEditor.h"
 
 class MidiTrackEditor : public ConfigEditor,
                         public YanRadio::Listener,

@@ -8,7 +8,7 @@
 #include <JuceHeader.h>
 
 #include "../common/YanForm.h"
-#include "YanParameter.h"
+#include "../common/YanParameter.h"
 
 class SessionEditorForm : public juce::Component
 {

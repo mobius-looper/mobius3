@@ -13,7 +13,7 @@
 #include "../JuceUtil.h"
 
 #include "../common/YanField.h"
-#include "YanParameter.h"
+#include "../common/YanParameter.h"
 
 #include "SessionEditorForm.h"
 

@@ -15,7 +15,7 @@
 #include "ParameterCategoryTree.h"
 #include "SessionEditorForm.h"
 
-#include "ConfigEditor.h"
+#include "../config/ConfigEditor.h"
 
 class SessionParameterEditor : public juce::Component
 {

@@ -6,8 +6,7 @@
 #include "../../model/ParameterProperties.h"
 #include "../../script/MslValue.h"
 
-#include "../common/YanField.h"
-
+#include "YanField.h"
 #include "YanParameter.h"
 
 YanParameter::YanParameter(juce::String label) : YanField(label)

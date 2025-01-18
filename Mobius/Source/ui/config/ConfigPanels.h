@@ -27,8 +27,8 @@
 #include "DisplayEditor.h"
 #include "PropertiesEditor.h"
 #include "GroupEditor.h"
-#include "MidiTrackEditor.h"
-#include "SessionEditor.h"
+#include "../session/MidiTrackEditor.h"
+#include "../session/SessionEditor.h"
 
 class ScriptPanel : public ConfigPanel
 {
