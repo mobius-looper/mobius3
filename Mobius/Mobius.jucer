@@ -340,6 +340,10 @@
                 file="Source/ui/config/ObjectSelector.cpp"/>
           <FILE id="IRESL5" name="ObjectSelector.h" compile="0" resource="0"
                 file="Source/ui/config/ObjectSelector.h"/>
+          <FILE id="NVQFua" name="ParameterCategoryTree.cpp" compile="1" resource="0"
+                file="Source/ui/config/ParameterCategoryTree.cpp"/>
+          <FILE id="xReOAv" name="ParameterCategoryTree.h" compile="0" resource="0"
+                file="Source/ui/config/ParameterCategoryTree.h"/>
           <FILE id="aY7LcN" name="ParameterField.cpp" compile="1" resource="0"
                 file="Source/ui/config/ParameterField.cpp"/>
           <FILE id="Olbaad" name="ParameterField.h" compile="0" resource="0"
@@ -379,6 +383,10 @@
           <FILE id="gpVbiW" name="SessionEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/SessionEditor.cpp"/>
           <FILE id="WcZ5HA" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/config/SessionEditor.h"/>
+          <FILE id="tPtUlY" name="SessionEditorForm.cpp" compile="1" resource="0"
+                file="Source/ui/config/SessionEditorForm.cpp"/>
+          <FILE id="UMt59T" name="SessionEditorForm.h" compile="0" resource="0"
+                file="Source/ui/config/SessionEditorForm.h"/>
           <FILE id="pzeGck" name="SetupEditor.cpp" compile="1" resource="0" file="Source/ui/config/SetupEditor.cpp"/>
           <FILE id="dtBl3I" name="SetupEditor.h" compile="0" resource="0" file="Source/ui/config/SetupEditor.h"/>
           <FILE id="WR0iDK" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/config/SymbolTree.cpp"/>

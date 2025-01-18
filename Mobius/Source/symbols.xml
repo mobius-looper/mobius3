@@ -692,9 +692,9 @@
     <Parameter name='transportLength' type='int' level='kernel'/>
     <Parameter name='transportBeatsPerBar' type='int' level='kernel'/>
     
-    <Parameter name='hostOverrideTimeSignature' type='bool' level='kernel' treePath='Sync' treeInclude='session'/>
-    <Parameter name='transportMidiEnable' type='bool' level='kernel' treePath='Sync' treeInclude='session'/>
-    <Parameter name='transportClocksWhenStopped' type='bool' level='kernel' treePath='Sync' treeInclude='session'/>
+    <Parameter name='hostOverrideTimeSignature' type='bool' level='kernel' tree='Sync' treeInclude='session'/>
+    <Parameter name='transportMidiEnable' type='bool' level='kernel' tree='Sync' treeInclude='session'/>
+    <Parameter name='transportClocksWhenStopped' type='bool' level='kernel' tree='Sync2' treeInclude='session'/>
 
   </ParameterScope>
     

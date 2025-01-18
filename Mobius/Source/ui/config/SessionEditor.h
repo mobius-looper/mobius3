@@ -14,9 +14,51 @@
 #include "../common/YanForm.h"
 #include "../common/YanField.h"
 
-#include "SymbolTree.h"
+#include "ParameterCategoryTree.h"
+#include "SessionEditorForm.h"
 
 #include "ConfigEditor.h"
+
+class SessionParameterEditor : public juce::Component
+{
+  public:
+    
+    SessionParameterEditor();
+    ~SessionParameterEditor() {}
+
+    void resized() override;
+    void paint(juce::Graphics& g) override;
+
+    void load(juce::String category, juce::Array<class Symbol*>& symbols);
+    
+  private:
+
+    juce::OwnedArray<class SessionEditorForm> forms;
+    juce::HashMap<juce::String,class SessionEditorForm*> formTable;
+    class SessionEditorForm* currentForm = nullptr;
+    
+};
+
+
+class SessionEditorParametersTab : public juce::Component, public SymbolTree::Listener
+{
+  public:
+
+    SessionEditorParametersTab();
+    ~SessionEditorParametersTab() {}
+
+    void load(class Provider* p);
+    
+    void resized() override;
+
+    void symbolTreeClicked(SymbolTreeItem* item) override;
+    
+  private:
+    
+    ParameterCategoryTree tree;
+    SessionParameterEditor editor;
+
+};
 
 class SessionEditor : public ConfigEditor,
                         public YanRadio::Listener,
@@ -54,8 +96,8 @@ class SessionEditor : public ConfigEditor,
     std::unique_ptr<class Session> revertSession;
 
     BasicTabs tabs;
-    SymbolTree tree;
-
+    SessionEditorParametersTab petab;
+    
     YanForm transportForm;
     YanCheckbox midiOut {"MIDI Out"};
     YanCheckbox midiClocks {"MIDI Clocks When Stopped"};

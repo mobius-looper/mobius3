@@ -33,6 +33,11 @@ SymbolTree::~SymbolTree()
 {
 }
 
+void SymbolTree::setListener(Listener* l)
+{
+    listener = l;
+}
+
 void SymbolTree::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
@@ -59,18 +64,35 @@ void SymbolTree::inputEditorHidden(YanInput*)
 
 void SymbolTree::loadSymbols(SymbolTable* symbols, juce::String newFavorites)
 {
+    loadSymbols(symbols, newFavorites, "");
+}
+    
+void SymbolTree::loadSymbols(SymbolTable* symbols, juce::String newFavorites,
+                             juce::String includeCsv)
+{
     SymbolTreeComparator comparator;
 
+    juce::StringArray includes = juce::StringArray::fromTokens(includeCsv, ",");
+    
     // pre-intern these in a particular order
     SymbolTreeItem* favoritesNode = root.internChild("Favorites");
-    (void)root.internChild("Functions");
-    (void)root.internChild("Parameters");
-    (void)root.internChild("Controls");
-    (void)root.internChild("Scripts");
-    (void)root.internChild("Structures");
-    (void)root.internChild("Samples");
-    (void)root.internChild("Other");
 
+    // kludge: if an includes list is passed assume we want only parameters
+    // ideally we should be able to intern the root nodes to lock their order,
+    // but have them be invisible, then visible them if things are added underneath
+    if (includeCsv.length() > 0) {
+        (void)root.internChild("Parameters");
+    }
+    else {
+        (void)root.internChild("Functions");
+        (void)root.internChild("Parameters");
+        (void)root.internChild("Controls");
+        (void)root.internChild("Scripts");
+        (void)root.internChild("Structures");
+        (void)root.internChild("Samples");
+        (void)root.internChild("Other");
+    }
+    
     favorites.clear();
     if (newFavorites.length() > 0) {
         // todo: may need to filter these if we remove symbols
@@ -82,8 +104,12 @@ void SymbolTree::loadSymbols(SymbolTable* symbols, juce::String newFavorites)
     }
     
     for (auto symbol : symbols->getSymbols()) {
+
+        bool includeIt = !symbol->hidden &&
+            (includes.size() == 0 || includes.contains(symbol->treeInclude));
         
-        if (!symbol->hidden) {
+        
+        if (includeIt) {
         
             SymbolTreeItem* parent = nullptr;
 
@@ -239,10 +265,17 @@ void SymbolTree::unhide(SymbolTreeItem* node)
     }
 }
 
+/**
+ * This is called by one of the items.
+ * Can either have a listener here or the subclass can override it.
+ */
 void SymbolTree::itemClicked(SymbolTreeItem* item)
 {
-    if (item->canBeSelected())
-      Trace(2, "Clicked %s", item->getName().toUTF8());
+    if (item->canBeSelected()) {
+        Trace(2, "Clicked %s", item->getName().toUTF8());
+        if (listener != nullptr)
+          listener->symbolTreeClicked(item);
+    }
 }
 
 void SymbolTree::addFavorite(juce::String name)
@@ -295,6 +328,21 @@ juce::String SymbolTreeItem::getName()
     return name;
 }
 
+void SymbolTreeItem::addSymbol(Symbol* s)
+{
+    symbols.add(s);
+}
+
+void SymbolTreeItem::setColor(juce::Colour c)
+{
+    color = c;
+}
+
+juce::Colour SymbolTreeItem::getColor()
+{
+    return color;
+}
+
 bool SymbolTreeItem::isHidden()
 {
     return hidden;
@@ -345,10 +393,18 @@ void SymbolTreeItem::paintItem(juce::Graphics& g, int width, int height)
         //g.fillAll(juce::Colours::grey);
         if (isSelected())
           g.setColour(juce::Colours::cyan);
-        else if (noSelect)
-          g.setColour(juce::Colours::yellow);
-        else
-          g.setColour(juce::Colours::white);
+
+        else {
+            // if there is no user supplied color, make unselectables
+            // look different
+            if (color != juce::Colour(0))
+              g.setColour(color);
+            else if (noSelect)
+              g.setColour(juce::Colours::yellow);
+            else
+              g.setColour(juce::Colours::white);
+        }
+        
         g.drawText(name, 0, 0, width, height, juce::Justification::left);
     }
 }

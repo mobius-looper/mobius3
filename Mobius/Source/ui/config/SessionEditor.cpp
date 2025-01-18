@@ -10,6 +10,7 @@
 #include "../../model/MobiusConfig.h"
 #include "../../model/UIConfig.h"
 #include "../../Supervisor.h"
+#include "../../Provider.h"
 
 #include "../common/BasicTabs.h"
 #include "../common/YanForm.h"
@@ -19,6 +20,8 @@
 #include "../../sync/Transport.h"
 
 #include "SymbolTree.h"
+#include "ParameterCategoryTree.h"
+#include "SessionEditorForm.h"
 
 #include "SessionEditor.h"
 
@@ -54,9 +57,7 @@ void SessionEditor::load()
     session.reset(new Session(src));
     revertSession.reset(new Session(src));
     
-    UIConfig* config = supervisor->getUIConfig();
-    juce::String favorites = config->get("symbolTreeFavorites");
-    tree.loadSymbols(supervisor->getSymbols(), favorites);
+    petab.load(supervisor);
     
     loadSession();
 }
@@ -125,7 +126,7 @@ void SessionEditor::render()
     transportForm.add(&midiClocks);
     
     tabs.add("Transport", &transportForm);
-    tabs.add("Parameters", &tree);
+    tabs.add("Parameters", &petab);
     
     addAndMakeVisible(tabs);
 }
@@ -156,6 +157,106 @@ void SessionEditor::inputChanged(class YanInput* input)
 {
     (void)input;
     //Trace(2, "SessionEditor: Track count changed %d", input->getInt());
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Parameters Tab
+//
+//////////////////////////////////////////////////////////////////////
+
+SessionEditorParametersTab::SessionEditorParametersTab()
+{
+    addAndMakeVisible(&tree);
+    addAndMakeVisible(&editor);
+
+    tree.setListener(this);
+}
+
+void SessionEditorParametersTab::resized()
+{
+    juce::Rectangle<int> area = getLocalBounds();
+    int half = getHeight() / 2;
+    tree.setBounds(area.removeFromLeft(half));
+    editor.setBounds(area);
+}
+
+void SessionEditorParametersTab::load(Provider* p)
+{
+    tree.load(p->getSymbols(), "session");
+}
+
+void SessionEditorParametersTab::symbolTreeClicked(SymbolTreeItem* item)
+{
+    SymbolTreeItem* container = item;
+    
+    // if this is a leaf node, go up to the parent and show the entire parent form
+    if (item->getNumSubItems() == 0) {
+        container = static_cast<SymbolTreeItem*>(item->getParentItem());
+    }
+    
+    juce::Array<Symbol*>& symbols = container->getSymbols();
+    if (symbols.size() == 0) {
+        // this can happen for interior organizational nodes that don't
+        // have symbols of their own, in this case, we could reset
+        // the displayed form, or just continue displaying the last one
+    }
+    else {
+        editor.load(container->getName(), symbols);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Parameter Editor
+//
+//////////////////////////////////////////////////////////////////////
+
+SessionParameterEditor::SessionParameterEditor()
+{
+}
+
+void SessionParameterEditor::resized()
+{
+    juce::Rectangle<int> area = getLocalBounds();
+    for (auto form : forms)
+      form->setBounds(area);
+}
+
+void SessionParameterEditor::paint(juce::Graphics& g)
+{
+    g.setColour(juce::Colours::pink);
+    g.fillRect(0, 0, getWidth(), getHeight());
+}
+
+void SessionParameterEditor::load(juce::String category, juce::Array<Symbol*>& symbols)
+{
+    SessionEditorForm* form = formTable[category];
+
+    if (form != nullptr) {
+        if (form == currentForm) {
+            Trace(2, "SPE: Form already displayed for category %s", category.toUTF8());
+        }
+        else {
+            Trace(2, "SPE: Displaying form for category %s", category.toUTF8());
+            currentForm->setVisible(false);
+            // probably need a refresh?
+            form->setVisible(true);
+            currentForm = form;
+        }
+    }
+    else {
+        Trace(2, "SPE: Creating form for category %s", category.toUTF8());
+        form = new SessionEditorForm();
+        forms.add(form);
+        formTable.set(category, form);
+
+        addAndMakeVisible(form);
+        form->setBounds(getLocalBounds());
+        
+        form->load(category, symbols);
+        currentForm = form;
+    }
 }
 
 /****************************************************************************/

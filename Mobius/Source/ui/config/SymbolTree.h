@@ -13,6 +13,13 @@ class SymbolTreeItem : public juce::TreeViewItem
 	SymbolTreeItem(juce::String s);
 	~SymbolTreeItem();
 
+    void addSymbol(class Symbol* s);
+    juce::Array<class Symbol*>& getSymbols() {
+        return symbols;
+    }
+    void setColor(juce::Colour c);
+    juce::Colour getColor();
+    
     // TreeViewItem
     
 	bool mightContainSubItems() override;
@@ -31,12 +38,17 @@ class SymbolTreeItem : public juce::TreeViewItem
     SymbolTreeItem* internChild(juce::String name);
     void remove(juce::String childName);
     void popupSelection(int result);
-
+    
   private:
 
     juce::String name;
     bool hidden = false;
     bool noSelect = false;
+    juce::Colour color;
+
+    // for interior nodes, the symbols under it
+    // used for the session editor
+    juce::Array<class Symbol*> symbols;
     
 };
 
@@ -55,9 +67,22 @@ class SymbolTree : public juce::Component, public YanInput::Listener
     SymbolTree();
     ~SymbolTree();
 
+    class Listener {
+      public:
+        virtual ~Listener() {}
+        virtual void symbolTreeClicked(SymbolTreeItem* item) =  0;
+    };
+
+    void setListener(Listener* l);
+    
     void resized() override;
 
+    // various ways to load it
     void loadSymbols(class SymbolTable* table, juce::String favorites);
+    void loadSymbols(class SymbolTable* table, juce::String favorites,
+                     juce::String includes);
+    
+    
     void addFavorite(juce::String name);
     void removeFavorite(juce::String name);
     juce::String getFavorites();
@@ -70,7 +95,9 @@ class SymbolTree : public juce::Component, public YanInput::Listener
 
     juce::StringArray favorites;
     
-  private:
+  protected:
+
+    Listener* listener = nullptr;
 
     juce::TreeView tree;
     SymbolTreeItem root;
