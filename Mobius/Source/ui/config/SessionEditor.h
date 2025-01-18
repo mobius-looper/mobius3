@@ -11,8 +11,6 @@
 
 #include "../../model/Session.h"
 #include "../common/BasicTabs.h"
-#include "../common/YanForm.h"
-#include "../common/YanField.h"
 
 #include "ParameterCategoryTree.h"
 #include "SessionEditorForm.h"
@@ -23,15 +21,19 @@ class SessionParameterEditor : public juce::Component
 {
   public:
     
-    SessionParameterEditor();
+    SessionParameterEditor(class SessionEditor* ed);
     ~SessionParameterEditor() {}
 
     void resized() override;
     void paint(juce::Graphics& g) override;
 
-    void load(juce::String category, juce::Array<class Symbol*>& symbols);
+    void show(juce::String category, juce::Array<class Symbol*>& symbols);
+    void load();
+    void save(class Session* dest);
     
   private:
+
+    class SessionEditor* sessionEditor = nullptr;
 
     juce::OwnedArray<class SessionEditorForm> forms;
     juce::HashMap<juce::String,class SessionEditorForm*> formTable;
@@ -44,26 +46,24 @@ class SessionEditorParametersTab : public juce::Component, public SymbolTree::Li
 {
   public:
 
-    SessionEditorParametersTab();
+    SessionEditorParametersTab(class SessionEditor* ed);
     ~SessionEditorParametersTab() {}
 
-    void load(class Provider* p);
+    void loadSymbols(class Provider* p);
+    void symbolTreeClicked(SymbolTreeItem* item) override;
+    void load();
+    void save(class Session* dest);
     
     void resized() override;
-
-    void symbolTreeClicked(SymbolTreeItem* item) override;
     
   private:
     
     ParameterCategoryTree tree;
-    SessionParameterEditor editor;
+    SessionParameterEditor peditor;
 
 };
 
-class SessionEditor : public ConfigEditor,
-                        public YanRadio::Listener,
-                        public YanCombo::Listener,
-                        public YanInput::Listener
+class SessionEditor : public ConfigEditor
 {
   public:
     
@@ -80,15 +80,14 @@ class SessionEditor : public ConfigEditor,
 
     void resized() override;
 
-    void radioSelected(class YanRadio* r, int index) override;
-    void comboSelected(class YanCombo* c, int index) override;
-    void inputChanged(class YanInput* i) override;
+    // because we build forms dynamically, inner components need
+    // to get to the Session being edited
+    class Session* getEditingSession();
+
+    class Provider* getProvider();
     
   private:
 
-    void render();
-    void initForm();
-    
     void loadSession();
     void saveSession(class Session* master);
 
@@ -96,10 +95,8 @@ class SessionEditor : public ConfigEditor,
     std::unique_ptr<class Session> revertSession;
 
     BasicTabs tabs;
-    SessionEditorParametersTab petab;
-    
-    YanForm transportForm;
-    YanCheckbox midiOut {"MIDI Out"};
-    YanCheckbox midiClocks {"MIDI Clocks When Stopped"};
+    SessionEditorParametersTab petab {this};
+
+    std::unique_ptr<class SessionTrackEditor> trackEditor;
     
 };

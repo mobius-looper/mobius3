@@ -1,0 +1,13 @@
+<!--
+    Non-editable file of system information I want to keep out of compiled code.
+    Similar in style to help.xml and symbols.xml
+-->
+
+<SystemConfig>
+
+  <!-- Parameter symbol categories for the SessionEditor -->
+  
+  <Category name='Sync' formTitle='Synchronization'/>
+
+
+</SystemConfig>

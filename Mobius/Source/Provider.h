@@ -54,6 +54,7 @@ class Provider
     virtual void addHighListener(HighRefreshListener* l) = 0;
     virtual void removeHighListener(HighRefreshListener* l) = 0;
 
+    virtual class SystemConfig* getSystemConfig() = 0;
     virtual class MobiusConfig* getMobiusConfig() = 0;
     virtual class Session* getSession() = 0;
     virtual class SymbolTable* getSymbols() = 0;

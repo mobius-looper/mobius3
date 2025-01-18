@@ -6,6 +6,8 @@
  *
  */
 
+#pragma once
+
 #include <JuceHeader.h>
 
 #include "../common/YanField.h"

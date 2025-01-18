@@ -7,6 +7,7 @@
 #include "model/MobiusConfig.h"
 #include "model/UIConfig.h"
 #include "model/DeviceConfig.h"
+#include "model/SystemConfig.h"
 #include "model/HelpCatalog.h"
 #include "model/Session.h"
 
@@ -17,9 +18,10 @@
 const char* DeviceConfigFile = "devices.xml";
 const char* MobiusConfigFile = "mobius.xml";
 const char* UIConfigFile = "uiconfig.xml";
-const char* HelpFile = "help.xml";
 const char* DefaultSessionFile = "session.xml";
 
+const char* SystemConfigFile = "system.xml";
+const char* HelpFile = "help.xml";
 
 FileManager::FileManager(Provider* p)
 {
@@ -183,7 +185,7 @@ void FileManager::writeUIConfig(UIConfig* config)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Help
+// Help & SystemConfig
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -205,6 +207,20 @@ HelpCatalog* FileManager::readHelpCatalog()
         help->parseXml(xml);
     }
     return help;
+}
+
+SystemConfig* FileManager::readSystemConfig()
+{
+    SystemConfig* scon = new SystemConfig();
+
+    juce::String xml = readConfigFile(SystemConfigFile);
+    if (xml.length() == 0) {
+        Trace(2, "Supervisor: Missing %s\n", SystemConfigFile);
+    }
+    else {
+        scon->parseXml(xml);
+    }
+    return scon;
 }
 
 //////////////////////////////////////////////////////////////////////

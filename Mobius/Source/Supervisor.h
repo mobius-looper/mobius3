@@ -190,6 +190,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class Session* getSession() override;
     void updateSession(bool noPropagation=false);
     
+    class SystemConfig* getSystemConfig();
     class HelpCatalog* getHelpCatalog();
 
     // propagate an action to either MobiusInterface or MainWindow
@@ -427,6 +428,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     std::unique_ptr<class Session> session;
     std::unique_ptr<class MobiusConfig> mobiusConfig;
     std::unique_ptr<class UIConfig> uiConfig;
+
+    // non-editable configuration
+    std::unique_ptr<class SystemConfig> systemConfig;
     std::unique_ptr<class HelpCatalog> helpCatalog;
 
     // temporary files created for outbound drag and drop

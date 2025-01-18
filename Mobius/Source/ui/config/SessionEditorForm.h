@@ -8,7 +8,7 @@
 #include <JuceHeader.h>
 
 #include "../common/YanForm.h"
-#include "../common/YanField.h"
+#include "YanParameter.h"
 
 class SessionEditorForm : public juce::Component
 {
@@ -20,13 +20,15 @@ class SessionEditorForm : public juce::Component
     void resized() override;
     void paint(juce::Graphics& g) override;
 
-    void load(juce::String category, juce::Array<class Symbol*>& symbols);
+    void initialize(juce::String category, juce::Array<class Symbol*>& symbols);
+    void load(class ValueSet* values);
+    void save(class ValueSet* values);
 
   private:
 
     juce::String category;
     YanForm form;
-    juce::OwnedArray<YanField> fields;
+    juce::OwnedArray<class YanParameter> fields;
     
 };
     

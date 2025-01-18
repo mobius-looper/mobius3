@@ -88,13 +88,13 @@ int UIAtom::getStringWidth(juce::String& s)
     if (s.length() > 0) {
         int height = getHeight();
         if (height == 0) {
-            Trace(2, "UIAtom: String sizing default height");
+            //Trace(2, "UIAtom: String sizing default height");
             height = 10;
         }
         
         juce::Font f (JuceUtil::getFont(height));
         width = f.getStringWidth(s);
-        Trace(2, "UIAtom: String %s height %d width %d", s.toUTF8(), height, width);
+        //Trace(2, "UIAtom: String %s height %d width %d", s.toUTF8(), height, width);
     }
     return width;
 }

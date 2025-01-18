@@ -182,7 +182,7 @@ void Transport::loadSession(Session* s)
     // parameters.  These are relatively obscure 
     
     midiEnabled = s->getBool(SessionTransportMidiEnable);
-    sendClocksWhenStopped = s->getBool(SessionTransportClocksWhenStopped);
+    sendClocksWhenStopped = s->getBool(SessionTransportMidiClocksWhenStopped);
 
     if (!midiEnabled) {
         midiRealizer->stop();

@@ -7,32 +7,49 @@
 #include "../../util/Trace.h"
 #include "../../model/SessionConstants.h"
 #include "../../model/Session.h"
+#include "../../model/SystemConfig.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/UIConfig.h"
 #include "../../Supervisor.h"
 #include "../../Provider.h"
+#include "../JuceUtil.h"
 
 #include "../common/BasicTabs.h"
-#include "../common/YanForm.h"
-#include "../common/YanField.h"
-#include "../common/SimpleRadio.h"
-
-#include "../../sync/Transport.h"
 
 #include "SymbolTree.h"
 #include "ParameterCategoryTree.h"
 #include "SessionEditorForm.h"
+#include "SessionTrackEditor.h"
 
 #include "SessionEditor.h"
 
 SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
 {
     setName("SessionEditor");
-    render();
+
+    tabs.add("Parameters", &petab);
+
+    trackEditor.reset(new SessionTrackEditor(s));
+    tabs.add("Tracks", trackEditor.get());
+
+    // the session isn't sensntive to user defined variables, so
+    // we can build the tree view asap and don't have to reload it
+    petab.loadSymbols(supervisor);
+    
+    trackEditor->loadSymbols();
+
+    addAndMakeVisible(tabs);
 }
 
 SessionEditor::~SessionEditor()
 {
+}
+
+Provider* SessionEditor::getProvider()
+{
+    // !! This should be done by ConfigEditor and everything in this
+    // ecosystem should stop using Supervisor directly
+    return supervisor;
 }
 
 void SessionEditor::prepare()
@@ -57,10 +74,14 @@ void SessionEditor::load()
     session.reset(new Session(src));
     revertSession.reset(new Session(src));
     
-    petab.load(supervisor);
-    
     loadSession();
 }
+
+Session* SessionEditor::getEditingSession()
+{
+    return session.get();
+}
+
 
 /**
  * Called by the Save button in the footer.
@@ -89,6 +110,7 @@ void SessionEditor::cancel()
 void SessionEditor::revert()
 {
     session.reset(new Session(revertSession.get()));
+    
     loadSession();
 }
 
@@ -99,64 +121,21 @@ void SessionEditor::revert()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Load a setup into the parameter fields
+ * Load the internal forms from the session now being edited.
+ * Things must call back to getEditingSession.
  */
 void SessionEditor::loadSession()
 {
-    midiOut.setValue(session->getBool(SessionTransportMidiEnable));
-    midiClocks.setValue(session->getBool(SessionTransportClocksWhenStopped));
+    petab.load();
+    trackEditor->load();
 }
-
-void SessionEditor::saveSession(Session* dest)
-{
-    dest->setBool(SessionTransportMidiEnable, midiOut.getValue());
-    dest->setBool(SessionTransportClocksWhenStopped, midiClocks.getValue());
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Form Rendering
-//
-//////////////////////////////////////////////////////////////////////
-
-void SessionEditor::render()
-{
-    transportForm.addSpacer();
-    transportForm.add(&midiOut);
-    transportForm.add(&midiClocks);
-    
-    tabs.add("Transport", &transportForm);
-    tabs.add("Parameters", &petab);
-    
-    addAndMakeVisible(tabs);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Listneners
-//
-//////////////////////////////////////////////////////////////////////
 
 /**
- * Respond to the track selection radio
+ * Deposit field results in this session, NOT the getEditingSession result.
  */
-void SessionEditor::radioSelected(YanRadio* r, int index)
+void SessionEditor::saveSession(Session* dest)
 {
-    (void)r;
-    (void)index;
-}
-
-void SessionEditor::comboSelected(class YanCombo* c, int index)
-{
-    (void)c;
-    (void)index;
-    //Trace(2, "SessionEditor: Sync source selected %d", index);
-}
-
-void SessionEditor::inputChanged(class YanInput* input)
-{
-    (void)input;
-    //Trace(2, "SessionEditor: Track count changed %d", input->getInt());
+    petab.save(dest);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -165,10 +144,10 @@ void SessionEditor::inputChanged(class YanInput* input)
 //
 //////////////////////////////////////////////////////////////////////
 
-SessionEditorParametersTab::SessionEditorParametersTab()
+SessionEditorParametersTab::SessionEditorParametersTab(SessionEditor* ed) : peditor(ed)
 {
     addAndMakeVisible(&tree);
-    addAndMakeVisible(&editor);
+    addAndMakeVisible(&peditor);
 
     tree.setListener(this);
 }
@@ -178,12 +157,22 @@ void SessionEditorParametersTab::resized()
     juce::Rectangle<int> area = getLocalBounds();
     int half = getHeight() / 2;
     tree.setBounds(area.removeFromLeft(half));
-    editor.setBounds(area);
+    peditor.setBounds(area);
 }
 
-void SessionEditorParametersTab::load(Provider* p)
+void SessionEditorParametersTab::loadSymbols(Provider* p)
 {
     tree.load(p->getSymbols(), "session");
+}
+
+void SessionEditorParametersTab::load()
+{
+    peditor.load();
+}
+
+void SessionEditorParametersTab::save(Session* dest)
+{
+    peditor.save(dest);
 }
 
 void SessionEditorParametersTab::symbolTreeClicked(SymbolTreeItem* item)
@@ -202,7 +191,7 @@ void SessionEditorParametersTab::symbolTreeClicked(SymbolTreeItem* item)
         // the displayed form, or just continue displaying the last one
     }
     else {
-        editor.load(container->getName(), symbols);
+        peditor.show(container->getName(), symbols);
     }
 }
 
@@ -212,8 +201,9 @@ void SessionEditorParametersTab::symbolTreeClicked(SymbolTreeItem* item)
 //
 //////////////////////////////////////////////////////////////////////
 
-SessionParameterEditor::SessionParameterEditor()
+SessionParameterEditor::SessionParameterEditor(SessionEditor* ed)
 {
+    sessionEditor = ed;
 }
 
 void SessionParameterEditor::resized()
@@ -229,23 +219,11 @@ void SessionParameterEditor::paint(juce::Graphics& g)
     g.fillRect(0, 0, getWidth(), getHeight());
 }
 
-void SessionParameterEditor::load(juce::String category, juce::Array<Symbol*>& symbols)
+void SessionParameterEditor::show(juce::String category, juce::Array<Symbol*>& symbols)
 {
     SessionEditorForm* form = formTable[category];
 
-    if (form != nullptr) {
-        if (form == currentForm) {
-            Trace(2, "SPE: Form already displayed for category %s", category.toUTF8());
-        }
-        else {
-            Trace(2, "SPE: Displaying form for category %s", category.toUTF8());
-            currentForm->setVisible(false);
-            // probably need a refresh?
-            form->setVisible(true);
-            currentForm = form;
-        }
-    }
-    else {
+    if (form == nullptr) {
         Trace(2, "SPE: Creating form for category %s", category.toUTF8());
         form = new SessionEditorForm();
         forms.add(form);
@@ -254,9 +232,41 @@ void SessionParameterEditor::load(juce::String category, juce::Array<Symbol*>& s
         addAndMakeVisible(form);
         form->setBounds(getLocalBounds());
         
-        form->load(category, symbols);
+        juce::String title = category;
+        SystemConfig* scon = sessionEditor->getProvider()->getSystemConfig();
+        SystemConfig::Category* cat = scon->getCategory(category);
+        if (cat != nullptr && cat->formTitle.length() > 0)
+          title = cat->formTitle;
+        
+        form->initialize(title, symbols);
+        currentForm = form;
+
+        currentForm->load(sessionEditor->getEditingSession()->getGlobals());
+    }
+    else if (form == currentForm) {
+        Trace(2, "SPE: Form already displayed for category %s", category.toUTF8());
+    }
+    else {
+        Trace(2, "SPE: Displaying form for category %s", category.toUTF8());
+        currentForm->setVisible(false);
+        // probably need a refresh?
+        form->setVisible(true);
         currentForm = form;
     }
+}
+
+void SessionParameterEditor::load()
+{
+    ValueSet* values = sessionEditor->getEditingSession()->getGlobals();
+    for (auto form : forms)
+      form->load(values);
+}
+
+void SessionParameterEditor::save(Session* dest)
+{
+    ValueSet* values = dest->ensureGlobals();
+    for (auto form : forms)
+      form->save(values);
 }
 
 /****************************************************************************/

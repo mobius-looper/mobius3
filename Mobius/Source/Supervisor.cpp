@@ -17,18 +17,19 @@
 #include "util/List.h"
 
 #include "model/MobiusConfig.h"
+#include "model/Setup.h"
 #include "model/Session.h"
 #include "model/UIConfig.h"
 #include "model/XmlRenderer.h"
 #include "model/UIAction.h"
 #include "model/Query.h"
 #include "model/ParameterProperties.h"
-#include "model/OldMobiusState.h"
 #include "model/SystemState.h"
 #include "model/PriorityState.h"
 #include "model/DeviceConfig.h"
 #include "model/Symbol.h"
 #include "model/SymbolId.h"
+#include "model/SystemConfig.h"
 #include "model/HelpCatalog.h"
 #include "model/ScriptConfig.h"
 #include "model/FunctionProperties.h"
@@ -1118,6 +1119,15 @@ HelpCatalog* Supervisor::getHelpCatalog()
         helpCatalog.reset(help);
     }
     return helpCatalog.get();
+}
+
+SystemConfig* Supervisor::getSystemConfig()
+{
+    if (!systemConfig) {
+        SystemConfig* scon = fileManager.readSystemConfig();
+        systemConfig.reset(scon);
+    }
+    return systemConfig.get();
 }
 
 //////////////////////////////////////////////////////////////////////

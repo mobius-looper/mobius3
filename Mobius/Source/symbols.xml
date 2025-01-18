@@ -646,7 +646,7 @@
 
   <ParameterScope name='global'>
 
-    <Parameter name='eventScript' type='string'/>
+    <Parameter name='eventScript' type='string' treeInclude='session' tree='Events'/>
     
   </ParameterScope>
 
@@ -655,30 +655,33 @@
   ============================================================================ -->
 
   <ParameterScope name='track'>
+    
     <Parameter name='leaderType'
                values='none,track,trackSyncMaster, transportMaster,focused,host,midi,transport'
-               valueLabels='None,Track Number,Track Sync Master,Transport Master,Focused,Host,MIDI In'/>
+               valueLabels='None,Track Number,Track Sync Master,Transport Master,Focused,Host,MIDI In'
+               treeInclude='midiTrack'/>
 
     <Parameter name='leaderSwitchLocation'
-               values='none,loop,cycle,subcycle'/>
+               values='none,loop,cycle,subcycle'
+               treeInclude='midiTrack'/>
     
-    <Parameter name='leaderTrack' type='int'/>
-    <Parameter name='followRecord' type='bool'/>
-    <Parameter name='followRecordEnd' type='bool'/>
-    <Parameter name='followSize' type='bool'/>
-    <Parameter name='followLocation' type='bool'/>
-    <Parameter name='followMute' type='bool'/>
-    <Parameter name='followStartPoint' type='bool'/>
-    <Parameter name='followRate' type='bool'/>
-    <Parameter name='followDirection' type='bool'/>
-    <Parameter name='followSwitch' type='bool'/>
-    <Parameter name='followCut' type='bool'/>
-    <Parameter name='followQuantizeLocation' type='bool'/>
-    <Parameter name='followerMuteStart' type='bool'/>
-    <Parameter name='noReset' type='bool'/>
-    <Parameter name='noEdit' type='bool'/>
+    <Parameter name='leaderTrack' type='int' treeInclude='midiTrack'/>
+    <Parameter name='followRecord' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='followRecordEnd' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='followSize' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='followLocation' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='followMute' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='followStartPoint' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='followRate' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='followDirection' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='followSwitch' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='followCut' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='followQuantizeLocation' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='followerMuteStart' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='noReset' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='noEdit' type='bool' treeInclude='midiTrack'/>
     <Parameter name='midiChannelOverride'
-               values='off,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16'/>
+               values='off,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16' treeInclude='midiTrack'/>
 
   </ParameterScope>
   
@@ -687,14 +690,20 @@
   ============================================================================ -->
 
   <ParameterScope name='sync'>
-    
+
+    <!-- These are runtime symbols used for actions.  They may be saved in the session
+         and restored, but are not edited in the SessionEditor
+    -->
     <Parameter name='transportTempo' type='int' level='kernel'/>
     <Parameter name='transportLength' type='int' level='kernel'/>
     <Parameter name='transportBeatsPerBar' type='int' level='kernel'/>
     
+    <!-- these are session symbols edited in the SessionEditor and
+         may also be used in actions
+     -->
     <Parameter name='hostOverrideTimeSignature' type='bool' level='kernel' tree='Sync' treeInclude='session'/>
     <Parameter name='transportMidiEnable' type='bool' level='kernel' tree='Sync' treeInclude='session'/>
-    <Parameter name='transportClocksWhenStopped' type='bool' level='kernel' tree='Sync2' treeInclude='session'/>
+    <Parameter name='transportMidiClocksWhenStopped' type='bool' level='kernel' tree='Sync' treeInclude='session'/>
 
   </ParameterScope>
     

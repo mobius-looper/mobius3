@@ -16,4 +16,4 @@ static const char* SessionBeatsPerBar = "beatsPerBar";
 static const char* SessionHostOverrideTimeSignature = "hostOverrideTimeSignature";
 
 static const char* SessionTransportMidiEnable = "transportMidiEnable";
-static const char* SessionTransportClocksWhenStopped = "transportMidiClocksWhenStopped";
+static const char* SessionTransportMidiClocksWhenStopped = "transportMidiClocksWhenStopped";

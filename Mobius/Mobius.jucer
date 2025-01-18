@@ -183,6 +183,9 @@
         <FILE id="PNgWm3" name="Symbol.h" compile="0" resource="0" file="Source/model/Symbol.h"/>
         <FILE id="VvS8a7" name="SymbolId.cpp" compile="1" resource="0" file="Source/model/SymbolId.cpp"/>
         <FILE id="FPoE0Y" name="SymbolId.h" compile="0" resource="0" file="Source/model/SymbolId.h"/>
+        <FILE id="H7zgLP" name="SystemConfig.cpp" compile="1" resource="0"
+              file="Source/model/SystemConfig.cpp"/>
+        <FILE id="yhV3fk" name="SystemConfig.h" compile="0" resource="0" file="Source/model/SystemConfig.h"/>
         <FILE id="JZYXKm" name="SystemConstant.h" compile="0" resource="0"
               file="Source/model/SystemConstant.h"/>
         <FILE id="W5mEyK" name="SystemState.h" compile="0" resource="0" file="Source/model/SystemState.h"/>
@@ -387,6 +390,18 @@
                 file="Source/ui/config/SessionEditorForm.cpp"/>
           <FILE id="UMt59T" name="SessionEditorForm.h" compile="0" resource="0"
                 file="Source/ui/config/SessionEditorForm.h"/>
+          <FILE id="ng1Ftu" name="SessionTrackEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/SessionTrackEditor.cpp"/>
+          <FILE id="HNRi5u" name="SessionTrackEditor.h" compile="0" resource="0"
+                file="Source/ui/config/SessionTrackEditor.h"/>
+          <FILE id="zjDDPh" name="SessionTrackTable.cpp" compile="1" resource="0"
+                file="Source/ui/config/SessionTrackTable.cpp"/>
+          <FILE id="Sz0o41" name="SessionTrackTable.h" compile="0" resource="0"
+                file="Source/ui/config/SessionTrackTable.h"/>
+          <FILE id="h8DgFe" name="SessionTrackTrees.cpp" compile="1" resource="0"
+                file="Source/ui/config/SessionTrackTrees.cpp"/>
+          <FILE id="yWpwKy" name="SessionTrackTrees.h" compile="0" resource="0"
+                file="Source/ui/config/SessionTrackTrees.h"/>
           <FILE id="pzeGck" name="SetupEditor.cpp" compile="1" resource="0" file="Source/ui/config/SetupEditor.cpp"/>
           <FILE id="dtBl3I" name="SetupEditor.h" compile="0" resource="0" file="Source/ui/config/SetupEditor.h"/>
           <FILE id="WR0iDK" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/config/SymbolTree.cpp"/>

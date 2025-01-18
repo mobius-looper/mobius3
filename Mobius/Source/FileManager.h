@@ -22,6 +22,7 @@ class FileManager
     void writeUIConfig(class UIConfig* config);
     
     class HelpCatalog* readHelpCatalog();
+    class SystemConfig* readSystemConfig();
     
     class Session* readSession(const char* filename);
     class Session* readDefaultSession();

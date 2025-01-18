@@ -9,9 +9,12 @@
 
 #include "../../util/Trace.h"
 #include "../../model/Symbol.h"
+#include "../../model/ValueSet.h"
 #include "../JuceUtil.h"
 
+#include "../common/YanField.h"
 #include "YanParameter.h"
+
 #include "SessionEditorForm.h"
 
 SessionEditorForm::SessionEditorForm()
@@ -45,7 +48,7 @@ void SessionEditorForm::paint(juce::Graphics& g)
 
 }
 
-void SessionEditorForm::load(juce::String c, juce::Array<Symbol*>& symbols)
+void SessionEditorForm::initialize(juce::String c, juce::Array<Symbol*>& symbols)
 {
     category = c;
     
@@ -57,10 +60,37 @@ void SessionEditorForm::load(juce::String c, juce::Array<Symbol*>& symbols)
         fields.add(field);
         
         field->init(s);
+        
         form.add(field);
     }
     resized();
-
-    JuceUtil::dumpComponent(this);
+    
+    // for some weird reason setting bounds on the new YanForm does not trigger a
+    // resized traversal in Juce, how you get resized flowing is still a mystery
+    form.resized();
 }
 
+void SessionEditorForm::load(ValueSet* values)
+{
+    for (auto field : fields) {
+        Symbol* s = field->getSymbol();
+        MslValue* v = nullptr;
+        if (values != nullptr)
+          v = values->get(s->name);
+        field->load(v);
+    }
+}
+
+void SessionEditorForm::save(ValueSet* values)
+{
+    for (auto field : fields) {
+        Symbol* s = field->getSymbol();
+        MslValue v;
+        field->save(&v);
+        values->set(s->name, v);
+    }
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

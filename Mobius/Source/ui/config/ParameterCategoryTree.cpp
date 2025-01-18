@@ -37,6 +37,8 @@ void ParameterCategoryTree::load(SymbolTable* symbols, juce::String includeCsv)
     juce::StringArray includes = juce::StringArray::fromTokens(includeCsv, ",");
 
     SymbolTreeItem* parametersNode = root.internChild("Parameters");
+    // start with the root open
+    parametersNode->setOpen(true);
     
     for (auto symbol : symbols->getSymbols()) {
 
