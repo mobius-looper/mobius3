@@ -1,59 +1,45 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
+#include "TreeForm.h"
 
 #include "SystemConfig.h"
 
-void SystemConfig::parseXml(juce::String xml)
+void SystemConfig::parseXml(juce::XmlElement* root, juce::StringArray& errors)
 {
-    juce::XmlDocument doc(xml);
-    std::unique_ptr<juce::XmlElement> root = doc.getDocumentElement();
-    if (root == nullptr) {
-        xmlError("Parse parse error: %s\n", doc.getLastParseError());
-    }
-    else if (!root->hasTagName("SystemConfig")) {
-        xmlError("Unexpected XML tag name: %s\n", root->getTagName());
-    }
-    else {
-        // no attributes
-        // build metadata might be interesting but there isn't much of that
-        // and I'd rather keep the build number compiled in
-        
-        for (auto* el : root->getChildIterator()) {
-            if (el->hasTagName("Category")) {
-                Category* cat = parseCategory(el);
-                categories.add(cat);
-                if (cat->name.length() > 0) 
-                  categoryMap.set(cat->name, cat);
-            }
-            else {
-                xmlError("Unexpected XML tag name: %s\n", el->getTagName());
-            }
+    for (auto* el : root->getChildIterator()) {
+        if (el->hasTagName("Tree")) {
+            TreeNode* tree = new TreeNode();
+            trees.add(tree);
+            tree->parseXml(el, errors);
+            if (tree->name.length() == 0)
+              errors.add(juce::String("SystemConfig: Tree without name"));
+            else
+              treeMap.set(tree->name, tree);
+        }
+        else if (el->hasTagName("Form")) {
+            TreeForm* form = new TreeForm();
+            forms.add(form);
+            form->parseXml(el, errors);
+            if (form->name.length() == 0)
+              errors.add(juce::String("SystemConfig: Form without name"));
+            else
+              formMap.set(form->name, form);
+        }
+        else {
+            errors.add(juce::String("SystemConfig: Unexpected XML tag name: " + el->getTagName()));
         }
     }
 }
 
-void SystemConfig::xmlError(const char* msg, juce::String arg)
+TreeNode* SystemConfig::getTree(juce::String name)
 {
-    juce::String fullmsg ("SystemConfig: " + juce::String(msg));
-    if (arg.length() == 0)
-      Trace(1, fullmsg.toUTF8());
-    else
-      Trace(1, fullmsg.toUTF8(), arg.toUTF8());
+    return treeMap[name];
 }
 
-SystemConfig::Category* SystemConfig::parseCategory(juce::XmlElement* root)
+TreeForm* SystemConfig::getForm(juce::String name)
 {
-    Category* category = new Category();
-    category->name = root->getStringAttribute("name");
-    category->formTitle = root->getStringAttribute("formTitle");
-    return category;
-}
-
-SystemConfig::Category* SystemConfig::getCategory(juce::String name)
-{
-    return categoryMap[name];
+    return formMap[name];
 }
 
 /****************************************************************************/

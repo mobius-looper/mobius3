@@ -191,6 +191,8 @@
         <FILE id="W5mEyK" name="SystemState.h" compile="0" resource="0" file="Source/model/SystemState.h"/>
         <FILE id="mlzDDU" name="TrackState.cpp" compile="1" resource="0" file="Source/model/TrackState.cpp"/>
         <FILE id="neInsb" name="TrackState.h" compile="0" resource="0" file="Source/model/TrackState.h"/>
+        <FILE id="BmxzkX" name="TreeForm.cpp" compile="1" resource="0" file="Source/model/TreeForm.cpp"/>
+        <FILE id="KI598c" name="TreeForm.h" compile="0" resource="0" file="Source/model/TreeForm.h"/>
         <FILE id="Gs8SHl" name="Trigger.cpp" compile="1" resource="0" file="Source/model/Trigger.cpp"/>
         <FILE id="A7dZul" name="Trigger.h" compile="0" resource="0" file="Source/model/Trigger.h"/>
         <FILE id="AbOPmx" name="UIAction.cpp" compile="1" resource="0" file="Source/model/UIAction.cpp"/>
@@ -231,6 +233,9 @@
                 file="Source/ui/session/ParameterCategoryTree.cpp"/>
           <FILE id="AJrVaW" name="ParameterCategoryTree.h" compile="0" resource="0"
                 file="Source/ui/session/ParameterCategoryTree.h"/>
+          <FILE id="y3QGus" name="ParameterForm.cpp" compile="1" resource="0"
+                file="Source/ui/session/ParameterForm.cpp"/>
+          <FILE id="D2sieP" name="ParameterForm.h" compile="0" resource="0" file="Source/ui/session/ParameterForm.h"/>
           <FILE id="h5SWoP" name="SessionEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionEditor.cpp"/>
           <FILE id="YLdxmd" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/session/SessionEditor.h"/>

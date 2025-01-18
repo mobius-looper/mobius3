@@ -18,7 +18,7 @@
 
 #include "SymbolTree.h"
 #include "ParameterCategoryTree.h"
-#include "SessionEditorForm.h"
+#include "ParameterForm.h"
 #include "SessionTrackEditor.h"
 
 #include "SessionEditor.h"
@@ -221,27 +221,30 @@ void SessionParameterEditor::paint(juce::Graphics& g)
 
 void SessionParameterEditor::show(juce::String category, juce::Array<Symbol*>& symbols)
 {
-    SessionEditorForm* form = formTable[category];
+    ParameterForm* form = formTable[category];
 
     if (form == nullptr) {
         Trace(2, "SPE: Creating form for category %s", category.toUTF8());
-        form = new SessionEditorForm();
+        
+        form = new ParameterForm();
         forms.add(form);
         formTable.set(category, form);
-
         addAndMakeVisible(form);
-        form->setBounds(getLocalBounds());
+
+        // todo: Read the form and/or tree definition from SystemConfig
         
         juce::String title = category;
-        SystemConfig* scon = sessionEditor->getProvider()->getSystemConfig();
-        SystemConfig::Category* cat = scon->getCategory(category);
-        if (cat != nullptr && cat->formTitle.length() > 0)
-          title = cat->formTitle;
         
-        form->initialize(title, symbols);
+        form->setTitle(title);
+        form->add(symbols);
+        
         currentForm = form;
-
         currentForm->load(sessionEditor->getEditingSession()->getGlobals());
+
+        form->setBounds(getLocalBounds());
+        // trouble getting this fleshed out dynamically
+        form->resized();
+        
     }
     else if (form == currentForm) {
         Trace(2, "SPE: Form already displayed for category %s", category.toUTF8());

@@ -218,7 +218,26 @@ SystemConfig* FileManager::readSystemConfig()
         Trace(2, "Supervisor: Missing %s\n", SystemConfigFile);
     }
     else {
-        scon->parseXml(xml);
+        // todo: This is theh way I'd like all object parsers to work
+        // FileManager handles the XML parsing and collects the errors
+        juce::XmlDocument doc(xml);
+        std::unique_ptr<juce::XmlElement> root = doc.getDocumentElement();
+        if (root == nullptr) {
+            Trace(1, "FileManager: Error parsing %s", SystemConfigFile);
+            Trace(1, "  %s", doc.getLastParseError().toUTF8());
+        }
+        else if (!root->hasTagName("SystemConfig")) {
+            Trace(1, "FileManager: Wrong XML element in file %s", SystemConfigFile);
+        }
+        else {
+            juce::StringArray errors;
+            scon->parseXml(root.get(), errors);
+            if (errors.size() > 0) {
+                Trace(1, "FileManager: Errors parsing %s", SystemConfigFile);
+                for (auto error : errors)
+                  Trace(1, "  %s", error.toUTF8());
+            }
+        }
     }
     return scon;
 }

@@ -19,26 +19,25 @@
  * 
  */
 
+#pragma once
+
+#include "TreeForm.h"
+
 class SystemConfig
 {
   public:
 
-    class Category {
-      public:
-        juce::String name;
-        juce::String formTitle;
-    };
+    void parseXml(juce::XmlElement* root, juce::StringArray& errors);
 
-    void parseXml(juce::String xml);
-
-    Category* getCategory(juce::String name);
-
+    TreeNode* getTree(juce::String name);
+    TreeForm* getForm(juce::String name);
+    
   private:
 
-    juce::OwnedArray<Category> categories;
-    juce::HashMap<juce::String,Category*> categoryMap;
-
-    void xmlError(const char* msg, juce::String arg);
-    Category* parseCategory(juce::XmlElement* root);
+    juce::OwnedArray<TreeNode> trees;
+    juce::OwnedArray<TreeForm> forms;
+    
+    juce::HashMap<juce::String,TreeNode*> treeMap;
+    juce::HashMap<juce::String,TreeForm*> formMap;
 
 };

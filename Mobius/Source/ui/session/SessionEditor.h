@@ -13,7 +13,7 @@
 #include "../common/BasicTabs.h"
 
 #include "ParameterCategoryTree.h"
-#include "SessionEditorForm.h"
+#include "ParameterForm.h"
 
 #include "../config/ConfigEditor.h"
 
@@ -35,9 +35,9 @@ class SessionParameterEditor : public juce::Component
 
     class SessionEditor* sessionEditor = nullptr;
 
-    juce::OwnedArray<class SessionEditorForm> forms;
-    juce::HashMap<juce::String,class SessionEditorForm*> formTable;
-    class SessionEditorForm* currentForm = nullptr;
+    juce::OwnedArray<class ParameterForm> forms;
+    juce::HashMap<juce::String,class ParameterForm*> formTable;
+    class ParameterForm* currentForm = nullptr;
     
 };
 
