@@ -128,7 +128,9 @@ bool Session::reconcileAudioTracks(int required)
         // add new ones
         while (currentCount < required) {
             Track* neu = new Track();
+            neu->type = TypeAudio;
             tracks.add(neu);
+            currentCount++;
         }
         modified = true;
     }

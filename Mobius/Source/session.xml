@@ -191,6 +191,14 @@
       <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
+  <Track id="9" type="audio"/>
+  <Track id="10" type="audio"/>
+  <Track id="11" type="audio"/>
+  <Track id="12" type="audio"/>
+  <Track id="13" type="audio"/>
+  <Track id="14" type="audio"/>
+  <Track id="15" type="audio"/>
+  <Track id="16" type="audio"/>
   <ValueSet>
     <Value name="activeSetup" value="Default"/>
     <Value name="controllerActionThreshold" value="64" type="int"/>
