@@ -27,16 +27,14 @@ SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
 {
     setName("SessionEditor");
 
-    tabs.add("Parameters", &petab);
+    globalEditor.reset(new SessionGlobalEditor());
+    tabs.add("Parameters", globalEditor.get());
 
     trackEditor.reset(new SessionTrackEditor(s));
     tabs.add("Tracks", trackEditor.get());
 
-    // the session isn't sensntive to user defined variables, so
-    // we can build the tree view asap and don't have to reload it
-    petab.loadSymbols(supervisor);
-    
-    trackEditor->loadSymbols();
+    globalEditor->initialize(s);
+    trackEditor->initialize(s);
 
     addAndMakeVisible(tabs);
 }
@@ -76,12 +74,6 @@ void SessionEditor::load()
     
     loadSession();
 }
-
-Session* SessionEditor::getEditingSession()
-{
-    return session.get();
-}
-
 
 /**
  * Called by the Save button in the footer.
@@ -126,8 +118,15 @@ void SessionEditor::revert()
  */
 void SessionEditor::loadSession()
 {
-    petab.load();
-    trackEditor->load();
+    ValueSet* globals = session->ensureGlobals();
+    
+    globalEditor->load(globals);
+
+    // !! yes, here's the issue
+    // there isn't one ValueSet for the tracks there are N of them
+    // trackEditor needs the entire Session
+
+    trackEditor->load(session);
 }
 
 /**
@@ -135,141 +134,8 @@ void SessionEditor::loadSession()
  */
 void SessionEditor::saveSession(Session* dest)
 {
-    petab.save(dest);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Parameters Tab
-//
-//////////////////////////////////////////////////////////////////////
-
-SessionEditorParametersTab::SessionEditorParametersTab(SessionEditor* ed) : peditor(ed)
-{
-    addAndMakeVisible(&tree);
-    addAndMakeVisible(&peditor);
-
-    tree.setListener(this);
-}
-
-void SessionEditorParametersTab::resized()
-{
-    juce::Rectangle<int> area = getLocalBounds();
-    int half = getHeight() / 2;
-    tree.setBounds(area.removeFromLeft(half));
-    peditor.setBounds(area);
-}
-
-void SessionEditorParametersTab::loadSymbols(Provider* p)
-{
-    tree.load(p->getSymbols(), "session");
-}
-
-void SessionEditorParametersTab::load()
-{
-    peditor.load();
-}
-
-void SessionEditorParametersTab::save(Session* dest)
-{
-    peditor.save(dest);
-}
-
-void SessionEditorParametersTab::symbolTreeClicked(SymbolTreeItem* item)
-{
-    SymbolTreeItem* container = item;
-    
-    // if this is a leaf node, go up to the parent and show the entire parent form
-    if (item->getNumSubItems() == 0) {
-        container = static_cast<SymbolTreeItem*>(item->getParentItem());
-    }
-    
-    juce::Array<Symbol*>& symbols = container->getSymbols();
-    if (symbols.size() == 0) {
-        // this can happen for interior organizational nodes that don't
-        // have symbols of their own, in this case, we could reset
-        // the displayed form, or just continue displaying the last one
-    }
-    else {
-        peditor.show(container->getName(), symbols);
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Parameter Editor
-//
-//////////////////////////////////////////////////////////////////////
-
-SessionParameterEditor::SessionParameterEditor(SessionEditor* ed)
-{
-    sessionEditor = ed;
-}
-
-void SessionParameterEditor::resized()
-{
-    juce::Rectangle<int> area = getLocalBounds();
-    for (auto form : forms)
-      form->setBounds(area);
-}
-
-void SessionParameterEditor::paint(juce::Graphics& g)
-{
-    g.setColour(juce::Colours::pink);
-    g.fillRect(0, 0, getWidth(), getHeight());
-}
-
-void SessionParameterEditor::show(juce::String category, juce::Array<Symbol*>& symbols)
-{
-    ParameterForm* form = formTable[category];
-
-    if (form == nullptr) {
-        Trace(2, "SPE: Creating form for category %s", category.toUTF8());
-        
-        form = new ParameterForm();
-        forms.add(form);
-        formTable.set(category, form);
-        addAndMakeVisible(form);
-
-        // todo: Read the form and/or tree definition from SystemConfig
-        
-        juce::String title = category;
-        
-        form->setTitle(title);
-        form->add(symbols);
-        
-        currentForm = form;
-        currentForm->load(sessionEditor->getEditingSession()->getGlobals());
-
-        form->setBounds(getLocalBounds());
-        // trouble getting this fleshed out dynamically
-        form->resized();
-        
-    }
-    else if (form == currentForm) {
-        Trace(2, "SPE: Form already displayed for category %s", category.toUTF8());
-    }
-    else {
-        Trace(2, "SPE: Displaying form for category %s", category.toUTF8());
-        currentForm->setVisible(false);
-        // probably need a refresh?
-        form->setVisible(true);
-        currentForm = form;
-    }
-}
-
-void SessionParameterEditor::load()
-{
-    ValueSet* values = sessionEditor->getEditingSession()->getGlobals();
-    for (auto form : forms)
-      form->load(values);
-}
-
-void SessionParameterEditor::save(Session* dest)
-{
-    ValueSet* values = dest->ensureGlobals();
-    for (auto form : forms)
-      form->save(values);
+    globalEditor->save(dest->ensureGlobals());
+    trackEditor->save(dest);
 }
 
 /****************************************************************************/

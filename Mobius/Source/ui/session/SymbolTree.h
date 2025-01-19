@@ -13,6 +13,14 @@ class SymbolTreeItem : public juce::TreeViewItem
 	SymbolTreeItem(juce::String s);
 	~SymbolTreeItem();
 
+    // kludge for tree forms, figure out how this should work
+    void setAnnotation(juce::String s) {
+        annotation = s;
+    }
+    juce::String getAnnotation() {
+        return annotation;
+    }
+
     void addSymbol(class Symbol* s);
     juce::Array<class Symbol*>& getSymbols() {
         return symbols;
@@ -42,6 +50,7 @@ class SymbolTreeItem : public juce::TreeViewItem
   private:
 
     juce::String name;
+    juce::String annotation;
     bool hidden = false;
     bool noSelect = false;
     juce::Colour color;

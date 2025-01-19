@@ -6,7 +6,12 @@
 
 #include <JuceHeader.h>
 
-class SessionTrackEditor : public juce::Component
+#include "../script/TypicalTable.h"
+#include "SymbolTree.h"
+
+class SessionTrackEditor : public juce::Component,
+                           public TypicalTable::Listener,
+                           public SymbolTree::Listener
 {
   public:
 
@@ -17,6 +22,8 @@ class SessionTrackEditor : public juce::Component
     void load();
     
     void resized() override;
+
+    void typicalTableChanged(class TypicalTable* t, int row) override;
     
   private:
 
@@ -24,6 +31,7 @@ class SessionTrackEditor : public juce::Component
 
     std::unique_ptr<class SessionTrackTable> tracks;
     std::unique_ptr<class SessionTrackTrees> trees;
+    
 };
 
         

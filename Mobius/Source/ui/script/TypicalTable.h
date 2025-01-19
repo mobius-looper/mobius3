@@ -9,8 +9,22 @@ class TypicalTable : public juce::Component,
 {
   public:
 
+    class Listener {
+      public:
+        virtual ~Listener() {}
+        // this happens when you click on a row
+        virtual void typicalTableClicked(TypicalTable* t, int row) {(void)t; (void)row;}
+        // this happens when you click or move with the keyboard
+        virtual void typicalTableChanged(TypicalTable* t, int row) {(void)t; (void)row;}
+    };
+    void setListener(Listener* l) {
+        listener = l;
+    }
+
     TypicalTable();
     ~TypicalTable();
+
+    int getSelectedRow();
 
     // defer most initialization till the subclass has control
     void initialize();
@@ -41,9 +55,12 @@ class TypicalTable : public juce::Component,
                     int width, int height, bool rowIsSelected) override;
     void cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
     void selectedRowsChanged(int lastRowSelected) override;
+    void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
 
   private:
+
+    Listener* listener = nullptr;
 
     bool hasCommands = false;
     ButtonBar commands;

@@ -17,9 +17,11 @@ class SessionEditorTree : public SymbolTree
     SessionEditorTree();
     ~SessionEditorTree();
 
-    void load(class SymbolTable* table, juce::String includes);
+    void load(class Provider* p, juce::String treeName);
 
   private:
 
+    void intern(class SymbolTreeItem* parent, class TreeNode* node);
+    
     
 };

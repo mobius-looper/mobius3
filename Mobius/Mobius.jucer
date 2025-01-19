@@ -243,6 +243,10 @@
                 file="Source/ui/session/SessionEditorForm.cpp"/>
           <FILE id="ButKbC" name="SessionEditorForm.h" compile="0" resource="0"
                 file="Source/ui/session/SessionEditorForm.h"/>
+          <FILE id="QRDZ18" name="SessionEditorTree.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionEditorTree.cpp"/>
+          <FILE id="Tu3Rui" name="SessionEditorTree.h" compile="0" resource="0"
+                file="Source/ui/session/SessionEditorTree.h"/>
           <FILE id="za4YnZ" name="SessionTrackEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionTrackEditor.cpp"/>
           <FILE id="bxa5u6" name="SessionTrackEditor.h" compile="0" resource="0"

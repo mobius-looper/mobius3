@@ -6,7 +6,7 @@
 
 #include <JuceHeader.h>
 
-#include "ParameterCategoryTree.h"
+#include "SessionEditorTree.h"
 
 class SessionTrackTrees : public juce::Component
 {
@@ -24,8 +24,8 @@ class SessionTrackTrees : public juce::Component
 
   private:
 
-    ParameterCategoryTree audioTree;
-    ParameterCategoryTree midiTree;
+    SessionEditorTree audioTree;
+    SessionEditorTree midiTree;
     bool showingMidi = false;
     
 };

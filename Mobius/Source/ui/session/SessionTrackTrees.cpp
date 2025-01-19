@@ -2,6 +2,8 @@
 #include <JuceHeader.h>
 
 #include "../../Provider.h"
+
+#include "SessionEditorTree.h"
 #include "SessionTrackTrees.h"
 
 SessionTrackTrees::SessionTrackTrees()
@@ -17,10 +19,8 @@ SessionTrackTrees::~SessionTrackTrees()
 
 void SessionTrackTrees::load(Provider* p)
 {
-    SymbolTable* symbols = p->getSymbols();
-    
-    audioTree.load(symbols, "");
-    midiTree.load(symbols, "midiTrack");
+    audioTree.load(p, juce::String("sessionAudioTrack"));
+    midiTree.load(p, juce::String("sessionMidiTrack"));
 }
 
 void SessionTrackTrees::showMidi(bool b)

@@ -5,9 +5,14 @@
 
 <SystemConfig>
 
-  <!-- Parameter symbol categories for the SessionEditor -->
+  <Tree name='sessionAudioTrack'>
+    <Tree name='Foo'/>
+    <Tree name='Bar'/>
+  </Tree>
   
-  <Category name='Sync' formTitle='Synchronization'/>
-
+  <Tree name='sessionMidiTrack'>
+    <Tree name='Something'/>
+    <Tree name='Awesome'/>
+  </Tree>
 
 </SystemConfig>

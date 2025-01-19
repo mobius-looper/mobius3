@@ -1,6 +1,7 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/Trace.h"
 #include "../../model/Session.h"
 #include "../../Provider.h"
 #include "../JuceUtil.h"
@@ -19,6 +20,8 @@ SessionTrackEditor::SessionTrackEditor(Provider* p)
     
     addAndMakeVisible(tracks.get());
     addAndMakeVisible(trees.get());
+
+    tracks->setListener(this);
 }
 
 SessionTrackEditor::~SessionTrackEditor()
@@ -43,4 +46,21 @@ void SessionTrackEditor::resized()
     trees->setBounds(area.removeFromLeft(400));
 
     JuceUtil::dumpComponent(this);
+}
+
+/**
+ * This is called when the selected row changes either by clicking on
+ * it or using the keyboard arrow keys after a row has been selected.
+ */
+void SessionTrackEditor::typicalTableChanged(TypicalTable* t, int row)
+{
+    (void)t;
+    //Trace(2, "SessionTrackEditor: Table changed row %d", row);
+
+    if (tracks->isMidi(row)) {
+        trees->showMidi(true);
+    }
+    else {
+        trees->showMidi(false);
+    }
 }

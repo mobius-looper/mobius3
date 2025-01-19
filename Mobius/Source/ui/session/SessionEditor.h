@@ -17,51 +17,6 @@
 
 #include "../config/ConfigEditor.h"
 
-class SessionParameterEditor : public juce::Component
-{
-  public:
-    
-    SessionParameterEditor(class SessionEditor* ed);
-    ~SessionParameterEditor() {}
-
-    void resized() override;
-    void paint(juce::Graphics& g) override;
-
-    void show(juce::String category, juce::Array<class Symbol*>& symbols);
-    void load();
-    void save(class Session* dest);
-    
-  private:
-
-    class SessionEditor* sessionEditor = nullptr;
-
-    juce::OwnedArray<class ParameterForm> forms;
-    juce::HashMap<juce::String,class ParameterForm*> formTable;
-    class ParameterForm* currentForm = nullptr;
-    
-};
-
-
-class SessionEditorParametersTab : public juce::Component, public SymbolTree::Listener
-{
-  public:
-
-    SessionEditorParametersTab(class SessionEditor* ed);
-    ~SessionEditorParametersTab() {}
-
-    void loadSymbols(class Provider* p);
-    void symbolTreeClicked(SymbolTreeItem* item) override;
-    void load();
-    void save(class Session* dest);
-    
-    void resized() override;
-    
-  private:
-    
-    ParameterCategoryTree tree;
-    SessionParameterEditor peditor;
-
-};
 
 class SessionEditor : public ConfigEditor
 {
@@ -95,8 +50,8 @@ class SessionEditor : public ConfigEditor
     std::unique_ptr<class Session> revertSession;
 
     BasicTabs tabs;
-    SessionEditorParametersTab petab {this};
-
+    
+    std::unique_ptr<class SessionGlobalEditor> globalEditor;
     std::unique_ptr<class SessionTrackEditor> trackEditor;
     
 };

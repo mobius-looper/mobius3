@@ -66,6 +66,8 @@ void SessionTrackTable::load()
         SessionTrackTableRow* row = new SessionTrackTableRow();
         
         row->name = name;
+        row->number = number;
+        row->midi = t->midi;
         
         tracks.add(row);
     }
@@ -78,6 +80,30 @@ void SessionTrackTable::clear()
 {
     tracks.clear();
     updateContent();
+}
+
+int SessionTrackTable::getTrackNumber(int row)
+{
+    int number = 0;
+    SessionTrackTableRow* trow = tracks[row];
+    number = trow->number;
+    return number;
+}
+
+int SessionTrackTable::getSelectedTrackNumber()
+{
+    int number = 0;
+    int row = getSelectedRow();
+    if (row >= 0)
+      number = getTrackNumber(row);
+    return row;
+
+}
+
+bool SessionTrackTable::isMidi(int row)
+{
+    SessionTrackTableRow* trow = tracks[row];
+    return trow->midi;
 }
 
 //////////////////////////////////////////////////////////////////////

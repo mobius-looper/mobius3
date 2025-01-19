@@ -40,6 +40,11 @@ void TypicalTable::addCommand(juce::String name)
     commands.autoSize();
 }
 
+int TypicalTable::getSelectedRow()
+{
+    return table.getSelectedRow();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Layout
@@ -253,7 +258,27 @@ void TypicalTable::cellDoubleClicked(int rowNumber, int columnId, const juce::Mo
 void TypicalTable::selectedRowsChanged(int lastRowSelected)
 {
     (void)lastRowSelected;
+    if (listener != nullptr)
+      listener->typicalTableChanged(this, table.getSelectedRow());
 }
+
+/**
+ * MouseEvent has various characters of the mouse click such as the actual x/y coordinate
+ * offsetFromDragStart, numberOfClicks, etc.  Not interested in those right now.
+ *
+ * Can pass the row/col to the listener.
+ * Can use ListBox::isRowSelected to get the selected row
+ * Don't know if there is tracking of a selected column but we don't need that yet.
+ */
+void TypicalTable::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+{
+    (void)rowNumber;
+    (void)columnId;
+    (void)event;
+    if (listener != nullptr) 
+      listener->typicalTableClicked(this, table.getSelectedRow());
+}
+
 
 /****************************************************************************/
 /****************************************************************************/

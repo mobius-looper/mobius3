@@ -17,6 +17,8 @@ class SessionTrackTableRow
     }
 
     juce::String name;
+    int number = 0;
+    bool midi = false;
 
 };
 
@@ -29,6 +31,11 @@ class SessionTrackTable : public TypicalTable
     SessionTrackTable(class Provider* p);
     ~SessionTrackTable();
 
+    int getSelectedTrackNumber();
+    int getTrackNumber(int row);
+
+    bool isMidi(int row);
+
     void load();
     void clear();
 
@@ -36,7 +43,7 @@ class SessionTrackTable : public TypicalTable
     int getRowCount() override;
     juce::String getCellText(int rowNumber, int columnId) override;
     void doCommand(juce::String name) override;
-
+    
   private:
     
     class Provider* provider = nullptr;
