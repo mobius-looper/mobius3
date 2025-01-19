@@ -26,9 +26,8 @@
  *
  * Also does the function properties conversion, and normalizes group names.
  */
-bool Upgrader::upgrade(MobiusConfig* config, Session* session)
+bool Upgrader::upgrade(MobiusConfig* config)
 {
-    (void)session;
     bool updated = false;
     
     if (config->getVersion() < 1) {

@@ -542,7 +542,7 @@ void Supervisor::shutdown()
     midiManager.shutdown();
 
     // have to do this while Mobius is still alive
-    saveSession();
+    saveMobiusConfigOnShutdown();
 
     Trace(2, "Supervisor: Stopping Mobius engine\n");
     // used to be a singleton with MobiusInterface::shutdown()
@@ -1274,23 +1274,10 @@ void Supervisor::propagateConfiguration()
 //
 //////////////////////////////////////////////////////////////////////
 
-Session* Supervisor::getSession()
-{
-    if (!session) {
-        Session* neu = fileManager.readDefaultSession();
-        if (neu == nullptr) {
-            // bootstrap a default session
-            // shouldn't be happening unless the .xml files are missing
-            neu = new Session();
-            MobiusConfig* config = getMobiusConfig();
-            neu->audioTracks = config->getCoreTracks();
-        }
-        session.reset(neu);
-    }
-    return session.get();
-}
-
 /**
+ * The Session is more complex than other file based objects because
+ * it MUST be normalized when loaded from the file system.  You can't access
+ * theh Session without it having gone through the normalization process.
  * Initialize the first Session on startup.
  */
 Session* Supervisor::initializeSession()
@@ -1298,22 +1285,58 @@ Session* Supervisor::initializeSession()
     // validate/upgrade the configuration files
     // doing a gradual migration toward Session from MobiusConfig
     // this must be done after symbols are initialized
+    bool sessionModified = false;
+    Session* neu = fileManager.readDefaultSession();
+    if (neu == nullptr) {
+        // bootstrap a default session
+        // shouldn't be happening unless the .xml files are missing
+        neu = new Session();
+        sessionModified = true;
+    }
+
     MobiusConfig* config = getMobiusConfig();
-    Session* ses = getSession();
-    if (upgrader.upgrade(config, ses)) {
+    if (upgrader.upgrade(config)) {
         fileManager.writeMobiusConfig(config);
     }
     
     // do this unconditionally for awhile
-    upgradeSession(config, ses);
-    fileManager.writeDefaultSession(ses);
+    upgradeSession(config, neu);
+
+    if (normalizeSession(neu))
+      sessionModified = true;
+    
+    if (sessionModified)
+      fileManager.writeDefaultSession(neu);
+
+    // this is now accessible to the reset of the system
+    session.reset(neu);
 
     // make the SystemState match the session
-    configureSystemState(ses);
+    configureSystemState(neu);
 
-    return ses;
+    return neu;
 }
 
+/**
+ * This is what everything else uses to get to the Session
+ * after it has been initialized.
+ */
+Session* Supervisor::getSession()
+{
+    if (!session) {
+        Trace(1, "Supervisor: Session not initialized, you will lose");
+        // this can't happen so don't bother trying to wedge the normalization
+        // process in here
+        Session* neu = new Session();
+        session.reset(neu);
+    }
+    return session.get();
+}
+
+/**
+ * Start converting the old global parameters into session parameters.
+ * This isn't the authoritative source for these yet though.
+ */
 void Supervisor::upgradeSession(MobiusConfig* old, Session* ses)
 {
     // we don't keep audio track definitions in the session yet so
@@ -1399,6 +1422,60 @@ void Supervisor::convertEnum(juce::String name, int value, ValueSet* dest)
 }
 
 /**
+ * Here from two places: after reading the session.xml file for the first
+ * time and after editing the session in the SessionEditor.
+ *
+ * At the end of normalization these will be true:
+ *
+ *     The audio track count in MobiusConfig will be AUTHORITATIVE and
+ *     the session will have exactly that number of Session::Tracks for audio
+ *     tracks.  New ones will be added and extra ones will be deleted.
+ *
+ *     Audio tracks will be numbered from 1 to N.
+ *     Midi tracks will be numbered from N+1 to M.
+ *     Future new track types go after those, clustered by type with increasing numbers.
+ *
+ */
+bool Supervisor::normalizeSession(Session* s)
+{
+    bool modified = false;
+    MobiusConfig* config = getMobiusConfig();
+
+    int requiredAudioTracks = config->getCoreTracks();
+    modified = s->reconcileAudioTracks(requiredAudioTracks);
+
+    // now number them, audio first
+    int trackNumber = 1;
+    for (int i = 0 ; i < s->getTrackCount() ; i++) {
+        Session::Track* t = s->getTrackByIndex(i);
+        if (t->type == Session::TypeAudio) {
+            t->number = trackNumber;
+            trackNumber++;
+        }
+    }
+    // then the rest
+    int midiCount = 0;
+    for (int i = 0 ; i < s->getTrackCount() ; i++) {
+        Session::Track* t = s->getTrackByIndex(i);
+        if (t->type != Session::TypeAudio) {
+            t->number = trackNumber;
+            trackNumber++;
+            midiCount++;
+        }
+    }
+
+    // this needs to be here for varioius reasons
+    s->audioTracks = requiredAudioTracks;
+
+    // MIDI tracks are far less touchy, let the Track objects define
+    // how many there are, but the view and other things wants
+    // this number to match
+    s->midiTracks = midiCount;
+    
+    return modified;
+}        
+
+/**
  * Configure the SystemState object so that it has enough TrackStates
  * to match the tracks defined in the session.  Since TrackState is a
  * generic model used for all track types, it doesn't really matter what
@@ -1475,6 +1552,22 @@ void Supervisor::configureSystemState(Session* s)
  * Write the default session after editing.
  * The only thing sensitive to this right now is MobiusKernel
  * and MidiTracker.
+ *
+ * This is called by:
+ *
+ *     GlobalEditor
+ *        - edits userFileFolder and eventScript, this needs to move
+ *          to SessionEditor
+ *
+ *     MidiTrackEditor
+ *        - obsolete, will be replaced by SessionEditor
+ *
+ *     SessionEditor
+ *        - the only thing that should be doing this for awhile,
+ *          eventually MixerEditor and other editors of session slices
+ *
+ * The noPropagation flag is set when the edits were focused and will not impact
+ * the Mobius engine.
  */
 void Supervisor::updateSession(bool noPropagation)
 {
@@ -1502,13 +1595,68 @@ void Supervisor::updateSession(bool noPropagation)
 }
 
 /**
+ * This is what SessionEditor must call after potentially adding and removing tracks.
+ *
+ * This is the only time where the session audio track count is authoritative over
+ * the track count in MobiusConfig.
+ *
+ * The SessionEditor already deposited its changes in the global Session object.
+ */
+void Supervisor::sessionEditorSave()
+{
+    Session* s = getSession();
+    
+    int newAudioTracks = 0;
+    for (int i = 0 ; i < s->getTrackCount() ; i++) {
+        Session::Track* t = s->getTrackByIndex(i);
+        if (t->type == Session::TypeAudio) {
+            newAudioTracks++;
+        }
+    }
+
+    // save the official track count
+    MobiusConfig* config = getMobiusConfig();
+    if (newAudioTracks != config->getCoreTracks()) {
+        config->setCoreTracks(newAudioTracks);
+        fileManager.writeMobiusConfig(config);
+    }
+
+    // renumber the session tracks
+    normalizeSession(s);
+
+    fileManager.writeDefaultSession(s);
+
+    configureSystemState(s);
+        
+    // tell the view to prepare for track changes
+    mobiusViewer.configure(&mobiusView);
+
+    // from here on down, it needs to match what updateMobiusConfig would do
+
+    // propagate config changes to other components
+    propagateConfiguration();
+
+    // send it down to the engine
+    if (mobius != nullptr) {
+        mobius->reconfigure(config, s);
+    }
+
+    // clear speical triggers for the engine now that it is done
+    config->setupsEdited = false;
+    config->presetsEdited = false;
+
+    // don't need to do this since bindings haven't changed
+    //configureBindings();
+}
+
+/**
  * Emergine "session" concept that at the moment just consists of
  * saving the active setup on shutdown.
  * Since we don't have a session object, this goes in the MobiusConfig.
  *
  * !! Now we DO have a session, so need to move this there
  */
-void Supervisor::saveSession()
+void Supervisor::saveMobiusConfigOnShutdown()
 {
     int active = getActiveSetup();
     if (active >= 0) {

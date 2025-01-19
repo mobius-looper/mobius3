@@ -11,6 +11,7 @@
 #include "../../model/ValueSet.h"
 #include "../../Provider.h"
 
+#include "ParameterForm.h"
 #include "SessionEditorTree.h"
 #include "SessionFormCollection.h"
 
@@ -24,10 +25,10 @@ SessionGlobalEditor::SessionGlobalEditor()
     tree.setListener(this);
 }
 
-SessionGlobalEditor::initialize(Provider* p)
+void SessionGlobalEditor::initialize(Provider* p)
 {
     provider = p;
-    tree.load(p->getSymbols(), "sessionGlobal");
+    tree.load(p, "sessionGlobal");
 }
 
 void SessionGlobalEditor::resized()
@@ -43,7 +44,7 @@ void SessionGlobalEditor::load(ValueSet* src)
     forms.load(src);
 }
 
-void SessionGlobalEditor::save(Session* dest)
+void SessionGlobalEditor::save(ValueSet* dest)
 {
     forms.save(dest);
 }

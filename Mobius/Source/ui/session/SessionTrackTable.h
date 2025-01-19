@@ -28,9 +28,12 @@ class SessionTrackTable : public TypicalTable
 
     const int ColumnName = 1;
     
-    SessionTrackTable(class Provider* p);
+    SessionTrackTable();
     ~SessionTrackTable();
 
+    void initialize(class Provider* p);
+    void load(class Provider* p, class Session* s);
+    
     int getSelectedTrackNumber();
     int getTrackNumber(int row);
 

@@ -7,17 +7,15 @@
 #include "../../util/Trace.h"
 #include "../../util/Util.h"
 #include "../../model/Symbol.h"
+#include "../../model/Session.h"
 #include "../../Provider.h"
 #include "../MobiusView.h"
 
 #include "SessionTrackTable.h"
 
-SessionTrackTable::SessionTrackTable(Provider* p)
+SessionTrackTable::SessionTrackTable()
 {
-    provider = p;
     setName("SessionTrackTable");
-
-    initialize();
 
     addColumn("Name", ColumnName, 200);
     
@@ -27,9 +25,28 @@ SessionTrackTable::SessionTrackTable(Provider* p)
 SessionTrackTable::~SessionTrackTable()
 {
 }
-
-void SessionTrackTable::load()
+void SessionTrackTable::initialize(Provider* p)
 {
+    // nothing to do during initialization, must
+    // reload the table every time the editor is opened
+    (void)p;
+}
+
+/**
+ * It should be possible for this to work using only the Session
+ * but that is sparse right now.  To know track names you need information
+ * from the Setup which will have been combined into the MobiusView.
+ * This also makes the order of the tracks match the View order, which
+ * SHOULD also match Session order, but since that's what drives the UI, use it.
+ *
+ * The session passed here is the one being edited by SessionEditor
+ * which one day may be complete enough to drive the process but for now
+ * is ignored.  
+ */
+void SessionTrackTable::load(Provider* p, Session* session)
+{
+    (void)session;
+
     tracks.clear();
 
     // the Session unfortunately can't drive the table because
@@ -41,7 +58,7 @@ void SessionTrackTable::load()
     // we go between them quickly, is that working?
 
     //Session* session = provider->getSession();
-    MobiusView* view = provider->getMobiusView();
+    MobiusView* view = p->getMobiusView();
 
     // the view will have display order eventually which is probably a good
     // way to order the table rows, but if we show the internal numbers it may

@@ -7,7 +7,7 @@
 #include <JuceHeader.h>
 
 #include "SymbolTree.h"
-#include "ParameterTree.h"
+#include "SessionEditorTree.h"
 #include "SessionFormCollection.h"
 
 

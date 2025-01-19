@@ -229,24 +229,24 @@
                 file="Source/ui/session/MidiTrackEditor.cpp"/>
           <FILE id="FVJZ8a" name="MidiTrackEditor.h" compile="0" resource="0"
                 file="Source/ui/session/MidiTrackEditor.h"/>
-          <FILE id="o5GJM2" name="ParameterCategoryTree.cpp" compile="1" resource="0"
-                file="Source/ui/session/ParameterCategoryTree.cpp"/>
-          <FILE id="AJrVaW" name="ParameterCategoryTree.h" compile="0" resource="0"
-                file="Source/ui/session/ParameterCategoryTree.h"/>
           <FILE id="y3QGus" name="ParameterForm.cpp" compile="1" resource="0"
                 file="Source/ui/session/ParameterForm.cpp"/>
           <FILE id="D2sieP" name="ParameterForm.h" compile="0" resource="0" file="Source/ui/session/ParameterForm.h"/>
           <FILE id="h5SWoP" name="SessionEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionEditor.cpp"/>
           <FILE id="YLdxmd" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/session/SessionEditor.h"/>
-          <FILE id="IllGre" name="SessionEditorForm.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionEditorForm.cpp"/>
-          <FILE id="ButKbC" name="SessionEditorForm.h" compile="0" resource="0"
-                file="Source/ui/session/SessionEditorForm.h"/>
           <FILE id="QRDZ18" name="SessionEditorTree.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionEditorTree.cpp"/>
           <FILE id="Tu3Rui" name="SessionEditorTree.h" compile="0" resource="0"
                 file="Source/ui/session/SessionEditorTree.h"/>
+          <FILE id="goG27g" name="SessionFormCollection.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionFormCollection.cpp"/>
+          <FILE id="y3emuo" name="SessionFormCollection.h" compile="0" resource="0"
+                file="Source/ui/session/SessionFormCollection.h"/>
+          <FILE id="KOaAEr" name="SessionGlobalEditor.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionGlobalEditor.cpp"/>
+          <FILE id="CqSPrU" name="SessionGlobalEditor.h" compile="0" resource="0"
+                file="Source/ui/session/SessionGlobalEditor.h"/>
           <FILE id="za4YnZ" name="SessionTrackEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionTrackEditor.cpp"/>
           <FILE id="bxa5u6" name="SessionTrackEditor.h" compile="0" resource="0"

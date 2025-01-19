@@ -11,10 +11,6 @@
 
 #include "../../model/Session.h"
 #include "../common/BasicTabs.h"
-
-#include "ParameterCategoryTree.h"
-#include "ParameterForm.h"
-
 #include "../config/ConfigEditor.h"
 
 

@@ -58,7 +58,8 @@ void SessionFormCollection::show(Provider* p, juce::String formName)
         
             form = new ParameterForm();
             forms.add(form);
-            formTable.set(category, form);
+            // need more here!!
+            formTable.set(formdef->name, form);
             addAndMakeVisible(form);
 
             form->setTitle(formName);
@@ -66,7 +67,7 @@ void SessionFormCollection::show(Provider* p, juce::String formName)
             form->load(sourceValues);
             
             currentForm = form;
-            currentForm->load(sessionEditor->getEditingSession()->getGlobals());
+            currentForm->load(sourceValues);
 
             form->setBounds(getLocalBounds());
             // trouble getting this fleshed out dynamically

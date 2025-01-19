@@ -1,5 +1,5 @@
 /**
- * A collection of ParameterCategoryTree's for each track type.
+ * A collection of SessionEditorTrees's for each track type.
  */
 
 #pragma once
@@ -15,7 +15,7 @@ class SessionTrackTrees : public juce::Component
     SessionTrackTrees();
     ~SessionTrackTrees();
 
-    void load(class Provider* p);
+    void initialize(class Provider* p);
 
     // eventually will need a type enumeration
     void showMidi(bool midi);

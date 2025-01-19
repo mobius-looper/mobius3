@@ -16,9 +16,8 @@
 
 #include "../common/BasicTabs.h"
 
-#include "SymbolTree.h"
-#include "ParameterCategoryTree.h"
 #include "ParameterForm.h"
+#include "SessionGlobalEditor.h"
 #include "SessionTrackEditor.h"
 
 #include "SessionEditor.h"
@@ -30,7 +29,7 @@ SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
     globalEditor.reset(new SessionGlobalEditor());
     tabs.add("Parameters", globalEditor.get());
 
-    trackEditor.reset(new SessionTrackEditor(s));
+    trackEditor.reset(new SessionTrackEditor());
     tabs.add("Tracks", trackEditor.get());
 
     globalEditor->initialize(s);
@@ -84,8 +83,12 @@ void SessionEditor::save()
     // copied Session so we can just update the master and abandon the copy
     Session* master = supervisor->getSession();
     saveSession(master);
-    supervisor->updateSession();
+    
+    // note that we don't call udateSession which will eventually go away
+    // entirely, this will do track number normalization
+    supervisor->sessionEditorSave();
 
+    // get rid of our intermediate state
     session.reset(nullptr);
     revertSession.reset(nullptr);
 }
@@ -126,7 +129,7 @@ void SessionEditor::loadSession()
     // there isn't one ValueSet for the tracks there are N of them
     // trackEditor needs the entire Session
 
-    trackEditor->load(session);
+    trackEditor->load(session.get());
 }
 
 /**

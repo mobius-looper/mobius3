@@ -17,7 +17,7 @@ SessionTrackTrees::~SessionTrackTrees()
 {
 }
 
-void SessionTrackTrees::load(Provider* p)
+void SessionTrackTrees::initialize(Provider* p)
 {
     audioTree.load(p, juce::String("sessionAudioTrack"));
     midiTree.load(p, juce::String("sessionMidiTrack"));

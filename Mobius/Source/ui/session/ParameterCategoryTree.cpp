@@ -1,3 +1,6 @@
+// OBSOLETE: DELETE
+
+
 /**
  *
  * Extension of SymbolTree to browse categories for the SessionEditor

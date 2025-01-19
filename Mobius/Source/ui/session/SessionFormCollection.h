@@ -10,6 +10,10 @@
  *
  */
 
+#pragma once
+
+#include <JuceHeader.h>
+
 class SessionFormCollection : public juce::Component
 {
   public:
@@ -34,5 +38,4 @@ class SessionFormCollection : public juce::Component
     class ParameterForm* currentForm = nullptr;
     
 };
-#endif
 

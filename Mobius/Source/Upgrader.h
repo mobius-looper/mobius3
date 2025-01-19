@@ -24,7 +24,7 @@ class Upgrader
 
     ~Upgrader() {}
 
-    bool upgrade(class MobiusConfig* config, class Session* session);
+    bool upgrade(class MobiusConfig* config);
 
   private:
 

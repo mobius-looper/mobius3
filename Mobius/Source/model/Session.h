@@ -52,8 +52,9 @@ class Session
         int id = 0;
 
         /**
-         * Tracks are assigned a unique internal reference number when the session
-         * is consumed by the engine and track implementations are constructed.
+         * Tracks are assigned a unique internal reference number after it is loaded
+         * from the file system and as the session is modified at runtime.
+         *
          * This serves as the canonical track identifier used within the engine and may
          * be used as an array index.  This is the number given to track objects, and used
          * in resolved action and query scopes.
@@ -63,9 +64,6 @@ class Session
          *
          * This number is currently visible to the user and is stored in Bindings, but this
          * is temporary and needs to change.  Users should never need to be aware of these numbers.
-         *
-         * todo: A better name for this would be "index".  But "number" is currently widespread
-         * in code.
          *
          * All other forms of track identifier should be considered "names" or "tags" and are
          * completely user defined and stable.
@@ -100,7 +98,17 @@ class Session
     int midiTracks = 0;
 
     int getTrackCount();
-    Track* getTrack(int index);
+
+    // accessing tracks by index should only be used when you want to operate
+    // on all of them in bulk, it is not the same as getTrack(number)
+    Track* getTrackByIndex(int index);
+    Track* getTrackById(int id);
+
+    // look up a track by cannonical referenc number
+    Track* getTrackByNumber(int number);
+
+    // force the number of audio tracks
+    bool reconcileAudioTracks(int required);
 
     // temporary kludge for MidiTrackEditor
     Track* ensureTrack(TrackType type, int index);

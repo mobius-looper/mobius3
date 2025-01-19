@@ -47,18 +47,123 @@ void Session::assignIds()
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Track Management
+//
+//////////////////////////////////////////////////////////////////////
+
+void Session::clearTracks(TrackType type)
+{
+    int index = 0;
+    while (index < tracks.size()) {
+        Track* t = tracks[index];
+        if (t->type == type) {
+            (void)tracks.remove(index, true);
+        }
+        else
+          index++;
+    }
+}
+
 int Session::getTrackCount()
 {
     return tracks.size();
 }
 
-Session::Track* Session::getTrack(int index)
+Session::Track* Session::getTrackByIndex(int index)
 {
     Session::Track* track = nullptr;
     if (index >= 0 && index < tracks.size())
       track = tracks[index];
     return track;
 }
+
+Session::Track* Session::getTrackById(int id)
+{
+    Track* track = nullptr;
+    for (int i = 0 ; i < tracks.size() ; i++) {
+        Track* t = tracks[i];
+        if (t->id == id) {
+            track = t;
+            break;
+        }
+    }
+    return track;
+}
+
+Session::Track* Session::getTrackByNumber(int number)
+{
+    Track* track = nullptr;
+    for (int i = 0 ; i < tracks.size() ; i++) {
+        Track* t = tracks[i];
+        if (t->number == number) {
+            track = t;
+            break;
+        }
+    }
+    return track;
+}
+
+/**
+ * Reconcile the number of audio tracks to match the number
+ * that comes from the MobiusConfig.
+ *
+ * Note that this does not number them.
+ */
+bool Session::reconcileAudioTracks(int required)
+{
+    bool modified = false;
+    
+    // how many are there now?
+    int currentCount = 0;
+    for (int i = 0 ; i < tracks.size() ; i++) {
+        Track* t = tracks[i];
+        if (t->type == TypeAudio) {
+            currentCount++;
+        }
+    }
+
+    if (currentCount < required) {
+        // add new ones
+        while (currentCount < required) {
+            Track* neu = new Track();
+            tracks.add(neu);
+        }
+        modified = true;
+    }
+    else if (currentCount > required) {
+        // awkward since they can be in random order
+        // seek up to the position after the last audio track
+        int position = 0;
+        int found = 0;
+        while (position < tracks.size() && found < required) {
+            Track* t = tracks[position];
+            if (t->type == TypeAudio)
+              found++;
+            position++;
+        }
+        // now delete the remainder
+        while (position < tracks.size()) {
+            Track* t = tracks[position];
+            if (t->type == TypeAudio)
+              tracks.remove(position, true);
+            else
+              position++;
+        }
+        modified = true;
+    }
+
+    assignIds();
+    
+    return modified;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// OBSOLETE, WEED AND DELETE
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Kludge for MidiTrackEditor
@@ -69,6 +174,7 @@ Session::Track* Session::getTrack(int index)
  * Will go away once MidiTrackEditor can handle dynamic track add/remove
  * rather than being fixed at 8 tracks.
  */
+// OBSOLETE: make this go away?
 Session::Track* Session::ensureTrack(TrackType type, int index)
 {
     Track* found = nullptr;
@@ -125,19 +231,11 @@ void Session::replaceMidiTracks(Session* src)
     midiTracks = src->midiTracks;
 }
 
-
-void Session::clearTracks(TrackType type)
-{
-    int index = 0;
-    while (index < tracks.size()) {
-        Track* t = tracks[index];
-        if (t->type == type) {
-            (void)tracks.remove(index, true);
-        }
-        else
-          index++;
-    }
-}
+//////////////////////////////////////////////////////////////////////
+//
+// Parameter Accessors
+//
+//////////////////////////////////////////////////////////////////////
 
 ValueSet* Session::getGlobals()
 {

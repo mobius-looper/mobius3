@@ -1,3 +1,5 @@
+// OBSOLETE: DELTEE
+
 /**
  * Dynamic form generated for the session editor containing
  * fields for a list of categorized symbols.

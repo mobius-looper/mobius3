@@ -189,6 +189,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // this is override because it is also part of MobiusContainer
     class Session* getSession() override;
     void updateSession(bool noPropagation=false);
+    void sessionEditorSave();
     
     class SystemConfig* getSystemConfig();
     class HelpCatalog* getHelpCatalog();
@@ -460,6 +461,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void configureBindings();
 
     class Session* initializeSession();
+    bool normalizeSession(Session* s);
     void configureSystemState(class Session* s);
 
     void upgradeSession(class MobiusConfig* old, class Session* ses);
@@ -467,7 +469,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     void initializeView();
 
-    void saveSession();
+    void saveMobiusConfigOnShutdown();
 
     // Listener notification
     void notifyAlertListeners(juce::String msg);

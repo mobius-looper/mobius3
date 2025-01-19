@@ -1,3 +1,5 @@
+// OBSOLETE: DELETE
+
 /**
  * Display a tree of Session parameter categories to drive the generation
  * of the session parameter editing forms.
