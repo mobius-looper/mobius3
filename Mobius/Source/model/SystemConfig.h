@@ -1,43 +1,39 @@
 /**
- * Definitions for system characteristics that are not editable, but are more
- * convenient kept outside the compiled code.
+ * Definitions for a few mutable system properties that live outside the Session.
  *
- * This will be stored in the system.xml file.
+ * These are not as of yet actionable parameters.
  *
- * This is a funny one that started as a home for parameter category definitions
- * for the SessionEditor.  Things in here drive parts of the UI but unlike UIConfig,
- * you can't edit them, and are normally only changed on releases.
+ * todo: devices.xml fits into this category, consider moving DeviceConfig inside
+ * this one.
  *
- * As such it's more like HelpCatalog, and arguably HelpCatalog (and help.xml) could
- * be inside the SystemConfig.  But help is much larger and more convenient to keep
- * outside and in a different file.
+ * Among the things that could go in here:
  *
- * Other things that could go in here in time are the definitions of the buit-in
- * UIElementDefinitions.
- *
- * Nothing in here currently relates to the engine.
+ *    alternative locations for user defined content: sessions, scripts, samples
  * 
  */
 
 #pragma once
 
-#include "TreeForm.h"
+#include "ValueSet.h"
 
 class SystemConfig
 {
   public:
 
-    void parseXml(juce::XmlElement* root, juce::StringArray& errors);
+    constexpr static const char* XmlElementName = "SystemConfig";
 
-    TreeNode* getTree(juce::String name);
-    TreeForm* getForm(juce::String name);
+    void parseXml(juce::XmlElement* root, juce::StringArray& errors);
+    juce::String toXml();
+
+    /**
+     * The name of the session that is considered to be the Startup Session.
+     * If unspecified it will auto-generate an empty session.
+     */
+    juce::String getStartupSession();
+    void setStartupSession(juce::String s);
     
   private:
 
-    juce::OwnedArray<TreeNode> trees;
-    juce::OwnedArray<TreeForm> forms;
-    
-    juce::HashMap<juce::String,TreeNode*> treeMap;
-    juce::HashMap<juce::String,TreeForm*> formMap;
+    ValueSet values;
 
 };

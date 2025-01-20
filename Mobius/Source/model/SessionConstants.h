@@ -10,10 +10,24 @@
  *
  */
 
-static const char* SessionBeatsPerBar = "beatsPerBar";
+// note that some of the transport symbols are stored in the session
+// but are also actionable and will not be saved it changed at runtime
 
-// not liking this, see notes on host bar ideas
-static const char* SessionHostOverrideTimeSignature = "hostOverrideTimeSignature";
+static const char* SessionTransportTempo = "transportTempo";
+static const char* SessionTransportLength = "transportLength";
+static const char* SessionTransportBeatsPerBar = "transortBeatsPerBar";
+static const char* SessionTransportBarsPerLoop = "transportBarsPerLoop";
+static const char* SessionTransportMidi = "transportMidi";
+static const char* SessionTransportClocks = "transportClocks";
+static const char* SessionTransportManualStart = "transportManualStart";
+static const char* SessionTransportMinTempo = "transportMinTempo";
+static const char* SessionTransportMaxTempo = "transportMaxTempo";
+static const char* SessionTransportMetronome = "transportMetronome";
 
-static const char* SessionTransportMidiEnable = "transportMidiEnable";
-static const char* SessionTransportMidiClocksWhenStopped = "transportMidiClocksWhenStopped";
+static const char* SessionHostBeatsPerBar = "hostBeatsPerBar";
+static const char* SessionHostBarsPerLoop = "hostBarsPerLoop";
+static const char* SessionHostOverride = "hostOverride";
+
+static const char* SessionMidiBeatsPerBar = "midiBeatsPerBar";
+static const char* SessionMidiBarsPerLoop = "midiBarsPerLoop";
+

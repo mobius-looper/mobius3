@@ -47,6 +47,22 @@ void Session::assignIds()
     }
 }
 
+/**
+ * This is going to be interesting.
+ * This is mostly used in the Supervisor/Shell session to watch for changes
+ * during upgrade, but since that object is copied and sent to the Kernel, we won't
+ * know if the Kernel made any changes on shutdown.  Need more here.
+ */
+void Session::setModified(bool b)
+{
+    modified = b;
+}
+
+bool Session::isModified()
+{
+    return modified;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Track Management

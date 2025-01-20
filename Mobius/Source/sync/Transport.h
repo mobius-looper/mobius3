@@ -58,6 +58,7 @@ class Transport : public SyncAnalyzer
     int getBarsPerLoop();
     int getBeat();
     int getBar();
+    int getLoop();
     bool isStarted();
     bool isPaused();
     
@@ -96,46 +97,43 @@ class Transport : public SyncAnalyzer
     SyncAnalyzerResult result;
     DriftMonitor drifter;
     bool testCorrection = false;
-    
-    // the desired tempo constraints
-    // the tempo will kept in this range unless barLock is true
-    float minTempo = 30.0f;
-    float maxTempo = 300.0f;
-    
-    bool paused = false;
-    bool metronomeEnabled = false;
+
+    // Session parameters
+
+    float defaultTempo = 0.0f;
+    float minTempo = 0.0f;
+    float maxTempo = 0.0f;
+    int defaultBeatsPerBar = 0;
+    int defaultBarsPerLoop = 0;
     bool midiEnabled = false;
     bool sendClocksWhenStopped = false;
+    bool manualStart = false;
+    bool metronomeEnabled = false;
 
-    // the id if the connected transport master track
-    int master = 0;
-
-    //
-    // Internal play state
-    //
+    // Current runtime parameters
 
     float tempo = 0.0f;
+    int beatsPerBar = 0;
+    int barsPerLoop = 0;
+    
+    // Internal runtime state
+    
+    // the id if the connected transport master track
+    int master = 0;
+    
+    bool started = false;
+    bool paused = false;
     int unitLength = 0;
     int unitPlayHead = 0;
     int unitsPerBeat = 1;
     int elapsedUnits = 0;
     int unitCounter = 0;
-    bool started = false;
 
     // raw beat counter, there is no "normalized" beat like HostAnalyzer
     // Transport gets to control the beat number, and MidiRealizer follows it
     int beat = 0;
     int bar = 0;
     int loop = 0;
-    
-    // Time signature from the Session or the user
-    int beatsPerBar = 4;
-
-    // loop length when connected to a track
-    int barsPerLoop = 1;
-
-    // default bpb from the session to be restored on GlobalReset
-    int sessionBeatsPerBar = 0;
     
     int deriveTempo(int tapFrames);
     void resetLocation();

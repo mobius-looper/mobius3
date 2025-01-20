@@ -1,45 +1,40 @@
 
 #include <JuceHeader.h>
 
-#include "TreeForm.h"
-
 #include "SystemConfig.h"
 
 void SystemConfig::parseXml(juce::XmlElement* root, juce::StringArray& errors)
 {
+    // you shouldn't be parsing into an already loaded object, but it could happen
+    values.clear();
+        
     for (auto* el : root->getChildIterator()) {
-        if (el->hasTagName("Tree")) {
-            TreeNode* tree = new TreeNode();
-            trees.add(tree);
-            tree->parseXml(el, errors);
-            if (tree->name.length() == 0)
-              errors.add(juce::String("SystemConfig: Tree without name"));
-            else
-              treeMap.set(tree->name, tree);
-        }
-        else if (el->hasTagName("Form")) {
-            TreeForm* form = new TreeForm();
-            forms.add(form);
-            form->parseXml(el, errors);
-            if (form->name.length() == 0)
-              errors.add(juce::String("SystemConfig: Form without name"));
-            else
-              formMap.set(form->name, form);
+        if (el->hasTagName(ValueSet::XmlElement)) {
+            values.parse(el);
         }
         else {
-            errors.add(juce::String("SystemConfig: Unexpected XML tag name: " + el->getTagName()));
+            errors.add(juce::String("SystemConfig: Invalid child element ") + el->getTagName());
         }
     }
 }
 
-TreeNode* SystemConfig::getTree(juce::String name)
+juce::String SystemConfig::toXml()
 {
-    return treeMap[name];
+    juce::XmlElement root (XmlElementName);
+
+    values.render(&root);
+
+    return root.toString();
 }
 
-TreeForm* SystemConfig::getForm(juce::String name)
+juce::String SystemConfig::getStartupSession()
 {
-    return formMap[name];
+    return values.getJString("startupSession");
+}
+
+void SystemConfig::setStartupSession(juce::String name)
+{
+    values.setJString("startupSession", name);
 }
 
 /****************************************************************************/

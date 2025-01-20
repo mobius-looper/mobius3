@@ -3,7 +3,7 @@
 
 #include "../../util/Trace.h"
 
-#include "../../model/SystemConfig.h"
+#include "../../model/StaticConfig.h"
 #include "../../model/TreeForm.h"
 #include "../../model/ValueSet.h"
 #include "../../Provider.h"
@@ -65,7 +65,7 @@ void SessionFormCollection::show(Provider* p, juce::String formName)
 
     if (form == nullptr) {
 
-        SystemConfig* scon = p->getSystemConfig();
+        StaticConfig* scon = p->getStaticConfig();
         TreeForm* formdef = scon->getForm(formName);
         if (formdef == nullptr) {
             Trace(1, "SessionFormCollection: Unknown form %s", formName.toUTF8());

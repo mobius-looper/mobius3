@@ -12,6 +12,9 @@ class FileManager
     FileManager(class Provider* p);
     ~FileManager();
 
+    class SystemConfig* readSystemConfig();
+    void writeSystemConfig(class SystemConfig* config);
+    
     class DeviceConfig* readDeviceConfig();
     void writeDeviceConfig(class DeviceConfig* config);
     
@@ -21,8 +24,8 @@ class FileManager
     class UIConfig* readUIConfig();
     void writeUIConfig(class UIConfig* config);
     
+    class StaticConfig* readStaticConfig();
     class HelpCatalog* readHelpCatalog();
-    class SystemConfig* readSystemConfig();
     
     class Session* readSession(const char* filename);
     class Session* readDefaultSession();
@@ -34,5 +37,8 @@ class FileManager
 
     juce::String readConfigFile(const char* name);
     void writeConfigFile(const char* name, const char* xml);
+
+    juce::XmlElement* readConfigFileRoot(const char* filename, const char* expected);
+    void logErrors(const char* filename, juce::StringArray& errors);
 
 };

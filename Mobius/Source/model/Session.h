@@ -132,8 +132,12 @@ class Session
     void parseXml(juce::String xml);
     juce::String toXml();
 
+    void setModified(bool b);
+    bool isModified();
+
   private:
 
+    bool modified = false;
     juce::OwnedArray<Track> tracks;
     std::unique_ptr<ValueSet> globals;
 

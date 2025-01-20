@@ -3,7 +3,7 @@
     Similar in style to help.xml and symbols.xml
 -->
 
-<SystemConfig>
+<StaticConfig>
 
   <Tree name='sessionGlobal'>
     <Tree name='Synchronization'
@@ -40,6 +40,4 @@
   <Form name='sessionMidiTrackLoopSwitch' title='Loop Switch Options'
         symbols='switchQuantize,emptyLoopAction,switchDuration,switchLocation'/>
 
-  
-
-</SystemConfig>
+</StaticConfig>

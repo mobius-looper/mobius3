@@ -5,9 +5,11 @@
 
 #include "model/XmlRenderer.h"
 #include "model/MobiusConfig.h"
+
 #include "model/UIConfig.h"
 #include "model/DeviceConfig.h"
 #include "model/SystemConfig.h"
+#include "model/StaticConfig.h"
 #include "model/HelpCatalog.h"
 #include "model/Session.h"
 
@@ -15,12 +17,12 @@
 
 #include "FileManager.h"
 
+const char* SystemConfigFile = "system.xml";
+const char* StaticConfigFile = "static.xml";
 const char* DeviceConfigFile = "devices.xml";
 const char* MobiusConfigFile = "mobius.xml";
 const char* UIConfigFile = "uiconfig.xml";
 const char* DefaultSessionFile = "session.xml";
-
-const char* SystemConfigFile = "system.xml";
 const char* HelpFile = "help.xml";
 
 FileManager::FileManager(Provider* p)
@@ -63,6 +65,78 @@ void FileManager::writeConfigFile(const char* name, const char* xml)
     // juce::String path = file.getFullPathName();
     // WriteFile(path.toUTF8(), xml);
     file.replaceWithText(juce::String(xml));
+}
+
+/**
+ * Read and parse an XML configuration file, logging the usual errors.
+ * Note that the XmlElement returned here is dynamically allocated and
+ * must be deleted.  And no, I'm not using std::unique_ptr because I live
+ * on the edge motherfucker.
+ */
+juce::XmlElement* FileManager::readConfigFileRoot(const char* filename, const char* expected)
+{
+    juce::XmlElement* result = nullptr;
+
+    juce::String xml = readConfigFile(filename);
+    if (xml.length() == 0) {
+        Trace(2, "FileManager: Missing file %s", filename);
+    }
+    else {
+        juce::XmlDocument doc(xml);
+        std::unique_ptr<juce::XmlElement> docel = doc.getDocumentElement();
+        if (docel == nullptr) {
+            Trace(1, "FileManager: Error parsing %s", filename);
+            Trace(1, "  %s", doc.getLastParseError().toUTF8());
+        }
+        else if (!docel->hasTagName(expected)) {
+            Trace(1, "FileManager: Incorrect XML element in file %s", filename);
+        }
+        else {
+            // set it free
+            result = docel.release();
+        }
+    }
+    return result;
+}
+
+void FileManager::logErrors(const char* filename, juce::StringArray& errors)
+{
+    if (errors.size() > 0) {
+        Trace(1, "FileManager: Errors parsing %s", filename);
+        for (auto error : errors)
+          Trace(1, "  %s", error.toUTF8());
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// SystemConfig
+//
+//////////////////////////////////////////////////////////////////////
+
+SystemConfig* FileManager::readSystemConfig()
+{
+    SystemConfig* scon = new SystemConfig();
+    juce::XmlElement* root = readConfigFileRoot(SystemConfigFile, SystemConfig::XmlElementName);
+    if (root != nullptr) {
+        juce::StringArray errors;
+        scon->parseXml(root, errors);
+        logErrors(StaticConfigFile, errors);
+        delete root;
+    }
+    return scon;
+}
+
+/**
+ * Write a DeviceConfig back to the file system.
+ * Ownership of the config object does not transfer.
+ */
+void FileManager::writeSystemConfig(SystemConfig* config)
+{
+    if (config != nullptr) {
+        juce::String xml = config->toXml();
+        writeConfigFile(SystemConfigFile, xml.toUTF8());
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -185,7 +259,7 @@ void FileManager::writeUIConfig(UIConfig* config)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Help & SystemConfig
+// Help & StaticConfig
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -209,35 +283,15 @@ HelpCatalog* FileManager::readHelpCatalog()
     return help;
 }
 
-SystemConfig* FileManager::readSystemConfig()
+StaticConfig* FileManager::readStaticConfig()
 {
-    SystemConfig* scon = new SystemConfig();
-
-    juce::String xml = readConfigFile(SystemConfigFile);
-    if (xml.length() == 0) {
-        Trace(2, "Supervisor: Missing %s\n", SystemConfigFile);
-    }
-    else {
-        // todo: This is theh way I'd like all object parsers to work
-        // FileManager handles the XML parsing and collects the errors
-        juce::XmlDocument doc(xml);
-        std::unique_ptr<juce::XmlElement> root = doc.getDocumentElement();
-        if (root == nullptr) {
-            Trace(1, "FileManager: Error parsing %s", SystemConfigFile);
-            Trace(1, "  %s", doc.getLastParseError().toUTF8());
-        }
-        else if (!root->hasTagName("SystemConfig")) {
-            Trace(1, "FileManager: Wrong XML element in file %s", SystemConfigFile);
-        }
-        else {
-            juce::StringArray errors;
-            scon->parseXml(root.get(), errors);
-            if (errors.size() > 0) {
-                Trace(1, "FileManager: Errors parsing %s", SystemConfigFile);
-                for (auto error : errors)
-                  Trace(1, "  %s", error.toUTF8());
-            }
-        }
+    StaticConfig* scon = new StaticConfig();
+    juce::XmlElement* root = readConfigFileRoot(StaticConfigFile, StaticConfig::XmlElementName);
+    if (root != nullptr) {
+        juce::StringArray errors;
+        scon->parseXml(root, errors);
+        logErrors(StaticConfigFile, errors);
+        delete root;
     }
     return scon;
 }

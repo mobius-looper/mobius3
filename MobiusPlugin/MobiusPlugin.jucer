@@ -246,12 +246,18 @@
               file="../Mobius/Source/model/SessionConstants.h"/>
         <FILE id="gUPJrL" name="Setup.cpp" compile="1" resource="0" file="../Mobius/Source/model/Setup.cpp"/>
         <FILE id="J4bzxZ" name="Setup.h" compile="0" resource="0" file="../Mobius/Source/model/Setup.h"/>
+        <FILE id="nKSjQf" name="StaticConfig.cpp" compile="1" resource="0"
+              file="../Mobius/Source/model/StaticConfig.cpp"/>
+        <FILE id="rHwo7u" name="StaticConfig.h" compile="0" resource="0" file="../Mobius/Source/model/StaticConfig.h"/>
         <FILE id="GefmGv" name="Structure.cpp" compile="1" resource="0" file="../Mobius/Source/model/Structure.cpp"/>
         <FILE id="C4fMLk" name="Structure.h" compile="0" resource="0" file="../Mobius/Source/model/Structure.h"/>
         <FILE id="WEigo3" name="Symbol.cpp" compile="1" resource="0" file="../Mobius/Source/model/Symbol.cpp"/>
         <FILE id="bWMkbO" name="Symbol.h" compile="0" resource="0" file="../Mobius/Source/model/Symbol.h"/>
         <FILE id="AyjBao" name="SymbolId.cpp" compile="1" resource="0" file="../Mobius/Source/model/SymbolId.cpp"/>
         <FILE id="Es984A" name="SymbolId.h" compile="0" resource="0" file="../Mobius/Source/model/SymbolId.h"/>
+        <FILE id="dRmINj" name="SystemConfig.cpp" compile="1" resource="0"
+              file="../Mobius/Source/model/SystemConfig.cpp"/>
+        <FILE id="DkaE2e" name="SystemConfig.h" compile="0" resource="0" file="../Mobius/Source/model/SystemConfig.h"/>
         <FILE id="U9JHYO" name="SystemConstant.h" compile="0" resource="0"
               file="../Mobius/Source/model/SystemConstant.h"/>
         <FILE id="q0TT6U" name="SystemState.h" compile="0" resource="0" file="../Mobius/Source/model/SystemState.h"/>
@@ -293,20 +299,12 @@
                 file="../Mobius/Source/ui/session/MidiTrackEditor.cpp"/>
           <FILE id="NjqAeL" name="MidiTrackEditor.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/session/MidiTrackEditor.h"/>
-          <FILE id="txKJ0f" name="ParameterCategoryTree.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/session/ParameterCategoryTree.cpp"/>
-          <FILE id="GYeBop" name="ParameterCategoryTree.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/session/ParameterCategoryTree.h"/>
           <FILE id="YSf8Hz" name="ParameterForm.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/session/ParameterForm.cpp"/>
           <FILE id="jmh6gM" name="ParameterForm.h" compile="0" resource="0" file="../Mobius/Source/ui/session/ParameterForm.h"/>
           <FILE id="VF2JAF" name="SessionEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/session/SessionEditor.cpp"/>
           <FILE id="CIivw9" name="SessionEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/session/SessionEditor.h"/>
-          <FILE id="PUHNg1" name="SessionEditorForm.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/session/SessionEditorForm.cpp"/>
-          <FILE id="MQfBxy" name="SessionEditorForm.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/session/SessionEditorForm.h"/>
           <FILE id="KHiytH" name="SessionTrackEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/session/SessionTrackEditor.cpp"/>
           <FILE id="dlDKV6" name="SessionTrackEditor.h" compile="0" resource="0"
@@ -315,10 +313,6 @@
                 file="../Mobius/Source/ui/session/SessionTrackTable.cpp"/>
           <FILE id="dCOCU8" name="SessionTrackTable.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/session/SessionTrackTable.h"/>
-          <FILE id="c155E8" name="SessionTrackTrees.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/session/SessionTrackTrees.cpp"/>
-          <FILE id="UVJ2tn" name="SessionTrackTrees.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/session/SessionTrackTrees.h"/>
           <FILE id="aGwJ6N" name="SymbolTree.cpp" compile="1" resource="0" file="../Mobius/Source/ui/session/SymbolTree.cpp"/>
           <FILE id="jFKyCn" name="SymbolTree.h" compile="0" resource="0" file="../Mobius/Source/ui/session/SymbolTree.h"/>
         </GROUP>
@@ -1001,6 +995,8 @@
             file="Source/PluginProcessor.cpp"/>
       <FILE id="OgdMaK" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
+      <FILE id="xeZJBx" name="Producer.cpp" compile="1" resource="0" file="../Mobius/Source/Producer.cpp"/>
+      <FILE id="IjMxn0" name="Producer.h" compile="0" resource="0" file="../Mobius/Source/Producer.h"/>
       <FILE id="uaw8KK" name="Prompter.cpp" compile="1" resource="0" file="../Mobius/Source/Prompter.cpp"/>
       <FILE id="EAziZK" name="Prompter.h" compile="0" resource="0" file="../Mobius/Source/Prompter.h"/>
       <FILE id="ZyvhBY" name="Provider.h" compile="0" resource="0" file="../Mobius/Source/Provider.h"/>

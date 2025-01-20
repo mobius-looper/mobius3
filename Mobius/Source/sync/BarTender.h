@@ -38,7 +38,6 @@ class BarTender
     ~BarTender();
 
     void loadSession(class Session* s);
-    void updateBeatsPerBar(int bpb);
 
     void advance(int blockFrames);
     Pulse* annotate(class Follower* f, Pulse* p);
@@ -49,6 +48,8 @@ class BarTender
     int getBeat(Follower* f);
     int getBar(int trackNumber);
     int getBar(Follower* f);
+    int getLoop(int trackNumber);
+    int getLoop(Follower* f);
     int getBeatsPerBar(int trackNumber);
     int getBarsPerLoop(int trackNumber);
 
@@ -56,15 +57,22 @@ class BarTender
 
     class SyncMaster* syncMaster = nullptr;
 
-    // options captured from the Session
-    int sessionBeatsPerBar = 0;
-    bool sessionHostOverride = false;
+    int hostBeatsPerBar = 0;
+    int hostBarsPerLoop = 0;
+    bool hostOverride = false;
+    
+    int midiBeatsPerBar = 0;
+    int midiBarsPerLoop = 0;
 
     // the annotated Pulse passed back to TimeSlicer
     Pulse annotated;
 
-    bool detectHostBar();
+    void detectHostBar(bool& onBar, bool& onLoop);
+    
     int getHostBeatsPerBar();
+    int getHostBarsPerLoop();
+    int getMidiBeatsPerBar();
+    int getMidiBarsPerLoop();
     
     SyncSource getSyncSource(int trackNumber);
     void getLeaderProperties(int follower, class TrackProperties& props);

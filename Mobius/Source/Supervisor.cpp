@@ -30,6 +30,7 @@
 #include "model/Symbol.h"
 #include "model/SymbolId.h"
 #include "model/SystemConfig.h"
+#include "model/StaticConfig.h"
 #include "model/HelpCatalog.h"
 #include "model/ScriptConfig.h"
 #include "model/FunctionProperties.h"
@@ -49,6 +50,7 @@
 #include "MainComponent.h"
 #include "RootLocator.h"
 #include "Symbolizer.h"
+#include "Producer.h"
 #include "AudioManager.h"
 #include "MidiManager.h"
 #include "JuceAudioStream.h"
@@ -271,6 +273,7 @@ bool Supervisor::start()
     variableManager.install();
 
     // load the initial session and prepare internal objects
+    producer.reset(new Producer(this));
     Session* ses = initializeSession();
     
     // initialize the view for the known track counts
@@ -1095,6 +1098,14 @@ UIConfig* Supervisor::getUIConfig()
     return uiConfig.get();
 }
 
+SystemConfig* Supervisor::getSystemConfig()
+{
+    if (!systemConfig) {
+        systemConfig.reset(fileManager.readSystemConfig());
+    }
+    return systemConfig.get();
+}
+
 DeviceConfig* Supervisor::getDeviceConfig()
 {
     if (!deviceConfig) {
@@ -1121,13 +1132,12 @@ HelpCatalog* Supervisor::getHelpCatalog()
     return helpCatalog.get();
 }
 
-SystemConfig* Supervisor::getSystemConfig()
+StaticConfig* Supervisor::getStaticConfig()
 {
-    if (!systemConfig) {
-        SystemConfig* scon = fileManager.readSystemConfig();
-        systemConfig.reset(scon);
+    if (!staticConfig) {
+        staticConfig.reset(fileManager.readStaticConfig());
     }
-    return systemConfig.get();
+    return staticConfig.get();
 }
 
 /**
@@ -1142,7 +1152,7 @@ SystemConfig* Supervisor::getSystemConfig()
  */
 void Supervisor::decacheForms()
 {
-    systemConfig.reset(nullptr);
+    staticConfig.reset(nullptr);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1300,14 +1310,7 @@ Session* Supervisor::initializeSession()
     // validate/upgrade the configuration files
     // doing a gradual migration toward Session from MobiusConfig
     // this must be done after symbols are initialized
-    bool sessionModified = false;
-    Session* neu = fileManager.readDefaultSession();
-    if (neu == nullptr) {
-        // bootstrap a default session
-        // shouldn't be happening unless the .xml files are missing
-        neu = new Session();
-        sessionModified = true;
-    }
+    Session* neu = producer->readDefaultSession();
 
     MobiusConfig* config = getMobiusConfig();
     if (upgrader.upgrade(config)) {
@@ -1317,11 +1320,10 @@ Session* Supervisor::initializeSession()
     // do this unconditionally for awhile
     upgradeSession(config, neu);
 
-    if (normalizeSession(neu))
-      sessionModified = true;
-    
-    if (sessionModified)
-      fileManager.writeDefaultSession(neu);
+    normalizeSession(neu);
+
+    if (neu->isModified())
+      producer->writeDefaultSession(neu);
 
     // this is now accessible to the reset of the system
     session.reset(neu);
@@ -1356,7 +1358,10 @@ void Supervisor::upgradeSession(MobiusConfig* old, Session* ses)
 {
     // we don't keep audio track definitions in the session yet so
     // copy this over so it can be known with only the Session
-    ses->audioTracks = old->getCoreTracks();
+    if (ses->audioTracks != old->getCoreTracks()) {
+        ses->audioTracks = old->getCoreTracks();
+        ses->setModified(true);
+    }
     
     ValueSet* global = ses->ensureGlobals();
     
@@ -1451,13 +1456,13 @@ void Supervisor::convertEnum(juce::String name, int value, ValueSet* dest)
  *     Future new track types go after those, clustered by type with increasing numbers.
  *
  */
-bool Supervisor::normalizeSession(Session* s)
+void Supervisor::normalizeSession(Session* s)
 {
-    bool modified = false;
     MobiusConfig* config = getMobiusConfig();
 
     int requiredAudio = config->getCoreTracks();
-    modified = s->reconcileTrackCount(Session::TypeAudio, requiredAudio);
+    if (s->reconcileTrackCount(Session::TypeAudio, requiredAudio))
+      s->setModified(true);
     s->audioTracks = requiredAudio;
 
     // I changed from deriving the midi track count from the object list rather than the
@@ -1474,7 +1479,7 @@ bool Supervisor::normalizeSession(Session* s)
     }
 
     if (s->reconcileTrackCount(Session::TypeMidi, s->midiTracks))
-      modified = true;
+      s->setModified(true);
 
     // now number them, audio first
     int trackNumber = 1;
@@ -1486,7 +1491,7 @@ bool Supervisor::normalizeSession(Session* s)
                   Trace(2, "Supervisor: Assigning audio track number %d", trackNumber);
                 else
                   Trace(2, "Supervisor: Modifying audio track number %d", trackNumber);
-                modified = true;
+                s->setModified(true);
                 t->number = trackNumber;
             }
             trackNumber++;
@@ -1502,14 +1507,12 @@ bool Supervisor::normalizeSession(Session* s)
                   Trace(2, "Supervisor: Assigning audio track number %d", trackNumber);
                 else
                   Trace(2, "Supervisor: Modifying audio track number %d", trackNumber);
-                modified = true;
+                s->setModified(true);
                 t->number = trackNumber;
             }
             trackNumber++;
         }
     }
-
-    return modified;
 }        
 
 /**
@@ -1611,7 +1614,7 @@ void Supervisor::updateSession(bool noPropagation)
     if (session) {
         Session* s = session.get();
         // todo: if this wasn't the default session, remember where it came from
-        fileManager.writeDefaultSession(s);
+        producer->writeDefaultSession(s);
 
         configureSystemState(s);
         
@@ -1661,7 +1664,7 @@ void Supervisor::sessionEditorSave()
     // renumber the session tracks
     normalizeSession(s);
 
-    fileManager.writeDefaultSession(s);
+    producer->writeDefaultSession(s);
 
     configureSystemState(s);
         

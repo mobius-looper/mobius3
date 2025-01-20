@@ -48,6 +48,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "..\..\Mobius\Builds\VisualStudio2022\x64\Debug\App\{#MyAppSourceExeName}"; DestDir: "{#MyAppProgram}"; DestName: "{#MyAppExeName}"; Flags: ignoreversion
 Source: "..\resources\mobius.xml"; DestDir: "{#MyAppData}"; Flags: onlyifdoesntexist
 Source: "..\resources\uiconfig.xml"; DestDir: "{#MyAppData}"; Flags: onlyifdoesntexist
+Source: "..\..\Mobius\Source\static.xml"; DestDir: "{#MyAppData}"; Flags: ignoreversion
 Source: "..\..\Mobius\Source\help.xml"; DestDir: "{#MyAppData}"; Flags: ignoreversion
 Source: "..\..\Mobius\Source\symbols.xml"; DestDir: "{#MyAppData}"; Flags: ignoreversion
 Source: "..\..\Mobius\Source\test\samples\gcloop.wav"; DestDir: "{#MyAppData}\test\samples"; Flags: ignoreversion

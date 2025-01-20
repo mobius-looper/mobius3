@@ -148,6 +148,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
         return &midiManager;
     }
 
+    class FileManager* getFileManager() override {
+        return &fileManager;
+    }
+
     class MobiusInterface* getMobius() override {
         return mobius;
     }
@@ -175,6 +179,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     class MidiClerk* getMidiClerk();
 
+    class SystemConfig* getSystemConfig();
     class DeviceConfig* getDeviceConfig();
     void updateDeviceConfig();
     class MobiusConfig* getMobiusConfig() override;
@@ -191,7 +196,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void updateSession(bool noPropagation=false);
     void sessionEditorSave();
     
-    class SystemConfig* getSystemConfig();
+    class StaticConfig* getStaticConfig();
     class HelpCatalog* getHelpCatalog();
     void decacheForms();
     
@@ -415,6 +420,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     Prompter prompter {this};
     ApplicationBinderator binderator {this};
 
+    // new session manager, start using this style to reduce header dependencies
+    std::unique_ptr<class Producer> producer;
+
     // new way of doing embedded objects that doesn't require a
     // full link every time you touch the header file
     std::unique_ptr<class MidiClerk> midiClerk;
@@ -426,13 +434,14 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class MobiusConsole* mobiusConsole = nullptr;
 
     // master copies of the configuration files
+    std::unique_ptr<class SystemConfig> systemConfig;
     std::unique_ptr<class DeviceConfig> deviceConfig;
     std::unique_ptr<class Session> session;
     std::unique_ptr<class MobiusConfig> mobiusConfig;
     std::unique_ptr<class UIConfig> uiConfig;
 
     // non-editable configuration
-    std::unique_ptr<class SystemConfig> systemConfig;
+    std::unique_ptr<class StaticConfig> staticConfig;
     std::unique_ptr<class HelpCatalog> helpCatalog;
 
     // temporary files created for outbound drag and drop
@@ -462,7 +471,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void configureBindings();
 
     class Session* initializeSession();
-    bool normalizeSession(Session* s);
+    void normalizeSession(Session* s);
     void configureSystemState(class Session* s);
 
     void upgradeSession(class MobiusConfig* old, class Session* ses);

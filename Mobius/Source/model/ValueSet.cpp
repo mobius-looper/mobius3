@@ -131,6 +131,18 @@ const char* ValueSet::getString(juce::String key)
     return charval;
 }
 
+juce::String ValueSet::getJString(juce::String key)
+{
+    juce::String jval = "";
+    MslValue* value = map[key];
+    if (value != nullptr) {
+        const char* charval = value->getString();
+        if (charval != nullptr)
+          jval = juce::String(charval);
+    }
+    return jval;
+}
+
 void ValueSet::setString(juce::String key, const char* charval)
 {
     MslValue* value = map[key];

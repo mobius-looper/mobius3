@@ -787,9 +787,6 @@ bool SyncMaster::doAction(UIAction* a)
             
         case ParamTransportBeatsPerBar: {
             transport->userSetBeatsPerBar(a->value);
-            // transport may need to notify BarTender whenever BPB changes
-            // if it can happen through another means besides a user action
-            barTender->updateBeatsPerBar(a->value);
         }
             break;
             

@@ -42,13 +42,6 @@ BarTender::~BarTender()
 }
 
 /**
- * Problem 1: Where is the default beatsPerBar defined?
- *
- * The Session has two parameters related to time sigatures:
- *
- *     SessionBeatsPerBar
- *     SessionHostOverrideTimeSignature
- *
  * The first was intended to be the BPB for the Transport, but that can
  * go out the window if the Transport locks onto a master track.  That new
  * value isn't in the Session so if you edit the Session that will get pushed
@@ -63,19 +56,14 @@ BarTender::~BarTender()
  */
 void BarTender::loadSession(Session* s)
 {
-    // save these
-    sessionBeatsPerBar = s->getInt(SessionBeatsPerBar);
-    sessionHostOverride = s->getBool(SessionHostOverrideTimeSignature);
-}
+    // !! todo: all these need to be actionable for scripts
+    
+    hostBeatsPerBar = s->getInt(SessionHostBeatsPerBar);
+    hostBarsPerLoop = s->getInt(SessionHostBarsPerLoop);
+    hostOverride = s->getBool(SessionHostOverride);
 
-/**
- * Called by SyncMaster when it receives a UIAction to change
- * the transport time signature.
- * Like loadSession, could use this to recalculate track normalized beats.
- */
-void BarTender::updateBeatsPerBar(int bpb)
-{
-    sessionBeatsPerBar = bpb;
+    midiBeatsPerBar = s->getInt(SessionMidiBeatsPerBar);
+    midiBarsPerLoop = s->getInt(SessionMidiBarsPerLoop);
 }
 
 /**
@@ -115,6 +103,7 @@ Pulse* BarTender::annotate(Follower* f, Pulse* beatPulse)
     Pulse* result = beatPulse;
     Transport* transport = syncMaster->getTransport();
     bool onBar = false;
+    bool onLoop = false;
     
     switch (f->source) {
         case SyncSourceNone:
@@ -127,8 +116,13 @@ Pulse* BarTender::annotate(Follower* f, Pulse* beatPulse)
             // so we don't have to go back there to get it
             MidiAnalyzer* anal = syncMaster->getMidiAnalyzer();
             int raw = anal->getElapsedBeats();
-            int bpb = transport->getBeatsPerBar();
+            int bpb = getMidiBeatsPerBar();
             onBar = ((raw % bpb) == 0);
+            if (onBar) {
+                int bpl = getMidiBarsPerLoop();
+                int beatsPerLoop = bpb * bpl;
+                onLoop = ((raw & beatsPerLoop) == 0);
+            }
         }
             break;
 
@@ -137,12 +131,13 @@ Pulse* BarTender::annotate(Follower* f, Pulse* beatPulse)
             // Transport did the work for us
             SyncAnalyzerResult* res =  transport->getResult();
             onBar = res->barDetected;
+            onLoop = res->loopDetected;
         }
             break;
 
         case SyncSourceHost: {
             // armegeddon
-            onBar = detectHostBar();
+            detectHostBar(onBar, onLoop);
         }
             break;
 
@@ -155,10 +150,13 @@ Pulse* BarTender::annotate(Follower* f, Pulse* beatPulse)
             break;
     }
 
-    if (onBar) {
+    if (onBar || onLoop) {
         // copy the original pulse and change it's unit
         annotated = *beatPulse;
-        annotated.unit = SyncUnitBar;
+        if (onLoop)
+          annotated.unit = SyncUnitLoop;
+        else
+          annotated.unit = SyncUnitBar;
         result = &annotated;
     }
 
@@ -179,10 +177,8 @@ Pulse* BarTender::annotate(Follower* f, Pulse* beatPulse)
  *
  * For initail testing, we'll just do the usual modulo
  */
-bool BarTender::detectHostBar()
+void BarTender::detectHostBar(bool &onBar, bool& onLoop)
 {
-    bool onBar = false;
-
     int bpb = getHostBeatsPerBar();
     HostAnalyzer* anal = syncMaster->getHostAnalyzer();
 
@@ -192,7 +188,62 @@ bool BarTender::detectHostBar()
 
     onBar = ((raw % bpb) == 0);
 
-    return onBar;
+    if (onBar) {
+        int bpl = getHostBarsPerLoop();
+        int beatsPerLoop = bpb * bpl;
+        onLoop = ((raw & beatsPerLoop) == 0);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Time Signature Determination
+//
+//////////////////////////////////////////////////////////////////////
+
+int BarTender::getHostBeatsPerBar()
+{
+    // first calculate the default in case the host doesn't tell us
+    int bpb = hostBeatsPerBar;
+    if (bpb < 1) {
+        // I guess fall back to the transport
+        bpb = syncMaster->getTransport()->getBeatsPerBar();
+    }
+
+    if (!hostOverride) {
+        // not using the default, ask the host
+        HostAnalyzer* anal = syncMaster->getHostAnalyzer();
+        if (anal->hasNativeTimeSignature())
+          bpb = anal->getNativeBeatsPerBar();
+        // else use the default
+    }
+
+    // final sanity check
+    if (bpb < 1) bpb = 4;
+    return bpb;
+}
+
+int BarTender::getHostBarsPerLoop()
+{
+    // hosts don't have a way to say this though there are some
+    // obscure ones related to looping modes that might be useful
+    int bpl = hostBarsPerLoop;
+    if (bpl < 1) bpl = 1;
+    return bpl;
+}
+
+int BarTender::getMidiBeatsPerBar()
+{
+    int bpb = midiBeatsPerBar;
+    if (bpb < 1) bpb = 4;
+    return bpb;
+}
+
+int BarTender::getMidiBarsPerLoop()
+{
+    int bpl = midiBarsPerLoop;
+    if (bpl < 1) bpl = 1;
+    return bpl;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -228,8 +279,7 @@ int BarTender::getBeat(Follower* f)
                 MidiAnalyzer* anal = syncMaster->getMidiAnalyzer();
                 int raw = anal->getElapsedBeats();
                 if (raw > 0) {
-                    // really not liking assumign transport controls this
-                    int bpb = transport->getBeatsPerBar();
+                    int bpb = getMidiBeatsPerBar();
                     beat = (raw % bpb);
                 }
             }
@@ -289,7 +339,7 @@ int BarTender::getBar(Follower* f)
                 MidiAnalyzer* anal = syncMaster->getMidiAnalyzer();
                 int raw = anal->getElapsedBeats();
                 if (raw > 0) {
-                    int bpb = transport->getBeatsPerBar();
+                    int bpb = getMidiBeatsPerBar();
                     bar = (raw / bpb);
                 }
             }
@@ -322,6 +372,62 @@ int BarTender::getBar(Follower* f)
     return bar;
 }
 
+int BarTender::getLoop(int trackNumber)
+{
+    Follower* f = syncMaster->getFollower(trackNumber);
+    return getLoop(f);
+}
+
+int BarTender::getLoop(Follower* f)
+{
+    int loop = 0;
+    
+    Transport* transport = syncMaster->getTransport();
+    
+    if (f != nullptr) {
+        switch (f->source) {
+            case SyncSourceNone:
+                break;
+
+            case SyncSourceMidi: {
+                MidiAnalyzer* anal = syncMaster->getMidiAnalyzer();
+                int raw = anal->getElapsedBeats();
+                if (raw > 0) {
+                    int bpb = getMidiBeatsPerBar();
+                    int bpl = getMidiBarsPerLoop();
+                    int beatsPerLoop = bpb * bpl;
+                    loop = (raw / beatsPerLoop);
+                }
+            }
+                break;
+
+            case SyncSourceTransport:
+            case SyncSourceMaster:
+                // this maintains it it's own self
+                loop = transport->getLoop();
+                break;
+                
+            case SyncSourceHost: {
+                HostAnalyzer* anal = syncMaster->getHostAnalyzer();
+                // todo: this has the host bar number vs. elapsed origin issue?
+                int raw = anal->getElapsedBeats();
+                int bpb = getHostBeatsPerBar();
+                int bpl = getHostBarsPerLoop();
+                int beatsPerLoop = bpb * bpl;
+                loop = (raw / beatsPerLoop);
+            }
+                break;
+
+            case SyncSourceTrack: {
+                // we don't remember the number of times these iterate
+            }
+                break;
+        }
+    }
+
+    return loop;
+}
+
 /**
  * Punting on track overrides for awhile.
  */
@@ -337,8 +443,8 @@ int BarTender::getBeatsPerBar(int trackNumber)
                 break;
 
             case SyncSourceMidi:
-                // no midi specific override yet, but may want one
-                // fall back to transport
+                bpb = getMidiBeatsPerBar();
+                break;
                 
             case SyncSourceTransport:
             case SyncSourceMaster:
@@ -369,31 +475,10 @@ int BarTender::getBeatsPerBar(int trackNumber)
     return bpb;
 }
 
-int BarTender::getHostBeatsPerBar()
-{
-    int bpb = 4;
-    if (sessionHostOverride) {
-        // use Transport, probably want a specific setting
-        // just for Host so Transport can be independent of whatever
-        // they're trying to do with the Host
-        bpb = syncMaster->getTransport()->getBeatsPerBar();
-    }
-    else {
-        HostAnalyzer* anal = syncMaster->getHostAnalyzer();
-        if (anal->hasNativeTimeSignature()) {
-            bpb = anal->getNativeBeatsPerBar();
-        }
-        else {
-            // transport I guess
-            bpb = syncMaster->getTransport()->getBeatsPerBar();
-        }
-    }
-
-    return bpb;
-}
-
 /**
- * Kind of a weird one.  Mostly for Transport.
+ * Mostly for transport, but can also apply the notion of a loop
+ * or "pattern length" to MIDI and Host.
+ * 
  * For leaders, I guess return the cycle count, though
  * getBeatsPerBar with a sync leader doesn't normally return
  * the leader's subcycle count.
@@ -402,17 +487,37 @@ int BarTender::getBarsPerLoop(int trackNumber)
 {
     int bpl = 1;
     
-    SyncSource source = getSyncSource(trackNumber);
-    if (source == SyncSourceTransport) {
-        bpl = syncMaster->getTransport()->getBarsPerLoop();
+    Follower* f = syncMaster->getFollower(trackNumber);
+    if (f != nullptr) {
+        switch (f->source) {
+            case SyncSourceNone:
+                break;
+
+            case SyncSourceMidi:
+                bpl = getMidiBarsPerLoop();
+                break;
+                
+            case SyncSourceTransport:
+            case SyncSourceMaster:
+                bpl = syncMaster->getTransport()->getBarsPerLoop();
+                break;
+                
+            case SyncSourceHost: {
+                bpl = getHostBarsPerLoop();
+            }
+                break;
+
+            case SyncSourceTrack: {
+                TrackProperties props;
+                getLeaderProperties(trackNumber, props);
+                if (!props.invalid && props.cycles > 0)
+                  bpl = props.cycles;
+            }
+                break;
+        }
     }
-    else if (source == SyncSourceTrack) {
-        TrackProperties props;
-        getLeaderProperties(trackNumber, props);
-        if (!props.invalid && props.cycles > 0)
-          bpl = props.cycles;
-    }
-    
+
+    if (bpl < 1) bpl = 1;
     return bpl;
 }
 

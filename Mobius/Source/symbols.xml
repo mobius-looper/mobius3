@@ -696,15 +696,27 @@
     -->
     <Parameter name='transportTempo' type='int' level='kernel'/>
     <Parameter name='transportLength' type='int' level='kernel'/>
-    <Parameter name='transportBeatsPerBar' type='int' level='kernel'/>
-    
-    <!-- these are session symbols edited in the SessionEditor and
-         may also be used in actions
-     -->
-    <Parameter name='hostOverrideTimeSignature' type='bool' level='kernel' tree='Sync' treeInclude='session'/>
-    <Parameter name='transportMidiEnable' type='bool' level='kernel' tree='Sync' treeInclude='session'/>
-    <Parameter name='transportMidiClocksWhenStopped' type='bool' level='kernel' tree='Sync' treeInclude='session'/>
 
+    <!-- accessible transport parameters -->
+    <Parameter name='transportBeatsPerBar' type='int' level='kernel'/>
+    <Parameter name='transportBeatsPerLoop' type='int' level='kernel'/>
+    <Parameter name='transportMidiEnable' type='bool' level='kernel'/>
+    <Parameter name='transportMidiClocksWhenStopped' type='bool' level='kernel'/>
+    
+    <Parameter name='transportMinTempo type='int' level='kernel'/>
+    <Parameter name='transportMaxTempo type='int' level='kernel'/>
+    <Parameter name='transportManualStart type='bool' level='kernel'/>
+
+    <!-- Plugin Host -->
+    <Parameter name='hostBeatsPerBar' type='int' level='kernel'/>
+    <Parameter name='hostBeatsPerLoop' type='int' level='kernel'/>
+    <Parameter name='hostOverrideTimeSignature' type='bool' level='kernel'/>
+
+    <!-- Midi In -->
+    <Parameter name='midiBeatsPerBar' type='int' level='kernel'/>
+    <Parameter name='midiBeatsPerLoop' type='int' level='kernel'/>
+    
+    
   </ParameterScope>
     
 </Symbols>

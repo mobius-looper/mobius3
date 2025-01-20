@@ -7,7 +7,7 @@
 #include "../../util/Trace.h"
 #include "../../model/Symbol.h"
 #include "../../model/ParameterProperties.h"
-#include "../../model/SystemConfig.h"
+#include "../../model/StaticConfig.h"
 #include "../../model/TreeForm.h"
 #include "../../Provider.h"
 
@@ -23,7 +23,7 @@ SessionEditorTree::~SessionEditorTree()
 
 void SessionEditorTree::load(Provider* p, juce::String treename)
 {
-    SystemConfig* scon = p->getSystemConfig();
+    StaticConfig* scon = p->getStaticConfig();
     TreeNode* treedef = scon->getTree(treename);
     if (treedef == nullptr) {
         Trace(1, "SessionEditorTree: No tree definition %s", treename.toUTF8());

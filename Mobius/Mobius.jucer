@@ -177,6 +177,9 @@
         <FILE id="CsEfK5" name="Session.h" compile="0" resource="0" file="Source/model/Session.h"/>
         <FILE id="OZh5wr" name="Setup.cpp" compile="1" resource="0" file="Source/model/Setup.cpp"/>
         <FILE id="I3HQ2E" name="Setup.h" compile="0" resource="0" file="Source/model/Setup.h"/>
+        <FILE id="UeOHZY" name="StaticConfig.cpp" compile="1" resource="0"
+              file="Source/model/StaticConfig.cpp"/>
+        <FILE id="YGofo1" name="StaticConfig.h" compile="0" resource="0" file="Source/model/StaticConfig.h"/>
         <FILE id="RWjxQk" name="Structure.cpp" compile="1" resource="0" file="Source/model/Structure.cpp"/>
         <FILE id="UvI59d" name="Structure.h" compile="0" resource="0" file="Source/model/Structure.h"/>
         <FILE id="F539YC" name="Symbol.cpp" compile="1" resource="0" file="Source/model/Symbol.cpp"/>
@@ -1029,6 +1032,8 @@
       <FILE id="FvmX3i" name="PortAuthority.cpp" compile="1" resource="0"
             file="Source/PortAuthority.cpp"/>
       <FILE id="NaAOgB" name="PortAuthority.h" compile="0" resource="0" file="Source/PortAuthority.h"/>
+      <FILE id="sVeQJW" name="Producer.cpp" compile="1" resource="0" file="Source/Producer.cpp"/>
+      <FILE id="aeEkzt" name="Producer.h" compile="0" resource="0" file="Source/Producer.h"/>
       <FILE id="XCsVKz" name="ProjectFiler.cpp" compile="1" resource="0"
             file="Source/ProjectFiler.cpp"/>
       <FILE id="IWWZnL" name="ProjectFiler.h" compile="0" resource="0" file="Source/ProjectFiler.h"/>

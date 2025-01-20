@@ -178,11 +178,43 @@ void Transport::setSampleRate(int rate)
  */
 void Transport::loadSession(Session* s)
 {
-    // Let's let the Session have immediate control over the MIDI clock
-    // parameters.  These are relatively obscure 
+    defaultTempo = (float)(s->getInt(SessionTransportTempo));
+    defaultBeatsPerBar = s->getInt(SessionTransportBeatsPerBar);
+    defaultBarsPerLoop = s->getInt(SessionTransportBarsPerLoop);
+
+    midiEnabled = s->getBool(SessionTransportMidi);
+    sendClocksWhenStopped = s->getBool(SessionTransportClocks);
+    manualStart = s->getBool(SessionTransportManualStart);
+    metronomeEnabled = s->getBool(SessionTransportMetronome);
     
-    midiEnabled = s->getBool(SessionTransportMidiEnable);
-    sendClocksWhenStopped = s->getBool(SessionTransportMidiClocksWhenStopped);
+    int min = s->getInt(SessionTransportMinTempo);
+    if (min == 0) min = 30;
+    minTempo = (float)min;
+
+    int max = s->getInt(SessionTransportMaxTempo);
+    if (max == 0) max = 300;
+    maxTempo = (float)max;
+
+    if (defaultBeatsPerBar < 1) {
+        Trace(2, "Transport: Correcting missing transportBeatsPerBar %d",
+              defaultBeatsPerBar);
+        defaultBeatsPerBar = 4;
+    }
+    
+    if (defaultBarsPerLoop < 1) {
+        Trace(2, "Transport: Correcting missing transportBarsPerLoop %d",
+              defaultBarsPerLoop);
+        defaultBarsPerLoop = 1;
+    }
+
+    if (tempo == 0.0f)
+      tempo = defaultTempo;
+    
+    if (beatsPerBar == 0)
+      beatsPerBar = defaultBeatsPerBar;
+
+    if (barsPerLoop == 0)
+      barsPerLoop = defaultBarsPerLoop;
 
     if (!midiEnabled) {
         midiRealizer->stop();
@@ -195,24 +227,6 @@ void Transport::loadSession(Session* s)
         if (!started)
           midiRealizer->stopSelective(false, true);
     }
-
-    // BeatsPerBar should be a "default" unless we're in GlobalReset
-    sessionBeatsPerBar = s->getInt(SessionBeatsPerBar);
-
-    if (sessionBeatsPerBar < 1) {
-        Trace(2, "Transport: Correcting invalid sessionBeatsPerBar %d",
-              sessionBeatsPerBar);
-        sessionBeatsPerBar = 4;
-    }
-    
-    // does this slam in or must we check for lockness?
-    // I think I'd rather this be a startup time change but until we have
-    // a UI to edit it, editing the session is the only way to change it
-    beatsPerBar = sessionBeatsPerBar;
-
-    // todo: there is no SessionTransportDefaultTempo
-    // but we need it
-    
 }
 
 /**
@@ -221,10 +235,14 @@ void Transport::loadSession(Session* s)
  *
  * This is going to start being a common pattern.  Rather than making everything
  * remember what was in the Session, could just pass the Session in on GR.
+ *
+ * Might need an option to make these "sticky" and survive a GR.
  */
 void Transport::globalReset()
 {
-    beatsPerBar = sessionBeatsPerBar;
+    tempo = defaultTempo;
+    beatsPerBar = defaultBeatsPerBar;
+    barsPerLoop = defaultBarsPerLoop;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -351,6 +369,11 @@ int Transport::getBeat()
 int Transport::getBar()
 {
     return bar;
+}
+
+int Transport::getLoop()
+{
+    return loop;
 }
 
 //////////////////////////////////////////////////////////////////////
