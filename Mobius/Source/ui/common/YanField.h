@@ -22,7 +22,8 @@ class YanField : public juce::Component
     juce::Label* getLabel();
     void setAdjacent(bool b);
     bool isAdjacent();
-
+    virtual bool isSection() {return false;};
+    
     int getPreferredWidth(int rowHeight);
     
     virtual int getPreferredComponentWidth() = 0;
@@ -48,6 +49,20 @@ class YanSpacer : public YanField
     int getPreferredComponentWidth();
 };
 
+/**
+ * I suppose it would also work if this were just a Spacer with a label?
+ * Fewer moving parts...
+ */
+class YanSection : public YanField
+{
+  public:
+
+    YanSection(juce::String label);
+    ~YanSection();
+
+    int getPreferredComponentWidth();
+    bool isSection() override {return true;}
+};
 
 class YanInput : public YanField, public juce::Label::Listener, public juce::TextEditor::Listener
 {

@@ -15,8 +15,6 @@
 #include "../common/YanField.h"
 #include "../common/YanParameterForm.h"
 
-#include "SymbolTree.h"
-
 #include "../config/ConfigEditor.h"
 
 class MidiTrackEditor : public ConfigEditor,
@@ -82,7 +80,5 @@ class MidiTrackEditor : public ConfigEditor,
     //YanCheckbox followMute {"Follow Mute"};
     //YanCheckbox followSize {"Follow Size"};
     //YanCheckbox followLocation {"Follow Location"};
-
-    SymbolTree tree;
     
 };

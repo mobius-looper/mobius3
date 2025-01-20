@@ -59,7 +59,7 @@ class ParameterForm : public juce::Component
     /**
      * Add form fields from a form definition.
      */
-    void add(class TreeForm* formdef);
+    void add(class Provider* p, class TreeForm* formdef);
     
     /**
      * Load the values of symbol parameter fields from the value set.

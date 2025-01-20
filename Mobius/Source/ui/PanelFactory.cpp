@@ -84,6 +84,13 @@ void PanelFactory::hide(PanelId id)
     }
 }
 
+void PanelFactory::decacheForms(PanelId id)
+{
+    BasePanel* panel = findPanel(id);
+    if (panel != nullptr)
+      panel->decacheForms();
+}
+
 /**
  * Here via MainThread->Supervisor->MainWindow with the
  * periodic refresh ping.  There aren't many that need

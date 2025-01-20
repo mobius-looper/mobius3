@@ -11,13 +11,32 @@
   </Tree>
   
   <Tree name='sessionAudioTrack'>
-    <Tree name='Audio'/>
-    <Tree name='Things'/>
+    <Tree name='Parameters'/>
   </Tree>
   
   <Tree name='sessionMidiTrack'>
-    <Tree name='Midi'/>
-    <Tree name='Ephemera'/>
+    <Tree name='General'/>
+    <Tree name='Follower'/>
+    <Tree name='LoopSwitch'/>
   </Tree>
+
+  <Form name='sessionGlobalGlobal' title='Global Parameters'
+        symbols='longPress,maxLoops,maxSyncDrift,transportMidiClocksWhenStopped,transportMidiEnable'/>
+  
+  <Form name='sessionGlobalStuff' title='Very Interesting Stuff' symbols='maxLoops,*section*Check this out,maxSyncDrift'/>
+  
+  <Form name='sessionAudioTrackParameters' title='Audio tracks must be configured with the Setup' />
+
+  <!-- todo: inputDevice, outputDevice, midiThru,trackGroup -->
+  <Form name='sessionMidiTrackGeneral'
+        symbols='midiChannelOverride,*spacer*,syncSource,trackSyncUnit,slaveSyncUnit,beatsPerBar,*spacer*,loopCount,quantize,subcycles'/>
+
+  <Form name='sessionMidiTrackFollower' title='Follower Parmeters'
+        symbols='leaderType,leaderTrack,followRecord,followRecordEnd,followerMuteStart,followMute,leaderSwitchLocation,followQuantizeLocation'/>
+  
+  <Form name='sessionMidiTrackLoopSwitch' title='Loop Switch Options'
+        symbols='switchQuantize,emptyLoopAction,switchDuration,switchLocation'/>
+
+  
 
 </SystemConfig>

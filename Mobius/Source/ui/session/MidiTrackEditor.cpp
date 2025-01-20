@@ -12,8 +12,6 @@
 
 #include "../common/SimpleRadio.h"
 
-#include "SymbolTree.h"
-
 #include "MidiTrackEditor.h"
 
 MidiTrackEditor::MidiTrackEditor(Supervisor* s) : ConfigEditor(s), generalForm(s), switchForm(s), followerForm(s)
@@ -55,7 +53,6 @@ void MidiTrackEditor::load()
 
     UIConfig* config = supervisor->getUIConfig();
     juce::String favorites = config->get("symbolTreeFavorites");
-    tree.loadSymbols(supervisor->getSymbols(), favorites);
     
     loadSession();
 }
@@ -80,9 +77,6 @@ void MidiTrackEditor::save()
 
     session.reset(nullptr);
     revertSession.reset(nullptr);
-
-    UIConfig* config = supervisor->getUIConfig();
-    config->put("symbolTreeFavorites", tree.getFavorites());
 }
 
 /**
@@ -302,8 +296,6 @@ void MidiTrackEditor::render()
 
     tabs.add("Loop Switch", &switchForm);
 
-    tabs.add("Tree", &tree);
-    
     addAndMakeVisible(tabs);
 }
 

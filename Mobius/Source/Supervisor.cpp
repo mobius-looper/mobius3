@@ -1130,6 +1130,21 @@ SystemConfig* Supervisor::getSystemConfig()
     return systemConfig.get();
 }
 
+/**
+ * Hack for development.
+ * The "Decache Forms" menu item will tell SessionEditor to unload any
+ * cacled forms loaded from the SystemConfig.  We also need to re-read
+ * system.xml to pick up the new form (and tree) definitions.
+ *
+ * This assumes nothing can be hanging on to a TreeNode or TreeForm object
+ * at this point, which is a risk.  Should have a safer way to do this but
+ * it isn't for general use.
+ */
+void Supervisor::decacheForms()
+{
+    systemConfig.reset(nullptr);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Configuration Propagation

@@ -23,7 +23,7 @@ void TreeNode::parseXml(juce::XmlElement* root, juce::StringArray& errors)
 
     juce::String csv = root->getStringAttribute("symbols");
     if (csv.length() > 0)
-      symbols = juce::StringArray::fromTokens(csv, ",");
+      symbols = juce::StringArray::fromTokens(csv, ",", "");
 
     for (auto* el : root->getChildIterator()) {
         if (el->hasTagName("Tree")) {
@@ -56,12 +56,14 @@ void TreeNode::parseXml(juce::XmlElement* root, juce::StringArray& errors)
  */
 void TreeForm::parseXml(juce::XmlElement* root, juce::StringArray& errors)
 {
+    (void)errors;
+    
     name = root->getStringAttribute("name");
     title = root->getStringAttribute("title");
 
     juce::String csv = root->getStringAttribute("symbols");
     if (csv.length() > 0)
-      symbols = juce::StringArray::fromTokens(csv, ",");
+      symbols = juce::StringArray::fromTokens(csv, ",", "");
 }
 
 /****************************************************************************/

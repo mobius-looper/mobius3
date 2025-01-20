@@ -20,6 +20,8 @@ class SessionTrackEditor : public juce::Component,
     void initialize(class Provider* p);
     void load(class Session* src);
     void save(class Session* dest);
+    void cancel();
+    void decacheForms();
     
     void resized() override;
 

@@ -207,6 +207,11 @@ class ConfigEditor : public juce::Component {
      * This method is optional.
      */
     virtual void hiding() {}
+    
+    /**
+     * Request that the editor decache any TreeForms it may be managing.
+     */
+    virtual void decacheForms() {}
 
     // Object selector notifiications
     // Thes are optional and will be called only if the editor

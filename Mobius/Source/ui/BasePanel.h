@@ -83,6 +83,7 @@ class BasePanel : public juce::Component, public juce::Button::Listener
     virtual void hiding();
     virtual void update();
     virtual void footerButton(juce::Button* b);
+    virtual void decacheForms();
     
     // Component
     void resized() override;

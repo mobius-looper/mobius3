@@ -20,9 +20,11 @@ class SessionTreeForms : public juce::Component, public SymbolTree::Listener
     ~SessionTreeForms();
 
     void initialize(class Provider* p, juce::String treeName);
+    void decache();
     
     void load(class ValueSet* src);
     void save(class ValueSet* dest);
+    void cancel();
     
     void resized() override;
 
@@ -31,6 +33,7 @@ class SessionTreeForms : public juce::Component, public SymbolTree::Listener
   private:
 
     class Provider* provider = nullptr;
+    juce::String treeName;
     SessionEditorTree tree;
     SessionFormCollection forms;
     

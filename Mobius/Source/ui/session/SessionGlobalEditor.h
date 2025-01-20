@@ -21,6 +21,8 @@ class SessionGlobalEditor : public juce::Component
     
     void load(class ValueSet* set);
     void save(ValueSet* values);
+    void cancel();
+    void decacheForms();
 
     void showInitial(juce::String name);
     

@@ -99,6 +99,10 @@ void BasePanel::hiding()
 {
 }
 
+void BasePanel::decacheForms()
+{
+}
+
 void BasePanel::update()
 {
 }

@@ -139,6 +139,7 @@ class ConfigPanel : public BasePanel, public ConfigEditorContext
     // BasePanel overloads
     void showing() override;
     void hiding() override;
+    void decacheForms() override;
 
     // BasePanel button handler
     void footerButton(juce::Button* b) override;

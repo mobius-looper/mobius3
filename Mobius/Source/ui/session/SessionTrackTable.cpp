@@ -30,6 +30,10 @@ void SessionTrackTable::initialize(Provider* p)
     // nothing to do during initialization, must
     // reload the table every time the editor is opened
     (void)p;
+    
+    // it is vital you call this to get the header and other parts
+    // of the table defined, or else it won't display
+    TypicalTable::initialize();
 }
 
 /**
@@ -91,6 +95,7 @@ void SessionTrackTable::load(Provider* p, Session* session)
     
     // load the things and make the list
     updateContent();
+    repaint();
 }
 
 void SessionTrackTable::clear()
@@ -113,8 +118,7 @@ int SessionTrackTable::getSelectedTrackNumber()
     int row = getSelectedRow();
     if (row >= 0)
       number = getTrackNumber(row);
-    return row;
-
+    return number;
 }
 
 bool SessionTrackTable::isMidi(int row)

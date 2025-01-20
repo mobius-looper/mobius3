@@ -29,13 +29,8 @@ SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
     trackEditor.reset(new SessionTrackEditor());
     tabs.add("Tracks", trackEditor.get());
 
-    trackTable.reset(new SessionTrackTable());
-    tabs.add("Table", trackTable.get());
-
     globalEditor->initialize(s);
     trackEditor->initialize(s);
-
-    trackTable->initialize(s);
 
     addAndMakeVisible(tabs);
 }
@@ -62,6 +57,8 @@ void SessionEditor::resized()
 
 void SessionEditor::load()
 {
+    invalidateSession();
+    
     Session* src = supervisor->getSession();
     session.reset(new Session(src));
     revertSession.reset(new Session(src));
@@ -83,8 +80,7 @@ void SessionEditor::save()
     // entirely, this will do track number normalization
     supervisor->sessionEditorSave();
 
-    // get rid of our intermediate state
-    session.reset(nullptr);
+    invalidateSession();
     revertSession.reset(nullptr);
 }
 
@@ -93,15 +89,44 @@ void SessionEditor::save()
  */
 void SessionEditor::cancel()
 {
-    session.reset(nullptr);
+    invalidateSession();
     revertSession.reset(nullptr);
+}
+
+void SessionEditor::decacheForms()
+{
+    invalidateSession();
+    globalEditor->decacheForms();
+    trackEditor->decacheForms();
 }
 
 void SessionEditor::revert()
 {
+    invalidateSession();
+    
     session.reset(new Session(revertSession.get()));
     
     loadSession();
+}
+
+/**
+ * This must be used when the Session copied at load() needs to be
+ * deleted, either when the form has been saved, reverted, or canceled.
+ *
+ * Since interior components are allowed to hold onto references to ValueSets
+ * within this Session, they have to be informed and remove any references.
+ * After this a load() traversal must be performed again.  Hit this after adding
+ * decacheForms which tries to do a save if the form had been displayed, but at that
+ * point, the editing session isn't always active and it got invalid memory access.
+ */
+void SessionEditor::invalidateSession()
+{
+    // ugly, when nwe delete the copied Session, need to inform the inner components
+    // that any ValueSet prevously loaded must be forgotten
+    globalEditor->cancel();
+    trackEditor->cancel();
+
+    session.reset(nullptr);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -124,8 +149,6 @@ void SessionEditor::loadSession()
     // a pointer to the initial intermediate Session
     
     trackEditor->load(session.get());
-
-    trackTable->load(supervisor, session.get());
 }
 
 /**

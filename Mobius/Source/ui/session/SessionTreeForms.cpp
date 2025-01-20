@@ -22,10 +22,16 @@ SessionTreeForms::~SessionTreeForms()
 {
 }
 
-void SessionTreeForms::initialize(Provider* p, juce::String treeName)
+void SessionTreeForms::initialize(Provider* p, juce::String argTreeName)
 {
     provider = p;
+    treeName = argTreeName;
     tree.load(p, treeName);
+}
+
+void SessionTreeForms::decache()
+{
+    forms.decache();
 }
 
 void SessionTreeForms::load(ValueSet* src)
@@ -36,6 +42,11 @@ void SessionTreeForms::load(ValueSet* src)
 void SessionTreeForms::save(ValueSet* dest)
 {
     forms.save(dest);
+}
+
+void SessionTreeForms::cancel()
+{
+    forms.cancel();
 }
 
 void SessionTreeForms::resized()
@@ -59,12 +70,11 @@ void SessionTreeForms::symbolTreeClicked(SymbolTreeItem* item)
     
     juce::String formName = container->getAnnotation();
     if (formName.length() == 0) {
-        // okay for interior nodes, but test
-        Trace(2, "SessionTreeForms: No form for node %s", item->getName().toUTF8());
+        // default form name is a combination of the tree name and node name
+        formName = treeName + item->getName();
     }
-    else {
-        forms.show(provider, formName);
-    }
+    
+    forms.show(provider, formName);
 }
 
 /****************************************************************************/

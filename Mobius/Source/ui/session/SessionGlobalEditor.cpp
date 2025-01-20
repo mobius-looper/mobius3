@@ -22,6 +22,16 @@ void SessionGlobalEditor::initialize(Provider* p)
     forms.initialize(p, juce::String("sessionGlobal"));
 }
 
+void SessionGlobalEditor::cancel()
+{
+    forms.cancel();
+}
+
+void SessionGlobalEditor::decacheForms()
+{
+    forms.decache();
+}
+
 void SessionGlobalEditor::resized()
 {
     forms.setBounds(getLocalBounds());

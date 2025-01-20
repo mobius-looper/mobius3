@@ -72,7 +72,7 @@ void SymbolTree::loadSymbols(SymbolTable* symbols, juce::String newFavorites,
 {
     SymbolTreeComparator comparator;
 
-    juce::StringArray includes = juce::StringArray::fromTokens(includeCsv, ",");
+    juce::StringArray includes = juce::StringArray::fromTokens(includeCsv, ",", "");
     
     // pre-intern these in a particular order
     SymbolTreeItem* favoritesNode = root.internChild("Favorites");
@@ -171,7 +171,7 @@ SymbolTreeItem* SymbolTree::internPath(SymbolTreeItem* parent, juce::StringArray
 
 juce::StringArray SymbolTree::parsePath(juce::String s)
 {
-    return juce::StringArray::fromTokens(s, "/");
+    return juce::StringArray::fromTokens(s, "/", "");
 }
 
 void SymbolTree::startSearch()

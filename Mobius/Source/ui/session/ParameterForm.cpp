@@ -5,6 +5,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/ValueSet.h"
 #include "../../model/TreeForm.h"
+#include "../../Provider.h"
 #include "../JuceUtil.h"
 
 #include "../common/YanField.h"
@@ -91,9 +92,33 @@ void ParameterForm::addSpacer()
 /**
  * Build a form from a TreeForm
  */
-void ParameterForm::add(TreeForm* formdef)
+void ParameterForm::add(Provider* p, TreeForm* formdef)
 {
-    (void)formdef;
+    for (auto name : formdef->symbols) {
+        if (name == TreeForm::Spacer) {
+            addSpacer();
+        }
+        else if (name.startsWith(TreeForm::Section)) {
+            addSpacer();
+            juce::String sectionLabel = name.fromFirstOccurrenceOf(TreeForm::Section, false, false);
+            YanSection* sec = new YanSection(sectionLabel);
+            others.add(sec);
+            form.add(sec);
+            addSpacer();
+        }
+        else {
+            Symbol* s = p->getSymbols()->find(name);
+            if (s == nullptr) {
+                Trace(1, "ParameterForm: Unknown symbol %s", name.toUTF8());
+            }
+            else {
+                YanParameter* field = new YanParameter(s->getDisplayName());
+                parameters.add(field);
+                field->init(s);
+                form.add(field);
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

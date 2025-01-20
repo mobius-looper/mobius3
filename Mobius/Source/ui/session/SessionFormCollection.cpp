@@ -42,6 +42,23 @@ void SessionFormCollection::save(ValueSet* dest)
       form->save(dest);
 }
 
+void SessionFormCollection::cancel()
+{
+    // forget this, just reload
+    sourceValues = nullptr;
+}
+
+void SessionFormCollection::decache()
+{
+    // first save them
+    if (sourceValues != nullptr)
+      save(sourceValues);
+
+    formTable.clear();
+    forms.clear();
+    currentForm = nullptr;
+}
+
 void SessionFormCollection::show(Provider* p, juce::String formName)
 {
     ParameterForm* form = formTable[formName];
@@ -55,6 +72,9 @@ void SessionFormCollection::show(Provider* p, juce::String formName)
         }
         else {
             Trace(2, "SessionFormCollection: Creating form %s", formName.toUTF8());
+
+            if (currentForm != nullptr)
+              currentForm->setVisible(false);
         
             form = new ParameterForm();
             forms.add(form);
@@ -62,12 +82,19 @@ void SessionFormCollection::show(Provider* p, juce::String formName)
             formTable.set(formdef->name, form);
             addAndMakeVisible(form);
 
-            form->setTitle(formName);
-            form->add(formdef);
-            form->load(sourceValues);
-            
+            juce::String title = formdef->title;
+            if (title.length() == 0) title = formName;
+
+            form->setTitle(title);
+            form->add(p, formdef);
+
+            // must have been loaded by now
+            if (sourceValues == nullptr)
+              Trace(1, "SessionFormCollection: Attempt to show form without source values");
+            else
+              form->load(sourceValues);
+
             currentForm = form;
-            currentForm->load(sourceValues);
 
             form->setBounds(getLocalBounds());
             // trouble getting this fleshed out dynamically

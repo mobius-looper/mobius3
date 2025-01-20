@@ -30,6 +30,8 @@ class SessionFormCollection : public juce::Component
 
     void load(class ValueSet* src);
     void save(class ValueSet* dest);
+    void cancel();
+    void decache();
     
   private:
 

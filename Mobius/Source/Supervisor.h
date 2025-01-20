@@ -193,7 +193,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     class SystemConfig* getSystemConfig();
     class HelpCatalog* getHelpCatalog();
-
+    void decacheForms();
+    
     // propagate an action to either MobiusInterface or MainWindow
     void doAction(class UIAction*) override;
     void alert(juce::String message);

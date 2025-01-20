@@ -35,7 +35,22 @@ void YanForm::add(class YanField* f)
     fields.add(f);
     addAndMakeVisible(f);
 
-    if (f->isAdjacent() && !firstOne) {
+    if (f->isSection()) {
+        juce::Label* label = f->getLabel();
+        label->setJustificationType(juce::Justification::centredLeft);
+
+        label->setFont (JuceUtil::getFontf(16.0f, juce::Font::bold));
+        // should be using this instead
+        //label->setFont (JuceUtil::getFontf(16.0f, juce::Font::bold));
+        label->setColour (juce::Label::textColourId, juce::Colours::yellow);
+
+        if (labelColor != juce::Colour())
+          label->setColour(juce::Label::textColourId, labelColor);
+
+        labels.add(label);
+        addAndMakeVisible(label);
+    }
+    else if (f->isAdjacent() && !firstOne) {
         // this will draw it's own label
     }
     else {

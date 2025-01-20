@@ -43,6 +43,12 @@ void SessionTrackEditor::initialize(Provider* p)
     midiForms.initialize(p, juce::String("sessionMidiTrack"));
 }
 
+void SessionTrackEditor::decacheForms()
+{
+    audioForms.decache();
+    midiForms.decache();
+}
+
 void SessionTrackEditor::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
@@ -51,8 +57,6 @@ void SessionTrackEditor::resized()
     
     audioForms.setBounds(area);
     midiForms.setBounds(area);
-
-    JuceUtil::dumpComponent(this);
 }
 
 void SessionTrackEditor::load(Session* s)
@@ -125,6 +129,16 @@ void SessionTrackEditor::save(Session* dest)
 }
 
 /**
+ * Have to propagate a cancel down to clear out lingering references
+ * to a Session's ValueTrees.
+ */
+void SessionTrackEditor::cancel()
+{
+    audioForms.cancel();
+    midiForms.cancel();
+}
+
+/**
  * This is called when the selected row changes either by clicking on
  * it or using the keyboard arrow keys after a row has been selected.
  *
@@ -138,7 +152,10 @@ void SessionTrackEditor::typicalTableChanged(TypicalTable* t, int row)
     (void)row;
     
     int newNumber = tracks->getSelectedTrackNumber();
-    if (newNumber != currentTrack) {
+    if (newNumber == 0) {
+        Trace(1, "SessionTrackEditor: Change alert with no selected track number");
+    }
+    else if (newNumber != currentTrack) {
         
         saveForms(currentTrack);
         

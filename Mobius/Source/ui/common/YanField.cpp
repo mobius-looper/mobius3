@@ -91,7 +91,6 @@ juce::Rectangle<int> YanField::resizeLabel()
 //
 //////////////////////////////////////////////////////////////////////
 
-
 YanSpacer::YanSpacer()
 {
 }
@@ -101,6 +100,19 @@ YanSpacer::~YanSpacer()
 }
 
 int YanSpacer::getPreferredComponentWidth()
+{
+    return 0;
+}
+
+YanSection::YanSection(juce::String label) : YanField(label)
+{
+}
+
+YanSection::~YanSection()
+{
+}
+
+int YanSection::getPreferredComponentWidth()
 {
     return 0;
 }

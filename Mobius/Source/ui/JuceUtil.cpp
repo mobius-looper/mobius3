@@ -49,7 +49,8 @@ juce::Font JuceUtil::getFontf(float height, int styleFlags)
 
 void JuceUtil::dumpComponent(const char* title, juce::Component* c, int indent)
 {
-    trace("*** %s\n", title);
+    // trace("*** %s\n", title);
+    Trace(2, "*** %s\n", title);
     dumpComponent(c, indent);
 }
 
@@ -117,7 +118,8 @@ void JuceUtil::dumpComponent(juce::Component* c, int indent)
     }
     s += "\n";
 
-    trace(s.toUTF8());
+    // trace(s.toUTF8());
+    Trace(2, s.toUTF8());
 
     indent += 2;
 

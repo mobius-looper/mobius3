@@ -92,6 +92,11 @@ class PanelFactory
      */
     void update();
 
+    /**
+     * Development tool to decache TreeForms held by one of the panels.
+     */
+    void decacheForms(PanelId id);
+
   private:
 
     class MainWindow* mainWindow = nullptr;

@@ -190,6 +190,11 @@ void ConfigPanel::hiding()
     wrapper.getEditor()->hiding();
 }
 
+void ConfigPanel::decacheForms()
+{
+    wrapper.getEditor()->decacheForms();
+}
+
 /**
  * Called by BasePanel when a footer button is clicked.
  * Kind of messy forwarding here, should we just let the wrapper

@@ -352,6 +352,11 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::TraceLog);
                 break;
                 
+            case MainMenu::DecacheForms:
+                panelFactory.decacheForms(PanelFactory::Session);
+                supervisor->decacheForms();
+                break;
+                
             case MainMenu::ScriptEditor:
                 windowFactory.show(WindowFactory::ScriptEditor);
                 break;

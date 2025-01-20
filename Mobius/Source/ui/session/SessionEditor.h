@@ -26,7 +26,8 @@ class SessionEditor : public ConfigEditor
     void save() override;
     void cancel() override;
     void revert() override;
-
+    void decacheForms() override;
+    
     void resized() override;
 
     // because we build forms dynamically, inner components need
@@ -39,6 +40,7 @@ class SessionEditor : public ConfigEditor
 
     void loadSession();
     void saveSession(class Session* master);
+    void invalidateSession();
 
     std::unique_ptr<class Session> session;
     std::unique_ptr<class Session> revertSession;
@@ -47,9 +49,4 @@ class SessionEditor : public ConfigEditor
     
     std::unique_ptr<class SessionGlobalEditor> globalEditor;
     std::unique_ptr<class SessionTrackEditor> trackEditor;
-
-    // shit
-    std::unique_ptr<class SessionTrackTable> trackTable;
-    
-    
 };

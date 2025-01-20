@@ -29,7 +29,11 @@ void SessionEditorTree::load(Provider* p, juce::String treename)
         Trace(1, "SessionEditorTree: No tree definition %s", treename.toUTF8());
     }
     else {
-        intern(&root, treedef);
+        // the root of the tree definition is not expected to be a useful form node
+        // adding the children
+        for (auto child : treedef->nodes) {
+            intern(&root, child);
+        }
     }
 }
 
