@@ -6,7 +6,7 @@
 <StaticConfig>
 
   <Tree name='sessionGlobal'>
-    <Tree name='Synchronization'
+    <Tree name='Synchronization'/>
     <Tree name='Stuff'/>
   </Tree>
   
@@ -21,7 +21,7 @@
   </Tree>
 
   <Form name='sessionGlobalGlobal' title='Global Parameters'
-        symbols='longPress,maxLoops,maxSyncDrift'
+        symbols='longPress,maxLoops,maxSyncDrift'/>
 
   <Form name='sessionGlobalSync' display='Synchronization'
         symbols='TransportBeatsPerBar,transportBarsPerLoop,transportMidiClocksWhenStopped,transportMidiEnable,transportMinTempo,transportMaxTempo,transportManualStart,hostBeatsPerBar,hostBeatsPerLoop,hostOverrideTimeSignature,midiBeatsPerBar,midiBarsPerLoop'/>

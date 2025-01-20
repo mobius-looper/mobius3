@@ -695,27 +695,27 @@
          and restored, but are not edited in the SessionEditor
     -->
     <Parameter name='transportTempo' type='int' level='kernel'/>
-    <Parameter name='transportLength' type='int' level='kernel'/>
+    <Parameter name='transportLength' type='int' level='kernel' options='noBinding'/>
 
     <!-- accessible transport parameters -->
     <Parameter name='transportBeatsPerBar' type='int' level='kernel'/>
-    <Parameter name='transportBeatsPerLoop' type='int' level='kernel'/>
-    <Parameter name='transportMidiEnable' type='bool' level='kernel'/>
-    <Parameter name='transportMidiClocksWhenStopped' type='bool' level='kernel'/>
+    <Parameter name='transportBarsPerLoop' type='int' level='kernel'/>
+    <Parameter name='transportMidi' type='bool' level='kernel'/>
+    <Parameter name='transportClocks' type='bool' level='kernel'/>
     
-    <Parameter name='transportMinTempo type='int' level='kernel'/>
-    <Parameter name='transportMaxTempo type='int' level='kernel'/>
-    <Parameter name='transportManualStart type='bool' level='kernel'/>
+    <Parameter name='transportManualStart' type='bool' level='kernel'/>
+    <Parameter name='transportMinTempo' type='int' level='kernel'/>
+    <Parameter name='transportMaxTempo' type='int' level='kernel'/>
+    <Parameter name='transportMetronome' type='bool' level='kernel'/>
 
     <!-- Plugin Host -->
     <Parameter name='hostBeatsPerBar' type='int' level='kernel'/>
-    <Parameter name='hostBeatsPerLoop' type='int' level='kernel'/>
-    <Parameter name='hostOverrideTimeSignature' type='bool' level='kernel'/>
+    <Parameter name='hostBarsPerLoop' type='int' level='kernel'/>
+    <Parameter name='hostOverride' type='bool' level='kernel'/>
 
     <!-- Midi In -->
     <Parameter name='midiBeatsPerBar' type='int' level='kernel'/>
-    <Parameter name='midiBeatsPerLoop' type='int' level='kernel'/>
-    
+    <Parameter name='midiBarsPerLoop' type='int' level='kernel'/>
     
   </ParameterScope>
     
