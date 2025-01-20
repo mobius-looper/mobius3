@@ -1042,6 +1042,9 @@
       <FILE id="NzgXK9" name="Provider.h" compile="0" resource="0" file="Source/Provider.h"/>
       <FILE id="hGOwW6" name="RootLocator.cpp" compile="1" resource="0" file="Source/RootLocator.cpp"/>
       <FILE id="Tgt8wg" name="RootLocator.h" compile="0" resource="0" file="Source/RootLocator.h"/>
+      <FILE id="oKFVlR" name="SessionClerk.cpp" compile="1" resource="0"
+            file="Source/SessionClerk.cpp"/>
+      <FILE id="soBeCj" name="SessionClerk.h" compile="0" resource="0" file="Source/SessionClerk.h"/>
       <FILE id="eOUyrZ" name="SuperDumper.cpp" compile="1" resource="0" file="Source/SuperDumper.cpp"/>
       <FILE id="mBQtpX" name="SuperDumper.h" compile="0" resource="0" file="Source/SuperDumper.h"/>
       <FILE id="md4KUz" name="Supervisor.cpp" compile="1" resource="0" file="Source/Supervisor.cpp"/>

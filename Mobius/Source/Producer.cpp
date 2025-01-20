@@ -5,41 +5,33 @@
 #include "model/Session.h"
 
 #include "Provider.h"
-#include "FileManager.h"
+#include "SessionClerk.h"
 
 #include "Producer.h"
 
 Producer::Producer(Provider* p)
 {
     provider = p;
+    clerk.reset(new SessionClerk(p));
 }
 
 Producer::~Producer()
 {
 }
 
-Session* Producer::readDefaultSession()
+void Producer::initialize()
 {
-    Session* session = nullptr;
-    
-    FileManager* fm = provider->getFileManager();
-
-    session = fm->readDefaultSession();
-    if (session == nullptr) {
-        // bootstrap a default session
-        // shouldn't be happening unless the .xml files are missing
-        session = new Session();
-        session->setModified(true);
-    }
-
-    return session;
+    clerk->initialize();
 }
 
-void Producer::writeDefaultSession(Session* s)
+Session* Producer::readStartupSession()
 {
-    FileManager* fm = provider->getFileManager();
-    fm->writeDefaultSession(s);
-    s->setModified(false);
+    return clerk->readDefaultSession();
+}
+
+void Producer::saveSession(Session* s)
+{
+    clerk->saveSession(s);
 }
 
 /****************************************************************************/

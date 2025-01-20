@@ -108,7 +108,7 @@ class Session
     Track* getTrackByNumber(int number);
 
     // force the number of audio tracks
-    bool reconcileTrackCount(TrackType type, int required);
+    void reconcileTrackCount(TrackType type, int required);
 
     // temporary kludge for MidiTrackEditor
     Track* ensureTrack(TrackType type, int index);
@@ -129,20 +129,28 @@ class Session
     void setInt(juce::String name, int value);
     void setBool(juce::String name, bool value);
     
-    void parseXml(juce::String xml);
+    void parseXml(juce::XmlElement* root, juce::StringArray& errors);
     juce::String toXml();
 
     void setModified(bool b);
     bool isModified();
 
+    juce::String getName();
+    void setName(juce::String s);
+
+    juce::String getLocation();
+    void setLocation(juce::String s);
+    
   private:
+
+    juce::String name;
+    juce::String location;
 
     bool modified = false;
     juce::OwnedArray<Track> tracks;
     std::unique_ptr<ValueSet> globals;
 
-    void xmlError(const char* msg, juce::String arg);
-    Track* parseTrack(juce::XmlElement* root);
+    Track* parseTrack(juce::XmlElement* root, juce::StringArray& errors);
     void renderTrack(juce::XmlElement* parent, Track* track);
     void renderDevice(juce::XmlElement* parent, SessionMidiDevice* device);
     void parseDevice(juce::XmlElement* root, SessionMidiDevice* device);

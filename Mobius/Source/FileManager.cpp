@@ -11,7 +11,6 @@
 #include "model/SystemConfig.h"
 #include "model/StaticConfig.h"
 #include "model/HelpCatalog.h"
-#include "model/Session.h"
 
 #include "Provider.h"
 
@@ -22,7 +21,6 @@ const char* StaticConfigFile = "static.xml";
 const char* DeviceConfigFile = "devices.xml";
 const char* MobiusConfigFile = "mobius.xml";
 const char* UIConfigFile = "uiconfig.xml";
-const char* DefaultSessionFile = "session.xml";
 const char* HelpFile = "help.xml";
 
 FileManager::FileManager(Provider* p)
@@ -294,43 +292,6 @@ StaticConfig* FileManager::readStaticConfig()
         delete root;
     }
     return scon;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Session
-//
-//////////////////////////////////////////////////////////////////////
-
-Session* FileManager::readSession(const char* filename)
-{
-    Session* ses = nullptr;
-    
-    juce::String xml = readConfigFile(filename);
-    if (xml.length() > 0) {
-        ses = new Session();
-        ses->parseXml(xml);
-    }
-
-    return ses;
-}
-
-Session* FileManager::readDefaultSession()
-{
-    // bootstrapping is more complex for these, let Supervisor handle it
-    return readSession(DefaultSessionFile);
-}
-
-/**
- * Write a MainConfig back to the file system.
- * Ownership of the config object does not transfer.
- */
-void FileManager::writeDefaultSession(Session* ses)
-{
-    if (ses != nullptr) {
-        juce::String xml = ses->toXml();
-        writeConfigFile(DefaultSessionFile, xml.toUTF8());
-    }
 }
 
 /****************************************************************************/

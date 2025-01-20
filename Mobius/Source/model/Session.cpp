@@ -63,6 +63,27 @@ bool Session::isModified()
     return modified;
 }
 
+juce::String Session::getName()
+{
+    return name;
+}
+
+void Session::setName(juce::String s)
+{
+    name = s;
+}
+
+juce::String Session::getLocation()
+{
+    return location;
+}
+
+void Session::setLocation(juce::String s)
+{
+    location = s;
+}
+
+
 //////////////////////////////////////////////////////////////////////
 //
 // Track Management
@@ -128,10 +149,8 @@ Session::Track* Session::getTrackByNumber(int number)
  *
  * Note that this does not number them.
  */
-bool Session::reconcileTrackCount(TrackType type, int required)
+void Session::reconcileTrackCount(TrackType type, int required)
 {
-    bool modified = false;
-    
     // how many are there now?
     int currentCount = 0;
     for (int i = 0 ; i < tracks.size() ; i++) {
@@ -174,8 +193,6 @@ bool Session::reconcileTrackCount(TrackType type, int required)
     }
 
     assignIds();
-    
-    return modified;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -380,49 +397,31 @@ const char* Session::Track::getString(juce::String pname)
 //
 //////////////////////////////////////////////////////////////////////
 
-void Session::parseXml(juce::String xml)
+void Session::parseXml(juce::XmlElement* root, juce::StringArray& errors)
 {
-    juce::XmlDocument doc(xml);
-    std::unique_ptr<juce::XmlElement> root = doc.getDocumentElement();
-    if (root == nullptr) {
-        xmlError("Parse parse error: %s\n", doc.getLastParseError());
-    }
-    else if (!root->hasTagName("Session")) {
-        xmlError("Unexpected XML tag name: %s\n", root->getTagName());
-    }
-    else {
-        audioTracks = root->getIntAttribute("audioTracks");
-        midiTracks = root->getIntAttribute("midiTracks");
+    name = root->getStringAttribute("name");
+    location = root->getStringAttribute("location");
+    audioTracks = root->getIntAttribute("audioTracks");
+    midiTracks = root->getIntAttribute("midiTracks");
         
-        for (auto* el : root->getChildIterator()) {
-            if (el->hasTagName(ValueSet::XmlElement)) {
-                ValueSet* set = new ValueSet();
-                set->parse(el);
-                globals.reset(set);
-            }
-            else if (el->hasTagName("Track")) {
-                tracks.add(parseTrack(el));
-            }
-            else {
-                Trace(1, "Session: Invalid XML element %s", el->getTagName().toUTF8());
-            }
+    for (auto* el : root->getChildIterator()) {
+        if (el->hasTagName(ValueSet::XmlElement)) {
+            ValueSet* set = new ValueSet();
+            set->parse(el);
+            globals.reset(set);
         }
-
-        // assign ids, this will replace the notion of "index"
-        assignIds();
+        else if (el->hasTagName("Track")) {
+            tracks.add(parseTrack(el, errors));
+        }
+        else {
+            errors.add(juce::String("Session: Invalid XML element: ") + el->getTagName());
+        }
     }
+
+    assignIds();
 }
 
-void Session::xmlError(const char* msg, juce::String arg)
-{
-    juce::String fullmsg ("Session: " + juce::String(msg));
-    if (arg.length() == 0)
-      Trace(1, fullmsg.toUTF8());
-    else
-      Trace(1, fullmsg.toUTF8(), arg.toUTF8());
-}
-
-Session::Track* Session::parseTrack(juce::XmlElement* root)
+Session::Track* Session::parseTrack(juce::XmlElement* root, juce::StringArray& errors)
 {
     Session::Track* track = new Session::Track();
 
@@ -438,7 +437,7 @@ Session::Track* Session::parseTrack(juce::XmlElement* root)
         track->type = Session::TypeMidi;
     }
     else {
-        xmlError("Invalid track type %s", typeString);
+        errors.add(juce::String("Session: Invalid track type: ") + typeString);
     }
     
     for (auto* el : root->getChildIterator()) {
@@ -453,9 +452,8 @@ Session::Track* Session::parseTrack(juce::XmlElement* root)
             track->devices.add(device);
         }
         else {
-            xmlError("Invalid XML element %s", el->getTagName().toUTF8());
+            errors.add(juce::String("Session: Invalid XML element: ") + el->getTagName());
         }
-
     }
     return track;
 }
@@ -464,13 +462,12 @@ juce::String Session::toXml()
 {
     juce::XmlElement root ("Session");
 
+    if (name.length() > 0) root.setAttribute("name", name);
+    if (location.length() > 0) root.setAttribute("location", location);
+
     if (audioTracks > 0)
       root.setAttribute("audioTracks", audioTracks);
 
-    // todo: this is the "active" number of MIDI tracks
-    // it may be fewer than the number of tracks in the array
-    // this is temporary until the UI supports dynamic add/remove
-    // of tracks
     if (midiTracks > 0)
       root.setAttribute("midiTracks", midiTracks);
 

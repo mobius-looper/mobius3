@@ -27,12 +27,16 @@ class Producer
     Producer(class Provider* p);
     ~Producer();
 
-    class Session* readDefaultSession();
-    void writeDefaultSession(class Session* s);
+    void initialize();
+
+    class Session* readStartupSession();
+    void saveSession(class Session* s);
 
   private:
 
     class Provider* provider = nullptr;
+
+    std::unique_ptr<class SessionClerk> clerk;
     
 };
 

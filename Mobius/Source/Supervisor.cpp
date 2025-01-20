@@ -274,6 +274,7 @@ bool Supervisor::start()
 
     // load the initial session and prepare internal objects
     producer.reset(new Producer(this));
+    producer->initialize();
     Session* ses = initializeSession();
     
     // initialize the view for the known track counts
@@ -1310,7 +1311,7 @@ Session* Supervisor::initializeSession()
     // validate/upgrade the configuration files
     // doing a gradual migration toward Session from MobiusConfig
     // this must be done after symbols are initialized
-    Session* neu = producer->readDefaultSession();
+    Session* neu = producer->readStartupSession();
 
     MobiusConfig* config = getMobiusConfig();
     if (upgrader.upgrade(config)) {
@@ -1323,7 +1324,7 @@ Session* Supervisor::initializeSession()
     normalizeSession(neu);
 
     if (neu->isModified())
-      producer->writeDefaultSession(neu);
+      producer->saveSession(neu);
 
     // this is now accessible to the reset of the system
     session.reset(neu);
@@ -1461,8 +1462,7 @@ void Supervisor::normalizeSession(Session* s)
     MobiusConfig* config = getMobiusConfig();
 
     int requiredAudio = config->getCoreTracks();
-    if (s->reconcileTrackCount(Session::TypeAudio, requiredAudio))
-      s->setModified(true);
+    s->reconcileTrackCount(Session::TypeAudio, requiredAudio);
     s->audioTracks = requiredAudio;
 
     // I changed from deriving the midi track count from the object list rather than the
@@ -1478,9 +1478,8 @@ void Supervisor::normalizeSession(Session* s)
         s->midiTracks = midiObjects;
     }
 
-    if (s->reconcileTrackCount(Session::TypeMidi, s->midiTracks))
-      s->setModified(true);
-
+    s->reconcileTrackCount(Session::TypeMidi, s->midiTracks);
+    
     // now number them, audio first
     int trackNumber = 1;
     for (int i = 0 ; i < s->getTrackCount() ; i++) {
@@ -1614,7 +1613,7 @@ void Supervisor::updateSession(bool noPropagation)
     if (session) {
         Session* s = session.get();
         // todo: if this wasn't the default session, remember where it came from
-        producer->writeDefaultSession(s);
+        producer->saveSession(s);
 
         configureSystemState(s);
         
@@ -1664,7 +1663,7 @@ void Supervisor::sessionEditorSave()
     // renumber the session tracks
     normalizeSession(s);
 
-    producer->writeDefaultSession(s);
+    producer->saveSession(s);
 
     configureSystemState(s);
         

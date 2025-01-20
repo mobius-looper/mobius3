@@ -27,10 +27,6 @@ class FileManager
     class StaticConfig* readStaticConfig();
     class HelpCatalog* readHelpCatalog();
     
-    class Session* readSession(const char* filename);
-    class Session* readDefaultSession();
-    void writeDefaultSession(class Session* ses);
-        
   private:
 
     class Provider* provider = nullptr;

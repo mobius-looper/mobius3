@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Session name="Default" location="" audioTracks="8" midiTracks="2">
+  <Track id="1" number="9" type="midi">
+    <ValueSet>
+      <Value name="beatsPerBar" value="7"/>
+      <Value name="durationMode" value="1" type="int"/>
+      <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
+      <Value name="followLocation" value="1" type="int"/>
+      <Value name="followMute" value="1" type="int"/>
+      <Value name="followQuantizeLocation" value="1" type="int"/>
+      <Value name="followRecord" value="1" type="int"/>
+      <Value name="followRecordEnd" value="1" type="int"/>
+      <Value name="followSize" value="1" type="int"/>
+      <Value name="followerMuteStart" value="0" type="int"/>
+      <Value name="group" value="Groupuu"/>
+      <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
+      <Value name="leaderTrack" value="1"/>
+      <Value name="leaderType" value="track" type="enum" ordinal="1"/>
+      <Value name="loopCount" value="2"/>
+      <Value name="midiChannelOverride" value="10" type="enum" ordinal="10"/>
+      <Value name="midiThru" value="1" type="int"/>
+      <Value name="outputDevice" value="Bome MIDI Translator 1"/>
+      <Value name="quantize" value="off" type="enum" ordinal="0"/>
+      <Value name="slaveSyncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
+      <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
+      <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
+      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
+    </ValueSet>
+  </Track>
+  <Track id="2" number="10" type="midi">
+    <ValueSet>
+      <Value name="beatsPerBar" value="2"/>
+      <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
+      <Value name="followMute" value="0" type="int"/>
+      <Value name="followQuantizeLocation" value="0" type="int"/>
+      <Value name="followRecord" value="0" type="int"/>
+      <Value name="followRecordEnd" value="0" type="int"/>
+      <Value name="followerMuteStart" value="0" type="int"/>
+      <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
+      <Value name="leaderType" value="none" type="enum" ordinal="0"/>
+      <Value name="midiChannelOverride" value="off" type="enum" ordinal="0"/>
+      <Value name="midiThru" value="0" type="int"/>
+      <Value name="outputDevice" value="Bome MIDI Translator 1"/>
+      <Value name="quantize" value="off" type="enum" ordinal="0"/>
+      <Value name="slaveSyncUnit" value="beat" type="enum" ordinal="0"/>
+      <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
+      <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
+      <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
+      <Value name="syncSource" value="default" type="enum" ordinal="0"/>
+      <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
+    </ValueSet>
+  </Track>
+  <Track id="9" number="1" type="audio">
+    <ValueSet/>
+  </Track>
+  <Track id="10" number="2" type="audio">
+    <ValueSet/>
+  </Track>
+  <Track id="11" number="3" type="audio">
+    <ValueSet/>
+  </Track>
+  <Track id="12" number="4" type="audio">
+    <ValueSet/>
+  </Track>
+  <Track id="13" number="5" type="audio">
+    <ValueSet/>
+  </Track>
+  <Track id="14" number="6" type="audio">
+    <ValueSet/>
+  </Track>
+  <Track id="15" number="7" type="audio">
+    <ValueSet/>
+  </Track>
+  <Track id="16" number="8" type="audio">
+    <ValueSet/>
+  </Track>
+  <ValueSet>
+    <Value name="activeSetup" value="Default"/>
+    <Value name="controllerActionThreshold" value="64" type="int"/>
+    <Value name="driftCheckPoint" value="loop" type="enum" ordinal="0"/>
+    <Value name="fadeFrames" value="128" type="int"/>
+    <Value name="hostOverrideTimeSignature" value="0" type="int"/>
+    <Value name="inputLatency" value="0" type="int"/>
+    <Value name="longPress" value="500" type="int"/>
+    <Value name="maxLoops" value="2"/>
+    <Value name="maxSyncDrift" value="50"/>
+    <Value name="midiRecordMode" value="average" type="enum" ordinal="0"/>
+    <Value name="monitorAudio" value="false" type="bool"/>
+    <Value name="noiseFloor" value="50" type="int"/>
+    <Value name="outputLatency" value="0" type="int"/>
+    <Value name="quickSave" value="mobiusloop"/>
+    <Value name="spreadRange" value="48" type="int"/>
+    <Value name="transportMidiClocksWhenStopped" value="1" type="int"/>
+    <Value name="transportMidiEnable" value="1" type="int"/>
+    <Value name="userFileFolder" value="c:\dev\mobius3\Mobius\Source\midifiles"/>
+  </ValueSet>
+</Session>
