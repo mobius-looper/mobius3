@@ -14,6 +14,8 @@
 
 #include <JuceHeader.h>
 
+#include "ParameterForm.h"
+
 class SessionFormCollection : public juce::Component
 {
   public:

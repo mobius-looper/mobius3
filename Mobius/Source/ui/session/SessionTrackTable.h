@@ -39,7 +39,6 @@ class SessionTrackTable : public TypicalTable
 
     bool isMidi(int row);
 
-    void load();
     void clear();
 
     // TypicalTable overrides

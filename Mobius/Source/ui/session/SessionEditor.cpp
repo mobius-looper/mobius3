@@ -5,20 +5,17 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../model/SessionConstants.h"
 #include "../../model/Session.h"
-#include "../../model/SystemConfig.h"
-#include "../../model/MobiusConfig.h"
-#include "../../model/UIConfig.h"
 #include "../../Supervisor.h"
 #include "../../Provider.h"
-#include "../JuceUtil.h"
 
 #include "../common/BasicTabs.h"
 
-#include "ParameterForm.h"
 #include "SessionGlobalEditor.h"
 #include "SessionTrackEditor.h"
+
+// temporary
+#include "SessionTrackTable.h"
 
 #include "SessionEditor.h"
 
@@ -32,21 +29,19 @@ SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
     trackEditor.reset(new SessionTrackEditor());
     tabs.add("Tracks", trackEditor.get());
 
+    trackTable.reset(new SessionTrackTable());
+    tabs.add("Table", trackTable.get());
+
     globalEditor->initialize(s);
     trackEditor->initialize(s);
+
+    trackTable->initialize(s);
 
     addAndMakeVisible(tabs);
 }
 
 SessionEditor::~SessionEditor()
 {
-}
-
-Provider* SessionEditor::getProvider()
-{
-    // !! This should be done by ConfigEditor and everything in this
-    // ecosystem should stop using Supervisor directly
-    return supervisor;
 }
 
 void SessionEditor::prepare()
@@ -117,7 +112,6 @@ void SessionEditor::revert()
 
 /**
  * Load the internal forms from the session now being edited.
- * Things must call back to getEditingSession.
  */
 void SessionEditor::loadSession()
 {
@@ -125,11 +119,13 @@ void SessionEditor::loadSession()
     
     globalEditor->load(globals);
 
-    // !! yes, here's the issue
-    // there isn't one ValueSet for the tracks there are N of them
-    // trackEditor needs the entire Session
-
+    // NOTE: Because TrackEditor needs access to all of the
+    // ValueSets for every Session::Track, it is allowed to retain
+    // a pointer to the initial intermediate Session
+    
     trackEditor->load(session.get());
+
+    trackTable->load(supervisor, session.get());
 }
 
 /**

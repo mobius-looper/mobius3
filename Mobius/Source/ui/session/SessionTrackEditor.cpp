@@ -7,22 +7,20 @@
 #include "../JuceUtil.h"
 
 #include "ParameterForm.h"
-#include "SessionEditor.h"
 #include "SessionTrackTable.h"
-#include "SessionTrackTrees.h"
-#include "SessionFormCollection.h"
+#include "SessionTreeForms.h"
 
 #include "SessionTrackEditor.h"
 
 SessionTrackEditor::SessionTrackEditor()
 {
     tracks.reset(new SessionTrackTable());
-    trees.reset(new SessionTrackTrees());
-    forms.reset(new SessionFormCollection());
-    
+
     addAndMakeVisible(tracks.get());
-    addAndMakeVisible(trees.get());
-    addAndMakeVisible(forms.get());
+
+    // one of these will become visible on the first load
+    addChildComponent(audioForms);
+    addChildComponent(midiForms);
     
     tracks->setListener(this);
 
@@ -40,7 +38,21 @@ void SessionTrackEditor::initialize(Provider* p)
     provider = p;
     
     tracks->initialize(p);
-    trees->initialize(p);
+
+    audioForms.initialize(p, juce::String("sessionAudioTrack"));
+    midiForms.initialize(p, juce::String("sessionMidiTrack"));
+}
+
+void SessionTrackEditor::resized()
+{
+    juce::Rectangle<int> area = getLocalBounds();
+    
+    tracks->setBounds(area.removeFromLeft(200));
+    
+    audioForms.setBounds(area);
+    midiForms.setBounds(area);
+
+    JuceUtil::dumpComponent(this);
 }
 
 void SessionTrackEditor::load(Session* s)
@@ -52,14 +64,13 @@ void SessionTrackEditor::load(Session* s)
     // track configuration may change
     tracks->load(provider, s);
     
-    // trees do not change once initialied
-
     // forms show the selected track
     loadForms(currentTrack);
 }
 
 /**
- * Now we have a problem.
+ * Save is a problem.
+ * 
  * SessionGlobalEditor was able to keep all editing state in the Forms
  * which could then just be dumped into the destination Session.
  *
@@ -89,60 +100,52 @@ void SessionTrackEditor::save(Session* dest)
     // now load the intermediate session back into the forms one at a time
     // but save them to the destination session
     for (int i = 0 ; i < session->getTrackCount() ; i++) {
-        Session::Track* t = session->getTrackByIndex(i);
-        ValueSet* src = t->ensureParameters();
-        forms->load(src);
-
-        Session::Track* destTrack = dest->getTrackByNumber(t->number);
+        
+        Session::Track* srcTrack = session->getTrackByIndex(i);
+        Session::Track* destTrack = dest->getTrackByNumber(srcTrack->number);
         if (destTrack == nullptr) {
             // this must be a new track we're supposed to create
-            Trace(1, "SessionTrackEditor: Uneable to save new track forms");
+            // create isn't implemented yet
+            Trace(1, "SessionTrackEditor: Unable to save new track forms");
         }
         else {
+            ValueSet* srcValues = srcTrack->ensureParameters();
             ValueSet* destValues = destTrack->ensureParameters();
-            forms->save(destValues);
+
+            if (srcTrack->type == Session::TypeMidi) {
+                midiForms.load(srcValues);
+                midiForms.save(destValues);
+            }
+            else {
+                audioForms.load(srcValues);
+                audioForms.save(destValues);
+            }
         }
     }
-}
-
-void SessionTrackEditor::resized()
-{
-    juce::Rectangle<int> area = getLocalBounds();
-
-    tracks->setBounds(area.removeFromLeft(200));
-    trees->setBounds(area.removeFromLeft(400));
-
-    JuceUtil::dumpComponent(this);
 }
 
 /**
  * This is called when the selected row changes either by clicking on
  * it or using the keyboard arrow keys after a row has been selected.
+ *
+ * Save the current forms back to the intermediate session,
+ * then display the appropriate tree forms for the new track type
+ * and load those forms.
  */
 void SessionTrackEditor::typicalTableChanged(TypicalTable* t, int row)
 {
     (void)t;
-    //Trace(2, "SessionTrackEditor: Table changed row %d", row);
-
-    if (tracks->isMidi(row)) {
-        trees->showMidi(true);
-    }
-    else {
-        trees->showMidi(false);
-    }
-
+    (void)row;
+    
     int newNumber = tracks->getSelectedTrackNumber();
     if (newNumber != currentTrack) {
+        
         saveForms(currentTrack);
+        
         loadForms(newNumber);
+        
         currentTrack = newNumber;
     }
-}
-
-void SessionTrackEditor::symbolTreeClicked(SymbolTreeItem* item)
-{
-    (void)item;
-    Trace(1, "SessionTrackEditor::symbolTreeClicked");
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -162,7 +165,17 @@ void SessionTrackEditor::loadForms(int number)
         Trace(1, "SessionTrackEditor: Invalid track number %d", number);
     }
     else {
-        forms->load(trackdef->ensureParameters());
+        ValueSet* values = trackdef->ensureParameters();
+        if (trackdef->type == Session::TypeMidi) {
+            midiForms.load(values);
+            audioForms.setVisible(false);
+            midiForms.setVisible(true);
+        }
+        else {
+            audioForms.load(values);
+            midiForms.setVisible(false);
+            audioForms.setVisible(true);
+        }
     }
 }
 
@@ -173,7 +186,11 @@ void SessionTrackEditor::saveForms(int number)
         Trace(1, "SessionTrackEditor: Invalid intermediate session track number %d", number);
     }
     else {
-        forms->save(trackdef->ensureParameters());
+        ValueSet* values = trackdef->ensureParameters();
+        if (trackdef->type == Session::TypeMidi)
+          midiForms.save(values);
+        else
+          audioForms.save(values);
     }
 }
 

@@ -5,14 +5,19 @@
 
 <SystemConfig>
 
+  <Tree name='sessionGlobal'>
+    <Tree name='Global'/>
+    <Tree name='Stuff'/>
+  </Tree>
+  
   <Tree name='sessionAudioTrack'>
-    <Tree name='Foo'/>
-    <Tree name='Bar'/>
+    <Tree name='Audio'/>
+    <Tree name='Things'/>
   </Tree>
   
   <Tree name='sessionMidiTrack'>
-    <Tree name='Something'/>
-    <Tree name='Awesome'/>
+    <Tree name='Midi'/>
+    <Tree name='Ephemera'/>
   </Tree>
 
 </SystemConfig>

@@ -6,12 +6,9 @@
 
 #include <JuceHeader.h>
 
-#include "SymbolTree.h"
-#include "SessionEditorTree.h"
-#include "SessionFormCollection.h"
+#include "SessionTreeForms.h"
 
-
-class SessionGlobalEditor : public juce::Component, public SymbolTree::Listener
+class SessionGlobalEditor : public juce::Component
 {
   public:
 
@@ -27,12 +24,6 @@ class SessionGlobalEditor : public juce::Component, public SymbolTree::Listener
 
     void showInitial(juce::String name);
     
-    // Subcomponent Communication
-
-    void symbolTreeClicked(SymbolTreeItem* item) override;
-
-    // Juce
-    
     void resized() override;
     
   private:
@@ -40,8 +31,7 @@ class SessionGlobalEditor : public juce::Component, public SymbolTree::Listener
     class Provider* provider = nullptr;
     class ValueSet* values = nullptr;
 
-    SessionEditorTree tree;
-    SessionFormCollection forms;
+    SessionTreeForms forms;
 
 };
 

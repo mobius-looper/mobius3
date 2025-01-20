@@ -27,6 +27,12 @@ void TypicalTable::initialize()
 void TypicalTable::updateContent()
 {
     table.updateContent();
+    
+    // I'm having chronic problems with tables not refreshing if all you
+    // do is call is call updateContent, not sure if it's something wrong
+    // with my wrapper classes, or my misunderstanding of Juce tables
+    // forcing a repaint seems to do the trick
+    table.repaint();
 }
 
 void TypicalTable::addCommand(juce::String name)

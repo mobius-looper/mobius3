@@ -7,11 +7,10 @@
 #include <JuceHeader.h>
 
 #include "../script/TypicalTable.h"
-#include "SymbolTree.h"
+#include "SessionTreeForms.h"
 
 class SessionTrackEditor : public juce::Component,
-                           public TypicalTable::Listener,
-                           public SymbolTree::Listener
+                           public TypicalTable::Listener
 {
   public:
 
@@ -25,7 +24,6 @@ class SessionTrackEditor : public juce::Component,
     void resized() override;
 
     void typicalTableChanged(class TypicalTable* t, int row) override;
-    void symbolTreeClicked(class SymbolTreeItem* item) override;
     
   private:
 
@@ -34,8 +32,9 @@ class SessionTrackEditor : public juce::Component,
     int currentTrack = 1;
     
     std::unique_ptr<class SessionTrackTable> tracks;
-    std::unique_ptr<class SessionTrackTrees> trees;
-    std::unique_ptr<class SessionFormCollection> forms;
+
+    SessionTreeForms audioForms;
+    SessionTreeForms midiForms;
 
     void loadForms(int number);
     void saveForms(int number);

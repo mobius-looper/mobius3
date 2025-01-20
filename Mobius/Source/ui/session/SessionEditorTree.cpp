@@ -39,6 +39,9 @@ void SessionEditorTree::intern(SymbolTreeItem* parent, TreeNode* node)
 
     // !! need more here
     item->setAnnotation(node->formName);
+
+    // all nodes can be clicked
+    item->setNoSelect(false);
     
     for (auto child : node->nodes) {
         intern(item, child);

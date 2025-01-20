@@ -106,12 +106,13 @@ Session::Track* Session::getTrackByNumber(int number)
 }
 
 /**
- * Reconcile the number of audio tracks to match the number
- * that comes from the MobiusConfig.
+ * Reconcile the number of tracks of a given type.
+ * For audio tracks this currently comes from MobiusConfig for
+ * MidiTracks this comes from the Session.
  *
  * Note that this does not number them.
  */
-bool Session::reconcileAudioTracks(int required)
+bool Session::reconcileTrackCount(TrackType type, int required)
 {
     bool modified = false;
     
@@ -119,7 +120,7 @@ bool Session::reconcileAudioTracks(int required)
     int currentCount = 0;
     for (int i = 0 ; i < tracks.size() ; i++) {
         Track* t = tracks[i];
-        if (t->type == TypeAudio) {
+        if (t->type == type) {
             currentCount++;
         }
     }
@@ -128,7 +129,7 @@ bool Session::reconcileAudioTracks(int required)
         // add new ones
         while (currentCount < required) {
             Track* neu = new Track();
-            neu->type = TypeAudio;
+            neu->type = type;
             tracks.add(neu);
             currentCount++;
         }
@@ -136,19 +137,19 @@ bool Session::reconcileAudioTracks(int required)
     }
     else if (currentCount > required) {
         // awkward since they can be in random order
-        // seek up to the position after the last audio track
+        // seek up to the position after the last track of this type
         int position = 0;
         int found = 0;
         while (position < tracks.size() && found < required) {
             Track* t = tracks[position];
-            if (t->type == TypeAudio)
+            if (t->type == type)
               found++;
             position++;
         }
         // now delete the remainder
         while (position < tracks.size()) {
             Track* t = tracks[position];
-            if (t->type == TypeAudio)
+            if (t->type == type)
               tracks.remove(position, true);
             else
               position++;
@@ -311,6 +312,7 @@ void Session::setBool(juce::String pname, bool value)
 Session::Track::Track(Session::Track* src)
 {
     id = src->id;
+    number = src->number;
     type = src->type;
     name = src->name;
     if (src->parameters != nullptr)
@@ -408,9 +410,8 @@ Session::Track* Session::parseTrack(juce::XmlElement* root)
 {
     Session::Track* track = new Session::Track();
 
-    // normally the id is not stored, but is necessary when XML serialization
-    // is used for copying, get rid of this!
     track->id = root->getIntAttribute("id");
+    track->number = root->getIntAttribute("number");
     track->name = root->getStringAttribute("name");
     
     juce::String typeString = root->getStringAttribute("type");
@@ -475,6 +476,9 @@ void Session::renderTrack(juce::XmlElement* parent, Session::Track* track)
     // but it is meaningless when saved in a file
     if (track->id > 0)
       root->setAttribute("id", track->id);
+
+    if (track->number > 0)
+      root->setAttribute("number", track->number);
 
     if (track->type == Session::TypeAudio)
       root->setAttribute("type", "audio");

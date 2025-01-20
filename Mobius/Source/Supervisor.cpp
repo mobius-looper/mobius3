@@ -1441,37 +1441,59 @@ bool Supervisor::normalizeSession(Session* s)
     bool modified = false;
     MobiusConfig* config = getMobiusConfig();
 
-    int requiredAudioTracks = config->getCoreTracks();
-    modified = s->reconcileAudioTracks(requiredAudioTracks);
+    int requiredAudio = config->getCoreTracks();
+    modified = s->reconcileTrackCount(Session::TypeAudio, requiredAudio);
+    s->audioTracks = requiredAudio;
+
+    // I changed from deriving the midi track count from the object list rather than the
+    // number in the session, so we might want to upgrade this?
+    if (s->midiTracks == 0) {
+        Trace(1, "Supervisor: MIDI track count not defined in session but Track objects existed");
+        int midiObjects = 0;
+        for (int i = 0 ; i < s->getTrackCount() ; i++) {
+            Session::Track* t = s->getTrackByIndex(i);
+            if (t->type == Session::TypeMidi)
+              midiObjects++;
+        }
+        s->midiTracks = midiObjects;
+    }
+
+    if (s->reconcileTrackCount(Session::TypeMidi, s->midiTracks))
+      modified = true;
 
     // now number them, audio first
     int trackNumber = 1;
     for (int i = 0 ; i < s->getTrackCount() ; i++) {
         Session::Track* t = s->getTrackByIndex(i);
         if (t->type == Session::TypeAudio) {
-            t->number = trackNumber;
+            if (t->number != trackNumber) {
+                if (t->number == 0)
+                  Trace(2, "Supervisor: Assigning audio track number %d", trackNumber);
+                else
+                  Trace(2, "Supervisor: Modifying audio track number %d", trackNumber);
+                modified = true;
+                t->number = trackNumber;
+            }
             trackNumber++;
         }
     }
+    
     // then the rest
-    int midiCount = 0;
     for (int i = 0 ; i < s->getTrackCount() ; i++) {
         Session::Track* t = s->getTrackByIndex(i);
         if (t->type != Session::TypeAudio) {
-            t->number = trackNumber;
+            if (t->number != trackNumber) {
+                if (t->number == 0)
+                  Trace(2, "Supervisor: Assigning audio track number %d", trackNumber);
+                else
+                  Trace(2, "Supervisor: Modifying audio track number %d", trackNumber);
+                modified = true;
+                t->number = trackNumber;
+            }
             trackNumber++;
-            midiCount++;
         }
     }
 
-    // this needs to be here for varioius reasons
-    s->audioTracks = requiredAudioTracks;
-
-    // MIDI tracks are far less touchy, let the Track objects define
-    // how many there are, but the view and other things wants
-    // this number to match
-    s->midiTracks = midiCount;
-    
     return modified;
 }        
 

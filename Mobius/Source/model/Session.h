@@ -108,7 +108,7 @@ class Session
     Track* getTrackByNumber(int number);
 
     // force the number of audio tracks
-    bool reconcileAudioTracks(int required);
+    bool reconcileTrackCount(TrackType type, int required);
 
     // temporary kludge for MidiTrackEditor
     Track* ensureTrack(TrackType type, int index);

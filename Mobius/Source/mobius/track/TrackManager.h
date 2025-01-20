@@ -146,9 +146,10 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     TrackMslHandler mslHandler;
     
     juce::OwnedArray<class LogicalTrack> tracks;
-    
+
+    // assumes the LogicalTrack array is ordered, dislike
     int audioTrackCount = 0;
-    int activeMidiTracks = 0;
+    int midiTrackCount = 0;
 
     void configureTracks(class Session* session);
     

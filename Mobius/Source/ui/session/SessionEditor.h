@@ -9,10 +9,8 @@
 
 #include <JuceHeader.h>
 
-#include "../../model/Session.h"
 #include "../common/BasicTabs.h"
 #include "../config/ConfigEditor.h"
-
 
 class SessionEditor : public ConfigEditor
 {
@@ -49,5 +47,9 @@ class SessionEditor : public ConfigEditor
     
     std::unique_ptr<class SessionGlobalEditor> globalEditor;
     std::unique_ptr<class SessionTrackEditor> trackEditor;
+
+    // shit
+    std::unique_ptr<class SessionTrackTable> trackTable;
+    
     
 };

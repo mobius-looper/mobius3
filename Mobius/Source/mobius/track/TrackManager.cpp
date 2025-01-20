@@ -88,37 +88,37 @@ void TrackManager::configure(MobiusConfig* config)
 }
 
 /**
- * Reconfigure the MIDI tracks based on information in the session.
+ * Reconfigure the LogicalTracks based on the session.
  *
- * Until the Mobius side of things can start using Sessions, track numbering and
- * order is fixed.  MIDI tracks will come after the audio tracks and we don't need
- * to mess with reordering at the moment.
+ * The Session is expected to have been normalized with audioCount and midiCount
+ * accurate and a Session::Track for each one.
  *
- * Note that the UI now allows "hidden" Session::Track definitions so you can turn down the
- * active track count without losing prior definitions.  The number of tracks to use
- * is in session->midiTracks which may be smaller than the Track list size.  It can be larger
- * too in which case we're supposed to use a default configuration.
+ * Tracks will have been numbered starting from 1 with the audio tracks first
+ * but the order of the Session::Track array is random.
+ *
+ * Changing the audio track count is awkward because it is still done through the Setup
+ * which must have already been processed by the core.
+ *
  */
 void TrackManager::loadSession(Session* session) 
 {
-    configureTracks(session);
-
-    // can we get rid of this?
-    activeMidiTracks = session->midiTracks;
-
     longWatcher.initialize(session, kernel->getContainer()->getSampleRate());
 
     // allow this to be disabled during debugging
     longDisable = session->getBool("longDisable");
 
+    configureTracks(session);
+
     // make sure we're a listener for every track, even our own
-    int totalTracks = audioTrackCount + activeMidiTracks;
-    for (int i = 1 ; i <= totalTracks ; i++)
-      kernel->getNotifier()->addTrackListener(i, this);
+    // why do it this way, just use LogicalTracy array si
+    for (int i = 0 ; i < tracks.size() ; i++) {
+        // index to number
+        kernel->getNotifier()->addTrackListener(i + 1, this);
+    }
 }
 
 /**
- * Organize the track arrays for a new session.
+ * Organize the track array for a new session.
  * Mobius tracks always go at the front and can't be changed without a restart.
  * Other track types can come and go.
  *
@@ -126,6 +126,19 @@ void TrackManager::loadSession(Session* session)
  */
 void TrackManager::configureTracks(Session* session)
 {
+    // try to get rid of these
+    audioTrackCount = session->audioTracks;
+    if (audioTrackCount != audioEngine->getTrackCount()) {
+        // this would be an error sending the Setup over to the core, or the core didn't like it
+        Trace(1, "TrackManager: Mismatched audio track count %d/%d",
+              audioTrackCount, audioEngine->getTrackCount());
+        // the Session wins no matter what since so much is built from it
+        // if there are more than enough core tracks, then some will be unused
+        // if there are too few, then some actions will go nowhere
+    }
+
+    midiTrackCount = session->midiTracks;
+    
     // transfer the current track list to a holding area
     // discard old MobiusTrackWrappers since the referenced Track may no longer be valid
     // and build fresh ones
@@ -140,53 +153,52 @@ void TrackManager::configureTracks(Session* session)
 
     // now put them back, for now Mobius always goes first
     // Mobius tracks configure themselves through MobiusConfig at an earlier stage
-    int mobiusTracks = audioEngine->getTrackCount();
-    if (mobiusTracks != session->audioTracks)
-      Trace(1, "TrackManager: Engine/Session track count mismatch %d/%d",
-            mobiusTracks, session->audioTracks);
-
-    // ignore the engine, do what the Session tells us
     for (int i = 0 ; i < session->audioTracks ; i++) {
         LogicalTrack* lt = new LogicalTrack(this);
         // audio tracks must be numbered first
         int number = i+1;
         Session::Track* def = session->getTrackByNumber(number);
-        if (def == nullptr)
-          Trace(1, "TrackManager: Missing Track definition for %d", number);
-        else
-          lt->loadSession(def);
+        if (def == nullptr) {
+            Trace(1, "TrackManager: Missing Track definition for Audio %d", number);
+            // this probably fatal but try to move on so we don't NPE, this will leak
+            def = new Session::Track();
+            def->number = number;
+            def->type = Session::TypeAudio;
+        }
+            
+        lt->loadSession(def);
         tracks.add(lt);
     }
 
     // now midi and eventually the others, these have more flexibility
-    // in being guided by the Session::Track list, but until MidiITrackEditor
-    // can dynamically size this, use the Session::midiTracks counter to only
-    // pay attention to a subset of the tracks that are there
-    int baseNumber = mobiusTracks + 1;
+    int baseNumber = tracks.size() + 1;
     int remaining = session->midiTracks;
     for (int i = 0 ; i < remaining ; i++) {
         int number = baseNumber + i;
         Session::Track* def = session->getTrackByNumber(number);
         if (def == nullptr) {
-            Trace(1, "TrackManager: Missing Track definition for %d", number);
+            // not supposed to happen, leak and avoid an NPE
+            Trace(1, "TrackManager: Missing Track definition for MIDI %d", number);
+            def = new Session::Track();
+            def->number = number;
+            def->type = Session::TypeMidi;
         }
-        else {
-            // see if we had one with this id before
-            LogicalTrack* lt = nullptr;
-            int index = 0;
-            for (auto old : oldTracks) {
-                if (old->getSessionId() == def->id) {
-                    // reuse this one
-                    lt = oldTracks.removeAndReturn(index);
-                    break;
-                }
-                index++;
+
+        // see if we had one with this id before
+        LogicalTrack* lt = nullptr;
+        int index = 0;
+        for (auto old : oldTracks) {
+            if (old->getSessionId() == def->id) {
+                // reuse this one
+                lt = oldTracks.removeAndReturn(index);
+                break;
             }
-            if (lt == nullptr)
-              lt = new LogicalTrack(this);
-            lt->loadSession(def);
-            tracks.add(lt);
+            index++;
         }
+        if (lt == nullptr)
+          lt = new LogicalTrack(this);
+        lt->loadSession(def);
+        tracks.add(lt);
     }
     
     // if we have leftovers, might consider saving them in reserve
@@ -197,10 +209,7 @@ void TrackManager::configureTracks(Session* session)
     // Mobius tracks to be downsized yet
     while (oldTracks.size() > 0) {
         LogicalTrack* lt = oldTracks.removeAndReturn(0);
-        if (lt->getType() != Session::TypeMidi)
-          Trace(1, "TrackManager: Removing *unknown* track");
-        else
-          Trace(2, "TrackManager: Removing MIDI track");
+        Trace(2, "TrackManager: Removing unused track");
         delete lt;
     }
 }
@@ -258,7 +267,7 @@ int TrackManager::getAudioTrackCount()
 
 int TrackManager::getMidiTrackCount()
 {
-    return activeMidiTracks;
+    return midiTrackCount;
 }
 
 // this needs to be implemented here rather than going back to the container
@@ -866,7 +875,7 @@ void TrackManager::doTrackSelectAction(UIAction* a)
     
     if (s->id == FuncNextTrack) {
         int next = prevFocused + 1;
-        if (next >= (audioTrackCount + activeMidiTracks))
+        if (next >= (audioTrackCount + midiTrackCount))
           next = 0;
         newFocused = next;
         relative = true;
@@ -874,7 +883,7 @@ void TrackManager::doTrackSelectAction(UIAction* a)
     else if (s->id == FuncPrevTrack) {
         int next = prevFocused - 1;
         if (next < 0)
-          next = (audioTrackCount + activeMidiTracks) - 1;
+          next = (audioTrackCount + midiTrackCount) - 1;
         newFocused = next;
         relative = true;
     }

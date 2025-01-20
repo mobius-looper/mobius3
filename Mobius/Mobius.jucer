@@ -255,10 +255,10 @@
                 file="Source/ui/session/SessionTrackTable.cpp"/>
           <FILE id="jADQbN" name="SessionTrackTable.h" compile="0" resource="0"
                 file="Source/ui/session/SessionTrackTable.h"/>
-          <FILE id="fh3vdM" name="SessionTrackTrees.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionTrackTrees.cpp"/>
-          <FILE id="C57wUV" name="SessionTrackTrees.h" compile="0" resource="0"
-                file="Source/ui/session/SessionTrackTrees.h"/>
+          <FILE id="TFYMwC" name="SessionTreeForms.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionTreeForms.cpp"/>
+          <FILE id="EQhLym" name="SessionTreeForms.h" compile="0" resource="0"
+                file="Source/ui/session/SessionTreeForms.h"/>
           <FILE id="uzUdnw" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/session/SymbolTree.cpp"/>
           <FILE id="rYvScn" name="SymbolTree.h" compile="0" resource="0" file="Source/ui/session/SymbolTree.h"/>
         </GROUP>
