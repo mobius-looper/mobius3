@@ -348,38 +348,6 @@ typedef enum {
 } DriftCheckPoint;
 
 /**
- * Values for the midiRecordMode paramter.
- * This an internal parameter used for experimenting with styles
- * of calculating the optimal loop length when using MIDI sync.
- * The default is MIDI_AVERAGE_TEMPO and this should not normallyu
- * be changed.  Once we've had some time to experiment with these
- * options in the field, this should be removed and hard coded into
- * Synchronizer.
- */
-typedef enum {
-
-    // average tempo calculated by MidiInput
-    MIDI_TEMPO_AVERAGE,
-
-    // smooth tempo calculated by MidiInput, accurate to 1/10th BPM
-    MIDI_TEMPO_SMOOTH,
-
-    // end exactly on a MIDI clock pulse
-    MIDI_RECORD_PULSED
-
-} MidiRecordMode;
-
-/**
- * Defines out SYNC_OUT Realign is performed.
- */
-typedef enum {
-
-    REALIGN_MIDI_START,
-    REALIGN_RESTART
-
-} OutRealignMode;
-
-/**
  * Defines what happens to the SYNC_OUT tempo when various
  * changes are made to the sync master track
  */

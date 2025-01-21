@@ -39,7 +39,6 @@ const char* ParamNameMaxLoops = "maxLoops";
 const char* ParamNameInputLatency = "inputLatency";
 const char* ParamNameOutputLatency = "outputLatency";
 const char* ParamNameNoiseFloor = "noiseFloor";
-const char* ParamNameMidiRecordMode = "midiRecordMode";
 const char* ParamNameControllerActionThreshold = "controllerActionThreshold";
 
 //
@@ -107,7 +106,6 @@ const char* ParamNameMuteSyncMode = "muteSyncMode";
 const char* ParamNameResizeSyncAdjust = "resizeSyncAdjust";
 const char* ParamNameSpeedSyncAdjust = "speedSyncAdjust";
 const char* ParamNameRealignTime = "realignTime";
-const char* ParamNameOutRealign = "outRealign";
 const char* ParamNameActiveTrack = "activeTrack";
     
 const char* ParamNameTrackName =  "trackName";
@@ -168,7 +166,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameInputLatency, ParamInputLatency},
     {ParamNameOutputLatency, ParamOutputLatency},
     {ParamNameNoiseFloor, ParamNoiseFloor},
-    {ParamNameMidiRecordMode, ParamMidiRecordMode},
     {ParamNameControllerActionThreshold, ParamControllerActionThreshold},
 
     {ParamNameSubcycles, ParamSubcycles},
@@ -232,7 +229,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameResizeSyncAdjust, ParamResizeSyncAdjust},
     {ParamNameSpeedSyncAdjust, ParamSpeedSyncAdjust},
     {ParamNameRealignTime, ParamRealignTime},
-    {ParamNameOutRealign, ParamOutRealign},
     {ParamNameActiveTrack, ParamActiveTrack},
 
     {ParamNameTrackName, ParamTrackName},

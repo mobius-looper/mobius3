@@ -584,7 +584,6 @@ void Parameter::initParameters()
         add(MaxTempoParameter);
         add(MinTempoParameter);
         add(MuteSyncModeParameter);
-        add(OutRealignModeParameter);
         add(RealignTimeParameter);
         add(ResizeSyncAdjustParameter);
         add(SlaveSyncUnitParameter);
@@ -603,7 +602,6 @@ void Parameter::initParameters()
         add(LongPressParameter);
         add(MaxLoopsParameter);
         add(MaxSyncDriftParameter);
-        add(MidiRecordModeParameter);
         add(MonitorAudioParameter);
         add(NoiseFloorParameter);
         add(OutputLatencyParameter);

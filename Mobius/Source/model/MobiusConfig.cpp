@@ -120,16 +120,11 @@ void MobiusConfig::init()
 	mTraceDebugLevel = 2;
 	mSaveLayers = false;
 	mDriftCheckPoint = DRIFT_CHECK_LOOP;
-	mMidiRecordMode = MIDI_TEMPO_AVERAGE;
     mGroupFocusLock = false;
 
     mNoPresetChanges = false;
     mNoSetupChanges = false;
 
-    // not used any more, remove
-    // this causes confusion when not on since key bindings often don't work
-    mDualPluginWindow = false;  
-    
     mNoSyncBeatRounding = false;
 
     mEdpisms = false;
@@ -511,22 +506,6 @@ void MobiusConfig::setAltFeedbackDisables(StringList* l)
 {
 	delete mAltFeedbackDisables;
 	mAltFeedbackDisables = l;
-}
-
-void MobiusConfig::setMidiRecordMode(MidiRecordMode mode) {
-	mMidiRecordMode = mode;
-}
-
-MidiRecordMode MobiusConfig::getMidiRecordMode() {
-	return mMidiRecordMode;
-}
-
-void MobiusConfig::setDualPluginWindow(bool b) {
-	mDualPluginWindow = b;
-}
-
-bool MobiusConfig::isDualPluginWindow() {
-	return mDualPluginWindow;
 }
 
 void MobiusConfig::setGroupFocusLock(bool b) {

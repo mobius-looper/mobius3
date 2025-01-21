@@ -289,12 +289,6 @@ class MobiusConfig {
 	void setDriftCheckPoint(DriftCheckPoint p);
 	DriftCheckPoint getDriftCheckPoint();
 
-	void setMidiRecordMode(MidiRecordMode m);
-	MidiRecordMode getMidiRecordMode();
-
-    void setDualPluginWindow(bool b);
-    bool isDualPluginWindow();
-
     void setGroupFocusLock(bool b);
     bool isGroupFocusLock();
 
@@ -451,24 +445,6 @@ class MobiusConfig {
 	 * Specifies where we check for sync drift.
 	 */
 	DriftCheckPoint mDriftCheckPoint;
-
-	/**
-     * Determines how we calculate the ending loop length with
-     * using SYNC_MIDI.
-	 */
-	MidiRecordMode mMidiRecordMode;
-
-    /**
-     * When true, enables dual plugin windows where the window given
-     * to us by the host is used a small launch pad to bring up the main 
-     * window.  When false, we force the UI into the host window which
-     * must have been presized for VST, or adaptable for AU.
-     * 
-     * This is ignored for Mac (both AU and VST) since I couldn't get
-     * it working properly and is generally not desired.  It was
-     * historically forced on for Windows but is now configurable.
-     */
-    bool mDualPluginWindow;
 
     /**
      * When true, track groups have focus lock.  This means

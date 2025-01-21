@@ -98,7 +98,6 @@ name='pluginMidiOutput'
 name='pluginMidiThrough'
 name='audioInput'
 name='audioOutput'
-name='midiRecordMode'
 -->
 
 <!-- Preset Parameters -->

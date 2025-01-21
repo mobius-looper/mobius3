@@ -644,56 +644,6 @@ void RealignTimeParameterType::setValue(Setup* s, ExValue* value)
 RealignTimeParameterType RealignTimeParameterTypeObj;
 Parameter* RealignTimeParameter = &RealignTimeParameterTypeObj;
 
-//////////////////////////////////////////////////////////////////////
-//
-// OutRealignMode
-//
-//////////////////////////////////////////////////////////////////////
-
-class OutRealignModeParameterType : public SetupParameter
-{
-  public:
-	OutRealignModeParameterType();
-    int getOrdinalValue(Setup* s);
-	void getValue(Setup* s, ExValue* value);
-	void setValue(Setup* s, ExValue* value);
-};
-
-const char* REALIGN_MODE_NAMES[] = {
-	"midiStart", "restart", NULL
-};
-
-OutRealignModeParameterType::OutRealignModeParameterType() :
-    SetupParameter("outRealign")
-{
-    bindable = true;
-	type = TYPE_ENUM;
-	values = REALIGN_MODE_NAMES;
-}
-
-int OutRealignModeParameterType::getOrdinalValue(Setup* s)
-{
-	return (int)s->getOutRealignMode();
-}
-
-void OutRealignModeParameterType::getValue(Setup* s, ExValue* value)
-{
-	value->setString(values[(int)s->getOutRealignMode()]);
-}
-
-void OutRealignModeParameterType::setValue(Setup* s, ExValue* value)
-{
-    // upgrade old value
-    const char* str = value->getString();
-    if (StringEqualNoCase(str, "retrigger"))
-      value->setString("restart");
-
-	s->setOutRealignMode((OutRealignMode)getEnum(value));
-}
-
-OutRealignModeParameterType OutRealignModeParameterTypeObj;
-Parameter* OutRealignModeParameter = &OutRealignModeParameterTypeObj;
-
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

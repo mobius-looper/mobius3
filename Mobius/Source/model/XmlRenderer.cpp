@@ -454,7 +454,6 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
     render(b, UIParameterSaveLayers, c->isSaveLayers());
     render(b, UIParameterDriftCheckPoint, c->getDriftCheckPoint());
 
-    render(b, UIParameterMidiRecordMode, c->getMidiRecordMode());
     render(b, UIParameterGroupFocusLock, c->isGroupFocusLock());
 
     b->addAttribute(ATT_NO_SYNC_BEAT_ROUNDING, c->isNoSyncBeatRounding());
@@ -545,8 +544,6 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 	c->setTraceDebugLevel(parse(e, UIParameterTraceLevel));
 	c->setSaveLayers(parse(e, UIParameterSaveLayers));
 	c->setDriftCheckPoint((DriftCheckPoint)parse(e, UIParameterDriftCheckPoint));
-	c->setMidiRecordMode((MidiRecordMode)parse(e, UIParameterMidiRecordMode));
-
 
     // this isn't a parameter yet
     c->setNoSyncBeatRounding(e->getBoolAttribute(ATT_NO_SYNC_BEAT_ROUNDING));
@@ -804,7 +801,6 @@ void XmlRenderer::render(XmlBuffer* b, Setup* setup)
     render(b, UIParameterMaxTempo, setup->getMaxTempo());
     render(b, UIParameterMinTempo, setup->getMinTempo());
     render(b, UIParameterMuteSyncMode, setup->getMuteSyncMode());
-    render(b, UIParameterOutRealign, setup->getOutRealignMode());
     render(b, UIParameterRealignTime, setup->getRealignTime());
     render(b, UIParameterResizeSyncAdjust, setup->getResizeSyncAdjust());
     render(b, UIParameterSlaveSyncUnit, setup->getSyncUnit());
@@ -839,7 +835,6 @@ void XmlRenderer::parse(XmlElement* e, Setup* setup)
     setup->setMaxTempo(parse(e, UIParameterMaxTempo));
     setup->setMinTempo(parse(e, UIParameterMinTempo));
     setup->setMuteSyncMode(parse(e, UIParameterMuteSyncMode));
-    setup->setOutRealignMode(parse(e, UIParameterOutRealign));
     setup->setRealignTime(parse(e, UIParameterRealignTime));
     setup->setResizeSyncAdjust(parse(e, UIParameterResizeSyncAdjust));
     setup->setSyncUnit((OldSyncUnit)parse(e, UIParameterSlaveSyncUnit));

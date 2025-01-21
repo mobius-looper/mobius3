@@ -336,7 +336,83 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
     }
     if (newEnum != nullptr)
       values->setString(juce::String("syncUnit"), newEnum);
-}    
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Pending
+//
+//////////////////////////////////////////////////////////////////////
+
+#if 0
+
+/**
+ * These are the rare cases where parameter name constants are necessary.
+ * Use GetParameterName
+ */
+void Upgrader::convertPreset(Preset* preset, MainConfig* main)
+{
+    SymbolTable* symbols = supervisor->getSymbols();
+    
+    juce::String objname = juce::String("Preset:") + preset->getName();
+
+    ValueSet* neu = main->find(objname);
+    if (neu == nullptr) {
+        neu = new ValueSet();
+        neu->name = objname;
+        main->add(neu);
+    }
+
+    neu->setInt(symbols->getName(ParamSubcycles), preset->getSubcycles());
+    convertEnum(symbols->getName(ParamMultiplyMode), preset->getMultiplyMode(), neu);
+    convertEnum(symbols->getName(ParamShuffleMode), preset->getShuffleMode(), neu);
+    neu->setBool(symbols->getName(ParamAltFeedbackEnable), preset->isAltFeedbackEnable());
+    convertEnum(symbols->getName(ParamEmptyLoopAction), preset->getEmptyLoopAction(), neu);
+    convertEnum(symbols->getName(ParamEmptyTrackAction), preset->getEmptyTrackAction(), neu);
+    convertEnum(symbols->getName(ParamTrackLeaveAction), preset->getTrackLeaveAction(), neu);
+    neu->setInt(symbols->getName(ParamLoopCount), preset->getLoops());
+    convertEnum(symbols->getName(ParamMuteMode), preset->getMuteMode(), neu);
+    convertEnum(symbols->getName(ParamMuteCancel), preset->getMuteCancel(), neu);
+    neu->setBool(symbols->getName(ParamOverdubQuantized), preset->isOverdubQuantized());
+    convertEnum(symbols->getName(ParamQuantize), preset->getQuantize(), neu);
+    convertEnum(symbols->getName(ParamBounceQuantize), preset->getBounceQuantize(), neu);
+    neu->setBool(symbols->getName(ParamRecordResetsFeedback), preset->isRecordResetsFeedback());
+    neu->setBool(symbols->getName(ParamSpeedRecord), preset->isSpeedRecord());
+    neu->setBool(symbols->getName(ParamRoundingOverdub), preset->isRoundingOverdub());
+    convertEnum(symbols->getName(ParamSwitchLocation), preset->getSwitchLocation(), neu);
+    convertEnum(symbols->getName(ParamReturnLocation), preset->getReturnLocation(), neu);
+    convertEnum(symbols->getName(ParamSwitchDuration), preset->getSwitchDuration(), neu);
+    convertEnum(symbols->getName(ParamSwitchQuantize), preset->getSwitchQuantize(), neu);
+    convertEnum(symbols->getName(ParamTimeCopyMode), preset->getTimeCopyMode(), neu);
+    convertEnum(symbols->getName(ParamSoundCopyMode), preset->getSoundCopyMode(), neu);
+    neu->setInt(symbols->getName(ParamRecordThreshold), preset->getRecordThreshold());
+    neu->setBool(symbols->getName(ParamSwitchVelocity), preset->isSwitchVelocity());
+    neu->setInt(symbols->getName(ParamMaxUndo), preset->getMaxUndo());
+    neu->setInt(symbols->getName(ParamMaxRedo), preset->getMaxRedo());
+    neu->setBool(symbols->getName(ParamNoFeedbackUndo), preset->isNoFeedbackUndo());
+    neu->setBool(symbols->getName(ParamNoLayerFlattening), preset->isNoLayerFlattening());
+    neu->setBool(symbols->getName(ParamSpeedShiftRestart), preset->isSpeedShiftRestart());
+    neu->setBool(symbols->getName(ParamPitchShiftRestart), preset->isPitchShiftRestart());
+    neu->setInt(symbols->getName(ParamSpeedStepRange), preset->getSpeedStepRange());
+    neu->setInt(symbols->getName(ParamSpeedBendRange), preset->getSpeedBendRange());
+    neu->setInt(symbols->getName(ParamPitchStepRange), preset->getPitchStepRange());
+    neu->setInt(symbols->getName(ParamPitchBendRange), preset->getPitchBendRange());
+    neu->setInt(symbols->getName(ParamTimeStretchRange), preset->getTimeStretchRange());
+    convertEnum(symbols->getName(ParamSlipMode), preset->getSlipMode(), neu);
+    neu->setInt(symbols->getName(ParamSlipTime), preset->getSlipTime());
+    neu->setInt(symbols->getName(ParamAutoRecordTempo), preset->getAutoRecordTempo());
+    neu->setInt(symbols->getName(ParamAutoRecordBars), preset->getAutoRecordBars());
+    convertEnum(symbols->getName(ParamRecordTransfer), preset->getRecordTransfer(), neu);
+    convertEnum(symbols->getName(ParamOverdubTransfer), preset->getOverdubTransfer(), neu);
+    convertEnum(symbols->getName(ParamReverseTransfer), preset->getReverseTransfer(), neu);
+    convertEnum(symbols->getName(ParamSpeedTransfer), preset->getSpeedTransfer(), neu);
+    convertEnum(symbols->getName(ParamPitchTransfer), preset->getPitchTransfer(), neu);
+    convertEnum(symbols->getName(ParamWindowSlideUnit), preset->getWindowSlideUnit(), neu);
+    convertEnum(symbols->getName(ParamWindowEdgeUnit), preset->getWindowEdgeUnit(), neu);
+    neu->setInt(symbols->getName(ParamWindowSlideAmount), preset->getWindowSlideAmount());
+    neu->setInt(symbols->getName(ParamWindowEdgeAmount), preset->getWindowEdgeAmount());
+}
+#endif
 
 /****************************************************************************/
 /****************************************************************************/

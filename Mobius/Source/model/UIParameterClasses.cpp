@@ -606,38 +606,6 @@ void UIParameterNoiseFloorClass::setValue(void* obj, ExValue* value)
 UIParameterNoiseFloorClass UIParameterNoiseFloorObj;
 UIParameter* UIParameterNoiseFloor = &UIParameterNoiseFloorObj;
 
-////////////// MidiRecordMode
-
-class UIParameterMidiRecordModeClass : public UIParameter
-{
-  public:
-    UIParameterMidiRecordModeClass();
-    void getValue(void* obj, class ExValue* value) override;
-    void setValue(void* obj, class ExValue* value) override;
-};
-const char* UIParameterMidiRecordModeClassValues[] = {"average","smooth","pulsed",nullptr};
-const char* UIParameterMidiRecordModeClassLabels[] = {"Average","Smooth","Pulsed",nullptr};
-UIParameterMidiRecordModeClass::UIParameterMidiRecordModeClass()
-{
-    name = "midiRecordMode";
-    displayName = "Midi Record Mode";
-    scope = ScopeGlobal;
-    type = TypeEnum;
-    values = UIParameterMidiRecordModeClassValues;
-    valueLabels = UIParameterMidiRecordModeClassLabels;
-    noBinding = true;
-}
-void UIParameterMidiRecordModeClass::getValue(void* obj, ExValue* value)
-{
-    value->setInt(((MobiusConfig*)obj)->getMidiRecordMode());
-}
-void UIParameterMidiRecordModeClass::setValue(void* obj, ExValue* value)
-{
-    ((MobiusConfig*)obj)->setMidiRecordMode((MidiRecordMode)value->getInt());
-}
-UIParameterMidiRecordModeClass UIParameterMidiRecordModeObj;
-UIParameter* UIParameterMidiRecordMode = &UIParameterMidiRecordModeObj;
-
 //******************** preset
 
 
@@ -2424,37 +2392,6 @@ void UIParameterRealignTimeClass::setValue(void* obj, ExValue* value)
 }
 UIParameterRealignTimeClass UIParameterRealignTimeObj;
 UIParameter* UIParameterRealignTime = &UIParameterRealignTimeObj;
-
-////////////// OutRealign
-
-class UIParameterOutRealignClass : public UIParameter
-{
-  public:
-    UIParameterOutRealignClass();
-    void getValue(void* obj, class ExValue* value) override;
-    void setValue(void* obj, class ExValue* value) override;
-};
-const char* UIParameterOutRealignClassValues[] = {"midiStart","restart",nullptr};
-const char* UIParameterOutRealignClassLabels[] = {"Midi Start","Restart",nullptr};
-UIParameterOutRealignClass::UIParameterOutRealignClass()
-{
-    name = "outRealign";
-    displayName = "Out Realign";
-    scope = ScopeSetup;
-    type = TypeEnum;
-    values = UIParameterOutRealignClassValues;
-    valueLabels = UIParameterOutRealignClassLabels;
-}
-void UIParameterOutRealignClass::getValue(void* obj, ExValue* value)
-{
-    value->setInt(((Setup*)obj)->getOutRealignMode());
-}
-void UIParameterOutRealignClass::setValue(void* obj, ExValue* value)
-{
-    ((Setup*)obj)->setOutRealignMode((OutRealignMode)value->getInt());
-}
-UIParameterOutRealignClass UIParameterOutRealignObj;
-UIParameter* UIParameterOutRealign = &UIParameterOutRealignObj;
 
 ////////////// ActiveTrack
 

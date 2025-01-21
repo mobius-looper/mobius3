@@ -114,10 +114,6 @@ class Setup : public Structure {
 	void setRealignTime(int i);
 	RealignTime getRealignTime();
 
-	void setOutRealignMode(OutRealignMode m);
-	void setOutRealignMode(int i);
-	OutRealignMode getOutRealignMode();
-
   private:
 
 	void initParameters();
@@ -222,12 +218,6 @@ class Setup : public Structure {
 	 * Controls the time at which a Realign occurs.
 	 */
 	RealignTime mRealignTime;
-
-	/**
-	 * When using SYNC_OUT, determines how to realign the external sync loop.
-	 */
-	OutRealignMode mOutRealignMode;
-
 
 };
 

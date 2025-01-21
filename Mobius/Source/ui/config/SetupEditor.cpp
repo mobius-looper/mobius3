@@ -477,7 +477,6 @@ void SetupEditor::initForm()
     addField("Synchronization", UIParameterSlaveSyncUnit);
     addField("Synchronization", UIParameterBeatsPerBar);
     addField("Synchronization", UIParameterRealignTime);
-    addField("Synchronization", UIParameterOutRealign);
     addField("Synchronization", UIParameterMuteSyncMode);
     addField("Synchronization", UIParameterResizeSyncAdjust);
     addField("Synchronization", UIParameterSpeedSyncAdjust);

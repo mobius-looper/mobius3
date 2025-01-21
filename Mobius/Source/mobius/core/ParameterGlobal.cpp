@@ -1202,69 +1202,6 @@ Parameter* GroupFocusLockParameter = &GroupFocusLockParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
-// MidiRecordMode
-//
-//////////////////////////////////////////////////////////////////////
-
-class MidiRecordModeParameterType : public GlobalParameter
-{
-  public:
-	MidiRecordModeParameterType();
-	void getValue(MobiusConfig* c, ExValue* value);
-	void setValue(MobiusConfig* c, ExValue* value);
-	void setValue(Action* action);
-};
-
-const char* MIDI_RECORD_MODE_NAMES[] = {
-	"average", "smooth", "pulse", NULL
-};
-
-MidiRecordModeParameterType::MidiRecordModeParameterType() :
-    GlobalParameter("midiRecordMode")
-{
-    // not worth bindable
-	type = TYPE_ENUM;
-	values = MIDI_RECORD_MODE_NAMES;
-}
-
-void MidiRecordModeParameterType::getValue(MobiusConfig* c, ExValue* value)
-{
-	value->setString(values[c->getMidiRecordMode()]);
-}
-
-void MidiRecordModeParameterType::setValue(MobiusConfig* c, ExValue* value)
-{
-    MidiRecordMode mode = (MidiRecordMode)getEnum(value);
-    c->setMidiRecordMode(mode);
-}
-
-/**
- * Binding this is rare but we occasionally set this in test scripts.
- * For this to have any meaning, we also need to propagate it to the
- * Synchronizer which keeps a cached copy.  Also copy it to the interrupt
- * config just so they stay in sync though that isn't used.
- */
-void MidiRecordModeParameterType::setValue(Action* action)
-{
-    MidiRecordMode mode = (MidiRecordMode)getEnum(&(action->arg));
-
-    Mobius* m = (Mobius*)action->mobius;
-    MobiusConfig* config = m->getConfiguration();
-	config->setMidiRecordMode(mode);
-
-    MobiusConfig* iconfig = m->getConfiguration();
-    if (iconfig != NULL) {
-        iconfig->setMidiRecordMode(mode);
-        Synchronizer* sync = m->getSynchronizer();
-        sync->updateConfiguration(iconfig);
-    }
-}
-
-MidiRecordModeParameterType MidiRecordModeParameterTypeObj;
-Parameter* MidiRecordModeParameter = &MidiRecordModeParameterTypeObj;
-
-//////////////////////////////////////////////////////////////////////
-//
 // MaxLoops
 //
 //////////////////////////////////////////////////////////////////////

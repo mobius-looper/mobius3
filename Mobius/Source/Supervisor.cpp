@@ -1322,8 +1322,12 @@ Session* Supervisor::initializeSession()
     // this must be done after symbols are initialized
     Session* neu = producer->readStartupSession();
     
-    // do this unconditionally for awhile
-    upgradeSession(config, neu);
+    // we don't keep audio track definitions in the session yet so
+    // copy this over so it can be known with only the Session
+    if (neu->audioTracks != config->getCoreTracks()) {
+        neu->audioTracks = config->getCoreTracks();
+        neu->setModified(true);
+    }
 
     normalizeSession(neu);
 
@@ -1353,97 +1357,6 @@ Session* Supervisor::getSession()
         session.reset(neu);
     }
     return session.get();
-}
-
-/**
- * Start converting the old global parameters into session parameters.
- * This isn't the authoritative source for these yet though.
- */
-void Supervisor::upgradeSession(MobiusConfig* old, Session* ses)
-{
-    // we don't keep audio track definitions in the session yet so
-    // copy this over so it can be known with only the Session
-    if (ses->audioTracks != old->getCoreTracks()) {
-        ses->audioTracks = old->getCoreTracks();
-        ses->setModified(true);
-    }
-    
-    ValueSet* global = ses->ensureGlobals();
-    
-    global->setInt(symbols.getName(ParamInputLatency), old->getInputLatency());
-    global->setInt(symbols.getName(ParamOutputLatency), old->getOutputLatency());
-    global->setInt(symbols.getName(ParamNoiseFloor), old->getNoiseFloor());
-    global->setInt(symbols.getName(ParamFadeFrames), old->getFadeFrames());
-    global->setInt(symbols.getName(ParamMaxSyncDrift), old->getNoiseFloor());
-    global->setInt(symbols.getName(ParamMaxLoops), old->getMaxLoops());
-    global->setInt(symbols.getName(ParamLongPress), old->getLongPress());
-    global->setInt(symbols.getName(ParamSpreadRange), old->getSpreadRange());
-    global->setInt(symbols.getName(ParamControllerActionThreshold), old->mControllerActionThreshold);
-    global->setBool(symbols.getName(ParamMonitorAudio), old->isMonitorAudio());
-    global->setString(symbols.getName(ParamQuickSave), old->getQuickSave());
-    global->setString(symbols.getName(ParamActiveSetup), old->getStartingSetupName());
-    
-    // enumerations have been stored with symbolic names, which is all we really need
-    // but I'd like to test working backward to get the ordinals, need to streamline
-    // this process
-    convertEnum(symbols.getName(ParamDriftCheckPoint), old->getDriftCheckPoint(), global);
-    convertEnum(symbols.getName(ParamMidiRecordMode), old->getMidiRecordMode(), global);
-}
-
-/**
- * Build the MslValue for an enumeration from this parameter name and ordinal
- * and isntall it in the value set.
- *
- * This does some consnstency checking that isn't necessary but I want to detect
- * when there are model inconsistencies while both still exist.
- */
-void Supervisor::convertEnum(juce::String name, int value, ValueSet* dest)
-{
-    // method 1: using UIParameter static objects
-    // this needs to go away
-    const char* cname = name.toUTF8();
-    UIParameter* p = UIParameter::find(cname);
-    const char* enumName = nullptr;
-    if (p == nullptr) {
-        Trace(1, "Upgrader: Unresolved old parameter %s", cname);
-    }
-    else {
-        enumName = p->getEnumName(value);
-        if (enumName == nullptr)
-          Trace(1, "Upgrader: Unresolved old enumeration %s %d", cname, value);
-    }
-
-    // method 2: using Symbol and ParameterProperties
-    Symbol* s = symbols.find(name);
-    if (s == nullptr) {
-        Trace(1, "Upgrader: Unresolved symbol %s", cname);
-    }
-    else if (s->parameterProperties == nullptr) {
-        Trace(1, "Upgrader: Symbol not a parameter %s", cname);
-    }
-    else {
-        const char* newEnumName = s->parameterProperties->getEnumName(value);
-        if (newEnumName == nullptr)
-          Trace(1, "Upgrader: Unresolved new enumeration %s %d", cname, value);
-        else if (enumName != nullptr && strcmp(enumName, newEnumName) != 0)
-          Trace(1, "Upgrader: Enum name mismatch %s %s", enumName, newEnumName);
-
-        // so we can limp along, use the new name if the old one didn't match
-        if (enumName == nullptr)
-          enumName = newEnumName;
-    }
-
-    // if we were able to find a name from somewhere, install it
-    // otherwise something was traced
-    if (enumName != nullptr) {
-        MslValue* mv = new MslValue();
-        mv->setEnum(enumName, value);
-        MslValue* existing = dest->replace(name, mv);
-        if (existing != nullptr) {
-            // first time shouldn't have these, anything interesting to say here?
-            delete existing;
-        }
-    }
 }
 
 /**

@@ -2059,6 +2059,8 @@ void Synchronizer::sendStart(Loop* l, bool checkManual, bool checkNear)
  */
 void Synchronizer::loopLocalStartPoint(Loop* l)
 {
+    (void)l;
+#if 0    
     Track* t = l->getTrack();
 
 	if (t->getDisplayNumber() == mSyncMaster->getTrackSyncMaster()) {
@@ -2073,6 +2075,8 @@ void Synchronizer::loopLocalStartPoint(Loop* l)
 			  doRealign(l, NULL, realign);
 		}
 	}
+#endif
+    
 }
 
 /**
@@ -2212,16 +2216,17 @@ void Synchronizer::doRealign(Loop* loop, Event* pulse, Event* realign)
 {
     Track* track = loop->getTrack();
     EventManager* em = track->getEventManager();
-    Setup* setup = mMobius->getActiveSetup();
+    //Setup* setup = mMobius->getActiveSetup();
     
     // kludge: need to support MIDI tracks
-    Track* mOutSyncMaster = getOutSyncMaster();
+    //Track* mOutSyncMaster = getOutSyncMaster();
 
     // sanity checks since we can be called directly by the Realign function
     // really should be safe by now...
     if (loop->getFrames() == 0) {
 		Trace(loop, 1, "Sync: Ignoring realign of empty loop!\n");
 	}
+#if 0    
     else if (track == mOutSyncMaster &&
              setup->getOutRealignMode() == REALIGN_MIDI_START) {
 
@@ -2237,6 +2242,7 @@ void Synchronizer::doRealign(Loop* loop, Event* pulse, Event* realign)
         if (!setup->isManualStart())
           sendStart(loop, false, false);
 	}
+#endif    
     else if (pulse == NULL) {
         // only the clause above is allowed without a pulse
         Trace(loop, 1, "Sync:doRealign no pulse event!\n");

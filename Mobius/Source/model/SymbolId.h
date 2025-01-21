@@ -62,7 +62,6 @@ typedef enum {
     ParamInputLatency,
     ParamOutputLatency,
     ParamNoiseFloor,
-    ParamMidiRecordMode,
     ParamControllerActionThreshold,
 
     //
@@ -138,7 +137,6 @@ typedef enum {
     ParamResizeSyncAdjust,
     ParamSpeedSyncAdjust,
     ParamRealignTime,
-    ParamOutRealign,
     ParamActiveTrack,
 
     //

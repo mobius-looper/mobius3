@@ -35,12 +35,4 @@ class Upgrader
     void upgradeFunctionProperty(class StringList* names, bool focus, bool confirm, bool muteCancel);
     bool upgradeGroups(class MobiusConfig* config);
     
-/*
-    bool refreshMainConfig(class MobiusConfig* old, class MainConfig* neu);
-    void convertEnum(juce::String name, int value, class ValueSet* dest);
-    void convertPreset(class Preset* preset, class MainConfig* main);
-    void convertSetup(class Setup* setup, class MainConfig* main);
-    void convertSetupTrack(class SetupTrack* track, int trackNumber, class ValueSet* neu);
-*/
-    
 };

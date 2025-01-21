@@ -95,10 +95,6 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
             value->setInt(((MobiusConfig*)obj)->getNoiseFloor());
             break;
             
-        case ParamMidiRecordMode:
-            value->setInt(((MobiusConfig*)obj)->getMidiRecordMode());
-            break;
-
             /* Preset */
     
         case ParamSubcycles:
@@ -343,10 +339,6 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
             value->setInt(((Setup*)obj)->getRealignTime());
             break;
             
-        case ParamOutRealign:
-            value->setInt(((Setup*)obj)->getOutRealignMode());
-            break;
-            
         case ParamActiveTrack:
             value->setInt(((Setup*)obj)->getActiveTrack());
             break;
@@ -542,10 +534,6 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             ((MobiusConfig*)obj)->setNoiseFloor(value->getInt());
             break;
             
-        case ParamMidiRecordMode:
-            ((MobiusConfig*)obj)->setMidiRecordMode((MidiRecordMode)value->getInt());
-            break;
-
             /* Preset */
     
         case ParamSubcycles:
@@ -788,10 +776,6 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             
         case ParamRealignTime:
             ((Setup*)obj)->setRealignTime((RealignTime)value->getInt());
-            break;
-            
-        case ParamOutRealign:
-            ((Setup*)obj)->setOutRealignMode((OutRealignMode)value->getInt());
             break;
             
         case ParamActiveTrack:

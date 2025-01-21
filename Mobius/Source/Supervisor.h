@@ -474,9 +474,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void normalizeSession(Session* s);
     void configureSystemState(class Session* s);
 
-    void upgradeSession(class MobiusConfig* old, class Session* ses);
-    void convertEnum(juce::String name, int value, class ValueSet* dest);
-
     void initializeView();
 
     void saveMobiusConfigOnShutdown();

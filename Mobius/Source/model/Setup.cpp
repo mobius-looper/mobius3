@@ -131,7 +131,6 @@ void Setup::initParameters()
     mResizeSyncAdjust   = SYNC_ADJUST_NONE;
 	mSpeedSyncAdjust	= SYNC_ADJUST_NONE;
 	mRealignTime		= REALIGN_START;
-	mOutRealignMode		= REALIGN_RESTART;
 }
 
 Setup::Setup(Setup* src)
@@ -158,7 +157,6 @@ Setup::Setup(Setup* src)
     mResizeSyncAdjust = src->getResizeSyncAdjust();
     mSpeedSyncAdjust = src->getSpeedSyncAdjust();
     mRealignTime = src->getRealignTime();
-    mOutRealignMode = src->getOutRealignMode();
 
 
     SetupTrack* last = nullptr;
@@ -432,18 +430,6 @@ void Setup::setRealignTime(int i) {
 
 RealignTime Setup::getRealignTime() {
 	return mRealignTime;
-}
-
-void Setup::setOutRealignMode(OutRealignMode m) {
-	mOutRealignMode = m;
-}
-
-void Setup::setOutRealignMode(int i) {
-	setOutRealignMode((OutRealignMode)i);
-}
-
-OutRealignMode Setup::getOutRealignMode() {
-	return mOutRealignMode;
 }
 
 /****************************************************************************

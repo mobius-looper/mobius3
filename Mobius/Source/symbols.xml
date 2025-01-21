@@ -309,8 +309,6 @@
       sensitive AutoRecord is
     </Parameter>
 
-    <Parameter name='midiRecordMode' values='average,smooth,pulsed' options='noBinding'/>
-
     <!-- Things that still exist in the model but probably want to move them somewhere else
          oscInputPort
          oscOutputPort
@@ -538,9 +536,6 @@
     <Parameter name='speedSyncAdjust' values='none,tempo'
                enumName='SyncAdjust'/>
     <Parameter name='realignTime' values='start,bar,beat,now' />
-    <Parameter name='outRealign' values='midiStart,restart'
-               codeName='OutRealignMode'
-               enumName='OutRealignMode'/>
 
     <Parameter name='activeTrack' high='8' options='dynamic,noBinding'
                coreName='selectedTrack'>
