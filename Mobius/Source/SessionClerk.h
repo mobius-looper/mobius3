@@ -6,6 +6,8 @@
 
 #include <JuceHeader.h>
 
+#include "model/Session.h"
+
 class SessionClerk
 {
   public:
@@ -54,5 +56,14 @@ class SessionClerk
     void writeSession(Folder* f, Session* s);
 
     Folder* bootstrapDefaultSession();
+
+    // Temporary migration
+    
+    void createSession(class Session* neu);
+    void migrateSetups(class MobiusConfig* src);
+    void migrateSetup(class Setup* src, class Session* dest);
+    void migrateTrack(class SetupTrack* src, Session::Track* dest);
+    void migrateGlobals(class MobiusConfig* src, class Session* dest);
+    void convertEnum(juce::String name, int value, class ValueSet* dest);
     
 };

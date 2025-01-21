@@ -83,6 +83,10 @@ class Session
         const char* getString(juce::String name);
         int getInt(juce::String name);
 
+        void setInt(juce::String name, int value);
+        void setBool(juce::String name, bool value);
+        void setString(juce::String name, const char* value);
+
         juce::OwnedArray<class SessionMidiDevice> devices;
 
       private:
@@ -109,6 +113,9 @@ class Session
 
     // force the number of audio tracks
     void reconcileTrackCount(TrackType type, int required);
+
+    // for SessionClerk migration
+    void add(Track* t);
 
     // temporary kludge for MidiTrackEditor
     Track* ensureTrack(TrackType type, int index);

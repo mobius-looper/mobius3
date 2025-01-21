@@ -103,6 +103,15 @@ void Session::clearTracks(TrackType type)
     }
 }
 
+/**
+ * Sensitive surgery only for use by SessionClerk during migration
+ */
+void Session::add(Track* t)
+{
+    if (t != nullptr)
+      tracks.add(t);
+}
+
 int Session::getTrackCount()
 {
     return tracks.size();
@@ -390,6 +399,24 @@ const char* Session::Track::getString(juce::String pname)
     MslValue* v = get(pname);
     return (v != nullptr) ? v->getString() : nullptr;
 }
+
+void Session::Track::setInt(juce::String pname, int value)
+{
+    ValueSet* g = ensureParameters();
+    g->setInt(pname, value);
+}    
+
+void Session::Track::setBool(juce::String pname, bool value)
+{
+    ValueSet* g = ensureParameters();
+    g->setBool(pname, value);
+}    
+
+void Session::Track::setString(juce::String pname, const char* value)
+{
+    ValueSet* g = ensureParameters();
+    g->setString(pname, value);
+}    
 
 //////////////////////////////////////////////////////////////////////
 //

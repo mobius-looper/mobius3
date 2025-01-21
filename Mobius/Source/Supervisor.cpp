@@ -274,7 +274,6 @@ bool Supervisor::start()
 
     // load the initial session and prepare internal objects
     producer.reset(new Producer(this));
-    producer->initialize();
     Session* ses = initializeSession();
     
     // initialize the view for the known track counts
@@ -1308,15 +1307,20 @@ void Supervisor::propagateConfiguration()
  */
 Session* Supervisor::initializeSession()
 {
-    // validate/upgrade the configuration files
-    // doing a gradual migration toward Session from MobiusConfig
-    // this must be done after symbols are initialized
-    Session* neu = producer->readStartupSession();
-
+    // before Producer/ScriptClerk get going, do a few old upgrades
+    // to mobius.xml that should be long over by now
     MobiusConfig* config = getMobiusConfig();
     if (upgrader.upgrade(config)) {
         fileManager.writeMobiusConfig(config);
     }
+
+    // initialize SessionClerk and do Setup migration if necessary
+    producer->initialize();
+    
+    // validate/upgrade the configuration files
+    // doing a gradual migration toward Session from MobiusConfig
+    // this must be done after symbols are initialized
+    Session* neu = producer->readStartupSession();
     
     // do this unconditionally for awhile
     upgradeSession(config, neu);
