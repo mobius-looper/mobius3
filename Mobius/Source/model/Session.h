@@ -114,6 +114,9 @@ class Session
     // force the number of audio tracks
     void reconcileTrackCount(TrackType type, int required);
 
+    // find a track of a type
+    Track* getTrackByType(TrackType type, int index);
+
     // for SessionClerk migration
     void add(Track* t);
 
@@ -156,6 +159,8 @@ class Session
     bool modified = false;
     juce::OwnedArray<Track> tracks;
     std::unique_ptr<ValueSet> globals;
+
+    int countTracks(TrackType type);
 
     Track* parseTrack(juce::XmlElement* root, juce::StringArray& errors);
     void renderTrack(juce::XmlElement* parent, Track* track);

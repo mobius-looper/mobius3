@@ -2804,67 +2804,67 @@ void UIParameterPanClass::setValue(void* obj, ExValue* value)
 UIParameterPanClass UIParameterPanObj;
 UIParameter* UIParameterPan = &UIParameterPanObj;
 
-////////////// SyncSource
+////////////// OldSyncSource
 
-class UIParameterSyncSourceClass : public UIParameter
+class UIParameterOldSyncSourceClass : public UIParameter
 {
   public:
-    UIParameterSyncSourceClass();
+    UIParameterOldSyncSourceClass();
     void getValue(void* obj, class ExValue* value) override;
     void setValue(void* obj, class ExValue* value) override;
 };
-const char* UIParameterSyncSourceClassValues[] = {"default","none","track","out","host","midi","transport",nullptr};
-const char* UIParameterSyncSourceClassLabels[] = {"Default","None","Track","Out","Host","Midi","Transport",nullptr};
-UIParameterSyncSourceClass::UIParameterSyncSourceClass()
+const char* UIParameterOldSyncSourceClassValues[] = {"default","none","track","out","host","midi","transport",nullptr};
+const char* UIParameterOldSyncSourceClassLabels[] = {"Default","None","Track","Out","Host","Midi","Transport",nullptr};
+UIParameterOldSyncSourceClass::UIParameterOldSyncSourceClass()
 {
     name = "syncSource";
     displayName = "Sync Source";
     scope = ScopeTrack;
     type = TypeEnum;
-    values = UIParameterSyncSourceClassValues;
-    valueLabels = UIParameterSyncSourceClassLabels;
+    values = UIParameterOldSyncSourceClassValues;
+    valueLabels = UIParameterOldSyncSourceClassLabels;
 }
-void UIParameterSyncSourceClass::getValue(void* obj, ExValue* value)
+void UIParameterOldSyncSourceClass::getValue(void* obj, ExValue* value)
 {
     value->setInt(((SetupTrack*)obj)->getSyncSource());
 }
-void UIParameterSyncSourceClass::setValue(void* obj, ExValue* value)
+void UIParameterOldSyncSourceClass::setValue(void* obj, ExValue* value)
 {
     ((SetupTrack*)obj)->setSyncSource((OldSyncSource)value->getInt());
 }
-UIParameterSyncSourceClass UIParameterSyncSourceObj;
-UIParameter* UIParameterSyncSource = &UIParameterSyncSourceObj;
+UIParameterOldSyncSourceClass UIParameterOldSyncSourceObj;
+UIParameter* UIParameterOldSyncSource = &UIParameterOldSyncSourceObj;
 
-////////////// TrackSyncUnit
+////////////// OldTrackSyncUnit
 
-class UIParameterTrackSyncUnitClass : public UIParameter
+class UIParameterOldTrackSyncUnitClass : public UIParameter
 {
   public:
-    UIParameterTrackSyncUnitClass();
+    UIParameterOldTrackSyncUnitClass();
     void getValue(void* obj, class ExValue* value) override;
     void setValue(void* obj, class ExValue* value) override;
 };
-const char* UIParameterTrackSyncUnitClassValues[] = {"default","subcycle","cycle","loop",nullptr};
-const char* UIParameterTrackSyncUnitClassLabels[] = {"Default","Subcycle","Cycle","Loop",nullptr};
-UIParameterTrackSyncUnitClass::UIParameterTrackSyncUnitClass()
+const char* UIParameterOldTrackSyncUnitClassValues[] = {"default","subcycle","cycle","loop",nullptr};
+const char* UIParameterOldTrackSyncUnitClassLabels[] = {"Default","Subcycle","Cycle","Loop",nullptr};
+UIParameterOldTrackSyncUnitClass::UIParameterOldTrackSyncUnitClass()
 {
     name = "trackSyncUnit";
     displayName = "Track Sync Unit";
     scope = ScopeTrack;
     type = TypeEnum;
-    values = UIParameterTrackSyncUnitClassValues;
-    valueLabels = UIParameterTrackSyncUnitClassLabels;
+    values = UIParameterOldTrackSyncUnitClassValues;
+    valueLabels = UIParameterOldTrackSyncUnitClassLabels;
 }
-void UIParameterTrackSyncUnitClass::getValue(void* obj, ExValue* value)
+void UIParameterOldTrackSyncUnitClass::getValue(void* obj, ExValue* value)
 {
     value->setInt(((SetupTrack*)obj)->getSyncTrackUnit());
 }
-void UIParameterTrackSyncUnitClass::setValue(void* obj, ExValue* value)
+void UIParameterOldTrackSyncUnitClass::setValue(void* obj, ExValue* value)
 {
     ((SetupTrack*)obj)->setSyncTrackUnit((SyncTrackUnit)value->getInt());
 }
-UIParameterTrackSyncUnitClass UIParameterTrackSyncUnitObj;
-UIParameter* UIParameterTrackSyncUnit = &UIParameterTrackSyncUnitObj;
+UIParameterOldTrackSyncUnitClass UIParameterOldTrackSyncUnitObj;
+UIParameter* UIParameterOldTrackSyncUnit = &UIParameterOldTrackSyncUnitObj;
 
 ////////////// AudioInputPort
 

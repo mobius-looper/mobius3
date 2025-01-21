@@ -195,7 +195,7 @@
       in mobius.xml as "startingSetup".
     </Parameter>
 
-    <Parameter name='bindings'
+    <Parameter name='bindings' options='noBinding'
                type='structure' structureClass='BindingSet'
                >
       Selects an optional alternate binding set.
@@ -206,53 +206,53 @@
       ?? do we really
     </Parameter>
 
-    <Parameter name='fadeFrames' high='1024'>
+    <Parameter name='fadeFrames' high='1024' options='noBinding'>
       In practie this will probably have an enforced lower bound that
       won't be part of the definition, though maybe setting it to zero
       would be interesring for testing?
     </Parameter>
     
-    <Parameter name='maxSyncDrift' high='10000'>
+    <Parameter name='maxSyncDrift' high='10000' options='noBinding'>
       The amount of drift to allow before we force a Realign
     </Parameter>
 
-    <Parameter name='driftCheckPoint' values='loop,external'>
+    <Parameter name='driftCheckPoint' values='loop,external' options='noBinding'>
       Where we do sync drift correction
     </Parameter>
 
-    <Parameter name='pluginPorts' low='1' high='8'>
+    <Parameter name='pluginPorts' low='1' high='8' options='noBinding'>
       The number of ports (stereo channel pairs) we will advertise to the plugin host.
       Arguably belongs in a separate device configuration model.
     </Parameter>
 
-    <Parameter name='longPress' low='250' high='10000'>
+    <Parameter name='longPress' low='250' high='10000' options='noBinding'>
       The amount of time a trigger can be held before activating long-press behavior.
       Forget what the unit is here, milliseconds or tenths?
       Belongs in UIConfig with other Binding parameters.
     </Parameter>
-    <Parameter name='longDisable' type='bool'>
+    <Parameter name='longDisable' type='bool' options='noBinding'>
       During debugging it is really annoying to have long-press behavior firing
       when we're single stepping so allow it to be turned off.
     </Parameter>
     
-    <Parameter name='spreadRange' low='1' high='128'>
+    <Parameter name='spreadRange' low='1' high='128' options='noBinding'>
       The amount to spread the binding range over adjacent values.
       Belongs in UIConfig with the other BInding parameters.
     </Parameter>
 
-    <Parameter name='traceLevel'
+    <Parameter name='traceLevel' options='noBinding'
                coreName='traceDebugLevel'
                codeName='TraceDebugLevel'>
       Controls the granularity of trace logging to the debug output stream on Windows
       or the console on Mac.  Core also has tracePrintLevel, try to merge these.
       </Parameter>
 
-    <Parameter name='autoFeedbackReduction' type='bool'>
+    <Parameter name='autoFeedbackReduction' type='bool' options='noBinding'>
       Forget what this does, I think feedback is automatically reduced when in
       some recording modes like multiply or overdub.
     </Parameter>
 
-    <Parameter name='isolateOverdubs' type='bool'>
+    <Parameter name='isolateOverdubs' type='bool' options'noBinding'>
       Has to do with project saving, should move to UI
     </Parameter>
 
@@ -261,11 +261,11 @@
       this is implemented in the engine, maybe buried under Recorder.
     </Parameter>
     
-    <Parameter name='saveLayers' type='bool'>
+    <Parameter name='saveLayers' type='bool' options='noBinding'>
       Another project option, move to UI
     </Parameter>
 
-    <Parameter name='quickSave' type='string'>
+    <Parameter name='quickSave' type='string' options='noBinding'>
       The base name fo the quick save file.
       Move to UI
     </Parameter>
@@ -278,26 +278,26 @@
          </Parameter>
       -->
 
-    <Parameter name='groupFocusLock' type='bool'>
+    <Parameter name='groupFocusLock' type='bool' options='noBinding'>
       Still relevant?  Move to UI
     </Parameter>
 
-    <Parameter name='trackCount' coreName='tracks' codeName='Tracks'>
+    <Parameter name='trackCount' coreName='tracks' codeName='Tracks' options='noBinding'>
       The number of tracks to configure internally and display in the UI
       Cannot be changed at runtime
     </Parameter>
 
-    <Parameter name='maxLoops'> 
+    <Parameter name='maxLoops' options='noBinding'> 
       The maximum number of loops a track can have.
       Cannot be changed at runtime.
     </Parameter>
     
-    <Parameter name='inputLatency'>
+    <Parameter name='inputLatency' options='noBinding'>
       The number of samples to use for input latency adjustments.  Overrides
       what is reported by the container for the selected audio device.
     </Parameter>
     
-    <Parameter name='outputLatency'>
+    <Parameter name='outputLatency' options='noBinding'>
       The number of samples to use for output latency adjustments.  Overrides
       what is reported by the container for the selected audio device.
     </Parameter>
@@ -498,7 +498,13 @@
   <!-- =======================================================================
        SETUP
   ============================================================================ -->
-
+  <!--
+      Setup parameters are essentially global parameters but they were managed
+      inside multiiple objects that could be swapped rather than a single set
+      shared by all Setups.  They are no longer used, replaced by Session parameters
+      though there are a few name overlaps.
+  -->
+  
   <ParameterScope name='setup'>
 
     <Parameter name='defaultPreset'
@@ -514,28 +520,35 @@
     <!-- note that this needs "default" as the first enum value even though that's not
          allowed for this parameter since internally it shares the same SyncSource enumeration
          with the syncSource track scope parameter
+
+note2: The sync related parameters and really everything in Setup are deprecated
+and replaced by a new set of parameters defined at the end of this file
+
     -->
     <Parameter name='defaultSyncSource' values='default,none,track,out,host,midi,transport'
+               options='noBinding'
                coreName='syncSource'
                codeName='SyncSource'
                enumName='SyncSource'/>
     <Parameter name='defaultTrackSyncUnit' values='subcycle,cycle,loop'
+               options='noBinding'
                codeName='SyncTrackUnit'
                enumName='SyncTrackUnit'/>
     <Parameter name='slaveSyncUnit' values='beat,bar'
+               options='noBinding'
                codeName='SyncUnit'
                enumName='SyncUnit'/>
-    <Parameter name='manualStart' type='bool' />
-    <Parameter name='minTempo' high='500' />
-    <Parameter name='maxTempo' high='500' />
-    <Parameter name='beatsPerBar' high='64' />
-    <Parameter name='muteSyncMode' values='transport,transportClocks,clocks,none' />
-    <Parameter name='resizeSyncAdjust' values='none,tempo'
+    <Parameter name='manualStart' type='bool' options='noBinding'/>
+    <Parameter name='minTempo' high='500' options='noBinding'/>
+    <Parameter name='maxTempo' high='500' options='noBinding'/>
+    <Parameter name='beatsPerBar' high='64' options='noBinding'/>
+    <Parameter name='muteSyncMode' values='transport,transportClocks,clocks,none' options='noBinding'/>
+    <Parameter name='resizeSyncAdjust' values='none,tempo' options='noBinding'
                enumName='SyncAdjust'/>
 
-    <Parameter name='speedSyncAdjust' values='none,tempo'
+    <Parameter name='speedSyncAdjust' values='none,tempo' options='noBinding'
                enumName='SyncAdjust'/>
-    <Parameter name='realignTime' values='start,bar,beat,now' />
+    <Parameter name='realignTime' values='start,bar,beat,now' options='noBinding'/>
 
     <Parameter name='activeTrack' high='8' options='dynamic,noBinding'
                coreName='selectedTrack'>
@@ -588,7 +601,7 @@
     <Parameter name='activePreset' coreName='preset'
                type='structure' structureClass='Preset'
                codeName='StartingPresetName'
-               options='transient,resetRetain'>
+               options='noBinding,transient,resetRetain'>
       In runtime context this changes the Preset a track is using.
     </Parameter>
     
@@ -598,7 +611,7 @@
     <Parameter name='group' options='dynamic,resetRetain'/>
     -->
     <!-- ugh, unclear how core is dealing with this -->
-    <Parameter name='groupName' options='dynamic,resetRetain'/>
+    <Parameter name='groupName' options='noBinding,dynamic,resetRetain'/>
     
     <Parameter name='mono' type='bool' options='noBinding'/>
     <Parameter name='feedback' high='127' options='control,resetRetain,mayFocus'/>
@@ -607,9 +620,12 @@
     <Parameter name='output' codeName='OutputLevel' high='127' options='control,resetRetain,mayFocus'/>
     <Parameter name='pan' high='127' options='control,resetRetain,mayFocus'/>
 
-    <Parameter name='syncSource' values='default,none,track,out,host,midi,transport' />
-    <Parameter name='trackSyncUnit' codeName='SyncTrackUnit' enumName='SyncTrackUnit'
+<!-- !! These are the problems.  We need a different enumeration for the new parameters in the Session -->
+    
+    <Parameter name='oldSyncSource' values='default,none,track,out,host,midi,transport' options='noBinding'/>
+    <Parameter name='oldTrackSyncUnit' codeName='SyncTrackUnit' enumName='SyncTrackUnit'
                values='default,subcycle,cycle,loop' />
+    
     <Parameter name='audioInputPort' low='0' high='31' displayBase='1' options='noBinding'/>
     <Parameter name='audioOutputPort' low='0' high='31' displayBase='1' options='noBinding'/>
     <Parameter name='pluginInputPort' low='0' high='31' displayBase='1'options='noBinding'/>
@@ -641,7 +657,7 @@
 
   <ParameterScope name='global'>
 
-    <Parameter name='eventScript' type='string' treeInclude='session' tree='Events'/>
+    <Parameter name='eventScript' type='string'/>
     
   </ParameterScope>
 
@@ -649,40 +665,58 @@
        Session Track
   ============================================================================ -->
 
+  <!-- keep these out of Binding lists for awhile -->
+  
   <ParameterScope name='track'>
+
+    <!-- the replacement for oldSyncSource defined SyncSource in SyncConstants.h -->
+    <Parameter name='syncSource' values='none,transport,track,host,midi,master'/>
+
+    <!-- the replacements for slaveSyncUnit, used for all except track -->
+    <Parameter name='syncUnit' values='beat,bar,loop'/>
     
-    <Parameter name='leaderType'
+    <!-- the replacement for oldTrackSyncUnit -->
+    <Parameter name='trackSyncUnit' values='subcycle,cycle,loop'/>
+
+    <!-- these apply only to Midi tracks ATM -->
+    
+    <Parameter name='leaderType' options='noBinding'
                values='none,track,trackSyncMaster, transportMaster,focused,host,midi,transport'
                valueLabels='None,Track Number,Track Sync Master,Transport Master,Focused,Host,MIDI In'
-               treeInclude='midiTrack'/>
+               />
 
-    <Parameter name='leaderSwitchLocation'
+    <Parameter name='leaderSwitchLocation' options='noBinding'
                values='none,loop,cycle,subcycle'
-               treeInclude='midiTrack'/>
+               />
     
-    <Parameter name='leaderTrack' type='int' treeInclude='midiTrack'/>
-    <Parameter name='followRecord' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='followRecordEnd' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='followSize' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='followLocation' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='followMute' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='followStartPoint' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='followRate' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='followDirection' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='followSwitch' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='followCut' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='followQuantizeLocation' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='followerMuteStart' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='noReset' type='bool' treeInclude='midiTrack'/>
-    <Parameter name='noEdit' type='bool' treeInclude='midiTrack'/>
+    <Parameter name='leaderTrack' type='int'  options='noBinding'/>
+    <Parameter name='followRecord' type='bool'  options='noBinding'/>
+    <Parameter name='followRecordEnd' type='bool'  options='noBinding'/>
+    <Parameter name='followSize' type='bool'  options='noBinding'/>
+    <Parameter name='followLocation' type='bool'  options='noBinding'/>
+    <Parameter name='followMute' type='bool'  options='noBinding'/>
+    <Parameter name='followStartPoint' type='bool'  options='noBinding'/>
+    <Parameter name='followRate' type='bool'  options='noBinding'/>
+    <Parameter name='followDirection' type='bool'  options='noBinding'/>
+    <Parameter name='followSwitch' type='bool'  options='noBinding'/>
+    <Parameter name='followCut' type='bool'  options='noBinding'/>
+    <Parameter name='followQuantizeLocation' type='bool'  options='noBinding'/>
+    <Parameter name='followerMuteStart' type='bool'  options='noBinding'/>
+    <Parameter name='noReset' type='bool'  options='noBinding'/>
+    <Parameter name='noEdit' type='bool'  options='noBinding'/>
     <Parameter name='midiChannelOverride'
-               values='off,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16' treeInclude='midiTrack'/>
+               values='off,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16'  options='noBinding'/>
+
+    <!-- these are the ones from SetupTrack that we still use -->
 
   </ParameterScope>
   
   <!-- =======================================================================
        Sync and Transport
-  ============================================================================ -->
+       ============================================================================ -->
+
+  <!-- these are effectively all global parameters but give them a specific scope if that
+       becomes useful -->
 
   <ParameterScope name='sync'>
 

@@ -92,8 +92,8 @@ class Valuator
     // and cast the result into the enumeration.
     //
 
-    OldSyncSource getSyncSource(int trackId);
-    SyncTrackUnit getTrackSyncUnit(int trackId);
+    OldSyncSource getOldSyncSource(int trackId);
+    SyncTrackUnit getOldTrackSyncUnit(int trackId);
     OldSyncUnit getSlaveSyncUnit(int trackId);
     int getLoopCount(int trackId);
     LeaderType getLeaderType(int trackId);

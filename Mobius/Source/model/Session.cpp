@@ -152,6 +152,38 @@ Session::Track* Session::getTrackByNumber(int number)
 }
 
 /**
+ * This is intended for ModelTransformer when merging sessions.
+ * You normally would only reference tracks by number.
+ */
+Session::Track* Session::getTrackByType(TrackType type, int index)
+{
+    Track* found = nullptr;
+
+    int count = 0;
+    for (auto track : tracks) {
+        if (track->type == type) {
+            if (count == index) {
+                found = track;
+                break;
+            }
+            count++;
+        }
+    }
+    return found;
+}
+
+int Session::countTracks(TrackType type)
+{
+    int count = 0;
+    for (auto track : tracks) {
+        if (track->type == type) {
+            count++;
+        }
+    }
+    return count;
+}
+
+/**
  * Reconcile the number of tracks of a given type.
  * For audio tracks this currently comes from MobiusConfig for
  * MidiTracks this comes from the Session.
@@ -222,30 +254,17 @@ void Session::reconcileTrackCount(TrackType type, int required)
 // OBSOLETE: make this go away?
 Session::Track* Session::ensureTrack(TrackType type, int index)
 {
-    Track* found = nullptr;
-
-    int count = 0;
-    for (auto track : tracks) {
-        if (track->type == type) {
-            if (count == index) {
-                found = track;
-                break;
-            }
-            count++;
-        }
-    }
-
+    Track* found = getTrackByType(type, index);
     if (found == nullptr) {
+        int count = countTracks(type);
         for (int i = count ; i <= index ; i++) {
             found = new Session::Track();
             found->type = type;
             tracks.add(found);
         }
+        // give any new ones unique ids
+        assignIds();
     }
-
-    // give any new ones unique ids
-    assignIds();
-
     return found;
 }
 

@@ -79,7 +79,7 @@
 
 #include "SystemConstant.h"
 
-// for SyncSource, SyncUnit
+// for OldSyncSource, OldSyncUnit
 #include "Setup.h"
 
 /**

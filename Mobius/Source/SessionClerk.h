@@ -47,6 +47,7 @@ class SessionClerk
     juce::File libraryRoot;
     bool libraryValid = false;
 
+    void bootstrapDefaultSession();
     Folder* findFolder(juce::String name);
     
     juce::XmlElement* readSessionElement(juce::File src);
@@ -55,19 +56,7 @@ class SessionClerk
     Session* readSession(Folder* f);
     void writeSession(Folder* f, Session* s);
 
-    Folder* bootstrapDefaultSession();
-
-    // Temporary migration
-    
+    void migrateSetups();
     void createSession(class Session* neu);
-    void migrateSetups(class MobiusConfig* src);
-    void migrateSetup(class Setup* src, class Session* dest);
-    void migrateTrack(class SetupTrack* src, Session::Track* dest);
-    void migrateGlobals(class MobiusConfig* src, class Session* dest);
-    void convertEnum(juce::String name, int value, class ValueSet* dest);
-    
-    void migrate(SymbolId id, int value, class ValueSet* dest);
-    void migrateBool(SymbolId id, bool value, ValueSet* dest);
-    
-    
+
 };

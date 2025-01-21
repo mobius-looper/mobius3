@@ -12,6 +12,8 @@
 #include "../../model/UIParameterHandler.h"
 #include "../../model/ExValue.h"
 
+#include "../../sync/SyncConstants.h"
+
 #include "../../script/MslEnvironment.h"
 #include "../../script/MslBinding.h"
 #include "../../script/MslValue.h"
@@ -66,7 +68,7 @@ void LogicalTrack::setAdvanced(bool b)
 void LogicalTrack::loadSession(Session::Track* trackdef)
 {
     // assumes it is okay to hang onto this until the next one is loaded
-    session = trackdef;
+    sessionTrack = trackdef;
     trackType = trackdef->type;
 
     if (track == nullptr) {
@@ -119,7 +121,7 @@ int LogicalTrack::getSessionId()
 {
     // mobius tracks won't have a Session and therefore won't have
     // correlation ids, but it doesn't matter since we rebuild them every time
-    return (session != nullptr) ? session->id : 0;
+    return (sessionTrack != nullptr) ? sessionTrack->id : 0;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -318,49 +320,49 @@ void LogicalTrack::clearBindings()
     }
 }
 
-//////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
 //
-// Group 1: MidiTracks pulling things from the Session only
+// Parameter Enumeration Conversion
 //
-// Used only by MIDI tracks
+// Now that everything is in a ValueSet, it requires conversion into
+// the enumerated constant that is more convenient to use in code.
+// These do that transformation and also validate that the strings and ordinals
+// stored in the Session actually match the enumeration.
 //
-// Now that we've reworked how getParameterOrdinal deals with the Session
-// Should just use that and skip Enumerator!!
+// These are only used by MIDI tracks.  Audio tracks still get them from
+// the Setup which is created dynamically from the Session.
 //
 //////////////////////////////////////////////////////////////////////
 
-
-// !! need to start using Pulse constants here, I guess convert them till
-// why do we keep going back to the Session for this, just save them locally
-OldSyncSource LogicalTrack::getSyncSource()
+SyncSource LogicalTrack::getSyncSource()
 {
-    return (OldSyncSource)Enumerator::getOrdinal(manager->getSymbols(),
+    return (SyncSource)Enumerator::getOrdinal(manager->getSymbols(),
                                               ParamSyncSource,
-                                              session->getParameters(),
-                                              SYNC_NONE);
+                                              sessionTrack->getParameters(),
+                                              SyncSourceNone);
 }
 
-SyncTrackUnit LogicalTrack::getTrackSyncUnit()
+SyncUnit LogicalTrack::getSyncUnit()
 {
-    return (SyncTrackUnit)Enumerator::getOrdinal(manager->getSymbols(),
+    return (SyncUnit)Enumerator::getOrdinal(manager->getSymbols(),
+                                            ParamSyncUnit,
+                                            sessionTrack->getParameters(),
+                                            SyncUnitBeat);
+}
+
+TrackSyncUnit LogicalTrack::getTrackSyncUnit()
+{
+    return (TrackSyncUnit)Enumerator::getOrdinal(manager->getSymbols(),
                                                  ParamTrackSyncUnit,
-                                                 session->getParameters(),
-                                                 TRACK_UNIT_LOOP);
-}
-
-OldSyncUnit LogicalTrack::getSlaveSyncUnit()
-{
-    return (OldSyncUnit)Enumerator::getOrdinal(manager->getSymbols(),
-                                            ParamSlaveSyncUnit,
-                                            session->getParameters(),
-                                            SYNC_UNIT_BEAT);
+                                                 sessionTrack->getParameters(),
+                                                 TrackUnitLoop);
 }
 
 LeaderType LogicalTrack::getLeaderType()
 {
     return (LeaderType)Enumerator::getOrdinal(manager->getSymbols(),
                                               ParamLeaderType,
-                                              session->getParameters(),
+                                              sessionTrack->getParameters(),
                                               LeaderNone);
 }
 
@@ -368,7 +370,7 @@ LeaderLocation LogicalTrack::getLeaderSwitchLocation()
 {
     return (LeaderLocation)Enumerator::getOrdinal(manager->getSymbols(),
                                                   ParamLeaderSwitchLocation,
-                                                  session->getParameters(),
+                                                  sessionTrack->getParameters(),
                                                   LeaderLocationNone);
 }
 
@@ -377,7 +379,7 @@ int LogicalTrack::getLoopCount()
     int result = 2;
     Symbol* s = manager->getSymbols()->getSymbol(ParamLoopCount);
     if (s != nullptr) {
-        MslValue* v = session->get(s->name);
+        MslValue* v = sessionTrack->get(s->name);
         if (v != nullptr) {
             result = v->getInt();
             if (result < 1) {
@@ -466,8 +468,8 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
             // Preset if there is no value in the Session
             
             bool foundInSession = false;
-            if (trackType == Session::TypeMidi && session != nullptr) {
-                ValueSet* params = session->getParameters();
+            if (trackType == Session::TypeMidi && sessionTrack != nullptr) {
+                ValueSet* params = sessionTrack->getParameters();
                 if (params != nullptr) {
                     MslValue* v = params->get(s->name);
                     if (v != nullptr) {

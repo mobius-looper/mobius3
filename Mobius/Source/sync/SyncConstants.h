@@ -63,6 +63,14 @@ typedef enum {
     SyncUnitLoop
     
 } SyncUnit;
+
+typedef enum {
+
+    TrackUnitSubcycle,
+    TrackUnitCycle,
+    TrackUnitLoop
+
+} TrackSyncUnit;
     
 /****************************************************************************/
 /****************************************************************************/

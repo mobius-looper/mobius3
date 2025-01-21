@@ -890,8 +890,8 @@ void XmlRenderer::render(XmlBuffer* b, SetupTrack* t)
     render(b, UIParameterPluginInputPort, t->getPluginInputPort());
     render(b, UIParameterPluginOutputPort, t->getPluginOutputPort());
 
-    render(b, UIParameterSyncSource, t->getSyncSource());
-    render(b, UIParameterTrackSyncUnit, t->getSyncTrackUnit());
+    render(b, UIParameterOldSyncSource, t->getSyncSource());
+    render(b, UIParameterOldTrackSyncUnit, t->getSyncTrackUnit());
 
     UserVariables* uv = t->getVariables();
     if (uv == nullptr) {
@@ -939,8 +939,8 @@ void XmlRenderer::parse(XmlElement* e, SetupTrack* t)
     t->setPluginInputPort(parse(e, UIParameterPluginInputPort));
     t->setPluginOutputPort(parse(e, UIParameterPluginOutputPort));
 
-    t->setSyncSource((OldSyncSource)parse(e, UIParameterSyncSource));
-    t->setSyncTrackUnit((SyncTrackUnit)parse(e, UIParameterTrackSyncUnit));
+    t->setSyncSource((OldSyncSource)parse(e, UIParameterOldSyncSource));
+    t->setSyncTrackUnit((SyncTrackUnit)parse(e, UIParameterOldTrackSyncUnit));
 
     // should only have a single UserVariables 
 	for (XmlElement* child = e->getChildElement() ; child != nullptr ; 

@@ -23,7 +23,6 @@ SessionClerk::~SessionClerk()
 {
 }
 
-
 /**
  * Read the sessions defined in the user library.
  *
@@ -41,14 +40,12 @@ void SessionClerk::initialize()
         Trace(1, "SessionClerk: Sessions library folder exists as a file");
         thisIsFine = false;
     }
-    else {
-        if (!sessions.isDirectory()) {
-            juce::Result res = sessions.createDirectory();
-            if (res.failed()) {
-                Trace(1, "SessionClerk: Unable to create sessions library folder");
-                Trace(1, "  %s", res.getErrorMessage().toUTF8());
-                thisIsFine = false;
-            }
+    else if (!sessions.isDirectory()) {
+        juce::Result res = sessions.createDirectory();
+        if (res.failed()) {
+            Trace(1, "SessionClerk: Unable to create sessions library folder");
+            Trace(1, "  %s", res.getErrorMessage().toUTF8());
+            thisIsFine = false;
         }
     }
 
@@ -70,14 +67,60 @@ void SessionClerk::initialize()
             f->name = file.getFileNameWithoutExtension();
             f->path = path;
 
-            // todo: need to look inside
+            // todo: need to look inside and validate contents
             f->valid = true;
 
             folders.add(f);
         }
 
-        MobiusConfig* config = provider->getMobiusConfig();
-        migrateSetups(config);
+        // always ensure that a Default session exists
+        bootstrapDefaultSession();
+        
+        // convert old Setup objects into Sessions
+        migrateSetups();
+    }
+}
+
+/**
+ * On a fresh install (or a corrupted install) if we don't
+ * find the Default session in the library, attempt to create one.
+ * During the period immediately after build 30, this will look for
+ * session.xml in the root of the installation directory and copy it to the
+ * new folder so we can retain the early settings without corrupting them.
+ */
+void SessionClerk::bootstrapDefaultSession()
+{
+    Folder* f = findFolder(juce::String("Default"));
+    if (f == nullptr) {
+        juce::File sessionRoot = libraryRoot.getChildFile("Default");
+        juce::Result res = sessionRoot.createDirectory();
+        if (res.failed()) {
+            Trace(1, "SessionClerk: Unable to create defualt session folder");
+            Trace(1, "  %s", res.getErrorMessage().toUTF8());
+        }
+        else {
+            juce::File root = provider->getRoot();
+            juce::File old = root.getChildFile("session.xml");
+            juce::File dest = sessionRoot.getChildFile("session.xml");
+            bool copied = false;
+            if (old.existsAsFile()) {
+                copied = old.copyFileTo(dest);
+                if (!copied)
+                  Trace(1, "SessionClerk: Unable to convert old session.xml file");
+            }
+
+            if (!copied) {
+                Session empty;
+                dest.replaceWithText(empty.toXml());
+            }
+                
+            f = new Folder();
+            f->name = "Default";
+            f->path = sessionRoot.getFullPathName();
+            f->valid = true;
+            
+            folders.add(f);
+        }
     }
 }
 
@@ -134,12 +177,11 @@ void SessionClerk::logErrors(const char* filename, juce::StringArray& errors)
     }
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Session Files
-//
-//////////////////////////////////////////////////////////////////////
-
+/**
+ * Given a folder from the library read the session.xml file and
+ * create a Session object.  The Session is owned by the caller
+ * and must be cached or deleted.
+ */
 Session* SessionClerk::readSession(Folder* f)
 {
     Session* session = nullptr;
@@ -158,7 +200,8 @@ Session* SessionClerk::readSession(Folder* f)
                 logErrors("session.xml", errors);
                 delete el;
 
-                // it doesn't matter what the .xml file had for name, it gets where it was
+                // it doesn't matter what the .xml file had for name
+                // it gets the name from the folder it was in
                 session->setName(f->name);
             }
         }
@@ -166,13 +209,17 @@ Session* SessionClerk::readSession(Folder* f)
     return session;
 }
 
+/**
+ * Write a modified Session back to the library folder.
+ */
 void SessionClerk::writeSession(Folder* f, Session* s)
 {
-    if (f != nullptr) {
+    if (f != nullptr && s != nullptr) {
         juce::File root (f->path);
         juce::File dest = root.getChildFile("session.xml");
 
-        // this doesn't matter, but make sure it matches to avoid confusion
+        // this doesn't matter since we fix it on read,
+        // but make sure it matches to avoid confusion
         s->setName(f->name);
         
         dest.replaceWithText(s->toXml());
@@ -181,54 +228,9 @@ void SessionClerk::writeSession(Folder* f, Session* s)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Default Session
+// Public Interface
 //
 //////////////////////////////////////////////////////////////////////
-
-/**
- * On a fresh install (or a corrupted install) if we don't
- * find the Default session in the library, attempt to create one.
- * During the period immediately after build 30, this will look for
- * session.xml in the root of the installation directory and copy it to the
- * new folder so we can retain the early settings without corrupting them.
- */
-SessionClerk::Folder* SessionClerk::bootstrapDefaultSession()
-{
-    Folder* result = nullptr;
-
-    if (libraryValid) {
-        juce::File sessionRoot = libraryRoot.getChildFile("Default");
-        juce::Result res = sessionRoot.createDirectory();
-        if (res.failed()) {
-            Trace(1, "SessionClerk: Unable to create defualt session folder");
-            Trace(1, "  %s", res.getErrorMessage().toUTF8());
-        }
-        else {
-            juce::File root = provider->getRoot();
-            juce::File old = root.getChildFile("session.xml");
-            juce::File dest = sessionRoot.getChildFile("session.xml");
-            bool copied = false;
-            if (old.existsAsFile()) {
-                copied = old.copyFileTo(dest);
-                if (!copied)
-                  Trace(1, "SessionClerk: Unable to convert old session.xml file");
-            }
-
-            if (!copied) {
-                Session empty;
-                dest.replaceWithText(empty.toXml());
-            }
-                
-            result = new Folder();
-            result->name = "Default";
-            result->path = sessionRoot.getFullPathName();
-            result->valid = true;
-            
-            folders.add(result);
-        }
-    }
-    return result;
-}
 
 /**
  * This one is special, we don't bail if it doesn't exist.
@@ -239,9 +241,13 @@ Session* SessionClerk::readDefaultSession()
 
     if (libraryValid) {
         Folder* f = findFolder(juce::String("Default"));
-        if (f == nullptr)
-          f = bootstrapDefaultSession();
-        session = readSession(f);
+        if (f == nullptr) {
+            // bootstratpDefaultSession should have done this during initialize()
+            Trace(1, "SessionClerk: Default session not found");
+        }
+        else {
+            session = readSession(f);
+        }
     }
 
     // prevent NPEs
@@ -252,12 +258,6 @@ Session* SessionClerk::readDefaultSession()
     
     return session;
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// Public Interface
-//
-//////////////////////////////////////////////////////////////////////
 
 Session* SessionClerk::readSession(juce::String name)
 {
@@ -296,36 +296,75 @@ void SessionClerk::saveSession(Session* s)
 ///////////////////////////////////////////////////////////////////////
 
 /**
- * Early in startup, when the Producer is initialized, migrate Setup
- * objects from the old mobius.xml into Sessions.  This is only done once.
+ * Convert any Setup objects into Sessions.  This is normally done once.
+ * Once a Session exists with the same name as a Setup, it is assumed that
+ * the new session editor is being used and the old Setup objects can
+ * be ignored.
  *
- * Do NOT TOUCH mobius.xml.  It is imortant to be able to revert to an earlier
- * release that still uses it.
+ * A special case exists for the Setup named "Default".  The Session with
+ * that name is bootstrapped by copying the first prototype session.xml
+ * into the session library folder and this is where Midi track definitions
+ * for the earlier releases will live.  That session has no audio tracks.
+ * When the Default Setup is encounered it needs to merge into the Default
+ * Setup rather than creating a new one.
+ *
+ * For testing, this can also be done for all of them, but this is temporary.
+ * Once the session editor is working properly it should never go back
+ * to the Setups for audio tracks.
+ *
+ * NOTE: So that user can downgrade to earlier builds, it is important that
+ * we NOT TOUCH either mobius.xml or the original session.xml.
  */
-void SessionClerk::migrateSetups(MobiusConfig* config)
+void SessionClerk::migrateSetups()
 {
     ModelTransformer transformer(provider);
     
+    MobiusConfig* config = provider->getMobiusConfig();
     for (Setup* setup = config->getSetups() ; setup != nullptr ; setup = setup->getNextSetup()) {
 
-        // !! this could be a problem if they used characters in setup names that are not
-        // allowed in file names.  Need a name sanitizer
-        Folder* f = findFolder(juce::String(setup->getName()));
-        if (f != nullptr) {
-            // already migrated or edited, ignore
+        juce::String setupName (setup->getName());
+        Folder* f = findFolder(setupName);
+
+        if (f == nullptr) {
+
+            // this should not be happening if bootstrapDefaultSession worked
+            if (setupName == "Default")
+              Trace(1, "SessionClerk: Migrating into Default, bootstrap failed");
+            else
+              Trace(2, "SessionClerk: Migrating Setup %s", setup->getName());
+            
+            Session* neu = transformer.setupToSession(setup);
+            // former global parameters are duplicated in every session
+            transformer.addGlobals(config, neu);
+            createSession(neu);
+            delete neu;
         }
         else {
-            Trace(2, "SessionClerk: Migrating Setup %s", setup->getName());
-
-            Session* neu = transformer.setupToSession(setup);
-
-            transformer.addGlobals(config, neu);
+            bool merge = (setupName == "Default");
+            // temporary testing
+            merge = true;
             
-            createSession(neu);
+            if (merge) {
+                Trace(2, "SessionClerk: Merging Setup %s", setup->getName());
+                
+                Session* dest = readSession(f);
+                if (dest == nullptr) {
+                    Trace(1, "SessionClerk: Unable to read Session to merge into %s", f->name.toUTF8());
+                }
+                else {
+                    transformer.merge(setup, dest);
+                    writeSession(f, dest);
+                    delete dest;
+                }
+            }
         }
     }
 }
 
+/**
+ * Given a Session fresly created from an old Setup, save it
+ * in the library.
+ */
 void SessionClerk::createSession(Session* neu)
 {
     juce::String name = neu->getName();

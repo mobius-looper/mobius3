@@ -1,6 +1,6 @@
 /**
- * Utility to convert between the old MobiusConfig model and the new
- * Session model.
+ * Utility to convert between the old MobiusConfig and Setup models
+ * and the new Session model.
  *
  */
 
@@ -20,6 +20,7 @@ class ModelTransformer
 
     class Session* setupToSession(class Setup* s);
     void addGlobals(class MobiusConfig* config, class Session* session);
+    void merge(class Setup* src, class Session* dest);
 
   private:
 

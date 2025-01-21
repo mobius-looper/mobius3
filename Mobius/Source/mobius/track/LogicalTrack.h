@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 
 #include "../../model/ParameterConstants.h"
+#include "../../sync/SyncConstants.h"
 #include "../../model/Session.h"
 #include "../../model/ValueSet.h"
 
@@ -65,9 +66,9 @@ class LogicalTrack
     
     int getParameterOrdinal(SymbolId id);
     
-    OldSyncSource getSyncSource();
-    SyncTrackUnit getTrackSyncUnit();
-    OldSyncUnit getSlaveSyncUnit();
+    SyncSource getSyncSource();
+    SyncUnit getSyncUnit();
+    TrackSyncUnit getTrackSyncUnit();
     int getLoopCount();
     LeaderType getLeaderType();
     LeaderLocation getLeaderSwitchLocation();
@@ -82,7 +83,7 @@ class LogicalTrack
   private:
 
     class TrackManager* manager = nullptr;
-    class Session::Track* session = nullptr;
+    class Session::Track* sessionTrack = nullptr;
     Session::TrackType trackType = Session::TypeAudio;
     int engineNumber = 0;
 

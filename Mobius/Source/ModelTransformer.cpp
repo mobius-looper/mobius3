@@ -40,6 +40,43 @@ void ModelTransformer::addGlobals(MobiusConfig* config, Session* session)
     transform(config, session);
 }
 
+/**
+ * Speial operation for the "Default" Setup that merges audio
+ * track definitions into an existing Session rather than creating
+ * a new one.
+ *
+ * The correspondence between a SetupTrack and a Session::Track is
+ * loose since tracks don't always have unique identifiers.  The expectation
+ * is that this only happens once, and the destination Session will either have
+ * no audio tracks or will have stubbed out or corrupted tracks and exact
+ * correspondence doesn't matter.  We will match them by position rather than
+ * name or contents.
+ */
+void ModelTransformer::merge(Setup* src, Session* dest)
+{
+    // start by making the numbers match
+    int trackCount = 0;
+    for (SetupTrack* t = src->getTracks() ; t != nullptr ; t = t->getNext())
+      trackCount++;
+
+    dest->reconcileTrackCount(Session::TypeAudio, trackCount);
+
+    // now replace them
+    int trackIndex = 0;
+    for (SetupTrack* t = src->getTracks() ; t != nullptr ; t = t->getNext()) {
+        Session::Track* destTrack = dest->getTrackByType(Session::TypeAudio, trackIndex);
+        if (destTrack == nullptr) {
+            // reconcile didn't work
+            Trace(1, "ModelTransformer: Session track count mismatch, bad reconciliation");
+            break;
+        }
+        else {
+            transform(src, t, destTrack);
+        }
+        trackIndex++;
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Value Transformers
@@ -231,11 +268,18 @@ void ModelTransformer::transform(MobiusConfig* src, Session* dest)
  *
  *   defaultSyncSource
  *   slaveSyncUnit (default)
- * 
+ *
+ *
+ * Merge flag is only for the Setup named "Default".  The Default bootstrapped
+ * Session also has that name, and it usually comes with Midi track definitions
+ * but no audio tracks.  In this case we add audio tracks from the Setup but
+ * leave the Midi tracks and midi count in place.
  */
 void ModelTransformer::transform(Setup* src, Session* dest)
 {
     ValueSet*  values = dest->ensureGlobals();
+
+    dest->setName(juce::String(src->getName()));
 
     // still used by Track
     transform(ParamDefaultPreset, src->getDefaultPresetName(), values);
@@ -301,6 +345,10 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
     transform(ParamPluginInputPort, src->getPluginInputPort(), values);
     transform(ParamPluginOutputPort, src->getPluginOutputPort(), values);
 
+    // The sync parameters have changed enumerations
+    // Setup uses OldSyncSource and OldTrackSyncUnit and the Session
+    // uses SyncSource and TrackSyncUnit
+    
     // there is no longer a "default" value here that falls back to a higher level
     OldSyncSource syncSource = src->getSyncSource();
     if (syncSource == SYNC_DEFAULT)
@@ -308,9 +356,9 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
 
     // note: though the Session doesn't use the same enumeration, the values are the
     // same except that SYNC_OUT is converted to SYNC_MASTER
-    // this needs a new Symbol!!
     const char* newEnum = nullptr;
     switch (syncSource) {
+        case SYNC_NONE: newEnum = "none"; break;
         case SYNC_TRACK: newEnum = "track"; break;
         case SYNC_MIDI: newEnum = "midi"; break;
         case SYNC_HOST: newEnum = "host"; break;
@@ -319,15 +367,24 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
     }
     if (newEnum != nullptr)
       values->setString(juce::String("syncSource"), newEnum);
-    
+
+    // similar conversion the names are the same except there is no Default
     // convert this using the old enum for now
     SyncTrackUnit trackUnit = src->getSyncTrackUnit();
     if (trackUnit == TRACK_UNIT_DEFAULT)
       trackUnit = defaultTrackSyncUnit;
-        
-    transformEnum(ParamTrackSyncUnit, trackUnit, values);
 
-    // do we want a common sync unit for both midi and host or two?
+    newEnum = nullptr;
+    switch (trackUnit) {
+        case TRACK_UNIT_SUBCYCLE: newEnum = "subcycle"; break;
+        case TRACK_UNIT_CYCLE: newEnum = "cycle"; break;
+        case TRACK_UNIT_LOOP: newEnum = "loop"; break;
+    }
+    if (newEnum != nullptr)
+      values->setString(juce::String("trackSyncUnit"), newEnum);
+
+    // old model had only beat and bar, new model adds loop
+    // but you won't see that in the Setup
     newEnum = nullptr;
     OldSyncUnit slaveUnit = setup->getSyncUnit();
     switch (slaveUnit) {
@@ -341,6 +398,9 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
 //////////////////////////////////////////////////////////////////////
 //
 // Pending
+//
+// Some old prototype code for transforming Presets that will be
+// needed someday
 //
 //////////////////////////////////////////////////////////////////////
 

@@ -446,8 +446,8 @@ void SetupEditor::initForm()
     // resetRetains, overlayBindings
 
     addField("Tracks", UIParameterTrackName);
-    addField("Tracks", UIParameterSyncSource);    // overrides default SyncSourceParameter
-    addField("Tracks", UIParameterTrackSyncUnit);
+    addField("Tracks", UIParameterOldSyncSource);    // overrides default SyncSourceParameter
+    addField("Tracks", UIParameterOldTrackSyncUnit);
     // same hackery as UIParameterGroupName to get it refreshed every time
     trackPresetField = new ParameterField(supervisor, UIParameterTrackPreset);
     form.add(trackPresetField, "Tracks", 0);

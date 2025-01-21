@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Session name="Default" location="" audioTracks="8" midiTracks="2">
+<Session name="Default" audioTracks="8" midiTracks="2">
   <Track id="1" number="9" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="7"/>
@@ -18,7 +18,7 @@
       <Value name="leaderTrack" value="1"/>
       <Value name="leaderType" value="track" type="enum" ordinal="1"/>
       <Value name="loopCount" value="2"/>
-      <Value name="midiChannelOverride" value="10" type="enum" ordinal="10"/>
+      <Value name="midiChannelOverride" value="9" type="enum" ordinal="9"/>
       <Value name="midiThru" value="1" type="int"/>
       <Value name="outputDevice" value="Bome MIDI Translator 1"/>
       <Value name="quantize" value="off" type="enum" ordinal="0"/>
@@ -53,29 +53,150 @@
       <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
-  <Track id="9" number="1" type="audio">
-    <ValueSet/>
+  <Track id="9" number="1" type="audio" name="sadf">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="3" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="0" type="int"/>
+      <Value name="groupName" value="Groupuu"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="0" type="int"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="master"/>
+      <Value name="syncUnit" value="bar"/>
+      <Value name="trackSyncUnit" value="loop"/>
+    </ValueSet>
   </Track>
-  <Track id="10" number="2" type="audio">
-    <ValueSet/>
+  <Track id="10" number="2" type="audio" name="xxxx">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="0" type="int"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="0" type="int"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="master"/>
+      <Value name="syncUnit" value="bar"/>
+      <Value name="trackSyncUnit" value="loop"/>
+    </ValueSet>
   </Track>
   <Track id="11" number="3" type="audio">
-    <ValueSet/>
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="0" type="int"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="0" type="int"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="none"/>
+      <Value name="syncUnit" value="bar"/>
+      <Value name="trackSyncUnit" value="cycle"/>
+    </ValueSet>
   </Track>
   <Track id="12" number="4" type="audio">
-    <ValueSet/>
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="0" type="int"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="0" type="int"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="none"/>
+      <Value name="syncUnit" value="bar"/>
+      <Value name="trackSyncUnit" value="cycle"/>
+    </ValueSet>
   </Track>
   <Track id="13" number="5" type="audio">
-    <ValueSet/>
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="0" type="int"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="0" type="int"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="none"/>
+      <Value name="syncUnit" value="bar"/>
+      <Value name="trackSyncUnit" value="cycle"/>
+    </ValueSet>
   </Track>
   <Track id="14" number="6" type="audio">
-    <ValueSet/>
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="0" type="int"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="0" type="int"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="none"/>
+      <Value name="syncUnit" value="bar"/>
+      <Value name="trackSyncUnit" value="cycle"/>
+    </ValueSet>
   </Track>
   <Track id="15" number="7" type="audio">
-    <ValueSet/>
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="0" type="int"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="0" type="int"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="none"/>
+      <Value name="syncUnit" value="bar"/>
+      <Value name="trackSyncUnit" value="cycle"/>
+    </ValueSet>
   </Track>
   <Track id="16" number="8" type="audio">
-    <ValueSet/>
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="0" type="int"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="0" type="int"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="none"/>
+      <Value name="syncUnit" value="bar"/>
+      <Value name="trackSyncUnit" value="cycle"/>
+    </ValueSet>
   </Track>
   <ValueSet>
     <Value name="activeSetup" value="Default"/>
@@ -85,10 +206,9 @@
     <Value name="hostOverrideTimeSignature" value="0" type="int"/>
     <Value name="inputLatency" value="0" type="int"/>
     <Value name="longPress" value="500" type="int"/>
-    <Value name="maxLoops" value="2"/>
-    <Value name="maxSyncDrift" value="50"/>
-    <Value name="midiRecordMode" value="average" type="enum" ordinal="0"/>
-    <Value name="monitorAudio" value="false" type="bool"/>
+    <Value name="maxLoops" value="2" type="int"/>
+    <Value name="maxSyncDrift" value="50" type="int"/>
+    <Value name="monitorAudio" value="0" type="int"/>
     <Value name="noiseFloor" value="50" type="int"/>
     <Value name="outputLatency" value="0" type="int"/>
     <Value name="quickSave" value="mobiusloop"/>

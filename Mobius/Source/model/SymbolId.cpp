@@ -119,8 +119,8 @@ const char* ParamNameAltFeedback = "altFeedback";
 const char* ParamNameInput = "input";
 const char* ParamNameOutput = "output";
 const char* ParamNamePan = "pan";
-const char* ParamNameSyncSource = "syncSource";
-const char* ParamNameTrackSyncUnit = "trackSyncUnit";
+const char* ParamNameOldSyncSource = "oldSyncSource";
+const char* ParamNameOldTrackSyncUnit = "oldTrackSyncUnit";
 const char* ParamNameAudioInputPort = "audioInputPort";
 const char* ParamNameAudioOutputPort = "audioOutputPort";
 const char* ParamNamePluginInputPort = "pluginInputPort";
@@ -242,8 +242,8 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameInput, ParamInput},
     {ParamNameOutput, ParamOutput},
     {ParamNamePan, ParamPan},
-    {ParamNameSyncSource, ParamSyncSource},
-    {ParamNameTrackSyncUnit, ParamTrackSyncUnit},
+    {ParamNameOldSyncSource, ParamOldSyncSource},
+    {ParamNameOldTrackSyncUnit, ParamOldTrackSyncUnit},
     {ParamNameAudioInputPort, ParamAudioInputPort},
     {ParamNameAudioOutputPort, ParamAudioOutputPort},
     {ParamNamePluginInputPort, ParamPluginInputPort},
@@ -449,6 +449,12 @@ SymbolDefinition SymbolDefinitions[] = {
     // we would need aliases or duplicate SymbolIds
     {"SyncMasterTrack", FuncSyncMasterTrack},
     {"SyncMasterMidi", FuncSyncMasterTransport},
+
+    {"syncSource", ParamSyncSource},
+    {"syncUnit", ParamSyncUnit},
+    {"trackSyncUnit", ParamTrackSyncUnit},
+
+    
     
     //
     // Terminator

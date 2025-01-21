@@ -6,12 +6,14 @@
 <StaticConfig>
 
   <Tree name='sessionGlobal'>
-    <Tree name='Synchronization'/>
-    <Tree name='Stuff'/>
+    <Tree name='General'/>
+    <Tree name='Sync'/>
   </Tree>
   
   <Tree name='sessionAudioTrack'>
-    <Tree name='Parameters'/>
+    <Tree name='General'/>
+    <Tree name='Mixer'/>
+    <Tree name='Ports'/>
   </Tree>
   
   <Tree name='sessionMidiTrack'>
@@ -20,15 +22,24 @@
     <Tree name='LoopSwitch'/>
   </Tree>
 
-  <Form name='sessionGlobalGlobal' title='Global Parameters'
-        symbols='longPress,maxLoops,maxSyncDrift'/>
+  <Form name='sessionGlobalGeneral' title='Global Parameters'
+        symbols='inputLatency,outputLatency,longPress,noiseFloor,maxLoops,monitorAudio,quickSave,spreadRange,fadeFrames,maxSynDrift,defaultPreset'/>
 
-  <Form name='sessionGlobalSync' display='Synchronization'
+  <Form name='sessionGlobalSync' title='Synchronization'
         symbols='TransportBeatsPerBar,transportBarsPerLoop,transportMidiClocksWhenStopped,transportMidiEnable,transportMinTempo,transportMaxTempo,transportManualStart,hostBeatsPerBar,hostBeatsPerLoop,hostOverrideTimeSignature,midiBeatsPerBar,midiBarsPerLoop'/>
   
-  <Form name='sessionGlobalStuff' title='Very Interesting Stuff' symbols='maxLoops,*section*Check this out,maxSyncDrift'/>
+  <Form name='sessionAudioTrackGeneral'
+        symbols='name,groupName,trackPreset,focus'/>
+    
+  <Form name='sessionAudioTrackMixer'
+        symbols='input,output,feedback,altFeedback,pan,mono'/>
   
-  <Form name='sessionAudioTrackParameters' title='Audio tracks must be configured with the Setup' />
+  <Form name='sessionAudioTrackPorts'
+        symbols='inputPort,outputPort,pluginInputPort,pluginOutputPort'/>
+  
+  <Form name='sessionAudioTrackSync'
+        symbols='syncSource,syncUnit,trackSyncUnit'/>
+  
 
   <!-- todo: inputDevice, outputDevice, midiThru,trackGroup -->
   <Form name='sessionMidiTrackGeneral'

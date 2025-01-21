@@ -393,11 +393,11 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
             value->setInt(((SetupTrack*)obj)->getPan());
             break;
             
-        case ParamSyncSource:
+        case ParamOldSyncSource:
             value->setInt(((SetupTrack*)obj)->getSyncSource());
             break;
             
-        case ParamTrackSyncUnit:
+        case ParamOldTrackSyncUnit:
             value->setInt(((SetupTrack*)obj)->getSyncTrackUnit());
             break;
             
@@ -827,11 +827,11 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             ((SetupTrack*)obj)->setPan(value->getInt());
             break;
             
-        case ParamSyncSource:
+        case ParamOldSyncSource:
             ((SetupTrack*)obj)->setSyncSource((OldSyncSource)value->getInt());
             break;
             
-        case ParamTrackSyncUnit:
+        case ParamOldTrackSyncUnit:
             ((SetupTrack*)obj)->setSyncTrackUnit((SyncTrackUnit)value->getInt());
             break;
             

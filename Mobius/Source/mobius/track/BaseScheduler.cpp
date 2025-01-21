@@ -83,53 +83,33 @@ void BaseScheduler::loadSession(Session::Track* def)
     (void)def;
 
     // convert sync options into a Pulsator follow
-    // ugly mappings but I want to keep use of the old constants limited
+    // !! using LogicalTrack to do the enumeration conversions
+    // get these out of there
+    // it's also looking in the Session and not the Session::Track
     LogicalTrack* lt = scheduledTrack->getLogicalTrack();
 
-    // !! need to start using the Pulse constants exclusively
-    // stop using these
-    OldSyncSource oldSyncSource = lt->getSyncSource();
-    OldSyncUnit oldSyncUnit = lt->getSlaveSyncUnit();
+    syncSource = lt->getSyncSource();
+    pulseUnit = lt->getSyncUnit();
 
-    // set this up for host and midi, track sync will be different
-    pulseUnit = SyncUnitBeat;
-    if (oldSyncUnit == SYNC_UNIT_BAR)
-      pulseUnit = SyncUnitBar;
-    
-    if (oldSyncSource == SYNC_TRACK) {
+    if (syncSource == SyncSourceTrack) {
         // track sync uses a different unit parameter
         // default for this one is the entire loop
-        SyncTrackUnit stu = lt->getTrackSyncUnit();
         pulseUnit = SyncUnitLoop;
-        if (stu == TRACK_UNIT_SUBCYCLE)
-          pulseUnit = SyncUnitBeat;
-        else if (stu == TRACK_UNIT_CYCLE)
-          pulseUnit = SyncUnitBar;
-          
+        TrackSyncUnit tsu = lt->getTrackSyncUnit();
+        switch (tsu) {
+            case TrackUnitSubcycle: pulseUnit = SyncUnitBeat; break;
+            case TrackUnitCycle: pulseUnit = SyncUnitBar; break;
+            case TrackUnitLoop: pulseUnit = SyncUnitLoop; break;
+        }
         // no specific track leader yet...
         int leader = 0;
-        syncSource = SyncSourceTrack;
         syncMaster->follow(scheduledTrack->getNumber(), leader, pulseUnit);
     }
-    else if (oldSyncSource == SYNC_OUT) {
-        Trace(1, "BaseScheduler: MIDI tracks can't do OutSync yet");
-        syncSource = SyncSourceNone;
-    }
-    else if (oldSyncSource == SYNC_HOST) {
-        syncSource = SyncSourceHost;
-        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseUnit);
-    }
-    else if (oldSyncSource == SYNC_MIDI) {
-        syncSource = SyncSourceMidi;
-        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseUnit);
-    }
-    else if (oldSyncSource == SYNC_TRANSPORT) {
-        syncSource = SyncSourceTransport;
+    else if (syncSource != SyncSourceNone && syncSource != SyncSourceMaster) {
         syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseUnit);
     }
     else {
         syncMaster->unfollow(scheduledTrack->getNumber());
-        syncSource = SyncSourceNone;
     }
 
     // follower options

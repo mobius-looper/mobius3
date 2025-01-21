@@ -155,8 +155,8 @@ typedef enum {
     ParamInput,
     ParamOutput,
     ParamPan,
-    ParamSyncSource,
-    ParamTrackSyncUnit,
+    ParamOldSyncSource,
+    ParamOldTrackSyncUnit,
     ParamAudioInputPort,
     ParamAudioOutputPort,
     ParamPluginInputPort,
@@ -405,6 +405,12 @@ typedef enum {
 
     FuncSyncMasterTrack,
     FuncSyncMasterTransport,
+
+
+    // new session parameters replacing the old ones from the Setup
+    ParamSyncSource,
+    ParamSyncUnit,
+    ParamTrackSyncUnit,
     
     SymbolIdMax
 
