@@ -7,6 +7,10 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="qi4XPR" name="ModelTransformer.cpp" compile="1" resource="0"
+            file="Source/ModelTransformer.cpp"/>
+      <FILE id="MOkp2k" name="ModelTransformer.h" compile="0" resource="0"
+            file="Source/ModelTransformer.h"/>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>

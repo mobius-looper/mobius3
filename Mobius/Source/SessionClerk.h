@@ -66,4 +66,8 @@ class SessionClerk
     void migrateGlobals(class MobiusConfig* src, class Session* dest);
     void convertEnum(juce::String name, int value, class ValueSet* dest);
     
+    void migrate(SymbolId id, int value, class ValueSet* dest);
+    void migrateBool(SymbolId id, bool value, ValueSet* dest);
+    
+    
 };

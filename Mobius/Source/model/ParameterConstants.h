@@ -75,44 +75,6 @@
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Values for the driftCheckPoint parameter.
- * Made this an enumeration instead of a boolean in case we
- * want to introduce more granular check points like DRIFT_CHECK_CYCLE
- * or even DRIFT_CHECK_SUBCYCLE.  Seems like overkill though.
- */
-typedef enum {
-
-	// check at the Mobius loop start point
-	DRIFT_CHECK_LOOP,
-
-	// check at the external loop start point
-	DRIFT_CHECK_EXTERNAL
-
-} DriftCheckPoint;
-
-/**
- * Values for the midiRecordMode paramter.
- * This an internal parameter used for experimenting with styles
- * of calculating the optimal loop length when using MIDI sync.
- * The default is MIDI_AVERAGE_TEMPO and this should not normallyu
- * be changed.  Once we've had some time to experiment with these
- * options in the field, this should be removed and hard coded into
- * Synchronizer.
- */
-typedef enum {
-
-    // average tempo calculated by MidiInput
-    MIDI_TEMPO_AVERAGE,
-
-    // smooth tempo calculated by MidiInput, accurate to 1/10th BPM
-    MIDI_TEMPO_SMOOTH,
-
-    // end exactly on a MIDI clock pulse
-    MIDI_RECORD_PULSED
-
-} MidiRecordMode;
-
-/**
  * Sample rate could be an integer, but it's easier to prevent
  * crazy values if we use an enumeration.
  */
@@ -315,17 +277,6 @@ typedef enum {
 } MuteSyncMode;
 
 /**
- * Defines what happens to the SYNC_OUT tempo when various
- * changes are made to the sync master track
- */
-typedef enum {
-
-    SYNC_ADJUST_NONE,
-    SYNC_ADJUST_TEMPO
-
-} SyncAdjust;
-
-/**
  * Defines when a Realign function is performed.
  * START is the most common and means that the realign will be performed
  * on the next pulse that represents the "external start point" of the
@@ -345,16 +296,6 @@ typedef enum {
     REALIGN_NOW
 
 } RealignTime;
-
-/**
- * Defines out SYNC_OUT Realign is performed.
- */
-typedef enum {
-
-    REALIGN_MIDI_START,
-    REALIGN_RESTART
-
-} OutRealignMode;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -380,6 +321,74 @@ typedef enum {
     LeaderLocationCycle,
     LeaderLocationSubcycle
 } LeaderLocation;
+
+//////////////////////////////////////////////////////////////////////
+//
+// Obsolete
+//
+// These are provided only to compile the old model loaders and do
+// model transformation.  They are not used in the Session model.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Values for the driftCheckPoint parameter.
+ * Made this an enumeration instead of a boolean in case we
+ * want to introduce more granular check points like DRIFT_CHECK_CYCLE
+ * or even DRIFT_CHECK_SUBCYCLE.  Seems like overkill though.
+ */
+typedef enum {
+
+	// check at the Mobius loop start point
+	DRIFT_CHECK_LOOP,
+
+	// check at the external loop start point
+	DRIFT_CHECK_EXTERNAL
+
+} DriftCheckPoint;
+
+/**
+ * Values for the midiRecordMode paramter.
+ * This an internal parameter used for experimenting with styles
+ * of calculating the optimal loop length when using MIDI sync.
+ * The default is MIDI_AVERAGE_TEMPO and this should not normallyu
+ * be changed.  Once we've had some time to experiment with these
+ * options in the field, this should be removed and hard coded into
+ * Synchronizer.
+ */
+typedef enum {
+
+    // average tempo calculated by MidiInput
+    MIDI_TEMPO_AVERAGE,
+
+    // smooth tempo calculated by MidiInput, accurate to 1/10th BPM
+    MIDI_TEMPO_SMOOTH,
+
+    // end exactly on a MIDI clock pulse
+    MIDI_RECORD_PULSED
+
+} MidiRecordMode;
+
+/**
+ * Defines out SYNC_OUT Realign is performed.
+ */
+typedef enum {
+
+    REALIGN_MIDI_START,
+    REALIGN_RESTART
+
+} OutRealignMode;
+
+/**
+ * Defines what happens to the SYNC_OUT tempo when various
+ * changes are made to the sync master track
+ */
+typedef enum {
+
+    SYNC_ADJUST_NONE,
+    SYNC_ADJUST_TEMPO
+
+} SyncAdjust;
 
 /****************************************************************************/
 /****************************************************************************/
