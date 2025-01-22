@@ -19,7 +19,10 @@ SessionTrackTable::SessionTrackTable()
 
     addColumn("Track", ColumnName, 200);
     
-    addCommand("Refresh");
+    popup.add("Add...", 1);
+    popup.add("Delete...", 2);
+    popup.add("Rename...", 3);
+    popup.add("Bulk...", 4);
 }
 
 SessionTrackTable::~SessionTrackTable()
@@ -151,11 +154,74 @@ juce::String SessionTrackTable::getCellText(int rowNumber, int columnId)
     return cell;
 }
 
-void SessionTrackTable::doCommand(juce::String name)
+void SessionTrackTable::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
-    (void)name;
-    //if (name == "Refresh")
-    //load();
+    if (event.mods.isRightButtonDown())
+      popup.show();
+    else
+      TypicalTable::cellClicked(rowNumber, columnId, event);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Menu Handlers
+//
+//////////////////////////////////////////////////////////////////////
+
+void SessionTrackTable::yanPopupSelected(int id)
+{
+    switch (id) {
+        case 1: menuAdd(); break;
+        case 2: menuDelete(); break;
+        case 3: menuRename(); break;
+        case 4: menuBulk(); break;
+    }
+}
+
+void SessionTrackTable::menuAdd()
+{
+    addDialog.setTitle("Add Track");
+    addDialog.setMessage("Select the track type to add");
+    addDialog.addButton("Cancel");
+    addDialog.addButton("Audio");
+    addDialog.addButton("Midi");
+    addDialog.show();
+}
+
+void SessionTrackTable::menuDelete()
+{
+    deleteDialog.setTitle("Delete Track");
+    deleteDialog.setSerious(true);
+    deleteDialog.setMessage("Are you sure you want to delete this track?\nDeleting a track will reunmber the tracks and may cause instability in the bindings if you used track numbers as scopes.");
+    deleteDialog.addButton("Cancel");
+    deleteDialog.addButton("Delete");
+    deleteDialog.show();
+}
+
+void SessionTrackTable::menuRename()
+{
+}
+
+void SessionTrackTable::menuBulk()
+{
+}
+
+void SessionTrackTable::yanDialogSelected(YanDialog* d, int button)
+{
+    if (d == &deleteDialog) {
+        if (button == 0)
+          Trace(2, "SessionTrackTable: No, I'm scared");
+        else
+          Trace(2, "SessionTrackTable: Yes, I'm brave");
+    }
+    else if (d == &addDialog) {
+        if (button == 0)
+          Trace(2, "SessionTrackTable: Forget the add");
+        else if (button == 1)
+          Trace(2, "SessionTrackTable: Adding an audio");
+        else if (button == 2)
+          Trace(2, "SessionTrackTable: Forget a Midi");
+    }
 }
 
 /****************************************************************************/

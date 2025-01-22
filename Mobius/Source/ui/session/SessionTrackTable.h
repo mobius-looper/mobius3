@@ -7,6 +7,8 @@
 #include <JuceHeader.h>
 
 #include "../script/TypicalTable.h"
+#include "../common/YanPopup.h"
+#include "../common/YanDialog.h"
 
 class SessionTrackTableRow
 {
@@ -22,7 +24,7 @@ class SessionTrackTableRow
 
 };
 
-class SessionTrackTable : public TypicalTable
+class SessionTrackTable : public TypicalTable, public YanPopup::Listener, public YanDialog::Listener
 {
   public:
 
@@ -44,12 +46,24 @@ class SessionTrackTable : public TypicalTable
     // TypicalTable overrides
     int getRowCount() override;
     juce::String getCellText(int rowNumber, int columnId) override;
-    void doCommand(juce::String name) override;
+    void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
+
+    void yanPopupSelected(int id);
+    void yanDialogSelected(class YanDialog* d, int id);
     
   private:
     
     class Provider* provider = nullptr;
     juce::OwnedArray<class SessionTrackTableRow> tracks;
+    YanPopup popup {this};
+    YanDialog deleteDialog;
+    YanDialog addDialog;
+    //YanDialog renameDialog;
+    //YanDialog bulkDialog;
     
+    void menuAdd();
+    void menuDelete();
+    void menuRename();
+    void menuBulk();
 };
     

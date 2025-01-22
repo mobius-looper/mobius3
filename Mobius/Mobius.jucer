@@ -601,6 +601,8 @@
                 file="Source/ui/common/SimpleTabPanel.cpp"/>
           <FILE id="ywZEOE" name="SimpleTabPanel.h" compile="0" resource="0"
                 file="Source/ui/common/SimpleTabPanel.h"/>
+          <FILE id="SrDTKr" name="YanDialog.cpp" compile="1" resource="0" file="Source/ui/common/YanDialog.cpp"/>
+          <FILE id="cHOVTJ" name="YanDialog.h" compile="0" resource="0" file="Source/ui/common/YanDialog.h"/>
           <FILE id="qZv8U0" name="YanField.cpp" compile="1" resource="0" file="Source/ui/common/YanField.cpp"/>
           <FILE id="xYsipx" name="YanField.h" compile="0" resource="0" file="Source/ui/common/YanField.h"/>
           <FILE id="QfGCab" name="YanFieldHelpers.cpp" compile="1" resource="0"
@@ -616,6 +618,8 @@
                 file="Source/ui/common/YanParameterForm.cpp"/>
           <FILE id="erADRG" name="YanParameterForm.h" compile="0" resource="0"
                 file="Source/ui/common/YanParameterForm.h"/>
+          <FILE id="dwke1e" name="YanPopup.cpp" compile="1" resource="0" file="Source/ui/common/YanPopup.cpp"/>
+          <FILE id="B6k2jT" name="YanPopup.h" compile="0" resource="0" file="Source/ui/common/YanPopup.h"/>
         </GROUP>
         <FILE id="i40dnE" name="AboutPanel.cpp" compile="1" resource="0" file="Source/ui/AboutPanel.cpp"/>
         <FILE id="Cgk0He" name="AboutPanel.h" compile="0" resource="0" file="Source/ui/AboutPanel.h"/>

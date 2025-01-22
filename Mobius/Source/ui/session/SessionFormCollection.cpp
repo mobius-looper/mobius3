@@ -71,7 +71,7 @@ void SessionFormCollection::show(Provider* p, juce::String formName)
             Trace(1, "SessionFormCollection: Unknown form %s", formName.toUTF8());
         }
         else {
-            Trace(2, "SessionFormCollection: Creating form %s", formName.toUTF8());
+            //Trace(2, "SessionFormCollection: Creating form %s", formName.toUTF8());
 
             if (currentForm != nullptr)
               currentForm->setVisible(false);
@@ -105,7 +105,7 @@ void SessionFormCollection::show(Provider* p, juce::String formName)
         // Trace(2, "SPE: Form already displayed for category %s", category.toUTF8());
     }
     else {
-        Trace(2, "SessionFormCollection: Changing form %s", formName.toUTF8());
+        //Trace(2, "SessionFormCollection: Changing form %s", formName.toUTF8());
         currentForm->setVisible(false);
         // probably need a refresh?
         form->setVisible(true);

@@ -60,7 +60,7 @@ void SymbolTree::inputEditorShown(YanInput*)
 void SymbolTree::inputEditorChanged(YanInput* input, juce::String text)
 {
     (void)input;
-    Trace(2, "%s", text.toUTF8());
+    //Trace(2, "%s", text.toUTF8());
     searchTree(text, &root);
 }
 
@@ -279,7 +279,7 @@ void SymbolTree::unhide(SymbolTreeItem* node)
 void SymbolTree::itemClicked(SymbolTreeItem* item)
 {
     if (item->canBeSelected()) {
-        Trace(2, "Clicked %s", item->getName().toUTF8());
+        //Trace(2, "Clicked %s", item->getName().toUTF8());
         if (listener != nullptr)
           listener->symbolTreeClicked(item);
     }
