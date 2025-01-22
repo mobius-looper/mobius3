@@ -263,9 +263,9 @@ void MidiTrackEditor::render()
     generalForm.addSpacer();
     
     generalForm.addField(ParamSyncSource);
+    generalForm.addField(ParamSyncUnit);
     generalForm.addField(ParamTrackSyncUnit);
-    generalForm.addField(ParamSlaveSyncUnit);
-    generalForm.addField(ParamBeatsPerBar);
+    generalForm.addField(ParamMidiBeatsPerBar);
     generalForm.addSpacer();
     
     generalForm.addField(ParamLoopCount);

@@ -48,7 +48,7 @@ class SymbolTreeItem : public juce::TreeViewItem
     void popupSelection(int result);
     
   private:
-
+    
     juce::String name;
     juce::String annotation;
     bool hidden = false;
@@ -82,6 +82,7 @@ class SymbolTree : public juce::Component, public YanInput::Listener
         virtual void symbolTreeClicked(SymbolTreeItem* item) =  0;
     };
 
+    void disableSearch();
     void setListener(Listener* l);
     
     void resized() override;
@@ -107,7 +108,8 @@ class SymbolTree : public juce::Component, public YanInput::Listener
   protected:
 
     Listener* listener = nullptr;
-
+    bool searchDisabled = false;
+    
     juce::TreeView tree;
     SymbolTreeItem root;
     YanInput search {"Search"};

@@ -25,7 +25,7 @@ void SessionFormCollection::resized()
 
 void SessionFormCollection::paint(juce::Graphics& g)
 {
-    g.setColour(juce::Colours::pink);
+    g.setColour(juce::Colours::black);
     g.fillRect(0, 0, getWidth(), getHeight());
 }
 

@@ -53,13 +53,14 @@ void ParameterForm::paint(juce::Graphics& g)
         juce::Rectangle<int> titleArea = area.reduced(titleInset);
         juce::Font f (JuceUtil::getFont(20));
         g.setFont(f);
-        g.setColour(juce::Colours::black);
+        // really need this to be configurable
+        g.setColour(juce::Colours::white);
         g.drawText (title, titleArea.getX(), titleArea.getY(), titleArea.getWidth(), 20,
                     juce::Justification::centredLeft, true);
     }
 
     // this was used for testing, don't need it if the YanForm takes up the entire area
-    g.setColour(juce::Colours::grey);
+    g.setColour(juce::Colours::black);
 
     juce::Rectangle<int> center = area.reduced(formInset);
     g.fillRect(center.getX(), center.getY(), center.getWidth(), center.getHeight());
@@ -110,6 +111,9 @@ void ParameterForm::add(Provider* p, TreeForm* formdef)
             Symbol* s = p->getSymbols()->find(name);
             if (s == nullptr) {
                 Trace(1, "ParameterForm: Unknown symbol %s", name.toUTF8());
+            }
+            else if (s->parameterProperties == nullptr) {
+                Trace(1, "ParameterForm: Symbol is not a parameter %s", name.toUTF8());
             }
             else {
                 YanParameter* field = new YanParameter(s->getDisplayName());

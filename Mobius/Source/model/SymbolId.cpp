@@ -98,11 +98,11 @@ const char* ParamNameDefaultPreset = "defaultPreset";
 const char* ParamNameDefaultSyncSource = "defaultSyncSource";
 const char* ParamNameDefaultTrackSyncUnit = "defaultTrackSyncUnit";
 const char* ParamNameSlaveSyncUnit = "slaveSyncUnit";
-const char* ParamNameManualStart = "manualStart";
-const char* ParamNameMinTempo = "minTempo";
-const char* ParamNameMaxTempo = "maxTempo";
-const char* ParamNameBeatsPerBar = "beatsPerBar";
-const char* ParamNameMuteSyncMode = "muteSyncMode";
+//const char* ParamNameManualStart = "manualStart";
+//const char* ParamNameMinTempo = "minTempo";
+//const char* ParamNameMaxTempo = "maxTempo";
+//const char* ParamNameBeatsPerBar = "beatsPerBar";
+//const char* ParamNameMuteSyncMode = "muteSyncMode";
 const char* ParamNameResizeSyncAdjust = "resizeSyncAdjust";
 const char* ParamNameSpeedSyncAdjust = "speedSyncAdjust";
 const char* ParamNameRealignTime = "realignTime";
@@ -221,11 +221,11 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameDefaultSyncSource, ParamDefaultSyncSource},
     {ParamNameDefaultTrackSyncUnit, ParamDefaultTrackSyncUnit},
     {ParamNameSlaveSyncUnit, ParamSlaveSyncUnit},
-    {ParamNameManualStart, ParamManualStart},
-    {ParamNameMinTempo, ParamMinTempo},
-    {ParamNameMaxTempo, ParamMaxTempo},
-    {ParamNameBeatsPerBar, ParamBeatsPerBar},
-    {ParamNameMuteSyncMode, ParamMuteSyncMode},
+    //{ParamNameManualStart, ParamManualStart},
+    //{ParamNameMinTempo, ParamMinTempo},
+    //{ParamNameMaxTempo, ParamMaxTempo},
+    //{ParamNameBeatsPerBar, ParamBeatsPerBar},
+    //{ParamNameMuteSyncMode, ParamMuteSyncMode},
     {ParamNameResizeSyncAdjust, ParamResizeSyncAdjust},
     {ParamNameSpeedSyncAdjust, ParamSpeedSyncAdjust},
     {ParamNameRealignTime, ParamRealignTime},
@@ -444,6 +444,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {"transportTempo", ParamTransportTempo},
     {"transportLength", ParamTransportLength},
     {"transportBeatsPerBar", ParamTransportBeatsPerBar},
+    {"midiBeatsPerBar", ParamMidiBeatsPerBar},
 
     // these are old names, i'd like to change them but then
     // we would need aliases or duplicate SymbolIds

@@ -793,14 +793,14 @@ void XmlRenderer::render(XmlBuffer* b, Setup* setup)
     // are String lists, should be consistent, I'm liking csv for brevity
     b->addAttribute(ATT_RESET_RETAINS, setup->getResetRetains());
 
-    render(b, UIParameterBeatsPerBar, setup->getBeatsPerBar());
+    //render(b, UIParameterBeatsPerBar, setup->getBeatsPerBar());
     // why is the name pattern not followed here?
     render(b, UIParameterDefaultSyncSource, setup->getSyncSource());
     render(b, UIParameterDefaultTrackSyncUnit, setup->getSyncTrackUnit());
-    render(b, UIParameterManualStart, setup->isManualStart());
-    render(b, UIParameterMaxTempo, setup->getMaxTempo());
-    render(b, UIParameterMinTempo, setup->getMinTempo());
-    render(b, UIParameterMuteSyncMode, setup->getMuteSyncMode());
+    //render(b, UIParameterManualStart, setup->isManualStart());
+    //render(b, UIParameterMaxTempo, setup->getMaxTempo());
+    //render(b, UIParameterMinTempo, setup->getMinTempo());
+    //render(b, UIParameterMuteSyncMode, setup->getMuteSyncMode());
     render(b, UIParameterRealignTime, setup->getRealignTime());
     render(b, UIParameterResizeSyncAdjust, setup->getResizeSyncAdjust());
     render(b, UIParameterSlaveSyncUnit, setup->getSyncUnit());
@@ -828,13 +828,13 @@ void XmlRenderer::parse(XmlElement* e, Setup* setup)
     
     setup->setResetRetains(e->getAttribute(ATT_RESET_RETAINS));
 
-    setup->setBeatsPerBar(parse(e, UIParameterBeatsPerBar));
+    //setup->setBeatsPerBar(parse(e, UIParameterBeatsPerBar));
     setup->setSyncSource((OldSyncSource)parse(e, UIParameterDefaultSyncSource));
     setup->setSyncTrackUnit((SyncTrackUnit)parse(e, UIParameterDefaultTrackSyncUnit));
-    setup->setManualStart(parse(e, UIParameterManualStart));
-    setup->setMaxTempo(parse(e, UIParameterMaxTempo));
-    setup->setMinTempo(parse(e, UIParameterMinTempo));
-    setup->setMuteSyncMode(parse(e, UIParameterMuteSyncMode));
+    //setup->setManualStart(parse(e, UIParameterManualStart));
+    //setup->setMaxTempo(parse(e, UIParameterMaxTempo));
+    //setup->setMinTempo(parse(e, UIParameterMinTempo));
+    //setup->setMuteSyncMode(parse(e, UIParameterMuteSyncMode));
     setup->setRealignTime(parse(e, UIParameterRealignTime));
     setup->setResizeSyncAdjust(parse(e, UIParameterResizeSyncAdjust));
     setup->setSyncUnit((OldSyncUnit)parse(e, UIParameterSlaveSyncUnit));

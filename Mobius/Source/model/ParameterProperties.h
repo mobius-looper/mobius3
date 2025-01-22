@@ -143,6 +143,21 @@ class ParameterProperties
 
     //////////////////////////////////////////////////////////////////////
     //
+    // Rendering
+    //
+    // Properties in this section are only used by the form generator
+    // to show things nicer than the raw values.
+    //
+    //////////////////////////////////////////////////////////////////////
+
+    /**
+     * For number fields, adds a numeric offset to the value when displayed.
+     * This is almost always 1 so internal 0 is presented as 1.
+     */
+    int displayBase = 0;
+
+    //////////////////////////////////////////////////////////////////////
+    //
     // Enumeration Utilities
     //
     //////////////////////////////////////////////////////////////////////

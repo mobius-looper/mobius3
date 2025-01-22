@@ -17,7 +17,7 @@ SessionTrackTable::SessionTrackTable()
 {
     setName("SessionTrackTable");
 
-    addColumn("Name", ColumnName, 200);
+    addColumn("Track", ColumnName, 200);
     
     addCommand("Refresh");
 }

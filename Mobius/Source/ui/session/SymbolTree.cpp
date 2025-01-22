@@ -33,6 +33,12 @@ SymbolTree::~SymbolTree()
 {
 }
 
+void SymbolTree::disableSearch()
+{
+    removeChildComponent(&search);
+    searchDisabled = true;
+}
+
 void SymbolTree::setListener(Listener* l)
 {
     listener = l;
@@ -41,7 +47,8 @@ void SymbolTree::setListener(Listener* l)
 void SymbolTree::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-    search.setBounds(area.removeFromTop(20));
+    if (!searchDisabled)
+      search.setBounds(area.removeFromTop(20));
     tree.setBounds(area);
 }
 

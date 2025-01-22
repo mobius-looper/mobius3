@@ -2159,7 +2159,7 @@ UIParameterSlaveSyncUnitClass UIParameterSlaveSyncUnitObj;
 UIParameter* UIParameterSlaveSyncUnit = &UIParameterSlaveSyncUnitObj;
 
 ////////////// ManualStart
-
+#if 0
 class UIParameterManualStartClass : public UIParameter
 {
   public:
@@ -2184,9 +2184,10 @@ void UIParameterManualStartClass::setValue(void* obj, ExValue* value)
 }
 UIParameterManualStartClass UIParameterManualStartObj;
 UIParameter* UIParameterManualStart = &UIParameterManualStartObj;
+#endif
 
 ////////////// MinTempo
-
+#if 0
 class UIParameterMinTempoClass : public UIParameter
 {
   public:
@@ -2212,9 +2213,10 @@ void UIParameterMinTempoClass::setValue(void* obj, ExValue* value)
 }
 UIParameterMinTempoClass UIParameterMinTempoObj;
 UIParameter* UIParameterMinTempo = &UIParameterMinTempoObj;
+#endif
 
 ////////////// MaxTempo
-
+#if 0
 class UIParameterMaxTempoClass : public UIParameter
 {
   public:
@@ -2240,9 +2242,10 @@ void UIParameterMaxTempoClass::setValue(void* obj, ExValue* value)
 }
 UIParameterMaxTempoClass UIParameterMaxTempoObj;
 UIParameter* UIParameterMaxTempo = &UIParameterMaxTempoObj;
+#endif
 
 ////////////// BeatsPerBar
-
+#if 0
 class UIParameterBeatsPerBarClass : public UIParameter
 {
   public:
@@ -2268,9 +2271,10 @@ void UIParameterBeatsPerBarClass::setValue(void* obj, ExValue* value)
 }
 UIParameterBeatsPerBarClass UIParameterBeatsPerBarObj;
 UIParameter* UIParameterBeatsPerBar = &UIParameterBeatsPerBarObj;
+#endif
 
 ////////////// MuteSyncMode
-
+#if 0
 class UIParameterMuteSyncModeClass : public UIParameter
 {
   public:
@@ -2299,6 +2303,7 @@ void UIParameterMuteSyncModeClass::setValue(void* obj, ExValue* value)
 }
 UIParameterMuteSyncModeClass UIParameterMuteSyncModeObj;
 UIParameter* UIParameterMuteSyncMode = &UIParameterMuteSyncModeObj;
+#endif
 
 ////////////// ResizeSyncAdjust
 

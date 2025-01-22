@@ -15,6 +15,7 @@
 
 SessionEditorTree::SessionEditorTree()
 {
+    disableSearch();
 }
 
 SessionEditorTree::~SessionEditorTree()

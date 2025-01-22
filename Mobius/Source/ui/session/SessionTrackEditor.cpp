@@ -52,8 +52,11 @@ void SessionTrackEditor::decacheForms()
 void SessionTrackEditor::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-    
-    tracks->setBounds(area.removeFromLeft(200));
+
+    // the one column in the track header is 200 and
+    // getting a horizontal scroll bar if the outer track is
+    // the same size, give it a little extra
+    tracks->setBounds(area.removeFromLeft(204));
     
     audioForms.setBounds(area);
     midiForms.setBounds(area);

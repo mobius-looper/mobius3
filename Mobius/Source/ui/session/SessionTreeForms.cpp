@@ -52,7 +52,7 @@ void SessionTreeForms::cancel()
 void SessionTreeForms::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-    tree.setBounds(area.removeFromLeft(200));
+    tree.setBounds(area.removeFromLeft(100));
     forms.setBounds(area);
 }
 

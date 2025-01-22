@@ -12,39 +12,47 @@
   
   <Tree name='sessionAudioTrack'>
     <Tree name='General'/>
+    <Tree name='Sync'/>
     <Tree name='Mixer'/>
     <Tree name='Ports'/>
   </Tree>
   
   <Tree name='sessionMidiTrack'>
     <Tree name='General'/>
+    <Tree name='Sync'/>
     <Tree name='Follower'/>
     <Tree name='LoopSwitch'/>
   </Tree>
 
-  <Form name='sessionGlobalGeneral' title='Global Parameters'
+  <Form name='sessionGlobalGeneral' title='General Parameters'
         symbols='inputLatency,outputLatency,longPress,noiseFloor,maxLoops,monitorAudio,quickSave,spreadRange,fadeFrames,maxSynDrift,defaultPreset'/>
 
-  <Form name='sessionGlobalSync' title='Synchronization'
+  <Form name='sessionGlobalSync' title='Synchronization Parameters'
         symbols='TransportBeatsPerBar,transportBarsPerLoop,transportMidiClocksWhenStopped,transportMidiEnable,transportMinTempo,transportMaxTempo,transportManualStart,hostBeatsPerBar,hostBeatsPerLoop,hostOverrideTimeSignature,midiBeatsPerBar,midiBarsPerLoop'/>
+
   
-  <Form name='sessionAudioTrackGeneral'
+  <Form name='sessionAudioTrackGeneral' title='General Parameters'
         symbols='name,groupName,trackPreset,focus'/>
     
-  <Form name='sessionAudioTrackMixer'
-        symbols='input,output,feedback,altFeedback,pan,mono'/>
-  
-  <Form name='sessionAudioTrackPorts'
-        symbols='inputPort,outputPort,pluginInputPort,pluginOutputPort'/>
-  
-  <Form name='sessionAudioTrackSync'
+  <Form name='sessionAudioSync' title='Synchronization Parameters'
         symbols='syncSource,syncUnit,trackSyncUnit'/>
   
+  <Form name='sessionAudioTrackMixer' title='Mixer Parameters'
+        symbols='input,output,feedback,altFeedback,pan,mono'/>
+  
+  <Form name='sessionAudioTrackPorts' title='Audio Ports'
+        symbols='audioInputPort,audioOutputPort,pluginInputPort,pluginOutputPort'/>
+  
+  <Form name='sessionAudioTrackSync' title='Synchronization Parameters'
+        symbols='syncSource,syncUnit,trackSyncUnit'/>
 
   <!-- todo: inputDevice, outputDevice, midiThru,trackGroup -->
-  <Form name='sessionMidiTrackGeneral'
-        symbols='midiChannelOverride,*spacer*,syncSource,trackSyncUnit,slaveSyncUnit,beatsPerBar,*spacer*,loopCount,quantize,subcycles'/>
+  <Form name='sessionMidiTrackGeneral' title='General Parameters'
+        symbols='midiInputDevice,midiOutputDevice,midiThru,midiChannelOverride,*spacer*,loopCount,quantize,subcycles'/>
 
+  <Form name='sessionMidiTrackSync' title='Synchronization Parameters'
+        symbols='syncSource,syncUnit,trackSyncUnit,midiBeatsPerBar'/>
+  
   <Form name='sessionMidiTrackFollower' title='Follower Parmeters'
         symbols='leaderType,leaderTrack,followRecord,followRecordEnd,followerMuteStart,followMute,leaderSwitchLocation,followQuantizeLocation'/>
   

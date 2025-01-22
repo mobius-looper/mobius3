@@ -36,33 +36,96 @@ typedef enum {
     SymbolIdNone,
 
     //
-    // Global Parameters
-    //
-    // These are things that have historically been defined in MobiusConfig
-    // and are not related to Mobius tracks.  Some are deprecating.
+    // Session Global Parameters
+    // These are the ones that can be expected to exist in modern configurations
     //
     
-    ParamActiveSetup,
-    ParamFadeFrames,
-    ParamMaxSyncDrift,
-    ParamDriftCheckPoint,
-    ParamLongPress,
-    ParamLongDisable,
-    ParamSpreadRange,
-    ParamTraceLevel,
-    ParamAutoFeedbackReduction,
-    ParamIsolateOverdubs,
-    ParamMonitorAudio,
-    ParamSaveLayers,
-    ParamQuickSave,
-    ParamIntegerWaveFile,
-    ParamGroupFocusLock,
-    ParamTrackCount,
-    ParamMaxLoops,
     ParamInputLatency,
     ParamOutputLatency,
+    ParamMaxLoops,
     ParamNoiseFloor,
+    ParamLongPress,
+    ParamLongDisable,
+    ParamMonitorAudio,
+    ParamQuickSave,
+    ParamSpreadRange,
+    ParamFadeFrames,
+    ParamMaxSyncDrift,
     ParamControllerActionThreshold,
+    ParamAutoFeedbackReduction,
+    ParamIsolateOverdubs,
+    ParamSaveLayers,
+
+    // formerly in the Setup
+    ParamDefaultPreset,
+
+    //
+    // Session Track Parameters
+    //
+    
+    ParamSyncSource,
+    ParamSyncUnit,
+    ParamTrackSyncUnit,
+
+    ParamLeaderType,
+    ParamLeaderSwitchLocation,
+    ParamLeaderTrack,
+    ParamFollowRecord,
+    ParamFollowRecordEnd,
+    ParamFollowSize,
+    ParamFollowLocation,
+    ParamFollowMute,
+    ParamFollowRate,
+    ParamFollowDirection,
+    ParamFollowStartPoint,
+    ParamFollowerMuteStart,
+    ParamFollowSwitch,
+    ParamFollowCut,
+    ParamFollowQuantizeLocation,
+    ParamMidiChannelOverride,
+
+    // Formerly in SetupTrack
+    
+    ParamTrackName,
+    ParamTrackPreset,
+    ParamGroupName,
+    ParamFocus,
+    ParamMono,
+    ParamInput,
+    ParamOutput,
+    ParamFeedback,
+    ParamAltFeedback,
+    ParamPan,
+
+    ParamAudioInputPort,
+    ParamAudioOutputPort,
+    ParamPluginInputPort,
+    ParamPluginOutputPort,
+    
+    ParamSpeedOctave,
+    ParamSpeedStep,
+    ParamSpeedBend,
+    ParamPitchOctave,
+    ParamPitchStep,
+    ParamPitchBend,
+    ParamTimeStretch,
+
+    //
+    // New Transport and Sync
+    // There are more in symbols.xml but only decided to give ids to a few of them
+    // The others use SessionConstants
+    //
+    
+    ParamTransportTempo,
+    ParamTransportLength,
+    ParamTransportBeatsPerBar,
+    ParamMidiBeatsPerBar,
+
+    // Random new things
+    ParamNoReset,
+    ParamNoEdit,
+    ParamEventScript,
+    
 
     //
     // Preset Parameters
@@ -120,88 +183,48 @@ typedef enum {
     ParamWindowSlideAmount,
     ParamWindowEdgeAmount,
 
+    //////////////////////////////////////////////////////////////////////
     //
-    // Setup Parameters
-    // These have historicaly come from Setup objects in the old model
+    // Obsolete Parameters
     //
+    // Should be working on removing these.  New code should use them
+    // and old code should be phased out.
+    //
+    //////////////////////////////////////////////////////////////////////
+
+    // Globals
     
-    ParamDefaultPreset,
+    ParamActiveSetup,
+    ParamDriftCheckPoint,
+    ParamTraceLevel,
+    ParamIntegerWaveFile,
+    ParamGroupFocusLock,
+    ParamTrackCount,
+    
+    // Setup
+    
     ParamDefaultSyncSource,
     ParamDefaultTrackSyncUnit,
     ParamSlaveSyncUnit,
-    ParamManualStart,
-    ParamMinTempo,
-    ParamMaxTempo,
-    ParamBeatsPerBar,
-    ParamMuteSyncMode,
+    //ParamManualStart,
+    //ParamMinTempo,
+    //ParamMaxTempo,
+    //ParamBeatsPerBar,
+    //ParamMuteSyncMode,
     ParamResizeSyncAdjust,
     ParamSpeedSyncAdjust,
     ParamRealignTime,
     ParamActiveTrack,
 
-    //
-    // Track Parameters
-    // These have historically come from the SetupTrack in the old model
-    //
+    // Track
     
-    ParamTrackName,
-    ParamTrackPreset,
     ParamActivePreset,
-    ParamFocus,
-    ParamGroupName,
-    ParamMono,
-    ParamFeedback,
-    ParamAltFeedback,
-    ParamInput,
-    ParamOutput,
-    ParamPan,
     ParamOldSyncSource,
     ParamOldTrackSyncUnit,
-    ParamAudioInputPort,
-    ParamAudioOutputPort,
-    ParamPluginInputPort,
-    ParamPluginOutputPort,
-    ParamSpeedOctave,
-    ParamSpeedStep,
-    ParamSpeedBend,
-    ParamPitchOctave,
-    ParamPitchStep,
-    ParamPitchBend,
-    ParamTimeStretch,
 
-    //
-    // Follower/Leader
-    //
-
-    ParamLeaderType,
-    ParamLeaderSwitchLocation,
-    ParamLeaderTrack,
-    ParamFollowRecord,
-    ParamFollowRecordEnd,
-    ParamFollowSize,
-    ParamFollowLocation,
-    ParamFollowMute,
-    ParamFollowRate,
-    ParamFollowDirection,
-    ParamFollowStartPoint,
-    ParamFollowerMuteStart,
-    ParamFollowSwitch,
-    ParamFollowCut,
-    ParamFollowQuantizeLocation,
-    ParamMidiChannelOverride,
-    
-    //
-    // Misc track properties
-    //
-
-    ParamNoReset,
-    ParamNoEdit,
-
-    //
-    // Event scripts
-    //
-
-    ParamEventScript,
+    //////////////////////////////////////////////////////////////////////
+    // Functions
+    //////////////////////////////////////////////////////////////////////
 
     //
     // Mobius Functions
@@ -334,6 +357,10 @@ typedef enum {
     // internal functions derived from other things
     FuncUnroundedMultiply,
     FuncUnroundedInsert,
+
+    //////////////////////////////////////////////////////////////////////
+    // UI Symbols
+    //////////////////////////////////////////////////////////////////////
     
     //
     // UI Parameters
@@ -399,18 +426,9 @@ typedef enum {
 
     FuncTransportStart,
     FuncTransportStop,
-    ParamTransportTempo,
-    ParamTransportLength,
-    ParamTransportBeatsPerBar,
 
     FuncSyncMasterTrack,
     FuncSyncMasterTransport,
-
-
-    // new session parameters replacing the old ones from the Setup
-    ParamSyncSource,
-    ParamSyncUnit,
-    ParamTrackSyncUnit,
     
     SymbolIdMax
 

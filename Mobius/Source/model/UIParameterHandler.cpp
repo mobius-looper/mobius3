@@ -307,26 +307,6 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
             value->setInt(((Setup*)obj)->getSyncUnit());
             break;
             
-        case ParamManualStart:
-            value->setBool(((Setup*)obj)->isManualStart());
-            break;
-            
-        case ParamMinTempo:
-            value->setInt(((Setup*)obj)->getMinTempo());
-            break;
-            
-        case ParamMaxTempo:
-            value->setInt(((Setup*)obj)->getMaxTempo());
-            break;
-            
-        case ParamBeatsPerBar:
-            value->setInt(((Setup*)obj)->getBeatsPerBar());
-            break;
-            
-        case ParamMuteSyncMode:
-            value->setInt(((Setup*)obj)->getMuteSyncMode());
-            break;
-            
         case ParamResizeSyncAdjust:
             value->setInt(((Setup*)obj)->getResizeSyncAdjust());
             break;
@@ -744,26 +724,6 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             
         case ParamSlaveSyncUnit:
             ((Setup*)obj)->setSyncUnit((OldSyncUnit)value->getInt());
-            break;
-            
-        case ParamManualStart:
-            ((Setup*)obj)->setManualStart(value->getBool());
-            break;
-            
-        case ParamMinTempo:
-            ((Setup*)obj)->setMinTempo(value->getInt());
-            break;
-            
-        case ParamMaxTempo:
-            ((Setup*)obj)->setMaxTempo(value->getInt());
-            break;
-            
-        case ParamBeatsPerBar:
-            ((Setup*)obj)->setBeatsPerBar(value->getInt());
-            break;
-            
-        case ParamMuteSyncMode:
-            ((Setup*)obj)->setMuteSyncMode((MuteSyncMode)value->getInt());
             break;
             
         case ParamResizeSyncAdjust:

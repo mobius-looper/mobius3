@@ -437,6 +437,7 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
         props->transient = options.contains("transient");
         props->juceValues = options.contains("juceValues");
         props->noBinding = options.contains("noBinding");
+        props->displayBase = el->getIntAttribute("displayBase");
 
         props->coreName = el->getStringAttribute("coreName");
 

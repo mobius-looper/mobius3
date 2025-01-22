@@ -82,8 +82,13 @@ class ParameterForm : public juce::Component
   private:
 
     juce::String title;
+
+    // this gives it a little border between the title and the container
     int titleInset = 20;
-    int formInset = 100;
+
+    // this needs to be large enough to include the title inset plus the
+    // title height 
+    int formInset = 42;
     
     YanForm form;
     juce::OwnedArray<class YanParameter> parameters;

@@ -124,6 +124,13 @@ void YanParameter::load(MslValue* v)
         else if (isCheckbox) {
             checkbox.setValue(v->getBool());
         }
+        else if (props->type == TypeInt) {
+            // it will be an input field, but allow a value offset
+            // todo: for integers within a small range need to allow a slider
+            int val = v->getInt();
+            val += props->displayBase;
+            input.setValue(juce::String(val));
+        }
         else {
             input.setValue(v->getString());
         }
@@ -132,9 +139,10 @@ void YanParameter::load(MslValue* v)
 
 void YanParameter::save(MslValue* v)
 {
+    ParameterProperties* props = symbol->parameterProperties.get();
     v->setNull();
+    
     if (isCombo) {
-        ParameterProperties* props = symbol->parameterProperties.get();
         int ordinal = combo.getSelection();
         if (ordinal >= 0) {
             if (ordinal >= props->values.size()) {
@@ -149,9 +157,16 @@ void YanParameter::save(MslValue* v)
     else if (isCheckbox) {
         v->setBool(checkbox.getValue());
     }
+    else if (props->type == TypeInt) {
+        juce::String svalue = input.getValue();
+        int ival = svalue.getIntValue();
+        ival -= props->displayBase;
+        v->setInt(ival);
+    }
     else {
         v->setJString(input.getValue());
     }
+    
 }
 
 /****************************************************************************/

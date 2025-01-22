@@ -475,14 +475,14 @@ void SetupEditor::initForm()
     addField("Synchronization", UIParameterDefaultSyncSource);
     addField("Synchronization", UIParameterDefaultTrackSyncUnit);
     addField("Synchronization", UIParameterSlaveSyncUnit);
-    addField("Synchronization", UIParameterBeatsPerBar);
+    //addField("Synchronization", UIParameterBeatsPerBar);
     addField("Synchronization", UIParameterRealignTime);
-    addField("Synchronization", UIParameterMuteSyncMode);
+    //addField("Synchronization", UIParameterMuteSyncMode);
     addField("Synchronization", UIParameterResizeSyncAdjust);
     addField("Synchronization", UIParameterSpeedSyncAdjust);
-    addField("Synchronization", UIParameterMinTempo);
-    addField("Synchronization", UIParameterMaxTempo);
-    addField("Synchronization", UIParameterManualStart);
+    //addField("Synchronization", UIParameterMinTempo);
+    //addField("Synchronization", UIParameterMaxTempo);
+    //addField("Synchronization", UIParameterManualStart);
 
     // Other
     // this needs to be done in a more obvious way

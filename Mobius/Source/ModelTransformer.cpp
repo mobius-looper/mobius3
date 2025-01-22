@@ -236,6 +236,16 @@ void ModelTransformer::transform(MobiusConfig* src, Session* dest)
     // this never went anywhere, and is probably broken
     transform(ParamControllerActionThreshold, src->mControllerActionThreshold, values);
 
+    // a few more obscure ones, reconsider the need
+    transformBool(ParamAutoFeedbackReduction, src->isAutoFeedbackReduction(), values);
+
+    // this applies to project saving, it can probably go away once projects
+    // are redesigned around the Session and be more of a UI level option
+    transformBool(ParamIsolateOverdubs, src->isIsolateOverdubs(), values);
+
+    // another project option, should be part of the session UI
+    transformBool(ParamSaveLayers, src->isSaveLayers(), values);
+
     // will likely want some options around this, but probably not the same
     //transformEnum(ParamDriftCheckPoint, src->getDriftCheckPoint(), values);
 }
@@ -319,14 +329,14 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
     // this gets a special place outside the ValueSet
     dest->name = juce::String(src->getName());
 
+    // tracks can specify an active preset that overrides the default preset
+    // from the Setup
+    transform(ParamTrackPreset, src->getTrackPresetName(), values);
+
     // should have been upgraded to a name by now
     juce::String gname = src->getGroupName();
     if (gname.length() > 0)
       transform(ParamGroupName, gname.toUTF8(), values);
-
-    // tracks can specify an active preset that overrides the default preset
-    // from the Setup
-    transform(ParamTrackPreset, src->getTrackPresetName(), values);
 
     // not sure I want this to work the same way
     transformBool(ParamFocus, src->isFocusLock(), values);

@@ -1,3 +1,18 @@
+<!--
+
+There are two types of symbols: Functions and Parameters
+
+Symbols are divided into two main categories, those with Global scope
+and those with Track scope.
+
+Track parameters apply only to one track.
+
+Some parameters are obsolete and retain only so that Symbols can be defined
+for parsing and converting old objects like MobiusConfig, Setup, and Preset.
+Once those models are fully converted, these symbols can be removed.
+
+-->
+
 <Symbols>
   <Function name="AutoRecord" sustainable='true' longHelp='Long press becomes Reset'
             mayFocus='true' mayCancelMute='true' tree='Recording'/>
@@ -159,169 +174,13 @@
   rather than low/high.
   -->
   
-  <!-- =======================================================================
-       GLOBAL
-  ============================================================================ -->
-
-  <ParameterScope name='global'>
-
-    <!-- this is NOT a parameter, it's a session property that is used on
-         startup and saved on shutdown, you can't bind to it or change it at runtime
-    <Parameter name='startingSetup'
-               type='structure' structureClass='Setup'
-               codeName='StartingSetupName'
-               options='noBinding'>
-      This is used only in model context to define the starting Setup by name.
-      It cannot be bound to a trigger.  We really don't need this to be a parameter
-      at all since the value will be set as a side effect of the main menu, or when
-      selecting among available presets in the configuration UI.  The fields for that
-      are not generated from a UIParameter definition.
-      </Parameter>
-      -->
-
-    <!--
-        Revisit whether this should be bindable.
-        This one behaves differently than most global parameters, it's more like a "session"
-        property that just remembers what the last setup was on shutdown and restores
-        that on startup.  I decided to take out startingSetup for that reason too.
-        This is part of the evolving "session" concept.  
-    -->
-    <Parameter name='activeSetup' coreName='setup'
-               type='structure' structureClass='Setup'
-               options='noBinding,transient'>
-      This is a runtime parameter that has no structure equivalent.  It may be referenced
-      from a script to change the active setup with "set setup foo".  This change is
-      will persist for the duration of the runtime.  On shutdown it will be saved
-      in mobius.xml as "startingSetup".
-    </Parameter>
-
-    <Parameter name='bindings' options='noBinding'
-               type='structure' structureClass='BindingSet'
-               >
-      Selects an optional alternate binding set.
-      This is what old Mobius called the "overlay bindings".
-      New Mobius calls this an "alternate binding" which is different from an overlay.
-      It exists in MobiusConfig but is not edited like a normal global parameter.
-      Need a formal declaration so it can behave as a Structure for the binding panels.
-      ?? do we really
-    </Parameter>
-
-    <Parameter name='fadeFrames' high='1024' options='noBinding'>
-      In practie this will probably have an enforced lower bound that
-      won't be part of the definition, though maybe setting it to zero
-      would be interesring for testing?
-    </Parameter>
-    
-    <Parameter name='maxSyncDrift' high='10000' options='noBinding'>
-      The amount of drift to allow before we force a Realign
-    </Parameter>
-
-    <Parameter name='driftCheckPoint' values='loop,external' options='noBinding'>
-      Where we do sync drift correction
-    </Parameter>
-
-    <Parameter name='pluginPorts' low='1' high='8' options='noBinding'>
-      The number of ports (stereo channel pairs) we will advertise to the plugin host.
-      Arguably belongs in a separate device configuration model.
-    </Parameter>
-
-    <Parameter name='longPress' low='250' high='10000' options='noBinding'>
-      The amount of time a trigger can be held before activating long-press behavior.
-      Forget what the unit is here, milliseconds or tenths?
-      Belongs in UIConfig with other Binding parameters.
-    </Parameter>
-    <Parameter name='longDisable' type='bool' options='noBinding'>
-      During debugging it is really annoying to have long-press behavior firing
-      when we're single stepping so allow it to be turned off.
-    </Parameter>
-    
-    <Parameter name='spreadRange' low='1' high='128' options='noBinding'>
-      The amount to spread the binding range over adjacent values.
-      Belongs in UIConfig with the other BInding parameters.
-    </Parameter>
-
-    <Parameter name='traceLevel' options='noBinding'
-               coreName='traceDebugLevel'
-               codeName='TraceDebugLevel'>
-      Controls the granularity of trace logging to the debug output stream on Windows
-      or the console on Mac.  Core also has tracePrintLevel, try to merge these.
-      </Parameter>
-
-    <Parameter name='autoFeedbackReduction' type='bool' options='noBinding'>
-      Forget what this does, I think feedback is automatically reduced when in
-      some recording modes like multiply or overdub.
-    </Parameter>
-
-    <Parameter name='isolateOverdubs' type='bool' options'noBinding'>
-      Has to do with project saving, should move to UI
-    </Parameter>
-
-    <Parameter name='monitorAudio' type='bool'>
-      Enables through monitoring, should move this up.  Not sure how
-      this is implemented in the engine, maybe buried under Recorder.
-    </Parameter>
-    
-    <Parameter name='saveLayers' type='bool' options='noBinding'>
-      Another project option, move to UI
-    </Parameter>
-
-    <Parameter name='quickSave' type='string' options='noBinding'>
-      The base name fo the quick save file.
-      Move to UI
-    </Parameter>
-
-    <!-- StringList
-         This was a list of Mode names that don't want altFeedback applied.
-         There were only four possibilities: Multiply, Overdub, Stutter, Substitute
-         <Parameter name='altFeedbackDisables' type='string' multi='true'>
-         Diables secondary feedback in modes
-         </Parameter>
-      -->
-
-    <Parameter name='groupFocusLock' type='bool' options='noBinding'>
-      Still relevant?  Move to UI
-    </Parameter>
-
-    <Parameter name='trackCount' coreName='tracks' codeName='Tracks' options='noBinding'>
-      The number of tracks to configure internally and display in the UI
-      Cannot be changed at runtime
-    </Parameter>
-
-    <Parameter name='maxLoops' options='noBinding'> 
-      The maximum number of loops a track can have.
-      Cannot be changed at runtime.
-    </Parameter>
-    
-    <Parameter name='inputLatency' options='noBinding'>
-      The number of samples to use for input latency adjustments.  Overrides
-      what is reported by the container for the selected audio device.
-    </Parameter>
-    
-    <Parameter name='outputLatency' options='noBinding'>
-      The number of samples to use for output latency adjustments.  Overrides
-      what is reported by the container for the selected audio device.
-    </Parameter>
-
-    <!-- Things that exist but are obscure
-    -->
-    <Parameter name='noiseFloor' type='int' options='noBinding'>
-      Used this in early testing, not sure if useful.  It would control how
-      sensitive AutoRecord is
-    </Parameter>
-
-    <!-- Things that still exist in the model but probably want to move them somewhere else
-         oscInputPort
-         oscOutputPort
-         oscOutputHost
-         oscTrace
-         oscEnable
-    -->
-    
-  </ParameterScope>
 
   <!-- =======================================================================
        PRESET
-  ============================================================================ -->
+       ============================================================================ -->
+
+  <!-- These are all effectively Track scope parameters.  They will remain in the Preset
+       until that is converted to use Session tracks -->
 
   <ParameterScope name='preset'>
      
@@ -496,16 +355,94 @@
   </ParameterScope>
 
   <!-- =======================================================================
-       SETUP
-  ============================================================================ -->
-  <!--
-      Setup parameters are essentially global parameters but they were managed
-      inside multiiple objects that could be swapped rather than a single set
-      shared by all Setups.  They are no longer used, replaced by Session parameters
-      though there are a few name overlaps.
-  -->
-  
-  <ParameterScope name='setup'>
+       Session Global
+       ============================================================================ -->
+
+  <!-- The next two sections define the parameters that are expected to be used in
+       Sessions.  These are the ones that will be made public and most will be shown
+       in the UI.
+       -->
+
+  <ParameterScope name='global'>
+
+    <Parameter name='eventScript' type='string'/>
+    
+    <Parameter name='inputLatency' options='noBinding'>
+      The number of samples to use for input latency adjustments.  Overrides
+      what is reported by the container for the selected audio device.
+    </Parameter>
+    
+    <Parameter name='outputLatency' options='noBinding'>
+      The number of samples to use for output latency adjustments.  Overrides
+      what is reported by the container for the selected audio device.
+    </Parameter>
+    
+    <Parameter name='maxLoops' options='noBinding'> 
+      The maximum number of loops a track can have.
+      Cannot be changed at runtime.
+    </Parameter>
+    
+    <Parameter name='noiseFloor' type='int' options='noBinding'>
+      Used this in early testing, not sure if useful.  It would control how
+      sensitive AutoRecord is
+    </Parameter>
+
+    <Parameter name='longPress' low='250' high='10000' options='noBinding'>
+      The amount of time a trigger can be held before activating long-press behavior.
+      Forget what the unit is here, milliseconds or tenths?
+      Belongs in UIConfig with other Binding parameters.
+    </Parameter>
+    
+    <Parameter name='longDisable' type='bool' options='noBinding'>
+      During debugging it is really annoying to have long-press behavior firing
+      when we're single stepping so allow it to be turned off.
+    </Parameter>
+    
+    <Parameter name='monitorAudio' type='bool'>
+      Enables through monitoring, should move this up.  Not sure how
+      this is implemented in the engine, maybe buried under Recorder.
+    </Parameter>
+    
+    <Parameter name='quickSave' type='string' options='noBinding'>
+      The base name fo the quick save file.
+      Move to UI
+    </Parameter>
+
+    <Parameter name='spreadRange' low='1' high='128' options='noBinding'>
+      The amount to spread the binding range over adjacent values.
+      Belongs in UIConfig with the other BInding parameters.
+    </Parameter>
+    
+    <Parameter name='fadeFrames' high='1024' options='noBinding'>
+      In practie this will probably have an enforced lower bound that
+      won't be part of the definition, though maybe setting it to zero
+      would be interesring for testing?
+    </Parameter>
+    
+    <Parameter name='maxSyncDrift' high='10000' options='noBinding'>
+      The amount of drift to allow before we force a Realign
+    </Parameter>
+    
+    <Parameter name='controllerActionThreshold' type='int' options='noBinding'>
+      An experiment to specify the level above which a CC must go before
+      it becomes an "on" for an action trigger.  If not set, any non-zero value
+      triggers the action.
+    </Parameter>
+
+    <Parameter name='autoFeedbackReduction' type='bool' options='noBinding'>
+      Forget what this does, I think feedback is automatically reduced when in
+      some recording modes like multiply or overdub.
+    </Parameter>
+    
+    <Parameter name='isolateOverdubs' type='bool' options='noBinding'>
+      Has to do with project saving, should move to UI
+    </Parameter>
+
+    <Parameter name='saveLayers' type='bool' options='noBinding'>
+      Another project option, move to UI
+    </Parameter>
+
+    <!-- These were once defined in the Setup but they are effectively global -->
 
     <Parameter name='defaultPreset'
                type='structure' structureClass='Preset'
@@ -517,156 +454,12 @@
       be used at runtime.  
     </Parameter>
 
-    <!-- note that this needs "default" as the first enum value even though that's not
-         allowed for this parameter since internally it shares the same SyncSource enumeration
-         with the syncSource track scope parameter
-
-note2: The sync related parameters and really everything in Setup are deprecated
-and replaced by a new set of parameters defined at the end of this file
-
-    -->
-    <Parameter name='defaultSyncSource' values='default,none,track,out,host,midi,transport'
-               options='noBinding'
-               coreName='syncSource'
-               codeName='SyncSource'
-               enumName='SyncSource'/>
-    <Parameter name='defaultTrackSyncUnit' values='subcycle,cycle,loop'
-               options='noBinding'
-               codeName='SyncTrackUnit'
-               enumName='SyncTrackUnit'/>
-    <Parameter name='slaveSyncUnit' values='beat,bar'
-               options='noBinding'
-               codeName='SyncUnit'
-               enumName='SyncUnit'/>
-    <Parameter name='manualStart' type='bool' options='noBinding'/>
-    <Parameter name='minTempo' high='500' options='noBinding'/>
-    <Parameter name='maxTempo' high='500' options='noBinding'/>
-    <Parameter name='beatsPerBar' high='64' options='noBinding'/>
-    <Parameter name='muteSyncMode' values='transport,transportClocks,clocks,none' options='noBinding'/>
-    <Parameter name='resizeSyncAdjust' values='none,tempo' options='noBinding'
-               enumName='SyncAdjust'/>
-
-    <Parameter name='speedSyncAdjust' values='none,tempo' options='noBinding'
-               enumName='SyncAdjust'/>
-    <Parameter name='realignTime' values='start,bar,beat,now' options='noBinding'/>
-
-    <Parameter name='activeTrack' high='8' options='dynamic,noBinding'
-               coreName='selectedTrack'>
-      In model context, defines the initial active track, almost always zero.
-      Range depends on the global trackCount parameter.
-      In runtime context, this changes the active track for focus and display
-      WITHOUT incurring Track Copy behavior.
-      todo: Compare this with the TrackSelect function which I'd like to
-      start calling TrackShift.  
-
-      We also have an ordinal problem.  Internally tracks are numbered from zero but
-      externally they are always numbered from 1.  Need to work this out.
-    </Parameter>
-    
-    <!-- StringList
-         Renamed this "resetRetains" at some point, still not visible in the UI
-         update: now a ParameterProperties flag
-    <Parameter name='resetables' type='string' multi='true' options='noBinding,juceValues'>
-         This was not defined formally in core, though it is a member of the Setup class.
-         The SetupDialog handled it as a special case.  Since it wasn't a parameter
-         it could not be used in bindings or scripts.
-       </Parameter>
-    -->
-
-  </ParameterScope>
-
-  <!-- =======================================================================
-       TRACK
-  ============================================================================ -->
-
-  <ParameterScope name='track'>
-    
-    <Parameter name='trackName' codeName='Name' type='string' options='noBinding'/>
-
-    <Parameter name='trackPreset' coreName='preset'
-               codeName='TrackPresetName'
-               type='structure' structureClass='Preset'
-               options='noBinding'>
-      In model context defined the starting preset for this track by name.
-
-      In runtime context, this is weird.  It corresponds to the old "preset" parameter
-      which changes the active preset in the Track without modifying config, so it
-      would be lost on Reset.
-
-      todo: "active preset" is a poorly defined concept that needs thought
-    </Parameter>
-    
-    <!-- !!! this is generating code even though it is marked transient -->
-    
-    <Parameter name='activePreset' coreName='preset'
-               type='structure' structureClass='Preset'
-               codeName='StartingPresetName'
-               options='noBinding,transient,resetRetain'>
-      In runtime context this changes the Preset a track is using.
-    </Parameter>
-    
-    <Parameter name='focus' codeName='FocusLock' type='bool' options='resetRetain,noBinding'/>
-
-    <!-- this used to be a number
-    <Parameter name='group' options='dynamic,resetRetain'/>
-    -->
-    <!-- ugh, unclear how core is dealing with this -->
-    <Parameter name='groupName' options='noBinding,dynamic,resetRetain'/>
-    
-    <Parameter name='mono' type='bool' options='noBinding'/>
-    <Parameter name='feedback' high='127' options='control,resetRetain,mayFocus'/>
-    <Parameter name='altFeedback' high='127' options='control,resetRetain,mayFocus'/>
-    <Parameter name='input' codeName='InputLevel' high='127' options='control,resetRetain,mayFocus'/>
-    <Parameter name='output' codeName='OutputLevel' high='127' options='control,resetRetain,mayFocus'/>
-    <Parameter name='pan' high='127' options='control,resetRetain,mayFocus'/>
-
-<!-- !! These are the problems.  We need a different enumeration for the new parameters in the Session -->
-    
-    <Parameter name='oldSyncSource' values='default,none,track,out,host,midi,transport' options='noBinding'/>
-    <Parameter name='oldTrackSyncUnit' codeName='SyncTrackUnit' enumName='SyncTrackUnit'
-               values='default,subcycle,cycle,loop' />
-    
-    <Parameter name='audioInputPort' low='0' high='31' displayBase='1' options='noBinding'/>
-    <Parameter name='audioOutputPort' low='0' high='31' displayBase='1' options='noBinding'/>
-    <Parameter name='pluginInputPort' low='0' high='31' displayBase='1'options='noBinding'/>
-    <Parameter name='pluginOutputPort' low='0' high='31' displayBase='1' options='noBinding'/>
-
-    <!-- special catagory of parameters availalbe for runtime bindings, but
-         not in the configuration files, no get/set code will be generated
-    -->
-    <Parameter name='speedOctave' high='4'
-               options='transient,control,zeroCenter,scheduled'/>
-    <Parameter name='speedStep' high='48'
-               options='transient,control,zeroCenter,scheduled'/>
-    <Parameter name='speedBend' high='8191'
-               options='transient,control,zeroCenter,scheduled'/>
-    <Parameter name='pitchOctave' high='4'
-               options='transient,control,zeroCenter,scheduled'/>
-    <Parameter name='pitchStep' high='48'
-               options='transient,control,zeroCenter,scheduled'/>
-    <Parameter name='pitchBend' high='8191'
-               options='transient,control,zeroCenter,scheduled'/>
-    <Parameter name='timeStretch' high='8191'
-               options='transient,control,zeroCenter,scheduled'/>
-
-  </ParameterScope>
-  
-  <!-- =======================================================================
-       Session
-       ============================================================================ -->
-
-  <ParameterScope name='global'>
-
-    <Parameter name='eventScript' type='string'/>
-    
   </ParameterScope>
 
   <!-- =======================================================================
        Session Track
   ============================================================================ -->
 
-  <!-- keep these out of Binding lists for awhile -->
-  
   <ParameterScope name='track'>
 
     <!-- the replacement for oldSyncSource defined SyncSource in SyncConstants.h -->
@@ -709,6 +502,54 @@ and replaced by a new set of parameters defined at the end of this file
 
     <!-- these are the ones from SetupTrack that we still use -->
 
+    <Parameter name='trackName' codeName='Name' type='string' options='noBinding'/>
+
+    <Parameter name='trackPreset' coreName='preset'
+               codeName='TrackPresetName'
+               type='structure' structureClass='Preset'
+               options='noBinding'>
+      In model context defined the starting preset for this track by name.
+
+      In runtime context, this is weird.  It corresponds to the old "preset" parameter
+      which changes the active preset in the Track without modifying config, so it
+      would be lost on Reset.
+
+      todo: "active preset" is a poorly defined concept that needs thought
+    </Parameter>
+    
+    <Parameter name='groupName' options='noBinding,dynamic,resetRetain'/>
+    
+    <Parameter name='focus' codeName='FocusLock' type='bool' options='resetRetain,noBinding'/>
+    <Parameter name='mono' type='bool' options='noBinding'/>
+    <Parameter name='input' codeName='InputLevel' high='127' options='control,resetRetain,mayFocus'/>
+    <Parameter name='output' codeName='OutputLevel' high='127' options='control,resetRetain,mayFocus'/>
+    <Parameter name='feedback' high='127' options='control,resetRetain,mayFocus'/>
+    <Parameter name='altFeedback' high='127' options='control,resetRetain,mayFocus'/>
+    <Parameter name='pan' high='127' options='control,resetRetain,mayFocus'/>
+    
+    <Parameter name='audioInputPort' low='0' high='31' displayBase='1' options='noBinding'/>
+    <Parameter name='audioOutputPort' low='0' high='31' displayBase='1' options='noBinding'/>
+    <Parameter name='pluginInputPort' low='0' high='31' displayBase='1'options='noBinding'/>
+    <Parameter name='pluginOutputPort' low='0' high='31' displayBase='1' options='noBinding'/>
+
+    <!-- special catagory of parameters availalbe for runtime bindings, but
+         not in the configuration files, no get/set code will be generated
+    -->
+    <Parameter name='speedOctave' high='4'
+               options='transient,control,zeroCenter,scheduled'/>
+    <Parameter name='speedStep' high='48'
+               options='transient,control,zeroCenter,scheduled'/>
+    <Parameter name='speedBend' high='8191'
+               options='transient,control,zeroCenter,scheduled'/>
+    <Parameter name='pitchOctave' high='4'
+               options='transient,control,zeroCenter,scheduled'/>
+    <Parameter name='pitchStep' high='48'
+               options='transient,control,zeroCenter,scheduled'/>
+    <Parameter name='pitchBend' high='8191'
+               options='transient,control,zeroCenter,scheduled'/>
+    <Parameter name='timeStretch' high='8191'
+               options='transient,control,zeroCenter,scheduled'/>
+
   </ParameterScope>
   
   <!-- =======================================================================
@@ -748,4 +589,196 @@ and replaced by a new set of parameters defined at the end of this file
     
   </ParameterScope>
     
+  <!-- =======================================================================
+       OLD GLOBAL
+       ============================================================================ -->
+
+  <!-- Parameters in this area existed in MobiusConfig but are being phased out
+       or are no longer used-->
+
+  <ParameterScope name='global'>
+
+    <!-- this is NOT a parameter, it's a session property that is used on
+         startup and saved on shutdown, you can't bind to it or change it at runtime
+    <Parameter name='startingSetup'
+               type='structure' structureClass='Setup'
+               codeName='StartingSetupName'
+               options='noBinding'>
+      This is used only in model context to define the starting Setup by name.
+      It cannot be bound to a trigger.  We really don't need this to be a parameter
+      at all since the value will be set as a side effect of the main menu, or when
+      selecting among available presets in the configuration UI.  The fields for that
+      are not generated from a UIParameter definition.
+      </Parameter>
+      -->
+
+    <!--
+        Revisit whether this should be bindable.
+        This one behaves differently than most global parameters, it's more like a "session"
+        property that just remembers what the last setup was on shutdown and restores
+        that on startup.  I decided to take out startingSetup for that reason too.
+        This is part of the evolving "session" concept.  
+    -->
+    <Parameter name='activeSetup' coreName='setup'
+               type='structure' structureClass='Setup'
+               options='noBinding,transient'>
+      This is a runtime parameter that has no structure equivalent.  It may be referenced
+      from a script to change the active setup with "set setup foo".  This change is
+      will persist for the duration of the runtime.  On shutdown it will be saved
+      in mobius.xml as "startingSetup".
+    </Parameter>
+
+    <Parameter name='bindings' options='noBinding'
+               type='structure' structureClass='BindingSet'
+               >
+      Selects an optional alternate binding set.
+      This is what old Mobius called the "overlay bindings".
+      New Mobius calls this an "alternate binding" which is different from an overlay.
+      It exists in MobiusConfig but is not edited like a normal global parameter.
+      Need a formal declaration so it can behave as a Structure for the binding panels.
+      ?? do we really
+    </Parameter>
+
+    <Parameter name='driftCheckPoint' values='loop,external' options='noBinding'>
+      Where we do sync drift correction
+    </Parameter>
+
+    <Parameter name='pluginPorts' low='1' high='8' options='noBinding'>
+      The number of ports (stereo channel pairs) we will advertise to the plugin host.
+      Arguably belongs in a separate device configuration model.
+    </Parameter>
+
+    <Parameter name='traceLevel' options='noBinding'
+               coreName='traceDebugLevel'
+               codeName='TraceDebugLevel'>
+      Controls the granularity of trace logging to the debug output stream on Windows
+      or the console on Mac.  Core also has tracePrintLevel, try to merge these.
+      </Parameter>
+
+    <!-- StringList
+         This was a list of Mode names that don't want altFeedback applied.
+         There were only four possibilities: Multiply, Overdub, Stutter, Substitute
+         <Parameter name='altFeedbackDisables' type='string' multi='true'>
+         Diables secondary feedback in modes
+         </Parameter>
+      -->
+
+    <Parameter name='groupFocusLock' type='bool' options='noBinding'>
+      Still relevant?  Move to UI
+    </Parameter>
+
+    <Parameter name='trackCount' coreName='tracks' codeName='Tracks' options='noBinding'>
+      The number of tracks to configure internally and display in the UI
+      Cannot be changed at runtime
+    </Parameter>
+    
+  </ParameterScope>
+  
+  <!-- =======================================================================
+       SETUP
+  ============================================================================ -->
+  <!--
+      Setup parameters are essentially global parameters but they were managed
+      inside multiiple objects that could be swapped rather than a single set
+      shared by all Setups.  They are no longer used, replaced by Session parameters
+      though there are a few name overlaps.
+  -->
+  
+  <ParameterScope name='setup'>
+
+
+    <!-- note that this needs "default" as the first enum value even though that's not
+         allowed for this parameter since internally it shares the same SyncSource enumeration
+         with the syncSource track scope parameter
+
+note2: The sync related parameters and really everything in Setup are deprecated
+and replaced by a new set of parameters defined at the end of this file
+
+    -->
+    <Parameter name='defaultSyncSource' values='default,none,track,out,host,midi,transport'
+               options='noBinding'
+               coreName='syncSource'
+               codeName='SyncSource'
+               enumName='SyncSource'/>
+    <Parameter name='defaultTrackSyncUnit' values='subcycle,cycle,loop'
+               options='noBinding'
+               codeName='SyncTrackUnit'
+               enumName='SyncTrackUnit'/>
+    <Parameter name='slaveSyncUnit' values='beat,bar'
+               options='noBinding'
+               codeName='SyncUnit'
+               enumName='SyncUnit'/>
+
+    <!-- Don't need to clutter the symbol table with these, they have
+         been entirely replaced by the Transport
+    -->
+    <!--
+    <Parameter name='manualStart' type='bool' options='noBinding'/>
+    <Parameter name='minTempo' high='500' options='noBinding'/>
+    <Parameter name='maxTempo' high='500' options='noBinding'/>
+    <Parameter name='beatsPerBar' high='64' options='noBinding'/>
+    <Parameter name='muteSyncMode' values='transport,transportClocks,clocks,none' options='noBinding'/>
+    -->
+
+    <Parameter name='resizeSyncAdjust' values='none,tempo' options='noBinding'
+               enumName='SyncAdjust'/>
+    <Parameter name='speedSyncAdjust' values='none,tempo' options='noBinding'
+               enumName='SyncAdjust'/>
+    <Parameter name='realignTime' values='start,bar,beat,now' options='noBinding'/>
+
+    <Parameter name='activeTrack' high='8' options='dynamic,noBinding'
+               coreName='selectedTrack'>
+      In model context, defines the initial active track, almost always zero.
+      Range depends on the global trackCount parameter.
+      In runtime context, this changes the active track for focus and display
+      WITHOUT incurring Track Copy behavior.
+      todo: Compare this with the TrackSelect function which I'd like to
+      start calling TrackShift.  
+
+      We also have an ordinal problem.  Internally tracks are numbered from zero but
+      externally they are always numbered from 1.  Need to work this out.
+    </Parameter>
+    
+    <!-- StringList
+         Renamed this "resetRetains" at some point, still not visible in the UI
+         update: now a ParameterProperties flag
+    <Parameter name='resetables' type='string' multi='true' options='noBinding,juceValues'>
+         This was not defined formally in core, though it is a member of the Setup class.
+         The SetupDialog handled it as a special case.  Since it wasn't a parameter
+         it could not be used in bindings or scripts.
+       </Parameter>
+    -->
+
+  </ParameterScope>
+
+  <!-- =======================================================================
+       TRACK
+  ============================================================================ -->
+
+  <ParameterScope name='track'>
+    
+    <!-- !!! this is generating code even though it is marked transient -->
+    <Parameter name='activePreset' coreName='preset'
+               type='structure' structureClass='Preset'
+               codeName='StartingPresetName'
+               options='noBinding,transient,resetRetain'>
+      In runtime context this changes the Preset a track is using.
+    </Parameter>
+    
+
+    <!-- this used to be a number
+    <Parameter name='group' options='dynamic,resetRetain'/>
+    -->
+
+    <!-- These have correspondence in the new model, but the enumerations
+         are different.  Define these temporarily while transitioning the
+         editing pages
+    -->
+    
+    <Parameter name='oldSyncSource' values='default,none,track,out,host,midi,transport' options='noBinding'/>
+    <Parameter name='oldTrackSyncUnit' codeName='SyncTrackUnit' enumName='SyncTrackUnit'
+               values='default,subcycle,cycle,loop' />
+
+  </ParameterScope>
+  
 </Symbols>
