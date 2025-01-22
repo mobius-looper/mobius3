@@ -61,7 +61,10 @@ class Field : public juce::Component,
     
     Field(juce::String name, juce::String displayName, Type type);
     Field(const char* name, Type type);
+    Field();
     ~Field();
+
+    void init(juce::String name, juce::String displayName, Type type);
 
     void addListener(Listener* l) {
         fieldListener = l;

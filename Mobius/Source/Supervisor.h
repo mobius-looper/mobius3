@@ -209,9 +209,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     // find the value of a parameter or variable
     bool doQuery(class Query* q) override;
-    juce::String getParameterLabel(class Symbol* s, int ordinal) override;
-    int getParameterMax(class Symbol* s) override;
-
+    juce::String getStructureName(class Symbol* s, int value) override;
+    
     // special accessors for things deep within the engine
     int getActiveSetup();
     int getActivePreset();

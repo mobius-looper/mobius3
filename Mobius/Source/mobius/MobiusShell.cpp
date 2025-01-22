@@ -41,7 +41,6 @@
 #include "../util/StructureDumper.h"
 
 #include "../model/MobiusConfig.h"
-#include "../model/UIParameter.h"
 #include "../model/Setup.h"
 #include "../model/Preset.h"
 #include "../model/UIAction.h"

@@ -14,9 +14,24 @@ class YanFieldHelpers
   public:
 
 
-    static void initCombo(juce::String type, YanCombo* combo);
+    static void comboInit(class Provider* p, class YanCombo* combo, juce::String type, juce::String value);
 
-    static juce::String saveCombo(juce::String type, YanCombo* combo);
+    static juce::String comboSave(class YanCombo* combo, juce::String type);
+
+  private:
+
+    static void initMidiInput(class Provider* p, class YanCombo* combo, juce::String value);
+    static juce::String saveMidiInput(YanCombo* combo);
+    
+    static void initMidiOutput(class Provider* p, class YanCombo* combo, juce::String value);
+    static juce::String saveMidiOutput(YanCombo* combo);
+    
+    static void initTrackGroup(class Provider* p, class YanCombo* combo, juce::String value);
+    static juce::String saveTrackGroup(class YanCombo* combo);
+    
+    static void initTrackPreset(class Provider* p, class YanCombo* combo, juce::String value);
+    static juce::String saveTrackPreset(class YanCombo* combo);
+    
 
 };
 

@@ -454,6 +454,19 @@ Once those models are fully converted, these symbols can be removed.
       be used at runtime.  
     </Parameter>
 
+    <!-- This isn't actually in the Session, it is a runtime parameter used by the UI
+         to show the currenty active preset. Which is what would be used if the
+         Track didn't override it.  It will start out the same as defaultPreset
+         but may be changed with the menu.  Since it isn't editable, don't need
+         display helpers.
+         -->
+    <Parameter name='activePreset' coreName='preset'
+               type='structure' structureClass='Preset'
+               codeName='StartingPresetName'
+               options='noBinding,transient,resetRetain'>
+      In runtime context this changes the Preset a track is using.
+    </Parameter>
+    
   </ParameterScope>
 
   <!-- =======================================================================
@@ -500,13 +513,25 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='midiChannelOverride'
                values='off,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16'  options='noBinding'/>
 
+    <!-- new way to specify groups for both audio and MIDI -->
+
+    <Parameter name='trackGroup' displayType='combo' displayHelper='trackGroup'
+               options='noBinding,dynamic,resetRetain'/>
+
+    <!-- for MIDI tracks only -->
+    
+    <Parameter name='midiInput' displayType='combo' displayHelper='midiInput' options='noBinding'/>
+    <Parameter name='midiOutput' displayType='combo' displayHelper='midiOutput' options='noBinding'/>
+    <Parameter name='midiThru' type='bool' options='noBinding'/>
+    
     <!-- these are the ones from SetupTrack that we still use -->
 
     <Parameter name='trackName' codeName='Name' type='string' options='noBinding'/>
 
-    <Parameter name='trackPreset' coreName='preset'
-               codeName='TrackPresetName'
+    <Parameter name='trackPreset'
                type='structure' structureClass='Preset'
+               displayType='combo' displayHelper='trackPreset'
+               coreName='preset' codeName='TrackPresetName'
                options='noBinding'>
       In model context defined the starting preset for this track by name.
 
@@ -516,9 +541,7 @@ Once those models are fully converted, these symbols can be removed.
 
       todo: "active preset" is a poorly defined concept that needs thought
     </Parameter>
-    
-    <Parameter name='groupName' options='noBinding,dynamic,resetRetain'/>
-    
+
     <Parameter name='focus' codeName='FocusLock' type='bool' options='resetRetain,noBinding'/>
     <Parameter name='mono' type='bool' options='noBinding'/>
     <Parameter name='input' codeName='InputLevel' high='127' options='control,resetRetain,mayFocus'/>
@@ -757,15 +780,6 @@ and replaced by a new set of parameters defined at the end of this file
 
   <ParameterScope name='track'>
     
-    <!-- !!! this is generating code even though it is marked transient -->
-    <Parameter name='activePreset' coreName='preset'
-               type='structure' structureClass='Preset'
-               codeName='StartingPresetName'
-               options='noBinding,transient,resetRetain'>
-      In runtime context this changes the Preset a track is using.
-    </Parameter>
-    
-
     <!-- this used to be a number
     <Parameter name='group' options='dynamic,resetRetain'/>
     -->
@@ -779,6 +793,10 @@ and replaced by a new set of parameters defined at the end of this file
     <Parameter name='oldTrackSyncUnit' codeName='SyncTrackUnit' enumName='SyncTrackUnit'
                values='default,subcycle,cycle,loop' />
 
+    <!-- this was used for the group name in the Setup days, but trackGroup above should take it's place    -->
+    
+    <Parameter name='groupName' options='noBinding,dynamic,resetRetain'/>
+    
   </ParameterScope>
   
 </Symbols>

@@ -122,6 +122,20 @@ Field::~Field()
 {
 }
 
+Field::Field()
+{
+    juce::Component::setName("Field");  // class sname for debugging
+}
+
+// post construction initializer for the SymbolId transition
+void Field::init(juce::String argName, juce::String argDisplayName, Field::Type argType)
+{
+    name = argName;
+    displayName = argDisplayName;
+    type = argType;
+    initLabel();
+}
+
 void Field::setAllowedValues(const char** arg)
 {
     allowedValues = juce::StringArray(arg);

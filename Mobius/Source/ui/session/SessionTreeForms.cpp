@@ -36,7 +36,7 @@ void SessionTreeForms::decache()
 
 void SessionTreeForms::load(ValueSet* src)
 {
-    forms.load(src);
+    forms.load(provider, src);
 }
 
 void SessionTreeForms::save(ValueSet* dest)

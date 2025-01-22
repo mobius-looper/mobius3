@@ -155,6 +155,10 @@
         <FILE id="RfFrrM" name="OscConfig.h" compile="0" resource="0" file="Source/model/OscConfig.h"/>
         <FILE id="C3L3uT" name="ParameterConstants.h" compile="0" resource="0"
               file="Source/model/ParameterConstants.h"/>
+        <FILE id="fmYUtB" name="ParameterHelper.cpp" compile="1" resource="0"
+              file="Source/model/ParameterHelper.cpp"/>
+        <FILE id="A8CbGD" name="ParameterHelper.h" compile="0" resource="0"
+              file="Source/model/ParameterHelper.h"/>
         <FILE id="JyBzf9" name="ParameterProperties.cpp" compile="1" resource="0"
               file="Source/model/ParameterProperties.cpp"/>
         <FILE id="wHWkb1" name="ParameterProperties.h" compile="0" resource="0"
@@ -599,6 +603,10 @@
                 file="Source/ui/common/SimpleTabPanel.h"/>
           <FILE id="qZv8U0" name="YanField.cpp" compile="1" resource="0" file="Source/ui/common/YanField.cpp"/>
           <FILE id="xYsipx" name="YanField.h" compile="0" resource="0" file="Source/ui/common/YanField.h"/>
+          <FILE id="QfGCab" name="YanFieldHelpers.cpp" compile="1" resource="0"
+                file="Source/ui/common/YanFieldHelpers.cpp"/>
+          <FILE id="ZRYWCB" name="YanFieldHelpers.h" compile="0" resource="0"
+                file="Source/ui/common/YanFieldHelpers.h"/>
           <FILE id="f2zY9Q" name="YanForm.cpp" compile="1" resource="0" file="Source/ui/common/YanForm.cpp"/>
           <FILE id="QtLbZf" name="YanForm.h" compile="0" resource="0" file="Source/ui/common/YanForm.h"/>
           <FILE id="bZ5HFu" name="YanParameter.cpp" compile="1" resource="0"

@@ -58,6 +58,8 @@ typedef enum {
 
     // formerly in the Setup
     ParamDefaultPreset,
+    // a runtime only global for the menu and ParametersElement
+    ParamActivePreset,
 
     //
     // Session Track Parameters
@@ -66,7 +68,12 @@ typedef enum {
     ParamSyncSource,
     ParamSyncUnit,
     ParamTrackSyncUnit,
-
+    ParamTrackGroup,
+    ParamMidiInput,
+    ParamMidiOutput,
+    ParamMidiThru,
+    ParamMidiChannelOverride,
+    
     ParamLeaderType,
     ParamLeaderSwitchLocation,
     ParamLeaderTrack,
@@ -82,13 +89,11 @@ typedef enum {
     ParamFollowSwitch,
     ParamFollowCut,
     ParamFollowQuantizeLocation,
-    ParamMidiChannelOverride,
 
     // Formerly in SetupTrack
     
     ParamTrackName,
     ParamTrackPreset,
-    ParamGroupName,
     ParamFocus,
     ParamMono,
     ParamInput,
@@ -119,13 +124,23 @@ typedef enum {
     ParamTransportTempo,
     ParamTransportLength,
     ParamTransportBeatsPerBar,
+    ParamTransportBarsPerLoop,
+    ParamTransportMidi,
+    ParamTransportClocks,
+    ParamTransportManualStart,
+    ParamTransportMinTempo,
+    ParamTransportMaxTempo,
+    ParamTransportMetronome,
+    ParamHostBeatsPerBar,
+    ParamHostBarsPerLoop,
+    ParamHostOverride,
     ParamMidiBeatsPerBar,
+    ParamMidiBarsPerLoop,
 
     // Random new things
     ParamNoReset,
     ParamNoEdit,
     ParamEventScript,
-    
 
     //
     // Preset Parameters
@@ -218,9 +233,9 @@ typedef enum {
 
     // Track
     
-    ParamActivePreset,
     ParamOldSyncSource,
     ParamOldTrackSyncUnit,
+    ParamGroupName,
 
     //////////////////////////////////////////////////////////////////////
     // Functions

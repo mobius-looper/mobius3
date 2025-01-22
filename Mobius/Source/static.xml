@@ -28,11 +28,11 @@
         symbols='inputLatency,outputLatency,longPress,noiseFloor,maxLoops,monitorAudio,quickSave,spreadRange,fadeFrames,maxSynDrift,defaultPreset'/>
 
   <Form name='sessionGlobalSync' title='Synchronization Parameters'
-        symbols='TransportBeatsPerBar,transportBarsPerLoop,transportMidiClocksWhenStopped,transportMidiEnable,transportMinTempo,transportMaxTempo,transportManualStart,hostBeatsPerBar,hostBeatsPerLoop,hostOverrideTimeSignature,midiBeatsPerBar,midiBarsPerLoop'/>
+        symbols='transportBeatsPerBar,transportBarsPerLoop,transportMidiClocksWhenStopped,transportMidiEnable,transportMinTempo,transportMaxTempo,transportManualStart,hostBeatsPerBar,hostBeatsPerLoop,hostOverrideTimeSignature,midiBeatsPerBar,midiBarsPerLoop'/>
 
   
   <Form name='sessionAudioTrackGeneral' title='General Parameters'
-        symbols='name,groupName,trackPreset,focus'/>
+        symbols='name,trackGroup,trackPreset,focus'/>
     
   <Form name='sessionAudioSync' title='Synchronization Parameters'
         symbols='syncSource,syncUnit,trackSyncUnit'/>
@@ -46,9 +46,8 @@
   <Form name='sessionAudioTrackSync' title='Synchronization Parameters'
         symbols='syncSource,syncUnit,trackSyncUnit'/>
 
-  <!-- todo: inputDevice, outputDevice, midiThru,trackGroup -->
   <Form name='sessionMidiTrackGeneral' title='General Parameters'
-        symbols='midiInputDevice,midiOutputDevice,midiThru,midiChannelOverride,*spacer*,loopCount,quantize,subcycles'/>
+        symbols='midiInput,midiOutput,midiChannelOverride,midiThru,*spacer*,trackGroup,loopCount,quantize,subcycles'/>
 
   <Form name='sessionMidiTrackSync' title='Synchronization Parameters'
         symbols='syncSource,syncUnit,trackSyncUnit,midiBeatsPerBar'/>

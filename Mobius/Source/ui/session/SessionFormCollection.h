@@ -28,7 +28,7 @@ class SessionFormCollection : public juce::Component
 
     void show(class Provider* p, juce::String formName);
 
-    void load(class ValueSet* src);
+    void load(class Provider* p, class ValueSet* src);
     void save(class ValueSet* dest);
     void cancel();
     void decache();

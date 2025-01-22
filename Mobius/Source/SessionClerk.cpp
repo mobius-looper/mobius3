@@ -203,10 +203,30 @@ Session* SessionClerk::readSession(Folder* f)
                 // it doesn't matter what the .xml file had for name
                 // it gets the name from the folder it was in
                 session->setName(f->name);
+
+                fixSession(session);
             }
         }
     }
     return session;
+}
+
+/**
+ * Short term kludge to fix a few parameter names that should
+ * have been different but are now out there.
+ */
+void SessionClerk::fixSession(Session* s)
+{
+    for (int i = 0 ; i < s->getTrackCount() ; i++) {
+        Session::Track* t = s->getTrackByIndex(i);
+        ValueSet* values = t->ensureParameters();
+        MslValue* v = values->get("group");
+        if (v != nullptr) {
+            juce::String gname (v->getString());
+            values->remove("group");
+            values->setJString("trackGroup", gname);
+        }
+    }
 }
 
 /**

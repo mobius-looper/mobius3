@@ -249,6 +249,7 @@ StringList* UIParameter::getStructureNames(MobiusConfig* container)
     return names;
 }
 
+#if 0
 int UIParameter::getStructureOrdinal(MobiusConfig* container, const char* structName)
 {
     int structOrdinal = -1;
@@ -271,6 +272,7 @@ int UIParameter::getStructureOrdinal(MobiusConfig* container, const char* struct
     
     return structOrdinal;
 }
+#endif
 
 const char* UIParameter::getStructureName(MobiusConfig* container, int structOrdinal)
 {

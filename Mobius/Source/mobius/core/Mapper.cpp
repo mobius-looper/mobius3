@@ -5,7 +5,6 @@
 #include "../../util/Trace.h"
 
 #include "../../model/UIEventType.h"
-#include "../../model/UIParameter.h"
 #include "../../model/ModeDefinition.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Setup.h"
@@ -51,29 +50,6 @@ UIEventType* MapEventType(EventType* src)
         }
     }
     return uit;
-}
-
-/**
- * Used by Track::resetParameteters to selectively reset parameters
- * stored in the Track-specific Setup copy after the Reset function.
- * This is done by calling this Setup method:
- *
- * if (global || setup->isResetable(MapParameter(InputLevelParameter))) {
- *
- * The Setup model was changed to use UIParameter for isResetable.
- * It maintains a StringList of the parameter names that should be sensitive
- * to reset and just looks for the name in that list.  This list is user
- * specified and can be different in each Setup so it can't go on the Parameter object.
- *
- * Could use ordinals here, but it is only done on Reset and the list is not typically
- * long.  Still, use ordinal mapping when the arrays are ready.
- *
- * This was only used for a few thigns related to Setup::isResetRetains,
- * don't need it now.
- */
-class UIParameter* MapParameter(class Parameter* src)
-{
-    return (src != nullptr) ? UIParameter::find(src->name) : nullptr;
 }
 
 /**

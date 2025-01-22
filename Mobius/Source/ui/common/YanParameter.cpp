@@ -7,6 +7,7 @@
 #include "../../script/MslValue.h"
 
 #include "YanField.h"
+#include "YanFieldHelpers.h"
 #include "YanParameter.h"
 
 YanParameter::YanParameter(juce::String label) : YanField(label)
@@ -35,7 +36,7 @@ void YanParameter::init(Symbol* s)
 
         // TypeEnum doesn't seem to be set reliably, look for a value list
         //nelse if (props->type == TypeEnum) {
-        else if (props->values.size() > 0) {
+        else if (props->values.size() > 0 || props->displayType == "combo") {
             isCombo = true;
             if (props->valueLabels.size() > 0)
               combo.setItems(props->valueLabels);
@@ -47,6 +48,10 @@ void YanParameter::init(Symbol* s)
         else if (props->type == TypeBool) {
             isCheckbox = true;
             addAndMakeVisible(&checkbox);
+        }
+        else if (props->type == TypeStructure) {
+            isCombo = true;
+            // this must have displayHelper specified
         }
         else {
             isText = true;
@@ -78,20 +83,26 @@ void YanParameter::resized()
       input.setBounds(remainder);
 }
 
-void YanParameter::load(MslValue* v)
+void YanParameter::load(Provider* p, MslValue* v)
 {
-    if (v == nullptr) {
-        // no current value, initialize fields to suitable defaults
-        if (isCombo)
-          combo.setSelection(0);
-        else if (isCheckbox)
-          checkbox.setValue(false);
-        else
-          input.setValue("");
-    }
-    else {
-        ParameterProperties* props = symbol->parameterProperties.get();
-        if (isCombo) {
+    ParameterProperties* props = symbol->parameterProperties.get();
+    bool hasHelper = (props->displayHelper.length() > 0);
+    
+    if (isCombo) {
+        if (hasHelper) {
+            if (p == nullptr) {
+                Trace(1, "YanParameter: Parameter has a display helper but Provider not supplied");
+            }
+            else {
+                juce::String svalue;
+                if (v != nullptr) svalue = juce::String(v->getString());
+                YanFieldHelpers::comboInit(p, &combo, props->displayHelper, svalue);
+            }
+        }
+        else if (v == nullptr) {
+            combo.setSelection(0);
+        }
+        else {
             if (v->type == MslValue::Enum) {
                 int ordinal = v->getInt();
                 if (ordinal < props->values.size()) {
@@ -121,19 +132,30 @@ void YanParameter::load(MslValue* v)
                 }
             }
         }
-        else if (isCheckbox) {
-            checkbox.setValue(v->getBool());
+    }
+    else if (isCheckbox) {
+        if (v == nullptr)
+          checkbox.setValue(false);
+        else
+          checkbox.setValue(v->getBool());
+    }
+    else if (props->type == TypeInt) {
+        if (v == nullptr) {
+            input.setValue("");
         }
-        else if (props->type == TypeInt) {
+        else {
             // it will be an input field, but allow a value offset
             // todo: for integers within a small range need to allow a slider
             int val = v->getInt();
             val += props->displayBase;
             input.setValue(juce::String(val));
         }
-        else {
-            input.setValue(v->getString());
-        }
+    }
+    else {
+        if (v == nullptr)
+          input.setValue("");
+        else
+          input.setValue(v->getString());
     }
 }
 
@@ -143,14 +165,21 @@ void YanParameter::save(MslValue* v)
     v->setNull();
     
     if (isCombo) {
-        int ordinal = combo.getSelection();
-        if (ordinal >= 0) {
-            if (ordinal >= props->values.size()) {
-                Trace(1, "YanParameter: Combo selection out of range %s %d",
-                      symbol->getName(), ordinal);
-            }
-            else {
-                v->setEnum(props->values[ordinal].toUTF8(), ordinal);
+        juce::String helper = props->displayHelper;
+        if (helper.length() > 0) {
+            juce::String result = YanFieldHelpers::comboSave(&combo, helper);
+            v->setString(result.toUTF8());
+        }
+        else {
+            int ordinal = combo.getSelection();
+            if (ordinal >= 0) {
+                if (ordinal >= props->values.size()) {
+                    Trace(1, "YanParameter: Combo selection out of range %s %d",
+                          symbol->getName(), ordinal);
+                }
+                else {
+                    v->setEnum(props->values[ordinal].toUTF8(), ordinal);
+                }
             }
         }
     }

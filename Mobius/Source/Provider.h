@@ -67,13 +67,13 @@ class Provider
     virtual class UIConfig* getUIConfig() = 0;
     virtual void updateUIConfig() = 0;
 
+    virtual bool isPlugin() = 0;
+
     virtual void doAction(class UIAction*) = 0;
     virtual bool doQuery(class Query* q) = 0;
 
     virtual void showMainPopupMenu() = 0;
     
-    virtual int getParameterMax(class Symbol* s) = 0;
-    virtual juce::String getParameterLabel(class Symbol* s, int ordinal) = 0;
     virtual class MobiusView* getMobiusView() = 0;
     virtual class AudioClerk* getAudioClerk() = 0;
 

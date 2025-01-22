@@ -59,4 +59,5 @@ class SessionClerk
     void migrateSetups();
     void createSession(class Session* neu);
 
+    void fixSession(class Session* s);
 };

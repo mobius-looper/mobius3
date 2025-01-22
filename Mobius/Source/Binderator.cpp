@@ -73,7 +73,6 @@
 #include "model/UIConfig.h"
 #include "model/UIAction.h"
 #include "model/FunctionProperties.h"
-#include "model/UIParameter.h"
 #include "model/Binding.h"
 #include "model/ScriptProperties.h"
 

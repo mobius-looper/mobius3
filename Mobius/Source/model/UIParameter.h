@@ -317,7 +317,7 @@ class UIParameter : public SystemConstant
      * For type=structure convert a symbolic structure name into an ordinal
      * within the value as that would be returned by getDynamicValues
      */
-    int getStructureOrdinal(class MobiusConfig* container, const char* name);
+    //int getStructureOrdinal(class MobiusConfig* container, const char* name);
 
     /**
      * For type=structure convert an ordinal into a symbolic name.

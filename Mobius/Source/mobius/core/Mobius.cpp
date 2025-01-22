@@ -29,7 +29,6 @@
 #include "../../model/Setup.h"
 #include "../../model/UserVariable.h"
 #include "../../model/UIAction.h"
-#include "../../model/UIParameter.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
 #include "../../model/ParameterProperties.h"

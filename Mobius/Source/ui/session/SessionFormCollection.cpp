@@ -29,11 +29,11 @@ void SessionFormCollection::paint(juce::Graphics& g)
     g.fillRect(0, 0, getWidth(), getHeight());
 }
 
-void SessionFormCollection::load(ValueSet* src)
+void SessionFormCollection::load(Provider* p, ValueSet* src)
 {
     sourceValues = src;
     for (auto form : forms)
-      form->load(sourceValues);
+      form->load(p, sourceValues);
 }
 
 void SessionFormCollection::save(ValueSet* dest)
@@ -92,7 +92,7 @@ void SessionFormCollection::show(Provider* p, juce::String formName)
             if (sourceValues == nullptr)
               Trace(1, "SessionFormCollection: Attempt to show form without source values");
             else
-              form->load(sourceValues);
+              form->load(p, sourceValues);
 
             currentForm = form;
 

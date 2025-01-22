@@ -438,7 +438,8 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
         props->juceValues = options.contains("juceValues");
         props->noBinding = options.contains("noBinding");
         props->displayBase = el->getIntAttribute("displayBase");
-
+        props->displayType = el->getStringAttribute("displayType");
+        props->displayHelper = el->getStringAttribute("displayHelper");
         props->coreName = el->getStringAttribute("coreName");
 
         props->mayFocus = options.contains("mayFocus");

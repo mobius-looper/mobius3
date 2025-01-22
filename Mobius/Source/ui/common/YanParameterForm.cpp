@@ -1,3 +1,4 @@
+// is this still used??? compare with ui/session/ParameterForm
 
 #include <JuceHeader.h>
 
@@ -48,7 +49,7 @@ void YanParameterForm::load(ValueSet* set)
         MslValue* v = nullptr;
         if (set != nullptr)
           v = set->get(s->name);
-        field->load(v);
+        field->load(provider, v);
     }
 }
 

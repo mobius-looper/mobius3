@@ -11,8 +11,12 @@
 
 #include "../../util/Trace.h"
 #include "../../model/UIParameter.h"
+#include "../../model/Symbol.h"
+#include "../../model/ParameterProperties.h"
+#include "../../model/ParameterHelper.h"
 #include "../../model/ExValue.h"
 #include "../../Supervisor.h"
+#include "../../Provider.h"
 
 #include "ParameterField.h"
 
@@ -54,6 +58,44 @@ ParameterField::ParameterField(Supervisor* s, UIParameter* p) :
     }
 }
 
+ParameterField::ParameterField(Provider* p, SymbolId id)
+{
+    provider = p;
+    symbol = p->getSymbols()->getSymbol(id);
+    ParameterProperties* props = symbol->parameterProperties.get();
+
+    init(symbol->name, props->displayName, convertParameterType(props->type));
+
+    setMulti(props->multi);
+
+    // todo: need to figure out how to handle fields with
+    // confirable highs
+    setMin(props->low);
+    setMax(props->high);
+
+    // enums must have allowed values, strings are optional
+    if (props->type == TypeEnum || props->type == TypeString) {
+        if (props->values.size() > 0) {
+            setAllowedValues(props->values);
+        }
+        if (props->valueLabels.size() > 0) {
+            setAllowedValueLabels(props->valueLabels);
+        }
+    }
+    else if (props->type == TypeStructure) {
+        refreshAllowedValuesInternal(false);
+    }
+
+    // hack, these look better if they're all the same size
+    // until we can be smarter about deriving this just pick
+    // a number that looks right for the current preset/setup panels
+    if (props->type == TypeEnum) {
+        // ugh, 20 is WAY too wide, sizing on these sucks "emwidth"
+        // isn't working well, might be font height problems
+        setWidthUnits(10);
+    }
+}
+
 /**
  * Structure parameters need to refresh their allowed values to track object renames.
  * Gag, this can be called in two contexts: during initialization before rendering where we
@@ -61,30 +103,53 @@ ParameterField::ParameterField(Supervisor* s, UIParameter* p) :
  */
 void ParameterField::refreshAllowedValuesInternal(bool rendered)
 {
-    if (parameter->type == TypeStructure) {
-        // these are combos (string + multi) but must have allowed values
+    if (parameter != nullptr) {
+        if (parameter->type == TypeStructure) {
+            // these are combos (string + multi) but must have allowed values
 
-        // returns an old-school StringList for some reason, we never want that
-        // why not just return juce::StringArray and be done with it?
-        StringList* list = parameter->getStructureNames(supervisor->getMobiusConfig());
-        juce::StringArray values;
+            // returns an old-school StringList for some reason, we never want that
+            // why not just return juce::StringArray and be done with it?
+            StringList* list = parameter->getStructureNames(supervisor->getMobiusConfig());
+            juce::StringArray values;
 
-        // always start with this?  for the first usage of selecting Preset names
-        // in the Setup these are always optional so need to allow empty
-        values.add(ParameterFieldNone);
+            // always start with this?  for the first usage of selecting Preset names
+            // in the Setup these are always optional so need to allow empty
+            values.add(ParameterFieldNone);
         
-        if (list != nullptr) {
-            for (int i = 0 ; i < list->size() ; i++) {
-                values.add(juce::String(list->getString(i)));
+            if (list != nullptr) {
+                for (int i = 0 ; i < list->size() ; i++) {
+                    values.add(juce::String(list->getString(i)));
+                }
+                delete list;
             }
-            delete list;
-        }
 
-        // actually don't need this shit, just call updateAllowedValues for both?
-        if (rendered)
-          updateAllowedValues(values);
-        else
-          setAllowedValues(values);
+            // actually don't need this shit, just call updateAllowedValues for both?
+            if (rendered)
+              updateAllowedValues(values);
+            else
+              setAllowedValues(values);
+        }
+    }
+    else if (provider != nullptr && symbol != nullptr) {
+        // new way of doing this
+        ParameterProperties* props = symbol->parameterProperties.get();
+        if (props != nullptr) {
+            if (props->type == TypeStructure) {
+
+                juce::StringArray names;
+                ParameterHelper::getStructureNames(provider, symbol, names);
+                
+                // always start with this?  for the first usage of selecting Preset names
+                // in the Setup these are always optional so need to allow empty
+                names.insert(0, ParameterFieldNone);
+        
+                // actually don't need this shit, just call updateAllowedValues for both?
+                if (rendered)
+                  updateAllowedValues(names);
+                else
+                  setAllowedValues(names);
+            }
+        }
     }
 }
 

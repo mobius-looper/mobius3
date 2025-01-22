@@ -10,7 +10,6 @@
 
 #include "../model/MobiusConfig.h"
 #include "../model/Session.h"
-#include "../model/UIParameter.h"
 #include "../model/UIAction.h"
 #include "../model/Scope.h"
 #include "../model/Query.h"

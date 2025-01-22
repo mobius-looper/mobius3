@@ -18,6 +18,7 @@
 #include "../../model/MobiusConfig.h"
 #include "../../model/Preset.h"
 #include "../../model/ParameterProperties.h"
+#include "../../model/ParameterHelper.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
 #include "../../model/SymbolId.h"
@@ -273,7 +274,7 @@ void ParametersElement::paint(juce::Graphics& g)
               strValue = juce::String("false");
         }
         else if (type == TypeStructure) {
-            strValue = statusArea->getProvider()->getParameterLabel(s, value);
+            strValue = ParameterHelper::getStructureName(statusArea->getProvider(), s, value);
         }
         else {
             strValue = juce::String(value);
@@ -393,8 +394,8 @@ int ParametersElement::getMax(ParameterState* ps)
     int max = 127;
 
     if (ps->symbol->parameterProperties != nullptr)
-      max = statusArea->getProvider()->getParameterMax(ps->symbol);
-
+      max = ParameterHelper::getParameterMax(statusArea->getProvider(), ps->symbol);
+         
     return max;
 }
 

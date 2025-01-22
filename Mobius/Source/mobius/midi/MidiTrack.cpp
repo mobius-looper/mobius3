@@ -149,7 +149,7 @@ void MidiTrack::loadSession(Session::Track* def)
 
     player.setChannelOverride(def->getInt("midiChannelOverride"));
 
-    const char* groupName = def->getString("group");
+    const char* groupName = def->getString("trackGroup");
     // since we store the name in the session, have to map it back to an ordinal
     // which requires the MobiusConfig
     // might be better to store this as the ordinal to track renames?

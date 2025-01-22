@@ -4,8 +4,8 @@
 #include "util/Trace.h"
 #include "util/Util.h"
 #include "model/Symbol.h"
+#include "model/ParameterProperties.h"
 #include "model/Binding.h"
-#include "model/UIParameter.h"
 #include "model/VariableDefinition.h"
 
 #include "PluginParameter.h"
@@ -27,42 +27,38 @@ PluginParameter::PluginParameter(Symbol* s, Binding* binding)
     // todo: get the complex arg string too
     setScope(binding->getScope());
 
-    if (s->parameter != nullptr && s->coreParameter != nullptr) {
-        UIParameter* p = s->parameter;
+    ParameterProperties* props = s->parameterProperties.get();
+    
+    if (props != nullptr) {
 
-        juce::String parameterId = p->getName();
-        juce::String parameterName = p->getDisplayName();
+        juce::String parameterId = s->getName();
+        juce::String parameterName = props->displayName;
         if (parameterName.length() == 0)
           parameterName = parameterId;
         
-        if (p->type == TypeInt) {
-            min = p->low;
+        if (props->type == TypeInt) {
+            min = props->low;
             // todo: if p->dynamic will have to calculate high
-            max = p->high;
+            max = props->high;
             intParameter = new juce::AudioParameterInt(parameterId, parameterName, min, max, 0);
         }
-        else if (p->type == TypeBool) {
+        else if (props->type == TypeBool) {
             min = 0;
             max = 1;
             boolParameter = new juce::AudioParameterBool(parameterId, parameterName, false);
         }
-        else if (p->type == TypeEnum) {
+        else if (props->type == TypeEnum) {
             juce::StringArray values;
-            if (p->valueLabels != nullptr) 
-              values = juce::StringArray(p->valueLabels);
+            if (props->valueLabels.size() > 0)
+              values = props->valueLabels;
             else
-              values = juce::StringArray(p->values);
+              values = props->values;
             
             choiceParameter = new juce::AudioParameterChoice(parameterId, parameterName, values, 0);
             min = 0;
             max = values.size() - 1;
         }
 
-    }
-    else if (s->parameter != nullptr) {
-        // anything else to support?
-        Trace(1, "PluginParameter: Binding to Symbol %s that had no core Parameter\n",
-              s->getName());
     }
     else if (s->functionProperties != nullptr) {
         // Hosts have not historically had the notion of a "momentary button" parameter type
@@ -88,7 +84,7 @@ PluginParameter::PluginParameter(Symbol* s, Binding* binding)
         // Samples not interesting yet
         // activations however are...
         
-        Trace(1, "PluginParameter: Binding to Symbol %s that wasn't a UIParameter\n",
+        Trace(1, "PluginParameter: Binding to Symbol %s that wasn't a parameter or function",
               s->getName());
     }
 }

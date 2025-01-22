@@ -20,8 +20,6 @@ class YanParameter : public YanField
     ~YanParameter();
 
     void init(class Symbol* s);
-    void load(class ValueSet* set);
-    void save(class ValueSet* set);
 
     int getPreferredComponentWidth() override;
     void resized() override;
@@ -30,7 +28,7 @@ class YanParameter : public YanField
         return symbol;
     }
 
-    void load(class MslValue* v);
+    void load(class Provider* p, class MslValue* v);
     void save(class MslValue* v);
 
   private:

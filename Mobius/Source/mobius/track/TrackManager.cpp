@@ -1089,7 +1089,7 @@ bool TrackManager::mslQuery(VarQuery* query)
  * into a pair of values to return to the interpreter.
  * Not liking this but it works.  Supervisor needs to do exactly the same
  * thing so it would be nice to share this.  The only difference
- * is the way we have to call getParameterLabel through the Container.
+ * is the way we have to call ParameterHelper.
  */
 void TrackManager::mutateMslReturn(Symbol* s, int value, MslValue* retval)
 {
@@ -1114,7 +1114,7 @@ void TrackManager::mutateMslReturn(Symbol* s, int value, MslValue* retval)
             // todo: Need to repackage this
             // todo: this could also be Type::Enum in the value but I don't
             // think anything cares?
-            retval->setJString(kernel->getContainer()->getParameterLabel(s, value));
+            retval->setJString(kernel->getContainer()->getStructureName(s, value));
         }
         else {
             // should only be here for TypeInt

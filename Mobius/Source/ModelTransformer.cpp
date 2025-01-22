@@ -333,10 +333,14 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
     // from the Setup
     transform(ParamTrackPreset, src->getTrackPresetName(), values);
 
-    // should have been upgraded to a name by now
+    // this used to be an ordinal number but it should have been upgraded long ago
     juce::String gname = src->getGroupName();
-    if (gname.length() > 0)
-      transform(ParamGroupName, gname.toUTF8(), values);
+    if (gname.length() > 0) {
+        // for awhile I used the parameter named "groupName" but I want
+        // that to be trackGroup now
+        //transform(ParamGroupName, gname.toUTF8(), values);
+        values->setJString("trackGroup", gname);
+    }
 
     // not sure I want this to work the same way
     transformBool(ParamFocus, src->isFocusLock(), values);

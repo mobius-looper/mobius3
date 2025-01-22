@@ -4,6 +4,7 @@
 
 #include "../util/Trace.h"
 
+#include "SessionConstants.h"
 #include "SymbolId.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -145,29 +146,94 @@ const char* ParamNameTimeStretch = "timeStretch";
  */
 SymbolDefinition SymbolDefinitions[] = {
 
-    {ParamNameActiveSetup, ParamActiveSetup},
-    //{ParamBindingsName, ParamBindings},
-    {ParamNameFadeFrames, ParamFadeFrames},
-    {ParamNameMaxSyncDrift, ParamMaxSyncDrift},
-    {ParamNameDriftCheckPoint, ParamDriftCheckPoint},
-    {ParamNameLongPress, ParamLongPress},
-    {"longDisable", ParamLongDisable},
-    {ParamNameSpreadRange, ParamSpreadRange},
-    {ParamNameTraceLevel, ParamTraceLevel},
-    {ParamNameAutoFeedbackReduction, ParamAutoFeedbackReduction},
-    {ParamNameIsolateOverdubs, ParamIsolateOverdubs},
-    {ParamNameMonitorAudio, ParamMonitorAudio},
-    {ParamNameSaveLayers, ParamSaveLayers},
-    {ParamNameQuickSave, ParamQuickSave},
-    {ParamNameIntegerWaveFile, ParamIntegerWaveFile},
-    {ParamNameGroupFocusLock, ParamGroupFocusLock},
-    {ParamNameTrackCount, ParamTrackCount},
-    {ParamNameMaxLoops, ParamMaxLoops},
+    //////////////////////////////////////////////////////////////////////
+    // Current Parameters
+    //////////////////////////////////////////////////////////////////////
+
     {ParamNameInputLatency, ParamInputLatency},
     {ParamNameOutputLatency, ParamOutputLatency},
+    {ParamNameMaxLoops, ParamMaxLoops},
     {ParamNameNoiseFloor, ParamNoiseFloor},
+    {ParamNameLongPress, ParamLongPress},
+    {"longDisable", ParamLongDisable},
+    {ParamNameMonitorAudio, ParamMonitorAudio},
+    {ParamNameQuickSave, ParamQuickSave},
+    {ParamNameSpreadRange, ParamSpreadRange},
+    {ParamNameFadeFrames, ParamFadeFrames},
+    {ParamNameMaxSyncDrift, ParamMaxSyncDrift},
     {ParamNameControllerActionThreshold, ParamControllerActionThreshold},
+    {ParamNameAutoFeedbackReduction, ParamAutoFeedbackReduction},
+    {ParamNameIsolateOverdubs, ParamIsolateOverdubs},
+    {ParamNameSaveLayers, ParamSaveLayers},
+    {ParamNameDefaultPreset, ParamDefaultPreset},
+    {ParamNameActivePreset, ParamActivePreset},
 
+    {"syncSource", ParamSyncSource},
+    {"syncUnit", ParamSyncUnit},
+    {"trackSyncUnit", ParamTrackSyncUnit},
+    {"trackGroup", ParamTrackGroup},
+    {"midiInput", ParamMidiInput},
+    {"midiOutput", ParamMidiOutput},
+    {"midiThru", ParamMidiThru},
+    {"midiChannelOverride", ParamMidiChannelOverride},
+    
+    {"leaderType", ParamLeaderType},
+    {"leaderSwitchLocation", ParamLeaderSwitchLocation},
+    {"leaderTrack", ParamLeaderTrack},
+    {"followRecord", ParamFollowRecord},
+    {"followRecordEnd", ParamFollowRecordEnd},
+    {"followSize", ParamFollowSize},
+    {"followLocation", ParamFollowLocation},
+    {"followMute", ParamFollowMute},
+    {"followRate", ParamFollowRate},
+    {"followDirection", ParamFollowDirection},
+    {"followStartPoint", ParamFollowStartPoint},
+    {"followerMuteStart", ParamFollowerMuteStart},
+    {"followSwitch", ParamFollowSwitch},
+    {"followCut", ParamFollowCut},
+    {"followQuantizeLocation", ParamFollowQuantizeLocation},
+
+    {ParamNameTrackName, ParamTrackName},
+    {ParamNameTrackPreset, ParamTrackPreset},
+    {ParamNameFocus, ParamFocus},
+    {ParamNameMono, ParamMono},
+    {ParamNameInput, ParamInput},
+    {ParamNameOutput, ParamOutput},
+    {ParamNameFeedback, ParamFeedback},
+    {ParamNameAltFeedback, ParamAltFeedback},
+    {ParamNamePan, ParamPan},
+    {ParamNameAudioInputPort, ParamAudioInputPort},
+    {ParamNameAudioOutputPort, ParamAudioOutputPort},
+    {ParamNamePluginInputPort, ParamPluginInputPort},
+    {ParamNamePluginOutputPort, ParamPluginOutputPort},
+    {ParamNameSpeedOctave, ParamSpeedOctave},
+    {ParamNameSpeedStep, ParamSpeedStep},
+    {ParamNameSpeedBend, ParamSpeedBend},
+    {ParamNamePitchOctave, ParamPitchOctave},
+    {ParamNamePitchStep, ParamPitchStep},
+    {ParamNamePitchBend, ParamPitchBend},
+    {ParamNameTimeStretch, ParamTimeStretch},
+
+    {SessionTransportTempo, ParamTransportTempo},
+    {SessionTransportLength, ParamTransportLength},
+    {SessionTransportBeatsPerBar, ParamTransportBeatsPerBar},
+    {SessionTransportBarsPerLoop, ParamTransportBarsPerLoop},
+    {SessionTransportMidi, ParamTransportMidi},
+    {SessionTransportClocks, ParamTransportClocks},
+    {SessionTransportManualStart, ParamTransportManualStart},
+    {SessionTransportMinTempo, ParamTransportMinTempo},
+    {SessionTransportMaxTempo, ParamTransportMaxTempo},
+    {SessionTransportMetronome, ParamTransportMetronome},
+    {SessionHostBeatsPerBar, ParamHostBeatsPerBar},
+    {SessionHostBarsPerLoop, ParamHostBarsPerLoop},
+    {SessionHostOverride, ParamHostOverride},
+    {SessionMidiBeatsPerBar, ParamMidiBeatsPerBar},
+    {SessionMidiBarsPerLoop, ParamMidiBarsPerLoop},
+
+    {"trackNoReset", ParamNoReset},
+    {"trackNoEdit", ParamNoEdit},
+    {"eventScript", ParamEventScript},
+    
     {ParamNameSubcycles, ParamSubcycles},
     {ParamNameMultiplyMode, ParamMultiplyMode},
     {ParamNameShuffleMode, ParamShuffleMode},
@@ -217,71 +283,9 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameWindowSlideAmount, ParamWindowSlideAmount},
     {ParamNameWindowEdgeAmount, ParamWindowEdgeAmount},
     
-    {ParamNameDefaultPreset, ParamDefaultPreset},
-    {ParamNameDefaultSyncSource, ParamDefaultSyncSource},
-    {ParamNameDefaultTrackSyncUnit, ParamDefaultTrackSyncUnit},
-    {ParamNameSlaveSyncUnit, ParamSlaveSyncUnit},
-    //{ParamNameManualStart, ParamManualStart},
-    //{ParamNameMinTempo, ParamMinTempo},
-    //{ParamNameMaxTempo, ParamMaxTempo},
-    //{ParamNameBeatsPerBar, ParamBeatsPerBar},
-    //{ParamNameMuteSyncMode, ParamMuteSyncMode},
-    {ParamNameResizeSyncAdjust, ParamResizeSyncAdjust},
-    {ParamNameSpeedSyncAdjust, ParamSpeedSyncAdjust},
-    {ParamNameRealignTime, ParamRealignTime},
-    {ParamNameActiveTrack, ParamActiveTrack},
-
-    {ParamNameTrackName, ParamTrackName},
-    {ParamNameTrackPreset, ParamTrackPreset},
-    {ParamNameActivePreset, ParamActivePreset},
-    {ParamNameFocus, ParamFocus},
-    {"groupName", ParamGroupName},
-    {ParamNameMono, ParamMono},
-    {ParamNameFeedback, ParamFeedback},
-    {ParamNameAltFeedback, ParamAltFeedback},
-    {ParamNameInput, ParamInput},
-    {ParamNameOutput, ParamOutput},
-    {ParamNamePan, ParamPan},
-    {ParamNameOldSyncSource, ParamOldSyncSource},
-    {ParamNameOldTrackSyncUnit, ParamOldTrackSyncUnit},
-    {ParamNameAudioInputPort, ParamAudioInputPort},
-    {ParamNameAudioOutputPort, ParamAudioOutputPort},
-    {ParamNamePluginInputPort, ParamPluginInputPort},
-    {ParamNamePluginOutputPort, ParamPluginOutputPort},
-    {ParamNameSpeedOctave, ParamSpeedOctave},
-    {ParamNameSpeedStep, ParamSpeedStep},
-    {ParamNameSpeedBend, ParamSpeedBend},
-    {ParamNamePitchOctave, ParamPitchOctave},
-    {ParamNamePitchStep, ParamPitchStep},
-    {ParamNamePitchBend, ParamPitchBend},
-    {ParamNameTimeStretch, ParamTimeStretch},
-
-    {"leaderType", ParamLeaderType},
-    {"leaderSwitchLocation", ParamLeaderSwitchLocation},
-    {"leaderTrack", ParamLeaderTrack},
-    {"followRecord", ParamFollowRecord},
-    {"followRecordEnd", ParamFollowRecordEnd},
-    {"followSize", ParamFollowSize},
-    {"followLocation", ParamFollowLocation},
-    {"followMute", ParamFollowMute},
-    {"followRate", ParamFollowRate},
-    {"followDirection", ParamFollowDirection},
-    {"followStartPoint", ParamFollowStartPoint},
-    {"followerMuteStart", ParamFollowerMuteStart},
-    {"followSwitch", ParamFollowSwitch},
-    {"followCut", ParamFollowCut},
-    {"followQuantizeLocation", ParamFollowQuantizeLocation},
-    {"midiChannelOverride", ParamMidiChannelOverride},
-
-    {"eventScript", ParamEventScript},
-    
-
-    //
-    // Misc track properties
-    //
-
-    {"trackNoReset", ParamNoReset},
-    {"trackNoEdit", ParamNoEdit},
+    //////////////////////////////////////////////////////////////////////
+    // Functions
+    //////////////////////////////////////////////////////////////////////
 
     {"AutoRecord", FuncAutoRecord},
     {"Backward", FuncBackward},
@@ -441,21 +445,40 @@ SymbolDefinition SymbolDefinitions[] = {
 
     {"TransportStart", FuncTransportStart},
     {"TransportStop", FuncTransportStop},
-    {"transportTempo", ParamTransportTempo},
-    {"transportLength", ParamTransportLength},
-    {"transportBeatsPerBar", ParamTransportBeatsPerBar},
-    {"midiBeatsPerBar", ParamMidiBeatsPerBar},
 
     // these are old names, i'd like to change them but then
     // we would need aliases or duplicate SymbolIds
     {"SyncMasterTrack", FuncSyncMasterTrack},
     {"SyncMasterMidi", FuncSyncMasterTransport},
 
-    {"syncSource", ParamSyncSource},
-    {"syncUnit", ParamSyncUnit},
-    {"trackSyncUnit", ParamTrackSyncUnit},
-
+    //////////////////////////////////////////////////////////////////////
+    // Deprecated
+    //////////////////////////////////////////////////////////////////////
     
+    {ParamNameActiveSetup, ParamActiveSetup},
+    //{ParamBindingsName, ParamBindings},
+    {ParamNameDriftCheckPoint, ParamDriftCheckPoint},
+    {ParamNameTraceLevel, ParamTraceLevel},
+    {ParamNameIntegerWaveFile, ParamIntegerWaveFile},
+    {ParamNameGroupFocusLock, ParamGroupFocusLock},
+    {ParamNameTrackCount, ParamTrackCount},
+
+    {ParamNameDefaultSyncSource, ParamDefaultSyncSource},
+    {ParamNameDefaultTrackSyncUnit, ParamDefaultTrackSyncUnit},
+    {ParamNameSlaveSyncUnit, ParamSlaveSyncUnit},
+    //{ParamNameManualStart, ParamManualStart},
+    //{ParamNameMinTempo, ParamMinTempo},
+    //{ParamNameMaxTempo, ParamMaxTempo},
+    //{ParamNameBeatsPerBar, ParamBeatsPerBar},
+    //{ParamNameMuteSyncMode, ParamMuteSyncMode},
+    {ParamNameResizeSyncAdjust, ParamResizeSyncAdjust},
+    {ParamNameSpeedSyncAdjust, ParamSpeedSyncAdjust},
+    {ParamNameRealignTime, ParamRealignTime},
+    {ParamNameActiveTrack, ParamActiveTrack},
+
+    {"groupName", ParamGroupName},
+    {ParamNameOldSyncSource, ParamOldSyncSource},
+    {ParamNameOldTrackSyncUnit, ParamOldTrackSyncUnit},
     
     //
     // Terminator

@@ -119,6 +119,15 @@ MslValue* ValueSet::replace(juce::String key, MslValue* value, bool deleteCurren
     return current;
 }
 
+void ValueSet::remove(juce::String key)
+{
+    MslValue* current = map[key];
+    if (current != nullptr) {
+        values.removeObject(current, true);
+        map.remove(key);
+    }
+}
+
 /**
  * Various coercion accessors for convenience.
  */

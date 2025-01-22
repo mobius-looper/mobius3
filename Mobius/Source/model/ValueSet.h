@@ -107,6 +107,8 @@ class ValueSet
      */
     MslValue* replace(juce::String name, MslValue* src, bool deleteCurrent=false);
 
+    void remove(juce::String key);
+    
     const char* getString(juce::String name);
     void setString(juce::String name, const char* value);
     juce::String getJString(juce::String name);

@@ -127,18 +127,19 @@ void ParameterForm::add(Provider* p, TreeForm* formdef)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Vavlue Transfer
+// Value Transfer
 //
 //////////////////////////////////////////////////////////////////////
 
-void ParameterForm::load(ValueSet* values)
+void ParameterForm::load(Provider* p, ValueSet* values)
 {
     for (auto field : parameters) {
         Symbol* s = field->getSymbol();
         MslValue* v = nullptr;
         if (values != nullptr)
           v = values->get(s->name);
-        field->load(v);
+
+        field->load(p, v);
     }
 }
 

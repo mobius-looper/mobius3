@@ -65,7 +65,7 @@ class ParameterForm : public juce::Component
      * Load the values of symbol parameter fields from the value set.
      * Only fields added with Symbols can be loaded this way.
      */
-    void load(class ValueSet* values);
+    void load(class Provider* p, class ValueSet* values);
 
     /**
      * Save the values of symbol parameter fields to the value set.

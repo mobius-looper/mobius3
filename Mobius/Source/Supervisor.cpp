@@ -24,6 +24,7 @@
 #include "model/UIAction.h"
 #include "model/Query.h"
 #include "model/ParameterProperties.h"
+#include "model/ParameterHelper.h"
 #include "model/SystemState.h"
 #include "model/PriorityState.h"
 #include "model/DeviceConfig.h"
@@ -2216,8 +2217,8 @@ bool Supervisor::doUILevelAction(UIAction* action)
 //
 // This is evolving, but any display component or future exporting
 // mechanism must call into one of these to get information about
-// a UIParameter value and it's range since this can't easily be
-// embedded within the UIParameter.
+// a parameter value and it's range since this can't easily be
+// embedded within the ParameterProperties.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -2254,7 +2255,8 @@ bool Supervisor::doQuery(Query* query)
         }
     }
     else if (s->level == LevelUI) {
-        // it's one of ours, these don't use UIParameter
+        // it's one of ours, these didn't have ParameterProperties
+        // but they may now
         UIConfig* config = getUIConfig();
         int value = -1;
         switch (s->id) {
@@ -2311,81 +2313,6 @@ bool Supervisor::doQuery(Query* query)
     
     return success;
 }
-
-/**
- * Return the value of a parameter as a display name to show
- * in the UI or export through a PluginParameter.
- */
-juce::String Supervisor::getParameterLabel(Symbol* s, int ordinal)
-{
-    juce::String label;
-    
-    if (s->level == LevelUI) {
-        // it's one of ours
-        UIConfig* config = getUIConfig();
-        switch (s->id) {
-            case ParamActiveLayout: {
-                if (ordinal >= 0 && ordinal < config->layouts.size())
-                  label = config->layouts[ordinal]->name;
-            }
-                break;
-            case ParamActiveButtons: {
-                if (ordinal >= 0 && ordinal < config->buttonSets.size())
-                  label = config->buttonSets[ordinal]->name;
-            }
-                break;
-
-            default: {
-                Trace(1, "Supervisor: Unsupported UI parameter %s\n", s->name.toUTF8());
-            }
-        }
-    }
-    else {
-        // these need to have a UIParameter
-        UIParameter* p = s->parameter;
-        if (p != nullptr) {
-            MobiusConfig* config = getMobiusConfig();
-            label = juce::String(p->getStructureName(config, ordinal));
-        }
-    }
-    return label;
-}
-
-/**
- * Return the high range of the parameter ordinal.
- * The minimum can be assumed zero.
- */
-int Supervisor::getParameterMax(Symbol* s)
-{
-    int max = 0;
-    
-    if (s->level == LevelUI) {
-        UIConfig* config = getUIConfig();
-        switch (s->id) {
-            case ParamActiveLayout:
-                max = config->layouts.size() - 1;
-                break;
-
-            case ParamActiveButtons:
-                max = config->buttonSets.size() - 1;
-                break;
-                
-            default:
-                Trace(1, "Supervisor: Unsupported UI parameter %s\n", s->name.toUTF8());
-        }
-    }
-    else {
-        // logic is currently embedded within UIParameter which
-        // I don't like but it's old and works well enough for now
-        UIParameter* p = s->parameter;
-        if (p != nullptr) {
-            MobiusConfig* config = getMobiusConfig();
-            max = p->getDynamicHigh(config);
-        }
-    }
-    return max;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Menu Handlers
@@ -2641,15 +2568,16 @@ bool Supervisor::mslQuery(VarQuery* query)
  */
 void Supervisor::mutateMslReturn(Symbol* s, int value, MslValue* retval)
 {
-    if (s->parameter == nullptr) {
+    ParameterProperties* props = s->parameterProperties.get();
+    if (props == nullptr) {
         // no extra definition, return whatever it was
         retval->setInt(value);
     }
     else {
-        UIParameterType ptype = s->parameter->type;
+        UIParameterType ptype = props->type;
         if (ptype == TypeEnum) {
             // don't use labels since I want scripters to get used to the names
-            const char* ename = s->parameter->getEnumName(value);
+            const char* ename = props->getEnumName(value);
             retval->setEnum(ename, value);
         }
         else if (ptype == TypeBool) {
@@ -2662,7 +2590,7 @@ void Supervisor::mutateMslReturn(Symbol* s, int value, MslValue* retval)
             // todo: Need to repackage this
             // todo: this could also be Type::Enum in the value but I don't
             // think anything cares?
-            retval->setJString(getParameterLabel(s, value));
+            retval->setJString(ParameterHelper::getStructureName(this, s, value));
         }
         else {
             // should only be here for TypeInt
@@ -2670,6 +2598,16 @@ void Supervisor::mutateMslReturn(Symbol* s, int value, MslValue* retval)
             retval->setInt(value);
         }
     }
+}
+
+/**
+ * This is what TrackManager calls up to through MobiusContainer for its own
+ * mutateMslReturn.  Kind of sucks, think about ways to package this better
+ * but it needs access to UIConfig.
+ */
+juce::String Supervisor::getStructureName(Symbol* s, int value)
+{
+    return ParameterHelper::getStructureName(this, s, value);
 }
 
 /**

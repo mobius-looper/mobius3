@@ -55,7 +55,7 @@ class TreeForm
     // to insert spacers and section labels
     // these need a prefix that won't conflict with symbol names that include package
     // prefixes
-    constexpr static const char* Spacer = "*space*";
+    constexpr static const char* Spacer = "*spacer*";
     constexpr static const char* Section = "*section*";
 
     juce::String name;

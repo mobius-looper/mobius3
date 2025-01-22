@@ -339,7 +339,9 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
         case ParamFocus:
             value->setBool(((SetupTrack*)obj)->isFocusLock());
             break;
-            
+
+            // new name and old name
+        case ParamTrackGroup:   
         case ParamGroupName: {
             juce::String gname = ((SetupTrack*)obj)->getGroupName();
             if (gname.length() > 0)
@@ -758,7 +760,8 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
         case ParamFocus:
             ((SetupTrack*)obj)->setFocusLock(value->getBool());
             break;
-            
+
+        case ParamTrackGroup:
         case ParamGroupName:
             ((SetupTrack*)obj)->setGroupName(value->getString());
             break;

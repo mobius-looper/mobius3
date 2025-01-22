@@ -151,10 +151,22 @@ class ParameterProperties
     //////////////////////////////////////////////////////////////////////
 
     /**
+     * Can be used to force the selection of one of the parameter dislay types
+     * Still in flux, but "combo" and "slider" are the two initial suggestions
+     */
+    juce::String displayType;
+
+    /**
      * For number fields, adds a numeric offset to the value when displayed.
      * This is almost always 1 so internal 0 is presented as 1.
      */
     int displayBase = 0;
+
+    /**
+     * Mostly for combo box fields, insert logic to calculate the allowed values
+     * and adjust the values.
+     */
+    juce::String displayHelper;
 
     //////////////////////////////////////////////////////////////////////
     //
@@ -183,57 +195,8 @@ class ParameterProperties
      */
     const char* getEnumLabel(int ordinal);
 
-    //////////////////////////////////////////////////////////////////////
-    //
-    // Model Queries
-    //
-    // For parameters with type='structure' or options='dynamic' some
-    // characteristics of the parameter cannot be statically defined and
-    // must be calculated at runtime.  These functions provide a way to do that
-    // until the Query model is fleshed out.
-    //
-    // Currently it is assumed that the calculation can be satisfied using
-    // only the model contained within MobiusConfig.  Eventually some of
-    // these will shift to UIConfig or another object at which point Query
-    // must be used in a larger context.
-    //
-    //////////////////////////////////////////////////////////////////////
-#if 0    
-    /**
-     * Calculate the maximum ordinal value of a dynamic or structure parameter.
-     */
-    int getDynamicHigh(class MobiusConfig* container);
-
-    /**
-     * For type=structure, calculate the set of structure names.
-     * This is in effect the symbolic values of a dynamic enumeration.
-     * If this becomes necessary for types other than type=structure
-     * change the name.
-     * 
-     * The result is returned as a StringList and must be deleted.
-     */
-    class StringList* getStructureNames(class MobiusConfig* container);
-
-    /**
-     * For type=structure convert a symbolic structure name into an ordinal
-     * within the value as that would be returned by getDynamicValues
-     */
-    int getStructureOrdinal(class MobiusConfig* container, const char* name);
-
-    /**
-     * For type=structure convert an ordinal into a symbolic name.
-     * Note that the string returned will be found within the container
-     * model and will become invalid if the container is deleted.
-     * It should be considered temporary and copied if it needs to live
-     * for an indefinite time.
-     */
-    const char* getStructureName(class MobiusConfig* container, int ordinal);
-
-  private:
-
-    class Structure* getStructureList(class MobiusConfig* container);
-
-#endif
+    // For similar utilities on Structures, see ParameterHelper
+    // Maybe put the Enum utils in there too
     
 };
 

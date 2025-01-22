@@ -428,7 +428,7 @@ class MobiusContainer
      * Necessary for MobiusKernel::mutateMslReturn.  Not happy with
      * how spread out this is.
      */
-    virtual juce::String getParameterLabel(class Symbol* s, int ordinal) = 0;
+    virtual juce::String getStructureName(class Symbol* s, int ordinal) = 0;
 
     virtual class SymbolTable* getSymbols() = 0;
 
