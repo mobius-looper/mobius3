@@ -77,16 +77,21 @@ void SessionClerk::initialize()
         bool bootstrapped = bootstrapDefaultSession();
         
         // convert old Setup objects into Sessions
+        // normally only done when bootstrapping, but for temporary
+        // testing of the Session migration may be done every startup
         migrateSetups(bootstrapped);
     }
 }
 
 /**
  * On a fresh install (or a corrupted install) if we don't
- * find the Default session in the library, attempt to create one.
+ * find the Default session in the library, attempt to create one.a
  * During the period immediately after build 30, this will look for
  * session.xml in the root of the installation directory and copy it to the
  * new folder so we can retain the early settings without corrupting them.
+ *
+ * Returning true will then trigger the migration of Setups from the
+ * MobiusConfig into new Sessions in the library.
  */
 bool SessionClerk::bootstrapDefaultSession()
 {
@@ -319,21 +324,22 @@ void SessionClerk::saveSession(Session* s)
 ///////////////////////////////////////////////////////////////////////
 
 /**
- * Convert any Setup objects into Sessions.  This is normally done once.
- * Once a Session exists with the same name as a Setup, it is assumed that
- * the new session editor is being used and the old Setup objects can
- * be ignored.
+ * During the Session migration phase, convert the MobiusConfig globals
+ * and Setups into Sessions.
  *
- * A special case exists for the Setup named "Default".  The Session with
- * that name is bootstrapped by copying the first prototype session.xml
- * into the session library folder and this is where Midi track definitions
- * for the earlier releases will live.  That session has no audio tracks.
+ * If the bootstrap flag is on, it means that we did not detect a Default
+ * session on startup, an empty one was created, and we must perform a full
+ * migration of the Default session.
+ *
+ * If the bootstrap flag is off, it means we already had a Default session,
+ * but we may choose to refresh portions of it from the MobiusConfig for testing.
+ * This is temporary.
+ *    
+ * When bootstrap is on, the Session was created by copying the first prototype
+ * session.xml into the session library folder and this is where Midi track definitions
+ * for the earlier releases lived.  That session has no audio tracks.
  * When the Default Setup is encounered it needs to merge into the Default
  * Setup rather than creating a new one.
- *
- * For testing, this can also be done for all of them, but this is temporary.
- * Once the session editor is working properly it should never go back
- * to the Setups for audio tracks.
  *
  * NOTE: So that user can downgrade to earlier builds, it is important that
  * we NOT TOUCH either mobius.xml or the original session.xml.
@@ -354,42 +360,84 @@ void SessionClerk::migrateSetups(bool bootstrapped)
         else if (defaultSetup == nullptr)
           defaultSetup = setup;
     }
+
+    // special one time handling of the bootstrap session
+    if (bootstrapped) {
+        Folder* f = findFolder("Default");
+        if (f == nullptr) {
+            // can't happen if bootstrapDefaultSession did it's job
+            Trace(1, "SessionClerk: Default session not found during migration");
+        }
+        else {
+            Session* dest = readSession(f);
+            if (dest == nullptr) {
+                Trace(1, "SessionClerk: Unable to read bootstrap Session %s", f->name.toUTF8());
+            }
+            else {
+                // copy the globals
+                transformer.addGlobals(config, neu);
+                
+                // this is the only time that the MobiusConfig track count is used
+                int oldTrackCount = config->getTrackCountDontUseThis();
+                dest->reconcileTrackCount(Session::TypeAudio, oldTrackCount);
+                
+                if (defaultSetup != nullptr) {
+                    // this does a careful merge into the existing session.xml rather
+                    // than a full transform so we can preserve Midi track definitions
+                    // and flesh out audio track definitions
+                    transformer.merge(defaultSetup, dest);
+                }
+                else {
+                    // The MobiusConfig was empty, unusual but could happen
+                    // default SessionTracks will have been stubbed out
+                    Trace(1, "SessionClerk: No default Setup found during migration");
+                }
+                writeSession(f, dest);
+                delete dest;
+            }
+        }
+    }
+
+    // now migrate all Sessions other than the Default
     
     for (Setup* setup = config->getSetups() ; setup != nullptr ; setup = setup->getNextSetup()) {
 
-        juce::String setupName (setup->getName());
-        Folder* f = findFolder(setupName);
-
-        if (f == nullptr) {
-
-            // this should not be happening if bootstrapDefaultSession worked
-            if (setupName == "Default")
-              Trace(1, "SessionClerk: Migrating into Default, bootstrap failed");
-            else
-              Trace(2, "SessionClerk: Migrating Setup %s", setup->getName());
+        if (setup != defaultSetup) {
             
-            Session* neu = transformer.setupToSession(setup);
-            // former global parameters are duplicated in every session
-            transformer.addGlobals(config, neu);
-            createSession(neu);
-            delete neu;
-        }
-        else {
-            bool merge = (setupName == "Default");
-            // temporary testing
-            merge = true;
-            
-            if (merge) {
-                Trace(2, "SessionClerk: Merging Setup %s", setup->getName());
-                
-                Session* dest = readSession(f);
-                if (dest == nullptr) {
-                    Trace(1, "SessionClerk: Unable to read Session to merge into %s", f->name.toUTF8());
+            juce::String setupName (setup->getName());
+            Folder* f = findFolder(setupName);
+            if (f == nullptr) {
+                if (!bootstrapped) {
+                    // this is after the bootstrap period, and we found a new Setup
+                    // should only happen if a prior migration failed or they copied
+                    // a different mobius.xml file into the installation
+                    // not really a problem, but unusual
+                    Trace(1, "SessionClerk: Encountered new Setup after initial migration %s",
+                          setup->getName());
                 }
-                else {
-                    transformer.merge(setup, dest);
-                    writeSession(f, dest);
-                    delete dest;
+                Trace(2, "SessionClerk: Migrating Setup %s", setup->getName());
+                Session* neu = transformer.setupToSession(setup);
+                // former global parameters are duplicated in every session
+                transformer.addGlobals(config, neu);
+                createSession(neu);
+                delete neu;
+            }
+            else {
+                // we've already seen this one, normally would ignore it but
+                // have a merge option just for testing
+                bool testMerge = true;
+                if (testMerge) {
+                    Trace(2, "SessionClerk: Merging Setup %s", setup->getName());
+                
+                    Session* dest = readSession(f);
+                    if (dest == nullptr) {
+                        Trace(1, "SessionClerk: Unable to read Session to merge into %s", f->name.toUTF8());
+                    }
+                    else {
+                        transformer.merge(setup, dest);
+                        writeSession(f, dest);
+                        delete dest;
+                    }
                 }
             }
         }

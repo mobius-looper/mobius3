@@ -141,7 +141,8 @@ typedef enum {
     ParamNoReset,
     ParamNoEdit,
     ParamEventScript,
-
+    ParamUserFileFolder,
+    
     //
     // Preset Parameters
     // These have historically been organized into Preset objects but 

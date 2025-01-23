@@ -152,6 +152,11 @@ class Session
     int getOldMidiTrackCount() {
         return midiTracks;
     }
+    int getOldAudioTrackCount() {
+        return audioTracks;
+    }
+    
+    void renumber();
     
   private:
 
@@ -177,7 +182,6 @@ class Session
     void parseDevice(juce::XmlElement* root, SessionMidiDevice* device);
 
     void assignIds();
-    void renumber();
     
 };
 

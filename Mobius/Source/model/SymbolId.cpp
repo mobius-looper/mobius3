@@ -232,6 +232,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {"trackNoReset", ParamNoReset},
     {"trackNoEdit", ParamNoEdit},
     {"eventScript", ParamEventScript},
+    {"userFileFolder", ParamUserFileFolder},
     
     {ParamNameSubcycles, ParamSubcycles},
     {ParamNameMultiplyMode, ParamMultiplyMode},

@@ -32,6 +32,11 @@ Session* ModelTransformer::setupToSession(Setup* src)
 {
     Session* session = new Session();
     transform(src, session);
+
+    // Session may have already done this but it is the guarantee
+    // of this class that Sessions comes out properly numbered
+    session->renumber();
+    
     return session;
 }
 
@@ -87,6 +92,8 @@ void ModelTransformer::merge(Setup* src, Session* dest)
         }
         trackIndex++;
     }
+
+    dest->renumber();
 }
 
 //////////////////////////////////////////////////////////////////////

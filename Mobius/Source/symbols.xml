@@ -365,7 +365,16 @@ Once those models are fully converted, these symbols can be removed.
 
   <ParameterScope name='global'>
 
-    <Parameter name='eventScript' type='string'/>
+    <Parameter name='eventScript' type='string'>
+      Temporary prototype for injecting event scripts into the kernel.
+      Continue support for awhile.
+    </Parameter>
+    
+    <Parameter name='userFileFolder' type='string'>
+      Temporary prototype for allowing file paths specified in in various objects
+      to be fragments relative to a user specified folder.  Currently used only
+      when loading MIDI files.
+    </Parameter>
     
     <Parameter name='inputLatency' options='noBinding'>
       The number of samples to use for input latency adjustments.  Overrides
