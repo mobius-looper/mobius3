@@ -601,6 +601,8 @@
                 file="Source/ui/common/SimpleTabPanel.cpp"/>
           <FILE id="ywZEOE" name="SimpleTabPanel.h" compile="0" resource="0"
                 file="Source/ui/common/SimpleTabPanel.h"/>
+          <FILE id="WA7Qza" name="YanAlert.cpp" compile="1" resource="0" file="Source/ui/common/YanAlert.cpp"/>
+          <FILE id="u0ZIvP" name="YanAlert.h" compile="0" resource="0" file="Source/ui/common/YanAlert.h"/>
           <FILE id="SrDTKr" name="YanDialog.cpp" compile="1" resource="0" file="Source/ui/common/YanDialog.cpp"/>
           <FILE id="cHOVTJ" name="YanDialog.h" compile="0" resource="0" file="Source/ui/common/YanDialog.h"/>
           <FILE id="qZv8U0" name="YanField.cpp" compile="1" resource="0" file="Source/ui/common/YanField.cpp"/>

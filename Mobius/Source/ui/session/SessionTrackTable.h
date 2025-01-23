@@ -8,7 +8,10 @@
 
 #include "../script/TypicalTable.h"
 #include "../common/YanPopup.h"
+#include "../common/YanAlert.h"
 #include "../common/YanDialog.h"
+#include "../common/YanForm.h"
+#include "../common/YanField.h"
 
 class SessionTrackTableRow
 {
@@ -24,7 +27,8 @@ class SessionTrackTableRow
 
 };
 
-class SessionTrackTable : public TypicalTable, public YanPopup::Listener, public YanDialog::Listener
+class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
+                          public YanAlert::Listener, public YanDialog::Listener
 {
   public:
 
@@ -49,17 +53,21 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener, public
     void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
     void yanPopupSelected(int id);
-    void yanDialogSelected(class YanDialog* d, int id);
+    void yanAlertSelected(class YanAlert* d, int id);
+    void yanDialogOk(class YanDialog* d);
     
   private:
     
     class Provider* provider = nullptr;
     juce::OwnedArray<class SessionTrackTableRow> tracks;
     YanPopup popup {this};
-    YanDialog deleteDialog;
-    YanDialog addDialog;
-    //YanDialog renameDialog;
+    YanAlert deleteAlert {this};
+    YanAlert addAlert {this};
+    YanDialog renameDialog {this};
     //YanDialog bulkDialog;
+
+    YanForm renameForm;
+    YanInput renameInput {"New Name"};
     
     void menuAdd();
     void menuDelete();

@@ -23,6 +23,21 @@ SessionTrackTable::SessionTrackTable()
     popup.add("Delete...", 2);
     popup.add("Rename...", 3);
     popup.add("Bulk...", 4);
+
+    addAlert.setTitle("Add Track");
+    addAlert.setMessage("Select the track type to add");
+    addAlert.addButton("Cancel");
+    addAlert.addButton("Audio");
+    addAlert.addButton("Midi");
+    
+    deleteAlert.setTitle("Delete Track");
+    deleteAlert.setSerious(true);
+    deleteAlert.setMessage("Are you sure you want to delete this track?\nDeleting a track will reunmber the tracks and may cause instability in the bindings if you used track numbers as scopes.");
+    deleteAlert.addButton("Cancel");
+    deleteAlert.addButton("Delete");
+
+    renameForm.add(&renameInput);
+    renameDialog.setContent(&renameForm);
 }
 
 SessionTrackTable::~SessionTrackTable()
@@ -37,6 +52,18 @@ void SessionTrackTable::initialize(Provider* p)
     // it is vital you call this to get the header and other parts
     // of the table defined, or else it won't display
     TypicalTable::initialize();
+
+    // kludge: the popup dialogs need to be displayed in the parent
+    // compoennt not this one since we're usually small
+    // this assumes that we've been added as a child at this point
+    // might be better if these are connected and disconnected when they were used
+    juce::Component* parent = getParentComponent();
+    if (parent == nullptr) {
+        Trace(1, "SessionTrackTable: No parent component at initialize(), dialogs won't work");
+    }
+    else {
+        parent->addChildComponent(&renameDialog);
+    }
 }
 
 /**
@@ -180,50 +207,49 @@ void SessionTrackTable::yanPopupSelected(int id)
 
 void SessionTrackTable::menuAdd()
 {
-    addDialog.setTitle("Add Track");
-    addDialog.setMessage("Select the track type to add");
-    addDialog.addButton("Cancel");
-    addDialog.addButton("Audio");
-    addDialog.addButton("Midi");
-    addDialog.show();
+    addAlert.show();
 }
 
 void SessionTrackTable::menuDelete()
 {
-    deleteDialog.setTitle("Delete Track");
-    deleteDialog.setSerious(true);
-    deleteDialog.setMessage("Are you sure you want to delete this track?\nDeleting a track will reunmber the tracks and may cause instability in the bindings if you used track numbers as scopes.");
-    deleteDialog.addButton("Cancel");
-    deleteDialog.addButton("Delete");
-    deleteDialog.show();
+    deleteAlert.show();
 }
 
 void SessionTrackTable::menuRename()
 {
+    renameInput.setValue("");
+    renameDialog.show();
 }
 
 void SessionTrackTable::menuBulk()
 {
 }
 
-void SessionTrackTable::yanDialogSelected(YanDialog* d, int button)
+void SessionTrackTable::yanAlertSelected(YanAlert* d, int button)
 {
-    if (d == &deleteDialog) {
+    if (d == &deleteAlert) {
         if (button == 0)
           Trace(2, "SessionTrackTable: No, I'm scared");
         else
           Trace(2, "SessionTrackTable: Yes, I'm brave");
     }
-    else if (d == &addDialog) {
+    else if (d == &addAlert) {
         if (button == 0)
           Trace(2, "SessionTrackTable: Forget the add");
         else if (button == 1)
           Trace(2, "SessionTrackTable: Adding an audio");
         else if (button == 2)
-          Trace(2, "SessionTrackTable: Forget a Midi");
+          Trace(2, "SessionTrackTable: Adding a Midi");
     }
 }
 
+void SessionTrackTable::yanDialogOk(YanDialog* d)
+{
+    if (d == &renameDialog) {
+        Trace(2, "SessionTrackTable: Rename that bitch to %s", renameInput.getValue().toUTF8());
+    }
+}
+    
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
