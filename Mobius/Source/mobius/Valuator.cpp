@@ -73,8 +73,8 @@ void Valuator::configure(MobiusConfig* mc, Session* s)
     configuration = mc;
     session = s;
     
-    audioActive = session->audioTracks;
-    midiActive = session->midiTracks;
+    audioActive = session->getAudioTracks();
+    midiActive = session->getMidiTracks();
     
     initTracks();
 }

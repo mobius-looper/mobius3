@@ -221,7 +221,7 @@ void GlobalEditor::initForm()
     addField("Advanced", UIParameterOutputLatency);
     addField("Advanced", UIParameterMaxSyncDrift);
     addField("Advanced", UIParameterNoiseFloor);
-    addField("Advanced", UIParameterTraceLevel);
+    //addField("Advanced", UIParameterTraceLevel);
     addField("Advanced", UIParameterSaveLayers);
     addField("Advanced", UIParameterMonitorAudio);
 

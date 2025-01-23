@@ -191,7 +191,7 @@ class MobiusConfig {
 	int getSpreadRange();
 
 	void setCoreTracks(int i);
-	int getCoreTracks();
+	int getCoreTracksDontUseThis();
 	void setTrackGroupsDeprecated(int i);
 	int getTrackGroupsDeprecated();
 	void setMaxLoops(int i);
@@ -210,6 +210,28 @@ class MobiusConfig {
 
 	void setMaxSyncDrift(int i);
 	int getMaxSyncDrift();
+
+	void setQuickSave(const char* s);
+	const char* getQuickSave();
+
+	void setSaveLayers(bool b);
+	bool isSaveLayers();
+
+	void setLongPress(int msecs);
+	int getLongPress();
+
+	void setDriftCheckPoint(DriftCheckPoint p);
+	DriftCheckPoint getDriftCheckPoint();
+
+    void setGroupFocusLock(bool b);
+    bool isGroupFocusLock();
+
+    void setNoSyncBeatRounding(bool b);
+    bool isNoSyncBeatRounding();
+
+    void setEdpisms(bool b);
+    bool isEdpisms();
+
 #if 0
 	const char* getMidiInput();
 	void setMidiInput(const char* s);
@@ -231,16 +253,17 @@ class MobiusConfig {
 	void setAudioOutput(const char* s);
     void setSampleRate(AudioSampleRate rate);
     AudioSampleRate getSampleRate();
-#endif
-    
+
 	void setTracePrintLevel(int i);
 	int getTracePrintLevel();
 	void setTraceDebugLevel(int i);
 	int getTraceDebugLevel();
-
-	void setSaveLayers(bool b);
-	bool isSaveLayers();
-
+    
+#endif
+    
+    juce::OwnedArray<class GroupDefinition> groups;
+    int getGroupOrdinal(juce::String name);
+    
 	class Setup* getSetups();
 	void setSetups(class Setup* list);
 	void addSetup(class Setup* p);
@@ -268,9 +291,6 @@ class MobiusConfig {
 	void setSampleConfig(class SampleConfig* s);
 	class SampleConfig* getSampleConfig();
 
-	void setQuickSave(const char* s);
-	const char* getQuickSave();
-
 	void setFocusLockFunctions(class StringList* functions);
 	StringList* getFocusLockFunctions();
 
@@ -283,23 +303,6 @@ class MobiusConfig {
 	void setAltFeedbackDisables(class StringList* functions);
 	class StringList* getAltFeedbackDisables();
 
-	void setLongPress(int msecs);
-	int getLongPress();
-
-	void setDriftCheckPoint(DriftCheckPoint p);
-	DriftCheckPoint getDriftCheckPoint();
-
-    void setGroupFocusLock(bool b);
-    bool isGroupFocusLock();
-
-    void setNoSyncBeatRounding(bool b);
-    bool isNoSyncBeatRounding();
-
-    void setEdpisms(bool b);
-    bool isEdpisms();
-
-    juce::OwnedArray<class GroupDefinition> groups;
-    int getGroupOrdinal(juce::String name);
     
     //
     // Transient fields for testing

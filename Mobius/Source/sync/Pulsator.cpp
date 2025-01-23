@@ -46,9 +46,7 @@ Pulsator::~Pulsator()
  */
 void Pulsator::loadSession(Session* s)
 {
-    int numFollowers = 0;
-    numFollowers = s->audioTracks;
-    numFollowers += s->midiTracks;
+    int numFollowers = s->getTrackCount();
 
     // ensure the array is big enough
     // !! this is potentially dangerous if tracks are actively registering

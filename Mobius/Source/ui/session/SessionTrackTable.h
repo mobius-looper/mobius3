@@ -8,9 +8,7 @@
 
 #include "../script/TypicalTable.h"
 #include "../common/YanPopup.h"
-#include "../common/YanAlert.h"
 #include "../common/YanDialog.h"
-#include "../common/YanForm.h"
 #include "../common/YanField.h"
 
 class SessionTrackTableRow
@@ -28,7 +26,7 @@ class SessionTrackTableRow
 };
 
 class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
-                          public YanAlert::Listener, public YanDialog::Listener
+                          public YanDialog::Listener
 {
   public:
 
@@ -53,25 +51,42 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
     void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
     void yanPopupSelected(int id);
-    void yanAlertSelected(class YanAlert* d, int id);
-    void yanDialogOk(class YanDialog* d);
+    void yanDialogClosed(class YanDialog* d, int button);
     
   private:
     
     class Provider* provider = nullptr;
+    class Session* session = nullptr;
     juce::OwnedArray<class SessionTrackTableRow> tracks;
-    YanPopup popup {this};
-    YanAlert deleteAlert {this};
-    YanAlert addAlert {this};
-    YanDialog renameDialog {this};
-    //YanDialog bulkDialog;
-
-    YanForm renameForm;
-    YanInput renameInput {"New Name"};
+    int audioTracks = 0;
+    int midiTracks = 0;
     
-    void menuAdd();
-    void menuDelete();
-    void menuRename();
-    void menuBulk();
+    YanPopup popup {this};
+    YanDialog addAlert {this};
+    YanDialog deleteAlert {this};
+    YanDialog renameDialog {this};
+    YanDialog bulkDialog {this};
+    YanDialog bulkConfirm {this};
+
+    YanInput newName {"New Name"};
+    YanInput audioCount {"Audio Tracks"};
+    YanInput midiCount {"Midi Tracks"};
+
+    void reload();
+    void countTracks();
+    void selectRowByNumber(int n);
+    
+    void startAdd();
+    void startDelete();
+    void startRename();
+    void startBulk();
+    void startBulkConfirm(int button);
+
+    void finishAdd(int button);
+    void finishDelete(int button);
+    void finishRename(int button);
+    void finishBulkConfirm(int button);
+    void finishBulk(int button);
+    
 };
     

@@ -434,7 +434,7 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
     // don't bother saving this until it can have a more useful range
 	//render(UIParameterFadeFrames, c->getFadeFrames());
     render(b, UIParameterMaxSyncDrift, c->getMaxSyncDrift());
-    render(b, UIParameterTrackCount, c->getCoreTracks());
+    render(b, UIParameterTrackCount, c->getCoreTracksDontUseThis());
     
     // UIParameter is gone, and this shouldn't be used any more, but the
     // upgrader still needs to parse it?
@@ -450,7 +450,7 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
     // don't allow this to be persisted any more, can only be set in scripts
 	//render(IsolateOverdubsParameter->getName(), mIsolateOverdubs);
     render(b, UIParameterSpreadRange, c->getSpreadRange());
-    render(b, UIParameterTraceLevel, c->getTraceDebugLevel());
+    //render(b, UIParameterTraceLevel, c->getTraceDebugLevel());
     render(b, UIParameterSaveLayers, c->isSaveLayers());
     render(b, UIParameterDriftCheckPoint, c->getDriftCheckPoint());
 
@@ -541,7 +541,7 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 	//setIsolateOverdubs(e->getBoolAttribute(IsolateOverdubsParameter->getName()));
 	c->setSpreadRange(parse(e, UIParameterSpreadRange));
 	//c->setTracePrintLevel(parse(e, UIParameterTracePrintLevel));
-	c->setTraceDebugLevel(parse(e, UIParameterTraceLevel));
+	//c->setTraceDebugLevel(parse(e, UIParameterTraceLevel));
 	c->setSaveLayers(parse(e, UIParameterSaveLayers));
 	c->setDriftCheckPoint((DriftCheckPoint)parse(e, UIParameterDriftCheckPoint));
 

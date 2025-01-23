@@ -273,7 +273,7 @@ void Mobius::initialize(MobiusConfig* config)
 
     // Sanity check on some important parameters
     // TODO: Need more of these...
-    if (mConfig->getCoreTracks() <= 0) {
+    if (mConfig->getCoreTracksDontUseThis() <= 0) {
         // don't see a need to be more flexible here
         int newCount = 1;
         Trace(1, "Mobius::initialize Missing track count, adjusting to %d\n", newCount);
@@ -328,7 +328,7 @@ void Mobius::initialize(MobiusConfig* config)
  */
 void Mobius::initializeTracks()
 {
-    int count = mConfig->getCoreTracks();
+    int count = mConfig->getCoreTracksDontUseThis();
 
     // should have caught misconfigured count earlier
     if (count > 0) {
@@ -657,10 +657,7 @@ void Mobius::propagateConfiguration()
     // Modes track altFeedbackDisables
     MobiusMode::updateConfiguration(mConfig);
 
-    // used to allow configuration of fade length
-    // should be hidden now and can't be changed randomly
-    // this is defined by Audio and should be done in Kernel since
-    // it owns Audio now
+    // used to configure fade length in AudioCursor/AudioFade
 	AudioFade::setRange(mConfig->getFadeFrames());
 
     // tracks are sensitive to lots of things in the Setup

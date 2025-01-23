@@ -1,6 +1,9 @@
 /**
  * Utility class used by Supervisor once during startup to upgrade mobius.xml
  * and other config files for model changes.
+ *
+ * This is old and will no longer be used once the Session transition is over.
+ * Put nothing new in here. 
  */
 
 #include <JuceHeader.h>

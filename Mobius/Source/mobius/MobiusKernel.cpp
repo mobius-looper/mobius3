@@ -168,10 +168,10 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     installSymbols();
 
     // supposed to be the same now
-    if (config->getCoreTracks() != ses->audioTracks)
-      Trace(1, "MobiusKernel: Session audio tracks not right");
-    audioTracks = config->getCoreTracks();
-    midiTracks = ses->midiTracks;
+    //if (config->getCoreTracks() != ses->getAudioTracks())
+    //Trace(1, "MobiusKernel: Session audio tracks not right");
+    audioTracks = ses->getAudioTracks();
+    midiTracks = ses->getMidiTracks();
 
     //synchronizer.initialize();
 
@@ -412,8 +412,9 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
 
     // SyncMaster cares about the audio track count but only gets
     // it through the session
-    session->audioTracks = configuration->getCoreTracks();
-    syncMaster.loadSession(session);
+    // update: track counts don't come down this way any more
+    //session->audioTracks = configuration->getCoreTracks();
+    //syncMaster.loadSession(session);
 
     // this would be the place where make changes for
     // the new configuration, nothing right now

@@ -20,6 +20,7 @@ class BasicButtonRow : public juce::Component
     
     void clear();
     void add(juce::Button* b, juce::Button::Listener* l = nullptr);
+    void remove(juce::Button* b);
     
     void resized() override;
     void paint(juce::Graphics& g) override;

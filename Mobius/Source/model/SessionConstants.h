@@ -31,3 +31,4 @@ static const char* SessionHostOverride = "hostOverride";
 static const char* SessionMidiBeatsPerBar = "midiBeatsPerBar";
 static const char* SessionMidiBarsPerLoop = "midiBarsPerLoop";
 
+static const char* SessionLongPress = "longPress";

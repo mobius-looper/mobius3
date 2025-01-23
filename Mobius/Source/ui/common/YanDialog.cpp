@@ -19,18 +19,12 @@ YanDialog::YanDialog(Listener* l)
 
 void YanDialog::init()
 {
+    // always start with an Ok button
     okButton.addListener(this);
     cancelButton.addListener(this);
-    buttons.setCentered(true);
-    buttons.add(&okButton);
-    addAndMakeVisible(buttons);
-
-    // important to do this after structuring the buttons
-    // if you do it before resized() is called immediately
-    // which gives the button row a size but it has no children
-    // later when children are added and the dialog is resized,
-    // it doesn't cascade because the size hasn't changed
-    setBounds(0, 0, DefaultWidth, DefaultHeight);
+    buttonRow.setCentered(true);
+    buttonRow.add(&okButton);
+    addAndMakeVisible(buttonRow);
 }
 
 YanDialog::~YanDialog()
@@ -40,6 +34,11 @@ YanDialog::~YanDialog()
 void YanDialog::setListener(Listener* l)
 {
     listener = l;
+}
+
+void YanDialog::setSerious(bool b)
+{
+    serious = b;
 }
 
 void YanDialog::setTitle(juce::String s)
@@ -52,24 +51,71 @@ void YanDialog::setMessage(juce::String s)
     message = s;
 }
 
-void YanDialog::setContent(juce::Component* c)
+void YanDialog::setMessageHeight(int h)
 {
-    content = c;
-    addAndMakeVisible(c);
+    messageHeight = h;
 }
 
-void YanDialog::setButtonStyle(ButtonStyle s)
+void YanDialog::setContent(juce::Component* c)
 {
-    buttonStyle = s;
-    if (s == ButtonsOkCancel)
-      buttons.add(&cancelButton);
+    if (form.getParentComponent() != nullptr) {
+        Trace(1, "YanDialog: Attempt to set content after internal form was added");
+    }
+    else {
+        content = c;
+        addAndMakeVisible(c);
+    }
+}
+
+void YanDialog::addField(YanField* f)
+{
+    if (content != nullptr) {
+        Trace(1, "YanDialog: Attempt to add fields after content was assigned");
+    }
+    else {
+        form.add(f);
+        if (form.getParentComponent() == nullptr)
+          addAndMakeVisible(form);
+    }
+}
+
+void YanDialog::addButton(juce::String text)
+{
+    buttonRow.remove(&okButton);
+    juce::TextButton* b = new juce::TextButton(text);
+    b->addListener(this);
+    buttons.add(b);
+    buttonRow.add(b);
+}
+
+void YanDialog::show(juce::Component* parent)
+{
+    juce::Component* current = getParentComponent();
+    if (current != parent) {
+        if (current == nullptr)
+          parent->addAndMakeVisible(this);
+        else {
+            Trace(2, "YanDialog: Reparenting dialog");
+            current->removeChildComponent(this);
+            parent->addAndMakeVisible(this);
+        }
+    }
+
+    int width = getWidth();
+    int height = getHeight();
+    if (width == 0 || height == 0) {
+        int newWidth = (width == 0) ? DefaultWidth : width;
+        int newHeight = (height == 0) ? DefaultHeight : height;
+        setSize(newWidth, newHeight);
+    }
+    show();
 }
 
 void YanDialog::show()
 {
+    resized();
     JuceUtil::centerInParent(this);
     setVisible(true);
-    resized();
 }
 
 void YanDialog::resized()
@@ -77,39 +123,33 @@ void YanDialog::resized()
     juce::Rectangle<int> area = getLocalBounds();
     area = area.reduced(BorderWidth);
 
-    area.removeFromBottom(2);
-    buttons.setBounds(area.removeFromBottom(20));
+    area.removeFromBottom(4);
+    buttonRow.setBounds(area.removeFromBottom(20));
     
     if (title.length() > 0) {
         area = area.reduced(TitleInset);
         (void)area.removeFromTop(TitleHeight);
     }
 
-    if (content != nullptr) {
-        area = area.reduced(ContentInset);
-        content->setBounds(area);
+    if (message.length() > 0) {
+        if (title.length() > 0)
+          (void)area.removeFromTop(TitleMessageGap);
+        (void)area.removeFromTop(getMessageHeight());
     }
+
+    area = area.reduced(ContentInset);
+    if (content != nullptr)
+      content->setBounds(area);
+    else
+      form.setBounds(area);
     
-    JuceUtil::dumpComponent(this);
+    //JuceUtil::dumpComponent(this);
 }
 
-#if 0
-void YanDialog::layoutButtons(juce::Rectangle<int> area)
+int YanDialog::getMessageHeight()
 {
-    int buttonWidth = 100;
-    int buttonCount = 1;
-    if (buttonStyle == ButtonsOkCancel) buttonCount++;
-    int buttonGap = 4;
-    int buttonsWidth = (buttonWidth * buttonCount) + (buttonGap * (buttonCount - 1));
-    int buttonOffset = area.getWidth() - (buttonsWidth / 2);
-    int buttonLeft = area.getX() + buttonOffset;
-    okButton.setBounds(buttonLeft, area.getY(), buttonWidth, area.getHeight());
-    if (buttonStyle == ButtonsOkCancel) {
-        buttonLeft += (buttonWidth + buttonGap);
-        cancelButton.setBounds(buttonLeft, area.getY(), buttonWidth, area.getHeight());
-    }
+    return (messageHeight > 0) ? messageHeight : MessageHeight;
 }
-#endif
 
 void YanDialog::paint(juce::Graphics& g)
 {
@@ -123,20 +163,49 @@ void YanDialog::paint(juce::Graphics& g)
     g.setColour(borderColor);
     g.drawRect(area, BorderWidth);
 
+    area = area.reduced(BorderWidth);
+    
     if (title.length() > 0) {
-        (void)area.reduced(TitleInset);
-        juce::Rectangle<int> titleArea = area.removeFromTop(TitleHeight).reduced(2);
-        g.setColour(juce::Colours::white);
+        area = area.reduced(TitleInset);
+        juce::Rectangle<int> titleArea = area.removeFromTop(TitleHeight);
+        g.setFont(JuceUtil::getFont(TitleHeight));
+        if (serious)
+          g.setColour(juce::Colours::red);
+        else
+          g.setColour(juce::Colours::white);
         g.drawText(title, titleArea, juce::Justification::centred);
+        (void)area.removeFromTop(TitleMessageGap);
+    }
+
+    if (message.length() > 0) {
+        juce::Rectangle<int> messageArea = area.removeFromTop(getMessageHeight());
+
+        g.setColour(juce::Colours::grey);
+        g.fillRect(messageArea);
+        
+        g.setColour(juce::Colours::black);
+        //g.drawText(message, messageArea, juce::Justification::centred);
+
+        g.setFont(JuceUtil::getFont(MessageFontHeight));
+        g.drawFittedText(message, messageArea.getX(), messageArea.getY(),
+                         messageArea.getWidth(),messageArea.getHeight(),
+                         juce::Justification::centred,
+                         5, // max lines
+                         1.0f);
+        
     }
 }
 
 void YanDialog::buttonClicked(juce::Button* b)
 {
-    if (b == &okButton) {
-        if (listener != nullptr)
-          listener->yanDialogOk(this);
-    }
+    int ordinal = 0;
+    
+    if (b != &okButton)
+      ordinal = buttons.indexOf(static_cast<juce::TextButton*>(b));
+    
+    if (listener != nullptr)
+      listener->yanDialogClosed(this, ordinal);
+    
     setVisible(false);
 }
 

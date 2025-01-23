@@ -2360,6 +2360,8 @@ bool Loop::isLayerChanged(Layer* layer, bool checkAutoUndo)
 			if (max < 0)
 			  max = -max;
 			MobiusConfig* c = mMobius->getConfiguration();
+            int noiseFloor = c->getNoiseFloor();
+            if (noiseFloor == 0) noiseFloor = DEFAULT_NOISE_FLOOR;
 			changed = (max > c->getNoiseFloor());
 		}
 	}

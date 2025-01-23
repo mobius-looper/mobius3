@@ -26,7 +26,6 @@ const char* ParamNameMaxSyncDrift = "maxSyncDrift";
 const char* ParamNameDriftCheckPoint = "driftCheckPoint";
 const char* ParamNameLongPress = "longPress";
 const char* ParamNameSpreadRange = "spreadRange";
-const char* ParamNameTraceLevel = "traceLevel";
 const char* ParamNameAutoFeedbackReduction = "autoFeedbackReduction";
 const char* ParamNameIsolateOverdubs = "isolateOverdubs";
 const char* ParamNameMonitorAudio = "monitorAudio";
@@ -458,7 +457,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameActiveSetup, ParamActiveSetup},
     //{ParamBindingsName, ParamBindings},
     {ParamNameDriftCheckPoint, ParamDriftCheckPoint},
-    {ParamNameTraceLevel, ParamTraceLevel},
     {ParamNameIntegerWaveFile, ParamIntegerWaveFile},
     {ParamNameGroupFocusLock, ParamGroupFocusLock},
     {ParamNameTrackCount, ParamTrackCount},

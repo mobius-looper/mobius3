@@ -377,19 +377,13 @@ Once those models are fully converted, these symbols can be removed.
       what is reported by the container for the selected audio device.
     </Parameter>
     
-    <Parameter name='maxLoops' options='noBinding'> 
-      The maximum number of loops a track can have.
-      Cannot be changed at runtime.
-    </Parameter>
-    
     <Parameter name='noiseFloor' type='int' options='noBinding'>
-      Used this in early testing, not sure if useful.  It would control how
-      sensitive AutoRecord is
+      Used by Loop to determine whether a layer can be suppressed because it
+      has no significant new content.  Has a code default to 13 if zero.
     </Parameter>
 
     <Parameter name='longPress' low='250' high='10000' options='noBinding'>
-      The amount of time a trigger can be held before activating long-press behavior.
-      Forget what the unit is here, milliseconds or tenths?
+      The amount of time in milliseconds a trigger can be held before activating long-press behavior.
       Belongs in UIConfig with other Binding parameters.
     </Parameter>
     
@@ -399,8 +393,7 @@ Once those models are fully converted, these symbols can be removed.
     </Parameter>
     
     <Parameter name='monitorAudio' type='bool'>
-      Enables through monitoring, should move this up.  Not sure how
-      this is implemented in the engine, maybe buried under Recorder.
+      Used by Track to enable through monitoring.  Should move this up.
     </Parameter>
     
     <Parameter name='quickSave' type='string' options='noBinding'>
@@ -414,9 +407,9 @@ Once those models are fully converted, these symbols can be removed.
     </Parameter>
     
     <Parameter name='fadeFrames' high='1024' options='noBinding'>
-      In practie this will probably have an enforced lower bound that
-      won't be part of the definition, though maybe setting it to zero
-      would be interesring for testing?
+      Used by some combination of Loop/LayerSegment to adjust the length
+      of boundary fades.  Has a code default of 128 which hasnt been changed
+      in forever.  Potentially useful but unused.
     </Parameter>
     
     <Parameter name='maxSyncDrift' high='10000' options='noBinding'>
@@ -430,12 +423,14 @@ Once those models are fully converted, these symbols can be removed.
     </Parameter>
 
     <Parameter name='autoFeedbackReduction' type='bool' options='noBinding'>
-      Forget what this does, I think feedback is automatically reduced when in
-      some recording modes like multiply or overdub.
+      Used by Loop to determine whether feedback should be reduced from 127 to 121
+      when in Overdub, Multiply, or Stutter modes.  Defaults to off.
+      NOTE: One of the few booleans that would be better defaulting to ON.
     </Parameter>
     
     <Parameter name='isolateOverdubs' type='bool' options='noBinding'>
-      Has to do with project saving, should move to UI
+      Formerly shown as "No Layer Flattening".  Considered experimental and hasnt
+      been exposed in a long time.  Still potentially useful but hidden.
     </Parameter>
 
     <Parameter name='saveLayers' type='bool' options='noBinding'>
@@ -671,13 +666,6 @@ Once those models are fully converted, these symbols can be removed.
       Arguably belongs in a separate device configuration model.
     </Parameter>
 
-    <Parameter name='traceLevel' options='noBinding'
-               coreName='traceDebugLevel'
-               codeName='TraceDebugLevel'>
-      Controls the granularity of trace logging to the debug output stream on Windows
-      or the console on Mac.  Core also has tracePrintLevel, try to merge these.
-      </Parameter>
-
     <!-- StringList
          This was a list of Mode names that don't want altFeedback applied.
          There were only four possibilities: Multiply, Overdub, Stutter, Substitute
@@ -693,6 +681,11 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='trackCount' coreName='tracks' codeName='Tracks' options='noBinding'>
       The number of tracks to configure internally and display in the UI
       Cannot be changed at runtime
+    </Parameter>
+    
+    <Parameter name='maxLoops' options='noBinding'> 
+      The maximum number of loops a track can have.
+      Cannot be changed at runtime.  ** hasnt been used in awhile ***
     </Parameter>
     
   </ParameterScope>

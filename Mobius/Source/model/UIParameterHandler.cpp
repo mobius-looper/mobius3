@@ -42,10 +42,6 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
             value->setInt(((MobiusConfig*)obj)->getSpreadRange());
             break;
             
-        case ParamTraceLevel:
-            value->setInt(((MobiusConfig*)obj)->getTraceDebugLevel());
-            break;
-            
         case ParamAutoFeedbackReduction:
             value->setBool(((MobiusConfig*)obj)->isAutoFeedbackReduction());
             break;
@@ -76,7 +72,7 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
             
         case ParamTrackCount:
             // as with so many others, this shouldn't be a UIParameter
-            value->setInt(((MobiusConfig*)obj)->getCoreTracks());
+            value->setInt(((MobiusConfig*)obj)->getCoreTracksDontUseThis());
             break;
             
         case ParamMaxLoops:
@@ -462,10 +458,6 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             
         case ParamSpreadRange:
             ((MobiusConfig*)obj)->setSpreadRange(value->getInt());
-            break;
-            
-        case ParamTraceLevel:
-            ((MobiusConfig*)obj)->setTraceDebugLevel(value->getInt());
             break;
             
         case ParamAutoFeedbackReduction:

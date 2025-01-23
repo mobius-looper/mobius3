@@ -7,6 +7,7 @@
 #include "../../util/Trace.h"
 #include "../../util/Util.h"
 #include "../../model/Session.h"
+#include "../../model/SessionConstants.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
@@ -54,8 +55,8 @@ void LongWatcher::initialize(Session* session, int rate)
     else
       sampleRate = rate;
 
-    // this needs to come from the Session
-    int longMsecs = 1000;
+    int longMsecs = session->getInt(SessionLongPress);
+    if (longMsecs <= 0) longMsecs = 1000;
 
     float longSeconds = (float)longMsecs / 1000.0f;
     

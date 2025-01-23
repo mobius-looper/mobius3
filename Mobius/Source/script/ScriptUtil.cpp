@@ -23,7 +23,7 @@ void ScriptUtil::configure(MobiusConfig* c, Session* s)
 
 int ScriptUtil::getMaxScope()
 {
-    return session->audioTracks + session->midiTracks;
+    return session->getTrackCount();
 }
 
 /**
@@ -62,20 +62,20 @@ bool ScriptUtil::expandScopeKeyword(const char* cname, juce::Array<int>& numbers
     juce::String name(cname);
     
     if (name.equalsIgnoreCase("all")) {
-        int total = session->audioTracks + session->midiTracks;
+        int total = session->getTrackCount();
         for (int i = 0 ; i < total ; i++) {
             numbers.add(i+1);
         }
     }
     else if (name.equalsIgnoreCase("audio")) {
-        int total = session->audioTracks;
+        int total = session->getAudioTracks();
         for (int i = 0 ; i < total ; i++) {
             numbers.add(i+1);
         }
     }
     else if (name.equalsIgnoreCase("midi")) {
-        int base = session->audioTracks + 1;
-        for (int i = 0 ; i < session->midiTracks ; i++) {
+        int base = session->getAudioTracks() + 1;
+        for (int i = 0 ; i < session->getMidiTracks() ; i++) {
             numbers.add(base + i);
         }
     }

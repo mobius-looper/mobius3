@@ -211,7 +211,6 @@ typedef enum {
     
     ParamActiveSetup,
     ParamDriftCheckPoint,
-    ParamTraceLevel,
     ParamIntegerWaveFile,
     ParamGroupFocusLock,
     ParamTrackCount,

@@ -248,34 +248,6 @@ void UIParameterSpreadRangeClass::setValue(void* obj, ExValue* value)
 UIParameterSpreadRangeClass UIParameterSpreadRangeObj;
 UIParameter* UIParameterSpreadRange = &UIParameterSpreadRangeObj;
 
-////////////// TraceLevel
-
-class UIParameterTraceLevelClass : public UIParameter
-{
-  public:
-    UIParameterTraceLevelClass();
-    void getValue(void* obj, class ExValue* value) override;
-    void setValue(void* obj, class ExValue* value) override;
-};
-UIParameterTraceLevelClass::UIParameterTraceLevelClass()
-{
-    name = "traceLevel";
-    displayName = "Trace Level";
-    coreName = "traceDebugLevel";
-    scope = ScopeGlobal;
-    type = TypeInt;
-}
-void UIParameterTraceLevelClass::getValue(void* obj, ExValue* value)
-{
-    value->setInt(((MobiusConfig*)obj)->getTraceDebugLevel());
-}
-void UIParameterTraceLevelClass::setValue(void* obj, ExValue* value)
-{
-    ((MobiusConfig*)obj)->setTraceDebugLevel(value->getInt());
-}
-UIParameterTraceLevelClass UIParameterTraceLevelObj;
-UIParameter* UIParameterTraceLevel = &UIParameterTraceLevelObj;
-
 ////////////// AutoFeedbackReduction
 
 class UIParameterAutoFeedbackReductionClass : public UIParameter
@@ -457,7 +429,7 @@ UIParameterTrackCountClass::UIParameterTrackCountClass()
 }
 void UIParameterTrackCountClass::getValue(void* obj, ExValue* value)
 {
-    value->setInt(((MobiusConfig*)obj)->getCoreTracks());
+    value->setInt(((MobiusConfig*)obj)->getCoreTracksDontUseThis());
 }
 void UIParameterTrackCountClass::setValue(void* obj, ExValue* value)
 {

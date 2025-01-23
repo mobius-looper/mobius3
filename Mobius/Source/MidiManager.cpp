@@ -104,7 +104,7 @@ void MidiManager::configure()
 {
     Session* session = supervisor->getSession();
     // assume for now that if there are any they're midi
-    if (session->midiTracks > 0)
+    if (session->getMidiTracks() > 0)
       recordable = true;
 }
 

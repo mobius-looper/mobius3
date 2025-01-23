@@ -25,7 +25,8 @@ class TypicalTable : public juce::Component,
     ~TypicalTable();
 
     int getSelectedRow();
-
+    void selectRow(int r);
+    
     // defer most initialization till the subclass has control
     void initialize();
 
@@ -57,11 +58,12 @@ class TypicalTable : public juce::Component,
     void selectedRowsChanged(int lastRowSelected) override;
     void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
-
-  private:
-
+  protected:
+    
     Listener* listener = nullptr;
 
+  private:
+    
     bool hasCommands = false;
     ButtonBar commands;
     juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};

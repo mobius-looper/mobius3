@@ -104,6 +104,10 @@ void SessionTrackEditor::save(Session* dest)
     // save editing state for the current track back to the intermediate session
     saveForms(currentTrack);
 
+    // make the numbers match
+    dest->reconcileTrackCount(Session::TypeAudio, session->getAudioTracks());
+    dest->reconcileTrackCount(Session::TypeMidi, session->getMidiTracks());
+
     // now load the intermediate session back into the forms one at a time
     // but save them to the destination session
     for (int i = 0 ; i < session->getTrackCount() ; i++) {
@@ -111,11 +115,13 @@ void SessionTrackEditor::save(Session* dest)
         Session::Track* srcTrack = session->getTrackByIndex(i);
         Session::Track* destTrack = dest->getTrackByNumber(srcTrack->number);
         if (destTrack == nullptr) {
-            // this must be a new track we're supposed to create
-            // create isn't implemented yet
-            Trace(1, "SessionTrackEditor: Unable to save new track forms");
+            // should not be seeing this if reconcileTrackCount worked to flesh them out
+            Trace(1, "SessionTrackEditor: New track save failed");
         }
         else {
+            // this is the only thing that isn't in the ValueSet
+            destTrack->name = srcTrack->name;
+            
             ValueSet* srcValues = srcTrack->ensureParameters();
             ValueSet* destValues = destTrack->ensureParameters();
 

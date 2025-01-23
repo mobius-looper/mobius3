@@ -105,7 +105,7 @@ void MidiTrackEditor::revert()
  */
 void MidiTrackEditor::loadSession()
 {
-    trackCount.setInt(session->midiTracks);
+    trackCount.setInt(session->getMidiTracks());
     loadTrack(selectedTrack);
 }
 
@@ -203,7 +203,7 @@ void MidiTrackEditor::initTrackGroup(Session::Track* track)
 
 void MidiTrackEditor::saveSession()
 {
-    session->midiTracks = trackCount.getInt();
+    session->reconcileTrackCount(Session::TypeMidi, trackCount.getInt());
     saveTrack(selectedTrack);
 }
 

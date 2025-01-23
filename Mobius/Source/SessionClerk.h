@@ -47,7 +47,7 @@ class SessionClerk
     juce::File libraryRoot;
     bool libraryValid = false;
 
-    void bootstrapDefaultSession();
+    bool bootstrapDefaultSession();
     Folder* findFolder(juce::String name);
     
     juce::XmlElement* readSessionElement(juce::File src);
@@ -56,7 +56,7 @@ class SessionClerk
     Session* readSession(Folder* f);
     void writeSession(Folder* f, Session* s);
 
-    void migrateSetups();
+    void migrateSetups(bool bootstrapped);
     void createSession(class Session* neu);
 
     void fixSession(class Session* s);

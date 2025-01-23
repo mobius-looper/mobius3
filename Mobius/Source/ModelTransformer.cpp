@@ -35,6 +35,18 @@ Session* ModelTransformer::setupToSession(Setup* src)
     return session;
 }
 
+void ModelTransformer::sessionToConfig(Session* src, MobiusConfig* dest)
+{
+    // the globals
+    transform(src, dest);
+
+    // there will only be one Setup, and it is us
+    Setup* setup = new Setup();
+    transform(src, setup);
+    dest->addSetup(setup);
+    dest->setStartingSetupName(src->getName().toUTF8());
+}
+
 void ModelTransformer::addGlobals(MobiusConfig* config, Session* session)
 {
     transform(config, session);
@@ -92,6 +104,18 @@ void ModelTransformer::transform(SymbolId id, const char* value, ValueSet* dest)
     }
 }
 
+const char* ModelTransformer::getString(SymbolId id, ValueSet* src)
+{
+    const char* result = nullptr;
+    Symbol* s = symbols->getSymbol(id);
+    if (s != nullptr) {
+        MslValue* v = src->get(s->name);
+        if (v != nullptr)
+          result = v->getString();
+    }
+    return result;
+}
+
 void ModelTransformer::transform(SymbolId id, int value, ValueSet* dest)
 {
     Symbol* s = symbols->getSymbol(id);
@@ -99,11 +123,35 @@ void ModelTransformer::transform(SymbolId id, int value, ValueSet* dest)
       dest->setInt(s->name, value);
 }
 
+int ModelTransformer::getInt(SymbolId id, ValueSet* src)
+{
+    int result = 0;
+    Symbol* s = symbols->getSymbol(id);
+    if (s != nullptr) {
+        MslValue* v = src->get(s->name);
+        if (v != nullptr)
+          result = v->getInt();
+    }
+    return result;
+}    
+
 void ModelTransformer::transformBool(SymbolId id, bool value, ValueSet* dest)
 {
     Symbol* s = symbols->getSymbol(id);
     if (s != nullptr)
       dest->setBool(s->name, value);
+}
+
+bool ModelTransformer::getBool(SymbolId id, ValueSet* src)
+{
+    bool result = false;
+    Symbol* s = symbols->getSymbol(id);
+    if (s != nullptr) {
+        MslValue* v = src->get(s->name);
+        if (v != nullptr)
+          result = v->getBool();
+    }
+    return result;
 }
 
 /**
@@ -209,14 +257,11 @@ void ModelTransformer::transform(MobiusConfig* src, Session* dest)
     
     // this will have the effect of fleshing out SessionTrack objects
     // if there were not enough SetupTracks in the old file
-    dest->audioTracks = src->getCoreTracks();
+    dest->reconcileTrackCount(Session::TypeAudio, src->getCoreTracksDontUseThis());
 
     // these really belong in DeviceConfig
     transform(ParamInputLatency, src->getInputLatency(), values);
     transform(ParamOutputLatency, src->getOutputLatency(), values);
-
-    // should try to get rid of this, core probably needs it to avoid allocation
-    transform(ParamMaxLoops, src->getMaxLoops(), values);
 
     // these are useful
     transform(ParamNoiseFloor, src->getNoiseFloor(), values);
@@ -226,12 +271,15 @@ void ModelTransformer::transform(MobiusConfig* src, Session* dest)
     // should be redesigned
     transform(ParamQuickSave, src->getQuickSave(), values);
 
-    // probably broken, still useful, related to binding redesign
+    // has to do with how Action values are donverted to speed and pitch
+    // adjustments
     transform(ParamSpreadRange, src->getSpreadRange(), values);
     
-    // these are obscure and could be hidden
+    // obscure old parameter, potentially useful but hidden
     transform(ParamFadeFrames, src->getFadeFrames(), values);
-    transform(ParamMaxSyncDrift, src->getNoiseFloor(), values);
+
+    // not used by the new sync engine, but still useful
+    transform(ParamMaxSyncDrift, src->getMaxSyncDrift(), values);
     
     // this never went anywhere, and is probably broken
     transform(ParamControllerActionThreshold, src->mControllerActionThreshold, values);
@@ -239,8 +287,7 @@ void ModelTransformer::transform(MobiusConfig* src, Session* dest)
     // a few more obscure ones, reconsider the need
     transformBool(ParamAutoFeedbackReduction, src->isAutoFeedbackReduction(), values);
 
-    // this applies to project saving, it can probably go away once projects
-    // are redesigned around the Session and be more of a UI level option
+    // an old experiment called "No Layer Flattening"
     transformBool(ParamIsolateOverdubs, src->isIsolateOverdubs(), values);
 
     // another project option, should be part of the session UI
@@ -248,6 +295,49 @@ void ModelTransformer::transform(MobiusConfig* src, Session* dest)
 
     // will likely want some options around this, but probably not the same
     //transformEnum(ParamDriftCheckPoint, src->getDriftCheckPoint(), values);
+}
+
+/**
+ * This goes the other direction, used when passing an editing session down
+ * to the core which still needs to see the old model.
+ */
+void ModelTransformer::transform(Session* src, MobiusConfig* dest)
+{
+    ValueSet* values = src->ensureGlobals();
+    
+    dest->setCoreTracks(src->getAudioTracks());
+
+    dest->setInputLatency(getInt(ParamInputLatency, values));
+    dest->setOutputLatency(getInt(ParamOutputLatency, values));
+
+    dest->setNoiseFloor(getInt(ParamNoiseFloor, values));
+    // this should be handled by TrackManager now
+    dest->setLongPress(getInt(ParamLongPress, values));
+    // does core do this or Kernel?
+    dest->setMonitorAudio(getBool(ParamMonitorAudio, values));
+    
+    dest->setQuickSave(getString(ParamQuickSave,  values));
+
+    // this shouldn't be necessary, only for bindings
+    dest->setSpreadRange(getInt(ParamSpreadRange, values));
+    
+    // these are obscure and could be hidden
+    dest->setFadeFrames(getInt(ParamFadeFrames, values));
+    
+    // ParamMaxSyncDrift is not used by core now
+    // ParamControllerActionThreshold is for Binderator
+
+    // a few more obscure ones, reconsider the need
+    dest->setAutoFeedbackReduction(getBool(ParamAutoFeedbackReduction, values));
+
+    // this applies to project saving, it can probably go away once projects
+    // are redesigned around the Session and be more of a UI level option
+    dest->setIsolateOverdubs(getBool(ParamIsolateOverdubs, values));
+
+    // another project option, should be part of the session UI
+    dest->setSaveLayers(getBool(ParamSaveLayers, values));
+
+    // todo: maybe Edpisms
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -307,6 +397,50 @@ void ModelTransformer::transform(Setup* src, Session* dest)
 
         track = track->getNext();
     }
+}
+
+void ModelTransformer::transform(Session* src, Setup* dest)
+{
+    ValueSet* values = src->ensureGlobals();
+
+    dest->setName(src->getName().toUTF8());
+
+    // still used by Track
+    dest->setDefaultPresetName(getString(ParamDefaultPreset, values));
+
+    SetupTrack* tracks = nullptr;
+    SetupTrack* last = nullptr;
+    juce::String syncUnit;
+    
+    for (int i = 0 ; i < src->getTrackCount() ; i++) {
+        Session::Track* srctrack = src->getTrackByIndex(i);
+        if (srctrack->type == Session::TypeAudio) {
+
+            SetupTrack* desttrack = new SetupTrack();
+            if (last == nullptr)
+              tracks = desttrack;
+            else
+              last->setNext(desttrack);
+            last = desttrack;
+            
+            transform(srctrack, desttrack);
+
+            // remember this
+            if (syncUnit.length() == 0)
+              syncUnit = srctrack->getString("syncUnit");
+        }
+    }
+
+    dest->setTracks(tracks);
+
+    // syncUnit was duplicated into the Session::Tracks,
+    // in the Setup it is shared by all tracks
+    
+    
+    OldSyncUnit slaveUnit = SYNC_UNIT_BAR;
+    if (syncUnit == "beat")
+      slaveUnit = SYNC_UNIT_BAR;
+    dest->setSyncUnit(slaveUnit);
 }
 
 /**
@@ -407,6 +541,68 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
     }
     if (newEnum != nullptr)
       values->setString(juce::String("syncUnit"), newEnum);
+}
+
+void ModelTransformer::transform(Session::Track* src, SetupTrack* dest)
+{
+    ValueSet* values = src->ensureParameters();
+
+    dest->setName(src->name.toUTF8());
+
+    // tracks can specify an active preset that overrides the default preset
+    // from the Setup
+    dest->setTrackPresetName(getString(ParamTrackPreset, values));
+
+    // this used to be an ordinal number but it should have been upgraded long ago
+    // this shouldn't be necessary any more, groups are handled by TrackManater
+    juce::String gname = values->getJString("trackGroup");
+    if (gname.length() > 0)
+      dest->setGroupName(gname.toUTF8());
+
+    // not sure I want this to work the same way
+    dest->setFocusLock(getBool(ParamFocus, values));
+
+    dest->setMono(getBool(ParamMono, values));
+        
+    dest->setInputLevel(getInt(ParamInput, values));
+    dest->setOutputLevel(getInt(ParamOutput, values));
+    dest->setFeedback(getInt(ParamFeedback, values));
+    dest->setAltFeedback(getInt(ParamAltFeedback, values));
+    dest->setPan(getInt(ParamPan, values));
+
+    dest->setAudioInputPort(getInt(ParamAudioInputPort, values));
+    dest->setAudioOutputPort(getInt(ParamAudioOutputPort, values));
+    dest->setPluginInputPort(getInt(ParamPluginInputPort, values));
+    dest->setPluginOutputPort(getInt(ParamPluginOutputPort, values));
+
+    // The sync parameters have changed enumerations
+    // Setup uses OldSyncSource and OldTrackSyncUnit and the Session
+    // uses SyncSource and TrackSyncUnit
+
+    // sync parameters should not be necessary, but there may be some funny
+    // things with them
+    juce::String syncSource = values->getString("syncSource");
+    OldSyncSource oldSyncSource = SYNC_NONE;
+    if (syncSource == "track")
+      oldSyncSource = SYNC_TRACK;
+    else if (syncSource == "midi")
+      oldSyncSource = SYNC_MIDI;
+    else if (syncSource == "host")
+      oldSyncSource = SYNC_HOST;
+    else if (syncSource == "master")
+      oldSyncSource = SYNC_OUT;
+    else if (syncSource == "transport")
+      oldSyncSource = SYNC_TRANSPORT;
+
+    dest->setSyncSource(oldSyncSource);
+    
+    juce::String trackSyncUnit = values->getString("trackSyncUnit");
+    SyncTrackUnit oldUnit = TRACK_UNIT_LOOP;
+    if (trackSyncUnit == "subcycle")
+      oldUnit = TRACK_UNIT_SUBCYCLE;
+    else if (trackSyncUnit == "cycle")
+      oldUnit = TRACK_UNIT_CYCLE;
+    dest->setSyncTrackUnit(oldUnit);
 }
 
 //////////////////////////////////////////////////////////////////////

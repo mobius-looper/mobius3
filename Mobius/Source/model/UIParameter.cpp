@@ -147,7 +147,7 @@ int UIParameter::getDynamicHigh(MobiusConfig* container)
         // as a bindable parameter, and it shouldn't even BE a UIParameter,
         // it's just a global preference
         // don't have access to Supervisor so we can't get the view, just use core tracks
-        dynamicHigh = container->getCoreTracks() - 1;
+        dynamicHigh = container->getCoreTracksDontUseThis() - 1;
     }
     else if (this == UIParameterLoopCount) {
         dynamicHigh = container->getMaxLoops() - 1;

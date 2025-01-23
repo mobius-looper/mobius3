@@ -94,14 +94,9 @@ class Session
 
     };
 
-    // until we get audio tracks in here, copy this from MobiusConfig
-    int audioTracks = 0;
-
-    // !!!!!!!!!!!!!!!!!!!!
-    // this shit is accessed all over and it needs to stop
-    int midiTracks = 0;
-
     int getTrackCount();
+    int getAudioTracks();
+    int getMidiTracks();
 
     // accessing tracks by index should only be used when you want to operate
     // on all of them in bulk, it is not the same as getTrack(number)
@@ -124,6 +119,8 @@ class Session
     Track* ensureTrack(TrackType type, int index);
     void replaceMidiTracks(Session* src);
     void clearTracks(TrackType type);
+
+    void deleteByNumber(int number);
     
     // global parameters
     ValueSet* getGlobals();
@@ -150,8 +147,20 @@ class Session
 
     juce::String getLocation();
     void setLocation(juce::String s);
+
+    // temporary upgrade
+    int getOldMidiTrackCount() {
+        return midiTracks;
+    }
     
   private:
+
+    // !! make these go away
+    // the numbers should be determined by the Track objects
+    // unfortunately for older sparse Sessions we had counts that didn't
+    // match
+    int audioTracks = 0;
+    int midiTracks = 0;
 
     juce::String name;
     juce::String location;
@@ -168,6 +177,7 @@ class Session
     void parseDevice(juce::XmlElement* root, SessionMidiDevice* device);
 
     void assignIds();
+    void renumber();
     
 };
 

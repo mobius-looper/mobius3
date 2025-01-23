@@ -626,8 +626,8 @@ void Supervisor::initializeView()
 
     // I think this is all that is needed, the track arrays will be built out and
     // in a good enough default stsate
-    systemState.audioTracks = s->audioTracks;
-    systemState.midiTracks = s->midiTracks;
+    systemState.audioTracks = s->getAudioTracks();
+    systemState.midiTracks = s->getMidiTracks();
     
     mobiusViewer.refresh(&systemState, &mobiusView);
 
@@ -1310,12 +1310,20 @@ Session* Supervisor::initializeSession()
 {
     // before Producer/ScriptClerk get going, do a few old upgrades
     // to mobius.xml that should be long over by now
+    // Once the Session conversion is complete, this won't be necessary
     MobiusConfig* config = getMobiusConfig();
     if (upgrader.upgrade(config)) {
         fileManager.writeMobiusConfig(config);
     }
 
     // initialize SessionClerk and do Setup migration if necessary
+    // this is where the critical MobiusConfig to Session upgrade magic lives
+    // down in SessionClerk, at the end everything in MobiusConfig besides
+    // the Presets and BindingSets will have been migrated to the Default
+    // Session, andd any extended Setups will have been converted to Sessions.
+    // From this point forward NOTHING should go back to mobius.xml except for
+    // those things.
+    // The Session will have been normalized for track counts and numbers.
     producer->initialize();
     
     // validate/upgrade the configuration files
@@ -1325,13 +1333,17 @@ Session* Supervisor::initializeSession()
     
     // we don't keep audio track definitions in the session yet so
     // copy this over so it can be known with only the Session
-    if (neu->audioTracks != config->getCoreTracks()) {
-        neu->audioTracks = config->getCoreTracks();
+    // !! SessionClerk should be doing the normalizing now
+#if 0    
+    if (neu->getAudioTracks() != config->getCoreTracks()) {
+        Trace(1, "Supervisor: Shouldn't be here correcting track counts");
+        neu->reconcileTrackCount(Session::TypeAudio, config->getCoreTracks());
         neu->setModified(true);
     }
 
     normalizeSession(neu);
-
+#endif
+    
     if (neu->isModified())
       producer->saveSession(neu);
 
@@ -1379,26 +1391,22 @@ void Supervisor::normalizeSession(Session* s)
 {
     MobiusConfig* config = getMobiusConfig();
 
-    int requiredAudio = config->getCoreTracks();
+    // !!! this will change once Session is authorative over the audio track count
+    int requiredAudio = config->getCoreTracksDontUseThis();
     s->reconcileTrackCount(Session::TypeAudio, requiredAudio);
-    s->audioTracks = requiredAudio;
 
-    // I changed from deriving the midi track count from the object list rather than the
-    // number in the session, so we might want to upgrade this?
-    if (s->midiTracks == 0) {
-        Trace(1, "Supervisor: MIDI track count not defined in session but Track objects existed");
-        int midiObjects = 0;
-        for (int i = 0 ; i < s->getTrackCount() ; i++) {
-            Session::Track* t = s->getTrackByIndex(i);
-            if (t->type == Session::TypeMidi)
-              midiObjects++;
+    // if there was an old track count in the XML but the Session was sparse, flesh it out
+    int oldMidiCount = s->getOldMidiTrackCount();
+    if (oldMidiCount > 0) {
+        int actualMidiCount = s->getMidiTracks();
+        if (oldMidiCount != actualMidiCount) {
+            Trace(1, "Supervisor: Midi track count mismatch, reconciling");
+            s->reconcileTrackCount(Session::TypeMidi, oldMidiCount);
         }
-        s->midiTracks = midiObjects;
     }
-
-    s->reconcileTrackCount(Session::TypeMidi, s->midiTracks);
     
     // now number them, audio first
+    // !! Session now does this it's own self
     int trackNumber = 1;
     for (int i = 0 ; i < s->getTrackCount() ; i++) {
         Session::Track* t = s->getTrackByIndex(i);
@@ -1452,15 +1460,8 @@ void Supervisor::normalizeSession(Session* s)
  */
 void Supervisor::configureSystemState(Session* s)
 {
-    // start with the configured counts
-    int maxTracks = s->audioTracks + s->midiTracks;
-
-    // if there are more Session::Tracks than there are in the count
-    // grow the state count until it is clearer which of the two should win
-    int sessionTracks = s->getTrackCount();
-
-    if (sessionTracks > maxTracks) maxTracks = sessionTracks;
-
+    int maxTracks = s->getTrackCount();
+    
     // in theory should whip through the config model and calculate
     // the maximum
     int maxLoops = TrackState::MaxLoops;
@@ -1572,8 +1573,10 @@ void Supervisor::sessionEditorSave()
     }
 
     // save the official track count
+    // !! don't need this here, a full model transformation needs to be sent done
+    // through mobius->reconfigure
     MobiusConfig* config = getMobiusConfig();
-    if (newAudioTracks != config->getCoreTracks()) {
+    if (newAudioTracks != config->getCoreTracksDontUseThis()) {
         config->setCoreTracks(newAudioTracks);
         fileManager.writeMobiusConfig(config);
     }
@@ -1627,6 +1630,7 @@ void Supervisor::saveMobiusConfigOnShutdown()
             Trace(1, "Supervisor: Null setup when saving final session");
         }
         else {
+            // !! this no longeer exists as a concept
             const char* starting = mconfig->getStartingSetupName();
             if (!StringEqual(setup->getName(), starting)) {
                 mconfig->setStartingSetupName(setup->getName());

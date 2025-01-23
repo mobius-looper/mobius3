@@ -25,7 +25,7 @@
   </Tree>
 
   <Form name='sessionGlobalGeneral' title='General Parameters'
-        symbols='inputLatency,outputLatency,longPress,noiseFloor,maxLoops,monitorAudio,quickSave,spreadRange,fadeFrames,maxSynDrift,defaultPreset'/>
+        symbols='inputLatency,outputLatency,longPress,noiseFloor,monitorAudio,quickSave,spreadRange,fadeFrames,maxSynDrift,defaultPreset'/>
 
   <Form name='sessionGlobalSync' title='Synchronization Parameters'
         symbols='transportBeatsPerBar,transportBarsPerLoop,transportMidiClocksWhenStopped,transportMidiEnable,transportMinTempo,transportMaxTempo,transportManualStart,hostBeatsPerBar,hostBeatsPerLoop,hostOverrideTimeSignature,midiBeatsPerBar,midiBarsPerLoop'/>

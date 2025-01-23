@@ -68,11 +68,13 @@ void TrackManager::initialize(MobiusConfig* config, Session* session, Mobius* co
     longWatcher.setListener(this);
 
     // todo: trust this or ask core?
-    audioTrackCount = session->audioTracks;
+    // !!!! I think we need to live in a world where the session wins and core
+    // just has to deal with it
+    audioTrackCount = session->getAudioTracks();
     int actual = core->getTrackCount();
     if (audioTrackCount != actual) {
         Trace(1, "TrackManager: Session audio track count didn't match core");
-        audioTrackCount = actual;
+        //audioTrackCount = actual;
     }
 
     loadSession(session);
@@ -127,7 +129,7 @@ void TrackManager::loadSession(Session* session)
 void TrackManager::configureTracks(Session* session)
 {
     // try to get rid of these
-    audioTrackCount = session->audioTracks;
+    audioTrackCount = session->getAudioTracks();
     if (audioTrackCount != audioEngine->getTrackCount()) {
         // this would be an error sending the Setup over to the core, or the core didn't like it
         Trace(1, "TrackManager: Mismatched audio track count %d/%d",
@@ -137,7 +139,7 @@ void TrackManager::configureTracks(Session* session)
         // if there are too few, then some actions will go nowhere
     }
 
-    midiTrackCount = session->midiTracks;
+    midiTrackCount = session->getMidiTracks();
     
     // transfer the current track list to a holding area
     // discard old MobiusTrackWrappers since the referenced Track may no longer be valid
@@ -153,7 +155,7 @@ void TrackManager::configureTracks(Session* session)
 
     // now put them back, for now Mobius always goes first
     // Mobius tracks configure themselves through MobiusConfig at an earlier stage
-    for (int i = 0 ; i < session->audioTracks ; i++) {
+    for (int i = 0 ; i < session->getAudioTracks() ; i++) {
         LogicalTrack* lt = new LogicalTrack(this);
         // audio tracks must be numbered first
         int number = i+1;
@@ -172,7 +174,7 @@ void TrackManager::configureTracks(Session* session)
 
     // now midi and eventually the others, these have more flexibility
     int baseNumber = tracks.size() + 1;
-    int remaining = session->midiTracks;
+    int remaining = session->getMidiTracks();
     for (int i = 0 ; i < remaining ; i++) {
         int number = baseNumber + i;
         Session::Track* def = session->getTrackByNumber(number);

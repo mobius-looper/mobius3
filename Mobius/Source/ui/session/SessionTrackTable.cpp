@@ -26,23 +26,40 @@ SessionTrackTable::SessionTrackTable()
 
     addAlert.setTitle("Add Track");
     addAlert.setMessage("Select the track type to add");
-    addAlert.addButton("Cancel");
     addAlert.addButton("Audio");
     addAlert.addButton("Midi");
+    addAlert.addButton("Cancel");
     
     deleteAlert.setTitle("Delete Track");
     deleteAlert.setSerious(true);
-    deleteAlert.setMessage("Are you sure you want to delete this track?\nDeleting a track will reunmber the tracks and may cause instability in the bindings if you used track numbers as scopes.");
-    deleteAlert.addButton("Cancel");
+    deleteAlert.setMessage("Are you sure you want to delete this track?");
     deleteAlert.addButton("Delete");
+    deleteAlert.addButton("Cancel");
 
-    renameForm.add(&renameInput);
-    renameDialog.setContent(&renameForm);
+    renameDialog.setTitle("Rename Track");
+    renameDialog.addField(&newName);
+    renameDialog.addButton("Rename");
+    renameDialog.addButton("Cancel");
+
+    bulkDialog.setTitle("Bulk Add/Remove Tracks");
+    bulkDialog.setMessage("Enter the total number of tracks of each type you wish to have.");
+    bulkDialog.setMessageHeight(40);
+    bulkDialog.addField(&audioCount);
+    bulkDialog.addField(&midiCount);
+    bulkDialog.addButton("Modify");
+    bulkDialog.addButton("Cancel");
+    
+    bulkConfirm.setTitle("Are you sure?");
+    bulkConfirm.setSerious(true);
+    bulkConfirm.setMessageHeight(100);
+    bulkConfirm.addButton("Modify");
+    bulkConfirm.addButton("Cancel");
 }
 
 SessionTrackTable::~SessionTrackTable()
 {
 }
+
 void SessionTrackTable::initialize(Provider* p)
 {
     // nothing to do during initialization, must
@@ -52,62 +69,38 @@ void SessionTrackTable::initialize(Provider* p)
     // it is vital you call this to get the header and other parts
     // of the table defined, or else it won't display
     TypicalTable::initialize();
-
-    // kludge: the popup dialogs need to be displayed in the parent
-    // compoennt not this one since we're usually small
-    // this assumes that we've been added as a child at this point
-    // might be better if these are connected and disconnected when they were used
-    juce::Component* parent = getParentComponent();
-    if (parent == nullptr) {
-        Trace(1, "SessionTrackTable: No parent component at initialize(), dialogs won't work");
-    }
-    else {
-        parent->addChildComponent(&renameDialog);
-    }
 }
 
 /**
- * It should be possible for this to work using only the Session
- * but that is sparse right now.  To know track names you need information
- * from the Setup which will have been combined into the MobiusView.
- * This also makes the order of the tracks match the View order, which
- * SHOULD also match Session order, but since that's what drives the UI, use it.
+ * The order of tracks in the table will follow the internal track numbers.
+ * It would be better to follow the view order once that becomes possible.
  *
- * The session passed here is the one being edited by SessionEditor
- * which one day may be complete enough to drive the process but for now
- * is ignored.  
+ * The session must be normalized at this point.
+ *
  */
-void SessionTrackTable::load(Provider* p, Session* session)
+void SessionTrackTable::load(Provider* p, Session* s)
 {
-    (void)session;
+    (void)p;
+    session = s;
+    reload();
+}
 
+void SessionTrackTable::reload()
+{
     tracks.clear();
 
-    // the Session unfortunately can't drive the table because
-    // audio track configurations are not kept in here
-    // the MobiusView is better because the order also corresponds to
-    // the canonical track numbers
+    // although the session is normalized to have the correct number
+    // of Session::Track objects they may appear in random order.
+    
+    int total = session->getTrackCount();
+    for (int i = 0 ; i < total ; i++) {
+        // look up by internal number for ordering
+        int number = i + 1;
 
-    // todo: need to start saving internal track numbers on the Session so
-    // we go between them quickly, is that working?
-
-    //Session* session = provider->getSession();
-    MobiusView* view = p->getMobiusView();
-
-    // the view will have display order eventually which is probably a good
-    // way to order the table rows, but if we show the internal numbers it may
-    // be confusing to see them out of order to maybe reorder them
-    // SystemState is not accessible here
-
-    for (int i = 0 ; i < view->totalTracks ; i++) {
-        MobiusViewTrack* t = view->getTrack(i);
-
-        // !! put the fucking number in the view instead of the index
-        int number = t->index + 1;
-
-        // experiment here...
+        Session::Track* t = session->getTrackByNumber(number);
+        
         juce::String name = juce::String(number) + ":";
-        if (t->midi)
+        if (t->type == Session::TypeMidi)
           name += "Midi";
         else
           name += "Audio";
@@ -118,7 +111,7 @@ void SessionTrackTable::load(Provider* p, Session* session)
         
         row->name = name;
         row->number = number;
-        row->midi = t->midi;
+        row->midi = (t->type == Session::TypeMidi);
         
         tracks.add(row);
     }
@@ -128,8 +121,14 @@ void SessionTrackTable::load(Provider* p, Session* session)
     repaint();
 }
 
+/**
+ * Now that we're effectively editing the Session, it doesn't make
+ * any sense to call clear().  It's more clearing the Session and
+ * then asking the table to reload.
+ */
 void SessionTrackTable::clear()
 {
+    Trace(1, "SessionTrackTable::clear Who is calling this?");
     tracks.clear();
     updateContent();
 }
@@ -191,65 +190,180 @@ void SessionTrackTable::cellClicked(int rowNumber, int columnId, const juce::Mou
 
 //////////////////////////////////////////////////////////////////////
 //
-// Menu Handlers
+// Menu Handlers and Dialogs
 //
 //////////////////////////////////////////////////////////////////////
 
 void SessionTrackTable::yanPopupSelected(int id)
 {
     switch (id) {
-        case 1: menuAdd(); break;
-        case 2: menuDelete(); break;
-        case 3: menuRename(); break;
-        case 4: menuBulk(); break;
+        case 1: startAdd(); break;
+        case 2: startDelete(); break;
+        case 3: startRename(); break;
+        case 4: startBulk(); break;
     }
 }
 
-void SessionTrackTable::menuAdd()
+void SessionTrackTable::startAdd()
 {
-    addAlert.show();
+    addAlert.show(getParentComponent());
 }
 
-void SessionTrackTable::menuDelete()
+void SessionTrackTable::startDelete()
 {
-    deleteAlert.show();
+    deleteAlert.show(getParentComponent());
 }
 
-void SessionTrackTable::menuRename()
+void SessionTrackTable::startRename()
 {
-    renameInput.setValue("");
-    renameDialog.show();
+    newName.setValue("");
+    renameDialog.show(getParentComponent());
 }
 
-void SessionTrackTable::menuBulk()
+void SessionTrackTable::countTracks()
 {
-}
-
-void SessionTrackTable::yanAlertSelected(YanAlert* d, int button)
-{
-    if (d == &deleteAlert) {
-        if (button == 0)
-          Trace(2, "SessionTrackTable: No, I'm scared");
+    audioTracks = 0;
+    midiTracks = 0;
+    for (auto t : tracks) {
+        if (t->midi)
+          midiTracks++;
         else
-          Trace(2, "SessionTrackTable: Yes, I'm brave");
-    }
-    else if (d == &addAlert) {
-        if (button == 0)
-          Trace(2, "SessionTrackTable: Forget the add");
-        else if (button == 1)
-          Trace(2, "SessionTrackTable: Adding an audio");
-        else if (button == 2)
-          Trace(2, "SessionTrackTable: Adding a Midi");
+          audioTracks++;
     }
 }
 
-void SessionTrackTable::yanDialogOk(YanDialog* d)
+void SessionTrackTable::startBulk()
 {
-    if (d == &renameDialog) {
-        Trace(2, "SessionTrackTable: Rename that bitch to %s", renameInput.getValue().toUTF8());
+    countTracks();
+    audioCount.setValue(juce::String(audioTracks));
+    midiCount.setValue(juce::String(midiTracks));
+    
+    bulkDialog.setMessage("Enter the total number of tracks of each type you wish to have.");
+    
+    bulkDialog.show(getParentComponent());
+}
+
+void SessionTrackTable::startBulkConfirm(int button)
+{
+    if (button == 0) {
+
+        int newAudio = audioCount.getInt();
+        int newMidi = midiCount.getInt();
+
+        if (newAudio >= audioTracks && newMidi >= midiTracks) {
+            finishBulk(0);
+        }
+        else {
+            juce::String msg("You are deleting the highest ");
+            if (newAudio < audioTracks) {
+                msg += juce::String(audioTracks - newAudio);
+                msg += juce::String(" audio tracks");
+            }
+            if (newMidi < midiTracks) {
+                if (newAudio < audioTracks)
+                  msg += " and ";
+                msg += juce::String(midiTracks - newMidi);
+                msg += juce::String(" midi tracks.");
+            }
+            else {
+                msg += ".";
+            }
+
+            msg += "\nYou will lose all configuration and content for those tracks.\nThis cannot be undone.";
+            
+            bulkConfirm.setMessage(msg);
+            bulkConfirm.show(getParentComponent());
+        }
     }
 }
-    
+
+void SessionTrackTable::yanDialogClosed(YanDialog* d, int button)
+{
+    if (d == &addAlert)
+      finishAdd(button);
+    else if (d == &deleteAlert)
+      finishDelete(button);
+    else if (d == &renameDialog)
+      finishRename(button);
+    else if (d == &bulkDialog)
+      startBulkConfirm(button);
+    else if (d == &bulkConfirm)
+      finishBulk(button);
+}
+
+void SessionTrackTable::finishAdd(int button)
+{
+    if (button > 1) {
+        // cancel
+    }
+    else {
+        countTracks();
+        // this will be the internal track number of the new track
+        int newSelection = 0;
+        if (button == 0) {
+            session->reconcileTrackCount(Session::TypeAudio, audioTracks + 1);
+            newSelection = audioTracks + 1;
+        }
+        else {
+            session->reconcileTrackCount(Session::TypeMidi, midiTracks + 1);
+            newSelection = audioTracks + midiTracks + 1;
+        }
+        reload();
+        selectRowByNumber(newSelection);
+    }
+}
+
+/**
+ * After making structural modifications to the track list, pick
+ * a new track to be highlighted and tell the listeners to refresh
+ * whatever is following that.
+ */
+void SessionTrackTable::selectRowByNumber(int number)
+{
+    // we're currently keeping these in order
+    int row = number - 1;
+    selectRow(row);
+    if (listener != nullptr)
+      listener->typicalTableChanged(this, row);
+}
+
+void SessionTrackTable::finishDelete(int button)
+{
+    if (button == 0) {
+        int number = getSelectedTrackNumber();
+        session->deleteByNumber(number);
+        reload();
+        // go back to the beginning, though could try to be one after the
+        // deleted one
+        selectRowByNumber(0);
+    }
+}
+
+void SessionTrackTable::finishRename(int button)
+{
+    if (button == 0) {
+        int number = getSelectedTrackNumber();
+        Session::Track* t = session->getTrackByNumber(number);
+        // todo: should have some validation on allowed names
+        t->name = newName.getValue();
+        reload();
+    }
+}
+
+/**
+ * You can't define display order in this interface yet.
+ * Tracks will be clustered by type and assigned numbers.
+ */
+void SessionTrackTable::finishBulk(int button)
+{
+    if (button == 0) {
+        session->reconcileTrackCount(Session::TypeAudio, audioCount.getInt());
+        session->reconcileTrackCount(Session::TypeMidi, midiCount.getInt());
+        reload();
+        selectRowByNumber(0);
+    }
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

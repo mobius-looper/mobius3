@@ -51,6 +51,11 @@ int TypicalTable::getSelectedRow()
     return table.getSelectedRow();
 }
 
+void TypicalTable::selectRow(int n)
+{
+    table.selectRow(n);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Layout

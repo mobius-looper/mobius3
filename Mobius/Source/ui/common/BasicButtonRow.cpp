@@ -50,6 +50,12 @@ void BasicButtonRow::add(juce::Button* b, juce::Button::Listener* l)
       b->addListener(listener);
 }
 
+void BasicButtonRow::remove(juce::Button* b)
+{
+    buttons.removeAllInstancesOf(b);
+    removeChildComponent(b);
+}
+
 int BasicButtonRow::getPreferredHeight()
 {
     return 20;

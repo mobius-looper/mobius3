@@ -121,13 +121,13 @@ void MobiusViewer::initialize(MobiusView* view)
 {
     Session* session = provider->getSession();
 
-    view->audioTracks = session->audioTracks;
+    view->audioTracks = session->getAudioTracks();
     if (view->audioTracks == 0) {
         // crashy if we don't have at least one, force it
         view->audioTracks = 1;
     }
 
-    view->midiTracks = session->midiTracks;
+    view->midiTracks = session->getMidiTracks();
 
     view->totalTracks = view->audioTracks + view->midiTracks;
 
@@ -162,17 +162,17 @@ void MobiusViewer::configure(MobiusView* view)
 {
     Session* session = provider->getSession();
     
-    if (view->audioTracks != session->audioTracks) {
+    if (view->audioTracks != session->getAudioTracks()) {
         Trace(1, "MobiusViewer: Audio track counts changed, this might be a problem");
     }
     
-    view->audioTracks = session->audioTracks;
+    view->audioTracks = session->getAudioTracks();
     if (view->audioTracks == 0) {
         // crashy if we don't have at least one, force it
         view->audioTracks = 1;
     }
 
-    view->midiTracks = session->midiTracks;
+    view->midiTracks = session->getMidiTracks();
     view->totalTracks = view->audioTracks + view->midiTracks;
 
     // grow this when necessary, don't bother with shrinking it

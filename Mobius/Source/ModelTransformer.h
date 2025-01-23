@@ -22,6 +22,8 @@ class ModelTransformer
     void addGlobals(class MobiusConfig* config, class Session* session);
     void merge(class Setup* src, class Session* dest);
 
+    void sessionToConfig(Session* src, MobiusConfig* dest);
+    
   private:
 
     class Provider* provider = nullptr;
@@ -36,5 +38,12 @@ class ModelTransformer
     void transform(class MobiusConfig* src, class Session* dest);
     void transform(class Setup* src, class Session* dest);
     void transform(class Setup* setup, class SetupTrack* src, Session::Track* dest);
+
+    const char* getString(SymbolId id, ValueSet* src);
+    int getInt(SymbolId id, ValueSet* src);
+    bool getBool(SymbolId id, ValueSet* src);
+    void transform(Session* src, MobiusConfig* dest);
+    void transform(Session* src, Setup* dest);
+    void transform(Session::Track* src, SetupTrack* dest);
     
 };

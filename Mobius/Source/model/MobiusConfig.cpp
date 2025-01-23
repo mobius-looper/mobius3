@@ -275,6 +275,7 @@ int MobiusConfig::getSpreadRange()
 	return mSpreadRange;
 }
 
+#if 0
 void MobiusConfig::setTracePrintLevel(int i) {
 	mTracePrintLevel = i;
 }
@@ -290,6 +291,7 @@ void MobiusConfig::setTraceDebugLevel(int i) {
 int MobiusConfig::getTraceDebugLevel() {
 	return mTraceDebugLevel;
 }
+#endif
 
 void MobiusConfig::setSaveLayers(bool b) {
 	mSaveLayers = b;
@@ -311,7 +313,7 @@ void MobiusConfig::setNoiseFloor(int i)
 	mNoiseFloor = i;
 }
 
-int MobiusConfig::getCoreTracks()
+int MobiusConfig::getCoreTracksDontUseThis()
 {
 	return mCoreTracks;
 }

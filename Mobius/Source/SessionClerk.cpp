@@ -74,10 +74,10 @@ void SessionClerk::initialize()
         }
 
         // always ensure that a Default session exists
-        bootstrapDefaultSession();
+        bool bootstrapped = bootstrapDefaultSession();
         
         // convert old Setup objects into Sessions
-        migrateSetups();
+        migrateSetups(bootstrapped);
     }
 }
 
@@ -88,8 +88,9 @@ void SessionClerk::initialize()
  * session.xml in the root of the installation directory and copy it to the
  * new folder so we can retain the early settings without corrupting them.
  */
-void SessionClerk::bootstrapDefaultSession()
+bool SessionClerk::bootstrapDefaultSession()
 {
+    bool bootstrapped = false;
     Folder* f = findFolder(juce::String("Default"));
     if (f == nullptr) {
         juce::File sessionRoot = libraryRoot.getChildFile("Default");
@@ -120,8 +121,10 @@ void SessionClerk::bootstrapDefaultSession()
             f->valid = true;
             
             folders.add(f);
+            bootstrapped = true;
         }
     }
+    return bootstrapped;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -335,11 +338,23 @@ void SessionClerk::saveSession(Session* s)
  * NOTE: So that user can downgrade to earlier builds, it is important that
  * we NOT TOUCH either mobius.xml or the original session.xml.
  */
-void SessionClerk::migrateSetups()
+void SessionClerk::migrateSetups(bool bootstrapped)
 {
     ModelTransformer transformer(provider);
     
     MobiusConfig* config = provider->getMobiusConfig();
+
+    // the default setup is almost always named "Default" but if we don't see one,
+    // take the first one
+    Setup* defaultSetup = nullptr;
+    for (Setup* setup = config->getSetups() ; setup != nullptr ; setup = setup->getNextSetup()) {
+        juce::String setupName (setup->getName());
+        if (setupName == "Default")
+          defaultSetup = setup;
+        else if (defaultSetup == nullptr)
+          defaultSetup = setup;
+    }
+    
     for (Setup* setup = config->getSetups() ; setup != nullptr ; setup = setup->getNextSetup()) {
 
         juce::String setupName (setup->getName());

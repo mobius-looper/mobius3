@@ -169,7 +169,7 @@ void Synchronizer::updateConfiguration(MobiusConfig* config)
         // get into MIDI tracks, and we must NOT mess those up
         number++;
 
-        if (number > config->getCoreTracks()) {
+        if (number > config->getCoreTracksDontUseThis()) {
             Trace(2, "Synchronizer: Ignoring extra SetupTracks");
             break;
         }

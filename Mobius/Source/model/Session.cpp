@@ -16,9 +16,6 @@ Session::~Session()
 
 Session::Session(Session* src)
 {
-    audioTracks = src->audioTracks;
-    midiTracks = src->midiTracks;
-    
     for (auto track : src->tracks) {
         tracks.add(new Track(track));
     }
@@ -44,6 +41,24 @@ void Session::assignIds()
     for (auto track : tracks) {
         if (track->id == 0)
           track->id = max++;
+    }
+}
+
+/**
+ * It's a collosal mess trying to not know internal track numbers in the UI.
+ * The algorithm used here MUST match what is being enforced by TrackManager
+ * or it will whine.
+ */
+void Session::renumber()
+{
+    int number = 1;
+    for (auto track : tracks) {
+        if (track->type == TypeAudio)
+          track->number = number++;
+    }
+    for (auto track : tracks) {
+        if (track->type == TypeMidi)
+          track->number = number++;
     }
 }
 
@@ -115,6 +130,16 @@ void Session::add(Track* t)
 int Session::getTrackCount()
 {
     return tracks.size();
+}
+
+int Session::getAudioTracks()
+{
+    return countTracks(TypeAudio);
+}
+
+int Session::getMidiTracks()
+{
+    return countTracks(TypeMidi);
 }
 
 Session::Track* Session::getTrackByIndex(int index)
@@ -234,6 +259,16 @@ void Session::reconcileTrackCount(TrackType type, int required)
     }
 
     assignIds();
+    renumber();
+}
+
+void Session::deleteByNumber(int number)
+{
+    Session::Track* t = getTrackByNumber(number);
+    if (t != nullptr) {
+        tracks.removeObject(t, true);
+        renumber();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -17,6 +17,7 @@
       <Value name="leaderTrack" value="1"/>
       <Value name="leaderType" value="track" type="enum" ordinal="1"/>
       <Value name="loopCount" value="2"/>
+      <Value name="midiBeatsPerBar" value="0" type="int"/>
       <Value name="midiChannelOverride" value="9" type="enum" ordinal="9"/>
       <Value name="midiThru" value="1" type="int"/>
       <Value name="outputDevice" value="Bome MIDI Translator 1"/>
@@ -26,8 +27,9 @@
       <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
       <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="syncUnit" value="beat" type="enum" ordinal="0"/>
       <Value name="trackGroup" value="Groupuu"/>
-      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
+      <Value name="trackSyncUnit" value="subcycle" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
   <Track id="2" number="10" type="midi">
@@ -41,6 +43,7 @@
       <Value name="followerMuteStart" value="0" type="int"/>
       <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
       <Value name="leaderType" value="none" type="enum" ordinal="0"/>
+      <Value name="midiBeatsPerBar" value="0" type="int"/>
       <Value name="midiChannelOverride" value="off" type="enum" ordinal="0"/>
       <Value name="midiThru" value="0" type="int"/>
       <Value name="outputDevice" value="Bome MIDI Translator 1"/>
@@ -49,8 +52,9 @@
       <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
       <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
       <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
-      <Value name="syncSource" value="default" type="enum" ordinal="0"/>
-      <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+      <Value name="syncUnit" value="beat" type="enum" ordinal="0"/>
+      <Value name="trackSyncUnit" value="subcycle" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
   <Track id="9" number="1" type="audio" name="sadf">
@@ -59,7 +63,7 @@
       <Value name="audioInputPort" value="3" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="0" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
       <Value name="groupName" value="Groupuu"/>
       <Value name="input" value="127" type="int"/>
       <Value name="mono" value="0" type="int"/>
@@ -79,7 +83,7 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="0" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
       <Value name="input" value="127" type="int"/>
       <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
@@ -97,7 +101,7 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="0" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
       <Value name="input" value="127" type="int"/>
       <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
@@ -115,7 +119,7 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="0" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
       <Value name="input" value="127" type="int"/>
       <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
@@ -133,7 +137,7 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="0" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
       <Value name="input" value="127" type="int"/>
       <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
@@ -151,7 +155,7 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="0" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
       <Value name="input" value="127" type="int"/>
       <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
@@ -169,7 +173,7 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="0" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
       <Value name="input" value="127" type="int"/>
       <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
@@ -187,7 +191,7 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="0" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
       <Value name="input" value="127" type="int"/>
       <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
