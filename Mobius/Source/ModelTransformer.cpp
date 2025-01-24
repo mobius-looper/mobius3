@@ -28,59 +28,32 @@ ModelTransformer::~ModelTransformer()
 {
 }
 
-Session* ModelTransformer::setupToSession(Setup* src)
-{
-    Session* session = new Session();
-    transform(src, session);
-
-    // Session may have already done this but it is the guarantee
-    // of this class that Sessions comes out properly numbered
-    session->renumber();
-    
-    return session;
-}
-
-void ModelTransformer::sessionToConfig(Session* src, MobiusConfig* dest)
-{
-    // the globals
-    transform(src, dest);
-
-    // there will only be one Setup, and it is us
-    Setup* setup = new Setup();
-    transform(src, setup);
-    dest->addSetup(setup);
-    dest->setStartingSetupName(src->getName().toUTF8());
-}
-
 void ModelTransformer::addGlobals(MobiusConfig* config, Session* session)
 {
     transform(config, session);
 }
 
 /**
- * Speial operation for the "Default" Setup that merges audio
- * track definitions into an existing Session rather than creating
- * a new one.
+ * After configing the destination Session to have the right number
+ * of audio tracks, copy the parameters from the SetupTracks into those
+ * session tracks.
  *
  * The correspondence between a SetupTrack and a Session::Track is
  * loose since tracks don't always have unique identifiers.  The expectation
- * is that this only happens once, and the destination Session will either have
- * no audio tracks or will have stubbed out or corrupted tracks and exact
- * correspondence doesn't matter.  We will match them by position rather than
- * name or contents.
+ * is that this only happens once, and the destination Session will have stubbed
+ * out or corrupted tracks and exact correspondence doesn't matter.  We will match them
+ * by position rather than name or contents.
  */
 void ModelTransformer::merge(Setup* src, Session* dest)
 {
-    // start by making the numbers match
-    int trackCount = 0;
-    for (SetupTrack* t = src->getTracks() ; t != nullptr ; t = t->getNext())
-      trackCount++;
-
-    dest->reconcileTrackCount(Session::TypeAudio, trackCount);
-
-    // now replace them
+    // pull in the name and a very few other things
+    transform(src, dest);
+    
+    int max = dest->getAudioTracks();
     int trackIndex = 0;
-    for (SetupTrack* t = src->getTracks() ; t != nullptr ; t = t->getNext()) {
+
+    // then a careful merge of the tracks, ignoring extra ones
+    for (SetupTrack* t = src->getTracks() ; t != nullptr && trackIndex < max ; t = t->getNext()) {
         Session::Track* destTrack = dest->getTrackByType(Session::TypeAudio, trackIndex);
         if (destTrack == nullptr) {
             // reconcile didn't work
@@ -94,6 +67,20 @@ void ModelTransformer::merge(Setup* src, Session* dest)
     }
 
     dest->renumber();
+}
+
+void ModelTransformer::sessionToConfig(Session* src, MobiusConfig* dest)
+{
+    // the globals
+    transform(src, dest);
+
+    // there will only be one Setup, and it is us
+    dest->setSetups(nullptr);
+    
+    Setup* setup = new Setup();
+    transform(src, setup);
+    dest->addSetup(setup);
+    dest->setStartingSetupName(src->getName().toUTF8());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -376,36 +363,27 @@ void ModelTransformer::transform(Session* src, MobiusConfig* dest)
  *   defaultSyncSource
  *   slaveSyncUnit (default)
  *
+ * The Session has already been given the right number of Session::Track objects
+ * which was driven from the MobiusConfig::coreTrackCount number.  Old Setups may
+ * have more SetupTracks in them than that, those need to be ignored.
  *
- * Merge flag is only for the Setup named "Default".  The Default bootstrapped
- * Session also has that name, and it usually comes with Midi track definitions
- * but no audio tracks.  In this case we add audio tracks from the Setup but
- * leave the Midi tracks and midi count in place.
+ * Note that this only does the (one) top-level Session parameter, tracks
+ * are done by merge()
  */
 void ModelTransformer::transform(Setup* src, Session* dest)
 {
-    ValueSet*  values = dest->ensureGlobals();
+    ValueSet* values = dest->ensureGlobals();
 
     dest->setName(juce::String(src->getName()));
 
     // still used by Track
     transform(ParamDefaultPreset, src->getDefaultPresetName(), values);
-
-    // these are all by definition Audio tracks
-    // they will be numbered later if they are used and normalized
-    SetupTrack* track = src->getTracks();
-    while (track != nullptr) {
-        
-        Session::Track* strack = new Session::Track();
-        strack->type = Session::TypeAudio;
-        dest->add(strack);
-        
-        transform(src, track, strack);
-
-        track = track->getNext();
-    }
 }
 
+/**
+ * Going the other direction we will have accurate track counts
+ * in the Session, so we can rebuild all the SetupTracks too
+ */
 void ModelTransformer::transform(Session* src, Setup* dest)
 {
     ValueSet* values = src->ensureGlobals();
@@ -443,12 +421,17 @@ void ModelTransformer::transform(Session* src, Setup* dest)
     // syncUnit was duplicated into the Session::Tracks,
     // in the Setup it is shared by all tracks
     
-    
     OldSyncUnit slaveUnit = SYNC_UNIT_BAR;
     if (syncUnit == "beat")
       slaveUnit = SYNC_UNIT_BAR;
     dest->setSyncUnit(slaveUnit);
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Track
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * The big complication with SessionTrack is the synchronization parameters.
@@ -537,7 +520,9 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
     }
     if (newEnum != nullptr)
       values->setString(juce::String("trackSyncUnit"), newEnum);
-
+    else
+      Trace(1, "ModelTransformer: Error deriving trackSyncUnit");
+    
     // old model had only beat and bar, new model adds loop
     // but you won't see that in the Setup
     newEnum = nullptr;

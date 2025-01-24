@@ -157,6 +157,8 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
             menu.addItem(Exit, "Exit");
         }
     }
+
+    // continue this temporarily, but the menu needs to be gone
     else if (menuIndex == menuIndexSetup)
     {
         menu.addItem(TrackSetups, "Edit Setups...");
@@ -166,7 +168,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         
         Supervisor* supervisor = mainWindow->getSupervisor();
         int active = supervisor->getActiveSetup();
-        MobiusConfig* config = supervisor->getMobiusConfig();
+        MobiusConfig* config = supervisor->getOldMobiusConfig();
         Setup* setup = config->getSetups();
         int index = 0;
         while (setup != nullptr) {
@@ -187,7 +189,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
 
         Supervisor* supervisor = mainWindow->getSupervisor();
         int active = supervisor->getActivePreset();
-        MobiusConfig* config = supervisor->getMobiusConfig();
+        MobiusConfig* config = supervisor->getOldMobiusConfig();
         Preset* preset = config->getPresets();
         int index = 0;
         while (preset != nullptr) {
@@ -262,7 +264,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addSeparator();
         
         Supervisor* supervisor = mainWindow->getSupervisor();
-        MobiusConfig* mconfig = supervisor->getMobiusConfig();
+        MobiusConfig* mconfig = supervisor->getOldMobiusConfig();
         UIConfig* uiconfig = supervisor->getUIConfig();
         BindingSet* sets = mconfig->getBindingSets();
         // first one is always active and is not displayed

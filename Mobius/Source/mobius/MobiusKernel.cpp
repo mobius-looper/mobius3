@@ -168,8 +168,8 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     installSymbols();
 
     // supposed to be the same now
-    //if (config->getCoreTracks() != ses->getAudioTracks())
-    //Trace(1, "MobiusKernel: Session audio tracks not right");
+    if (config->getCoreTracksDontUseThis() != ses->getAudioTracks())
+      Trace(1, "MobiusKernel: Session audio tracks not right");
     audioTracks = ses->getAudioTracks();
     midiTracks = ses->getMidiTracks();
 

@@ -24,7 +24,7 @@ SampleEditor::~SampleEditor()
 
 void SampleEditor::load()
 {
-    MobiusConfig* config = supervisor->getMobiusConfig();
+    MobiusConfig* config = supervisor->getOldMobiusConfig();
     SampleConfig* sconfig = config->getSampleConfig();
     if (sconfig != nullptr) {
         // this makes it's own copy
@@ -34,15 +34,8 @@ void SampleEditor::load()
 
 void SampleEditor::save()
 {
-    MobiusConfig* config = supervisor->getMobiusConfig();
     SampleConfig* newConfig = table.capture();
-    config->setSampleConfig(newConfig);
-
-    supervisor->updateMobiusConfig();
-
-    // you almost always want scripts reloaded after editing
-    // so force that now, samples are another story...
-    supervisor->menuLoadSamples();
+    supervisor->sampleEditorSave(newConfig);
 }
 
 void SampleEditor::cancel()

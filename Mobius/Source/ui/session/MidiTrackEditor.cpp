@@ -69,11 +69,11 @@ void MidiTrackEditor::save()
 {
     saveSession();
 
-    Session* master = supervisor->getSession();
-    
-    master->replaceMidiTracks(session.get());
-
-    supervisor->updateSession();
+    // don't bother trying to replicate this, this UI is going away
+    Trace(1, "MidiTrackEditor: I can no longer save");
+    //Session* master = supervisor->getSession();
+    //master->replaceMidiTracks(session.get());
+    //supervisor->updateSession();
 
     session.reset(nullptr);
     revertSession.reset(nullptr);
@@ -186,7 +186,7 @@ void MidiTrackEditor::initOutputDevice(Session::Track* track)
 
 void MidiTrackEditor::initTrackGroup(Session::Track* track)
 {
-    MobiusConfig* config = supervisor->getMobiusConfig();
+    MobiusConfig* config = supervisor->getOldMobiusConfig();
     juce::StringArray names;
 
     names.add("[None]");

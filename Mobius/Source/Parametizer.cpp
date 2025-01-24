@@ -39,7 +39,7 @@ void Parametizer::initialize()
     int sustainId = 1;
     
     // start with Bindings
-    MobiusConfig* mconfig = supervisor->getMobiusConfig();
+    MobiusConfig* mconfig = supervisor->getOldMobiusConfig();
     BindingSet* bindings = mconfig->getBindingSets();
     // bindings can be nullptr on a build with no install
     Binding* binding = nullptr;

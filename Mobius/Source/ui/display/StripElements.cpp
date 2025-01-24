@@ -2,7 +2,6 @@
 
 #include "../../util/Trace.h"
 #include "../../model/UIParameter.h"
-#include "../../model/MobiusConfig.h"
 #include "../../model/UIConfig.h"
 #include "../../model/Symbol.h"
 

@@ -53,29 +53,29 @@
       <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
-  <Track id="9" type="audio">
-    <ValueSet/>
-  </Track>
-  <Track id="10" type="audio">
-    <ValueSet/>
-  </Track>
-  <Track id="11" type="audio">
-    <ValueSet/>
-  </Track>
-  <Track id="12" type="audio">
-    <ValueSet/>
-  </Track>
-  <Track id="13" type="audio">
-    <ValueSet/>
-  </Track>
-  <Track id="14" type="audio">
-    <ValueSet/>
-  </Track>
-  <Track id="15" type="audio">
-    <ValueSet/>
-  </Track>
-  <Track id="16" type="audio">
-    <ValueSet/>
+  <!-- an extra one to test reconciliation -->
+  <Track id="3" type="midi">
+    <ValueSet>
+      <Value name="beatsPerBar" value="2"/>
+      <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
+      <Value name="followMute" value="0" type="int"/>
+      <Value name="followQuantizeLocation" value="0" type="int"/>
+      <Value name="followRecord" value="0" type="int"/>
+      <Value name="followRecordEnd" value="0" type="int"/>
+      <Value name="followerMuteStart" value="0" type="int"/>
+      <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
+      <Value name="leaderType" value="none" type="enum" ordinal="0"/>
+      <Value name="midiChannelOverride" value="off" type="enum" ordinal="0"/>
+      <Value name="midiThru" value="0" type="int"/>
+      <Value name="outputDevice" value="Bome MIDI Translator 1"/>
+      <Value name="quantize" value="off" type="enum" ordinal="0"/>
+      <Value name="slaveSyncUnit" value="beat" type="enum" ordinal="0"/>
+      <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
+      <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
+      <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
+      <Value name="syncSource" value="default" type="enum" ordinal="0"/>
+      <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
+    </ValueSet>
   </Track>
   <ValueSet>
     <Value name="activeSetup" value="Default"/>

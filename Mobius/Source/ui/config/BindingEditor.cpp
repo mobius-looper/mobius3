@@ -91,7 +91,7 @@ void BindingEditor::setInitialObject(juce::String name)
  */
 void BindingEditor::load()
 {
-    MobiusConfig* config = supervisor->getMobiusConfig();
+    MobiusConfig* config = supervisor->getOldMobiusConfig();
     MobiusView* view = supervisor->getMobiusView();
 
     maxTracks = view->totalTracks;
@@ -234,10 +234,7 @@ void BindingEditor::save()
     // these we don't need any more
     revertBindingSets.clear();
 
-    MobiusConfig* config = supervisor->getMobiusConfig();
-    // this also deletes the current list
-    config->setBindingSets(setlist);
-    supervisor->updateMobiusConfig();
+    supervisor->bindingEditorSave(setlist);
 }
 
 /**
@@ -503,7 +500,9 @@ void BindingEditor::refreshScopeNames()
     // context is not always set at this point so we have to go direct
     // to Supervisor to get to MobiusConfig, this sucks work out a more
     // orderly initialization sequence
-    MobiusConfig* config = supervisor->getMobiusConfig();
+
+    // okay to use this for the group list temporarily
+    MobiusConfig* config = supervisor->getOldMobiusConfig();
     MobiusView* view = supervisor->getMobiusView();
     maxTracks = view->totalTracks;
     for (int i = 0 ; i < maxTracks ; i++)
@@ -604,7 +603,7 @@ void BindingEditor::refreshForm(Binding* b)
         scope.setSelection(tracknum);
     }
     else {
-        MobiusConfig* config = supervisor->getMobiusConfig();
+        MobiusConfig* config = supervisor->getOldMobiusConfig();
         int groupOrdinal = Scope::parseGroupOrdinal(config, scopeString);
         if (groupOrdinal >= 0)
           scope.setSelection(maxTracks + groupOrdinal);

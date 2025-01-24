@@ -6,6 +6,7 @@
 
 #include "../../util/Trace.h"
 #include "../../model/Session.h"
+#include "../../model/DeviceConfig.h"
 #include "../../Supervisor.h"
 #include "../../Provider.h"
 
@@ -62,6 +63,14 @@ void SessionEditor::load()
     Session* src = supervisor->getSession();
     session.reset(new Session(src));
     revertSession.reset(new Session(src));
+
+    // these are in the DeviceConfig but since there is no UI for that
+    // show them as if they were session globals
+    // hacky, needs thought
+    DeviceConfig* dc = supervisor->getDeviceConfig();
+    // forgetting why we did the +1 here
+    session->setInt("pluginInputs", dc->pluginConfig.defaultAuxInputs + 1);
+    session->setInt("pluginOutputs", dc->pluginConfig.defaultAuxOutputs + 1);
     
     loadSession();
 }
@@ -80,8 +89,24 @@ void SessionEditor::save()
     // entirely, this will do track number normalization
     supervisor->sessionEditorSave();
 
+    // reverse the silly plugin pins thing
+    
+    DeviceConfig* dc = supervisor->getDeviceConfig();
+    dc->pluginConfig.defaultAuxInputs = getPortValue("pluginInputs", 8) - 1;
+    dc->pluginConfig.defaultAuxOutputs = getPortValue("pluginOutputs", 8) - 1;
+
     invalidateSession();
     revertSession.reset(nullptr);
+}
+
+int SessionEditor::getPortValue(const char* name, int max)
+{
+    int value = session->getInt(name);
+    if (value < 1)
+      value = 1;
+    else if (max > 0 && value > max)
+      value = max;
+    return value;
 }
 
 /**

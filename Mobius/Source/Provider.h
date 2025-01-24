@@ -56,7 +56,7 @@ class Provider
 
     virtual class SystemConfig* getSystemConfig() = 0;
     virtual class StaticConfig* getStaticConfig() = 0;
-    virtual class MobiusConfig* getMobiusConfig() = 0;
+    virtual class MobiusConfig* getOldMobiusConfig() = 0;
     virtual class Session* getSession() = 0;
     virtual class SymbolTable* getSymbols() = 0;
     virtual class MidiManager* getMidiManager() = 0;

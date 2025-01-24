@@ -142,6 +142,8 @@ typedef enum {
     ParamNoEdit,
     ParamEventScript,
     ParamUserFileFolder,
+    ParamPluginInputs,
+    ParamPluginOutputs,
     
     //
     // Preset Parameters

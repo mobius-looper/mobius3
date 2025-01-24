@@ -134,7 +134,7 @@ juce::String YanFieldHelpers::saveMidiOutput(YanCombo* combo)
 
 void YanFieldHelpers::initTrackGroup(Provider* p, YanCombo* combo, juce::String value)
 {
-    MobiusConfig* config = p->getMobiusConfig();
+    MobiusConfig* config = p->getOldMobiusConfig();
     juce::StringArray names;
 
     names.add("[None]");
@@ -166,7 +166,7 @@ juce::String YanFieldHelpers::saveTrackGroup(YanCombo* combo)
 
 void YanFieldHelpers::initTrackPreset(Provider* p, YanCombo* combo, juce::String value)
 {
-    MobiusConfig* config = p->getMobiusConfig();
+    MobiusConfig* config = p->getOldMobiusConfig();
     
     juce::StringArray names;
     // assuming we always want a "no selection" option 

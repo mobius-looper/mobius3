@@ -54,6 +54,7 @@ TrackManager::~TrackManager()
  */
 void TrackManager::initialize(MobiusConfig* config, Session* session, Mobius* core)
 {
+    // only thing this is used for is the group list
     configuration = config;
     audioEngine = core;
 
@@ -67,14 +68,12 @@ void TrackManager::initialize(MobiusConfig* config, Session* session, Mobius* co
     longWatcher.initialize(session, kernel->getContainer()->getSampleRate());
     longWatcher.setListener(this);
 
-    // todo: trust this or ask core?
-    // !!!! I think we need to live in a world where the session wins and core
-    // just has to deal with it
+    // MobiusConfig is now synthesized from the Session so these must
+    // always match
     audioTrackCount = session->getAudioTracks();
     int actual = core->getTrackCount();
     if (audioTrackCount != actual) {
         Trace(1, "TrackManager: Session audio track count didn't match core");
-        //audioTrackCount = actual;
     }
 
     loadSession(session);
@@ -121,8 +120,10 @@ void TrackManager::loadSession(Session* session)
 
 /**
  * Organize the track array for a new session.
- * Mobius tracks always go at the front and can't be changed without a restart.
- * Other track types can come and go.
+ *
+ * The Session gets to be authoritative over the track order and numbering.
+ * At the moment it will always put the audio tracks first, and the engine
+ * will have been configured to have that many.  
  *
  * The Session must have normalized track numbers.  Session Tracks can be in any order.
  */
@@ -131,14 +132,13 @@ void TrackManager::configureTracks(Session* session)
     // try to get rid of these
     audioTrackCount = session->getAudioTracks();
     if (audioTrackCount != audioEngine->getTrackCount()) {
-        // this would be an error sending the Setup over to the core, or the core didn't like it
+        // we've already verified this a few times, but what's one more
         Trace(1, "TrackManager: Mismatched audio track count %d/%d",
               audioTrackCount, audioEngine->getTrackCount());
         // the Session wins no matter what since so much is built from it
         // if there are more than enough core tracks, then some will be unused
         // if there are too few, then some actions will go nowhere
     }
-
     midiTrackCount = session->getMidiTracks();
     
     // transfer the current track list to a holding area
@@ -153,40 +153,28 @@ void TrackManager::configureTracks(Session* session)
           oldTracks.add(lt);
     }
 
-    // now put them back, for now Mobius always goes first
-    // Mobius tracks configure themselves through MobiusConfig at an earlier stage
-    for (int i = 0 ; i < session->getAudioTracks() ; i++) {
-        LogicalTrack* lt = new LogicalTrack(this);
-        // audio tracks must be numbered first
+    // now put them back, for now Mobius tracks must always goes first
+    // work on ordering flexibility later, Session normalization must have ensured that
+    // note that session tracks can be in any order to have to ask for them by number
+    int audioTracksAdded = 0;
+    int midiTracksAdded = 0;
+    for (int i = 0 ; i < session->getTrackCount() ; i++) {
         int number = i+1;
         Session::Track* def = session->getTrackByNumber(number);
+
         if (def == nullptr) {
-            Trace(1, "TrackManager: Missing Track definition for Audio %d", number);
             // this probably fatal but try to move on so we don't NPE, this will leak
+            Trace(1, "TrackManager: Missing Track definition for Audio %d", number);
             def = new Session::Track();
             def->number = number;
             def->type = Session::TypeAudio;
         }
-            
-        lt->loadSession(def);
-        tracks.add(lt);
-    }
-
-    // now midi and eventually the others, these have more flexibility
-    int baseNumber = tracks.size() + 1;
-    int remaining = session->getMidiTracks();
-    for (int i = 0 ; i < remaining ; i++) {
-        int number = baseNumber + i;
-        Session::Track* def = session->getTrackByNumber(number);
-        if (def == nullptr) {
-            // not supposed to happen, leak and avoid an NPE
-            Trace(1, "TrackManager: Missing Track definition for MIDI %d", number);
-            def = new Session::Track();
-            def->number = number;
-            def->type = Session::TypeMidi;
-        }
+        
+        if (def->type == Session::TypeAudio && midiTracksAdded > 0)
+          Trace(1, "TrackManager: Audio tracks comming in out of order, you will lose");
 
         // see if we had one with this id before
+        // this will only happen for MIDI tracks
         LogicalTrack* lt = nullptr;
         int index = 0;
         for (auto old : oldTracks) {
@@ -201,12 +189,19 @@ void TrackManager::configureTracks(Session* session)
           lt = new LogicalTrack(this);
         lt->loadSession(def);
         tracks.add(lt);
+
+        if (def->type == Session::TypeAudio)
+          audioTracksAdded++;
+        else
+          midiTracksAdded++;
     }
-    
-    // if we have leftovers, might consider saving them in reserve
-    // in case they want to put them back and have all the previous contents
-    // restored, kind of overkill though
-    
+
+    // one final validation
+    if (audioTracksAdded != session->getAudioTracks())
+      Trace(1, "TrackManager: Mismatched audio track count after session load");
+    if (midiTracksAdded != session->getMidiTracks())
+      Trace(1, "TrackManager: Mismatched midi track count after session load");
+      
     // it is okay to remove MIDI tracks but we are NOT expecting
     // Mobius tracks to be downsized yet
     while (oldTracks.size() > 0) {

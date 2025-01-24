@@ -66,7 +66,7 @@ void SetupEditor::load()
     // clone the Setup list into a local copy
     setups.clear();
     revertSetups.clear();
-    MobiusConfig* config = supervisor->getMobiusConfig();
+    MobiusConfig* config = supervisor->getOldMobiusConfig();
     if (config != nullptr) {
         // convert the linked list to an OwnedArray
         Setup* plist = config->getSetups();
@@ -143,7 +143,7 @@ void SetupEditor::refreshObjectSelector()
  */
 void SetupEditor::adjustTrackSelector()
 {
-    MobiusConfig* config = supervisor->getMobiusConfig();
+    MobiusConfig* config = supervisor->getOldMobiusConfig();
 
     // setups only apply to core tracks so it is permissible to use this
     // rather than view->totalTracks
@@ -208,15 +208,8 @@ void SetupEditor::save()
     // clear the owned array but don't delete them
     setups.clear(false);
     revertSetups.clear();
-    
-    MobiusConfig* config = supervisor->getMobiusConfig();
-    // this will also delete the current setup list
-    config->setSetups(plist);
 
-    // this flag is necessary to get the engine to pay attention
-    config->setupsEdited = true;
-    
-    supervisor->updateMobiusConfig();
+    supervisor->setupEditorSave(plist);
 }
 
 /**

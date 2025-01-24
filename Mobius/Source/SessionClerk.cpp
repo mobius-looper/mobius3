@@ -2,6 +2,7 @@
 #include <JuceHeader.h>
 
 #include "util/Trace.h"
+#include "util/Util.h"
 #include "model/Session.h"
 
 // only for Setup migration
@@ -212,7 +213,8 @@ Session* SessionClerk::readSession(Folder* f)
                 // it gets the name from the folder it was in
                 session->setName(f->name);
 
-                fixSession(session);
+                // only do this for bootstrap
+                //fixSession(session);
             }
         }
     }
@@ -222,6 +224,8 @@ Session* SessionClerk::readSession(Folder* f)
 /**
  * Short term kludge to fix a few parameter names that should
  * have been different but are now out there.
+ *
+ * Really only need this for the bootsrap session.
  */
 void SessionClerk::fixSession(Session* s)
 {
@@ -233,6 +237,20 @@ void SessionClerk::fixSession(Session* s)
             juce::String gname (v->getString());
             values->remove("group");
             values->setJString("trackGroup", gname);
+        }
+
+        // for a time the sync parameters were messed up and
+        // used the wrong enumeration for storage, 
+        v = values->get("syncSource");
+        if (v != nullptr) {
+            if (StringEqual(v->getString(), "default"))
+              v->setString("none");
+        }
+
+        v = values->get("trackSyncUnit");
+        if (v != nullptr) {
+            if (StringEqual(v->getString(), "default"))
+              v->setString("loop");
         }
     }
 }
@@ -348,7 +366,7 @@ void SessionClerk::migrateSetups(bool bootstrapped)
 {
     ModelTransformer transformer(provider);
     
-    MobiusConfig* config = provider->getMobiusConfig();
+    MobiusConfig* config = provider->getOldMobiusConfig();
 
     // the default setup is almost always named "Default" but if we don't see one,
     // take the first one
@@ -374,12 +392,23 @@ void SessionClerk::migrateSetups(bool bootstrapped)
                 Trace(1, "SessionClerk: Unable to read bootstrap Session %s", f->name.toUTF8());
             }
             else {
-                // copy the globals
-                transformer.addGlobals(config, neu);
+                // fix some bad names in the prototype session.xml
+                fixSession(dest);
                 
-                // this is the only time that the MobiusConfig track count is used
-                int oldTrackCount = config->getTrackCountDontUseThis();
-                dest->reconcileTrackCount(Session::TypeAudio, oldTrackCount);
+                // two problems with track counts
+                // 1) MobiusConfig core track count is what was authoritative but there can
+                // be more SetupTracks in the object than are actually used
+                // 2) Similar issue in Session with midiCount being smaller than the
+                // number of TypeMidi tracks
+
+                // The second problem isn't a migration, it's fixing a bad prototype session
+                // and we can do that now
+                dest->reconcileTrackCount(Session::TypeMidi, dest->getOldMidiTrackCount());
+
+                // copy the globals
+                // this is also where MobiusConfig::trackCount is ready and the
+                // audio tracks in the session are reconciled
+                transformer.addGlobals(config, dest);
                 
                 if (defaultSetup != nullptr) {
                     // this does a careful merge into the existing session.xml rather
@@ -416,9 +445,16 @@ void SessionClerk::migrateSetups(bool bootstrapped)
                           setup->getName());
                 }
                 Trace(2, "SessionClerk: Migrating Setup %s", setup->getName());
-                Session* neu = transformer.setupToSession(setup);
+
+                // SetupTrack counts can be off from what the MobiusConfig said it would be
+                // set up globals first to get the right count
                 // former global parameters are duplicated in every session
+                Session* neu = new Session();
                 transformer.addGlobals(config, neu);
+
+                // after getting the track counts right, then migrate the tracks
+                transformer.merge(setup, neu);
+
                 createSession(neu);
                 delete neu;
             }

@@ -773,7 +773,9 @@ void Symbolizer::installActivationSymbols()
         }
     }
 
-    MobiusConfig* config = supervisor->getMobiusConfig();
+    // !!!!!!!!!!! Setups are gone, no longer activatable
+
+    MobiusConfig* config = supervisor->getOldMobiusConfig();
     Setup* setups = config->getSetups();
     unsigned char ordinal = 0;
     while (setups != nullptr) {

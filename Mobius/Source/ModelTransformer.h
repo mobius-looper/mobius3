@@ -18,7 +18,6 @@ class ModelTransformer
     ModelTransformer(class Provider* p);
     ~ModelTransformer();
 
-    class Session* setupToSession(class Setup* s);
     void addGlobals(class MobiusConfig* config, class Session* session);
     void merge(class Setup* src, class Session* dest);
 

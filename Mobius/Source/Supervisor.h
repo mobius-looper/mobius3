@@ -182,15 +182,26 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class SystemConfig* getSystemConfig();
     class DeviceConfig* getDeviceConfig();
     void updateDeviceConfig();
-    class MobiusConfig* getMobiusConfig() override;
-    void updateMobiusConfig();
-    void writeMobiusConfig();
-    void reloadMobiusConfig();
     class UIConfig* getUIConfig() override;
     void updateUIConfig() override;
     void reloadUIConfig();
     void updateSymbolProperties();
 
+    // used only by ScriptClerk after doing some MOS script surgery
+    // phase this out!
+    void writeOldMobiusConfig();
+    // something old and weird for UpgradePanel
+    void reloadOldMobiusConfig();
+
+    // old configuration editor interfaces
+    class MobiusConfig* getOldMobiusConfig() override;
+    void presetEditorSave(class Preset* newList);
+    void setupEditorSave(class Setup* newList);
+    void bindingEditorSave(class BindingSet* newList);
+    void groupEditorSave(juce::Array<class GroupDefinition*>& newList);
+    void sampleEditorSave(class SampleConfig* newConfig);
+    void upgradePanelSave();
+    
     // this is override because it is also part of MobiusContainer
     class Session* getSession() override;
     void sessionEditorSave();
@@ -471,6 +482,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class Session* initializeSession();
     void configureSystemState(class Session* s);
 
+    void sendInitialMobiusConfig();
+    void sendModifiedMobiusConfig();
+    class MobiusConfig* synthesizeMobiusConfig(class Session* s);
+    
     void initializeView();
 
     // Listener notification
@@ -484,4 +499,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void loadMidi(class MslValue* args);
     juce::File findUserFile(const char* fragment);
 
+    // weeding...
+    
+    void updateMobiusConfig();
 };

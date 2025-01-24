@@ -26,7 +26,7 @@ void BindingSummary::prepare(bool doMidi)
 {
     midi = doMidi;
     things.clear();
-    MobiusConfig* config = supervisor->getMobiusConfig();
+    MobiusConfig* config = supervisor->getOldMobiusConfig();
     UIConfig* uiconfig = supervisor->getUIConfig();
     BindingSet* bindingSets = config->getBindingSets();
 

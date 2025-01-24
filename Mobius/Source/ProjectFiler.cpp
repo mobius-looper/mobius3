@@ -1,7 +1,7 @@
 
 #include <JuceHeader.h>
 
-#include "model/MobiusConfig.h"
+#include "model/Session.h"
 
 #include "Supervisor.h"
 
@@ -117,8 +117,13 @@ void ProjectFiler::doLoopSave(juce::File file)
  */
 void ProjectFiler::quickSave()
 {
-    MobiusConfig* config = supervisor->getMobiusConfig();
-    const char* qname = config->getQuickSave();
+    //MobiusConfig* config = supervisor->getMobiusConfig();
+    //const char* qname = config->getQuickSave();
+
+    Session* session = supervisor->getSession();
+    // fuck, really need a SessionHelper or something for things like this
+    Symbol* sym = supervisor->getSymbols()->getSymbol(ParamQuickSave);
+    const char* qname = session->getString(sym->name);
 
     juce::File root = supervisor->getRoot();
     juce::File dest;

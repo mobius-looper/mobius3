@@ -11,7 +11,6 @@
 
 #include "../../Supervisor.h"
 #include "../../script/ScriptClerk.h"
-#include "../../model/MobiusConfig.h"
 
 #include "ScriptConfigEditor.h"
 

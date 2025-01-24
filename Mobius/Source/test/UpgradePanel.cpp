@@ -343,7 +343,7 @@ void UpgradeContent::loadMobiusConfig(juce::String xml)
             delete cxml;
         }
 
-        masterConfig = supervisor->getMobiusConfig();
+        masterConfig = supervisor->getOldMobiusConfig();
 
         loadPresets();
         loadSetups();
@@ -922,7 +922,7 @@ void UpgradeContent::doInstall()
     else {
         log.add("");
                 
-        masterConfig = supervisor->getMobiusConfig();
+        masterConfig = supervisor->getOldMobiusConfig();
 
         // quick and dirty undo
         juce::File root = supervisor->getRoot();
@@ -1029,7 +1029,7 @@ void UpgradeContent::doInstall()
             supervisor->updateUIConfig();
         }
 
-        supervisor->updateMobiusConfig();
+        supervisor->upgradePanelSave();
         
         log.add("MobiusConfig ugprade installed");
         log.add("You may revert these changes by returning to this panel and clicking \"Undo\"");
@@ -1086,7 +1086,7 @@ void UpgradeContent::doUndo()
             }
             else {
                 dest.replaceWithText(xml);
-                supervisor->reloadMobiusConfig();
+                supervisor->reloadOldMobiusConfig();
                 log.add("The previous mobius.xml installation has been undone");
 
                 // hmm, should we let this linger?

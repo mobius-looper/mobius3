@@ -197,7 +197,7 @@ void MainWindow::mainMenuSelection(int id)
         // map this back into a particular BindingSet, sure would be nice to just
         // get the item name here
         // MainMenu left a kludgey transient menu id on the object
-        MobiusConfig* mconfig = supervisor->getMobiusConfig();
+        MobiusConfig* mconfig = supervisor->getOldMobiusConfig();
         BindingSet* sets = mconfig->getBindingSets();
         BindingSet* selected = nullptr;
         for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {

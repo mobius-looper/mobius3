@@ -2077,8 +2077,8 @@ class UIParameterDefaultTrackSyncUnitClass : public UIParameter
     void getValue(void* obj, class ExValue* value) override;
     void setValue(void* obj, class ExValue* value) override;
 };
-const char* UIParameterDefaultTrackSyncUnitClassValues[] = {"subcycle","cycle","loop",nullptr};
-const char* UIParameterDefaultTrackSyncUnitClassLabels[] = {"Subcycle","Cycle","Loop",nullptr};
+const char* UIParameterDefaultTrackSyncUnitClassValues[] = {"default","subcycle","cycle","loop",nullptr};
+const char* UIParameterDefaultTrackSyncUnitClassLabels[] = {"Default","Subcycle","Cycle","Loop",nullptr};
 UIParameterDefaultTrackSyncUnitClass::UIParameterDefaultTrackSyncUnitClass()
 {
     name = "defaultTrackSyncUnit";

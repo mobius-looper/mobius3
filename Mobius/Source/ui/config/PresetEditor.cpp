@@ -51,7 +51,7 @@ void PresetEditor::load()
     // clone the Preset list into a local copy
     presets.clear();
     revertPresets.clear();
-    MobiusConfig* config = supervisor->getMobiusConfig();
+    MobiusConfig* config = supervisor->getOldMobiusConfig();
     if (config != nullptr) {
         // convert the linked list to an OwnedArray
         Preset* plist = config->getPresets();
@@ -121,14 +121,7 @@ void PresetEditor::save()
     presets.clear(false);
     revertPresets.clear();
 
-    MobiusConfig* config = supervisor->getMobiusConfig();
-    // this will also delete the current preset list
-    config->setPresets(plist);
-
-    // this flag is necessary to get the engine to pay attention
-    config->presetsEdited = true;
-    
-    supervisor->updateMobiusConfig();
+    supervisor->presetEditorSave(plist);
 }
 
 /**

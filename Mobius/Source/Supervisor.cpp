@@ -58,6 +58,7 @@
 #include "SuperDumper.h"
 #include "ProjectFiler.h"
 #include "MidiClerk.h"
+#include "ModelTransformer.h"
 #include "script/ScriptClerk.h"
 #include "script/MslEnvironment.h"
 #include "ui/script/MobiusConsole.h"
@@ -275,7 +276,7 @@ bool Supervisor::start()
 
     // load the initial session and prepare internal objects
     producer.reset(new Producer(this));
-    Session* ses = initializeSession();
+    (void)initializeSession();
     
     // initialize the view for the known track counts
     mobiusViewer.initialize(&mobiusView);
@@ -362,8 +363,7 @@ bool Supervisor::start()
     // this is where the bulk of the engine initialization happens
     // it will call MobiusContainer to register callbacks for
     // audio and midi streams
-    MobiusConfig* config = getMobiusConfig();
-    mobius->initialize(config, ses);
+    sendInitialMobiusConfig();
 
     // force a synchronous refresh of SystemState to reflect up the
     // state after initialization, don't need to use the normal async state
@@ -724,7 +724,7 @@ int Supervisor::getActivePreset()
  */
 void Supervisor::configureBindings()
 {
-    binderator.configure(getMobiusConfig(), getUIConfig(), &symbols);
+    binderator.configure(getOldMobiusConfig(), getUIConfig(), &symbols);
     binderator.start();
 
     // also build one and send it down to the kernel
@@ -732,7 +732,7 @@ void Supervisor::configureBindings()
         Binderator* coreBinderator = new Binderator();
         // this now requires UIConfig and pulls it from Supervisor
         // so we don't need to be passing in config objects any more
-        coreBinderator->configureMidi(getMobiusConfig(), getUIConfig(), &symbols);
+        coreBinderator->configureMidi(getOldMobiusConfig(), getUIConfig(), &symbols);
 
         mobius->installBindings(coreBinderator);
     }
@@ -1058,6 +1058,9 @@ void Supervisor::advanceHigh()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * update: this is being phased out and replaced by Session
+ * calls must be limited
+ *
  * Called by components to obtain the MobiusConfig object.
  * The object remains owned by the Supervisor and must not be deleted.
  * For now we will allow it to be modified by the caller, but to save
@@ -1069,7 +1072,7 @@ void Supervisor::advanceHigh()
  * rather than calling .get on it.  I suppose it helps drive the point
  * home about ownership, but I find it ugly.
  */
-MobiusConfig* Supervisor::getMobiusConfig()
+MobiusConfig* Supervisor::getOldMobiusConfig()
 {
     // bool operator tests for nullness of the pointer
     if (!mobiusConfig) {
@@ -1160,6 +1163,79 @@ void Supervisor::decacheForms()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Update the preset list after editing.
+ * This is temporarily stored in the old mobius.xml file but nothing
+ * else in there is modified.
+ */
+void Supervisor::presetEditorSave(Preset* newList)
+{
+    MobiusConfig* master = getOldMobiusConfig();
+    master->setPresets(newList);
+    
+    // this flag is necessary to get the engine to pay attention
+    master->presetsEdited = true;
+
+    // continue the old way for a little
+    updateMobiusConfig();
+}
+
+void Supervisor::setupEditorSave(Setup* newList)
+{
+    // should no longer be using this
+    Trace(1, "Supervisor: You're still using the old Setup editor");
+    
+    MobiusConfig* master = getOldMobiusConfig();
+    master->setSetups(newList);
+    
+    // this flag is necessary to get the engine to pay attention
+    master->setupsEdited = true;
+
+    // continue the old way for a little
+    updateMobiusConfig();
+}
+
+void Supervisor::bindingEditorSave(BindingSet* newList)
+{
+    MobiusConfig* master = getOldMobiusConfig();
+    // this also deletes the current list
+    master->setBindingSets(newList);
+    updateMobiusConfig();
+}
+
+void Supervisor::groupEditorSave(juce::Array<GroupDefinition*>& newList)
+{
+    // this one is weird because it was newer and doesn't use linked lists
+    // the objects in the Array are unowned
+    MobiusConfig* master = getOldMobiusConfig();
+    master->groups.clear();
+    for (auto group : newList)
+      master->groups.add(group);
+    updateMobiusConfig();
+}
+
+void Supervisor::sampleEditorSave(SampleConfig* newConfig)
+{
+    MobiusConfig* master = getOldMobiusConfig();
+    master->setSampleConfig(newConfig);
+    updateMobiusConfig();
+
+    // you almost always want scripts reloaded after editing
+    // so force that now, samples are another story...
+    menuLoadSamples();
+}
+
+/**
+ * The UpgradePanel is old and messy with the new Session.
+ * It just did a bunch of surgery to MobiusConfig and UICOnfig
+ * and now wants to save it.
+ * Unclear if it really needs to go through full update propagation.
+ */
+void Supervisor::upgradePanelSave()
+{
+    updateMobiusConfig();
+}
+
+/**
  * Save a modified MobiusConfig, and propagate changes
  * to the interested components.
  * In practice this should only be called by ConfigEditors.
@@ -1188,14 +1264,7 @@ void Supervisor::updateMobiusConfig()
         propagateConfiguration();
 
         // send it down to the engine
-        if (mobius != nullptr) {
-            Session* ses = getSession();
-            mobius->reconfigure(config, ses);
-        }
-
-        // clear speical triggers for the engine now that it is done
-        config->setupsEdited = false;
-        config->presetsEdited = false;
+        sendModifiedMobiusConfig();
 
         // bindings may have been edited
         configureBindings();
@@ -1203,11 +1272,77 @@ void Supervisor::updateMobiusConfig()
 }
 
 /**
+ * When Mobius is initialized for the first time, it needs
+ * the same sort of MobiusConfig synthesis as is done when editing
+ * using the old config editors.  This must match sendModifiedMobiusConfig.
+ */
+void Supervisor::sendInitialMobiusConfig()
+{
+    Session* ses = getSession();
+    MobiusConfig* synth = synthesizeMobiusConfig(ses);
+    
+    mobius->initialize(synth, ses);
+    
+    delete synth;
+}
+
+/**
+ * This is called by the old configuration editors after a modification
+ * was made to MobiusConfig.
+ *
+ * Synthesize the merged MobiusConfig and send it down.
+ */
+void Supervisor::sendModifiedMobiusConfig()
+{
+    Session* ses = getSession();
+    MobiusConfig* synth = synthesizeMobiusConfig(ses);
+    
+    mobius->reconfigure(synth, ses);
+
+    // clear speical triggers for the engine now that it is done
+    MobiusConfig* config = getOldMobiusConfig();
+    config->setupsEdited = false;
+    config->presetsEdited = false;
+
+    delete synth;
+}
+
+/*
+ * When MobiusConfig is sent down to the core it does not get the one
+ * managed in mobius.xml.  The globals now come from the Session.
+ * The full Preset list is preserved.  The Setup list is synthesized
+ * to contain only one Setup representing the current session.
+ */
+MobiusConfig* Supervisor::synthesizeMobiusConfig(Session* src)
+{
+    ModelTransformer transformer(this);
+    
+    MobiusConfig* config = getOldMobiusConfig();
+    MobiusConfig* synth = config->clone();
+
+    // this copies globals from the session and adds
+    // a single Setup for the session itself
+    transformer.sessionToConfig(src, synth);
+
+    bool logit = true;
+    if (logit) {
+        XmlRenderer xr;
+        char* xml = xr.render(synth);
+        const char* name = "synth.xml";
+        juce::File file = getRoot().getChildFile(name);
+        file.replaceWithText(juce::String(xml));
+        delete xml;
+    }
+
+    return synth;
+}
+
+/**
  * Special back door for ScriptClerk that needs to do some upgrades
  * without propagating changes via updateMobiusConfig since are not
  * fully initialized yet.
  */
-void Supervisor::writeMobiusConfig()
+void Supervisor::writeOldMobiusConfig()
 {
     if (mobiusConfig) {
         MobiusConfig* config = mobiusConfig.get();
@@ -1229,21 +1364,18 @@ void Supervisor::updateSymbolProperties()
 }
 
 /**
- * Added for UpgradePanel
+ * Added for UpgradePanel so it can undo changes it was making.
  * Reload the entire MobiusConfig from the file and
  * notify as if it had been edited.
  */
-void Supervisor::reloadMobiusConfig()
+void Supervisor::reloadOldMobiusConfig()
 {
     mobiusConfig.reset(nullptr);
-    (void)getMobiusConfig();
+    (void)getOldMobiusConfig();
     
     propagateConfiguration();
-        
-    MobiusConfig* config = mobiusConfig.get();
-    Session* ses = session.get();
-    if (mobius != nullptr)
-      mobius->reconfigure(config, ses);
+
+    sendModifiedMobiusConfig();
         
     configureBindings();
 }
@@ -1308,7 +1440,7 @@ Session* Supervisor::initializeSession()
     // before Producer/ScriptClerk get going, do a few old upgrades
     // to mobius.xml that should be long over by now
     // Once the Session conversion is complete, this won't be necessary
-    MobiusConfig* config = getMobiusConfig();
+    MobiusConfig* config = getOldMobiusConfig();
     if (upgrader.upgrade(config)) {
         fileManager.writeMobiusConfig(config);
     }
@@ -1420,57 +1552,6 @@ void Supervisor::configureSystemState(Session* s)
 }
 
 /**
- * OBSOLETE: The only thing that can edit the Session is SessionEditor
- * and it will call sessionEditorSave
- *
- * Write the default session after editing.
- * The only thing sensitive to this right now is MobiusKernel
- * and MidiTracker.
- *
- * This is called by:
- *
- *     GlobalEditor
- *        - edits userFileFolder and eventScript, this needs to move
- *          to SessionEditor
- *
- *     MidiTrackEditor
- *        - obsolete, will be replaced by SessionEditor
- *
- *     SessionEditor
- *        - the only thing that should be doing this for awhile,
- *          eventually MixerEditor and other editors of session slices
- *
- * The noPropagation flag is set when the edits were focused and will not impact
- * the Mobius engine.
- */
-#if 0
-void Supervisor::updateSession(bool noPropagation)
-{
-    if (session) {
-        Session* s = session.get();
-        // todo: if this wasn't the default session, remember where it came from
-        producer->saveSession(s);
-
-        configureSystemState(s);
-        
-        // tell the engine to reorganize tracks, this will lag till the next interrupt
-        // this may be delayed in some configuration panels that edit both the session
-        // and the MobiusConfig so we only reconfigure Mobius once
-        if (!noPropagation)
-          mobius->reconfigure(getMobiusConfig(), s);
-        
-        // tell the view to prepare for track changes
-        mobiusViewer.configure(&mobiusView);
-
-        // the only thing that cares about this is TrackStrips but we don't have
-        // a way to reach only that one
-        propagateConfiguration();
-
-    }
-}
-#endif
-
-/**
  * This is what SessionEditor must call after potentially adding and removing tracks.
  * The Track configuration in the new session is authorative, any use of MobiusConfig
  * in the core will be derived from what the Session is now.
@@ -1495,13 +1576,7 @@ void Supervisor::sessionEditorSave()
     propagateConfiguration();
 
     // send it down to the engine
-    if (mobius != nullptr) {
-        mobius->reconfigure(config, s);
-    }
-
-    // clear speical triggers for the engine now that it is done
-    config->setupsEdited = false;
-    config->presetsEdited = false;
+    sendModifiedMobiusConfig();
 
     // don't need to do this since bindings haven't changed
     //configureBindings();
@@ -1903,7 +1978,7 @@ void Supervisor::menuActivateBindings(BindingSet* set)
  */
 void Supervisor::mobiusActivateBindings(juce::String name)
 {
-    MobiusConfig* mconfig = getMobiusConfig();
+    MobiusConfig* mconfig = getOldMobiusConfig();
     UIConfig* uconfig = getUIConfig();
 
     if (name.length() == 0) {
@@ -2195,7 +2270,7 @@ bool Supervisor::doQuery(Query* query)
  */
 void Supervisor::menuLoadSamples(bool popup)
 {
-    MobiusConfig* config = getMobiusConfig();
+    MobiusConfig* config = getOldMobiusConfig();
     SampleConfig* sconfig = config->getSampleConfig();
     if (sconfig != nullptr) {
         mobius->installSamples(sconfig);

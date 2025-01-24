@@ -15,7 +15,6 @@
 #include "../../util/Trace.h"
 #include "../../util/List.h"
 #include "../../model/UIConfig.h"
-#include "../../model/MobiusConfig.h"
 #include "../../model/Preset.h"
 #include "../../model/ParameterProperties.h"
 #include "../../model/ParameterHelper.h"

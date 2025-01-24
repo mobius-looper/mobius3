@@ -8,7 +8,6 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../model/MobiusConfig.h"
 #include "../../model/Preset.h"
 #include "../../model/UIEventType.h"
 #include "../../model/Symbol.h"

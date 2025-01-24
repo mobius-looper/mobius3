@@ -130,7 +130,7 @@ void ScriptClerk::initialize()
     }
 
     // upgrade ScriptConfig to registry entries
-    MobiusConfig* mconfig = supervisor->getMobiusConfig();
+    MobiusConfig* mconfig = supervisor->getOldMobiusConfig();
     ScriptConfig* sconfig = mconfig->getScriptConfigObsolete();
     if (sconfig != nullptr && sconfig->getScripts() != nullptr) {
         reg->convert(sconfig);
@@ -138,7 +138,8 @@ void ScriptClerk::initialize()
         // note well: this can't call supervisor->updateMobiusConfig()
         // because if we're early in initialization that tries to
         // propagate things and things aren't properly initialized yet
-        supervisor->writeMobiusConfig();
+        // this is a shitty backdoor until the old mobius.xml can be broken apart
+        supervisor->writeOldMobiusConfig();
     }
 
     // hack: If they have paths into the standard library folder

@@ -446,6 +446,12 @@ Once those models are fully converted, these symbols can be removed.
       Another project option, move to UI
     </Parameter>
 
+    <!-- These aren't actually in the Session, they're in the DeviceConfig but
+         we make it look like they are for the SessionEditor -->
+
+    <Parameter name='pluginInputs' type='int' options='noBinding'/>
+    <Parameter name='pluginOutputs' type='int' options='noBinding'/>
+
     <!-- These were once defined in the Setup but they are effectively global -->
 
     <Parameter name='defaultPreset'
@@ -673,6 +679,8 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='pluginPorts' low='1' high='8' options='noBinding'>
       The number of ports (stereo channel pairs) we will advertise to the plugin host.
       Arguably belongs in a separate device configuration model.
+      update: well it does, it's in the DeviceConfig but simulated in the session
+      with pluginInputs and pluginOutputs
     </Parameter>
 
     <!-- StringList
@@ -715,17 +723,13 @@ Once those models are fully converted, these symbols can be removed.
     <!-- note that this needs "default" as the first enum value even though that's not
          allowed for this parameter since internally it shares the same SyncSource enumeration
          with the syncSource track scope parameter
-
-note2: The sync related parameters and really everything in Setup are deprecated
-and replaced by a new set of parameters defined at the end of this file
-
     -->
     <Parameter name='defaultSyncSource' values='default,none,track,out,host,midi,transport'
                options='noBinding'
                coreName='syncSource'
                codeName='SyncSource'
                enumName='SyncSource'/>
-    <Parameter name='defaultTrackSyncUnit' values='subcycle,cycle,loop'
+    <Parameter name='defaultTrackSyncUnit' values='default,subcycle,cycle,loop'
                options='noBinding'
                codeName='SyncTrackUnit'
                enumName='SyncTrackUnit'/>

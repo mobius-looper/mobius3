@@ -82,7 +82,7 @@ void GroupEditor::load()
     juce::Array<juce::String> names;
     groups.clear();
     revertGroups.clear();
-    MobiusConfig* config = supervisor->getMobiusConfig();
+    MobiusConfig* config = supervisor->getOldMobiusConfig();
     for (auto src : config->groups) {
         // Supervisor should have upgraded these by now
         if (src->name.length() == 0) {
@@ -135,16 +135,11 @@ void GroupEditor::save()
     // need to also do this when the selected group is changed
     saveGroup(selectedGroup);
 
-    // replace the definition list in MobiusConfig
-    // todo: should we have a minimum number here?
-    MobiusConfig* config = supervisor->getMobiusConfig();
-    config->groups.clear();
+    juce::Array<GroupDefinition*> newList;
     while (groups.size() > 0)
-      config->groups.add(groups.removeAndReturn(0));
-        
-    revertGroups.clear();
+      newList.add(groups.removeAndReturn(0));
 
-    supervisor->updateMobiusConfig();
+    supervisor->groupEditorSave(newList);
 }
 
 /**

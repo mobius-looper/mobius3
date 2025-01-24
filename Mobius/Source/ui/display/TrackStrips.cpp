@@ -11,7 +11,6 @@
 
 #include "../../util/Trace.h"
 #include "../../model/UIConfig.h"
-#include "../../model/MobiusConfig.h"
 #include "../../Provider.h"
 #include "../MobiusView.h"
 

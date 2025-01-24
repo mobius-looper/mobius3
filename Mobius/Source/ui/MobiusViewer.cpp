@@ -1259,10 +1259,13 @@ void MobiusViewer::refreshTrack(SystemState* state, TrackState* tstate,
  * to the Session someday.
  * It relies on MobiusView having the setupChanged flag set
  * and needs the setupOrdinal number captured from Mobius.
+ *
+ * update: Setups are gone, the track names come directly from the Session
  */
 void MobiusViewer::refreshTrackName(SystemState* state, TrackState* tstate,
                                     MobiusView* mview, MobiusViewTrack* tview)
 {
+#if 0    
     if (mview->setupChanged) {
 
         tview->name = "";
@@ -1275,6 +1278,16 @@ void MobiusViewer::refreshTrackName(SystemState* state, TrackState* tstate,
         }
         tview->refreshName = true;
     }
+#endif
+    (void)mview;
+    (void)state;
+    tview->name = "";
+    Session* session = provider->getSession();
+    Session::Track* track = session->getTrackByNumber(tstate->number);
+    if (track == nullptr)
+      Trace(1, "MobiusViewer: Track number out of range in session %d", tstate->number);
+    else
+      tview->name = track->name;
 }
 
 void MobiusViewer::refreshMinorModes(SystemState* state, TrackState* tstate, MobiusViewTrack* tview)
@@ -1654,8 +1667,8 @@ void MobiusViewer::refreshTrackGroups(TrackState* tstate,  MobiusViewTrack* tvie
         // so the UI components don't have to keep a copy
         tview->groupName = "";
         tview->groupColor = 0;
-        
-        MobiusConfig* config = provider->getMobiusConfig();
+
+        MobiusConfig* config = provider->getOldMobiusConfig();
         
         // ignore if out of range
         if (newNumber > 0 && newNumber <= config->groups.size()) {

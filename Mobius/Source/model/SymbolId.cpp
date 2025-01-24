@@ -233,6 +233,8 @@ SymbolDefinition SymbolDefinitions[] = {
     {"trackNoEdit", ParamNoEdit},
     {"eventScript", ParamEventScript},
     {"userFileFolder", ParamUserFileFolder},
+    {"pluginInputs", ParamPluginInputs},
+    {"pluginOutputs", ParamPluginOutputs},
     
     {ParamNameSubcycles, ParamSubcycles},
     {ParamNameMultiplyMode, ParamMultiplyMode},

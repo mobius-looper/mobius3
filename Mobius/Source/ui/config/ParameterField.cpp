@@ -109,7 +109,9 @@ void ParameterField::refreshAllowedValuesInternal(bool rendered)
 
             // returns an old-school StringList for some reason, we never want that
             // why not just return juce::StringArray and be done with it?
-            StringList* list = parameter->getStructureNames(supervisor->getMobiusConfig());
+            
+            // one of the few uses of this, only works for Presets
+            StringList* list = parameter->getStructureNames(supervisor->getOldMobiusConfig());
             juce::StringArray values;
 
             // always start with this?  for the first usage of selecting Preset names

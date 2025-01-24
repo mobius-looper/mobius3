@@ -33,7 +33,7 @@ void GlobalEditor::prepare()
 
 void GlobalEditor::load()
 {
-    MobiusConfig* config = supervisor->getMobiusConfig();
+    MobiusConfig* config = supervisor->getOldMobiusConfig();
     loadGlobal(config);
     
     // ports don't come from MobiusConfig
@@ -48,9 +48,9 @@ void GlobalEditor::load()
     pluginOutputs.setText(juce::String(dc->pluginConfig.defaultAuxOutputs + 1));
 
     // things that come from the session
-    Session* session = supervisor->getSession();
-    userFiles.setValue(session->getString("userFileFolder"));
-    eventScript.setValue(session->getString("eventScript"));
+    //Session* session = supervisor->getSession();
+    //userFiles.setValue(session->getString("userFileFolder"));
+    //eventScript.setValue(session->getString("eventScript"));
 }
 
 /**
@@ -64,18 +64,24 @@ void GlobalEditor::load()
  */
 void GlobalEditor::save()
 {
-    Session* session = supervisor->getSession();
-    session->setJString("userFileFolder", userFiles.getValue());
-    session->setJString("eventScript", eventScript.getValue());
+    // stop doing this, now that SessionEditor exists
+    //Session* session = supervisor->getSession();
+    //session->setJString("userFileFolder", userFiles.getValue());
+    //session->setJString("eventScript", eventScript.getValue());
+    
     // note the use of the special noPropagation argument to cause
     // the file to be saved, but defer the propagation of the changes
     // until the call to updateMobiusConfig to prevent two back-to-back
     // propagations to the kernel
-    supervisor->updateSession(true);
+    //supervisor->updateSession(true);
+
+    // this is completely stubbed now
+    Trace(1, "GlobalEditor: Save ignored");
     
-    MobiusConfig* config = supervisor->getMobiusConfig();
-    saveGlobal(config);
-    supervisor->updateMobiusConfig();
+    
+    //MobiusConfig* config = supervisor->getMobiusConfig();
+    //saveGlobal(config);
+    //supervisor->updateMobiusConfig();
 
     DeviceConfig* dc = supervisor->getDeviceConfig();
 
@@ -86,6 +92,7 @@ void GlobalEditor::save()
     //mc->outputPorts = getPortValue(&asioOutputs, 32);
     dc->pluginConfig.defaultAuxInputs = getPortValue(&pluginInputs, 8) - 1;
     dc->pluginConfig.defaultAuxOutputs = getPortValue(&pluginOutputs, 8) - 1;
+    
     // DeviceConfig is auto-updated on shutdown
 }
 

@@ -39,7 +39,7 @@ class SessionClerk
     class Session* readDefaultSession();
     Session* readSession(juce::String name);
     void saveSession(Session* s);
-    
+
   private:
 
     class Provider* provider = nullptr;

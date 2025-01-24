@@ -36,7 +36,7 @@ void ParameterHelper::getStructureNames(Provider* p, Symbol* s, juce::StringArra
         }
     }
     else {
-        MobiusConfig* config = p->getMobiusConfig();
+        MobiusConfig* config = p->getOldMobiusConfig();
         if (s->id == ParamTrackGroup) {
             for (auto group : config->groups) {
                 result.add(group->name);
@@ -85,7 +85,7 @@ juce::String ParameterHelper::getStructureName(Provider* p, Symbol* s, int ordin
         }
     }
     else {
-        MobiusConfig* config = p->getMobiusConfig();
+        MobiusConfig* config = p->getOldMobiusConfig();
         if (s->id == ParamTrackGroup) {
             if (ordinal >= 0 && ordinal < config->groups.size()) {
                 GroupDefinition* def = config->groups[ordinal];
@@ -135,7 +135,7 @@ int ParameterHelper::getParameterMax(Provider* p, Symbol* s)
         }
     }
     else {
-        MobiusConfig* config = p->getMobiusConfig();
+        MobiusConfig* config = p->getOldMobiusConfig();
         if (s->id == ParamTrackGroup) {
             max = config->groups.size();
             handled = true;
