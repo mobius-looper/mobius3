@@ -25,7 +25,7 @@ SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
     setName("SessionEditor");
 
     globalEditor.reset(new SessionGlobalEditor());
-    tabs.add("Parameters", globalEditor.get());
+    tabs.add("Globals", globalEditor.get());
 
     trackEditor.reset(new SessionTrackEditor());
     tabs.add("Tracks", trackEditor.get());

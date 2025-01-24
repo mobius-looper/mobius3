@@ -55,6 +55,8 @@ class Provider
     virtual void removeHighListener(HighRefreshListener* l) = 0;
 
     virtual class SystemConfig* getSystemConfig() = 0;
+    virtual void updateSystemConfig() = 0;
+    
     virtual class StaticConfig* getStaticConfig() = 0;
     virtual class MobiusConfig* getOldMobiusConfig() = 0;
     virtual class Session* getSession() = 0;
@@ -90,4 +92,10 @@ class Provider
     virtual class Prompter* getPrompter() = 0;
     virtual juce::File getRoot() = 0;
     virtual class ScriptClerk* getScriptClerk() = 0;
+    virtual class Producer* getProducer() = 0;
+
+    virtual bool isTestMode() = 0;
+    // this is terrible
+    virtual bool isIdentifyMode() = 0;
+    virtual int getActivePreset() = 0;
 };

@@ -236,10 +236,6 @@
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
         <GROUP id="{DF1301BF-7977-3AF9-2F74-88DD7CDC5689}" name="session">
-          <FILE id="FT6Mg2" name="MidiTrackEditor.cpp" compile="1" resource="0"
-                file="Source/ui/session/MidiTrackEditor.cpp"/>
-          <FILE id="FVJZ8a" name="MidiTrackEditor.h" compile="0" resource="0"
-                file="Source/ui/session/MidiTrackEditor.h"/>
           <FILE id="y3QGus" name="ParameterForm.cpp" compile="1" resource="0"
                 file="Source/ui/session/ParameterForm.cpp"/>
           <FILE id="D2sieP" name="ParameterForm.h" compile="0" resource="0" file="Source/ui/session/ParameterForm.h"/>
@@ -258,6 +254,16 @@
                 file="Source/ui/session/SessionGlobalEditor.cpp"/>
           <FILE id="CqSPrU" name="SessionGlobalEditor.h" compile="0" resource="0"
                 file="Source/ui/session/SessionGlobalEditor.h"/>
+          <FILE id="cRQyeY" name="SessionManager.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionManager.cpp"/>
+          <FILE id="kiLF6D" name="SessionManager.h" compile="0" resource="0"
+                file="Source/ui/session/SessionManager.h"/>
+          <FILE id="rUF5Av" name="SessionManagerPanel.h" compile="0" resource="0"
+                file="Source/ui/session/SessionManagerPanel.h"/>
+          <FILE id="v0KGjq" name="SessionManagerTable.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionManagerTable.cpp"/>
+          <FILE id="dEmxtK" name="SessionManagerTable.h" compile="0" resource="0"
+                file="Source/ui/session/SessionManagerTable.h"/>
           <FILE id="za4YnZ" name="SessionTrackEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionTrackEditor.cpp"/>
           <FILE id="bxa5u6" name="SessionTrackEditor.h" compile="0" resource="0"
@@ -365,9 +371,6 @@
           <FILE id="dqfccx" name="DisplayEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/DisplayEditor.cpp"/>
           <FILE id="I1bVV8" name="DisplayEditor.h" compile="0" resource="0" file="Source/ui/config/DisplayEditor.h"/>
-          <FILE id="RlXlKB" name="GlobalEditor.cpp" compile="1" resource="0"
-                file="Source/ui/config/GlobalEditor.cpp"/>
-          <FILE id="Gjig9Y" name="GlobalEditor.h" compile="0" resource="0" file="Source/ui/config/GlobalEditor.h"/>
           <FILE id="QsqaLh" name="GroupEditor.cpp" compile="1" resource="0" file="Source/ui/config/GroupEditor.cpp"/>
           <FILE id="u7Aap2" name="GroupEditor.h" compile="0" resource="0" file="Source/ui/config/GroupEditor.h"/>
           <FILE id="KVy75i" name="HostEditor.cpp" compile="1" resource="0" file="Source/ui/config/HostEditor.cpp"/>
@@ -426,8 +429,6 @@
                 file="Source/ui/config/ScriptSymbolTable.cpp"/>
           <FILE id="sJ7xu7" name="ScriptSymbolTable.h" compile="0" resource="0"
                 file="Source/ui/config/ScriptSymbolTable.h"/>
-          <FILE id="pzeGck" name="SetupEditor.cpp" compile="1" resource="0" file="Source/ui/config/SetupEditor.cpp"/>
-          <FILE id="dtBl3I" name="SetupEditor.h" compile="0" resource="0" file="Source/ui/config/SetupEditor.h"/>
           <FILE id="ImU9ao" name="TargetSelectorWrapper.cpp" compile="1" resource="0"
                 file="Source/ui/config/TargetSelectorWrapper.cpp"/>
           <FILE id="MuAGqD" name="TargetSelectorWrapper.h" compile="0" resource="0"

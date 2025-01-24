@@ -104,6 +104,7 @@ class Symbolizer
     ~Symbolizer();
 
     void initialize();
+    void installActivationSymbols();
     void saveSymbolProperties();
     
     Symbol* getSymbol(SymbolId id);
@@ -117,7 +118,6 @@ class Symbolizer
     void internSymbols();
     void installUISymbols();
     void installOldDefinitions();
-    void installActivationSymbols();
     
     // symbols.xml parsing
     void loadSymbolDefinitions();

@@ -115,7 +115,7 @@ class Session
     // for SessionClerk migration
     void add(Track* t);
 
-    // temporary kludge for MidiTrackEditor
+    // temporary kludge for MidiTrackEditor, weed
     Track* ensureTrack(TrackType type, int index);
     void replaceMidiTracks(Session* src);
     void clearTracks(TrackType type);

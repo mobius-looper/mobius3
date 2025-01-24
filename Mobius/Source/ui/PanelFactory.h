@@ -38,9 +38,7 @@ class PanelFactory
         KeyboardSummary,
 
         // configuration editing panels
-        Global,
         Preset,
-        Setup,
         Keyboard,
         Midi,
         Host,
@@ -50,8 +48,8 @@ class PanelFactory
         Button,
         Properties,
         Group,
-        MidiTracks,
         Session,
+        SessionManager,
 
         // Devices
         Audio,

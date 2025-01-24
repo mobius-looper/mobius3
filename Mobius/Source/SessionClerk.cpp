@@ -24,6 +24,11 @@ SessionClerk::~SessionClerk()
 {
 }
 
+juce::OwnedArray<SessionClerk::Folder>* SessionClerk::getFolders()
+{
+    return &folders;
+}
+
 /**
  * Read the sessions defined in the user library.
  *
@@ -461,7 +466,7 @@ void SessionClerk::migrateSetups(bool bootstrapped)
             else {
                 // we've already seen this one, normally would ignore it but
                 // have a merge option just for testing
-                bool testMerge = true;
+                bool testMerge = false;
                 if (testMerge) {
                     Trace(2, "SessionClerk: Merging Setup %s", setup->getName());
                 

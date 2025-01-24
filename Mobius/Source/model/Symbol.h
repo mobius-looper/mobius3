@@ -163,8 +163,10 @@ class Symbol
     /**
      * Prefixes added to symbol names representing structure activations.
      */
-    constexpr static const char* ActivationPrefixSetup = "Setup:";
     constexpr static const char* ActivationPrefixPreset = "Preset:";
+    constexpr static const char* ActivationPrefixSession = "Session:";
+    // if we see these in old bindings treat it like session activation
+    constexpr static const char* ActivationPrefixSetup = "Setup:";
 
     // temporary kludge as we work around the
     // UIParameter/ParameterProperties transition

@@ -180,6 +180,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class MidiClerk* getMidiClerk();
 
     class SystemConfig* getSystemConfig();
+    void updateSystemConfig();
     class DeviceConfig* getDeviceConfig();
     void updateDeviceConfig();
     class UIConfig* getUIConfig() override;
@@ -238,6 +239,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void dragMidi(int trackNumber, int loopNumber) override;
     Pathfinder* getPathfinder() override;
     Prompter* getPrompter() override;
+    class Producer* getProducer() override;
     
     // menu implementations
     void menuLoadScripts(bool poppup = true);
@@ -249,6 +251,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void menuQuickSave();
     void menuActivateBindings(BindingSet* set);
     void menuLoadMidi(bool analyze);
+    void menuLoadSession(juce::String name);
     
     // MobiusContainer
     int getSampleRate() override;
@@ -309,7 +312,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     // Test Mode
     void menuTestMode();
-    bool isTestMode();
+    bool isTestMode() override;
     class MobiusAudioListener* overrideAudioListener(class MobiusAudioListener* l);
     class MobiusListener* overrideMobiusListener(class MobiusListener* l);
     void cancelListenerOverrides();

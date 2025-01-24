@@ -20,6 +20,7 @@
 
 #include "../Supervisor.h"
 #include "../Symbolizer.h"
+#include "../Producer.h"
 
 #include "JuceUtil.h"
 #include "MainMenu.h"
@@ -172,12 +173,13 @@ void MainWindow::mainMenuSelection(int id)
         action.value = preset;
         supervisor->doAction(&action);
     }
-    else if (id >= MainMenu::MenuSetupOffset && id <= MainMenu::MenuSetupMax) {
-        int setup = id - MainMenu::MenuSetupOffset;
-        UIAction action;
-        action.symbol = symbols->intern("activeSetup");
-        action.value = setup;
-        supervisor->doAction(&action);
+    else if (id >= MainMenu::MenuSessionOffset && id <= MainMenu::MenuSessionMax) {
+        int ordinal = id - MainMenu::MenuSessionOffset;
+        // sigh, this assumes that the Folder list won't change since the time the
+        // menu was built till now, which is relatively safe, but it would be nicer
+        // if we could get the session name here
+        Producer* producer = supervisor->getProducer();
+        producer->changeSession(ordinal);
     }
     else if (id >= MainMenu::MenuLayoutOffset && id <= MainMenu::MenuLayoutMax) {
         int layoutOrdinal = id - MainMenu::MenuLayoutOffset;
@@ -253,10 +255,6 @@ void MainWindow::mainMenuSelection(int id)
             }
                 break;
 
-            case MainMenu::GlobalParameters: {
-                panelFactory.show(PanelFactory::Global);
-            }
-                break;
             case MainMenu::Properties: {
                 panelFactory.show(PanelFactory::Properties);
             }
@@ -269,16 +267,12 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::Preset);
             }
                 break;
-            case MainMenu::TrackSetups: {
-                panelFactory.show(PanelFactory::Setup);
-            }
-                break;
-            case MainMenu::MidiTracks: {
-                panelFactory.show(PanelFactory::MidiTracks);
-            }
-                break;
             case MainMenu::EditSession: {
                 panelFactory.show(PanelFactory::Session);
+            }
+                break;
+            case MainMenu::SessionManager: {
+                panelFactory.show(PanelFactory::SessionManager);
             }
                 break;
             case MainMenu::MidiControl: {

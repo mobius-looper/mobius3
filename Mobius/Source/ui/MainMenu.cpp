@@ -31,13 +31,14 @@
 #include "../util/Util.h"
 #include "../model/MobiusConfig.h"
 #include "../model/UIConfig.h"
-#include "../model/Setup.h"
+#include "../model/Session.h"
 #include "../model/Preset.h"
 #include "../model/Symbol.h"
 #include "../model/Query.h"
 #include "../model/Binding.h"
 
-#include "../Supervisor.h"
+#include "../Provider.h"
+#include "../Producer.h"
 
 #include "MainWindow.h"
 #include "MainMenu.h"
@@ -152,44 +153,43 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(LoadSamples, "Reload Samples");
         menu.addItem(LoadMidi, "Load MIDI File");
         menu.addItem(AnalyzeMidi, "Analyze MIDI File");
-        if (!mainWindow->getSupervisor()->isPlugin()) {
+        if (!mainWindow->getProvider()->isPlugin()) {
             menu.addSeparator();
             menu.addItem(Exit, "Exit");
         }
     }
 
     // continue this temporarily, but the menu needs to be gone
-    else if (menuIndex == menuIndexSetup)
+    else if (menuIndex == menuIndexSession)
     {
-        menu.addItem(TrackSetups, "Edit Setups...");
         menu.addItem(EditSession, "Edit Session...");
-        menu.addItem(MidiTracks, "Edit MIDI Tracks...");
+        menu.addItem(SessionManager, "Manage Sessions...");
         menu.addSeparator();
         
-        Supervisor* supervisor = mainWindow->getSupervisor();
-        int active = supervisor->getActiveSetup();
-        MobiusConfig* config = supervisor->getOldMobiusConfig();
-        Setup* setup = config->getSetups();
+        Provider* provider = mainWindow->getProvider();
+        Producer* producer = provider->getProducer();
+        juce::String currentSessionName = provider->getSession()->getName();
+        juce::StringArray sessions;
+        producer->getSessionNames(sessions);
+        
         int index = 0;
-        while (setup != nullptr) {
-            juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(setup->getName()));
-            item.setID(MenuSetupOffset + index);
-            if (index == active)
+        for (auto name : sessions) {
+            juce::PopupMenu::Item item = juce::PopupMenu::Item(name);
+            item.setID(MenuSessionOffset + index);
+            if (name == currentSessionName)
               item.setTicked(true);
             menu.addItem(item);
             index++;
-            setup = (Setup*)(setup->getNext());
         }
-
     }
     else if (menuIndex == menuIndexPreset)
     {
         menu.addItem(Presets, "Edit Presets...");
         menu.addSeparator();
 
-        Supervisor* supervisor = mainWindow->getSupervisor();
-        int active = supervisor->getActivePreset();
-        MobiusConfig* config = supervisor->getOldMobiusConfig();
+        Provider* provider = mainWindow->getProvider();
+        int active = provider->getActivePreset();
+        MobiusConfig* config = provider->getOldMobiusConfig();
         Preset* preset = config->getPresets();
         int index = 0;
         while (preset != nullptr) {
@@ -207,8 +207,8 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(Buttons, "Edit Buttons...");
         menu.addSeparator();
         
-        Supervisor* supervisor = mainWindow->getSupervisor();
-        UIConfig* config = supervisor->getUIConfig();
+        Provider* provider = mainWindow->getProvider();
+        UIConfig* config = provider->getUIConfig();
 
         // Layouts
         menu.addSectionHeader(juce::String("Layouts"));
@@ -251,7 +251,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         // this is a weird one because the state we're toggling isn't
         // in the UIConfig, it is transient
         // ugly dependencies
-        if (supervisor->isIdentifyMode())
+        if (provider->isIdentifyMode())
           item.setTicked(true);
         menu.addItem(item);
     }
@@ -263,9 +263,9 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(KeyboardControl, "Edit Keyboard Bindings...");
         menu.addSeparator();
         
-        Supervisor* supervisor = mainWindow->getSupervisor();
-        MobiusConfig* mconfig = supervisor->getOldMobiusConfig();
-        UIConfig* uiconfig = supervisor->getUIConfig();
+        Provider* provider = mainWindow->getProvider();
+        MobiusConfig* mconfig = provider->getOldMobiusConfig();
+        UIConfig* uiconfig = provider->getUIConfig();
         BindingSet* sets = mconfig->getBindingSets();
         // first one is always active and is not displayed
         if (sets != nullptr) sets = sets->getNextBindingSet();
@@ -325,7 +325,6 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         //menu.addItem(MidiControl, "MIDI Control");
         //menu.addItem(KeyboardControl, "Keyboard Control");
         //menu.addSeparator();
-        menu.addItem(GlobalParameters, "Global Parameters");
         menu.addItem(Properties, "Function Properties");
         menu.addItem(Groups, "Track Groups");
         menu.addItem(HostParameters, "Plugin Parameters");
@@ -335,7 +334,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addSeparator();
         menu.addItem(MidiDevices, "MIDI Devices");
         // don't show this if we're a plugin
-        if (!mainWindow->getSupervisor()->isPlugin())
+        if (!mainWindow->getProvider()->isPlugin())
           menu.addItem(AudioDevices, "Audio Devices");
         menu.addSeparator();
         menu.addItem(UpgradeConfig, "Upgrade Configuration");
@@ -363,7 +362,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         // todo: won't want to show this in released code
         juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String("Test Mode"));
         item.setID(TestMode);
-        if (mainWindow->getSupervisor()->isTestMode())
+        if (mainWindow->getProvider()->isTestMode())
           item.setTicked(true);
         menu.addItem(item);
 

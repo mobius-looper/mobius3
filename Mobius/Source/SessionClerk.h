@@ -40,6 +40,8 @@ class SessionClerk
     Session* readSession(juce::String name);
     void saveSession(Session* s);
 
+    juce::OwnedArray<Folder>* getFolders();
+
   private:
 
     class Provider* provider = nullptr;

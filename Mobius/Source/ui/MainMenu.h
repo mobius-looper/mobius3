@@ -26,7 +26,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     // these are indexes not ids so must start from zero
     enum MenuIndexes {
         menuIndexFile = 0,
-        menuIndexSetup,
+        menuIndexSession,
         menuIndexPreset,
         menuIndexDisplay,
         menuIndexBindings,
@@ -39,14 +39,14 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     /**
      * Names of the top-level menu items
      */
-    juce::StringArray MenuNames {"File", "Tracks", "Presets", "Display", "Bindings", "Configuration", "Scripts", "Help", "Test"};
+    juce::StringArray MenuNames {"File", "Sessions", "Presets", "Display", "Bindings", "Configuration", "Scripts", "Help", "Test"};
 
     /**
      * Offset of menu item ids for the generated track setup items
      * Figure out a better way to do this so we don't overflow
      */
-    static const int MenuSetupOffset = 100;
-    static const int MenuSetupMax = 199;
+    static const int MenuSessionOffset = 100;
+    static const int MenuSessionMax = 199;
     
     /**
      * Offset of menu item ids for the generated preset items
@@ -77,7 +77,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     /**
      * These are menu item model ids which must begin from 1
      *
-     * Menus for Setups, Preset, Bindings are special and generated
+     * Menus for Session, Preset, Bindings are special and generated
      * with their own id ranges.
      */
     enum MenuItems {
@@ -95,9 +95,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         Exit,
 
         // Configuration
-        GlobalParameters,
         Presets,
-        TrackSetups,
         MidiControl,
         KeyboardControl,
         Buttons,
@@ -108,9 +106,11 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         AudioDevices,
         Properties,
         Groups,
-        MidiTracks,
-        EditSession,
 
+        // Sessions
+        EditSession,
+        SessionManager,
+        
         // Scripts
         Scripts,
         ScriptEditor,

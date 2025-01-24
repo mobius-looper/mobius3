@@ -17,6 +17,8 @@
 #include "script/ConsolePanel.h"
 #include "script/MonitorPanel.h"
 
+#include "session/SessionManagerPanel.h"
+
 // this has all the configuration panels
 #include "config/ConfigPanels.h"
 
@@ -131,9 +133,7 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case MidiSummary: panel = new MidiSummaryPanel(super); break;
         case KeyboardSummary: panel = new KeyboardSummaryPanel(super); break;
 
-        case Global: panel = new GlobalPanel(super); break;
         case Preset: panel = new PresetPanel(super); break;
-        case Setup: panel = new SetupPanel(super); break;
         case Script: panel = new ScriptPanel(super); break;
         case Sample: panel = new SamplePanel(super); break;
         case Display: panel = new DisplayPanel(super); break;
@@ -144,8 +144,8 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case Host: panel = new HostPanel(super); break;
         case Properties: panel = new PropertiesPanel(super); break;
         case Group: panel = new GroupPanel(super); break;
-        case MidiTracks: panel = new MidiTrackPanel(super); break;
         case Session: panel = new SessionPanel(super); break;
+        case SessionManager: panel = new SessionManagerPanel(super); break;
             
         case Audio: panel = new AudioPanel(super); break;
         case MidiDevice: panel = new MidiDevicePanel(super); break;

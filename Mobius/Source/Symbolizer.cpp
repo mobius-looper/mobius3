@@ -13,10 +13,11 @@
 #include "model/UIParameter.h"
 #include "model/ParameterProperties.h"
 #include "model/MobiusConfig.h"
-#include "model/Setup.h"
+#include "model/Session.h"
 #include "model/Preset.h"
 
 #include "Supervisor.h"
+#include "Producer.h"
 #include "Symbolizer.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -109,7 +110,9 @@ void Symbolizer::initialize()
     
     installUISymbols();
 
-    installActivationSymbols();
+    // this is deferred until after the Sessions are initialized which
+    // comes later in the Supervisor::start process
+    //installActivationSymbols();
 
     loadSymbolDefinitions();
     
@@ -773,33 +776,37 @@ void Symbolizer::installActivationSymbols()
         }
     }
 
-    // !!!!!!!!!!! Setups are gone, no longer activatable
-
     MobiusConfig* config = supervisor->getOldMobiusConfig();
-    Setup* setups = config->getSetups();
-    unsigned char ordinal = 0;
-    while (setups != nullptr) {
-        juce::String name = juce::String(Symbol::ActivationPrefixSetup) + setups->getName();
-        Symbol* s = symbols->intern(name);
-        s->behavior = BehaviorActivation;
-        s->level = LevelCore;
-        s->hidden = false;
-        ordinal++;
-        setups = setups->getNextSetup();
-    }
-
     Preset* presets = config->getPresets();
-    ordinal = 0;
     while (presets != nullptr) {
         juce::String name = juce::String(Symbol::ActivationPrefixPreset) + presets->getName();
         Symbol* s = symbols->intern(name);
         s->behavior = BehaviorActivation;
         s->level = LevelCore;
         s->hidden = false;
-        ordinal++;
         presets = presets->getNextPreset();
-        
     }
+
+    // unclear if we want Sessions to have activation symbols
+    // this feeds into there being an "activeSession" parameter of type=Structure
+    // with all the ugly support for structure symbols
+    // you can get there just as well with a LoadSession UI function
+    // that takes an argument name
+
+    Producer* producer = supervisor->getProducer();
+    juce::StringArray sessionNames;
+    producer->getSessionNames(sessionNames);
+    for (auto name : sessionNames) {
+        juce::String symbolName = juce::String(Symbol::ActivationPrefixSession) + name;
+        Symbol* s = symbols->intern(name);
+        s->behavior = BehaviorActivation;
+        s->level = LevelUI;
+        s->hidden = false;
+    }
+
+    // while we're here, if this is in fact a popular way to do this, could do the
+    // same for Layouts and ButtonSets
+    // pick a style, any style...
 }
 
 /****************************************************************************/

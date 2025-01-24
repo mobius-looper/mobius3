@@ -13,9 +13,7 @@
 
 #include "ConfigPanel.h"
 
-#include "GlobalEditor.h"
 #include "PresetEditor.h"
-#include "SetupEditor.h"
 #include "ScriptConfigEditor.h"
 #include "SampleEditor.h"
 #include "KeyboardEditor.h"
@@ -27,7 +25,6 @@
 #include "DisplayEditor.h"
 #include "PropertiesEditor.h"
 #include "GroupEditor.h"
-#include "../session/MidiTrackEditor.h"
 #include "../session/SessionEditor.h"
 
 class ScriptPanel : public ConfigPanel
@@ -67,32 +64,6 @@ class PresetPanel : public ConfigPanel
  
   private:
     PresetEditor editor;
-};
-
-class SetupPanel : public ConfigPanel
-{
-  public:
-    SetupPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
-        setName("SetupPanel");
-        setEditor(&editor);
-    }
-    ~SetupPanel() {}
- 
-  private:
-    SetupEditor editor;
-};
-
-class GlobalPanel : public ConfigPanel
-{
-  public:
-    GlobalPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
-        setName("GlobalPanel");
-        setEditor(&editor);
-    }
-    ~GlobalPanel() {}
- 
-  private:
-    GlobalEditor editor;
 };
 
 class KeyboardPanel : public ConfigPanel
@@ -210,19 +181,6 @@ class GroupPanel : public ConfigPanel
  
   private:
     GroupEditor editor;
-};
-
-class MidiTrackPanel : public ConfigPanel
-{
-  public:
-    MidiTrackPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
-        setName("MIDI Tracks");
-        setEditor(&editor);
-    }
-    ~MidiTrackPanel() {}
- 
-  private:
-    MidiTrackEditor editor;
 };
 
 class SessionPanel : public ConfigPanel

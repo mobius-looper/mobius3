@@ -280,6 +280,10 @@ bool Supervisor::start()
     
     // initialize the view for the known track counts
     mobiusViewer.initialize(&mobiusView);
+
+    // now that Sessions and MobiusConfig are sanitized, can
+    // install activation symbols
+    symbolizer.installActivationSymbols();
     
     meter("MainWindow");
 
@@ -960,6 +964,11 @@ Prompter* Supervisor::getPrompter()
     return &prompter;
 }
 
+Producer* Supervisor::getProducer()
+{
+    return producer.get();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Maintenance Thread
@@ -1105,6 +1114,13 @@ SystemConfig* Supervisor::getSystemConfig()
         systemConfig.reset(fileManager.readSystemConfig());
     }
     return systemConfig.get();
+}
+
+void Supervisor::updateSystemConfig()
+{
+    if (systemConfig) {
+        fileManager.writeSystemConfig(systemConfig.get());
+    }
 }
 
 DeviceConfig* Supervisor::getDeviceConfig()
@@ -1324,7 +1340,7 @@ MobiusConfig* Supervisor::synthesizeMobiusConfig(Session* src)
     // a single Setup for the session itself
     transformer.sessionToConfig(src, synth);
 
-    bool logit = true;
+    bool logit = false;
     if (logit) {
         XmlRenderer xr;
         char* xml = xr.render(synth);
