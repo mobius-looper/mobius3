@@ -420,6 +420,10 @@ class Mobius
     // new clip/follower/MIDI support
     int calculateFollowerEventFrame(class Track* track, QuantizeMode q);
 
+    // new for track count reconfig
+    void adjustTrackCount();
+    void doTrackReset(class Track* t);
+
     //
     // Member Variables
     //

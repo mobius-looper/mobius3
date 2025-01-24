@@ -487,6 +487,9 @@ void ScriptRuntime::cancelScripts(Action* action, Track* t)
         // not sure why, but the unit tests do this, right
         // after UnitTestSetup while resetting all the tracks
         //Trace(2, "Mobius::cancelScripts NULL action\n");
+
+        // update, this can happen on a track count reconfiguration
+        // that wants to reset live tracks without an action
     }
     else {
         // this will be the interpreter doing the action

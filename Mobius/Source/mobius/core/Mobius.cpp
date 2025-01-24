@@ -660,6 +660,9 @@ void Mobius::propagateConfiguration()
     // used to configure fade length in AudioCursor/AudioFade
 	AudioFade::setRange(mConfig->getFadeFrames());
 
+    // new: allow dynamic track reorg
+    adjustTrackCount();
+    
     // tracks are sensitive to lots of things in the Setup
     // they will look at Setup::loopCount and adjust the number of loops
     // in each track, but this is done within a fixed array and won't
@@ -696,6 +699,87 @@ void Mobius::propagateConfiguration()
     
     if (allReset) {
         setActiveTrack(mSetup->getActiveTrack());
+    }
+}
+
+void Mobius::adjustTrackCount()
+{
+    int newCount = mConfig->getCoreTracksDontUseThis();
+    bool dummyTrack = false;
+    if (newCount <= 0) {
+        Trace(1, "Mobius: Configured track count was zero, this is not allowed");
+        newCount = 1;
+        // TrackManager won't really care, it will just not expose this hidden track,
+        // the danger is if this track is doing something it will still exist and can't
+        // be acted upon, should TrackReset it
+        dummyTrack = true;
+    }
+        
+    if (newCount != mTrackCount) {
+        Trace(2, "Mobius: Reorganizing track count from %d to %d", mTrackCount, newCount);
+        if (newCount > mTrackCount) {
+            // just append some new ones to the end and keep them all alive
+            Track** newTracks = new Track*[newCount];
+            for (int i = 0 ; i < mTrackCount ; i++) {
+                newTracks[i] = mTracks[i];
+            }
+            for (int i = mTrackCount ; i < newCount ; i++) {
+                Track* t = new Track(this, mSynchronizer, i);
+                newTracks[i] = t;
+            }
+            delete mTracks;
+            mTracks = newTracks;
+            mTrackCount = newCount;
+            // mTrack gets to stay where it was
+        }
+        else {
+            // reset and delete the ones that aren't included
+            for (int i = newCount ; i < mTrackCount ; i++) {
+                Track* t = mTracks[i];
+                doTrackReset(t);
+                delete t;
+            }
+            // build a new array
+            Track** newTracks = new Track*[newCount];
+            for (int i = 0 ; i < newCount ; i++) {
+                newTracks[i] = mTracks[i];
+            }
+            delete mTracks;
+            mTracks = newTracks;
+            mTrackCount = newCount;
+            // could be smarter about where to position this if it is still
+            // within range, punt and just put it at the beginning
+            mTrack = mTracks[0];
+        }
+
+        // unclear what to do about this, but it's obscure
+        // this is what globalReset() does
+        if (mCaptureAudio != NULL)
+          mCaptureAudio->reset();
+        mCapturing = false;
+    }
+
+    if (dummyTrack)
+      doTrackReset(mTracks[0]);
+}
+
+/**
+ * Cause a full TrackReset without going through the Action process.
+ * This was scraped from parts of globalReset()
+ */
+void Mobius::doTrackReset(Track* t)
+{
+    if (t != nullptr) {
+        // this normally takes an Action
+        // it gets passed to Loop::reset which ignores it
+        // it goes on to Track::trackReset which allows it to be NULL
+        // and treats it as if it were a GlobalReset which should be fine
+        t->reset(nullptr);
+
+        // also reset the variables until we can determine
+        // whether TrackReset should do this
+        UserVariables* vars = t->getVariables();
+        vars->reset();
     }
 }
 

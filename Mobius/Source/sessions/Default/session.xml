@@ -59,9 +59,9 @@
       <Value name="audioInputPort" value="3" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="false" type="bool"/>
+      <Value name="focus" value="0" type="int"/>
       <Value name="input" value="127" type="int"/>
-      <Value name="mono" value="false" type="bool"/>
+      <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
@@ -78,9 +78,9 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="false" type="bool"/>
+      <Value name="focus" value="0" type="int"/>
       <Value name="input" value="127" type="int"/>
-      <Value name="mono" value="false" type="bool"/>
+      <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
@@ -96,9 +96,9 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="false" type="bool"/>
+      <Value name="focus" value="0" type="int"/>
       <Value name="input" value="127" type="int"/>
-      <Value name="mono" value="false" type="bool"/>
+      <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
@@ -114,9 +114,9 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="false" type="bool"/>
+      <Value name="focus" value="0" type="int"/>
       <Value name="input" value="127" type="int"/>
-      <Value name="mono" value="false" type="bool"/>
+      <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
@@ -132,9 +132,9 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="false" type="bool"/>
+      <Value name="focus" value="0" type="int"/>
       <Value name="input" value="127" type="int"/>
-      <Value name="mono" value="false" type="bool"/>
+      <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
@@ -150,9 +150,9 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="false" type="bool"/>
+      <Value name="focus" value="0" type="int"/>
       <Value name="input" value="127" type="int"/>
-      <Value name="mono" value="false" type="bool"/>
+      <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
@@ -168,9 +168,9 @@
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="false" type="bool"/>
+      <Value name="focus" value="0" type="int"/>
       <Value name="input" value="127" type="int"/>
-      <Value name="mono" value="false" type="bool"/>
+      <Value name="mono" value="0" type="int"/>
       <Value name="output" value="127" type="int"/>
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
@@ -180,42 +180,27 @@
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
-  <Track id="10" number="8" type="audio">
-    <ValueSet>
-      <Value name="altFeedback" value="127" type="int"/>
-      <Value name="audioInputPort" value="0" type="int"/>
-      <Value name="audioOutputPort" value="0" type="int"/>
-      <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="false" type="bool"/>
-      <Value name="input" value="127" type="int"/>
-      <Value name="mono" value="false" type="bool"/>
-      <Value name="output" value="127" type="int"/>
-      <Value name="pan" value="64" type="int"/>
-      <Value name="pluginInputPort" value="0" type="int"/>
-      <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="none"/>
-      <Value name="syncUnit" value="bar"/>
-      <Value name="trackSyncUnit" value="loop"/>
-    </ValueSet>
+  <Track id="12" number="8" type="audio">
+    <ValueSet/>
   </Track>
   <ValueSet>
     <Value name="activeSetup" value="Default"/>
-    <Value name="autoFeedbackReduction" value="false" type="bool"/>
+    <Value name="autoFeedbackReduction" value="0" type="int"/>
     <Value name="controllerActionThreshold" value="64" type="int"/>
     <Value name="driftCheckPoint" value="loop" type="enum" ordinal="0"/>
     <Value name="fadeFrames" value="128" type="int"/>
     <Value name="hostOverrideTimeSignature" value="0" type="int"/>
     <Value name="inputLatency" value="0" type="int"/>
-    <Value name="isolateOverdubs" value="false" type="bool"/>
+    <Value name="isolateOverdubs" value="0" type="int"/>
     <Value name="longPress" value="500" type="int"/>
     <Value name="maxLoops" value="2" type="int"/>
     <Value name="maxSyncDrift" value="2048" type="int"/>
     <Value name="midiRecordMode" value="average" type="enum" ordinal="0"/>
-    <Value name="monitorAudio" value="false" type="bool"/>
+    <Value name="monitorAudio" value="0" type="int"/>
     <Value name="noiseFloor" value="50" type="int"/>
     <Value name="outputLatency" value="0" type="int"/>
     <Value name="quickSave" value="mobiusloop"/>
-    <Value name="saveLayers" value="false" type="bool"/>
+    <Value name="saveLayers" value="0" type="int"/>
     <Value name="spreadRange" value="48" type="int"/>
     <Value name="transportMidiClocksWhenStopped" value="1" type="int"/>
     <Value name="transportMidiEnable" value="1" type="int"/>
