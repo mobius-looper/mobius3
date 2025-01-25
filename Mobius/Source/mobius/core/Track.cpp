@@ -864,8 +864,7 @@ void Track::refreshState(TrackState* s)
     s->timeStretch = mInput->getTimeStretch();
 
     // active, true if this is the active track
-    // !? who sets this?
-    //s->active = ???
+    s->active = (mMobius->getTrack() == this);
     
     // pending, doesn't seem to have been used
     s->pending = false;

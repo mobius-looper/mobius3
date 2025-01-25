@@ -835,97 +835,97 @@ void TrackManager::doGlobal(UIAction* src)
  * used in scripts and I don't want to throw it all the way back up async if
  * the action starts down in the kernel.
  *
- * Supervisor has a similar intercept so it can update the selected track in the
- * view immediately without waiting for the next State refresh.
+ * In the logical track space, there can be a mixture of audio and MIDI tracks
+ * so the old implementation in core doesn't work.  After deciding which track
+ * should have focus IF it is an audio track we send down a SelectTrack action
+ * with the core track number rather than letting core next/prev among just
+ * the audio tracks.  This also selects what core considered the "active" track.
+ *
+ * If the new track is not audio, then nothing is sent to the core and the active
+ * track stays what it was.  This is confusing only for MOS scripts that won't
+ * see the full logical track space.  
  *
  * !! The focused track really needs to be something maintained authoritatively
  * by TrackManager and passed up in the State, rather than letting Supervisor
  * maintain it in the view and requiring us to notify it when it changes out
  * from under the view.
  *
- * Since audio and midi tracks can be freely mixed, this can never send the
- * old NextTrack/PrevTrack functions to the core, it must always use
- * SelectTrack.  If NextTrack/PrevTrack are used in MOS scripts it will
- * only move among audio tracks, and look weird in the UI.
- *
- * NOTE: This only matters for core audio tracks where Mobius has the concept
- * of the "active track"  It actually isn't that important that we set this
- * since UIActions will always be qualified with a track scope when they are sent
- * to the core.  But it can matter if they are using MOS scripts and expect them
- * to run in the focused track.  It can also trigger the EmptyTrackAction.
+ * One significant side effect of changing tracks is the EmptyTrackAction.  This
+ * will still work for core tracks, but the "source" track for content copy can
+ * only be whatever is the current active track.  We do not have EmptyTrackAction
+ * for Midi tracks yet as there is no concept of the "active" MidiTrack.  Should
+ * do that someday for consistency but it starts to be confusing in the UI as to what
+ * will happen if they're not all adjacent.
  */
 void TrackManager::doTrackSelectAction(UIAction* a)
 {
     Symbol* s = a->symbol;
-    int prevFocused = getFocusedTrackIndex();
-    int newFocused = prevFocused;
-    int max = session->getTrackCount();
-    
+    int prevFocusedIndex = getFocusedTrackIndex();
+    int newFocusedIndex = prevFocusedIndex;
+    int maxIndex = session->getTrackCount() - 1;
+
+    // note tht we're dealing with Numbers not Indexes
     if (s->id == FuncNextTrack) {
-        int next = prevFocused + 1;
-        if (next >= max)
-          next = 0;
-        newFocused = next;
+        newFocusedIndex = prevFocusedIndex + 1;
+        if (newFocusedIndex > maxIndex)
+          newFocusedIndex = 0;
     }
     else if (s->id == FuncPrevTrack) {
-        int next = prevFocused - 1;
-        if (next < 0)
-          next = max - 1;
-        newFocused = next;
+        newFocusedIndex = prevFocusedIndex - 1;
+        if (newFocusedIndex < 0)
+          newFocusedIndex = maxIndex;
     }
     else if (s->id == FuncSelectTrack) {
-        // argument is 1 based
-        int next = a->value - 1;
-        if (next < 0) {
+        // action argument is 1 based, convert to index
+        newFocusedIndex = a->value - 1;
+        if (newFocusedIndex < 0 || newFocusedIndex > maxIndex) {
             Trace(1, "TrackManager: Bad SelectTrack argument");
-        }
-        else {
-            newFocused = next;
+            newFocusedIndex = prevFocusedIndex;
         }
     }
     else {
-        Trace(1, "TrackManager: You are bad, and you should feel bad");
+        Trace(1, "TrackManager::doTrackSelectAction Not a track selection function");
     }
 
-    if (newFocused == prevFocused) {
-        // don't bother informing Mobius if nothing needs changing
-    }
-    else {
-        // formerly only did this for audio tracks, but MIDI tracks
-        // should be allowed to have EmptyTrackAction even though they don't right now
+    if (newFocusedIndex != prevFocusedIndex) {
 
-        LogicalTrack* lt = getLogicalTrack(newFocused);
+        // now look at what the new track is, back to numbers 
+        LogicalTrack* lt = getLogicalTrack(newFocusedIndex + 1);
         if (lt == nullptr) {
             Trace(1, "TrackManager: Select track out of wack");
         }
         else if (lt->getType() == Session::TypeAudio) {
-            a->symbol = kernel->getContainer()->getSymbols()->find("SelectTrack");
+
+            // adjust the action to look like SelectTrack with an argument
+            a->symbol = kernel->getContainer()->getSymbols()->getSymbol(FuncSelectTrack);
 
             // NOTE: this is an example of an action VALUE needing to be transformed into
             // a core track number, usually it is just the scope that is changed
             // by MobiusLooperTrack.  This is NOT general, we happen to know that SelectTrack
             // uses track numbers as arguments but there may be others
             // perhaps it would be better to have SelectTrack use the scope without an argument
-            // and have that treated as self selection
+            // and have that treated as self selection.
+            // MobiusLooperTrack can't really handle this because it doesn't know enough
+            // about the logical track space to make the transformation
             a->value = lt->getEngineNumber();
-        
-            // so the Actionator doesn't complain about having to deal with unscoped
-            // actions, give this a specific track scope
-            // it shouldn't matter what it is since track selection is a global function
-            a->setScopeTrack(audioEngine->getActiveTrack() + 1);
-        
-            audioEngine->doAction(a);
+
+            // for the scope, it doesn't matter what it is since MobiusLooperTrack will
+            // always force actions and queries to have the scope of the track it is
+            // connected to
+            a->setScopeTrack(0);
+
+            lt->doAction(a);
         }
         else {
-            // why wouldn't MIDI tracks want this?
+            // MIDI tracks would only care if they supported EmptyTrackAction
+            // and the notion of an active track
         }
+
+        // until we have returning focus changes in the State, have to inform
+        // the UI that it changed
+        kernel->getContainer()->setFocusedTrack(newFocusedIndex);
     }
-
-    // until we have returning focus changes in the State, have to inform
-    // the UI that it changed
-    if (newFocused != prevFocused)
-      kernel->getContainer()->setFocusedTrack(newFocused);
-
+    
     actionPool->checkin(a);
 }
 

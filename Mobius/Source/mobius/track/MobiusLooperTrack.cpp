@@ -63,15 +63,19 @@ void MobiusLooperTrack::loadSession(Session::Track* def)
     (void)def;
 }
 
+/**
+ * This one is complex because we do transformation on the track numbers
+ * from the logical track space into the Mobus track space.
+ * This needs to be done for UIAction and Query to convert action scope numbers.
+ */ 
 void MobiusLooperTrack::doAction(UIAction* a)
 {
-    // these always go through Mobius/Actionator
-    // we need to adjust the LogicalTrack scope number to the core track number
-
     // unclear whether the caller will be confused by this transformation so undo it
     int logicalScope = a->getScopeTrack();
     a->setScopeTrack(track->getDisplayNumber());
+    
     mobius->doAction(a);
+    
     a->setScopeTrack(logicalScope);
 }
 
@@ -81,7 +85,9 @@ bool MobiusLooperTrack::doQuery(Query* q)
     // need to adjust the LogicalTrack scope number to the core track number
     int logicalScope = q->scope;
     q->scope = track->getDisplayNumber();
+    
     bool result = mobius->doQuery(q);
+    
     q->scope = logicalScope;
     return result;
 }

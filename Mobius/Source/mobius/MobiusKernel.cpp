@@ -275,7 +275,6 @@ void MobiusKernel::refreshStateNow(SystemState* state)
     mTracks->refreshState(state);
 
     // these were done by Mobius in the old state model
-    state->activeAudioTrack = mCore->getActiveTrack();
     state->setupOrdinal = mCore->getSetupOrdinal();
     // OldMobiusState called this "globalRecording"
     state->audioCapturing = mCore->isCapturing();

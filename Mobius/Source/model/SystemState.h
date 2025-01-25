@@ -48,10 +48,6 @@ class SystemState
     // this "globalRecording"
     bool audioCapturing = false;
 
-    // another OldMobiusState holdover
-    // among the audio tracks only, this one is considered active
-    int activeAudioTrack = 0;
-
     // full state for each track
     juce::OwnedArray<TrackState> tracks;
 

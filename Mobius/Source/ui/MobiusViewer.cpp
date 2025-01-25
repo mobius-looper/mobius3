@@ -327,7 +327,12 @@ void MobiusViewer::refreshAudioTracks(OldMobiusState* state, MobiusView* view)
 
             // only audio tracks have the concept of an active track
             // this is NOT the same as the view's focused track
-            tview->active = (i == state->activeTrack);
+            // this is used to draw the "ghost" border around audio tracks if focus
+            // moves to a non-audio track
+            bool active = (i == state->activeTrack);
+
+            // the new refresher should do this
+            //tview->active = (i == state->activeTrack);
 
             // if this is the active track, extra refresh options are enabled
             // !! we actually don't need this if the focused track is a MIDI track
@@ -340,8 +345,11 @@ void MobiusViewer::refreshAudioTracks(OldMobiusState* state, MobiusView* view)
             // test this, because the refresh flags within each track view
             // may not be different
 
-            // no, the focusedTrack controls this now
-            if (active) {
+            // no, the focusedTrack controls this now, and this was wrong after
+            // I added track mixtures, also don't need activeAudioTrack in the view
+            // just test the active flag
+#if 0            
+            if (tview->active) {
                 // if this moved since the last time, then it moved due to GlobalReset
                 // or an old script, or something else that forced track selection not
                 // in the UI's control
@@ -360,6 +368,7 @@ void MobiusViewer::refreshAudioTracks(OldMobiusState* state, MobiusView* view)
                     view->activeAudioTrack = i;
                 }
             }
+#endif
         
 #if 0        
             if (active) {
@@ -1135,6 +1144,8 @@ void MobiusViewer::refreshTrack(SystemState* state, TrackState* tstate,
                                 MobiusView* mview, MobiusViewTrack* tview)
 {
     tview->midi = tstate->midi;
+    tview->active = tstate->active;
+    
     tview->loopCount = tstate->loopCount;
     if (tstate->activeLoop != tview->activeLoop) {
         tview->activeLoop = tstate->activeLoop;

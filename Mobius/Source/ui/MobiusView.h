@@ -381,7 +381,7 @@ class MobiusView
     MobiusViewTrack* getTrack(int index);
 
     int audioTracks = 0;
-    int activeAudioTrack = 0;
+    //int activeAudioTrack = 0;
     int midiTracks = 0;
     int totalTracks = 0;
     int focusedTrack = 0;

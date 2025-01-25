@@ -206,6 +206,10 @@ class TrackState
     // should be a more general track type enumeration
     bool midi = false;
 
+    // true if this track is considered "active" for this type
+    // this is currently only relevant for audio tracks
+    bool active = false;
+
     // from OldMobiusState, temporary
     int preset = 0;
         
@@ -286,10 +290,6 @@ class TrackState
     int pitchBend = 0;
     int timeStretch = 0;
 
-    // from OldMobiusState, the old tracks have the notion of an "active" track
-    // which needs to die, or maybe this was set for the loop "summaries" to indiciate
-    // the active loop?
-    bool active = false;
     // not sure what this was for, seems to be unused
     bool pending = false;
 
