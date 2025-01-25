@@ -24,7 +24,7 @@ class Notifier
     Notifier();
     ~Notifier();
     
-    void initialize(class MobiusKernel* k);
+    void initialize(class MobiusKernel* k, class TrackManager* tm);
     void configure(class Session* ses);
 
     //
@@ -58,6 +58,7 @@ class Notifier
   private:
 
     class MobiusKernel* kernel = nullptr;
+    class TrackManager* trackManager = nullptr;
     class MslEnvironment* scriptenv = nullptr;
     class SymbolTable* symbols = nullptr;
     juce::String scriptName;
@@ -66,9 +67,6 @@ class Notifier
     class MobiusPools* pool = nullptr;
     class Notification* head = nullptr;
     class Notification* tail = nullptr;
-
-    // will need a better way to do this
-    juce::Array<juce::Array<TrackListener*>> listeners;
 
     void notifyScript(NotificationId id, TrackProperties& props, NotificationPayload& payload);
     const char* mapNotificationId(NotificationId id);

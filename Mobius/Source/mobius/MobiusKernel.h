@@ -26,7 +26,6 @@
 #include "MobiusInterface.h"
 #include "KernelEvent.h"
 #include "KernelBinderator.h"
-#include "Valuator.h"
 #include "MobiusPools.h"
 #include "Notifier.h"
 
@@ -100,7 +99,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     }
 
     class TrackManager* getTrackManager();
-    class Valuator* getValuator();
 
     void initializeState(class SystemState* state);
     void requestState(class SystemState* state);
@@ -270,7 +268,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // these we own
     KernelEventPool eventPool;
     KernelBinderator binderator {this};
-    Valuator valuator;
     MobiusPools mobiusPools;
     SyncMaster syncMaster;
     Notifier notifier;

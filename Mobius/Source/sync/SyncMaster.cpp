@@ -17,6 +17,7 @@
 
 #include "../mobius/MobiusKernel.h"
 #include "../mobius/track/TrackManager.h"
+#include "../mobius/track/LogicalTrack.h"
 #include "../mobius/track/TrackProperties.h"
 
 #include "Pulsator.h"
@@ -54,9 +55,10 @@ SyncMaster::~SyncMaster()
  * dependencies MobiusContainer drags in.  The MidiRealtimeListener will be a problem
  * since that would have to move out of MidiManager.
  */
-void SyncMaster::initialize(MobiusKernel* k)
+void SyncMaster::initialize(MobiusKernel* k, TrackManager* tm)
 {
     kernel = k;
+    trackManager = tm;
     // need for alerts, lame
     container = kernel->getContainer();
 
@@ -66,8 +68,8 @@ void SyncMaster::initialize(MobiusKernel* k)
     hostAnalyzer.reset(new HostAnalyzer());
     transport.reset(new Transport(this));
 
-    barTender.reset(new BarTender(this));
-    pulsator.reset(new Pulsator(this));
+    barTender.reset(new BarTender(this, trackManager));
+    pulsator.reset(new Pulsator(this, trackManager, barTender.get()));
 
     // reach out and touch the face of god
     hostAnalyzer->initialize(container->getAudioProcessor());
@@ -173,13 +175,13 @@ int SyncMaster::notifyTrackRecordEnding(int number)
 void SyncMaster::notifyTrackAvailable(int number)
 {
     // verify the number is in range and can be a leader
-    Follower* f = pulsator->getFollower(number);
-    if (f != nullptr) {
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
         // anything can become the track sync master
         if (trackSyncMaster == 0)
           trackSyncMaster = number;
         
-        if (f->source == SyncSourceMaster) {
+        if (lt->getSyncSourceNow() == SyncSourceMaster) {
             // this one wants to be special
             int currentMaster = transport->getMaster();
             if (currentMaster == 0) {
@@ -574,12 +576,11 @@ void SyncMaster::setTrackSyncMaster(UIAction* a)
         number = container->getFocusedTrackIndex() + 1;
     }
 
-    Leader* leader = pulsator->getLeader(number);
-    if (leader == nullptr)
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt == nullptr)
       Trace(1, "SyncMaster: Invalid track id in SyncMasterTrack action");
-    else {
-        setTrackSyncMaster(number);
-    }
+    else
+      setTrackSyncMaster(number);
 }
 
 /**
@@ -626,8 +627,8 @@ void SyncMaster::setTransportMaster(UIAction* a)
         number = container->getFocusedTrackIndex() + 1;
     }
 
-    Leader* leader = pulsator->getLeader(number);
-    if (leader == nullptr)
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt == nullptr)
       Trace(1, "SyncMaster: Invalid track id in TransportMaster action");
     else {
         setTransportMaster(number);
@@ -861,24 +862,28 @@ void SyncMaster::refreshState(SystemState* sysstate)
         if (i < maxStates) {
             TrackState* tstate = sysstate->tracks[i];
             int trackNumber = i+1;
-            Follower* f = pulsator->getFollower(trackNumber);
-            if (f != nullptr) {
-                tstate->syncSource = f->source;
-                tstate->syncUnit = f->unit;
+
+            // we have so far been the one to put sync state in SystemState
+            // but since this is all on the LogicalTrack now TM could do it
+
+            LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
+            if (lt != nullptr) {
+                tstate->syncSource = lt->getSyncSourceNow();
+                tstate->syncUnit = lt->getSyncUnitNow();
 
                 // old convention was to suppress beat/bar display
                 // if the source was not in a started state
                 bool running = true;
-                if (f->source == SyncSourceMidi)
+                if (tstate->syncSource == SyncSourceMidi)
                   running = midiAnalyzer->isRunning();
-                else if (f->source == SyncSourceHost)
+                else if (tstate->syncSource == SyncSourceHost)
                   running = hostAnalyzer->isRunning();
 
                 // the convention has been that if beat or bar are
                 // zero they are undefined and not shown, TempoElement assumes this
                 if (running) {
-                    tstate->syncBeat = barTender->getBeat(f) + 1;
-                    tstate->syncBar = barTender->getBar(f) + 1;
+                    tstate->syncBeat = barTender->getBeat(lt) + 1;
+                    tstate->syncBar = barTender->getBar(lt) + 1;
                 }
                 else {
                     tstate->syncBeat = 0;
@@ -942,9 +947,9 @@ SyncSource SyncMaster::getEffectiveSource(int id)
 {
     SyncSource source = SyncSourceNone;
     
-    Follower* f = getFollower(id);
-    if (f != nullptr) {
-        source = f->source;
+    LogicalTrack* t = trackManager->getLogicalTrack(id);
+    if (t != nullptr) {
+        source = t->getSyncSourceNow();
         if (source == SyncSourceMaster) {
             int transportMaster = transport->getMaster();
             if (transportMaster > 0 && transportMaster != id) {
@@ -955,53 +960,6 @@ SyncSource SyncMaster::getEffectiveSource(int id)
         }
     }
     return source;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Granular State
-//
-//////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////
-//
-// Leader/Follower
-//
-//////////////////////////////////////////////////////////////////////
-
-Follower* SyncMaster::getFollower(int id)
-{
-    return pulsator->getFollower(id);
-}
-
-/**
- * Following a sync source does not result in track dependencies so you
- * don't need to inform TimeSlicer and reorder.
- */
-void SyncMaster::follow(int follower, SyncSource source, SyncUnit unit)
-{
-    pulsator->follow(follower, source, unit);
-}
-
-/**
- * Adding a follower relationship changes dependency order that
- * TimeSlicer is using to guide the track advance.  Let it know
- */
-void SyncMaster::follow(int follower, int leader, SyncUnit unit)
-{
-    pulsator->follow(follower, leader, unit);
-
-    if (listener != nullptr)
-      listener->syncFollowerChanges();
-}
-
-/**
- * Unfollowing doesn't change dependency order, though it may loosen it.
- * This could resolve dependency cycles if we reorrder now.  Not worth bothering.
- */
-void SyncMaster::unfollow(int follower)
-{
-    pulsator->unfollow(follower);
 }
 
 /**

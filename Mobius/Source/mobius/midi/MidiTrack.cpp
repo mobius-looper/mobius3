@@ -120,11 +120,9 @@ void MidiTrack::loadSession(Session::Track* def)
     // default it
     if (subcycles == 0) subcycles = 4;
     
-    loopCount = logicalTrack->getLoopCount();
+    loopCount = logicalTrack->getLoopCountFromSession();
     
     // tell the player where to go
-    // !! todo: Valuator should be handling this but we need accessors
-    // that can return strings
     MslValue* v = def->get("outputDevice");
     if (v == nullptr) {
         player.setDeviceId(0);
@@ -187,7 +185,7 @@ void MidiTrack::syncPulse(class Pulse* p)
 }
 
 /**
- * Query uses Valuator for most things but doesn't
+ * Query uses LogicalTrack for most things but doesn't
  * for the controllers and a few important parameters which are
  * cached in local members.
  */
@@ -203,7 +201,7 @@ bool MidiTrack::doQuery(Query* q)
         case ParamPan: q->value = pan; break;
 
         default: {
-            // everything else gets passed over to Valuator
+            // everything else gets handled by LogicalTrack
             // todo: need to be smarter about non-ordinal parameters
             q->value = logicalTrack->getParameterOrdinal(q->symbol->id);
         }
@@ -933,7 +931,7 @@ void MidiTrack::captureLevels(TrackState* state)
 
 /**
  * Actions on a few important parameters are cached locally,
- * the rest are held in Valuator until the next reset.
+ * the rest are held in LogicalTrack until the next reset.
  */
 void MidiTrack::doParameter(UIAction* a)
 {

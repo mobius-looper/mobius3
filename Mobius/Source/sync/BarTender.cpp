@@ -20,10 +20,10 @@
 #include "../model/Session.h"
 
 #include "../mobius/track/TrackManager.h"
+#include "../mobius/track/LogicalTrack.h"
 #include "../mobius/track/TrackProperties.h"
 
 #include "Pulse.h"
-#include "Follower.h"
 #include "Transport.h"
 #include "HostAnalyzer.h"
 #include "MidiAnalyzer.h"
@@ -32,9 +32,10 @@
 
 #include "BarTender.h"
 
-BarTender::BarTender(SyncMaster* sm)
+BarTender::BarTender(SyncMaster* sm, TrackManager* tm)
 {
     syncMaster = sm;
+    trackManager = tm;
 }
 
 BarTender::~BarTender()
@@ -98,14 +99,14 @@ void BarTender::advance(int frames)
 //
 //////////////////////////////////////////////////////////////////////
 
-Pulse* BarTender::annotate(Follower* f, Pulse* beatPulse)
+Pulse* BarTender::annotate(LogicalTrack* lt, Pulse* beatPulse)
 {
     Pulse* result = beatPulse;
     Transport* transport = syncMaster->getTransport();
     bool onBar = false;
     bool onLoop = false;
     
-    switch (f->source) {
+    switch (lt->getSyncSourceNow()) {
         case SyncSourceNone:
             // shouldn't be here
             break;
@@ -254,8 +255,7 @@ int BarTender::getMidiBarsPerLoop()
 
 int BarTender::getBeat(int trackNumber)
 {
-    Follower* f = syncMaster->getFollower(trackNumber);
-    return getBeat(f);
+    return getBeat(trackManager->getLogicalTrack(trackNumber));
 }
 
 /**
@@ -263,14 +263,14 @@ int BarTender::getBeat(int trackNumber)
  * for each track and advancing our own counters in Track.  But until then
  * just math the damn things every time.
  */
-int BarTender::getBeat(Follower* f)
+int BarTender::getBeat(LogicalTrack* lt)
 {
     int beat = 0;
     
     Transport* transport = syncMaster->getTransport();
     
-    if (f != nullptr) {
-        switch (f->source) {
+    if (lt != nullptr) {
+        switch (lt->getSyncSourceNow()) {
             case SyncSourceNone:
                 // technically should return zero?
                 break;
@@ -319,18 +319,17 @@ int BarTender::getBeat(Follower* f)
 
 int BarTender::getBar(int trackNumber)
 {
-    Follower* f = syncMaster->getFollower(trackNumber);
-    return getBar(f);
+    return getBar(trackManager->getLogicalTrack(trackNumber));
 }
 
-int BarTender::getBar(Follower* f)
+int BarTender::getBar(LogicalTrack* lt)
 {
     int bar = 0;
     
     Transport* transport = syncMaster->getTransport();
     
-    if (f != nullptr) {
-        switch (f->source) {
+    if (lt != nullptr) {
+        switch (lt->getSyncSourceNow()) {
             case SyncSourceNone:
                 // technically should return zero?
                 break;
@@ -374,18 +373,17 @@ int BarTender::getBar(Follower* f)
 
 int BarTender::getLoop(int trackNumber)
 {
-    Follower* f = syncMaster->getFollower(trackNumber);
-    return getLoop(f);
+    return getLoop(trackManager->getLogicalTrack(trackNumber));
 }
 
-int BarTender::getLoop(Follower* f)
+int BarTender::getLoop(LogicalTrack* lt)
 {
     int loop = 0;
     
     Transport* transport = syncMaster->getTransport();
     
-    if (f != nullptr) {
-        switch (f->source) {
+    if (lt != nullptr) {
+        switch (lt->getSyncSourceNow()) {
             case SyncSourceNone:
                 break;
 
@@ -435,9 +433,9 @@ int BarTender::getBeatsPerBar(int trackNumber)
 {
     int bpb = 4;
     
-    Follower* f = syncMaster->getFollower(trackNumber);
-    if (f != nullptr) {
-        switch (f->source) {
+    LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
+    if (lt != nullptr) {
+        switch (lt->getSyncSourceNow()) {
             case SyncSourceNone:
                 // technically should return zero?
                 break;
@@ -487,9 +485,9 @@ int BarTender::getBarsPerLoop(int trackNumber)
 {
     int bpl = 1;
     
-    Follower* f = syncMaster->getFollower(trackNumber);
-    if (f != nullptr) {
-        switch (f->source) {
+    LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
+    if (lt != nullptr) {
+        switch (lt->getSyncSourceNow()) {
             case SyncSourceNone:
                 break;
 
@@ -521,32 +519,34 @@ int BarTender::getBarsPerLoop(int trackNumber)
     return bpl;
 }
 
+/**
+ * Not sure why this is here, but don't need it any more
+ */
 SyncSource BarTender::getSyncSource(int trackNumber)
 {
+    Trace(1, "BarTender::getSyncSource Who calls this?");
     SyncSource source = SyncSourceNone;
-    Follower* f = syncMaster->getFollower(trackNumber);
-    if (f != nullptr)
-      source = f->source;
+    LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
+    if (lt != nullptr)
+      source = lt->getSyncSourceNow();
     return source;
 }
 
 void BarTender::getLeaderProperties(int follower, TrackProperties& props)
 {
-    Follower* f = syncMaster->getFollower(follower);
-    if (f == nullptr || f->source != SyncSourceTrack)
+    LogicalTrack* lt = trackManager->getLogicalTrack(follower);
+    if (lt == nullptr || lt->getSyncSourceNow() != SyncSourceTrack)
       props.invalid = true;
     else {
         // this little dance needs to be encapsulated somewhere, probably Pulsator
-        int leader = f->leader;
+        int leader = lt->getSyncLeaderNow();
         if (leader == 0)
           leader = syncMaster->getTrackSyncMaster();
         
         if (leader == 0)
           props.invalid;
         else {
-            // an unusual dependency
-            TrackManager* tm = syncMaster->getTrackManager();
-            tm->getTrackProperties(leader, props);
+            trackManager->getTrackProperties(leader, props);
         }
     }
 }

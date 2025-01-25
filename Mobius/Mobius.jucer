@@ -24,7 +24,6 @@
         <FILE id="N1Ldzj" name="HostAnalyzer.cpp" compile="1" resource="0"
               file="Source/sync/HostAnalyzer.cpp"/>
         <FILE id="AIzaaJ" name="HostAnalyzer.h" compile="0" resource="0" file="Source/sync/HostAnalyzer.h"/>
-        <FILE id="AvwHPv" name="Leader.h" compile="0" resource="0" file="Source/sync/Leader.h"/>
         <FILE id="xCfCPz" name="MidiAnalyzer.cpp" compile="1" resource="0"
               file="Source/sync/MidiAnalyzer.cpp"/>
         <FILE id="Gk3yQx" name="MidiAnalyzer.h" compile="0" resource="0" file="Source/sync/MidiAnalyzer.h"/>
@@ -634,12 +633,6 @@
         <FILE id="einvVL" name="MainWindow.h" compile="0" resource="0" file="Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
-        <FILE id="uo1Wve" name="AudioStreamSlicer.cpp" compile="1" resource="0"
-              file="Source/mobius/AudioStreamSlicer.cpp"/>
-        <FILE id="EyVrAj" name="AudioStreamSlicer.h" compile="0" resource="0"
-              file="Source/mobius/AudioStreamSlicer.h"/>
-        <FILE id="G2Qgyf" name="TimeSlicer.cpp" compile="1" resource="0" file="Source/mobius/TimeSlicer.cpp"/>
-        <FILE id="yWDOik" name="TimeSlicer.h" compile="0" resource="0" file="Source/mobius/TimeSlicer.h"/>
         <GROUP id="{D9CEF926-5070-AF3E-4E9F-1323713390DF}" name="track">
           <FILE id="feGMpx" name="BaseScheduler.cpp" compile="1" resource="0"
                 file="Source/mobius/track/BaseScheduler.cpp"/>
@@ -685,6 +678,10 @@
                 file="Source/mobius/track/TrackProperties.h"/>
         </GROUP>
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
+          <FILE id="uo1Wve" name="AudioStreamSlicer.cpp" compile="1" resource="0"
+                file="Source/mobius/AudioStreamSlicer.cpp"/>
+          <FILE id="EyVrAj" name="AudioStreamSlicer.h" compile="0" resource="0"
+                file="Source/mobius/AudioStreamSlicer.h"/>
           <FILE id="N2rO6u" name="MidiEngine.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiEngine.cpp"/>
           <FILE id="xn2n6u" name="MidiEngine.h" compile="0" resource="0" file="Source/mobius/midi/MidiEngine.h"/>
           <FILE id="Sbv33s" name="MidiFollower.cpp" compile="1" resource="0"
@@ -897,8 +894,8 @@
         <FILE id="JOsfQX" name="SampleReader.cpp" compile="1" resource="0"
               file="Source/mobius/SampleReader.cpp"/>
         <FILE id="RDP88j" name="SampleReader.h" compile="0" resource="0" file="Source/mobius/SampleReader.h"/>
-        <FILE id="b5NDV8" name="Valuator.cpp" compile="1" resource="0" file="Source/mobius/Valuator.cpp"/>
-        <FILE id="UxFgK7" name="Valuator.h" compile="0" resource="0" file="Source/mobius/Valuator.h"/>
+        <FILE id="G2Qgyf" name="TimeSlicer.cpp" compile="1" resource="0" file="Source/mobius/TimeSlicer.cpp"/>
+        <FILE id="yWDOik" name="TimeSlicer.h" compile="0" resource="0" file="Source/mobius/TimeSlicer.h"/>
         <FILE id="BCqKCe" name="WaveFile.cpp" compile="1" resource="0" file="Source/mobius/WaveFile.cpp"/>
         <FILE id="F6kToV" name="WaveFile.h" compile="0" resource="0" file="Source/mobius/WaveFile.h"/>
       </GROUP>

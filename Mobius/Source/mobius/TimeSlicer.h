@@ -34,6 +34,8 @@ class TimeSlicer : public SyncMaster::Listener
     TimeSlicer(class MobiusKernel* k, class SyncMaster* sm, class TrackManager* tm);
     ~TimeSlicer();
 
+    void loadSession(class Session* s);
+
     void processAudioStream(class MobiusAudioStream* stream);
     void syncFollowerChanges();
 

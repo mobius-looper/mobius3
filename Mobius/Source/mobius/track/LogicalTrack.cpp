@@ -24,13 +24,27 @@
 
 #include "BaseTrack.h"
 #include "MobiusLooperTrack.h"
+#include "TrackListener.h"
 #include "TrackManager.h"
 
 #include "LogicalTrack.h"
 
+///////////////////////////////////////////////////////////////////////
+//
+// Basic Properties
+//
+///////////////////////////////////////////////////////////////////////
+
+/**
+ * This should not do anything fancy yet.
+ * Wait until the call to loadSession if you need to do things
+ * that may requires relationships with other tracks.
+ */
 LogicalTrack::LogicalTrack(TrackManager* tm)
 {
     manager = tm;
+    // won't have many of these, really just TrackManager right now
+    listeners.ensureStorageAllocated(4);
 }
 
 LogicalTrack::~LogicalTrack()
@@ -39,40 +53,40 @@ LogicalTrack::~LogicalTrack()
 }
 
 /**
- * State flags used by TimeSlicer to order track advance.
- * Saves some annoying array sorting and cycle detection.
+ * Assigning the session just happens during track organization
+ * by TrackManager.  You do not ACT on it yet.
  */
-bool LogicalTrack::isVisited()
+void LogicalTrack::setSession(Session::Track* trackdef)
 {
-    return visited;
+    sessionTrack = trackdef;
 }
 
-void LogicalTrack::setVisited(bool b)
+Session::Track* LogicalTrack::getSession()
 {
-    visited = b;
-}
-
-bool LogicalTrack::isAdvanced()
-{
-    return advanced;
-}
-
-void LogicalTrack::setAdvanced(bool b)
-{
-    advanced = b;
+    return sessionTrack;
 }
 
 /**
- * Normal initialization driven from the Session.
+ * After track reorganization has finished and all tracks
+ * are in place, this is called to let it process the definition
+ * stored by setSession.
  */
-void LogicalTrack::loadSession(Session::Track* trackdef)
+void LogicalTrack::loadSession()
 {
-    // assumes it is okay to hang onto this until the next one is loaded
-    sessionTrack = trackdef;
-    trackType = trackdef->type;
+    if (sessionTrack == nullptr) {
+        Trace(1, "LogicalTrack::loadSession Session object was not set");
+        return;
+    }
+    
+    // pull this out for visibility in the debugger
+    number = sessionTrack->number;
+    trackType = sessionTrack->type;
 
+    cacheSyncParameters();
+    
     if (track == nullptr) {
-        // make a new one using the appopriate track factory
+        // this was a new logical track
+        // make a new inner track using the appopriate track factory
         if (trackType == Session::TypeMidi) {
             // the engine has no state at the moment, though we may want this
             // to be where the type specific pools live
@@ -80,32 +94,57 @@ void LogicalTrack::loadSession(Session::Track* trackdef)
             // this one will call back for the BaseScheduler and wire it in
             // with a LooperScheduler
             // not sure I like the handoff here
-            track.reset(engine.newTrack(manager, this, trackdef));
+            track.reset(engine.newTrack(manager, this, sessionTrack));
         }
         else if (trackType == Session::TypeAudio) {
             // core tracks are special
             // these have to be done in order at the front
             // if they can be out of order then will need to "allocate" engine
             // numbers as they are encountered
-            engineNumber = trackdef->number - 1;
+
+            // !! here is where we need to use the engine as a "pool" and
+            // allocate them in any order
+            
+            engineNumber = sessionTrack->number - 1;
             Mobius* m = manager->getAudioEngine();
             Track* mt = m->getTrack(engineNumber);
             track.reset(new MobiusLooperTrack(manager, this, m, mt));
             // Mobius tracks don't use the Session so we have to put the number
             // there for it
-            track->setNumber(trackdef->number);
+            track->setNumber(sessionTrack->number);
         }
         else {
             Trace(1, "LogicalTrack: Unknown track type");
         }
     }
     else {
-        track->loadSession(trackdef);
+        // we've had this one before, tell it to reconfigure
+        // since the inner track can always get back to the LogicalTrack we don't
+        // need to pass the Session down
+        track->loadSession(sessionTrack);
         // sanity check on numbers
-        if (track->getNumber() != trackdef->number)
+        if (track->getNumber() != sessionTrack->number)
           Trace(1, "LogicalTrack::loadSession Track number mismatch");
     }
 }
+
+/**
+ * Synchronization parameters are extremely important for deciding things
+ * so cache them rather than going back to the Session and the bindings every time.
+ *
+ * These have been duplicated at several levels, but now that LT is managing them
+ * they can get them from here.  These are AUTHORITATIVE over everything above
+ * and below the LT.
+ *
+ * This is also where temporary overrides to the values go if you ahve an action
+ * or script that changes them.
+ */
+void LogicalTrack::cacheSyncParameters()
+{
+    syncSource = getSyncSourceFromSession();
+    syncUnit = getSyncUnitFromSession();
+    syncLeader = sessionTrack->getInt("leaderTrack");
+}    
 
 Session::TrackType LogicalTrack::getType()
 {
@@ -114,7 +153,7 @@ Session::TrackType LogicalTrack::getType()
 
 int LogicalTrack::getNumber()
 {
-    return (track != nullptr) ? track->getNumber() : 0;
+    return number;
 }
 
 int LogicalTrack::getSessionId()
@@ -248,10 +287,6 @@ void LogicalTrack::syncPulse(Pulse* p)
 //
 // Parameters
 //
-// This grew out of Valuator, which turned out not to be necessary for
-// non-core tracks since LogicalTrack provices the place to hang transient
-// parameter bindings and is more easilly accessible everywhere.
-//
 //////////////////////////////////////////////////////////////////////
 
 /**
@@ -307,8 +342,7 @@ void LogicalTrack::bindParameter(UIAction* a)
 /**
  * Clear the temporary parameter bindings.
  * Sigh, this is called by the MidiTrack constructor which goes through its
- * Reset processing which wants to clear bindings.  Valuator will not have been
- * initialized yet.
+ * Reset processing which wants to clear bindings.
  */
 void LogicalTrack::clearBindings()
 {
@@ -332,9 +366,15 @@ void LogicalTrack::clearBindings()
 // These are only used by MIDI tracks.  Audio tracks still get them from
 // the Setup which is created dynamically from the Session.
 //
+// !! this sucks so hard right now...
+//
+// The relationship between Session/TrackManager/LogicalTrack/SyncMaster
+// is a fucking mess due to the old architecutre.  Now that  LogicalTrack
+// is the center of the universe, we don't need as much of this.
+//
 //////////////////////////////////////////////////////////////////////
 
-SyncSource LogicalTrack::getSyncSource()
+SyncSource LogicalTrack::getSyncSourceFromSession()
 {
     return (SyncSource)Enumerator::getOrdinal(manager->getSymbols(),
                                               ParamSyncSource,
@@ -342,7 +382,7 @@ SyncSource LogicalTrack::getSyncSource()
                                               SyncSourceNone);
 }
 
-SyncUnit LogicalTrack::getSyncUnit()
+SyncUnit LogicalTrack::getSyncUnitFromSession()
 {
     return (SyncUnit)Enumerator::getOrdinal(manager->getSymbols(),
                                             ParamSyncUnit,
@@ -350,7 +390,7 @@ SyncUnit LogicalTrack::getSyncUnit()
                                             SyncUnitBeat);
 }
 
-TrackSyncUnit LogicalTrack::getTrackSyncUnit()
+TrackSyncUnit LogicalTrack::getTrackSyncUnitFromSession()
 {
     return (TrackSyncUnit)Enumerator::getOrdinal(manager->getSymbols(),
                                                  ParamTrackSyncUnit,
@@ -358,7 +398,7 @@ TrackSyncUnit LogicalTrack::getTrackSyncUnit()
                                                  TrackUnitLoop);
 }
 
-LeaderType LogicalTrack::getLeaderType()
+LeaderType LogicalTrack::getLeaderTypeFromSession()
 {
     return (LeaderType)Enumerator::getOrdinal(manager->getSymbols(),
                                               ParamLeaderType,
@@ -366,7 +406,7 @@ LeaderType LogicalTrack::getLeaderType()
                                               LeaderNone);
 }
 
-LeaderLocation LogicalTrack::getLeaderSwitchLocation()
+LeaderLocation LogicalTrack::getLeaderSwitchLocationFromSession()
 {
     return (LeaderLocation)Enumerator::getOrdinal(manager->getSymbols(),
                                                   ParamLeaderSwitchLocation,
@@ -374,7 +414,7 @@ LeaderLocation LogicalTrack::getLeaderSwitchLocation()
                                                   LeaderLocationNone);
 }
 
-int LogicalTrack::getLoopCount()
+int LogicalTrack::getLoopCountFromSession()
 {
     int result = 2;
     Symbol* s = manager->getSymbols()->getSymbol(ParamLoopCount);
@@ -383,8 +423,7 @@ int LogicalTrack::getLoopCount()
         if (v != nullptr) {
             result = v->getInt();
             if (result < 1) {
-                Trace(1, "LogicalTrack: Malformed LoopCount parameter in session %d",
-                      track->getNumber());
+                Trace(1, "LogicalTrack: Malformed LoopCount parameter in session %d", number);
                 result = 1;
             }
         }
@@ -569,6 +608,99 @@ QuantizeMode LogicalTrack::getQuantizeMode()
 EmptyLoopAction LogicalTrack::getEmptyLoopAction()
 {
     return (EmptyLoopAction)getParameterOrdinal(ParamEmptyLoopAction);
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+// Notifier State
+//
+//////////////////////////////////////////////////////////////////////
+
+void LogicalTrack::addTrackListener(TrackListener* l)
+{
+    listeners.add(l);
+}
+
+void LogicalTrack::removeTrackListener(TrackListener* l)
+{
+    listeners.removeAllInstancesOf(l);
+}
+
+/**
+ * Notify any listeners of something that happened in another track.
+ *
+ * todo: TrackListener is probably too much of an abstraction.  If the
+ * only thing that can listen on another track is another track, then
+ * we can skip the TrackListener interface and just call the other
+ * track directly.
+ *
+ * see comments in TrackManager::loadSession for why this is over-engineered
+ */
+void LogicalTrack::notifyListeners(NotificationId id, TrackProperties& props)
+{
+    for (auto l : listeners) {
+        l->trackNotification(id, props);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// TimeSlicer State
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * State flags used by TimeSlicer to order track advance.
+ * Saves some annoying array sorting and cycle detection.
+ */
+bool LogicalTrack::isVisited()
+{
+    return visited;
+}
+
+void LogicalTrack::setVisited(bool b)
+{
+    visited = b;
+}
+
+bool LogicalTrack::isAdvanced()
+{
+    return advanced;
+}
+
+void LogicalTrack::setAdvanced(bool b)
+{
+    advanced = b;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Sync State
+//
+// This evolved away from Leader/Follower in Pulsator and we're keeping this
+// at several levels now.   Don't need so much duplication.
+//
+//////////////////////////////////////////////////////////////////////
+
+SyncSource LogicalTrack::getSyncSourceNow()
+{
+    return syncSource;
+}
+
+SyncUnit LogicalTrack::getSyncUnitNow()
+{
+    return syncUnit;
+}
+
+int LogicalTrack::getSyncLeaderNow()
+{
+    return syncLeader;
+}
+
+Pulse* LogicalTrack::getLeaderPulse()
+{
+    return &leaderPulse;
 }
 
 /****************************************************************************/

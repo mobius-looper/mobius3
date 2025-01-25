@@ -110,11 +110,18 @@ void TrackManager::loadSession(Session* session)
 
     configureTracks(session);
 
-    // make sure we're a listener for every track, even our own
-    // why do it this way, just use LogicalTracy array si
+    // !! the relationship here is old and stupid
+    // Tracks don't actually listen to each other, the only TrackListener
+    // is TrackManager itself and it registers for every track, and then
+    // Notifer goes through the Logicaltrack for the notification, which
+    // then forwards back to TrackManager
+    // unless there need to be other TrackListeners besides us,
+    // tracks can always just inform TrackManager whenever it does
+    // something and we can skip going through Notifier
+    
     for (int i = 0 ; i < tracks.size() ; i++) {
-        // index to number
-        kernel->getNotifier()->addTrackListener(i + 1, this);
+        LogicalTrack* lt = tracks[i];
+        lt->addTrackListener(this);
     }
 }
 
@@ -144,6 +151,10 @@ void TrackManager::configureTracks(Session* session)
     // transfer the current track list to a holding area
     // discard old MobiusTrackWrappers since the referenced Track may no longer be valid
     // and build fresh ones
+    // !! this needs to be better coordinated with the engine now that it supports
+    // dynamic tracks, we need to be in control and tell it which tracks to delete
+    // and which ones to add
+    
     juce::Array<LogicalTrack*> oldTracks;
     while (tracks.size() > 0) {
         LogicalTrack* lt = tracks.removeAndReturn(0);
@@ -185,15 +196,24 @@ void TrackManager::configureTracks(Session* session)
             }
             index++;
         }
+
         if (lt == nullptr)
           lt = new LogicalTrack(this);
-        lt->loadSession(def);
         tracks.add(lt);
+
+        // this remembers it but does not act on it
+        lt->setSession(def);
 
         if (def->type == Session::TypeAudio)
           audioTracksAdded++;
         else
           midiTracksAdded++;
+    }
+
+    // tell the tracks to process the session AFTER the track array has been reorganized
+    // so they can do things that may check relationships with other tracks
+    for (auto track : tracks) {
+        track->loadSession();
     }
 
     // one final validation
@@ -235,11 +255,6 @@ MobiusContainer* TrackManager::getContainer()
 SyncMaster* TrackManager::getSyncMaster()
 {
     return kernel->getSyncMaster();
-}
-
-Valuator* TrackManager::getValuator()
-{
-    return kernel->getValuator();
 }
 
 SymbolTable* TrackManager::getSymbols()

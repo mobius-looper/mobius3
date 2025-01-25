@@ -56,7 +56,6 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     class MobiusConfig* getConfiguration();
     class MidiPools* getPools();
     class SyncMaster* getSyncMaster();
-    class Valuator* getValuator();
     class SymbolTable* getSymbols();
     void getTrackProperties(int number, TrackProperties& props);
     class MidiEvent* getHeldNotes();
@@ -72,7 +71,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     juce::OwnedArray<LogicalTrack>& getTracks() {
         return tracks;
     }
-        
+
     //
     // Stimuli
     //

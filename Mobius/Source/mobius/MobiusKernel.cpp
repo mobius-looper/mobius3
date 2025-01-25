@@ -139,19 +139,8 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     configuration = config;
     session = ses;
 
-    // this MUST happen before any tracks try to register followers
-    syncMaster.initialize(this);
-    syncMaster.loadSession(ses);
-
-    notifier.initialize(this);
-    notifier.configure(ses);
-
     scriptUtil.initialize(this);
     scriptUtil.configure(config, ses);
-
-    // this should replace direct access to configuration and session
-    valuator.initialize(container->getSymbols(), container->getMslEnvironment());
-    valuator.configure(configuration, session);
 
     // register ourselves as the audio listener
     // unclear when things start pumping in, but do this last
@@ -173,10 +162,14 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     audioTracks = ses->getAudioTracks();
     midiTracks = ses->getMidiTracks();
 
-    //synchronizer.initialize();
-
     mTracks.reset(new TrackManager(this));
     mTracks->initialize(configuration, ses, mCore);
+
+    notifier.initialize(this, mTracks.get());
+    notifier.configure(ses);
+
+    syncMaster.initialize(this, mTracks.get());
+    syncMaster.loadSession(ses);
 
     mTimeSlicer.reset(new TimeSlicer(this, &syncMaster, mTracks.get()));
 }
@@ -407,7 +400,6 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
 
     // sigh, the two new config objects are sent down one at a time,
     // should be together
-    valuator.configure(configuration, session);
     scriptUtil.configure(configuration, session);
 
     // SyncMaster cares about the audio track count but only gets
@@ -437,25 +429,18 @@ void MobiusKernel::loadSession(KernelMessage* msg)
     
     // sigh, the two new config objects are sent down one at a time,
     // should be together
-    valuator.configure(configuration, session);
     scriptUtil.configure(configuration, session);
+    mTracks->loadSession(session);
+    
     notifier.configure(session);
     syncMaster.loadSession(session);
-
-    mTracks->loadSession(session);
+    // do this AFTER tracks in case it wants to look at leader/folloers
+    mTimeSlicer->loadSession(session);
 
     // reuse the request message to respond with the
     // old one to be deleted
     msg->object.session = old;
     communicator->kernelSend(msg);
-}
-
-/**
- * Used by internal components to get the Valuator.
- */
-Valuator* MobiusKernel::getValuator()
-{
-    return &valuator;
 }
 
 /**

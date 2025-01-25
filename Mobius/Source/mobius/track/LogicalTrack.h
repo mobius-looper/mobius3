@@ -1,6 +1,15 @@
 /**
- * A wrapper around track implementations that provides a set of common
- * operations and services like the TrackScheduler.
+ * The central model for an abstract Track that has these qualities.
+ *
+ *     - a unique number that is used for identification
+ *     - an implementation that is usually capable of recording or playing something
+ *     - able to receive Actions and respond to Querys
+ *     - contributes its state to SystemState
+ *     - may have leader, follower, or listener relationships with other tracks
+ *
+ * Tracks are defined by the Session.  For the near future they will always correspond
+ * to an OG Mobius "core" track, or a new Midi track.
+ *
  */
 
 #pragma once
@@ -12,7 +21,11 @@
 #include "../../model/Session.h"
 #include "../../model/ValueSet.h"
 
+// don't need a full Pulse here, make it simpler?
+#include "../../sync/Pulse.h"
+
 #include "../Notification.h"
+
 #include "TrackProperties.h"
 
 class LogicalTrack
@@ -22,7 +35,11 @@ class LogicalTrack
     LogicalTrack(class TrackManager* tm);
     ~LogicalTrack();
 
-    void loadSession(class Session::Track* def);
+    // this just remembers it during track organization
+    void setSession(class Session::Track* def);
+    Session::Track* getSession();
+    // this causes it to be fully loaded
+    void loadSession();
     
     Session::TrackType getType();
     int getSessionId();
@@ -51,28 +68,50 @@ class LogicalTrack
 
     void syncPulse(class Pulse* p);
 
-    // block advance dependency state
+    //////////////////////////////////////////////////////////////////////
+    // Notifier State
+    //////////////////////////////////////////////////////////////////////
+
+    void addTrackListener(class TrackListener* l);
+    void removeTrackListener(class TrackListener* l);
+    void notifyListeners(NotificationId id, TrackProperties& props);
+
+    //////////////////////////////////////////////////////////////////////
+    // Sync State
+    //////////////////////////////////////////////////////////////////////
+
+    SyncSource getSyncSourceNow();
+    SyncUnit getSyncUnitNow();
+    int getSyncLeaderNow();
+    Pulse* getLeaderPulse();
+    
+    //////////////////////////////////////////////////////////////////////
+    // TimeSlicer State
+    //////////////////////////////////////////////////////////////////////
+    
     bool isVisited();
     void setVisited(bool b);
     bool isAdvanced();
     void setAdvanced(bool b);
 
-    //
+    //////////////////////////////////////////////////////////////////////
     // Subclass parameter accessors
-    // 
+    //////////////////////////////////////////////////////////////////////
 
     void bindParameter(UIAction* a);
     void clearBindings();
     
     int getParameterOrdinal(SymbolId id);
-    
-    SyncSource getSyncSource();
-    SyncUnit getSyncUnit();
-    TrackSyncUnit getTrackSyncUnit();
-    int getLoopCount();
-    LeaderType getLeaderType();
-    LeaderLocation getLeaderSwitchLocation();
 
+    // weed these and just call the cached accessors
+    SyncSource getSyncSourceFromSession();
+    SyncUnit getSyncUnitFromSession();
+    TrackSyncUnit getTrackSyncUnitFromSession();
+    int getLoopCountFromSession();
+    LeaderType getLeaderTypeFromSession();
+    LeaderLocation getLeaderSwitchLocationFromSession();
+
+    // these are also "from session"
     ParameterMuteMode getMuteMode();
     SwitchLocation getSwitchLocation();
     SwitchDuration getSwitchDuration();
@@ -87,16 +126,20 @@ class LogicalTrack
     Session::TrackType trackType = Session::TypeAudio;
     int engineNumber = 0;
 
-    /**
-     * The underlying track implementation, either a MidiTrack
-     * or a MobiusTrackWrapper.
-     */
-    std::unique_ptr<class BaseTrack> track;
+    // the Session::Track is authoritative over this, but it is really
+    // convenient in the debugger to have it here where you can see it
+    int number = 0;
 
-    /**
-     * A colletion of parameter bindings for this track.
-     * These override what is in the Session 
-     */
+    // parameter cache
+    SyncSource syncSource = SyncSourceNone;
+    SyncUnit syncUnit = SyncUnitBeat;
+    int syncLeader = 0;
+
+    // sync Pulse for SyncMaster/Pulsator
+    Pulse leaderPulse;
+
+    // parameter bindings that override the session
+    // this is everything EXCEPT the sync parameters above
     class MslBinding* bindings = nullptr;
 
     /**
@@ -104,12 +147,22 @@ class LogicalTrack
      * Fall back to the old Preset model.
      */
     int activePreset = 0;
-    
     class Preset* getPreset();
 
+    /**
+     * The underlying track implementation, either a MidiTrack
+     * or a MobiusTrackWrapper.
+     */
+    std::unique_ptr<class BaseTrack> track;
+
+    // Notifier
+    juce::Array<class TrackListener*> listeners;
+    
+    // TimeSlicer
     bool visited = false;
     bool advanced = false;
     
+    void cacheSyncParameters();
 };
 
  

@@ -17,23 +17,18 @@
 
 #include "SyncConstants.h"
 #include "Pulse.h"
-#include "Leader.h"
-#include "Follower.h"
 #include "BarTender.h"
 
 class Pulsator
 {
   public:
 
-    Pulsator(SyncMaster* sm);
+    Pulsator(class SyncMaster* sm, class TrackManager* tm, class BarTender* bt);
     ~Pulsator();
 
     // Configuration
     
     void loadSession(class Session* s);
-
-    void userSetBeatsPerBar(int bpb, bool action);
-    void propagateTransportTimeSignature(int bpb);
 
     // Block Lifecycle
 
@@ -44,25 +39,11 @@ class Pulsator
 
     Pulse* getRelevantBlockPulse(int follower);
 
-    // Following
-
-    // register a follow for an external sync source
-    void follow(int follower, SyncSource source, SyncUnit unit);
-
-    // register a follow for an internal leader
-    void follow(int follower, int leader, SyncUnit unit);
-
-    void unfollow(int follower);
-
-    Follower* getFollower(int id, bool warn = true);
-    Leader* getLeader(int id);
-
   private:
 
     class SyncMaster* syncMaster = nullptr;
+    class TrackManager* trackManager = nullptr;
     class BarTender* barTender = nullptr;
-    juce::OwnedArray<Leader> leaders;
-    juce::OwnedArray<Follower> followers;
 
     // captured during advance
     int millisecond = 0;
@@ -81,8 +62,8 @@ class Pulsator
 
     Pulse* getPulseObject(SyncSource source, int leader);
     Pulse* getBlockPulse(SyncSource source, int leader);
-    Pulse* getAnyBlockPulse(Follower* f);
-    bool isRelevant(Follower* f, Pulse* p);
+    Pulse* getAnyBlockPulse(class LogicalTrack* t);
+    bool isRelevant(class LogicalTrack* t, Pulse* p);
 
     void trace();
     void trace(Pulse& p);

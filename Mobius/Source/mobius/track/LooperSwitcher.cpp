@@ -13,8 +13,6 @@
 
 #include "../../sync/SyncMaster.h"
 
-#include "../Valuator.h"
-
 #include "TrackProperties.h"
 #include "LooperScheduler.h"
 #include "LooperTrack.h"

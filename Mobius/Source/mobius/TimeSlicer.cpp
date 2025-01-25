@@ -24,7 +24,6 @@
 #include "../sync/SyncConstants.h"
 #include "../sync/Pulse.h"
 #include "../sync/SyncMaster.h"
-#include "../sync/Follower.h"
 #include "track/LogicalTrack.h"
 #include "track/TrackManager.h"
 
@@ -220,7 +219,22 @@ void TimeSlicer::test()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Leader/Follower relationships are usually defined by the Session.
+ * Any time it loads, flag it to reorder the dependencies.
+ */
+void TimeSlicer::loadSession(Session* s)
+{
+    (void)s;
+    ordered = false;
+}
+
+/**
  * SyncMaster callback whenever follower/leader changes are made.
+ *
+ * !! this sucks as usual, the way this has evolved, leader/follower
+ * relationships are directly on the LogicalTrack and we can figure out
+ * from there how to order things.  This ordering needs to be invalidated
+ * every time the Session loads however.
  */
 void TimeSlicer::syncFollowerChanges()
 {
@@ -241,7 +255,7 @@ void TimeSlicer::prepareTracks()
         track->setVisited(false);
         track->setAdvanced(false);
     }
-    
+
     if (!ordered)
       orderTracks();
 
@@ -270,10 +284,9 @@ void TimeSlicer::orderTracks(LogicalTrack* t)
 {
     if (!t->isVisited()) {
         t->setVisited(true);
-        Follower* f = syncMaster->getFollower(t->getNumber());
-        if (f != nullptr && f->source == SyncSourceTrack) {
+        if (t->getSyncSourceNow() == SyncSourceTrack) {
             
-            int leader = f->leader;
+            int leader = t->getSyncLeaderNow();
             if (leader == 0)
               leader = syncMaster->getTrackSyncMaster();
 

@@ -34,29 +34,29 @@ class BarTender
         int barsPerLoop = 0;
     };
 
-    BarTender(class SyncMaster* sm);
+    BarTender(class SyncMaster* sm, class TrackManager* tm);
     ~BarTender();
 
     void loadSession(class Session* s);
 
     void advance(int blockFrames);
-    Pulse* annotate(class Follower* f, Pulse* p);
+    Pulse* annotate(class LogicalTrack* t, Pulse* p);
 
-    // should this take numbers or a follower?  Follower is
-    // more common internally
+    // should this take numbers or a follower?
+    // Follower is more common internally
     int getBeat(int trackNumber);
-    int getBeat(Follower* f);
+    int getBeat(class LogicalTrack* t);
     int getBar(int trackNumber);
-    int getBar(Follower* f);
+    int getBar(class LogicalTrack* t);
     int getLoop(int trackNumber);
-    int getLoop(Follower* f);
+    int getLoop(class LogicalTrack* t);
     int getBeatsPerBar(int trackNumber);
     int getBarsPerLoop(int trackNumber);
 
   private:
 
     class SyncMaster* syncMaster = nullptr;
-
+    class TrackManager* trackManager = nullptr;
     int hostBeatsPerBar = 0;
     int hostBarsPerLoop = 0;
     bool hostOverride = false;

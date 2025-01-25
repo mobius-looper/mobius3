@@ -10,10 +10,11 @@
 #include "../model/Session.h"
 #include "../mobius/MobiusInterface.h"
 
+#include "../mobius/track/LogicalTrack.h"
+#include "../mobius/track/TrackManager.h"
+
 #include "SyncConstants.h"
 #include "Pulse.h"
-#include "Leader.h"
-#include "Follower.h"
 
 #include "MidiAnalyzer.h"
 #include "MidiRealizer.h"
@@ -24,50 +25,20 @@
 
 #include "Pulsator.h"
 
-Pulsator::Pulsator(SyncMaster* sm)
+Pulsator::Pulsator(SyncMaster* sm, TrackManager* tm, BarTender* bt)
 {
     syncMaster = sm;
-    // annoying dependency
-    barTender = syncMaster->getBarTender();
+    trackManager = tm;
+    barTender = bt;
 }
 
 Pulsator::~Pulsator()
 {
 }
 
-/**
- * Called during initialization and after anything changes that might
- * impact the leader or follower count.  Ensure that the arrays are large enough
- * to accept any registration of followers or leaders.
- *
- * In current use, followers and leaders are always audio or midi tracks
- * and ids are always track numbers.  This simplification may not always
- * hold true.
- */
 void Pulsator::loadSession(Session* s)
 {
-    int numFollowers = s->getTrackCount();
-
-    // ensure the array is big enough
-    // !! this is potentially dangerous if tracks are actively registering
-    // follows and the array needs to be resized.  Would be best to allow this
-    // only when in a state of GlobalReset
-    // +1 is because follower ids are 1 based and are array indexes
-    // follower id 0 is reserved
-    numFollowers++;
-    for (int i = followers.size() ; i < numFollowers ; i++) {
-        Follower* f = new Follower();
-        f->id = i;
-        followers.add(f);
-    }
-
-    // leaders are the same as followers
-    int numLeaders = numFollowers;
-    for (int i = leaders.size() ; i < numLeaders ; i++) {
-        Leader* l = new Leader();
-        l->id = i;
-        leaders.add(l);
-    }
+    (void)s;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -107,11 +78,14 @@ void Pulsator::reset()
     midiPulse.reset();
     hostPulse.reset();
     transportPulse.reset();
-    
-    // this is where pending pulses that were just over the last block
-    // are activated for this block
-    for (auto leader : leaders)
-      leader->reset();
+
+    // this could just be done by TrackManager, but I like having
+    // all Pulse management here
+    juce::OwnedArray<LogicalTrack>& tracks = trackManager->getTracks();
+    for (auto t : tracks) {
+        Pulse* p = t->getLeaderPulse();
+        p->reset();
+    }
 }
 
 /**
@@ -133,20 +107,28 @@ void Pulsator::reset()
  * Adjusting it down to the last frame doesn't work because it will split at that
  * point with the event happening BEFORE the last frame.  The event really needs
  * to be processed at frame zero of the next buffer.
+ *
+ * UPDATE: The only leaders are now LogicalTracks which maintain their own Pulse.
+ * Formerly had a parallel leader array here but it was too fragile.
+ * So while comments may say that a "leader" is more general than a "track", there
+ * are really only two types of leadership.  Either SyncSources that are not tracks
+ * or leader tracks.
  */
 void Pulsator::addLeaderPulse(int leaderId, SyncUnit unit, int frameOffset)
 {
-    Leader* l = getLeader(leaderId);
-    if (l != nullptr) {
-        l->pulse.reset(SyncSourceTrack, millisecond);
-        l->pulse.unit = unit;
-        l->pulse.blockFrame = frameOffset;
+    LogicalTrack* lt = trackManager->getLogicalTrack(leaderId);
+    if (lt != nullptr) {
+        Pulse* pulse = lt->getLeaderPulse();
+        
+        pulse->reset(SyncSourceTrack, millisecond);
+        pulse->unit = unit;
+        pulse->blockFrame = frameOffset;
 
         if (frameOffset >= blockFrames) {
             // leave it pending and adjust for the next block
-            l->pulse.pending = true;
+            pulse->pending = true;
             int wrapped = frameOffset - blockFrames;
-            l->pulse.blockFrame = wrapped;
+            pulse->blockFrame = wrapped;
             if (wrapped != 0){
                 // went beyond just the end of the block, I don't
                 // think this should happen
@@ -183,23 +165,23 @@ Pulse* Pulsator::getRelevantBlockPulse(int trackNumber)
 {
     Pulse* pulse = nullptr;
     
-    Follower* f = getFollower(trackNumber);
-    if (f != nullptr) {
+    LogicalTrack* t = trackManager->getLogicalTrack(trackNumber);
+    if (t != nullptr) {
 
         // start by locating the base pulse for the source this
         // track is following
-        Pulse* base = getAnyBlockPulse(f);
+        Pulse* base = getAnyBlockPulse(t);
 
         if (base != nullptr) {
 
             // derive a track-specific Pulse with bar awareness
             // this object is transient and maintained by BarTender,
             // it must be consumed before calling BarTender again
-            Pulse* annotated = barTender->annotate(f, base);
+            Pulse* annotated = barTender->annotate(t, base);
 
             if (annotated != nullptr) {
 
-                if (isRelevant(f, annotated)) {
+                if (isRelevant(t, annotated)) {
 
                     pulse = annotated;
                 }
@@ -329,9 +311,9 @@ Pulse* Pulsator::getPulseObject(SyncSource source, int leader)
             // in which case there won't be a pulse
             // don't call getLeader with zero or it traces an error
             if (leader > 0) {
-                Leader* l = getLeader(leader);
-                if (l != nullptr) {
-                    pulse = &(l->pulse);
+                LogicalTrack* lt = trackManager->getLogicalTrack(leader);
+                if (lt != nullptr) {
+                    pulse = lt->getLeaderPulse();
                 }
             }
         }
@@ -359,25 +341,25 @@ Pulse* Pulsator::getBlockPulse(SyncSource source, int leader)
 /**
  * Return any block pulse that may be relevant for a follower.
  */
-Pulse* Pulsator::getAnyBlockPulse(Follower* f)
+Pulse* Pulsator::getAnyBlockPulse(LogicalTrack* t)
 {
     Pulse* pulse = nullptr;
-    if (f != nullptr) {
+    if (t != nullptr) {
 
         // once the follower is locked, you can't change the source out
         // from under it
         // ?? why was this necessary
-        SyncSource source = f->source;
+        SyncSource source = t->getSyncSourceNow();
         int leader = 0;
-        if (f->source == SyncSourceTrack) {
-            leader = f->leader;
+        if (source == SyncSourceTrack) {
+            leader = t->getSyncLeaderNow();
             if (leader == 0)
               leader = syncMaster->getTrackSyncMaster();
         }
 
         // special case, if the leader is the follower, it means we couldn't find
         // a leader after starting which means it self-leads and won't have pulses
-        if (leader != f->id) {
+        if (leader != t->getNumber()) {
 
             pulse = getBlockPulse(source, leader);
         }
@@ -385,16 +367,17 @@ Pulse* Pulsator::getAnyBlockPulse(Follower* f)
     return pulse;
 }
 
-bool Pulsator::isRelevant(Follower* f, Pulse* p)
+bool Pulsator::isRelevant(LogicalTrack* t, Pulse* p)
 {
     bool relevant = false;
     if (p != nullptr && !p->pending && p->source != SyncSourceNone) {
+        SyncUnit unit = t->getSyncUnitNow();
         // there was a pulse from this source
-        if (f->unit == SyncUnitBeat) {
+        if (unit == SyncUnitBeat) {
             // anything is a beat
             relevant = true;
         }
-        else if (f->unit == SyncUnitBar) {
+        else if (unit == SyncUnitBar) {
             // loops are also bars
             relevant = (p->unit == SyncUnitBar || p->unit == SyncUnitLoop);
         }
@@ -422,116 +405,6 @@ bool Pulsator::isRelevant(Follower* f, Pulse* p)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Leaders and Followers
-//
-//////////////////////////////////////////////////////////////////////
-
-Leader* Pulsator::getLeader(int leaderId)
-{
-    Leader* l = nullptr;
-
-    // note that leader zero doesn't exist, it means default
-    if (leaderId <= 0 || leaderId >= leaders.size()) {
-        Trace(1, "Pulsator: Leader id out of range %d", leaderId);
-    }
-    else {
-        l = leaders[leaderId];
-    }
-    return l;
-}
-
-Follower* Pulsator::getFollower(int followerId, bool warn)
-{
-    Follower* f = nullptr;
-
-    if (followerId >= followers.size()) {
-        // could grow this, but we're in the audio thread and not supposed to
-        // should have been caught during configuration
-        if (warn)
-          Trace(1, "Pulsator: Follower id out of range %d", followerId);
-    }
-    else {
-        f = followers[followerId];
-    }
-    return f;
-}
-
-/**
- * Register intent to follow a sync source.
- * 
- * Registering a follower is normally done as soon as a track is configured to
- * have a sync source.  For most sources, simply registering does nothing.
- * When following another track "leader", this causes that track to be processed
- * before the follower in each audio block so that the leader has a chance to
- * deposit leader pulses that the follower wants.  This ordering is performed
- * by TimeSlicer.
- */
-void Pulsator::follow(int followerId, SyncSource source, SyncUnit unit)
-{
-    Follower* f = getFollower(followerId);
-    if (f != nullptr) {
-        
-        f->source = source;
-        f->leader = 0;
-        f->unit = unit;
-
-        char tracebuf[1024];
-        snprintf(tracebuf, sizeof(tracebuf),
-                 "Pulsator: Follower %d following %s pulse %s",
-                 followerId, getSourceName(source), getUnitName(unit));
-        Trace(2, tracebuf);
-    }
-}
-
-/**
- * Register following an internal sync leader
- */
-void Pulsator::follow(int followerId, int leaderId, SyncUnit unit)
-{
-    Follower* f = getFollower(followerId);
-    if (f != nullptr) {
-        // leaderId may be zero to mean "default" so don't call getLeader()
-        if (leaderId >= leaders.size()) {
-            Trace(1, "Pulsator::follow Leader %d out of range", leaderId);
-            leaderId = 0;
-        }
-        
-        char tracebuf[1024];
-        snprintf(tracebuf, sizeof(tracebuf),
-                 "Pulsator: Follower %d following Leader %d pulse %s",
-                 followerId, leaderId, getUnitName(unit));
-        Trace(2, tracebuf);
-
-        f->source = SyncSourceTrack;
-        f->leader = leaderId;
-        f->unit = unit;
-    }
-}
-
-/**
- * Stop following something after track reconfiguration.
- */
-void Pulsator::unfollow(int followerId)
-{
-    Follower* f = getFollower(followerId);
-    if (f != nullptr) {
-
-        if (f->source != SyncSourceNone) {
-            char tracebuf[1024];
-            snprintf(tracebuf, sizeof(tracebuf),
-                     "Pulsator: Follower %d unfollowing %s",
-                     followerId, getSourceName(f->source));
-            Trace(2, tracebuf);
-        }
-        
-        f->source = SyncSourceNone;
-        f->leader = 0;
-        f->unit = SyncUnitBeat;
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
 // Diagnostics
 //
 //////////////////////////////////////////////////////////////////////
@@ -541,11 +414,14 @@ void Pulsator::trace()
     if (hostPulse.source != SyncSourceNone) trace(hostPulse);
     if (midiPulse.source != SyncSourceNone) trace(midiPulse);
     if (transportPulse.source != SyncSourceNone) trace(transportPulse);
-    
+
+    // don't own the leaders any more, could go through the LogicalTracks
+#if 0    
     for (auto leader : leaders) {
         if (leader->pulse.source != SyncSourceNone)
           trace(leader->pulse);
     }
+#endif    
 }
 
 void Pulsator::trace(Pulse& p)

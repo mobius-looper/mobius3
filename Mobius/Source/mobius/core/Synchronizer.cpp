@@ -43,7 +43,7 @@
 #include "../../sync/Pulse.h"
 #include "../../sync/SyncMaster.h"
 // for OldMobiusState
-#include "../../sync/Follower.h"
+//#include "../../sync/Follower.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -97,9 +97,21 @@ void Synchronizer::globalReset()
  * Some of this could be accessed through the Track, but it all should
  * come from the Setup so don't complicate things with more indirection.
  *
+ * !! None of this is actually necessary.
+ * The process is this:
+ *
+ *      Session is converted to MobiusConfig
+ *      Synchronizer gets MobiusConfig and converts it back to Session constants
+ *      Synchronizer calls SyncMaster
+ *      SyncMaster deposits these things on the LogicalTrack
+ *
+ * This has all been done already when TrackManager loaded the session.
+ *      
  */
 void Synchronizer::updateConfiguration(MobiusConfig* config)
 {
+    (void)config;
+#if 0    
     // doesn't really matter what else is in MobiusConfig
     // the selected Setup is what matters
     (void)config;
@@ -174,6 +186,7 @@ void Synchronizer::updateConfiguration(MobiusConfig* config)
             break;
         }
     }
+#endif    
 }
 
 //////////////////////////////////////////////////////////////////////

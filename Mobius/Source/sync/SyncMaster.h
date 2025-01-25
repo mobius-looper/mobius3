@@ -43,7 +43,7 @@ class SyncMaster
 
     void addListener(Listener* l);
 
-    void initialize(class MobiusKernel* k);
+    void initialize(class MobiusKernel* k, class TrackManager* tm);
     void loadSession(class Session* s);
     void shutdown();
 
@@ -111,16 +111,6 @@ class SyncMaster
     int getMilliseconds();
     void sendAlert(juce::String msg);
 
-    //////////////////////////////////////////////////////////////////////
-    // Leader/Follower Pulsator passthroughs
-    //////////////////////////////////////////////////////////////////////
-
-    class Follower* getFollower(int id);
-    
-    void follow(int follower, SyncSource source, SyncUnit unit);
-    void follow(int follower, int leader, SyncUnit unit);
-    void unfollow(int follower);
-
     // notify that a leader pulse has been reached
     void addLeaderPulse(int leader, SyncUnit unit, int frameOffset);
 
@@ -180,6 +170,9 @@ class SyncMaster
 
     class MobiusKernel* kernel = nullptr;
     class MobiusContainer* container = nullptr;
+    class TrackManager* trackManager = nullptr;
+
+    // this is dumb, reorganize
     Listener* listener = nullptr;
     
     int sampleRate = 44100;

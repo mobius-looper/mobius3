@@ -69,8 +69,8 @@ BaseScheduler::~BaseScheduler()
 /**
  * Derive sync options from a session.
  *
- * Since we go through the LogicalTrack now rather than Valuator
- * we don't really need the Session passed in.
+ * Since we go through the LogicalTrack now we don't need the Session::Track
+ * passed in.
  *
  * !! Should reloading a session also clear bindings?
  *
@@ -88,36 +88,17 @@ void BaseScheduler::loadSession(Session::Track* def)
     // it's also looking in the Session and not the Session::Track
     LogicalTrack* lt = scheduledTrack->getLogicalTrack();
 
-    syncSource = lt->getSyncSource();
-    pulseUnit = lt->getSyncUnit();
-
-    if (syncSource == SyncSourceTrack) {
-        // track sync uses a different unit parameter
-        // default for this one is the entire loop
-        pulseUnit = SyncUnitLoop;
-        TrackSyncUnit tsu = lt->getTrackSyncUnit();
-        switch (tsu) {
-            case TrackUnitSubcycle: pulseUnit = SyncUnitBeat; break;
-            case TrackUnitCycle: pulseUnit = SyncUnitBar; break;
-            case TrackUnitLoop: pulseUnit = SyncUnitLoop; break;
-        }
-        // no specific track leader yet...
-        int leader = 0;
-        syncMaster->follow(scheduledTrack->getNumber(), leader, pulseUnit);
-    }
-    else if (syncSource != SyncSourceNone && syncSource != SyncSourceMaster) {
-        syncMaster->follow(scheduledTrack->getNumber(), syncSource, pulseUnit);
-    }
-    else {
-        syncMaster->unfollow(scheduledTrack->getNumber());
-    }
+    syncSource = lt->getSyncSourceFromSession();
+    pulseUnit = lt->getSyncUnitFromSession();
 
     // follower options
     // a few are in MidiTrack but they should be here if we need them
+    // !!! clean up how we access these through the levels, LogicalTrack
+    // is now the owner of all things realted to sync
 
-    leaderType = lt->getLeaderType();
+    leaderType = lt->getLeaderTypeFromSession();
     leaderTrack = def->getInt("leaderTrack");
-    leaderSwitchLocation = lt->getLeaderSwitchLocation();
+    leaderSwitchLocation = lt->getLeaderSwitchLocationFromSession();
     
     followQuantize = def->getBool("followQuantizeLocation");
     followRecord = def->getBool("followRecord");

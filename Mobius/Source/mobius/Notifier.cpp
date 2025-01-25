@@ -29,6 +29,8 @@
 #include "Notification.h"
 #include "MobiusPools.h"
 #include "track/TrackProperties.h"
+#include "track/TrackManager.h"
+#include "track/LogicalTrack.h"
 
 #include "core/Track.h"
 #include "core/Loop.h"
@@ -38,17 +40,6 @@
 
 Notifier::Notifier()
 {
-    int maxTracks = 100;
-    // does this even work?  I guess it does
-    for (int i = 0 ; i < maxTracks ; i++) {
-        listeners.add(juce::Array<TrackListener*>());
-    }
-
-    // may as well do this too
-    for (int i = 0 ; i < maxTracks ; i++) {
-        juce::Array<TrackListener*>& larray = listeners.getReference(i);
-        larray.ensureStorageAllocated(4);
-    }
 }
 
 Notifier::~Notifier()
@@ -56,9 +47,10 @@ Notifier::~Notifier()
     flush();
 }
 
-void Notifier::initialize(MobiusKernel* k)
+void Notifier::initialize(MobiusKernel* k, TrackManager* tm)
 {
     kernel = k;
+    trackManager = tm;
     scriptenv = k->getContainer()->getMslEnvironment();
     symbols = k->getContainer()->getSymbols();
     pool = k->getPools();
@@ -80,6 +72,9 @@ void Notifier::configure(Session* s)
 //
 // Mobius Core Notifications
 //
+// todo: Dislike having a dependency on the Track model, would be
+// better to have an interface.
+//
 //////////////////////////////////////////////////////////////////////
 
 void Notifier::notify(Loop* loop, NotificationId id)
@@ -97,7 +92,10 @@ void Notifier::notify(Loop* loop, NotificationId id)
  */
 void Notifier::notify(Track* track, NotificationId id)
 {
+    // !!! this needs to remember the track number from the Session
+    // which may be different than the engine number
     int trackNumber = track->getDisplayNumber();
+    
     //Trace(2, "Notifier: Received notification %d for track %d",
     //(int)id, track->getDisplayNumber());
 
@@ -106,21 +104,13 @@ void Notifier::notify(Track* track, NotificationId id)
     props.frames = track->getFrames();
     props.cycles = track->getCycles();
     props.currentFrame = (int)(track->getFrame());
-    
-    // handle the listeners
-    if (trackNumber < 0 || trackNumber >= listeners.size()) {
-        Trace(1, "Notififier: Listener array is fucked");
-    }
-    else {
-        juce::Array<TrackListener*>& larray = listeners.getReference(trackNumber);
-        if (larray.size() > 0) {
 
-            for (auto l : larray) {
-                l->trackNotification(id, props);
-            }
-        }
-    }
+    // inform the track listeners
+    LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
+    if (lt != nullptr)
+      lt->notifyListeners(id, props);
 
+    // and any scripts
     NotificationPayload payload;
     notifyScript(id, props, payload);
 }
@@ -141,18 +131,9 @@ void Notifier::notify(Track* track, NotificationId id, TrackProperties& props)
     props.cycles = track->getCycles();
     props.currentFrame = (int)(track->getFrame());
 
-    if (trackNumber < 0 || trackNumber >= listeners.size()) {
-        Trace(1, "Notififier: Listener array is fucked");
-    }
-    else {
-        juce::Array<TrackListener*>& larray = listeners.getReference(trackNumber);
-        if (larray.size() > 0) {
-
-            for (auto l : larray) {
-                l->trackNotification(id, props);
-            }
-        }
-    }
+    LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
+    if (lt != nullptr)
+      lt->notifyListeners(id, props);
 
     NotificationPayload payload;
     notifyScript(id, props, payload);
@@ -321,36 +302,10 @@ const char* Notifier::mapNotificationId(NotificationId id)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Listeners
-//
-//////////////////////////////////////////////////////////////////////
-
-void Notifier::addTrackListener(int trackNumber, TrackListener* l)
-{
-    if (trackNumber >= 0 && trackNumber < listeners.size()) {
-        juce::Array<TrackListener*>& larray = listeners.getReference(trackNumber);
-        if (!larray.contains(l))
-          larray.add(l);
-    }
-    else {
-        Trace(1, "Notififier: Listener array is fucked");
-    }
-}
-
-void Notifier::removeTrackListener(int trackNumber, TrackListener* l)
-{
-    if (trackNumber >= 0 && trackNumber < listeners.size()) {
-        juce::Array<TrackListener*>& larray = listeners.getReference(trackNumber);
-        larray.removeAllInstancesOf(l);
-    }
-    else {
-        Trace(1, "Notififier: Listener array is fucked");
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
 // The Notification Queue
+//
+// This is not actually used.  Probably won't be but keep it around
+// for awhile.
 //
 //////////////////////////////////////////////////////////////////////
 
