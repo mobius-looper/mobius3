@@ -215,8 +215,7 @@ void MobiusKernel::dump(StructureDumper& d)
 {
     d.line("MobiusKernel");
     d.inc();
-    if (mCore != nullptr)
-      mCore->dump(d);
+    mCore->dump(d);
     d.dec();
 }
 
@@ -384,9 +383,16 @@ void MobiusKernel::doMessage(KernelMessage* msg)
  * message for the return, but the consume loop wants to free that
  * not really important and I don't think worth messing with different
  * styles of consumption.
+ *
+ * update: This is expected now that we package the Session and
+ * MobiusConfig together.  This will only become useful again if
+ * you get to a point where sparse configs can be sent down with
+ * just presets, groups, etc.
  */
 void MobiusKernel::reconfigure(KernelMessage* msg)
 {
+    Trace(1, "MobiusKernel: Not expecting an old MsgConfiguration");
+    
     MobiusConfig* old = configuration;
 
     // take the new one
@@ -404,8 +410,7 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     scriptUtil.configure(configuration, session);
 
     // this is NOT where track configuration comes in
-    if (mCore != nullptr)
-      mCore->reconfigure(configuration);
+    mCore->reconfigure(configuration);
 
     mTracks->configure(configuration);
 }
@@ -419,10 +424,24 @@ void MobiusKernel::loadSession(KernelMessage* msg)
 
     // take the new one
     session = msg->object.session;
+
+    MobiusConfig* newConfig = session->getOldConfig();
+    if (newConfig == nullptr) {
+        Trace(1, "MobiusKernel: Expecting to receive both a Session and MobiusConfig");
+        old->setOldConfig(nullptr);
+    }
+    else {
+        old->setOldConfig(configuration);
+        configuration = newConfig;
+        session->setOldConfig(nullptr);
+        
+        // do this first so the Presets can get updated before we reconfigure the tracks
+        mCore->reconfigure(configuration);
+    }
     
-    // sigh, the two new config objects are sent down one at a time,
-    // should be together
     scriptUtil.configure(configuration, session);
+
+    // this will do the second call to core to configureTracks
     mTracks->loadSession(session);
     
     notifier.configure(session);

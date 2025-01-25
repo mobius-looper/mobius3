@@ -9,7 +9,6 @@
   longPress='500'
   spreadRange='48'
   driftCheckPoint='loop'
-  midiRecordMode='average'
   setup='Default'
   controllerActionThreshold='64'>
   <Preset
@@ -21,6 +20,7 @@
     emptyLoopAction='none'
     emptyTrackAction='none'
     loopCount='4'
+    maxRedo='3'
     multiplyMode='normal'
     muteCancel='never'
     muteMode='continue'
@@ -129,13 +129,8 @@
   <Setup
     name='Default'
     active='0'
-    beatsPerBar='7'
     defaultSyncSource='none'
     defaultTrackSyncUnit='loop'
-    maxTempo='300'
-    minTempo='20'
-    muteSyncMode='transport'
-    outRealign='midiStart'
     realignTime='start'
     resizeSyncAdjust='none'
     slaveSyncUnit='bar'
@@ -228,13 +223,8 @@
   <Setup
     name='asdf'
     active='0'
-    beatsPerBar='4'
     defaultSyncSource='track'
     defaultTrackSyncUnit='subcycle'
-    maxTempo='300'
-    minTempo='20'
-    muteSyncMode='transport'
-    outRealign='restart'
     realignTime='start'
     resizeSyncAdjust='none'
     slaveSyncUnit='beat'

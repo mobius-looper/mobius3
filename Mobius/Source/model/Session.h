@@ -106,6 +106,9 @@ class Session
     juce::String toXml();
 
     void renumber();
+
+    void setOldConfig(class MobiusConfig* config);
+    MobiusConfig* getOldConfig();
     
     //////////////////////////////////////////////////////////////////////
     // Tracks
@@ -153,6 +156,8 @@ class Session
     void setBool(juce::String name, bool value);
     
   private:
+
+    class MobiusConfig* oldConfig = nullptr;
 
     // !! make these go away
     // the numbers should be determined by the Track objects

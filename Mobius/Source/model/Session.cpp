@@ -30,6 +30,20 @@ Session::Session(Session* src)
 }
 
 /**
+ * Hack to pass both the Session and the MobiusConfig in one
+ * KernelMessage payload to avoid ordering problems.
+ */
+void Session::setOldConfig(MobiusConfig* config)
+{
+    oldConfig = config;
+}
+
+MobiusConfig* Session::getOldConfig()
+{
+    return oldConfig;
+}
+
+/**
  * After parsing or editing, make sure all tracks have a unique id.
  */
 void Session::assignIds()

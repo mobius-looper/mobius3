@@ -286,7 +286,9 @@ void MobiusShell::reconfigure(MobiusConfig* config, Session* ses)
     // it sucks that these are two messages!
     MobiusConfig* kernelCopy = config->clone();
     Session* kernelSession = new Session(ses);
-    sendKernelConfigure(kernelCopy);
+
+    // hack to get them both passed in one message
+    kernelSession->setOldConfig(kernelCopy);
     sendKernelSession(kernelSession);
 }
 
@@ -605,7 +607,10 @@ void MobiusShell::consumeCommunications()
                 
             case MsgSession: {
                 // kernel is done with the previous configuration
-                delete msg->object.session;
+                Session* s = msg->object.session;
+                MobiusConfig* c = s->getOldConfig();
+                delete c;
+                delete s;
             }
                 break;
                 
