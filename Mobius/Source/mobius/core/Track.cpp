@@ -50,6 +50,7 @@
 #include "../../model/UserVariable.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Setup.h"
+#include "../../model/Session.h"
 
 #include "../MobiusInterface.h"
 #include "../MobiusPools.h"
@@ -806,7 +807,7 @@ void Track::refreshPriorityState(PriorityState* s)
  */
 void Track::refreshState(TrackState* s)
 {
-    s->midi = false;
+    s->type = Session::TypeAudio;
     s->number = mLogicalNumber;
 	s->preset = mPreset->ordinal;
     s->inputMonitorLevel = mInput->getMonitorLevel();

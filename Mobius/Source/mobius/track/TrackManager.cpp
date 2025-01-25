@@ -823,9 +823,12 @@ void TrackManager::doGlobal(UIAction* src)
     // having some trouble with stuck notes in the watcher
     // maybe only during debugging, but it's annoying when it happens to
     // make sure to clear them
-    if (src->symbol->id == FuncGlobalReset)
-      watcher.flushHeld();
-
+    if (src->symbol->id == FuncGlobalReset) {
+        watcher.flushHeld();
+        MobiusListener* l = kernel->getListener();
+        l->mobiusGlobalReset();
+    }
+    
     actionPool->checkin(src);
 }
 
@@ -923,7 +926,8 @@ void TrackManager::doTrackSelectAction(UIAction* a)
 
         // until we have returning focus changes in the State, have to inform
         // the UI that it changed
-        kernel->getContainer()->setFocusedTrack(newFocusedIndex);
+        MobiusListener* l = kernel->getListener();
+        l->mobiusSetFocusedTrack(newFocusedIndex);
     }
     
     actionPool->checkin(a);

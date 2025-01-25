@@ -32,8 +32,8 @@ MidiClerk::~MidiClerk()
 void MidiClerk::loadFile()
 {
     MobiusView* view = supervisor->getMobiusView();
-    // focusedTrack is an index
-    if (view->focusedTrack < view->audioTracks) {
+    MobiusViewTrack* mvt = view->getTrack(view->focusedTrack);
+    if (mvt->type != Session::TypeMidi) {
         supervisor->alert("MIDI Track must have focus");
     }
     else {
@@ -49,8 +49,8 @@ void MidiClerk::loadFile()
 void MidiClerk::analyzeFile()
 {
     MobiusView* view = supervisor->getMobiusView();
-    // focusedTrack is an index
-    if (view->focusedTrack < view->audioTracks) {
+    MobiusViewTrack* mvt = view->getTrack(view->focusedTrack);
+    if (mvt->type != Session::TypeMidi) {
         supervisor->alert("MIDI Track must have focus");
     }
     else {
@@ -69,7 +69,11 @@ void MidiClerk::analyzeFile()
 void MidiClerk::loadFile(int trackNumber, int loopNumber)
 {
     MobiusView* view = supervisor->getMobiusView();
-    if (trackNumber <= view->audioTracks) {
+
+    // Supervisor will have already done this validation, if we must also do
+    // it here, then it doesn't need to
+    MobiusViewTrack* mvt = view->getTrack(trackNumber - 1);
+    if (mvt == nullptr || mvt->type != Session::TypeMidi) {
         supervisor->alert("Track is not a MIDI track");
     }
     else {
@@ -119,9 +123,10 @@ void MidiClerk::doFileLoad(juce::File file)
         analyzeFile(file);
     }
     else {
+        // haven't we done this several times already?
         MobiusView* view = supervisor->getMobiusView();
-
-        if (destinationTrack <= view->audioTracks) {
+        MobiusViewTrack* mvt = view->getTrack(destinationTrack - 1);
+        if (mvt == nullptr || mvt->type != Session::TypeMidi) {
             // back track number or sholdn't have asked for MIDI
             supervisor->alert("MIDI track must have focus");
         }
@@ -167,8 +172,8 @@ void MidiClerk::filesDropped(const juce::StringArray& files, int track, int loop
     if (track == 0)
       track = view->focusedTrack + 1;
 
-    // track is a 1 based number
-    if (track <= view->audioTracks) {
+    MobiusViewTrack* mvt = view->getTrack(track - 1);
+    if (mvt == nullptr || mvt->type != Session::TypeMidi) {
         // either we dropped over an audio track or the focused track is an audio
         // track, no can do
         supervisor->alert("MIDI file dropped over audio track");
@@ -196,8 +201,9 @@ void MidiClerk::filesDropped(const juce::StringArray& files, int track, int loop
 void MidiClerk::saveFile()
 {
     MobiusView* view = supervisor->getMobiusView();
-    // focusedTrack is an index
-    if (view->focusedTrack < view->audioTracks) {
+    MobiusViewTrack* mvt = view->getTrack(view->focusedTrack);
+
+    if (mvt == nullptr || mvt->type != Session::TypeMidi) {
         supervisor->alert("MIDI Track must have focus");
     }
     else {
@@ -210,7 +216,8 @@ void MidiClerk::saveFile()
 void MidiClerk::saveFile(int trackNumber, int loopNumber)
 {
     MobiusView* view = supervisor->getMobiusView();
-    if (trackNumber <= view->audioTracks) {
+    MobiusViewTrack* mvt = view->getTrack(trackNumber - 1);
+    if (mvt == nullptr || mvt->type != Session::TypeMidi) {
         supervisor->alert("Track is not a MIDI track");
     }
     else {
@@ -257,9 +264,8 @@ void MidiClerk::doFileSave(juce::File file)
     Trace(2, "MidiClerk: Selected file %s", file.getFullPathName().toUTF8());
 
     MobiusView* view = supervisor->getMobiusView();
-
-    if (destinationTrack <= view->audioTracks) {
-        // bad track number or sholdn't have asked for MIDI
+    MobiusViewTrack* mvt = view->getTrack(destinationTrack - 1);
+    if (mvt == nullptr || mvt->type != Session::TypeMidi) {
         supervisor->alert("MIDI track must have focus");
     }
     else {

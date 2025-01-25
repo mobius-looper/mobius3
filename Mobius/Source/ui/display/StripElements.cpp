@@ -4,6 +4,7 @@
 #include "../../model/UIParameter.h"
 #include "../../model/UIConfig.h"
 #include "../../model/Symbol.h"
+#include "../../model/Session.h"
 
 // so we can call filesDropped
 #include "../../AudioClerk.h"
@@ -106,7 +107,7 @@ void StripTrackNumber::paint(juce::Graphics& g)
     juce::Colour textColor = juce::Colour(MobiusGreen);
     if (focusLock)
       textColor = juce::Colour(MobiusRed);
-    else if (track->midi)
+    else if (track->type == Session::TypeMidi)
       textColor = juce::Colour(MobiusPink);
 
     g.setColour(textColor);
@@ -848,20 +849,20 @@ void StripLoopStack::mouseDown(const juce::MouseEvent& e)
     
     // use e.mods.isLeftButtonDown or isRightButtonDown if you want to distinguish buttons
     if (mods.isAltDown()) {
-        if (track->midi)
+        if (track->type == Session::TypeMidi)
           provider->dragMidi(trackNumber, loopNumber);
         else
           provider->dragAudio(trackNumber, loopNumber);
     }
     else if (mods.isCtrlDown()) {
         if (mods.isShiftDown()) {
-            if (track->midi)
+            if (track->type == Session::TypeMidi)
               provider->saveMidi(trackNumber, loopNumber);
             else
               provider->saveAudio(trackNumber, loopNumber);
         }
         else {
-            if (track->midi)
+            if (track->type == Session::TypeMidi)
               provider->loadMidi(trackNumber, loopNumber);
             else
               provider->loadAudio(trackNumber, loopNumber);

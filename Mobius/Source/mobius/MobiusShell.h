@@ -79,10 +79,6 @@ class MobiusShell : public MobiusInterface
         return configuration;
     }
 
-    MobiusListener* getListener() {
-        return listener;
-    }
-
   protected:
     
     // accessors for the Kernel only

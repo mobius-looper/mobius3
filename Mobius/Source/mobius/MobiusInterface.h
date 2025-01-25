@@ -437,18 +437,11 @@ class MobiusContainer
      */
     virtual int getFocusedTrackIndex() = 0;
 
-    // temporary kludge for TrackSelect functions handled in the core that need
-    // to pass the new focused track back to the view since State doesn't have it
-    virtual void setFocusedTrack(int index) = 0;
-
     virtual void writeDump(juce::String file, juce::String content) = 0;
 
     // now needed for SyncMaster/MidiRealizer, need to work on the
     // proper abstraction here
     virtual class MidiManager* getMidiManager() = 0;
-
-    // another weird hole for MidiRealizer, compare with MobiusListener::mobiusAlert and combine
-    virtual void addAlert(juce::String msg) = 0;
 
     // only for SyncMaster/HostAnalyzer
     virtual juce::AudioProcessor* getAudioProcessor() = 0;
@@ -550,6 +543,27 @@ class MobiusListener {
      * A SystemState refresh has been completed.
      */
     virtual void mobiusStateRefreshed(class SystemState* state) = 0;
+
+    /**
+     * The engine would like to change the focused track.
+     * This happens after processing a NextTrack/PrevTrack/SelectTrack
+     * function.  "Focus" isn't strictly a view concept because of
+     * the old EmptyTrackAction parameter supported by audio tracks.
+     * The track change functions need to be sent to the core, and
+     * the result of that sent back to the UI so the view can be adjusted
+     * to reflect the selection.
+     *
+     * It's an awkward handoff, and means the UI will lag a bit when
+     * you use track selection arrows, but the alternative danger is that
+     * the UI does not accurately reflect what the engine thinks.
+     */
+    virtual void mobiusSetFocusedTrack(int index) = 0;
+
+    /**
+     * The engine has performed a GlobalReset.
+     * The UI typically wants to adjust the track focus.
+     */
+    virtual void mobiusGlobalReset() = 0;
 
     //////////////////////////////////////////////////////////////////////
     //

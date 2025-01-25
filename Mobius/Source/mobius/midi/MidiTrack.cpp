@@ -791,7 +791,7 @@ void MidiTrack::refreshFocusedState(FocusedTrackState* state)
 
 void MidiTrack::refreshState(TrackState* state)
 {
-    state->midi = true;
+    state->type = Session::TypeMidi;
     state->loopCount = loopCount;
     state->activeLoop = loopIndex;
 

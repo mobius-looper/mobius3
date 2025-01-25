@@ -215,7 +215,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void doAction(class UIAction*) override;
     void alert(juce::String message);
     void alert(juce::StringArray& messages);
-    void addAlert(juce::String message) override;
     void message(juce::String message);
     
     // find the value of a parameter or variable
@@ -267,7 +266,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class MslEnvironment* getMslEnvironment() override;
     void writeDump(juce::String file, juce::String content) override;
     int getFocusedTrackIndex() override;
-    void setFocusedTrack(int index) override;
     
     // MobiusListener
 	void mobiusTimeBoundary() override;
@@ -281,6 +279,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void mobiusSaveCapture(Audio* content, juce::String fileName) override;
     void mobiusActivateBindings(juce::String name) override;
     void mobiusStateRefreshed(class SystemState* state) override;
+    void mobiusSetFocusedTrack(int index) override;
+    void mobiusGlobalReset() override;
     
     //
     // MslContext
@@ -493,6 +493,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // Listener notification
     void notifyAlertListeners(juce::String msg);
+    void addAlert(juce::String message);
 
     // msl support
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);

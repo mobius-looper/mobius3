@@ -59,7 +59,6 @@ void SyncMaster::initialize(MobiusKernel* k, TrackManager* tm)
 {
     kernel = k;
     trackManager = tm;
-    // need for alerts, lame
     container = kernel->getContainer();
 
     // these are now dynamically allocated to reduce header file dependencies
@@ -925,7 +924,7 @@ int SyncMaster::getMilliseconds()
  */
 void SyncMaster::sendAlert(juce::String msg)
 {
-    container->addAlert(msg);
+    kernel->sendAlert(msg);
 }
 
 /**

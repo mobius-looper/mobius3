@@ -104,16 +104,16 @@ void MobiusViewer::initialize(MobiusView* view)
 {
     Session* session = provider->getSession();
 
-    view->audioTracks = session->getAudioTracks();
-    if (view->audioTracks == 0) {
+    view->xaudioTracks = session->getAudioTracks();
+    if (view->xaudioTracks == 0) {
         // crashy if we don't have at least one, force it
         // !! why  fix this
         Trace(1, "MobiusViewer: Forcing a single audio track, why?");
-        view->audioTracks = 1;
+        view->xaudioTracks = 1;
     }
 
-    view->midiTracks = session->getMidiTracks();
-    view->totalTracks = view->audioTracks + view->midiTracks;
+    view->xmidiTracks = session->getMidiTracks();
+    view->totalTracks = view->xaudioTracks + view->xmidiTracks;
 
     // flesh these out ahead of time, they can grow if configuration is changed
     // but start with enough for the current session
@@ -146,17 +146,17 @@ void MobiusViewer::configure(MobiusView* view)
 {
     Session* session = provider->getSession();
     
-    if (view->audioTracks != session->getAudioTracks()) {
+    if (view->xaudioTracks != session->getAudioTracks()) {
         Trace(1, "MobiusViewer: Audio track counts changed");
     }
-    view->audioTracks = session->getAudioTracks();
-    if (view->audioTracks == 0) {
+    view->xaudioTracks = session->getAudioTracks();
+    if (view->xaudioTracks == 0) {
         // crashy if we don't have at least one, force it
-        view->audioTracks = 1;
+        view->xaudioTracks = 1;
     }
 
-    view->midiTracks = session->getMidiTracks();
-    view->totalTracks = view->audioTracks + view->midiTracks;
+    view->xmidiTracks = session->getMidiTracks();
+    view->totalTracks = view->xaudioTracks + view->xmidiTracks;
 
     // grow this when necessary, don't bother with shrinking it
     for (int i = view->tracks.size() ; i < view->totalTracks ; i++) {
@@ -184,9 +184,9 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
 {
     OldMobiusState* state = sysstate->oldState;
     
-    if (state != nullptr && state->trackCount != view->audioTracks) {
+    if (state != nullptr && state->trackCount != view->xaudioTracks) {
         Trace(1, "MobiusViewer: Adjusting audio tracks to %d", state->trackCount);
-        view->audioTracks = state->trackCount;
+        view->xaudioTracks = state->trackCount;
     }
     
     // Counter needs this
@@ -308,23 +308,17 @@ void MobiusViewer::refreshAudioTracks(OldMobiusState* state, MobiusView* view)
         // of audio and MIDI.  OldMobiusState only contains audio.  Have to search
         // for the target view
         MobiusViewTrack* tview = nullptr;
-        while (nextViewTrack < view->tracks.size()) {
+        while (tview == nullptr && nextViewTrack < view->tracks.size()) {
             MobiusViewTrack* maybe = view->tracks[nextViewTrack];
-            if (maybe->midi)
-              nextViewTrack++;
-            else {
-                tview = maybe;
-                break;
-            }
+            if (maybe->type == Session::TypeAudio)
+              tview = maybe;
+            nextViewTrack++;
         }
 
         if (tview == nullptr) {
             Trace(1, "MobiusViewer: Ran out of view tracks looking for audio view");
         }
         else {
-            // clear this incase it was midi in a past life
-            tview->midi = false;
-
             // only audio tracks have the concept of an active track
             // this is NOT the same as the view's focused track
             // this is used to draw the "ghost" border around audio tracks if focus
@@ -1005,18 +999,18 @@ void MobiusViewer::refreshAllTracks(SystemState* state, MobiusView* view)
 {
     // state changes along with the Session, but the view can lag
     // if things got bigger, grow
-    if (view->midiTracks != state->midiTracks) {
+    if (view->xmidiTracks != state->midiTracks) {
         Trace(2, "MobiusViewer: Adjusting MIDI track view to %d", state->midiTracks);
-        view->midiTracks = state->midiTracks;
+        view->xmidiTracks = state->midiTracks;
     }
 
-    if (view->audioTracks != state->audioTracks) {
+    if (view->xaudioTracks != state->audioTracks) {
         Trace(2, "MobiusViewer: Adjusting audio tracks to %d", state->audioTracks);
-        view->audioTracks = state->audioTracks;
+        view->xaudioTracks = state->audioTracks;
     }
     
     // add new ones
-    int required = view->audioTracks + view->midiTracks;
+    int required = view->xaudioTracks + view->xmidiTracks;
     while (required > view->tracks.size()) {
         MobiusViewTrack *vt = new MobiusViewTrack();
         vt->index = view->tracks.size();
@@ -1075,75 +1069,12 @@ void MobiusViewer::refreshAllTracks(SystemState* state, MobiusView* view)
 }
 
 /**
- * This currently refreshes only the state for MIDI tracks, but the model
- * in both the SystemState and MobiusView is generic and will eventually
- * be used for all track types.
- *
- * The SystemState will be fleshed out with a TrackState for all tracks, but
- * only the MIDI tracks will be filled.  Tracks are identified by internal
- * number.  
- */
-#if 0
-void MobiusViewer::refreshMidiTracks(SystemState* state, MobiusView* view)
-{
-    // state changes along with the Session, but the view can lag
-    // if things got bigger, grow
-    if (view->midiTracks != state->midiTracks) {
-        Trace(2, "MobiusViewer: Adjusting MIDI track view to %d", state->midiTracks);
-        view->midiTracks = state->midiTracks;
-    }
-
-    // add new ones
-    int required = view->audioTracks + view->midiTracks;
-    while (required > view->tracks.size()) {
-        MobiusViewTrack *vt = new MobiusViewTrack();
-        vt->index = view->tracks.size();
-        view->tracks.add(vt);
-    }
-
-    // jump to the MIDI tracks
-    for (int i = 0 ; i < state->midiTracks ; i++) {
-        
-        int trackIndex = view->audioTracks + i;
-
-        // sanity check before we start indexing
-        // neither of these should happen
-        if (trackIndex >= state->tracks.size()) {
-            Trace(1, "MobiusViewer: Track index overflow");
-        }
-        else if (trackIndex >= view->tracks.size()) {
-            Trace(1, "MobiusViewer: Track index overflow");
-        }
-        else {
-            TrackState* tstate = state->tracks[trackIndex];
-            MobiusViewTrack* tview = view->tracks[trackIndex];
-
-            refreshTrack(state, tstate, tview);
-        }
-    }
-
-    if (view->focusedTrack > 0) {
-        MobiusViewTrack* tview = view->tracks[view->focusedTrack];
-        if (tview == nullptr) {
-            Trace(1, "MobiusViewer: Track index overflow");
-        }
-        else {
-            FocusedTrackState* tstate = &(state->focusedState);
-            refreshRegions(tstate, tview);
-            refreshEvents(tstate, tview);
-            refreshLayers(tstate, tview);
-        }
-    }
-}
-#endif
-
-/**
  * Refresh a track view from the new TrackState model.
  */ 
 void MobiusViewer::refreshTrack(SystemState* state, TrackState* tstate,
                                 MobiusView* mview, MobiusViewTrack* tview)
 {
-    tview->midi = tstate->midi;
+    tview->type = tstate->type;
     tview->active = tstate->active;
     
     tview->loopCount = tstate->loopCount;

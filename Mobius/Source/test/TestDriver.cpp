@@ -666,6 +666,15 @@ void TestDriver::mobiusStateRefreshed(class SystemState* state)
     (void)state;
 }
 
+void TestDriver::mobiusSetFocusedTrack(int index)
+{
+    (void)index;
+}
+
+void TestDriver::mobiusGlobalReset()
+{
+}
+
 void TestDriver::mobiusTestStart(juce::String name)
 {
 }

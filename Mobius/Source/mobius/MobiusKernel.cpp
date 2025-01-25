@@ -76,6 +76,11 @@ MobiusKernel::MobiusKernel(MobiusShell* argShell, KernelCommunicator* comm)
     Mobius::initStaticObjects();
 }
 
+void MobiusKernel::setListener(MobiusListener* l)
+{
+    listener = l;
+}
+
 void MobiusKernel::setTestMode(bool b)
 {
     testMode = b;
@@ -216,13 +221,12 @@ void MobiusKernel::dump(StructureDumper& d)
 }
 
 /**
- * Kludge for SyncMaster/MidiRealizer
- * MidiRealizer wants to call Supervisor::addAlert to post pending alert messages
- * MobiusListener::mobiusAlert doesn't do that, why??
+ * SyncMaster/MidiRealizer to forward alert messages to the Supervisor.
  */
 void MobiusKernel::sendAlert(juce::String msg)
 {
-    container->addAlert(msg);
+    if (listener != nullptr)
+      listener->mobiusAlert(msg);
 }
 
 bool MobiusKernel::isGlobalReset()
@@ -263,9 +267,8 @@ void MobiusKernel::checkStateRefresh()
 
         stateToRefresh = nullptr;
         
-        MobiusListener* l = shell->getListener();
-        if (l != nullptr)
-          l->mobiusStateRefreshed(stateToRefresh);
+        if (listener != nullptr)
+          listener->mobiusStateRefreshed(stateToRefresh);
     }
 }
 
@@ -1416,9 +1419,8 @@ long MobiusKernel::getLastSampleFrames()
  */
 void MobiusKernel::coreTimeBoundary()
 {
-    MobiusListener* l = shell->getListener();
-    if (l != nullptr)
-      l->mobiusTimeBoundary();
+    if (listener != nullptr)
+      listener->mobiusTimeBoundary();
 }
 
 //////////////////////////////////////////////////////////////////////

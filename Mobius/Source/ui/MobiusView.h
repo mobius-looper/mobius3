@@ -28,6 +28,7 @@
 
 #include "../model/SyncState.h"
 #include "../model/TrackState.h"
+#include "../model/Session.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -125,11 +126,7 @@ class MobiusViewTrack {
     juce::String name;
     bool refreshName = false;
     
-    /**
-     * True if this is a midi track.  Could evolve into a more
-     * general type enumeration.
-     */
-    bool midi = false;
+    Session::TrackType type = Session::TypeAudio;
 
     /**
      * True if this is considered the active track of this type.
@@ -380,9 +377,10 @@ class MobiusView
     juce::OwnedArray<MobiusViewTrack> tracks;
     MobiusViewTrack* getTrack(int index);
 
-    int audioTracks = 0;
-    //int activeAudioTrack = 0;
-    int midiTracks = 0;
+    // need to stop using these, it's almost always for the wrong reasons
+    int xaudioTracks = 0;
+    int xmidiTracks = 0;
+    
     int totalTracks = 0;
     int focusedTrack = 0;
     int lastFocusedTrack = 0;

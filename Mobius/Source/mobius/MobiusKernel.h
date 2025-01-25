@@ -55,6 +55,18 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
 
     void shutdown();
 
+
+    /**
+     * Pass the MobiusListener from the shell to the kernel.
+     * This is what needs to be used for push requests from the engine.
+     * Continuing to dislike the Container/Listener distinction, but in general
+     * Container is read-only and Listener is write-only.
+     */
+    void setListener(class MobiusListener* l);
+    class MobiusListener* getListener() {
+        return listener;
+    }
+        
     /**
      * Special mode enabling direct shell/kernel communication.
      */
@@ -245,6 +257,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
 
     // stuff we are either passed or pull from the shell
     class MobiusShell* shell = nullptr;
+    class MobiusListener* listener = nullptr;
     class KernelCommunicator* communicator = nullptr;
     class MobiusContainer* container = nullptr;
     class MobiusConfig* configuration = nullptr;

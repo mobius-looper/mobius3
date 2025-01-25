@@ -159,6 +159,7 @@ MobiusShell::~MobiusShell()
 void MobiusShell::setListener(MobiusListener* l)
 {
     listener = l;
+    kernel.setListener(l);
 }
 
 void MobiusShell::setMidiListener(MobiusMidiListener* l)

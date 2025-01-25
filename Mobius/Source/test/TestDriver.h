@@ -59,6 +59,8 @@ class TestDriver : public MobiusListener, public MobiusAudioListener, public Mob
     Audio* mobiusLoadAudio(juce::String) override;
     void mobiusScriptFinished(int requestId) override;
     void mobiusStateRefreshed(class SystemState* state) override;
+    void mobiusSetFocusedTrack(int index) override;
+    void mobiusGlobalReset() override;
 
     // MobiusAudioListener
     void processAudioStream(class MobiusAudioStream* stream) override;

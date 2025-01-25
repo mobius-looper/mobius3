@@ -13,6 +13,7 @@
 #include "../sync/SyncConstants.h"
 #include "SyncState.h"
 #include "SymbolId.h"
+#include "Session.h"
 
 class TrackState
 {
@@ -204,7 +205,7 @@ class TrackState
 
     // flag indiciating this is a midi track
     // should be a more general track type enumeration
-    bool midi = false;
+    Session::TrackType type = Session::TypeAudio;
 
     // true if this track is considered "active" for this type
     // this is currently only relevant for audio tracks
