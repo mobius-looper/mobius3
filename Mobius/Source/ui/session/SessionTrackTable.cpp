@@ -71,13 +71,6 @@ void SessionTrackTable::initialize(Provider* p)
     TypicalTable::initialize();
 }
 
-/**
- * The order of tracks in the table will follow the internal track numbers.
- * It would be better to follow the view order once that becomes possible.
- *
- * The session must be normalized at this point.
- *
- */
 void SessionTrackTable::load(Provider* p, Session* s)
 {
     (void)p;
@@ -89,15 +82,10 @@ void SessionTrackTable::reload()
 {
     tracks.clear();
 
-    // although the session is normalized to have the correct number
-    // of Session::Track objects they may appear in random order.
-    
     int total = session->getTrackCount();
     for (int i = 0 ; i < total ; i++) {
-        // look up by internal number for ordering
-        int number = i + 1;
-
-        Session::Track* t = session->getTrackByNumber(number);
+        int number = i+1;
+        Session::Track* t = session->getTrackByIndex(i);
         
         juce::String name = juce::String(number) + ":";
         if (t->type == Session::TypeMidi)
@@ -129,10 +117,14 @@ void SessionTrackTable::reload()
 void SessionTrackTable::clear()
 {
     Trace(1, "SessionTrackTable::clear Who is calling this?");
-    tracks.clear();
-    updateContent();
+    //tracks.clear();
+    //updateContent();
 }
 
+/**
+ * This made more sense when session tracks were in random order
+ * but now the number is just 1+ row
+ */
 int SessionTrackTable::getTrackNumber(int row)
 {
     int number = 0;

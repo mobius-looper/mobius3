@@ -25,6 +25,8 @@ Session::Session(Session* src)
 
     // source tracks should already have ids but make sure
     assignIds();
+    // numbers should also match
+    renumber();
 }
 
 /**
@@ -44,22 +46,11 @@ void Session::assignIds()
     }
 }
 
-/**
- * It's a collosal mess trying to not know internal track numbers in the UI.
- * The algorithm used here MUST match what is being enforced by TrackManager
- * or it will whine.
- */
 void Session::renumber()
 {
     int number = 1;
-    for (auto track : tracks) {
-        if (track->type == TypeAudio)
-          track->number = number++;
-    }
-    for (auto track : tracks) {
-        if (track->type == TypeMidi)
-          track->number = number++;
-    }
+    for (auto track : tracks)
+      track->number = number++;
 }
 
 /**
@@ -67,6 +58,8 @@ void Session::renumber()
  * This is mostly used in the Supervisor/Shell session to watch for changes
  * during upgrade, but since that object is copied and sent to the Kernel, we won't
  * know if the Kernel made any changes on shutdown.  Need more here.
+ *
+ * ?? where is this used
  */
 void Session::setModified(bool b)
 {
@@ -98,34 +91,11 @@ void Session::setLocation(juce::String s)
     location = s;
 }
 
-
 //////////////////////////////////////////////////////////////////////
 //
 // Track Management
 //
 //////////////////////////////////////////////////////////////////////
-
-void Session::clearTracks(TrackType type)
-{
-    int index = 0;
-    while (index < tracks.size()) {
-        Track* t = tracks[index];
-        if (t->type == type) {
-            (void)tracks.remove(index, true);
-        }
-        else
-          index++;
-    }
-}
-
-/**
- * Sensitive surgery only for use by SessionClerk during migration
- */
-void Session::add(Track* t)
-{
-    if (t != nullptr)
-      tracks.add(t);
-}
 
 int Session::getTrackCount()
 {
@@ -140,6 +110,17 @@ int Session::getAudioTracks()
 int Session::getMidiTracks()
 {
     return countTracks(TypeMidi);
+}
+
+int Session::countTracks(TrackType type)
+{
+    int count = 0;
+    for (auto track : tracks) {
+        if (track->type == type) {
+            count++;
+        }
+    }
+    return count;
 }
 
 Session::Track* Session::getTrackByIndex(int index)
@@ -177,8 +158,10 @@ Session::Track* Session::getTrackByNumber(int number)
 }
 
 /**
- * This is intended for ModelTransformer when merging sessions.
- * You normally would only reference tracks by number.
+ * This is intended for ModelTransformer when merging old
+ * Setups from MobiusConfig into a Session.  Each SetupTrack
+ * ia paired with a Session::Track by it's position within the
+ * set of TypeAudio tracks.
  */
 Session::Track* Session::getTrackByType(TrackType type, int index)
 {
@@ -197,23 +180,20 @@ Session::Track* Session::getTrackByType(TrackType type, int index)
     return found;
 }
 
-int Session::countTracks(TrackType type)
+/**
+ * Used for use by SessionClerk during migration
+ */
+void Session::add(Track* t)
 {
-    int count = 0;
-    for (auto track : tracks) {
-        if (track->type == type) {
-            count++;
-        }
-    }
-    return count;
+    if (t != nullptr)
+      tracks.add(t);
 }
 
 /**
  * Reconcile the number of tracks of a given type.
- * For audio tracks this currently comes from MobiusConfig for
- * MidiTracks this comes from the Session.
- *
- * Note that this does not number them.
+ * This is used in the SessionEditor when making bulk changes
+ * to track counts, and by ScriptClerk/ModelTransformer during
+ * the initial transition from Setups to Sessions.
  */
 void Session::reconcileTrackCount(TrackType type, int required)
 {
@@ -277,6 +257,21 @@ void Session::deleteByNumber(int number)
 //
 //////////////////////////////////////////////////////////////////////
 
+#if 0
+void Session::clearTracks(TrackType type)
+{
+    int index = 0;
+    while (index < tracks.size()) {
+        Track* t = tracks[index];
+        if (t->type == type) {
+            (void)tracks.remove(index, true);
+        }
+        else
+          index++;
+    }
+}
+#endif
+
 /**
  * Kludge for MidiTrackEditor
  *
@@ -286,7 +281,7 @@ void Session::deleteByNumber(int number)
  * Will go away once MidiTrackEditor can handle dynamic track add/remove
  * rather than being fixed at 8 tracks.
  */
-// OBSOLETE: make this go away?
+#if 0
 Session::Track* Session::ensureTrack(TrackType type, int index)
 {
     Track* found = getTrackByType(type, index);
@@ -302,11 +297,13 @@ Session::Track* Session::ensureTrack(TrackType type, int index)
     }
     return found;
 }
+#endif
 
 /**
  * Move the tracks from one session to another.
  * Used by MidiTrackEditor
  */
+#if 0
 void Session::replaceMidiTracks(Session* src)
 {
     clearTracks(TypeMidi);
@@ -329,10 +326,11 @@ void Session::replaceMidiTracks(Session* src)
     // the Track array may be sparse or have extras
     midiTracks = src->midiTracks;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
-// Parameter Accessors
+// Global Parameters
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -482,6 +480,10 @@ void Session::parseXml(juce::XmlElement* root, juce::StringArray& errors)
 {
     name = root->getStringAttribute("name");
     location = root->getStringAttribute("location");
+
+    // These are temporary and only import during the early transition
+    // from Setups to Sessions. Once that is complete these are not public
+    // and can be removed.
     audioTracks = root->getIntAttribute("audioTracks");
     midiTracks = root->getIntAttribute("midiTracks");
         

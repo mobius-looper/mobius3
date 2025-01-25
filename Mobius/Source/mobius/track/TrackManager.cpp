@@ -26,7 +26,6 @@
 #include "../midi/MidiTrack.h"
 
 #include "../core/Mobius.h"
-//#include "../core/MobiusTrackWrapper.h"
 
 #include "TrackManager.h"
 
@@ -52,10 +51,11 @@ TrackManager::~TrackManager()
  * Startup initialization.  Session here is normally the default
  * session, a different one may come down later via loadSession()
  */
-void TrackManager::initialize(MobiusConfig* config, Session* session, Mobius* core)
+void TrackManager::initialize(MobiusConfig* config, Session* ses, Mobius* core)
 {
     // only thing this is used for is the group list
     configuration = config;
+    session = ses;
     audioEngine = core;
 
     // this isn't owned by MidiPools, but it's convenient to bundle
@@ -68,15 +68,7 @@ void TrackManager::initialize(MobiusConfig* config, Session* session, Mobius* co
     longWatcher.initialize(session, kernel->getContainer()->getSampleRate());
     longWatcher.setListener(this);
 
-    // MobiusConfig is now synthesized from the Session so these must
-    // always match
-    audioTrackCount = session->getAudioTracks();
-    int actual = core->getTrackCount();
-    if (audioTrackCount != actual) {
-        Trace(1, "TrackManager: Session audio track count didn't match core");
-    }
-
-    loadSession(session);
+    loadSession(ses);
 }
 
 /**
@@ -101,8 +93,9 @@ void TrackManager::configure(MobiusConfig* config)
  * which must have already been processed by the core.
  *
  */
-void TrackManager::loadSession(Session* session) 
+void TrackManager::loadSession(Session* s) 
 {
+    session = s;
     longWatcher.initialize(session, kernel->getContainer()->getSampleRate());
 
     // allow this to be disabled during debugging
@@ -134,58 +127,22 @@ void TrackManager::loadSession(Session* session)
  *
  * The Session must have normalized track numbers.  Session Tracks can be in any order.
  */
-void TrackManager::configureTracks(Session* session)
+void TrackManager::configureTracks(Session* ses)
 {
-    // try to get rid of these
-    audioTrackCount = session->getAudioTracks();
-    if (audioTrackCount != audioEngine->getTrackCount()) {
-        // we've already verified this a few times, but what's one more
-        Trace(1, "TrackManager: Mismatched audio track count %d/%d",
-              audioTrackCount, audioEngine->getTrackCount());
-        // the Session wins no matter what since so much is built from it
-        // if there are more than enough core tracks, then some will be unused
-        // if there are too few, then some actions will go nowhere
-    }
-    midiTrackCount = session->getMidiTracks();
+    (void)ses;  // already saved this in a member
     
     // transfer the current track list to a holding area
-    // discard old MobiusTrackWrappers since the referenced Track may no longer be valid
-    // and build fresh ones
-    // !! this needs to be better coordinated with the engine now that it supports
-    // dynamic tracks, we need to be in control and tell it which tracks to delete
-    // and which ones to add
-    
     juce::Array<LogicalTrack*> oldTracks;
     while (tracks.size() > 0) {
         LogicalTrack* lt = tracks.removeAndReturn(0);
-        if (lt->getType() == Session::TypeAudio)
-          delete lt;
-        else
-          oldTracks.add(lt);
+        oldTracks.add(lt);
     }
 
-    // now put them back, for now Mobius tracks must always goes first
-    // work on ordering flexibility later, Session normalization must have ensured that
-    // note that session tracks can be in any order to have to ask for them by number
-    int audioTracksAdded = 0;
-    int midiTracksAdded = 0;
+    // now put them back or create new ones
     for (int i = 0 ; i < session->getTrackCount() ; i++) {
-        int number = i+1;
-        Session::Track* def = session->getTrackByNumber(number);
-
-        if (def == nullptr) {
-            // this probably fatal but try to move on so we don't NPE, this will leak
-            Trace(1, "TrackManager: Missing Track definition for Audio %d", number);
-            def = new Session::Track();
-            def->number = number;
-            def->type = Session::TypeAudio;
-        }
-        
-        if (def->type == Session::TypeAudio && midiTracksAdded > 0)
-          Trace(1, "TrackManager: Audio tracks comming in out of order, you will lose");
+        Session::Track* def = session->getTrackByIndex(i);
 
         // see if we had one with this id before
-        // this will only happen for MIDI tracks
         LogicalTrack* lt = nullptr;
         int index = 0;
         for (auto old : oldTracks) {
@@ -203,32 +160,40 @@ void TrackManager::configureTracks(Session* session)
 
         // this remembers it but does not act on it
         lt->setSession(def);
-
-        if (def->type == Session::TypeAudio)
-          audioTracksAdded++;
-        else
-          midiTracksAdded++;
     }
-
+    
+    configureMobiusTracks();
+        
     // tell the tracks to process the session AFTER the track array has been reorganized
     // so they can do things that may check relationships with other tracks
+    // this is where MidiTracks or other implementations happen
     for (auto track : tracks) {
         track->loadSession();
     }
-
-    // one final validation
-    if (audioTracksAdded != session->getAudioTracks())
-      Trace(1, "TrackManager: Mismatched audio track count after session load");
-    if (midiTracksAdded != session->getMidiTracks())
-      Trace(1, "TrackManager: Mismatched midi track count after session load");
-      
-    // it is okay to remove MIDI tracks but we are NOT expecting
-    // Mobius tracks to be downsized yet
+    
     while (oldTracks.size() > 0) {
         LogicalTrack* lt = oldTracks.removeAndReturn(0);
         Trace(2, "TrackManager: Removing unused track");
         delete lt;
     }
+}
+
+/**
+ * After the main LogicalTrack list is fleshed out, extract just the MobiusLooperTracks
+ * to be sent over to Mobius for track configuration.
+ */
+void TrackManager::configureMobiusTracks()
+{
+    juce::Array<MobiusLooperTrack*> mtracks;
+
+    for (auto ltrack : tracks) {
+        MobiusLooperTrack* mlt = ltrack->getMobiusTrack();
+        if (mlt != nullptr)
+          mtracks.add(mlt);
+    }
+
+    // pass these over
+    audioEngine->configureTracks(mtracks);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -245,6 +210,11 @@ MidiPools* TrackManager::getPools()
 MobiusConfig* TrackManager::getConfiguration()
 {
     return configuration;
+}
+
+Session* TrackManager::getSession()
+{
+    return session;
 }
 
 MobiusContainer* TrackManager::getContainer()
@@ -270,16 +240,6 @@ MslEnvironment* TrackManager::getMsl()
 Mobius* TrackManager::getAudioEngine()
 {
     return audioEngine;
-}
-
-int TrackManager::getAudioTrackCount()
-{
-    return audioTrackCount;
-}
-
-int TrackManager::getMidiTrackCount()
-{
-    return midiTrackCount;
 }
 
 // this needs to be implemented here rather than going back to the container
@@ -642,13 +602,22 @@ void TrackManager::doScript(UIAction* src)
               sym->getName());
     }
     else if (sym->script->coreScript) {
-        // it's an old one
-        int track = src->getScopeTrack();
-        if (track > audioTrackCount) {
-            Trace(1, "TrackManager: MOS scripts can't be sent to MIDI tracks");
+        // it's an old one, only send this to core tracks
+        // we won't be replicating these for focus or groups, if the scope track is out
+        // of range ignore, if the scope is not specified, send it to the first core track
+        // and let Mobius sort out where it goes
+        int number = src->getScopeTrack();
+        if (number == 0) {
+            audioEngine->doAction(src);
         }
         else {
-            audioEngine->doAction(src);
+            LogicalTrack* lt = getLogicalTrack(number);
+            if (lt != nullptr) {
+                if (lt->getType() != Session::TypeAudio)
+                  Trace(1, "TrackManager: MOS scripts can't be sent to MIDI tracks");
+                else
+                  audioEngine->doAction(src);
+            }
         }
     }
     else if (sym->script->mslLinkage != nullptr) {
@@ -874,30 +843,35 @@ void TrackManager::doGlobal(UIAction* src)
  * maintain it in the view and requiring us to notify it when it changes out
  * from under the view.
  *
- * todo: if you ever let LogicalTracks to reorder audio tracks then this will
- * never be able to send NextTrack/PrevTrack to the core, it must always
- * use SelectTrack.
+ * Since audio and midi tracks can be freely mixed, this can never send the
+ * old NextTrack/PrevTrack functions to the core, it must always use
+ * SelectTrack.  If NextTrack/PrevTrack are used in MOS scripts it will
+ * only move among audio tracks, and look weird in the UI.
+ *
+ * NOTE: This only matters for core audio tracks where Mobius has the concept
+ * of the "active track"  It actually isn't that important that we set this
+ * since UIActions will always be qualified with a track scope when they are sent
+ * to the core.  But it can matter if they are using MOS scripts and expect them
+ * to run in the focused track.  It can also trigger the EmptyTrackAction.
  */
 void TrackManager::doTrackSelectAction(UIAction* a)
 {
     Symbol* s = a->symbol;
     int prevFocused = getFocusedTrackIndex();
     int newFocused = prevFocused;
-    bool relative = false;
+    int max = session->getTrackCount();
     
     if (s->id == FuncNextTrack) {
         int next = prevFocused + 1;
-        if (next >= (audioTrackCount + midiTrackCount))
+        if (next >= max)
           next = 0;
         newFocused = next;
-        relative = true;
     }
     else if (s->id == FuncPrevTrack) {
         int next = prevFocused - 1;
         if (next < 0)
-          next = (audioTrackCount + midiTrackCount) - 1;
+          next = max - 1;
         newFocused = next;
-        relative = true;
     }
     else if (s->id == FuncSelectTrack) {
         // argument is 1 based
@@ -916,30 +890,35 @@ void TrackManager::doTrackSelectAction(UIAction* a)
     if (newFocused == prevFocused) {
         // don't bother informing Mobius if nothing needs changing
     }
-    else if (newFocused < audioTrackCount) {
-        // now it gets weirder, if we were previously on a midi track
-        // and move back in to an audio track with next/prev, we don't actually
-        // want to send next/prev to the core, it becomes a SelectTrack
-        // of the desired index, either the last or the first
-        // if you don't do this, it skips an extra track
-        // todo: should we just always do this conversion?  the active track may
-        // already be there but that can happen normally so it can't mess anything up
-        // to ask for it redundantly
-        // really need to remove the active track notion from Mobius
-        if (prevFocused >= audioTrackCount && relative) {
-            a->symbol = kernel->getContainer()->getSymbols()->find("SelectTrack");
-            a->value = newFocused + 1;
-        }
-        
-        // so the Actionator doesn't complain about having to deal with unscoped
-        // actions, give this a specific track scope
-        // it shouldn't matter what it is since track selection is a global function
-        a->setScopeTrack(audioEngine->getActiveTrack() + 1);
-        
-        audioEngine->doAction(a);
-    }
     else {
-        // MIDI tracks don't have any special awaress of focus
+        // formerly only did this for audio tracks, but MIDI tracks
+        // should be allowed to have EmptyTrackAction even though they don't right now
+
+        LogicalTrack* lt = getLogicalTrack(newFocused);
+        if (lt == nullptr) {
+            Trace(1, "TrackManager: Select track out of wack");
+        }
+        else if (lt->getType() == Session::TypeAudio) {
+            a->symbol = kernel->getContainer()->getSymbols()->find("SelectTrack");
+
+            // NOTE: this is an example of an action VALUE needing to be transformed into
+            // a core track number, usually it is just the scope that is changed
+            // by MobiusLooperTrack.  This is NOT general, we happen to know that SelectTrack
+            // uses track numbers as arguments but there may be others
+            // perhaps it would be better to have SelectTrack use the scope without an argument
+            // and have that treated as self selection
+            a->value = lt->getEngineNumber();
+        
+            // so the Actionator doesn't complain about having to deal with unscoped
+            // actions, give this a specific track scope
+            // it shouldn't matter what it is since track selection is a global function
+            a->setScopeTrack(audioEngine->getActiveTrack() + 1);
+        
+            audioEngine->doAction(a);
+        }
+        else {
+            // why wouldn't MIDI tracks want this?
+        }
     }
 
     // until we have returning focus changes in the State, have to inform

@@ -170,14 +170,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     int mslGetFocusedScope() override;
     int mslGetSampleRate() override;
     
-    // things TrackManager needs
-    int getAudioTrackCount() {
-        return audioTracks;
-    }
-    int getMidiTrackCount() {
-        return midiTracks;
-    }
-    
     // used by the MidiOut function handler
     void midiSendSync(juce::MidiMessage& msg);
     void midiSendExport(juce::MidiMessage& msg);
@@ -273,11 +265,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     Notifier notifier;
     ScriptUtil scriptUtil;
     
-    // internal state
-
-    int audioTracks = 0;
-    int midiTracks = 0;
-
     // the stream we are currently processing in processAudioStream
     MobiusAudioStream* stream;
 

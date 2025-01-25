@@ -214,7 +214,7 @@ bool Synchronizer::isRecordStartSynchronized(Loop* l)
 {
     bool sync = false;
     Track* t = l->getTrack();
-    int number = t->getDisplayNumber();
+    int number = t->getLogicalNumber();
     SyncSource source = mSyncMaster->getEffectiveSource(number);
 
     sync = (source != SyncSourceNone && source != SyncSourceMaster);
@@ -633,7 +633,7 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
                   stopFrame += loop->getInputLatency();
 
                 // sync master may ask for rounding adjustments
-                int number = loop->getTrack()->getDisplayNumber();
+                int number = loop->getTrack()->getLogicalNumber();
                 int adjust = mSyncMaster->notifyTrackRecordEnding(number);
                 stopFrame += adjust;
                 
@@ -1295,7 +1295,7 @@ void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
     else if (type == CycleEvent) 
       pulseUnit = SyncUnitBar;
     
-    mSyncMaster->addLeaderPulse(t->getDisplayNumber(), pulseUnit, offset);
+    mSyncMaster->addLeaderPulse(t->getLogicalNumber(), pulseUnit, offset);
     
     // In all cases store the event type in the SyncState so we know
     // we reached an interesting boundary during this interrupt.  
@@ -1367,7 +1367,7 @@ void Synchronizer::startRecording(Loop* l)
         //if (src == SYNC_MIDI && !e->fields.sync.syncTrackerEvent)
         //startFrame += l->getInputLatency();
 
-        SyncSource source = mSyncMaster->getEffectiveSource(t->getDisplayNumber());
+        SyncSource source = mSyncMaster->getEffectiveSource(t->getLogicalNumber());
         if (source == SyncSourceMidi)
           startFrame += l->getInputLatency();
 
@@ -1658,7 +1658,7 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
  */
 void Synchronizer::loopRecordStart(Loop* l)
 {
-    mSyncMaster->notifyTrackRecord(l->getTrack()->getDisplayNumber());
+    mSyncMaster->notifyTrackRecord(l->getTrack()->getLogicalNumber());
 }
 
 /**
@@ -1701,7 +1701,7 @@ void Synchronizer::loopRecordStop(Loop* l, Event* stop)
 	Track* track = l->getTrack();
 
     // any track with content can become the track sync master
-    mSyncMaster->notifyTrackAvailable(track->getDisplayNumber());
+    mSyncMaster->notifyTrackAvailable(track->getLogicalNumber());
 
     // if we're here, we've stopped recording, let the MIDI track followers start
     // due to input latency, these will be a little late, so we might
@@ -1719,7 +1719,7 @@ void Synchronizer::loopRecordStop(Loop* l, Event* stop)
  */
 void Synchronizer::loopReset(Loop* loop)
 {
-    int number = loop->getTrack()->getDisplayNumber();
+    int number = loop->getTrack()->getLogicalNumber();
     mSyncMaster->notifyTrackReset(number);
 }
 
@@ -1762,7 +1762,7 @@ void Synchronizer::loopReset(Loop* loop)
  */
 void Synchronizer::loopResize(Loop* l, bool restart)
 {
-    int number = l->getTrack()->getDisplayNumber();
+    int number = l->getTrack()->getLogicalNumber();
     mSyncMaster->notifyTrackRestructure(number);
     if (restart)
       mSyncMaster->notifyTrackStart(number);
@@ -1773,7 +1773,7 @@ void Synchronizer::loopResize(Loop* l, bool restart)
  */
 void Synchronizer::loopSwitch(Loop* l, bool restart)
 {
-    int number = l->getTrack()->getDisplayNumber();
+    int number = l->getTrack()->getLogicalNumber();
     mSyncMaster->notifyTrackRestructure(number);
     if (restart)
       mSyncMaster->notifyTrackStart(number);
@@ -1786,7 +1786,7 @@ void Synchronizer::loopSwitch(Loop* l, bool restart)
  */
 void Synchronizer::loopSpeedShift(Loop* l)
 {
-    int number = l->getTrack()->getDisplayNumber();
+    int number = l->getTrack()->getLogicalNumber();
     mSyncMaster->notifyTrackSpeed(number);
 }
 
@@ -1809,7 +1809,7 @@ void Synchronizer::loopSpeedShift(Loop* l)
  */
 void Synchronizer::loopPause(Loop* l)
 {
-    int number = l->getTrack()->getDisplayNumber();
+    int number = l->getTrack()->getLogicalNumber();
     mSyncMaster->notifyTrackPause(number);
 }
 
@@ -1818,7 +1818,7 @@ void Synchronizer::loopPause(Loop* l)
  */
 void Synchronizer::loopResume(Loop* l)
 {
-    int number = l->getTrack()->getDisplayNumber();
+    int number = l->getTrack()->getLogicalNumber();
     mSyncMaster->notifyTrackResume(number);
 }
 
@@ -1832,7 +1832,7 @@ void Synchronizer::loopResume(Loop* l)
  */
 void Synchronizer::loopMute(Loop* l)
 {
-    int number = l->getTrack()->getDisplayNumber();
+    int number = l->getTrack()->getLogicalNumber();
     mSyncMaster->notifyTrackMute(number);
 }
 
@@ -1853,7 +1853,7 @@ void Synchronizer::loopMute(Loop* l)
  */
 void Synchronizer::loopRestart(Loop* l)
 {
-    int number = l->getTrack()->getDisplayNumber();
+    int number = l->getTrack()->getLogicalNumber();
     // this one used the weird "checkNear" flag that isn't
     // implemented by the SyncMaster interface, necessary?
     mSyncMaster->notifyTrackStart(number);
@@ -1871,7 +1871,7 @@ void Synchronizer::loopRestart(Loop* l)
  */
 void Synchronizer::loopMidiStart(Loop* l)
 {
-    int number = l->getTrack()->getDisplayNumber();
+    int number = l->getTrack()->getLogicalNumber();
     // this uses the "force" flag to bypass checking for manual
     // start mode since we're here after they asked to do it manually
     // this function really should be handled above Mobius?
@@ -1912,7 +1912,7 @@ void Synchronizer::loopMidiStop(Loop* l, bool force)
     // be an action handled by the Transport, not something that
     // makes it all the way down to core and back up
     (void)force;
-    mSyncMaster->notifyMidiStop(l->getTrack()->getDisplayNumber());
+    mSyncMaster->notifyMidiStop(l->getTrack()->getLogicalNumber());
 }
 
 /**
@@ -1925,7 +1925,7 @@ void Synchronizer::loopMidiStop(Loop* l, bool force)
 void Synchronizer::loopSetStartPoint(Loop* l, Event* e)
 {
     (void)e;
-    int number = l->getTrack()->getDisplayNumber();
+    int number = l->getTrack()->getLogicalNumber();
     // this isn't a Restructure, but it looks like the track
     // jumped to the start
     mSyncMaster->notifyTrackStart(number);
@@ -1961,7 +1961,7 @@ void Synchronizer::loadLoop(Loop* l)
         Track* track = l->getTrack();
 
         // tell SM that we have something and can be one of a master
-        mSyncMaster->notifyTrackRestructure(track->getDisplayNumber());
+        mSyncMaster->notifyTrackRestructure(track->getLogicalNumber());
     }
 }
 
@@ -2076,7 +2076,7 @@ void Synchronizer::loopLocalStartPoint(Loop* l)
 #if 0    
     Track* t = l->getTrack();
 
-	if (t->getDisplayNumber() == mSyncMaster->getTrackSyncMaster()) {
+	if (t->getLogicalNumber() == mSyncMaster->getTrackSyncMaster()) {
 
         Setup* setup = mMobius->getActiveSetup();
 		OutRealignMode mode = setup->getOutRealignMode();

@@ -54,6 +54,13 @@ class Mobius
     void initialize(class MobiusConfig* config);
 
     /**
+     * This is the new interface for configuring tracks.
+     * This is the only thing that should adjust the track array, initialize()
+     * and reconfigure() don't.
+     */
+    void configureTracks(juce::Array<class MobiusLooperTrack*>& trackdefs);
+
+    /**
      * Called by the Kernel after any change to the audio block size is made
      * so latencies can be cached.
      */
@@ -65,12 +72,6 @@ class Mobius
      * through whether Mobius can be in a suspended state without being destroyed.
      */
     void shutdown();
-
-    /**
-     * New for TrackManager
-     * Make something we can refer to each track as if it were independent.
-     */
-    //class MobiusTrackWrapper* getTrackWrapper(int index);
 
     /**
      * Called by Kernel after initialization and we've been running and

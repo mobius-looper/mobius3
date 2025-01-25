@@ -46,6 +46,7 @@
 #include "core/Mem.h"
 
 #include "track/TrackManager.h"
+#include "track/LogicalTrack.h"
 
 #include "MobiusKernel.h"
 
@@ -159,8 +160,6 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     // supposed to be the same now
     if (config->getCoreTracksDontUseThis() != ses->getAudioTracks())
       Trace(1, "MobiusKernel: Session audio tracks not right");
-    audioTracks = ses->getAudioTracks();
-    midiTracks = ses->getMidiTracks();
 
     mTracks.reset(new TrackManager(this));
     mTracks->initialize(configuration, ses, mCore);
@@ -402,14 +401,6 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     // should be together
     scriptUtil.configure(configuration, session);
 
-    // SyncMaster cares about the audio track count but only gets
-    // it through the session
-    // update: track counts don't come down this way any more
-    //session->audioTracks = configuration->getCoreTracks();
-    //syncMaster.loadSession(session);
-
-    // this would be the place where make changes for
-    // the new configuration, nothing right now
     // this is NOT where track configuration comes in
     if (mCore != nullptr)
       mCore->reconfigure(configuration);
@@ -542,14 +533,8 @@ juce::StringArray MobiusKernel::saveLoop(int trackNumber, int loopNumber, juce::
 {
     juce::StringArray errors;
     
-    if (trackNumber <= audioTracks) {
-        // todo: should make this work eventually, but currently only used by
-        // MIDI drag and drop
-        Trace(1, "MobiusKernel::saveLoop Saving audio loops not supported");
-    }
-    else {
-        errors = mTracks->saveLoop(trackNumber, loopNumber, file);
-    }
+    errors = mTracks->saveLoop(trackNumber, loopNumber, file);
+
     return errors;
 }
 
@@ -1272,15 +1257,18 @@ void MobiusKernel::doActionFromCore(UIAction* action)
  */
 void MobiusKernel::trackSelectFromCore(int number)
 {
-    if (number < audioTracks) {
-        // core should have handled this it's own self
-        Trace(1, "MobiusKernel::trackSelectFromCore Unexpected audio track number %d", number);
-    }
-    else {
-        UIAction* action = actionPool->newAction();
-        action->symbol = container->getSymbols()->getSymbol(FuncSelectTrack);
-        action->value = number;
-        mTracks->doAction(action);
+    LogicalTrack* lt = mTracks->getLogicalTrack(number);
+    if (lt != nullptr) {
+        if (lt->getType() == Session::TypeAudio) {
+            // core should have handled this it's own self
+            Trace(1, "MobiusKernel::trackSelectFromCore Unexpected audio track number %d", number);
+        }
+        else {
+            UIAction* action = actionPool->newAction();
+            action->symbol = container->getSymbols()->getSymbol(FuncSelectTrack);
+            action->value = number;
+            mTracks->doAction(action);
+        }
     }
 }
 

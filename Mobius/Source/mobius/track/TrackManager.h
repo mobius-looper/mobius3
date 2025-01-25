@@ -54,6 +54,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     // Services
 
     class MobiusConfig* getConfiguration();
+    class Session* getSession();
     class MidiPools* getPools();
     class SyncMaster* getSyncMaster();
     class SymbolTable* getSymbols();
@@ -144,13 +145,11 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     ScopeCache scopes;
     TrackMslHandler mslHandler;
     
+    class Session* session = nullptr;
     juce::OwnedArray<class LogicalTrack> tracks;
 
-    // assumes the LogicalTrack array is ordered, dislike
-    int audioTrackCount = 0;
-    int midiTrackCount = 0;
-
     void configureTracks(class Session* session);
+    void configureMobiusTracks();
     
     void sendActions(UIAction* actions, ActionResult& result);
     class UIAction* replicateAction(class UIAction* src);

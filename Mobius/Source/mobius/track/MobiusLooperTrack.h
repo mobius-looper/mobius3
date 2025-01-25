@@ -19,8 +19,15 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
 
     MobiusLooperTrack(class TrackManager* tm, class LogicalTrack*lt,
                       class Mobius* m, class Track* t);
+
+    MobiusLooperTrack(class TrackManager* tm, class LogicalTrack*lt);
+    
     ~MobiusLooperTrack();
 
+    class Track* getCoreTrack();
+    void setCoreTrack(class Mobius* m, class Track* t);
+    int getCoreTrackNumber();
+    
     //
     // BaseTrack
     //

@@ -5,15 +5,9 @@
  *
  * There is a default session, and any nymber of user defined sessions.
  *
- * The track list may be sparse for Mobius core tracks since they do not
- * yet configure themselves with Sessions and don't resize dynamically.
- * Also due to current core limitations all audio tracks must be numbered
- * first from 1 to N.
- *
- * The remaining tracks can be in any order and do not have numbers, numbers
- * are assigned dynamically at startup, in the order they appear in the Session
- * with numbers starting after the audio tracks.
- *
+ * The session defines the track order and the assignment of internal track
+ * numbers.  Tracks are numbered starting from 1 in the order they appear
+ * in the Session::Track list.
  */
 
 #pragma once
@@ -45,25 +39,18 @@ class Session
          * Tracks are assigned a unique transient identifier at startup
          * and this identifier will be retained as the session is edited.
          * It is used to correlate track definitions with their existing
-         * implementations as sessions are edited in the UI and passed down to the
-         * engine.  Ids are not stored, they should be considered random numbers
-         * or UUIDS and are not array indexes.   The id exists only within the Session object.
+         * uses as sessions are edited in the UI and passed down to the
+         * engine since tracks can be renumbered during session editing.
+         * Ids are not stored, they should be considered random numbers
+         * or UUIDS and are not array indexes.
          */
         int id = 0;
 
         /**
          * Tracks are assigned a unique internal reference number after it is loaded
-         * from the file system and as the session is modified at runtime.
-         *
-         * This serves as the canonical track identifier used within the engine and may
-         * be used as an array index.  This is the number given to track objects, and used
-         * in resolved action and query scopes.
-         *
-         * In current convention, old Mobius audio tracks are numbered from 1-N followed
-         * by MIDI tracks from N+1 to M, followed by other track types in ascending order.
-         *
-         * This number is currently visible to the user and is stored in Bindings, but this
-         * is temporary and needs to change.  Users should never need to be aware of these numbers.
+         * from the file system and as the session is modified at runtime.  This
+         * is always 1+ the index of the track in the session's track array.  It isn't
+         * necessary to store it in XML but is handy when viewing the file.
          *
          * All other forms of track identifier should be considered "names" or "tags" and are
          * completely user defined and stable.
@@ -94,35 +81,64 @@ class Session
 
     };
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // Session
+    ///////////////////////////////////////////////////////////////////////////////
+
+    juce::String getName();
+    void setName(juce::String s);
+
+    juce::String getLocation();
+    void setLocation(juce::String s);
+
+    void setModified(bool b);
+    bool isModified();
+
+    // temporary upgrade
+    int getOldMidiTrackCount() {
+        return midiTracks;
+    }
+    int getOldAudioTrackCount() {
+        return audioTracks;
+    }
+
+    void parseXml(juce::XmlElement* root, juce::StringArray& errors);
+    juce::String toXml();
+
+    void renumber();
+    
+    //////////////////////////////////////////////////////////////////////
+    // Tracks
+    //////////////////////////////////////////////////////////////////////
+    
     int getTrackCount();
     int getAudioTracks();
     int getMidiTracks();
 
-    // accessing tracks by index should only be used when you want to operate
-    // on all of them in bulk, it is not the same as getTrack(number)
     Track* getTrackByIndex(int index);
     Track* getTrackById(int id);
-
-    // look up a track by cannonical referenc number
     Track* getTrackByNumber(int number);
-
-    // force the number of audio tracks
-    void reconcileTrackCount(TrackType type, int required);
-
-    // find a track of a type
     Track* getTrackByType(TrackType type, int index);
+
+    // add or remove tracks of a given type in bulk
+    // when the number decreases, tracks that appear earlier
+    // in the list are retained
+    void reconcileTrackCount(TrackType type, int required);
 
     // for SessionClerk migration
     void add(Track* t);
+    // for SessionEditor
+    void deleteByNumber(int number);
 
     // temporary kludge for MidiTrackEditor, weed
-    Track* ensureTrack(TrackType type, int index);
-    void replaceMidiTracks(Session* src);
-    void clearTracks(TrackType type);
-
-    void deleteByNumber(int number);
+    //Track* ensureTrack(TrackType type, int index);
+    //void replaceMidiTracks(Session* src);
+    //void clearTracks(TrackType type);
     
-    // global parameters
+    //////////////////////////////////////////////////////////////////////
+    // Global Parameters
+    //////////////////////////////////////////////////////////////////////
+    
     ValueSet* getGlobals();
     ValueSet* ensureGlobals();
 
@@ -136,28 +152,6 @@ class Session
     void setInt(juce::String name, int value);
     void setBool(juce::String name, bool value);
     
-    void parseXml(juce::XmlElement* root, juce::StringArray& errors);
-    juce::String toXml();
-
-    void setModified(bool b);
-    bool isModified();
-
-    juce::String getName();
-    void setName(juce::String s);
-
-    juce::String getLocation();
-    void setLocation(juce::String s);
-
-    // temporary upgrade
-    int getOldMidiTrackCount() {
-        return midiTracks;
-    }
-    int getOldAudioTrackCount() {
-        return audioTracks;
-    }
-    
-    void renumber();
-    
   private:
 
     // !! make these go away
@@ -169,8 +163,8 @@ class Session
 
     juce::String name;
     juce::String location;
-
     bool modified = false;
+    
     juce::OwnedArray<Track> tracks;
     std::unique_ptr<ValueSet> globals;
 
@@ -204,6 +198,6 @@ class SessionMidiDevice
     juce::String output;
 };
 
-
-
-    
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

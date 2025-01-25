@@ -44,6 +44,7 @@ class LogicalTrack
     Session::TrackType getType();
     int getSessionId();
     int getNumber();
+    int getEngineNumber();
     
     void getTrackProperties(TrackProperties& props);
     int getGroup();
@@ -65,6 +66,7 @@ class LogicalTrack
 
     class MslTrack* getMslTrack();
     class MidiTrack* getMidiTrack();
+    class MobiusLooperTrack* getMobiusTrack();
 
     void syncPulse(class Pulse* p);
 
@@ -124,7 +126,6 @@ class LogicalTrack
     class TrackManager* manager = nullptr;
     class Session::Track* sessionTrack = nullptr;
     Session::TrackType trackType = Session::TypeAudio;
-    int engineNumber = 0;
 
     // the Session::Track is authoritative over this, but it is really
     // convenient in the debugger to have it here where you can see it
@@ -151,7 +152,7 @@ class LogicalTrack
 
     /**
      * The underlying track implementation, either a MidiTrack
-     * or a MobiusTrackWrapper.
+     * or a MobiusLooperTrack.
      */
     std::unique_ptr<class BaseTrack> track;
 

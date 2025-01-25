@@ -637,6 +637,7 @@
           <FILE id="feGMpx" name="BaseScheduler.cpp" compile="1" resource="0"
                 file="Source/mobius/track/BaseScheduler.cpp"/>
           <FILE id="D0C3IR" name="BaseScheduler.h" compile="0" resource="0" file="Source/mobius/track/BaseScheduler.h"/>
+          <FILE id="vZ5xWY" name="BaseTrack.cpp" compile="1" resource="0" file="Source/mobius/track/BaseTrack.cpp"/>
           <FILE id="MCUOmT" name="BaseTrack.h" compile="0" resource="0" file="Source/mobius/track/BaseTrack.h"/>
           <FILE id="vEVjGD" name="LogicalTrack.cpp" compile="1" resource="0"
                 file="Source/mobius/track/LogicalTrack.cpp"/>

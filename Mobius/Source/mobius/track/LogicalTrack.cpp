@@ -54,11 +54,18 @@ LogicalTrack::~LogicalTrack()
 
 /**
  * Assigning the session just happens during track organization
- * by TrackManager.  You do not ACT on it yet.
+ * by TrackManager.  You do not ACT on it yet.  This only happens
+ * when tracks are created.
  */
 void LogicalTrack::setSession(Session::Track* trackdef)
 {
     sessionTrack = trackdef;
+    // do set these so we can reason about them before creating
+    // the internal tracks
+    number = sessionTrack->number;
+    if (number == 0)
+      Trace(1, "LogicalTrack: No track number in session!");
+    trackType = sessionTrack->type;
 }
 
 Session::Track* LogicalTrack::getSession()
@@ -97,21 +104,8 @@ void LogicalTrack::loadSession()
             track.reset(engine.newTrack(manager, this, sessionTrack));
         }
         else if (trackType == Session::TypeAudio) {
-            // core tracks are special
-            // these have to be done in order at the front
-            // if they can be out of order then will need to "allocate" engine
-            // numbers as they are encountered
-
-            // !! here is where we need to use the engine as a "pool" and
-            // allocate them in any order
-            
-            engineNumber = sessionTrack->number - 1;
-            Mobius* m = manager->getAudioEngine();
-            Track* mt = m->getTrack(engineNumber);
-            track.reset(new MobiusLooperTrack(manager, this, m, mt));
-            // Mobius tracks don't use the Session so we have to put the number
-            // there for it
-            track->setNumber(sessionTrack->number);
+            // These should have been allocated earlier during Mobius configuration
+            Trace(1, "LogicalTrack: Should have created a Mobius track by now");
         }
         else {
             Trace(1, "LogicalTrack: Unknown track type");
@@ -126,6 +120,25 @@ void LogicalTrack::loadSession()
         if (track->getNumber() != sessionTrack->number)
           Trace(1, "LogicalTrack::loadSession Track number mismatch");
     }
+}
+
+/**
+ * Return the wrapped MobiusLooperTrack for this logical track.
+ * If one does not exist, create a stub.
+ */
+MobiusLooperTrack* LogicalTrack::getMobiusTrack()
+{
+    MobiusLooperTrack* mlt = nullptr;
+    if (trackType == Session::TypeAudio) {
+        if (track == nullptr) {
+            mlt = new MobiusLooperTrack(manager, this);
+            track.reset(mlt);
+        }
+        else {
+            mlt = static_cast<MobiusLooperTrack*>(track.get());
+        }
+    }
+    return mlt;
 }
 
 /**
@@ -154,6 +167,21 @@ Session::TrackType LogicalTrack::getType()
 int LogicalTrack::getNumber()
 {
     return number;
+}
+
+/**
+ * Hack for the SelectTrack case where we need to assemble a UIAction
+ * that uses the core track number as an argument.
+ * No good way to get this without adding another virtual to BaseTrack.
+ */
+int LogicalTrack::getEngineNumber()
+{
+    int engineNumber = number;
+    if (trackType == Session::TypeAudio) {
+        MobiusLooperTrack* mlt = static_cast<MobiusLooperTrack*>(track.get());
+        engineNumber = mlt->getCoreTrackNumber();
+    }
+    return engineNumber;
 }
 
 int LogicalTrack::getSessionId()

@@ -31,9 +31,7 @@ class BaseTrack
     }
     
     // all tracks have a unique number shown in the UI
-    // these are assigned by Trackmanager and can change at runtime
-    void setNumber(int n) {number = n;}
-    virtual int getNumber() {return number;}
+    int getNumber();
 
     // tracks come in many shapes and sizes
     virtual void loadSession(class Session::Track* def) = 0;
@@ -85,6 +83,5 @@ class BaseTrack
 
     class TrackManager* manager = nullptr;
     class LogicalTrack* logicalTrack = nullptr;
-    int number = 0;
     
 };

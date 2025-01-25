@@ -143,7 +143,7 @@ void MidiTrack::startRecord()
     mode = TrackState::ModeRecord;
     recorder.begin();
 
-    Trace(2, "MidiTrack: %d Recording", number);
+    Trace(2, "MidiTrack: %d Recording", getNumber());
 }
 
 /**
@@ -162,7 +162,7 @@ void MidiTrack::finishRecord()
     
     mode = TrackState::ModePlay;
     
-    Trace(2, "MidiTrack: %d Finished recording with %d events", number, eventCount);
+    Trace(2, "MidiTrack: %d Finished recording with %d events", getNumber(), eventCount);
 }
 
 //////////////////////////////////////////////////////////////////////

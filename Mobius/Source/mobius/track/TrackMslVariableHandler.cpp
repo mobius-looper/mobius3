@@ -340,20 +340,22 @@ void TrackMslVariableHandler::getPlaybackRate(MslTrack* t, MslValue& v)
 void TrackMslVariableHandler::getTrackCount(MslTrack* t, MslValue& v)
 {
     (void)t;
-    int total = kernel->getAudioTrackCount() + kernel->getMidiTrackCount();
-    v.setInt(total);
+    Session* s = kernel->getSession();
+    v.setInt(s->getTrackCount());
 }
 
 void TrackMslVariableHandler::getAudioTrackCount(MslTrack* t, MslValue& v)
 {
     (void)t;
-    v.setInt(kernel->getAudioTrackCount());
+    Session* s = kernel->getSession();
+    v.setInt(s->getAudioTracks());
 }
 
 void TrackMslVariableHandler::getMidiTrackCount(MslTrack* t, MslValue& v)
 {
     (void)t;
-    v.setInt(kernel->getMidiTrackCount());
+    Session* s = kernel->getSession();
+    v.setInt(s->getMidiTracks());
 }
 
 /**

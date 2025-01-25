@@ -110,9 +110,6 @@ MidiTrack::~MidiTrack()
  */
 void MidiTrack::loadSession(Session::Track* def)
 {
-    // set our number before we do any configuration loading
-    number = def->number;
-    
     // capture sync options
     scheduler.loadSession(def);
 
@@ -261,7 +258,7 @@ bool MidiTrack::isFocused()
 void MidiTrack::dump(StructureDumper& d)
 {
     d.start("MidiTrack:");
-    d.add("number", number);
+    d.add("number", getNumber());
     d.add("loops", loopCount);
     d.add("loopIndex", loopIndex);
     d.newline();

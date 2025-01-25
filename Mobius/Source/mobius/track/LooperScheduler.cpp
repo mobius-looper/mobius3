@@ -1462,10 +1462,9 @@ void LooperScheduler::doResize(UIAction* a)
     else {
         int otherTrack = a->value;
         // some validation before we ask for prperties
-        // could skip this if TrackPrperties had a way to return errors
-        int audioTracks = manager->getAudioTrackCount();
-        int midiTracks = manager->getMidiTrackCount();
-        int totalTracks = audioTracks + midiTracks;
+        // could skip this if TrackProperties had a way to return errors
+        Session* s = manager->getSession();
+        int totalTracks = s->getTrackCount();
         if (otherTrack < 1 || otherTrack > totalTracks) {
             Trace(1, "LooperScheduler: Track number out of range %d", otherTrack);
         }

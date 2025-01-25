@@ -36,7 +36,9 @@
 #include "../MobiusKernel.h"
 #include "../AudioPool.h"
 #include "../Notification.h"
+
 #include "../track/TrackProperties.h"
+#include "../track/MobiusLooperTrack.h"
 
 // implemented by MobiusContainer now but still need the old MidiEvent model
 //#include "../../midi/MidiByte.h"
@@ -58,7 +60,6 @@
 #include "ScriptRuntime.h"
 #include "Synchronizer.h"
 #include "Track.h"
-//#include "MobiusTrackWrapper.h"
 
 // for ScriptInternalVariable, encapsulation sucks
 #include "Variable.h"
@@ -318,15 +319,11 @@ void Mobius::initialize(MobiusConfig* config)
 
 /**
  * Called by initialize() to set up the tracks for the first time.
- * We do not yet support incremental track restructuring so MobiusConfig
- * changes that alter the track count will have no effect until after restart.
- *
- * todo: to reduce memory churn, the easiest thing is just to have a MaxTracks
- * parameter or constant and always allocate that many during initialization.
- * Then let MobiusConfig.mTracks determine how many we will actually use.
+ * update: This doesn't do anything now, configureTracks is called later.
  */
 void Mobius::initializeTracks()
 {
+#if 0    
     int count = mConfig->getCoreTracksDontUseThis();
 
     // should have caught misconfigured count earlier
@@ -349,6 +346,7 @@ void Mobius::initializeTracks()
         // to set the active track from the Setup but since we need
         // to share that with reconfigure() do it there
     }
+#endif    
 }
 
 /**
@@ -495,6 +493,134 @@ void Mobius::installSymbols()
         s->level = LevelCore;
         s->coreParameter = p;
         s->behavior = BehaviorParameter;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Track Configuration
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This is what allocates the internal Track array and does propagation
+ * of the Setup.  It will be called by TrackManager after the session
+ * has been processed and the logical track list has been organized.
+ */
+void Mobius::configureTracks(juce::Array<MobiusLooperTrack*>& trackdefs)
+{
+    // remember the ones we have now in a better collection
+    juce::Array<Track*> existing;
+    for (int i = 0 ; i < mTrackCount ; i++)
+      existing.add(mTracks[i]);
+
+    int newCount = trackdefs.size();
+    Track** newTracks = nullptr;
+    
+    if (newCount <= 0) {
+        // the engine probably will misbehave if we don't have at least
+        // one track, so make a dummy one
+        Trace(1, "Mobius: Configured track count was zero, this is not allowed");
+        newTracks = new Track*[1];
+        newTracks[0] = new Track(this, mSynchronizer, 0);
+        newCount = 1;
+    }
+    else {
+        newTracks = new Track*[newCount];
+        int index = 0;
+        for (auto def : trackdefs) {
+            Track* native = def->getCoreTrack();
+            if (native != nullptr) {
+                // reuse this one
+                newTracks[index] = native;
+                // it changes numbers internally
+                native->renumber(index);
+                existing.removeAllInstancesOf(native);
+            }
+            else {
+                // make a new one
+                native = new Track(this, mSynchronizer, index);
+                newTracks[index] = native;
+                def->setCoreTrack(this, native);
+            }
+            // need to remember this too when communicating with SyncMaster
+            // and sending notifications
+            native->setLogicalNumber(def->getNumber());
+            index++;
+        }
+    }
+
+    // reset and delete remaining tracks we didn't use
+    for (auto t : existing) {
+        doTrackReset(t);
+        if (mTrack == t) mTrack = nullptr;
+        delete t;
+    }
+    
+    // install the new array
+    delete mTracks;
+    mTracks = newTracks;
+    mTrackCount = newCount;
+
+    // if we lost the active track, make it the first
+    if (mTrack == nullptr)
+      mTrack = mTracks[0];
+                
+    // unclear what to do about this, but it's obscure
+    // this is what globalReset() does
+    if (mCaptureAudio != NULL)
+      mCaptureAudio->reset();
+    mCapturing = false;
+
+    // we defer configuration propagation to the tracks till now too
+
+    // Track has an optimization to ignore configuration propagation
+    // unless these two flags are on.  Since we are initializing for the
+    // first time, force them on
+    // !! hating this, force it on for now but need to work on how to ignore
+    // inconsequential changes
+    mConfig->setupsEdited = true;
+    mConfig->presetsEdited = true;
+
+    // tracks are sensitive to lots of things in the Setup
+    // they will look at Setup::loopCount and adjust the number of loops
+    // in each track, but this is done within a fixed array and won't
+    // allocate memory.  It also won't adjust tracks that are still doing
+    // something with audio.  This also refreshes the Track's Preset
+    // copy if it isn't doing anything
+	for (int i = 0 ; i < mTrackCount ; i++) {
+		Track* t = mTracks[i];
+		t->updateConfiguration(mConfig);
+	}
+
+    // now turn them off, don't think this is necessary since
+    // reconfigure will always be called with a different object
+    mConfig->setupsEdited = false;
+    mConfig->presetsEdited = false;
+
+    // latency overrides can come in here too without the block size that
+    // kernel is monitoring changing
+    // pretend we got notified by Kernel, this method will check for config overrides
+    updateLatencies(mContainer->getBlockSize());
+}
+
+/**
+ * Cause a full TrackReset without going through the Action process.
+ * This was scraped from parts of globalReset()
+ */
+void Mobius::doTrackReset(Track* t)
+{
+    if (t != nullptr) {
+        // this normally takes an Action
+        // it gets passed to Loop::reset which ignores it
+        // it goes on to Track::trackReset which allows it to be NULL
+        // and treats it as if it were a GlobalReset which should be fine
+        t->reset(nullptr);
+
+        // also reset the variables until we can determine
+        // whether TrackReset should do this
+        UserVariables* vars = t->getVariables();
+        vars->reset();
     }
 }
 
@@ -659,9 +785,9 @@ void Mobius::propagateConfiguration()
     // used to configure fade length in AudioCursor/AudioFade
 	AudioFade::setRange(mConfig->getFadeFrames());
 
-    // new: allow dynamic track reorg
-    adjustTrackCount();
-    
+
+    // this no longer happens here, wait until configureTracks
+#if 0    
     // tracks are sensitive to lots of things in the Setup
     // they will look at Setup::loopCount and adjust the number of loops
     // in each track, but this is done within a fixed array and won't
@@ -677,6 +803,7 @@ void Mobius::propagateConfiguration()
     // kernel is monitoring changing
     // pretend we got notified by Kernel, this method will check for config overrides
     updateLatencies(mContainer->getBlockSize());
+#endif
     
     // the only thing Track::updateConfiguration didn't
     // do that was in the setup was set the active track
@@ -698,87 +825,6 @@ void Mobius::propagateConfiguration()
     
     if (allReset) {
         setActiveTrack(mSetup->getActiveTrack());
-    }
-}
-
-void Mobius::adjustTrackCount()
-{
-    int newCount = mConfig->getCoreTracksDontUseThis();
-    bool dummyTrack = false;
-    if (newCount <= 0) {
-        Trace(1, "Mobius: Configured track count was zero, this is not allowed");
-        newCount = 1;
-        // TrackManager won't really care, it will just not expose this hidden track,
-        // the danger is if this track is doing something it will still exist and can't
-        // be acted upon, should TrackReset it
-        dummyTrack = true;
-    }
-        
-    if (newCount != mTrackCount) {
-        Trace(2, "Mobius: Reorganizing track count from %d to %d", mTrackCount, newCount);
-        if (newCount > mTrackCount) {
-            // just append some new ones to the end and keep them all alive
-            Track** newTracks = new Track*[newCount];
-            for (int i = 0 ; i < mTrackCount ; i++) {
-                newTracks[i] = mTracks[i];
-            }
-            for (int i = mTrackCount ; i < newCount ; i++) {
-                Track* t = new Track(this, mSynchronizer, i);
-                newTracks[i] = t;
-            }
-            delete mTracks;
-            mTracks = newTracks;
-            mTrackCount = newCount;
-            // mTrack gets to stay where it was
-        }
-        else {
-            // reset and delete the ones that aren't included
-            for (int i = newCount ; i < mTrackCount ; i++) {
-                Track* t = mTracks[i];
-                doTrackReset(t);
-                delete t;
-            }
-            // build a new array
-            Track** newTracks = new Track*[newCount];
-            for (int i = 0 ; i < newCount ; i++) {
-                newTracks[i] = mTracks[i];
-            }
-            delete mTracks;
-            mTracks = newTracks;
-            mTrackCount = newCount;
-            // could be smarter about where to position this if it is still
-            // within range, punt and just put it at the beginning
-            mTrack = mTracks[0];
-        }
-
-        // unclear what to do about this, but it's obscure
-        // this is what globalReset() does
-        if (mCaptureAudio != NULL)
-          mCaptureAudio->reset();
-        mCapturing = false;
-    }
-
-    if (dummyTrack)
-      doTrackReset(mTracks[0]);
-}
-
-/**
- * Cause a full TrackReset without going through the Action process.
- * This was scraped from parts of globalReset()
- */
-void Mobius::doTrackReset(Track* t)
-{
-    if (t != nullptr) {
-        // this normally takes an Action
-        // it gets passed to Loop::reset which ignores it
-        // it goes on to Track::trackReset which allows it to be NULL
-        // and treats it as if it were a GlobalReset which should be fine
-        t->reset(nullptr);
-
-        // also reset the variables until we can determine
-        // whether TrackReset should do this
-        UserVariables* vars = t->getVariables();
-        vars->reset();
     }
 }
 
@@ -1777,22 +1823,6 @@ int Mobius::getEffectiveOutputLatency()
 // Tracks
 //
 
-/**
- * Note that the argument is the INDEX, not the 1 based number.
- */
-#if 0
-MobiusTrackWrapper* Mobius::getTrackWrapper(int index)
-{
-    Track* t = getTrack(index);
-    if (t == nullptr)
-      Trace(1, "Mobius::getTrackWrapper Invalid index %d", index);
-
-    // make one of these regardless, it just may not do anything
-    MobiusTrackWrapper* mtw = new MobiusTrackWrapper(this, t);
-    return mtw;
-}
-#endif
-
 int Mobius::getTrackCount()
 {
 	return mTrackCount;
@@ -2373,6 +2403,7 @@ void Mobius::loadProject(Project* p)
         
         // should we let the project determine the track count
         // or force the project to fit the configured tracks?
+        // !! this will need much more involvment with the TrackManager
 		for (int i = 0 ; i < mTrackCount ; i++) {
 			if (i < tracks->size()) {
 				ProjectTrack* pt = (ProjectTrack*)tracks->get(i);
@@ -2593,7 +2624,7 @@ void Mobius::cancelMslWait(class Event* e)
 
 void Mobius::clipStart(class Loop* l, const char* bindingArgs)
 {
-    mKernel->clipStart(l->getTrack()->getDisplayNumber(), bindingArgs);
+    mKernel->clipStart(l->getTrack()->getLogicalNumber(), bindingArgs);
 }
 
 /**

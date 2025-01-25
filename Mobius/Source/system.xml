@@ -6,7 +6,7 @@
 <SystemConfig>
 
   <Tree name='sessionGlobal'>
-    <Tree name='Synchronization'
+    <Tree name='Synchronization'/>
     <Tree name='Stuff'/>
   </Tree>
   

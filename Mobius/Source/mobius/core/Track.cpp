@@ -168,6 +168,24 @@ Track::~Track()
 }
 
 /**
+ * Allow the raw number to be changed on reconfigure
+ */
+void Track::renumber(int n)
+{
+    mRawNumber = n;
+}
+
+void Track::setLogicalNumber(int n)
+{
+    mLogicalNumber = n;
+}
+
+int Track::getLogicalNumber()
+{
+    return mLogicalNumber;
+}
+
+/**
  * All sorts of stuff we should include in this.
  * Add as necessary.
  */
@@ -789,8 +807,7 @@ void Track::refreshPriorityState(PriorityState* s)
 void Track::refreshState(TrackState* s)
 {
     s->midi = false;
-    // RawNumber starts from 0, the cannonical numbers start from 1
-    s->number = mRawNumber + 1;
+    s->number = mLogicalNumber;
 	s->preset = mPreset->ordinal;
     s->inputMonitorLevel = mInput->getMonitorLevel();
 	s->outputMonitorLevel = mOutput->getMonitorLevel();

@@ -92,12 +92,7 @@ void Notifier::notify(Loop* loop, NotificationId id)
  */
 void Notifier::notify(Track* track, NotificationId id)
 {
-    // !!! this needs to remember the track number from the Session
-    // which may be different than the engine number
-    int trackNumber = track->getDisplayNumber();
-    
-    //Trace(2, "Notifier: Received notification %d for track %d",
-    //(int)id, track->getDisplayNumber());
+    int trackNumber = track->getLogicalNumber();
 
     TrackProperties props;
     props.number = trackNumber;
@@ -121,9 +116,7 @@ void Notifier::notify(Track* track, NotificationId id)
  */
 void Notifier::notify(Track* track, NotificationId id, TrackProperties& props)
 {
-    int trackNumber = track->getDisplayNumber();
-    //Trace(2, "Notifier: Received notification %d for track %d",
-    //(int)id, track->getDisplayNumber());
+    int trackNumber = track->getLogicalNumber();
 
     // trust that the track info has already been filled in or do ot for the caller?
     props.number = trackNumber;
@@ -146,7 +139,7 @@ void Notifier::notify(Loop* loop, NotificationId id, NotificationPayload& payloa
 
 void Notifier::notify(Track* track, NotificationId id, NotificationPayload& payload)
 {
-    int trackNumber = track->getDisplayNumber();
+    int trackNumber = track->getLogicalNumber();
     TrackProperties props;
     props.number = trackNumber;
     props.frames = track->getFrames();

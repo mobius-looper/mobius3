@@ -5,12 +5,15 @@
 
 #include "../../model/Preset.h"
 #include "../../model/TrackState.h"
+#include "../../model/UIAction.h"
+#include "../../model/Query.h"
 
 #include "../core/Mobius.h"
 #include "../core/Track.h"
 #include "../core/Loop.h"
 #include "../core/Mode.h"
 
+#include "LogicalTrack.h"
 #include "LooperTrack.h"
 #include "TrackProperties.h"
 
@@ -24,8 +27,29 @@ MobiusLooperTrack::MobiusLooperTrack(TrackManager* tm, LogicalTrack* lt,
     track = t;
 }
 
+MobiusLooperTrack::MobiusLooperTrack(TrackManager* tm, LogicalTrack* lt)
+    : BaseTrack(tm, lt)
+{
+}
+
 MobiusLooperTrack::~MobiusLooperTrack()
 {
+}
+
+Track* MobiusLooperTrack::getCoreTrack()
+{
+    return track;
+}
+
+void MobiusLooperTrack::setCoreTrack(Mobius* m, Track* t)
+{
+    mobius = m;
+    track = t;
+}
+
+int MobiusLooperTrack::getCoreTrackNumber()
+{
+    return ((track != nullptr) ? track->getDisplayNumber() : 0);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -42,13 +66,24 @@ void MobiusLooperTrack::loadSession(Session::Track* def)
 void MobiusLooperTrack::doAction(UIAction* a)
 {
     // these always go through Mobius/Actionator
+    // we need to adjust the LogicalTrack scope number to the core track number
+
+    // unclear whether the caller will be confused by this transformation so undo it
+    int logicalScope = a->getScopeTrack();
+    a->setScopeTrack(track->getDisplayNumber());
     mobius->doAction(a);
+    a->setScopeTrack(logicalScope);
 }
 
 bool MobiusLooperTrack::doQuery(Query* q)
 {
     // like actions we have always passed these through Mobius first
-    return mobius->doQuery(q);
+    // need to adjust the LogicalTrack scope number to the core track number
+    int logicalScope = q->scope;
+    q->scope = track->getDisplayNumber();
+    bool result = mobius->doQuery(q);
+    q->scope = logicalScope;
+    return result;
 }
 
 void MobiusLooperTrack::processAudioStream(class MobiusAudioStream* stream) 
@@ -87,6 +122,11 @@ bool MobiusLooperTrack::isFocused()
 void MobiusLooperTrack::refreshState(TrackState* state)
 {
     track->refreshState(state);
+    int expected = logicalTrack->getNumber();
+    if (expected != state->number) {
+        Trace(1, "MobiusLooperTrac: Shit");
+        state->number = expected;
+    }
 }
 
 void MobiusLooperTrack::refreshPriorityState(PriorityState* state)

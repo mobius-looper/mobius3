@@ -96,26 +96,9 @@ MobiusViewer::~MobiusViewer()
 /**
  * Initialize the view at startup.
  *
- * Track counts are touchy.
- *
- * The number of audio tracks is controlled by MobiusConfig.tracks which is used
- * by the core during initialization.  The core does not respond to changes in track counts
- * until a restart, but it will someday so always obey the trackCount returned in the
- * SystemSetate.
- *
- * Midi tracks are allowed to be dynamic at runtime.
- *
- * The UI for the most part doesn't care if something is an audio or MIDI track, but the
- * UIActions sent to the core do.   At the moment, UIAction.scope has a single number space
- * and it must be possible to know if a given track number is an audio track or a midi track
- * for routing in the Kernel.
- *
- * The convention is that all audio tracks are first 1-n, and then all midi tracks
- * n+1-m.   Actions can then just use numbers 1-m and let the kernel sort out where they go.
- *
  * Since we reuse track view objects in the array once created, in fringe cases where you are
  * adding and removing tracks of different types this should be doing a better job of initializing
- * track views that become unused, then reused.  Can't happen yet.
+ * track views that become unused, then reused.
  */
 void MobiusViewer::initialize(MobiusView* view)
 {
@@ -124,11 +107,12 @@ void MobiusViewer::initialize(MobiusView* view)
     view->audioTracks = session->getAudioTracks();
     if (view->audioTracks == 0) {
         // crashy if we don't have at least one, force it
+        // !! why  fix this
+        Trace(1, "MobiusViewer: Forcing a single audio track, why?");
         view->audioTracks = 1;
     }
 
     view->midiTracks = session->getMidiTracks();
-
     view->totalTracks = view->audioTracks + view->midiTracks;
 
     // flesh these out ahead of time, they can grow if configuration is changed
@@ -163,9 +147,8 @@ void MobiusViewer::configure(MobiusView* view)
     Session* session = provider->getSession();
     
     if (view->audioTracks != session->getAudioTracks()) {
-        Trace(1, "MobiusViewer: Audio track counts changed, this might be a problem");
+        Trace(1, "MobiusViewer: Audio track counts changed");
     }
-    
     view->audioTracks = session->getAudioTracks();
     if (view->audioTracks == 0) {
         // crashy if we don't have at least one, force it
@@ -202,7 +185,7 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
     OldMobiusState* state = sysstate->oldState;
     
     if (state != nullptr && state->trackCount != view->audioTracks) {
-        Trace(2, "MobiusViewer: Adjusting audio tracks to %d", state->trackCount);
+        Trace(1, "MobiusViewer: Adjusting audio tracks to %d", state->trackCount);
         view->audioTracks = state->trackCount;
     }
     
@@ -225,6 +208,9 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
     // !! this is not enough, you can edit the setup and change the names but the
     // ordinal will stay the same, need to increment a version number on each edit
     // how to did pre-view code detect this?
+
+    // update: this doesn't mean anything now, there will only be one Setup in
+    // core and the ordinal never changes
     if (state != nullptr) {
         if (view->setupOrdinal != state->setupOrdinal) {
             view->setupChanged = true;
@@ -313,73 +299,82 @@ void MobiusViewer::forceRefresh(MobiusView* view)
 
 void MobiusViewer::refreshAudioTracks(OldMobiusState* state, MobiusView* view)
 {
-    // !! OldMobiusState has no way to tell us how many tracks are in the state
-    // have to trust the view, this is bad
+    int nextViewTrack = 0;
+    
     for (int i = 0 ; i < state->trackCount ; i++) {
         OldMobiusTrackState* tstate = &(state->tracks[i]);
 
+        // the view contains tracks in Session order which will be a mixture
+        // of audio and MIDI.  OldMobiusState only contains audio.  Have to search
+        // for the target view
         MobiusViewTrack* tview = nullptr;
-        if (i < view->tracks.size())
-          tview = view->tracks[i];
-        else {
-            // something is messed up, there should always be one at this index
-            Trace(1, "MobiusViewer: View track array is hosed, and so are you");
-            break;
-        }
-
-        // clear this incase it was midi in a past life
-        tview->midi = false;
-
-        // only audio tracks have the concept of an active track
-        // this is NOT the same as the view's focused track
-        bool active = (i == state->activeTrack);
-        tview->active = (i == state->activeTrack);
-
-        // if this is the active track, extra refresh options are enabled
-        // !! we actually don't need this if the focused track is a MIDI track
-        // it doesn't hurt but it's extra work gathering things that won't be displayed
-        // revisit
-        refreshTrack(state, tstate, view, tview, active);
-
-        // detect whether the active track changed from the last refresh
-        // UI componenents that are sensitive to the active track MUST
-        // test this, because the refresh flags within each track view
-        // may not be different
-
-        // no, the focusedTrack controls this now
-        if (active) {
-            // if this moved since the last time, then it moved due to GlobalReset
-            // or an old script, or something else that forced track selection not
-            // in the UI's control
-            // the expectation is that this change focus, certainly if you are currently
-            // over an audio track, if currently over a MIDI track it's less clear, might
-            // want those to operate independently
-            if (view->activeAudioTrack != i) {
-                if (view->focusedTrack != i) {
-                    // we're warping, trace just to see if it happens as I expect
-                    //Trace(2, "MobiusViewer: Where the Mobius Track leads, I follow");
-                    view->focusedTrack = i;
-                    view->trackChanged = true;
-                }
-                // else, Mobius is following focus, which is normal since it takes awhile
-                // for the Kernel to catch up
-                view->activeAudioTrack = i;
+        while (nextViewTrack < view->tracks.size()) {
+            MobiusViewTrack* maybe = view->tracks[nextViewTrack];
+            if (maybe->midi)
+              nextViewTrack++;
+            else {
+                tview = maybe;
+                break;
             }
         }
+
+        if (tview == nullptr) {
+            Trace(1, "MobiusViewer: Ran out of view tracks looking for audio view");
+        }
+        else {
+            // clear this incase it was midi in a past life
+            tview->midi = false;
+
+            // only audio tracks have the concept of an active track
+            // this is NOT the same as the view's focused track
+            tview->active = (i == state->activeTrack);
+
+            // if this is the active track, extra refresh options are enabled
+            // !! we actually don't need this if the focused track is a MIDI track
+            // it doesn't hurt but it's extra work gathering things that won't be displayed
+            // revisit
+            refreshTrack(state, tstate, view, tview, active);
+
+            // detect whether the active track changed from the last refresh
+            // UI componenents that are sensitive to the active track MUST
+            // test this, because the refresh flags within each track view
+            // may not be different
+
+            // no, the focusedTrack controls this now
+            if (active) {
+                // if this moved since the last time, then it moved due to GlobalReset
+                // or an old script, or something else that forced track selection not
+                // in the UI's control
+                // the expectation is that this change focus, certainly if you are currently
+                // over an audio track, if currently over a MIDI track it's less clear, might
+                // want those to operate independently
+                if (view->activeAudioTrack != i) {
+                    if (view->focusedTrack != i) {
+                        // we're warping, trace just to see if it happens as I expect
+                        //Trace(2, "MobiusViewer: Where the Mobius Track leads, I follow");
+                        view->focusedTrack = i;
+                        view->trackChanged = true;
+                    }
+                    // else, Mobius is following focus, which is normal since it takes awhile
+                    // for the Kernel to catch up
+                    view->activeAudioTrack = i;
+                }
+            }
         
 #if 0        
-        if (active) {
+            if (active) {
             
-            // cache a pointer to the active track
-            view->track = tview;
+                // cache a pointer to the active track
+                view->track = tview;
             
-            if (view->activeTrack != i) {
-                view->trackChanged = true;
-                view->activeTrack = i;
+                if (view->activeTrack != i) {
+                    view->trackChanged = true;
+                    view->activeTrack = i;
+                }
             }
-        }
 #endif
         
+        }
     }
 }
 

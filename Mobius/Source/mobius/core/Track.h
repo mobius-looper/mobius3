@@ -65,6 +65,13 @@ class Track : public TraceContext
 	Track(class Mobius* mob, class Synchronizer* sync, int number);
 	~Track();
 
+    void renumber(int n);
+
+    // the number of this track in the LogicalTrack/Session list
+    // this is what needs to be used when communicating with the outside world.
+    void setLogicalNumber(int n);
+    int getLogicalNumber();
+
     void dump(class StructureDumper& d);
 
     int getInputPort() {
@@ -329,7 +336,8 @@ class Track : public TraceContext
     // Fields
     //
 
-	int	 mRawNumber;        // zero based
+	int mRawNumber;        // zero based
+    int mLogicalNumber;    // the number used in TrackManager/SyncMaster/MobiusView
     char mName[MAX_TRACK_NAME];
 
 	class Mobius* mMobius;
