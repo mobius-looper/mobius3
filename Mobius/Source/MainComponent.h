@@ -4,8 +4,8 @@
  * Not sure how much we can do with this without Projucer overwriting
  * it if the configuration changes.
  *
- * Most application management logic is in Supervisor, DeviceConfigurator
- * and JuceMobiusContainer.  Here we only need to pass along audio and MIDI events
+ * Most application management logic is in Supervisor.
+ * Here we only need to pass along audio and MIDI events
  * that normally come through MainComponent.
  */
 #pragma once
