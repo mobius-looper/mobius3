@@ -141,7 +141,7 @@ void YanParameter::load(Provider* p, MslValue* v)
     }
     else if (props->type == TypeInt) {
         if (v == nullptr) {
-            input.setValue("");
+            input.setValue(juce::String(symbol->parameterProperties->defaultValue));
         }
         else {
             // it will be an input field, but allow a value offset

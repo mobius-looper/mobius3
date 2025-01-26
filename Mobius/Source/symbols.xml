@@ -597,28 +597,28 @@ Once those models are fully converted, these symbols can be removed.
     <!-- These are runtime symbols used for actions.  They may be saved in the session
          and restored, but are not edited in the SessionEditor
     -->
-    <Parameter name='transportTempo' type='int' level='kernel'/>
+    <Parameter name='transportTempo' type='int' level='kernel' defaultValue='90'/>
     <Parameter name='transportLength' type='int' level='kernel' options='noBinding'/>
 
     <!-- accessible transport parameters -->
-    <Parameter name='transportBeatsPerBar' type='int' level='kernel'/>
-    <Parameter name='transportBarsPerLoop' type='int' level='kernel'/>
+    <Parameter name='transportBeatsPerBar' type='int' level='kernel' defaultValue='4'/>
+    <Parameter name='transportBarsPerLoop' type='int' level='kernel' defaultValue='1'/>
     <Parameter name='transportMidi' type='bool' level='kernel'/>
     <Parameter name='transportClocks' type='bool' level='kernel'/>
     
     <Parameter name='transportManualStart' type='bool' level='kernel'/>
-    <Parameter name='transportMinTempo' type='int' level='kernel'/>
-    <Parameter name='transportMaxTempo' type='int' level='kernel'/>
+    <Parameter name='transportMinTempo' type='int' level='kernel' defaultValue='30'/>
+    <Parameter name='transportMaxTempo' type='int' level='kernel' defaultValue='300'/>
     <Parameter name='transportMetronome' type='bool' level='kernel'/>
 
     <!-- Plugin Host -->
-    <Parameter name='hostBeatsPerBar' type='int' level='kernel'/>
-    <Parameter name='hostBarsPerLoop' type='int' level='kernel'/>
+    <Parameter name='hostBeatsPerBar' type='int' level='kernel' defaultValue='4'/>
+    <Parameter name='hostBarsPerLoop' type='int' level='kernel' defaultValue='1'/>
     <Parameter name='hostOverride' type='bool' level='kernel'/>
 
     <!-- Midi In -->
-    <Parameter name='midiBeatsPerBar' type='int' level='kernel'/>
-    <Parameter name='midiBarsPerLoop' type='int' level='kernel'/>
+    <Parameter name='midiBeatsPerBar' type='int' level='kernel' defaultValue='4'/>
+    <Parameter name='midiBarsPerLoop' type='int' level='kernel' defaultValue='1'/>
     
   </ParameterScope>
     

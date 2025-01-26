@@ -79,6 +79,8 @@ class ParameterForm : public juce::Component
     void resized() override;
     void paint(juce::Graphics& g) override;
 
+    void forceResize();
+
   private:
 
     juce::String title;

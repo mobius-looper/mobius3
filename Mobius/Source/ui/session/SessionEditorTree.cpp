@@ -38,6 +38,23 @@ void SessionEditorTree::load(Provider* p, juce::String treename)
     }
 }
 
+SymbolTreeItem* SessionEditorTree::getFirst()
+{
+    SymbolTreeItem* first = static_cast<SymbolTreeItem*>(root.getSubItem(0));
+    return first;
+}
+
+void SessionEditorTree::selectFirst()
+{
+    juce::TreeViewItem* first = root.getSubItem(0);
+    if (first != nullptr) {
+        // hmm, if you allowed this to send a notification would that cause the
+        // symbolTreeClickk callback to fire?  If so might simplifiy the way
+        // SessionTreeForm opens the initial from after startup
+        first->setSelected(true, false, juce::NotificationType::sendNotification);
+    }
+}
+
 void SessionEditorTree::intern(SymbolTreeItem* parent, TreeNode* node)
 {
     SymbolTreeItem* item = parent->internChild(node->name);

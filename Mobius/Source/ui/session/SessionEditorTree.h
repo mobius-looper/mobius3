@@ -18,6 +18,9 @@ class SessionEditorTree : public SymbolTree
     ~SessionEditorTree();
 
     void load(class Provider* p, juce::String treeName);
+    
+    class SymbolTreeItem* getFirst();
+    void selectFirst();
 
   private:
 

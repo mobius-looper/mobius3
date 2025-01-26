@@ -590,10 +590,36 @@ void YanCombo::setItems(juce::StringArray names)
     combobox.setSelectedId(1, juce::NotificationType::dontSendNotification);
 }
 
+// having trouble getting the setItems size to stick
+int YanCombo::calculatePreferredWidth()
+{
+    int maxChars = 0;
+    for (int i = 0 ; i < combobox.getNumItems() ; i++) {
+        juce::String name = combobox.getItemText(i);
+        if (name.length() > maxChars)
+          maxChars = name.length();
+    }
+
+    // the box also needs to be wide enough to show the pull-down chevron on the right
+    // not sure how wide the default is
+    int arrowWidth = 24;
+
+    // override the maxChars calculated from the values if the user
+    // pass down a desired width
+    if (widthUnits > 0)
+      maxChars = widthUnits;
+
+    // the usual guessing game
+    int charWidth = 12;
+
+    return ((maxChars * charWidth) + arrowWidth);
+}
+
 int YanCombo::getPreferredComponentWidth()
 {
     // calculated when the items were added
-    return getWidth();
+    //return getWidth();
+    return calculatePreferredWidth();
 }
 
 void YanCombo::setSelection(int index)

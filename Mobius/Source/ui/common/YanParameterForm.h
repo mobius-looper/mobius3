@@ -1,3 +1,6 @@
+// !! This is unused, replaced by ui/session/ParameterForm
+//    Merge these
+
 /**
  * Extension of YanForm that assists with large forms of Symbol parameters.
  */

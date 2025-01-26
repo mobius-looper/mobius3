@@ -1,4 +1,5 @@
-// is this still used??? compare with ui/session/ParameterForm
+// !! This is unused, replaced by ui/session/ParameterForm
+//    Merge these
 
 #include <JuceHeader.h>
 
@@ -63,6 +64,8 @@ void YanParameterForm::save(ValueSet* set)
     }
 }
 
+// !! This is unused, replaced by ui/session/ParameterForm
+//    Merge these
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -42,6 +42,20 @@ void ParameterForm::resized()
     
     juce::Rectangle<int> center = area.reduced(formInset);
     form.setBounds(center);
+    
+    // fields that have dynamic widths depending on what is loaded
+    // into them, such as YanCombos with YanParameterHelpers often need
+    // to have their size recalculated after loading.  But since the
+    // bounds of the outer form didn't change the setBounds() call above
+    // won't trigger a resized walk over the children.  This will probably
+    // cause a redundant resized walk most of the time, could avoid it by
+    // testing for the setBounds() size being equal above
+    form.forceResize();
+}
+
+void ParameterForm::forceResize()
+{
+    resized();
 }
 
 void ParameterForm::paint(juce::Graphics& g)
@@ -141,6 +155,10 @@ void ParameterForm::load(Provider* p, ValueSet* values)
 
         field->load(p, v);
     }
+
+    // force it to resize, important for combo boxes that may change
+    // widths after loading
+    forceResize();
 }
 
 void ParameterForm::save(ValueSet* values)

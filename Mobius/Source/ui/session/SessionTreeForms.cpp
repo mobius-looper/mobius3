@@ -27,6 +27,12 @@ void SessionTreeForms::initialize(Provider* p, juce::String argTreeName)
     provider = p;
     treeName = argTreeName;
     tree.load(p, treeName);
+
+    tree.selectFirst();
+    // simulate a click
+    SymbolTreeItem* item = tree.getFirst();
+    if (item != nullptr)
+      symbolTreeClicked(item);
 }
 
 void SessionTreeForms::decache()

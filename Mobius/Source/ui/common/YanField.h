@@ -222,6 +222,7 @@ class YanCombo : public YanField, public juce::ComboBox::Listener
     int widthUnits = 0;
     juce::ComboBox combobox;
     
+    int calculatePreferredWidth();
 };
 
 /****************************************************************************/

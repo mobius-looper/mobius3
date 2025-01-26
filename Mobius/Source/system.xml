@@ -1,45 +1,13 @@
 <!--
-    Non-editable file of system information I want to keep out of compiled code.
-    Similar in style to help.xml and symbols.xml
+    Random configuration settings that apply to the entire installation
+    and exist outside of any one Session.
+
+    This is behaviorally similar to DeviceConfig and devices.xml and could
+    consider merging them.  
 -->
 
 <SystemConfig>
-
-  <Tree name='sessionGlobal'>
-    <Tree name='Synchronization'/>
-    <Tree name='Stuff'/>
-  </Tree>
-  
-  <Tree name='sessionAudioTrack'>
-    <Tree name='Parameters'/>
-  </Tree>
-  
-  <Tree name='sessionMidiTrack'>
-    <Tree name='General'/>
-    <Tree name='Follower'/>
-    <Tree name='LoopSwitch'/>
-  </Tree>
-
-  <Form name='sessionGlobalGlobal' title='Global Parameters'
-        symbols='longPress,maxLoops,maxSyncDrift'
-
-  <Form name='sessionGlobalSync' display='Synchronization'
-        symbols='TransportBeatsPerBar,transportBarsPerLoop,transportMidiClocksWhenStopped,transportMidiEnable,transportMinTempo,transportMaxTempo,transportManualStart,hostBeatsPerBar,hostBeatsPerLoop,hostOverrideTimeSignature,midiBeatsPerBar,midiBarsPerLoop'/>
-  
-  <Form name='sessionGlobalStuff' title='Very Interesting Stuff' symbols='maxLoops,*section*Check this out,maxSyncDrift'/>
-  
-  <Form name='sessionAudioTrackParameters' title='Audio tracks must be configured with the Setup' />
-
-  <!-- todo: inputDevice, outputDevice, midiThru,trackGroup -->
-  <Form name='sessionMidiTrackGeneral'
-        symbols='midiChannelOverride,*spacer*,syncSource,trackSyncUnit,slaveSyncUnit,beatsPerBar,*spacer*,loopCount,quantize,subcycles'/>
-
-  <Form name='sessionMidiTrackFollower' title='Follower Parmeters'
-        symbols='leaderType,leaderTrack,followRecord,followRecordEnd,followerMuteStart,followMute,leaderSwitchLocation,followQuantizeLocation'/>
-  
-  <Form name='sessionMidiTrackLoopSwitch' title='Loop Switch Options'
-        symbols='switchQuantize,emptyLoopAction,switchDuration,switchLocation'/>
-
-  
-
+  <ValueSet>
+    <Value name="startupSession" value="Default"/>
+  </ValueSet>
 </SystemConfig>

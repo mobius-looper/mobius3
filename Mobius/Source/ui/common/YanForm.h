@@ -35,6 +35,7 @@ class YanForm : public juce::Component
 
     // Juce 
     void resized() override;
+    void forceResize();
     
   private:
 
