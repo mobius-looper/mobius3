@@ -23,7 +23,6 @@
 #include "../../util/Util.h"
 #include "../../util/List.h"
 #include "../../util/StructureDumper.h"
-//#include "../../SuperDumper.h"
 
 #include "../../model/MobiusConfig.h"
 #include "../../model/Setup.h"
@@ -39,10 +38,6 @@
 
 #include "../track/TrackProperties.h"
 #include "../track/MobiusLooperTrack.h"
-
-// implemented by MobiusContainer now but still need the old MidiEvent model
-//#include "../../midi/MidiByte.h"
-//#include "../../midi/MidiEvent.h"
 
 #include "Action.h"
 #include "Actionator.h"
@@ -702,26 +697,9 @@ void Mobius::reconfigure(class MobiusConfig* config)
     Structure::ordinate(config->getSetups());
     Structure::ordinate(config->getPresets());
 
-    // mSetup is a pointer to an object inside mConfig so we need
-    // to refresh that but DON'T go back to getStartingSetup, the active
-    // setup needs to be retained until manually changed, it will be saved in
-    // MobiusConfig at shutdown
-
-    Setup* neu = nullptr;
-    if (mSetup != nullptr) {
-        const char* currentName = mSetup->getName();
-        neu = config->getSetup(currentName);
-    }
-    
-    if (neu != nullptr) {
-        mSetup = neu;
-    }
-    else {
-        // user must have deleted what was the active setup, fall back
-        // to the starting setup
-        mSetup = config->getStartingSetup();
-    }
-
+    // new: formerly had some logic here to look for a Setup with the same
+    // name of the currently active setup, now there is only one
+    mSetup = config->getStartingSetup();
     propagateConfiguration();
 }
 
@@ -851,17 +829,16 @@ void Mobius::setActiveTrack(int index)
  * This is a runtime value only, it is not put back into
  * MobiusConfig and saved at this level.  The UI treats
  * this as a "session property" and saves it on shutdown.
+ *
+ * new: this is obsolete after the Session migration.
+ * I expect this to only be used by old MOS scripts
+ * and we could forward this to Supervisor and ask it
+ * to load a different Session.
  */
 void Mobius::setActiveSetup(const char* name)
 {
-    Setup* s = mConfig->getSetup(name);
-    if (s == nullptr) {
-        Trace(1, "Mobius: Invalid setup name %s\n", name);
-    }
-    else {
-        mSetup = s;
-        propagateSetup();
-    }
+    (void)name;
+    Trace(1, "Mobius: Dynamic Setup changes are no longer allowed");
 }
 
 /**
@@ -869,30 +846,8 @@ void Mobius::setActiveSetup(const char* name)
  */
 void Mobius::setActiveSetup(int ordinal)
 {
-    Setup* s = mConfig->getSetup(ordinal);
-    if (s == nullptr) {
-        Trace(1, "Mobius: Invalid setup ordinal %d\n", ordinal);
-    }
-    else {
-        mSetup = s;
-        propagateSetup();
-    }
-}
-
-/**
- * After setting the runtime setup, propgagate changes
- * to the tracks.  This is different than propagateConfiguration
- * because we're only changing the Setup, but internally
- * the Track does most of the same work.
- */
-void Mobius::propagateSetup()
-{
-    for (int i = 0 ; i < mTrackCount ; i++) {
-        Track* t = mTracks[i];
-        t->changeSetup(mSetup);
-    }
-    
-    setActiveTrack(mSetup->getActiveTrack());
+    (void)ordinal;
+    Trace(1, "Mobius: Dynamic Setup changes are no longer allowed");
 }
 
 /**
@@ -2022,11 +1977,6 @@ Parameter* Mobius::getParameter(const char* name)
 bool Mobius::isCapturing()
 {
     return mCapturing;
-}
-
-int Mobius::getSetupOrdinal()
-{
-    return mSetup->ordinal;
 }
 
 /**

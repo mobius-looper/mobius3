@@ -202,7 +202,6 @@ class Mobius
     // used by MobiusKernel to build the new SystemState model
     // and include things that were in OldMobiusState
     bool isCapturing();
-    int getSetupOrdinal();
         
     //////////////////////////////////////////////////////////////////////
     //
@@ -262,6 +261,7 @@ class Mobius
 
     /**
      * Return the Setup currently in use.
+     * new: There is only ever one Setup after the Session conversion.
      */
     class Setup* getActiveSetup();
 
