@@ -133,7 +133,7 @@ bool Upgrader::upgradeGroups(MobiusConfig* config)
     
     // add names for prototype definitions that didn't have them
     int ordinal = 0;
-    for (auto group : config->groups) {
+    for (auto group : config->dangerousGroups) {
         if (group->name.length() == 0) {
             group->name = GroupDefinition::getInternalName(ordinal);
             updated = true;
@@ -148,12 +148,12 @@ bool Upgrader::upgradeGroups(MobiusConfig* config)
     if (oldGroupCount == 0)
       oldGroupCount = 2;
     
-    if (oldGroupCount > config->groups.size()) {
-        ordinal = config->groups.size();
+    if (oldGroupCount > config->dangerousGroups.size()) {
+        ordinal = config->dangerousGroups.size();
         while (ordinal < oldGroupCount) {
             GroupDefinition* neu = new GroupDefinition();
             neu->name = GroupDefinition::getInternalName(ordinal);
-            config->groups.add(neu);
+            config->dangerousGroups.add(neu);
             updated = true;
             ordinal++;
         }
@@ -174,8 +174,8 @@ bool Upgrader::upgradeGroups(MobiusConfig* config)
                 else {
                     // this was an ordinal starting from 1
                     int groupIndex = groupNumber - 1;
-                    if (groupIndex >= 0 && groupIndex < config->groups.size()) {
-                        GroupDefinition* def = config->groups[groupIndex];
+                    if (groupIndex >= 0 && groupIndex < config->dangerousGroups.size()) {
+                        GroupDefinition* def = config->dangerousGroups[groupIndex];
                         track->setGroupName(def->name);
                     }
                     else {

@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <JuceHeader.h>
+
 class Provider
 {
   public:
@@ -58,14 +60,20 @@ class Provider
     virtual void updateSystemConfig() = 0;
     
     virtual class StaticConfig* getStaticConfig() = 0;
-    virtual class MobiusConfig* getOldMobiusConfig() = 0;
     virtual class Session* getSession() = 0;
     virtual class SymbolTable* getSymbols() = 0;
     virtual class MidiManager* getMidiManager() = 0;
     virtual class FileManager* getFileManager() = 0;
+    virtual class Grouper* getGrouper() = 0;
     virtual class MobiusInterface* getMobius() = 0;
     virtual int getSampleRate() = 0;
 
+    // controlled access to MobiusConfig
+    virtual class MobiusConfig* getOldMobiusConfig() = 0;
+    virtual class BindingSet* getBindingSets() = 0;
+    virtual class Preset* getPresets() = 0;
+    
+    
     virtual class UIConfig* getUIConfig() = 0;
     virtual void updateUIConfig() = 0;
 
@@ -98,4 +106,9 @@ class Provider
     // this is terrible
     virtual bool isIdentifyMode() = 0;
     virtual int getActivePreset() = 0;
+
+    // obscure things for Parametizer
+    virtual class VariableManager* getVariableManager() = 0;
+    virtual juce::AudioProcessor* getAudioProcessor() = 0;
+    
 };

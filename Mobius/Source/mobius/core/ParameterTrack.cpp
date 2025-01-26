@@ -349,7 +349,7 @@ void GroupParameterType::setValue(Track* t, ExValue* value)
     MobiusConfig* config = m->getConfiguration();
 
 	// int maxGroup = config->getTrackGroups();
-    int maxGroup = config->groups.size();
+    int maxGroup = config->dangerousGroups.size();
 
     // this only sets number, if we have to support this in core
     // should convert to the name

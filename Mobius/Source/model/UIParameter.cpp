@@ -155,12 +155,12 @@ int UIParameter::getDynamicHigh(MobiusConfig* container)
     else if (this == UIParameterGroup) {
         // this isn't in here any more, who calls this?
         Trace(1, "UIPaameter::getDynamicHigh UIParameterGroup Who called this?");
-        dynamicHigh = container->groups.size();
+        dynamicHigh = container->dangerousGroups.size();
     }
     else if (type == TypeStructure) {
         // kludge because GroupDefinitions are not Structures
         if (this == UIParameterGroupName) {
-            dynamicHigh = container->groups.size();
+            dynamicHigh = container->dangerousGroups.size();
         }
         else {
             Structure* list = getStructureList(container);
@@ -227,9 +227,9 @@ StringList* UIParameter::getStructureNames(MobiusConfig* container)
 
     // regretting these not being Structures
     if (this == UIParameterGroupName) {
-        if (container->groups.size() > 0) {
+        if (container->dangerousGroups.size() > 0) {
             names = new StringList();
-            for (auto group : container->groups) {
+            for (auto group : container->dangerousGroups) {
                 juce::String gname = group->name;
                 names->add((const char*)(gname.toUTF8()));
             }
@@ -255,8 +255,8 @@ int UIParameter::getStructureOrdinal(MobiusConfig* container, const char* struct
     int structOrdinal = -1;
 
     if (this == UIParameterGroupName) {
-        for (int i = 0 ; i < container->groups.size() ; i++) {
-            juce::String gname = container->groups[i]->name;
+        for (int i = 0 ; i < container->dangerousGroups.size() ; i++) {
+            juce::String gname = container->dangerousGroups[i]->name;
             if (gname == juce::String(structName)) {
                 structOrdinal = i;
                 break;
@@ -279,8 +279,8 @@ const char* UIParameter::getStructureName(MobiusConfig* container, int structOrd
     const char* structName = nullptr;
 
     if (this == UIParameterGroupName) {
-        if (structOrdinal >= 0 && structOrdinal < container->groups.size()) {
-            GroupDefinition* def = container->groups[structOrdinal];
+        if (structOrdinal >= 0 && structOrdinal < container->dangerousGroups.size()) {
+            GroupDefinition* def = container->dangerousGroups[structOrdinal];
             // fuck, how constant are these names?
             structName = (const char*)(def->name.toUTF8());
         }

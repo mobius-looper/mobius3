@@ -16,7 +16,7 @@
 #include "model/Session.h"
 #include "model/Preset.h"
 
-#include "Supervisor.h"
+#include "Provider.h"
 #include "Producer.h"
 #include "Symbolizer.h"
 
@@ -69,9 +69,9 @@ UISymbols::Parameter UISymbols::Parameters[] = {
 //
 //////////////////////////////////////////////////////////////////////
 
-Symbolizer::Symbolizer(Supervisor* s)
+Symbolizer::Symbolizer(Provider* p)
 {
-    supervisor = s;
+    provider = p;
 }
 
 Symbolizer::~Symbolizer()
@@ -130,7 +130,7 @@ void Symbolizer::initialize()
  */
 void Symbolizer::internSymbols()
 {
-    SymbolTable* symbols = supervisor->getSymbols();
+    SymbolTable* symbols = provider->getSymbols();
 
     // I'm curious how large this is getting, be careful it doesn't grow
     // beyond 255 for optimized switch() compilation
@@ -166,7 +166,7 @@ void Symbolizer::internSymbols()
 
 void Symbolizer::installUISymbols()
 {
-    SymbolTable* symbols = supervisor->getSymbols();
+    SymbolTable* symbols = provider->getSymbols();
     
     for (int i = 0 ; UISymbols::Functions[i].id != SymbolIdNone ; i++) {
         UISymbols::Function* f = &(UISymbols::Functions[i]);
@@ -225,7 +225,7 @@ void Symbolizer::installUISymbols()
 
 void Symbolizer::loadSymbolDefinitions()
 {
-    juce::File root = supervisor->getRoot();
+    juce::File root = provider->getRoot();
     juce::File file = root.getChildFile("symbols.xml");
     if (!file.existsAsFile()) {
         Trace(1, "Symbolizer: Initialization file not found\n");
@@ -285,7 +285,7 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         
         // todo: need mayFocus, mayConfirm, and mayMuteCancel in here too!
 
-        Symbol* s = supervisor->getSymbols()->intern(name);
+        Symbol* s = provider->getSymbols()->intern(name);
         s->functionProperties.reset(func);
         s->behavior = BehaviorFunction;
 
@@ -448,7 +448,7 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
         props->mayFocus = options.contains("mayFocus");
         props->mayResetRetain = options.contains("resetRetain");
         
-        Symbol* s = supervisor->getSymbols()->intern(name);
+        Symbol* s = provider->getSymbols()->intern(name);
         s->parameterProperties.reset(props);
                 
         // this seems to be necessary for some things
@@ -529,7 +529,7 @@ juce::String Symbolizer::formatDisplayName(juce::String xmlName)
  */
 void Symbolizer::loadSymbolProperties()
 {
-    juce::File root = supervisor->getRoot();
+    juce::File root = provider->getRoot();
     juce::File file = root.getChildFile("properties.xml");
     if (!file.existsAsFile()) {
         Trace(1, "Symbolizer: properties.xml not found\n");
@@ -562,7 +562,7 @@ void Symbolizer::loadSymbolProperties()
  */
 void Symbolizer::parseProperty(juce::XmlElement* el)
 {
-    SymbolTable* symbols = supervisor->getSymbols();
+    SymbolTable* symbols = provider->getSymbols();
     
     juce::String sname = el->getStringAttribute("symbol");
     juce::String pname = el->getStringAttribute("name");
@@ -629,7 +629,7 @@ void Symbolizer::saveSymbolProperties()
 {
     juce::XmlElement xmlroot ("Properties");
     
-    SymbolTable* symbols = supervisor->getSymbols();
+    SymbolTable* symbols = provider->getSymbols();
     for (auto symbol : symbols->getSymbols()) {
         if (symbol->functionProperties != nullptr) {
             if (symbol->functionProperties->focus)
@@ -655,7 +655,7 @@ void Symbolizer::saveSymbolProperties()
 
     juce::String xml = xmlroot.toString();
     
-    juce::File fileroot = supervisor->getRoot();
+    juce::File fileroot = provider->getRoot();
     juce::File file = fileroot.getChildFile("properties.xml");
     file.replaceWithText(xml);
 }
@@ -690,7 +690,7 @@ void Symbolizer::addProperty(juce::XmlElement& root, Symbol* s, juce::String nam
  */
 void Symbolizer::installOldDefinitions()
 {
-    SymbolTable* symbols = supervisor->getSymbols();
+    SymbolTable* symbols = provider->getSymbols();
     
     // adorn Symbols from the older static FunctionDefinitions
 
@@ -768,7 +768,7 @@ void Symbolizer::installOldDefinitions()
  */
 void Symbolizer::installActivationSymbols()
 {
-    SymbolTable* symbols = supervisor->getSymbols();
+    SymbolTable* symbols = provider->getSymbols();
     // hide existing activation symbols
     for (auto symbol : symbols->getSymbols()) {
         if (symbol->behavior == BehaviorActivation) {
@@ -776,8 +776,7 @@ void Symbolizer::installActivationSymbols()
         }
     }
 
-    MobiusConfig* config = supervisor->getOldMobiusConfig();
-    Preset* presets = config->getPresets();
+    Preset* presets = provider->getPresets();
     while (presets != nullptr) {
         juce::String name = juce::String(Symbol::ActivationPrefixPreset) + presets->getName();
         Symbol* s = symbols->intern(name);
@@ -793,7 +792,7 @@ void Symbolizer::installActivationSymbols()
     // you can get there just as well with a LoadSession UI function
     // that takes an argument name
 
-    Producer* producer = supervisor->getProducer();
+    Producer* producer = provider->getProducer();
     juce::StringArray sessionNames;
     producer->getSessionNames(sessionNames);
     for (auto name : sessionNames) {

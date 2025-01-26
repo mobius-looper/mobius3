@@ -852,8 +852,8 @@ void MobiusViewer::refreshTrackGroups(TrackState* tstate,  MobiusViewTrack* tvie
         MobiusConfig* config = provider->getOldMobiusConfig();
         
         // ignore if out of range
-        if (newNumber > 0 && newNumber <= config->groups.size()) {
-            GroupDefinition* group = config->groups[newNumber - 1];
+        if (newNumber > 0 && newNumber <= config->dangerousGroups.size()) {
+            GroupDefinition* group = config->dangerousGroups[newNumber - 1];
             tview->groupName = group->name;
             tview->groupColor = group->color;
         }

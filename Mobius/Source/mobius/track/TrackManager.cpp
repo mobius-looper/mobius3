@@ -16,6 +16,7 @@
 #include "../../script/MslExternal.h"
 #include "../../script/MslWait.h"
 #include "../../script/ScriptExternals.h"
+#include "../../Grouper.h"
 
 #include "../MobiusKernel.h"
 #include "../MobiusInterface.h"
@@ -760,8 +761,8 @@ UIAction* TrackManager::replicateFocused(UIAction* src)
         // get the definition from the number
         if (focusedGroupNumber > 0) {
             int groupIndex = focusedGroupNumber - 1;
-            if (groupIndex < configuration->groups.size())
-              groupdef = configuration->groups[groupIndex];
+            if (groupIndex < configuration->dangerousGroups.size())
+              groupdef = configuration->dangerousGroups[groupIndex];
         }
     }
 

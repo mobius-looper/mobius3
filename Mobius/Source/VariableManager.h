@@ -11,7 +11,7 @@ class VariableManager
 {
   public:
 
-    VariableManager(Supervisor* super);
+    VariableManager(class Provider* p);
     ~VariableManager();
 
     void install();
@@ -22,7 +22,7 @@ class VariableManager
 
   private:
 
-    class Supervisor* supervisor = nullptr;
+    class Provider* provider = nullptr;
     VariableDefinitionSet variables;
 
 };

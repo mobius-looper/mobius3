@@ -1,5 +1,8 @@
 /**
  * Class encapsulating management of VariableDefinitions
+ *
+ * This is old now, and was an experiment that didn't get far.
+ * Still potentially useful but needs thought.
  */
 
 #include <JuceHeader.h>
@@ -10,9 +13,9 @@
 #include "Supervisor.h"
 #include "VariableManager.h"
 
-VariableManager::VariableManager(Supervisor* super)
+VariableManager::VariableManager(Provider* p)
 {
-    supervisor = super;
+    provider = p;
 }
 
 VariableManager::~VariableManager()
@@ -23,7 +26,9 @@ void VariableManager::install()
 {
     Trace(2, "VariableManager::install\n");
 
-    juce::File root = supervisor->getRoot();
+    // !! this needs to be using FileManasger
+
+    juce::File root = provider->getRoot();
     juce::File file = root.getChildFile("variables.xml");
     if (!file.existsAsFile()) {
         Trace(2, "VariableManager: No variables.xml file\n");
@@ -50,7 +55,7 @@ void VariableManager::install()
         // have to behave like Script symbols where we unresolve
         // some, update some, and add some
         for (auto variable : variables.variables) {
-            Symbol* s = supervisor->getSymbols()->intern(variable->name.toUTF8());
+            Symbol* s = provider->getSymbols()->intern(variable->name.toUTF8());
             if (s->variable != nullptr) {
                 // shouldn't be here yet
                 Trace(1, "VariableManager: Replacing Symbol VariableDefinition\n");

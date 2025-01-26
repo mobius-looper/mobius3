@@ -99,7 +99,7 @@ Event* TrackGroupFunction::invoke(Action* action, Loop* l)
             // UIAction converter decided to send this down as an int
             // OR we're here from the old scrpt language
             int g = action->arg.getInt();
-            if (g >= 0 && g <= config->groups.size()) {
+            if (g >= 0 && g <= config->dangerousGroups.size()) {
                 group = g;
             }
             else if (g < 0) {
@@ -138,7 +138,7 @@ int TrackGroupFunction::parseBindingArgument(Track* t, MobiusConfig* config, con
     if (strlen(s) > 0) {
         
         int gnumber = 1;
-        for (auto g : config->groups) {
+        for (auto g : config->dangerousGroups) {
             // what about case on these?
             if (g->name.equalsIgnoreCase(s)) {
                 group = gnumber;
@@ -151,7 +151,7 @@ int TrackGroupFunction::parseBindingArgument(Track* t, MobiusConfig* config, con
             // see if it looks like a number in range
             if (IsInteger(s)) {
                 group = ToInt(s);
-                if (group < 1 || group > config->groups.size()) {
+                if (group < 1 || group > config->dangerousGroups.size()) {
                     Trace(1, "TrackGroup: Group number out of range %d", group);
                     group = -1;
                 }
@@ -178,10 +178,10 @@ int TrackGroupFunction::parseBindingArgument(Track* t, MobiusConfig* config, con
 
             if (delta != 0) {
                 group = t->getGroup() + delta;
-                if (group > config->groups.size())
+                if (group > config->dangerousGroups.size())
                   group = 0;
                 else if (group < 0)
-                  group = config->groups.size();
+                  group = config->dangerousGroups.size();
             }
         }
     }

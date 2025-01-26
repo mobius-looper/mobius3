@@ -181,8 +181,8 @@ bool MobiusConfig::isDefault()
 int MobiusConfig::getGroupOrdinal(juce::String name)
 {
     int ordinal = -1;
-    for (int i = 0 ; i < groups.size() ; i++) {
-        GroupDefinition* def = groups[i];
+    for (int i = 0 ; i < dangerousGroups.size() ; i++) {
+        GroupDefinition* def = dangerousGroups[i];
         if (def->name == name) {
             ordinal = i;
             break;

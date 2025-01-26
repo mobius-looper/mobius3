@@ -10,6 +10,7 @@
 #include "../../model/Preset.h"
 #include "../../Provider.h"
 #include "../../MidiManager.h"
+#include "../../Grouper.h"
 
 #include "YanField.h"
 #include "YanFieldHelpers.h"
@@ -134,16 +135,16 @@ juce::String YanFieldHelpers::saveMidiOutput(YanCombo* combo)
 
 void YanFieldHelpers::initTrackGroup(Provider* p, YanCombo* combo, juce::String value)
 {
-    MobiusConfig* config = p->getOldMobiusConfig();
+    Grouper* gp = p->getGrouper();
+
     juce::StringArray names;
+    gp->getGroupNames(names);
 
-    names.add("[None]");
-    for (auto def : config->groups)
-      names.add(def->name);
-
+    names.insert(0, "[None]");
+    
     combo->setItems(names);
 
-    int ordinal = config->getGroupOrdinal(value);
+    int ordinal = gp->getGroupOrdinal(value);
     // ordinal is -1 if not found, which matches [None]
     combo->setSelection(ordinal + 1);
 }

@@ -132,7 +132,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
         return mainComponent;
     }
     
-    juce::AudioProcessor* getAudioProcessor() {
+    juce::AudioProcessor* getAudioProcessor() override {
         return audioProcessor;
     }
 
@@ -160,11 +160,14 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
         return &mobiusView;
     }
     
-    // !! these should just return references
-    VariableManager* getVariableManager() {
+    class VariableManager* getVariableManager() override {
         return &variableManager;
     }
 
+    class Grouper* getGrouper() override {
+        return grouper.get();
+    }
+    
     // part of Provider for Prompter
     class ScriptClerk* getScriptClerk() override {
         return &scriptClerk;
@@ -194,15 +197,19 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // something old and weird for UpgradePanel
     void reloadOldMobiusConfig();
 
-    // old configuration editor interfaces
+    // controlled access to MobiusConfig
     class MobiusConfig* getOldMobiusConfig() override;
+    class BindingSet* getBindingSets() override;
+    class Preset* getPresets() override;
+    
+    // old configuration editor interfaces
     void presetEditorSave(class Preset* newList);
     void setupEditorSave(class Setup* newList);
     void bindingEditorSave(class BindingSet* newList);
     void groupEditorSave(juce::Array<class GroupDefinition*>& newList);
     void sampleEditorSave(class SampleConfig* newConfig);
     void upgradePanelSave();
-    
+
     // this is override because it is also part of MobiusContainer
     class Session* getSession() override;
     void sessionEditorSave();
@@ -438,6 +445,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // new way of doing embedded objects that doesn't require a
     // full link every time you touch the header file
     std::unique_ptr<class MidiClerk> midiClerk;
+
+    // new way of gaining group information
+    std::unique_ptr<class Grouper> grouper;
     
     // internal component listeners
     juce::Array<ActionListener*> actionListeners;

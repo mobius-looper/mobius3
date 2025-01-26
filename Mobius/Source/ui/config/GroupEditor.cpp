@@ -83,7 +83,7 @@ void GroupEditor::load()
     groups.clear();
     revertGroups.clear();
     MobiusConfig* config = supervisor->getOldMobiusConfig();
-    for (auto src : config->groups) {
+    for (auto src : config->dangerousGroups) {
         // Supervisor should have upgraded these by now
         if (src->name.length() == 0) {
             Trace(1, "GroupEditor: GroupDefinition with no name, bad Supervisor");

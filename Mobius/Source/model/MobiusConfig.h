@@ -260,8 +260,15 @@ class MobiusConfig {
 	int getTraceDebugLevel();
     
 #endif
+
+    // sigh, use of this is buried at levels that make access
+    // to Grouper harder, weed those out
+    juce::OwnedArray<class GroupDefinition> dangerousGroups;
     
-    juce::OwnedArray<class GroupDefinition> groups;
+    juce::OwnedArray<class GroupDefinition>& getGroupDefinitions() {
+        return dangerousGroups;
+    }
+    
     int getGroupOrdinal(juce::String name);
     
 	class Setup* getSetups();

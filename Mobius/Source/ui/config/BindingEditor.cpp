@@ -37,6 +37,7 @@
 
 // temporary until we can get the initialization order sorted out
 #include "../../Supervisor.h"
+#include "../../Grouper.h"
 
 #include "BindingTable.h"
 #include "BindingTargetSelector.h"
@@ -501,15 +502,17 @@ void BindingEditor::refreshScopeNames()
     // to Supervisor to get to MobiusConfig, this sucks work out a more
     // orderly initialization sequence
 
-    // okay to use this for the group list temporarily
-    MobiusConfig* config = supervisor->getOldMobiusConfig();
     MobiusView* view = supervisor->getMobiusView();
     maxTracks = view->totalTracks;
     for (int i = 0 ; i < maxTracks ; i++)
       scopeNames.add("Track " + juce::String(i+1));
 
-    for (auto group : config->groups) {
-        scopeNames.add("Group " + group->name);
+    juce::StringArray gnames;
+    Grouper* g = supervisor->getGrouper();
+    g->getGroupNames(gnames);
+
+    for (auto gname : gnames) {
+        scopeNames.add(juce::String("Group ") + gname);
     }
     
     scope.setItems(scopeNames);

@@ -489,7 +489,7 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
 	if (c->getSampleConfig() != nullptr)
       render(b, c->getSampleConfig());
 
-    for (auto group : c->groups)
+    for (auto group : c->dangerousGroups)
       render(b, group);
 #if 0
     // never really implemented these
@@ -590,7 +590,7 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 		else if (child->isName(EL_GROUP_DEFINITION)) {
 			GroupDefinition* gd = new GroupDefinition();
             parse(child, gd);
-            c->groups.add(gd);
+            c->dangerousGroups.add(gd);
 		}
 
         // never did fully support this 

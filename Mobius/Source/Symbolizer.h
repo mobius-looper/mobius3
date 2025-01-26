@@ -100,7 +100,7 @@ class Symbolizer
 {
   public:
 
-    Symbolizer(class Supervisor* s);
+    Symbolizer(class Provider* p);
     ~Symbolizer();
 
     void initialize();
@@ -112,7 +112,7 @@ class Symbolizer
     
   private:
 
-    class Supervisor* supervisor = nullptr;
+    class Provider* provider = nullptr;
     juce::Array<class Symbol*> idmap;
     
     void internSymbols();

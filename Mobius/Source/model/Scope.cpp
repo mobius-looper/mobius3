@@ -55,7 +55,7 @@ int Scope::parseGroupOrdinal(MobiusConfig* config, const char* scope)
     int ordinal = -1;
 
     int index = 0;
-    for (auto group : config->groups) {
+    for (auto group : config->dangerousGroups) {
         if (group->name == scope) {
             ordinal = index;
             break;
@@ -86,12 +86,12 @@ ScopeCache::~ScopeCache()
 void ScopeCache::refresh(MobiusConfig* config)
 {
     int index = 0;
-    for (auto group : config->groups) {
+    for (auto group : config->dangerousGroups) {
         const char* gname = group->name.toUTF8();
         strncpy(GroupNames[index], gname, MaxGroupName-1);
         index++;
         if (index >= MaxGroupNames) {
-            if (config->groups.size() > MaxGroupNames)
+            if (config->dangerousGroups.size() > MaxGroupNames)
               Trace(1, "ScopeCache: Group name cache overflow");
             break;
         }

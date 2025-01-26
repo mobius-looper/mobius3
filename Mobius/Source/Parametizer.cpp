@@ -19,13 +19,14 @@
 #include "model/VariableDefinition.h"
 #include "model/Symbol.h"
 
-#include "Supervisor.h"
+#include "Provider.h"
 #include "PluginParameter.h"
+#include "VariableManager.h"
 #include "Parametizer.h"
 
-Parametizer::Parametizer(Supervisor* super)
+Parametizer::Parametizer(Provider* p)
 {
-    supervisor = super;
+    provider = p;
 }
 
 Parametizer::~Parametizer()
@@ -39,8 +40,7 @@ void Parametizer::initialize()
     int sustainId = 1;
     
     // start with Bindings
-    MobiusConfig* mconfig = supervisor->getOldMobiusConfig();
-    BindingSet* bindings = mconfig->getBindingSets();
+    BindingSet* bindings = provider->getBindingSets();
     // bindings can be nullptr on a build with no install
     Binding* binding = nullptr;
     if (bindings != nullptr)
@@ -48,7 +48,7 @@ void Parametizer::initialize()
     
     while (binding != nullptr) {
         if (binding->trigger == TriggerHost) {
-            Symbol* s = supervisor->getSymbols()->intern(binding->getSymbolName());
+            Symbol* s = provider->getSymbols()->intern(binding->getSymbolName());
             PluginParameter* p = new PluginParameter(s, binding);
             // we work top down from the PluginParameter to the Symbol
             // so we don't need to hang the PluginParameter on the Symbol
@@ -77,12 +77,12 @@ void Parametizer::initialize()
     // iterate over Symbols looking foro the ones that have a VariableDefinition
     // todo: if a VariableDefinition and a Binding have the same name we'll get
     // duplicates unless we put the previous PluginParameter as a property of the Symbol
-    VariableManager* vm = supervisor->getVariableManager();
+    VariableManager* vm = provider->getVariableManager();
     VariableDefinitionSet* vars = vm->getVariables();
     if (vars != nullptr) {
         for (auto var : vars->variables) {
             if (var->getBool("automatable")) {
-                Symbol* s = supervisor->getSymbols()->intern(var->name);
+                Symbol* s = provider->getSymbols()->intern(var->name);
                 PluginParameter* p = new PluginParameter(s, var);
                 if (p->getJuceParameter() == nullptr) {
                     Trace(1, "Parametizer: Ignoring incomplete parameter definition %s\n",
@@ -109,7 +109,7 @@ void Parametizer::install()
     
     // we're going to need this a lot right?  maybe ust pass that
     // to the constructor
-    juce::AudioProcessor* ap = supervisor->getAudioProcessor();
+    juce::AudioProcessor* ap = provider->getAudioProcessor();
     if (ap == nullptr) {
         Trace(1, "Parametizer::install You are not a plugin\n");
     }

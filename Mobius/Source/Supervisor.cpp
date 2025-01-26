@@ -59,6 +59,8 @@
 #include "ProjectFiler.h"
 #include "MidiClerk.h"
 #include "ModelTransformer.h"
+#include "Grouper.h"
+
 #include "script/ScriptClerk.h"
 #include "script/MslEnvironment.h"
 #include "ui/script/MobiusConsole.h"
@@ -284,6 +286,9 @@ bool Supervisor::start()
     // now that Sessions and MobiusConfig are sanitized, can
     // install activation symbols
     symbolizer.installActivationSymbols();
+
+    // random utility classes
+    grouper.reset(new Grouper(this));
     
     meter("MainWindow");
 
@@ -1065,7 +1070,10 @@ void Supervisor::advanceHigh()
 
 //////////////////////////////////////////////////////////////////////
 //
-// Configuration Objects
+// MobiusConfig Access
+//
+// This is evolving and access needs to be carefully controlled.
+// Most things should never touch MobiusConfig directly.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -1098,6 +1106,24 @@ MobiusConfig* Supervisor::getOldMobiusConfig()
     }
     return mobiusConfig.get();
 }
+
+BindingSet* Supervisor::getBindingSets()
+{
+    MobiusConfig* config = getOldMobiusConfig();
+    return config->getBindingSets();
+}
+
+Preset* Supervisor::getPresets()
+{
+    MobiusConfig* config = getOldMobiusConfig();
+    return config->getPresets();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Other Configuration Objects
+//
+//////////////////////////////////////////////////////////////////////
 
 UIConfig* Supervisor::getUIConfig()
 {
@@ -1226,9 +1252,9 @@ void Supervisor::groupEditorSave(juce::Array<GroupDefinition*>& newList)
     // this one is weird because it was newer and doesn't use linked lists
     // the objects in the Array are unowned
     MobiusConfig* master = getOldMobiusConfig();
-    master->groups.clear();
+    master->dangerousGroups.clear();
     for (auto group : newList)
-      master->groups.add(group);
+      master->dangerousGroups.add(group);
     updateMobiusConfig();
 }
 

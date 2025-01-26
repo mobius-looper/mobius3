@@ -9,7 +9,7 @@ class Parametizer
 {
   public:
 
-    Parametizer(Supervisor* super);
+    Parametizer(class Provider* p);
     ~Parametizer();
 
     void initialize();
@@ -21,7 +21,7 @@ class Parametizer
     
   private:
 
-    class Supervisor* supervisor = nullptr;
+    class Provider* provider = nullptr;
 
     juce::OwnedArray<class PluginParameter> parameters;
     
