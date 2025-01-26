@@ -137,6 +137,7 @@
     <Button action="Play"/>
     <Button action="TapTempo"/>
     <Button action="SyncMasterMidi"/>
+    <Button action="Checkpoint"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

@@ -120,7 +120,10 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
         return audioPool;
     }
 
-    class MobiusConfig* getMobiusConfig() {
+    // the ONLY reason this is exposed is for TestDriver that wants
+    // to inject some special objects into the MobiusConfig
+    // this is probably broken now that it doesn't use a Setup any more
+    class MobiusConfig* getMobiusConfigForTestDriver() {
         return configuration;
     }
     

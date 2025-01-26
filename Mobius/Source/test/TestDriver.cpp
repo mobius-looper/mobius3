@@ -688,7 +688,7 @@ void TestDriver::mobiusSaveAudio(Audio* content, juce::String fileName)
     bool normalMode = false;
     if (normalMode) {
         MobiusShell* shell = getMobiusShell();
-        MobiusConfig* config = shell->getConfiguration();
+        MobiusConfig* config = shell->getConfigurationForTestDriver();
         const char* quickfile = config->getQuickSave();
         if (quickfile == nullptr) {
             // this is what old code used, better name might
@@ -809,7 +809,7 @@ void TestDriver::installTestConfiguration()
         }
         else {
             MobiusKernel* kernel = shell->getKernel();
-            MobiusConfig* kernelConfig = kernel->getMobiusConfig();
+            MobiusConfig* kernelConfig = kernel->getMobiusConfigForTestDriver();
     
             // special Setup and Preset
             installPresetAndSetup(kernelConfig);

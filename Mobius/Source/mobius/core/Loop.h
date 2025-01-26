@@ -159,10 +159,6 @@ class Loop : public TraceContext {
 	void refreshState(class OldMobiusLoopState* s, bool active);
     void refreshState(class TrackState* s);
     void refreshFocusedState(class FocusedTrackState* state);
-
-    void getLayerState(Layer* layers, class ShittyLayerState* states, int max,
-                       int *retAdded, int* retLost);
-
     
     class StreamState* getRestoreState();
 	class MobiusMode* getMode();

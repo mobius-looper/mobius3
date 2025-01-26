@@ -74,8 +74,12 @@ class MobiusShell : public MobiusInterface
     class MobiusContainer* getContainer() {
         return container;
     }
-    
-    class MobiusConfig* getConfiguration() {
+
+    // the ONLY reason this needs to be exposed is for TestDriver
+    // that wants to get to the quick save file name
+    // need to retool TestDriver to use the Session then there is no reason
+    // for Shell to keep a copy of this
+    class MobiusConfig* getConfigurationForTestDriver() {
         return configuration;
     }
 

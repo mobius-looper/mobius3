@@ -1395,11 +1395,6 @@ void Layer::getState(OldMobiusLayerState* s)
 	s->checkpoint = isCheckpoint();
 }
 
-void Layer::getState(ShittyLayerState* s)
-{
-	s->checkpoint = isCheckpoint();
-}
-
 /****************************************************************************
  *                                                                          *
  *                             SEGMENT MANAGEMENT                           *

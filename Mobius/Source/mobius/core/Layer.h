@@ -154,7 +154,6 @@ class Layer : public TraceContext
 	Layer* getCheckpointTail();
 	Layer* getTail();
 	void getState(class OldMobiusLayerState* s);
-	void getState(class ShittyLayerState* s);
 
 	// Recording
 

@@ -232,8 +232,8 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
     // temporarily corrrect the view from the old model until the new one
     // is fully tested
     
-    if (state != nullptr)
-      refreshAudioTracks(state, view);
+    //if (state != nullptr)
+    //refreshAudioTracks(state, view);
 
     // dump the entire sync state over, no need to duplicate
     view->syncState = sysstate->syncState;

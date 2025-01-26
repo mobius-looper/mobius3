@@ -1336,7 +1336,7 @@ void Loop::refreshState(TrackState* s)
 
     // now Track takes over
     
-    // MobiusState has a new model for modes
+    // MobiusState has the new model for modes
     // this wasn't done for summaries
     s->mode = mMode->stateMode;
 	s->overdub = mOverdub;
@@ -1401,132 +1401,97 @@ void Loop::refreshState(TrackState* s)
         mBeatSubCycle = false;
     }
 
-    // layer links are a mess, the following is wrong
-    // but gets the basic stats
-    
+    // layers minus checkpoints look like this...
+    // the layer being recorded is hidden, the UI makes it look like
+    // the play layer is being actively recorded
+    // so for a loop with 3 layers linked from mRecord, there are only 2
+    // layers in the state, in other words, count the length of the mPlay
+    // list linked by mPrev.  mPlay will be null on the initial recording
+
     int undoLayers = 0;
-    for (Layer* l = mRecord ; l != nullptr ; l = l->getPrev()) {
-        undoLayers++;
+    for (Layer* l = mPlay ; l != nullptr ; l = l->getPrev())
+      undoLayers++;
+
+    // the redo count is a simple count of mRedo but linked using mRedo
+    int redoLayers = 0;
+    for (Layer* l = mRedo ; l != nullptr ; l = l->getRedo()) {
+        redoLayers++;
+
+        if (l->getPrev() != nullptr) {
+            // this redo item also has a prev chain, I think this can happen
+            // if you actually did an Undo to checkpoint
+            // if so, then you would add the length of this onto the redo count?
+            // or do you just make it look like each redo item is one thing
+            Trace(2, "Loop: Redo list item has a sub-chain");
+        }
     }
 
+    // the state then shows the combination of those
+    s->layerCount = undoLayers + redoLayers;
+
+    // and we make it look like the active layer is the last undo layer
+    // this will be -1 if we're in the initial recording
+    s->activeLayer = undoLayers - 1;
+}
+
+/**
+ * Layer details exist only in the FocusedTrackState
+ */
+void Loop::refreshFocusedState(FocusedTrackState* state)
+{
+    // repeat what we did for the full state
+    
+    int undoLayers = 0;
+    for (Layer* l = mPlay ; l != nullptr ; l = l->getPrev())
+      undoLayers++;
+
+    // the redo count is a simple count of mRedo but linked using mRedo
     int redoLayers = 0;
     for (Layer* l = mRedo ; l != nullptr ; l = l->getRedo()) {
         redoLayers++;
     }
 
-    // not sure if this is right
-    s->layerCount = undoLayers + redoLayers;
-    s->activeLayer = undoLayers;
-}
-
-/**
- * Layer details exist only in the FocusedTrackState
- *
- * This is using the original code that does an incomprehensible iteration
- * over the layer lists.  Just get this working outside the OldMobiusState
- * figure out what it does, take it behind the shed and burn it.
- *
- * I THINK if we're iterating over the Undo list, then there won't be a Redo
- * pointer so the outer loop only has one thing, but the inner loop will
- * iterate over the Prev list which is how the Undo list is chained.
- *
- * If this IS the Redo list, then the outer loop will do the work and the inner
- * loop won't have anything.  Maybe.
- *
- * In the new model there is just a flat list of layers numbered from 0 to N
- * (or is it 1 to N) and for each of those numbers we want to know if there is
- * a checkpoint.
- *
- * Fuck, this is terrible.
- */
-void Loop::refreshFocusedState(FocusedTrackState* state)
-{
-    // abandoned attempt to simplifiy this
-#if 0    
-    int undoCount = 0;
-    if (mRecord != nullptr) {
-        for (Layer* l = mRecord->getPrev() ; l != nullptr ; l = l->getPrev())
-          undoCount++;
-
-        // again adding the checkpoints
-        if (undoCount > 0) {
-            for (Layer* l = mRecord->getPrev(), int position = 0 ; l != nullptr ;
-                 l = l->getPrev(), position++) {
-                if (l->isCheckpoint) {
-                    int virtualNumber = undoCount - position;
-                    TrackState::Layer& lstate = state.layers.getReference(state.layerCount);
-                    lstate.number = virtualNumber;
-                    lstate.checkpoint = true;
-                    state.layerCount++;
-                }
-            }
-        }
-    }
-#endif
-
-    // replicate the old model inside the new one
-    ShittyOldState* s = &(state->oldState);
+    // now for checkpoints
+    state->layers.clearQuick();
+    int layersAdded = 0;
     
-    // calculate the number of layers, the record loop is invisible
-    int added = 0;
-    int lost = 0;
-    if (mRecord != NULL)
-      getLayerState(mRecord->getPrev(), s->layers, ShittyMaxLayers,
-                    &added, &lost);
+    // the checkpoint number space starts from zero up to the layerCount -1
+    // if a Redo layer is a checkpoint it's number is undoLayers plus the
+    // redo layer's position in the redo list
+    //
+    // this is where this migth be wrong  if each item on the mRedo list can also have
+    // an mPrev list, then those would need to be "flattened"
+    int psn = 0;
+    for (Layer* redo = mRedo ; redo != nullptr ; redo = redo->getRedo()) {
+        if (redo->isCheckpoint()) {
+            TrackState::Layer info;
+            info.checkpoint = true;
+            info.number = undoLayers + psn;
+            state->layers.add(info);
+            layersAdded++;
+        }
+        psn++;
+    }
+          
+    // checkpoint numbers for the undo list go in reverse order of it's position
+    psn = undoLayers - 1;
+    for (Layer* undo = mPlay ; undo != nullptr ; undo = undo->getPrev()) {
+        if (undo->isCheckpoint()) {
+            TrackState::Layer info;
+            info.checkpoint = true;
+            info.number = psn;
+            state->layers.add(info);
+            layersAdded++;
+        }
+        psn--;
+    }
 
-    s->layerCount = added;
-    s->lostLayers = lost;
+    // this is in the model but we don't need it if we use clearQuick
+    state->layerCount = layersAdded;
 
-    // same for redo layers
-    getLayerState(mRedo, s->redoLayers, ShittyMaxRedoLayers, &added, &lost);
-    s->redoCount = added;
-    s->lostRedo = lost;
-}
-
-/**
- * Capture layer state.
- * Used for both normal layers and redo layers.
- * Return via pointers the number of entries in the array and the number
- * of layers that wouldn't fit.
- *
- * Layers are added in reverse order, with the most recent first.
- * The lost layer count represents old layers that would not fit in the
- * summary array.  
- *
- * The redo layers are in the order in which they will be redone.
- */
-void Loop::getLayerState(Layer* layers, ShittyLayerState* states, int max,
-                         int *retAdded, int* retLost)
-{
-	int added = 0;
-	int lost = 0;
-
-	// if this is the redo list, we'll have a redo pointer
-	for (Layer* links = layers ; links != NULL ; links = links->getRedo()) {
-		bool inCheckpoint = false;
-
-		// with the introduction of redo links, this logic is overcomplicated
-		// since if there are non-null links this must by definition
-		// be a checkpoint so we don't need to scan, but trying to
-		// share the same scanner for both the undo and redo lists
-
-		for (Layer* l = links ; l != NULL ; l = l->getPrev()) {
-			bool check = l->isCheckpoint();
-			if (!inCheckpoint || check) {
-				if (added >= max)
-				  lost++;
-				else {
-					l->getState(&(states[added]));
-					added++;
-				}
-				// once set, this doesn't turn off in the inner loop
-				inCheckpoint = check;
-			}
-		}
-	}
-
-	*retAdded = added;
-	*retLost = lost;
+    // why wouldn't these be the same
+    if (layersAdded != state->layers.size())
+      Trace(1, "Loop: Unexpected layer counts in focused state");
 }
 
 /****************************************************************************
