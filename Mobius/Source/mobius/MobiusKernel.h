@@ -50,7 +50,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
      * is kind of arbitrary, consider doing it one way or the other.
      * Or just pulling it from the MobiusShell
      */
-    void initialize(class MobiusContainer* cont, class MobiusConfig* config, class Session* session);
+    void initialize(class MobiusContainer* cont, class Session* s, class MobiusConfig* c);
     void propagateSymbolProperties();
 
     void shutdown();
@@ -263,8 +263,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     class MobiusListener* listener = nullptr;
     class KernelCommunicator* communicator = nullptr;
     class MobiusContainer* container = nullptr;
-    class MobiusConfig* configuration = nullptr;
     class Session* session = nullptr;
+    class MobiusConfig* configuration = nullptr;
     class AudioPool* audioPool = nullptr;
     class UIActionPool* actionPool = nullptr;
 

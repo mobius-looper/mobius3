@@ -14,7 +14,6 @@
 
 #include "../../util/Trace.h"
 #include "../Audio.h"
-#include "../../model/OldMobiusState.h"
 
 /****************************************************************************
  *                                                                          *
@@ -153,7 +152,6 @@ class Layer : public TraceContext
 	Layer* getPrevCheckpoint();
 	Layer* getCheckpointTail();
 	Layer* getTail();
-	void getState(class OldMobiusLayerState* s);
 
 	// Recording
 

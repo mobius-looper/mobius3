@@ -14,9 +14,6 @@
 
 #include "../../util/Trace.h"
 
-// needed for TrackState
-#include "../../model/OldMobiusState.h"
-
 #include "../Notification.h"
 
 /****************************************************************************
@@ -92,7 +89,7 @@ class Track : public TraceContext
 
     // used for sync parameters rather than having
     // to maintain a local copy
-    SetupTrack* getSetup();
+    class SetupTrack* getSetup();
     
 	void setHalting(bool b);
 
@@ -187,7 +184,6 @@ class Track : public TraceContext
     int getFrames();
     int getCycles();
 	long getFrame();
-    void getState(class OldMobiusTrackState* s);
     void refreshState(class TrackState* s);
     void refreshPriorityState(class PriorityState* s);
     void refreshFocusedState(class FocusedTrackState* state);

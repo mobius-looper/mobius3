@@ -263,7 +263,7 @@ class TrackState
     int altFeedback = 0;
     int pan = 0;
 
-    // OldMobiusState
+    // OldMobiusState had these, needs redesign
     bool solo = false;
     bool globalMute = false;
     bool globalPause = false;
@@ -301,7 +301,7 @@ class TrackState
     // or otherwise had their size adjusted when not active
     bool refreshLoopContent = false;
         
-    // OldMobiusState
+    // another from OldMobiusState
     // I think this was set after loading projects
     bool needsRefresh = false;
 };

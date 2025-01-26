@@ -134,7 +134,7 @@ MobiusKernel::~MobiusKernel()
  * by a later MsgConfigure
  *
  */
-void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Session* ses)
+void MobiusKernel::initialize(MobiusContainer* cont, Session* ses, MobiusConfig* config)
 {
     Trace(2, "MobiusKernel::initialize\n");
     
@@ -142,8 +142,8 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     container = cont;
     audioPool = shell->getAudioPool();
     actionPool = shell->getActionPool();
-    configuration = config;
     session = ses;
+    configuration = config;
 
     scriptUtil.initialize(this);
     scriptUtil.configure(config, ses);
@@ -167,7 +167,7 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
       Trace(1, "MobiusKernel: Session audio tracks not right");
 
     mTracks.reset(new TrackManager(this));
-    mTracks->initialize(configuration, ses, mCore);
+    mTracks->initialize(ses, configuration, mCore);
 
     notifier.initialize(this, mTracks.get());
     notifier.configure(ses);
@@ -276,13 +276,8 @@ void MobiusKernel::refreshStateNow(SystemState* state)
     syncMaster.refreshState(state);
     mTracks->refreshState(state);
 
-    // these were done by Mobius in the old state model
-    state->setupOrdinal = mCore->getSetupOrdinal();
     // OldMobiusState called this "globalRecording"
     state->audioCapturing = mCore->isCapturing();
-        
-    // temporary
-    state->oldState = mCore->getState();
 }
 
 void MobiusKernel::refreshPriorityState(PriorityState* state)
@@ -412,7 +407,7 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     // this is NOT where track configuration comes in
     mCore->reconfigure(configuration);
 
-    mTracks->configure(configuration);
+    mTracks->reconfigure(configuration);
 }
 
 /**

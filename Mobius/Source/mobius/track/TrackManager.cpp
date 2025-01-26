@@ -51,11 +51,11 @@ TrackManager::~TrackManager()
  * Startup initialization.  Session here is normally the default
  * session, a different one may come down later via loadSession()
  */
-void TrackManager::initialize(MobiusConfig* config, Session* ses, Mobius* core)
+void TrackManager::initialize(Session* ses, MobiusConfig* config, Mobius* core)
 {
+    session = ses;
     // only thing this is used for is the group list
     configuration = config;
-    session = ses;
     audioEngine = core;
 
     // this isn't owned by MidiPools, but it's convenient to bundle
@@ -74,7 +74,7 @@ void TrackManager::initialize(MobiusConfig* config, Session* ses, Mobius* core)
 /**
  * Have to get this to refresh GroupDefinitions
  */
-void TrackManager::configure(MobiusConfig* config)
+void TrackManager::reconfigure(MobiusConfig* config)
 {
     configuration = config;
     scopes.refresh(config);
@@ -207,7 +207,12 @@ MidiPools* TrackManager::getPools()
     return &pools;
 }
 
-MobiusConfig* TrackManager::getConfiguration()
+MobiusConfig* TrackManager::getConfigurationForGroups()
+{
+    return configuration;
+}
+
+MobiusConfig* TrackManager::getConfigurationForPresets()
 {
     return configuration;
 }

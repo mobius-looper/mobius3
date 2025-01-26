@@ -2019,34 +2019,6 @@ Parameter* Mobius::getParameter(const char* name)
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * Refresh and return the full MobiusState object.
- * Called at regular intervals by the UI refresh thread.
- * We could just let the internal MobiusState object be retained by the
- * caller but this still serves as the mechanism to refresh it.
- */
-OldMobiusState* Mobius::getState()
-{
-    mState.trackCount = mTrackCount;
-    
-	mState.globalRecording = mCapturing;
-
-    //mSynchronizer->getState(&mState);
-
-    // OG Mobius only refreshed the active track, now we do all of them
-    // since the TrackStrips will want most things
-    for (int i = 0 ; i < mTrackCount ; i++) {
-        Track* t = mTracks[i];
-        OldMobiusTrackState* tstate = &(mState.tracks[i]);
-        t->getState(tstate);
-    }
-    
-    mState.activeTrack = getActiveTrack();
-    mState.setupOrdinal = mSetup->ordinal;
-    
-	return &mState;
-}
-
 bool Mobius::isCapturing()
 {
     return mCapturing;
@@ -2055,14 +2027,6 @@ bool Mobius::isCapturing()
 int Mobius::getSetupOrdinal()
 {
     return mSetup->ordinal;
-}
-
-// kludge for drag and drop
-// let internal components put things in here early before
-// the next call to getState which does a full state refresh
-OldMobiusTrackState* Mobius::getTrackState(int index)
-{
-    return &(mState.tracks[index]);
 }
 
 /**
@@ -2252,7 +2216,7 @@ void Mobius::dump(const char* name, Loop* l)
 
 /**
  * Used by TestDriver to easilly know this without digging through
- * OldMobiusState.  Mostly this makes sure that the active loop in all
+ * SystemState.  Mostly this makes sure that the active loop in all
  * tracks are in Reset, and that there aren't any scripts running.
  * There might be other things to test here, we don't have a formal
  * testable mode for this.

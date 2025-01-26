@@ -88,25 +88,16 @@ MobiusShell::MobiusShell(MobiusContainer* cont)
     Instances++;
     
     container = cont;
-    
-    // this is given to us later
-    configuration = nullptr;
-
-    // see notes below on destructor subtleties
-    // keep this on the stack rather than the heap
-    // audioPool = new AudioPool();
-
 }
 
 /**
  * Destruction subtelty.
  * 
- * Because MobiusKernel is a member object (or whatever those are called)
- * rather than a dynamically allocated pointer, it will be destructed AFTER
- * MobiusShell is destructed.  The problem is that the AudioPool is shared between
- * them.  Originally AudioPool was a stack object with a member pointer,
- * and we deleted it here in the destructor.  But when we did that it will be invalid
- * when Kernel wants to delete Mobius which will return things to the pool.
+ * Because MobiusKernel is a member object rather than a dynamically allocated pointer,
+ * it will be destructed AFTER MobiusShell is destructed.  The problem is that the
+ * AudioPool is shared between* them.  Originally AudioPool was a stack object with a
+ * member pointer, and we deleted it here in the destructor.  But when we did that
+ * it will be invalid when Kernel wants to delete Mobius which will return things to the pool.
  * This didn't seem to crash in my testing, maybe because it still looks enough
  * like it did before it was returned to the heap, still surpised we didn't get
  * an access violation.
@@ -147,10 +138,6 @@ MobiusShell::~MobiusShell()
 {
     Trace(2, "MobiusShell: Destructing\n");
 
-    // use a unique_ptr here!
-    delete configuration;
-    //delete session;
-    
     audioPool.dump();
 
     Instances--;
@@ -201,49 +188,27 @@ void MobiusShell::shutdown()
  * Do first time initialization of the shell/kernel/core.
  * This must be called once, before the audio thread is active
  * so we are allowed to reach into kernel-level objects without
- * passing through the KernelCommunicator.  After innitialization,
+ * passing through the KernelCommunicator.  After initialization,
  * configuration changes made in the UI must be passed through the
  * reconfigure() method which will use KernelCommunicator.
  *
- * Ownership of MobusConfig is retained by the caller.
+ * Ownership of the Session and MobusConfig are retained by the caller.
  * Two copies are made, one for the shell and one for the kernel.
  * We could probably share them, but safer not to.
+ *
+ * update: Shell no longer has any need for either of these two
+ * objects, one copy is passed through to the kernel.
  */
-void MobiusShell::initialize(MobiusConfig* config, Session* ses)
+void MobiusShell::initialize(Session* s, MobiusConfig* c)
 {
     Trace(2, "MobiusShell::initialize\n");
     
-    // shouldn't have one at initialization time
-    if (configuration != nullptr) {
-        Trace(1, "MobiusShell::initialize Already initialized!\n");
-        delete configuration;
-        configuration = nullptr;
-    }
-
-    // todo: give this class a proper clone() method so we don't have to use XML
-    configuration = config->clone();
-
-    // shell doesn't need a copy of the Session, if it needs anything in there
-    // pull out the pieces
-    /*
-    if (session != nullptr) {
-        Trace(1, "MobiusShell::initialize Session already initialized!\n");
-        delete session;
-        session = nullptr;
-    }
-    session = new Session(ses);
-    */
-
-    // add symbols for our built-in functions
-    // symbols for scripts and samples are added later as they are loaded
-    installSymbols();
-
     // initialization mess
     // to do what it does, the Kernel needs to start with
     //   shell - given at construction
     //   communicator - given at construction
     //   container - given here
-    //   config - given here the first time, then passed with a message
+    //   session/config - given here the first time, then passed with a message
     //   audioPool - immediately calls back to getAudioPool
     //
     // most if not all of this could done the same way, either
@@ -251,44 +216,24 @@ void MobiusShell::initialize(MobiusConfig* config, Session* ses)
     // it one at a time inside initialize, can do some things
     // in the constructor, but not all like audioPool and config
 
-    MobiusConfig* kernelCopy = config->clone();
-    Session* kernelSession = new Session(ses);
+    Session* kernelSession = new Session(s);
+    MobiusConfig* kernelConfig = c->clone();
 
-    kernel.initialize(container, kernelCopy, kernelSession);
-
-}
-
-/**
- * Install symbols for the few shell level functions we support.
- * Used to have a few dynamic functions here, but now there is nothing.
- */
-void MobiusShell::installSymbols()
-{
+    kernel.initialize(container, kernelSession, kernelConfig);
 }
 
 /**
  * Reconfigure the engine after MobiusConfig has been edited.
  */
-void MobiusShell::reconfigure(MobiusConfig* config, Session* ses)
+void MobiusShell::reconfigure(Session* s, MobiusConfig* c)
 {
     Trace(2, "MobiusShell::reconfigure\n");
     
-    // todo: give this class a proper clone() method so we don't have to use XML
-    delete configuration;
-    configuration = config->clone();
-
-    //delete session;
-    //session = new Session(ses);
-
-    // todo: reload scripts whenever the config changes?
-    
-    // clone it again and give it to the kernel
-    // it sucks that these are two messages!
-    MobiusConfig* kernelCopy = config->clone();
-    Session* kernelSession = new Session(ses);
+    Session* kernelSession = new Session(s);
+    MobiusConfig* kernelConfig = c->clone();
 
     // hack to get them both passed in one message
-    kernelSession->setOldConfig(kernelCopy);
+    kernelSession->setOldConfig(kernelConfig);
     sendKernelSession(kernelSession);
 }
 

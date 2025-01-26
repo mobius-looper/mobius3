@@ -45,15 +45,19 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     TrackManager(class MobiusKernel* k);
     ~TrackManager();
 
-    void initialize(class MobiusConfig* config, class Session* s, class Mobius* engine);
-    void configure(class MobiusConfig* config);
+    void initialize(class Session* s, class MobiusConfig* c, class Mobius* engine);
+    void reconfigure(class MobiusConfig* config);
     void loadSession(class Session* s);
 
     class LogicalTrack* getLogicalTrack(int number);
+
+    // Trying to limit the use of MobiusConfig
+    // access it through a method that shows intent
+    class MobiusConfig* getConfigurationForGroups();
+    class MobiusConfig* getConfigurationForPresets();
     
     // Services
 
-    class MobiusConfig* getConfiguration();
     class Session* getSession();
     class MidiPools* getPools();
     class SyncMaster* getSyncMaster();
@@ -134,6 +138,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     MobiusKernel* kernel = nullptr;
     class UIActionPool* actionPool = nullptr;
     class Mobius* audioEngine = nullptr;
+    class Session* session = nullptr;
     class MobiusConfig* configuration = nullptr;
     
     // need a place to hang this, here or in Kernel?
@@ -145,7 +150,6 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     ScopeCache scopes;
     TrackMslHandler mslHandler;
     
-    class Session* session = nullptr;
     juce::OwnedArray<class LogicalTrack> tracks;
 
     void configureTracks(class Session* session);

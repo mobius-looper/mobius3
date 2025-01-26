@@ -82,14 +82,6 @@ class Synchronizer {
     void globalReset();
     
     //
-    // Misc status
-    //
-
-    //void getState(class OldMobiusState* state);
-	//void getState(class OldMobiusTrackState* state, class Track* t);
-    //void refreshState(class TrackState* state, class Track* t);
-    
-    //
     // Sync Pulses
     //
 

@@ -60,6 +60,7 @@
 #include "../../model/ParameterConstants.h"
 #include "../../model/Trigger.h"
 #include "../../model/MobiusConfig.h"
+#include "../../model/Setup.h"
 #include "../../model/ScriptConfig.h"
 #include "../../model/UserVariable.h"
 #include "../../model/Symbol.h"

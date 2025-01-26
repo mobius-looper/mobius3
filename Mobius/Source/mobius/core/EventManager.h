@@ -108,7 +108,6 @@ class EventManager {
 
     void refreshEventState(class TrackState* state);
     void refreshFocusedState(class FocusedTrackState* s);
-    void getEventSummary(class OldMobiusLoopState* s);
 
     // Selection
 
@@ -141,7 +140,6 @@ class EventManager {
     long reverseFrame(long origin, long newOrigin, long frame);
     void finishReturnEvent(Loop* loop, Event* re);
 
-    void getEventSummary(class OldMobiusLoopState* s, Event* e, bool stacked);
     void getEventSummary(class TrackState::Event& estate, Event* e, bool stacked);
     bool isEventVisible(Event* e, bool stacked);
     long reflectFrame(Loop* loop, long frame);

@@ -29,7 +29,7 @@
 #include "../../util/Util.h"
 
 #include "../../model/MobiusConfig.h"
-#include "../../model/OldMobiusState.h"
+#include "../../model/Setup.h"
 #include "../../model/TrackState.h"
 // TriggerScript
 #include "../../model/Trigger.h"
@@ -42,8 +42,6 @@
 #include "../../sync/SyncConstants.h"
 #include "../../sync/Pulse.h"
 #include "../../sync/SyncMaster.h"
-// for OldMobiusState
-//#include "../../sync/Follower.h"
 
 #include "Action.h"
 #include "Event.h"

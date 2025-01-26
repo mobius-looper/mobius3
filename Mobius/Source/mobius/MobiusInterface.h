@@ -107,14 +107,14 @@ class MobiusInterface {
      * todo: the engine may want to return error messages if it doesn't like
      * something about the configuration
      */
-    virtual void initialize(class MobiusConfig* config, class Session* session) = 0;
+    virtual void initialize(class Session* session, class MobiusConfig* config) = 0;
 
     /**
      * Reconfigure the Mobius engine.
      * Called after the engine has been running and the configuration
      * was modified by the UI.
      */
-    virtual void reconfigure(class MobiusConfig* config, class Session* session) =  0;
+    virtual void reconfigure(class Session* session, class MobiusConfig* config) =  0;
 
     /**
      * Newer alternative to some things that used to be in MobiusConfig

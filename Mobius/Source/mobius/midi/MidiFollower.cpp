@@ -12,8 +12,6 @@
 #include "../../model/Symbol.h"
 #include "../../model/Session.h"
 #include "../../model/SymbolId.h"
-// for GroupDefinitions
-#include "../../model/MobiusConfig.h"
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"

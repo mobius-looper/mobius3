@@ -1300,7 +1300,7 @@ void Supervisor::sendInitialMobiusConfig()
     Session* ses = getSession();
     MobiusConfig* synth = synthesizeMobiusConfig(ses);
     
-    mobius->initialize(synth, ses);
+    mobius->initialize(ses, synth);
     
     delete synth;
 }
@@ -1316,7 +1316,7 @@ void Supervisor::sendModifiedMobiusConfig()
     Session* ses = getSession();
     MobiusConfig* synth = synthesizeMobiusConfig(ses);
     
-    mobius->reconfigure(synth, ses);
+    mobius->reconfigure(ses, synth);
 
     // clear speical triggers for the engine now that it is done
     MobiusConfig* config = getOldMobiusConfig();

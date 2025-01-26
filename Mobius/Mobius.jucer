@@ -20,7 +20,6 @@
         <FILE id="LIOiwp" name="DriftMonitor.cpp" compile="1" resource="0"
               file="Source/sync/DriftMonitor.cpp"/>
         <FILE id="HYQ3tR" name="DriftMonitor.h" compile="0" resource="0" file="Source/sync/DriftMonitor.h"/>
-        <FILE id="RXCW17" name="Follower.h" compile="0" resource="0" file="Source/sync/Follower.h"/>
         <FILE id="N1Ldzj" name="HostAnalyzer.cpp" compile="1" resource="0"
               file="Source/sync/HostAnalyzer.cpp"/>
         <FILE id="AIzaaJ" name="HostAnalyzer.h" compile="0" resource="0" file="Source/sync/HostAnalyzer.h"/>
@@ -146,10 +145,6 @@
               file="Source/model/ModeDefinition.h"/>
         <FILE id="bGX9AO" name="ObjectPool.cpp" compile="1" resource="0" file="Source/model/ObjectPool.cpp"/>
         <FILE id="rppXvP" name="ObjectPool.h" compile="0" resource="0" file="Source/model/ObjectPool.h"/>
-        <FILE id="OItCK6" name="OldMobiusState.cpp" compile="1" resource="0"
-              file="Source/model/OldMobiusState.cpp"/>
-        <FILE id="dLX1dk" name="OldMobiusState.h" compile="0" resource="0"
-              file="Source/model/OldMobiusState.h"/>
         <FILE id="sWgU5q" name="OscConfig.cpp" compile="1" resource="0" file="Source/model/OscConfig.cpp"/>
         <FILE id="RfFrrM" name="OscConfig.h" compile="0" resource="0" file="Source/model/OscConfig.h"/>
         <FILE id="C3L3uT" name="ParameterConstants.h" compile="0" resource="0"
@@ -182,6 +177,9 @@
               file="Source/model/ScriptProperties.h"/>
         <FILE id="YR9r54" name="Session.cpp" compile="1" resource="0" file="Source/model/Session.cpp"/>
         <FILE id="CsEfK5" name="Session.h" compile="0" resource="0" file="Source/model/Session.h"/>
+        <FILE id="F6Prbt" name="SessionHelper.cpp" compile="1" resource="0"
+              file="Source/model/SessionHelper.cpp"/>
+        <FILE id="BJ2osP" name="SessionHelper.h" compile="0" resource="0" file="Source/model/SessionHelper.h"/>
         <FILE id="OZh5wr" name="Setup.cpp" compile="1" resource="0" file="Source/model/Setup.cpp"/>
         <FILE id="I3HQ2E" name="Setup.h" compile="0" resource="0" file="Source/model/Setup.h"/>
         <FILE id="UeOHZY" name="StaticConfig.cpp" compile="1" resource="0"

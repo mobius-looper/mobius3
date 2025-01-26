@@ -112,9 +112,13 @@ void Loader::loadLoop(Audio* audio, int trackNumber, int loopNumber)
 
             // kludge: set this goofy flag to tell the UI that it better
             // pay closer attention to this track and do a full refresh
-            int trackIndex = track->getRawNumber();
-            OldMobiusTrackState* tstate = mobius->getTrackState(trackIndex);
-            tstate->needsRefresh = true;
+            //int trackIndex = track->getRawNumber();
+
+            // !! this set a special flag in the old state object to force
+            // a refresh, I don't want the new SystemState to require this,
+            // state/view refresh should be triggered at a much higher level
+            //OldMobiusTrackState* tstate = mobius->getTrackState(trackIndex);
+            //tstate->needsRefresh = true;
 
             // some old comments from Mobius::loadProjectInternal
             

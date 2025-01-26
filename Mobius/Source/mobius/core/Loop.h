@@ -14,7 +14,6 @@
 
 #include "../../util/Trace.h"
 
-#include "../../model/OldMobiusState.h"
 #include "../../model/Preset.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -156,7 +155,6 @@ class Loop : public TraceContext {
     // Status
     //
 
-	void refreshState(class OldMobiusLoopState* s, bool active);
     void refreshState(class TrackState* s);
     void refreshFocusedState(class FocusedTrackState* state);
     
@@ -337,8 +335,6 @@ class Loop : public TraceContext {
 	long getModeInsertedFrames(class Event* endEvent);
 	long getModeEndFrame(class Event* event);
 
-	void getLayerState(class Layer* layers, class OldMobiusLayerState* states, int max,
-					   int *retAdded, int* retLost);
     long reflectFrame(long frame);
 
 	bool undoRecordStop();

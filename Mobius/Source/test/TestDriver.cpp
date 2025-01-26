@@ -70,6 +70,7 @@
 #include "../model/Symbol.h"
 #include "../model/UIAction.h"
 #include "../model/UIConfig.h"
+#include "../model/SessionHelper.h"
 
 #include "../mobius/MobiusInterface.h"
 #include "../mobius/MobiusShell.h"
@@ -687,9 +688,8 @@ void TestDriver::mobiusSaveAudio(Audio* content, juce::String fileName)
 {
     bool normalMode = false;
     if (normalMode) {
-        MobiusShell* shell = getMobiusShell();
-        MobiusConfig* config = shell->getConfigurationForTestDriver();
-        const char* quickfile = config->getQuickSave();
+        SessionHelper helper(supervisor);
+        const char* quickfile = helper.getString(ParamQuickSave);
         if (quickfile == nullptr) {
             // this is what old code used, better name might
             // just be "quicksave" to show where it came from
@@ -808,6 +808,9 @@ void TestDriver::installTestConfiguration()
             Trace(1, "TestDriver: Unable to access MobiusShell\n");
         }
         else {
+
+            // !!!!!!!! this is no longer working after the Session migration
+            
             MobiusKernel* kernel = shell->getKernel();
             MobiusConfig* kernelConfig = kernel->getMobiusConfigForTestDriver();
     

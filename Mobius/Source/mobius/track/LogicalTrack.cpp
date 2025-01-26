@@ -470,15 +470,16 @@ int LogicalTrack::getLoopCountFromSession()
 Preset* LogicalTrack::getPreset()
 {
     Preset* preset = nullptr;
+    MobiusConfig* config = manager->getConfigurationForPresets();
     
     if (activePreset >= 0)
-      preset = manager->getConfiguration()->getPreset(activePreset);
+      preset = config->getPreset(activePreset);
     
     // fall back to the default
     // !! should be in the Session
     // actually Presets should go away entirely for MIDI tracks
     if (preset == nullptr)
-      preset = manager->getConfiguration()->getPresets();
+      preset = config->getPresets();
 
     return preset;
 }

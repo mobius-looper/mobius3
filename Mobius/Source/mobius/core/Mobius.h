@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "../../model/OldMobiusState.h"
+#include "../../model/ParameterConstants.h"
 #include "../track/TrackProperties.h"
 #include "Loader.h"
 #include "MobiusMslHandler.h"
@@ -150,11 +150,6 @@ class Mobius
     static void freeStaticObjects();
 
     /**
-     * Refresh and return state for the engine and the active track.
-     */
-    class OldMobiusState* getState();
-
-    /**
      * Install a freshly minted Scriptarian when scripts are reloaded
      * after we've been initialized and running.
      */
@@ -204,7 +199,7 @@ class Mobius
     bool isTrackFocused(int index);
     int getTrackGroup(int index);
 
-    // now used by MobiusKernel to build the new MobiusState model
+    // used by MobiusKernel to build the new SystemState model
     // and include things that were in OldMobiusState
     bool isCapturing();
     int getSetupOrdinal();
@@ -306,7 +301,6 @@ class Mobius
     int getActiveTrack();
     class Track* getTrack();
     class Track* getTrack(int index);
-    OldMobiusTrackState* getTrackState(int index);
 
 	class MobiusMode* getMode();
 	long getFrame();
@@ -462,9 +456,6 @@ class Mobius
 	bool mCapturing;
 	long mCaptureOffset;
 	
-	// state exposed to the outside world
-	OldMobiusState mState;
-
     // handler for MSL integration
     MobiusMslHandler mslHandler {this};
 

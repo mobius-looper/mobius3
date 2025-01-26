@@ -328,7 +328,6 @@
 #include "Loop.h"
 #include "Mobius.h"
 #include "../../model/MobiusConfig.h"
-#include "../../model/OldMobiusState.h"
 #include "../../model/TrackState.h"
 #include "Mode.h"
 #include "Project.h"
@@ -1384,15 +1383,6 @@ Layer* Layer::getTail()
 	while (tail->getPrev() != NULL)
 	  tail = tail->getPrev();
 	return tail;
-}
-
-/**
- * Helper for Loop::getState.
- * Return interesting things about this layer.
- */
-void Layer::getState(OldMobiusLayerState* s)
-{
-	s->checkpoint = isCheckpoint();
 }
 
 /****************************************************************************

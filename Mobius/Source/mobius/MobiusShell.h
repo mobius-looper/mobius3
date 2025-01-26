@@ -30,9 +30,9 @@ class MobiusShell : public MobiusInterface
     // MobiusInterface
     void setListener(class MobiusListener* l) override;
     void setMidiListener(class MobiusMidiListener* l) override;
-    void initialize(class MobiusConfig* config, class Session* session) override;
+    void initialize(class Session* session, class MobiusConfig* config) override;
     void propagateSymbolProperties() override;
-    void reconfigure(class MobiusConfig* config, class Session* session) override;
+    void reconfigure(class Session* session, class MobiusConfig* config) override;
     void initializeState(class SystemState* state) override;
     void requestState(class SystemState* state) override;
     void refreshPriorityState(class PriorityState* state) override;
@@ -75,14 +75,6 @@ class MobiusShell : public MobiusInterface
         return container;
     }
 
-    // the ONLY reason this needs to be exposed is for TestDriver
-    // that wants to get to the quick save file name
-    // need to retool TestDriver to use the Session then there is no reason
-    // for Shell to keep a copy of this
-    class MobiusConfig* getConfigurationForTestDriver() {
-        return configuration;
-    }
-
   protected:
     
     // accessors for the Kernel only
@@ -111,8 +103,6 @@ class MobiusShell : public MobiusInterface
 
     class MobiusContainer* container = nullptr;
     MobiusListener* listener = nullptr;
-    class MobiusConfig* configuration = nullptr;
-    //class Session* session = nullptr;
     
     // kernel communication and shared state
     KernelCommunicator communicator;
@@ -142,7 +132,6 @@ class MobiusShell : public MobiusInterface
 
     class SampleConfig* expandPaths(class SampleConfig* src);
 
-    void installSymbols();
     void installSymbols(class SampleManager* samples);
     void installSymbols(class Scriptarian* scripts);
 

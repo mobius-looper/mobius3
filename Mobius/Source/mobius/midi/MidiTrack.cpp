@@ -150,7 +150,7 @@ void MidiTrack::loadSession(Session::Track* def)
     // might be better to store this as the ordinal to track renames?
     // that isn't what SetupTrack does though, it stores the name
     if (groupName != nullptr) {
-        MobiusConfig* config = manager->getConfiguration();
+        MobiusConfig* config = manager->getConfigurationForGroups();
         int ordinal = config->getGroupOrdinal(groupName);
         if (ordinal < 0)
           Trace(1, "MidiTrack: Invalid group name found in session %s", groupName);
