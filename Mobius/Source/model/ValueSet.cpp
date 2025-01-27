@@ -354,7 +354,7 @@ void ValueSet::parse(juce::XmlElement* root)
                 else if(type == "bool")  {
                     // el->getBoolAttribute should have the same rules as MslValue
                     // make sure of this! basically "true" and not "true"
-                    value->setInt(el->getBoolAttribute("value"));
+                    value->setBool(el->getBoolAttribute("value"));
                 }
                 else if (type == "enum") {
                     // the weird one
