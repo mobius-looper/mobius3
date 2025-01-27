@@ -346,6 +346,13 @@ void MobiusViewer::refreshTrack(SystemState* state, TrackState* tstate,
 {
     tview->type = tstate->type;
     tview->active = tstate->active;
+
+    // noticed that since MidiTrack doesn't set the active flag it can stay
+    // stuck on if you reorder tracks and reuse the same TrackState for a differnet
+    // track type.  this is actually a bigger problem.  Each track type either needs
+    // to fully reset the TrackState, or we need to do it before sending it down
+    if (tview->type == Session::TypeMidi)
+      tview->active = false;
     
     tview->loopCount = tstate->loopCount;
     if (tstate->activeLoop != tview->activeLoop) {

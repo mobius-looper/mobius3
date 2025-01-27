@@ -112,6 +112,14 @@ class Session
     void setVersion(int v);
     int getVersion();
     
+    /**
+     * A similar transient id generated when the session is loaded and used by
+     * TrackManager to determine if a session sent down is the same as the last one
+     * or a different one.
+     */
+    void setId(int i);
+    int getId();
+
     //////////////////////////////////////////////////////////////////////
     // Tracks
     //////////////////////////////////////////////////////////////////////
@@ -166,7 +174,8 @@ class Session
     void setBool(juce::String name, bool value);
     
   private:
-
+    
+    int id = 0;
     int version = 0;
 
     class MobiusConfig* oldConfig = nullptr;

@@ -16,6 +16,7 @@ Session::~Session()
 
 Session::Session(Session* src)
 {
+    id = src->id;
     version = src->version;
     
     for (auto track : src->tracks) {
@@ -27,6 +28,16 @@ Session::Session(Session* src)
 
     // source tracks should already have ids but make sure
     assignIds();
+}
+
+int Session::getId()
+{
+    return id;
+}
+
+void Session::setId(int i)
+{
+    id = i;
 }
 
 int Session::getVersion()

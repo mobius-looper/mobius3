@@ -1,6 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Session name="Default" audioTracks="8" midiTracks="2">
+  <Track id="2" type="midi" name="m2">
+    <ValueSet>
+      <Value name="beatsPerBar" value="2"/>
+      <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
+      <Value name="followMute" value="0" type="int"/>
+      <Value name="followQuantizeLocation" value="0" type="int"/>
+      <Value name="followRecord" value="0" type="int"/>
+      <Value name="followRecordEnd" value="0" type="int"/>
+      <Value name="followerMuteStart" value="0" type="int"/>
+      <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
+      <Value name="leaderType" value="none" type="enum" ordinal="0"/>
+      <Value name="loopCount" value="0" type="int"/>
+      <Value name="midiChannelOverride" value="off" type="enum" ordinal="0"/>
+      <Value name="midiOutput" value="Bome MIDI Translator 1"/>
+      <Value name="midiThru" value="false" type="bool"/>
+      <Value name="outputDevice" value="Bome MIDI Translator 1"/>
+      <Value name="quantize" value="off" type="enum" ordinal="0"/>
+      <Value name="slaveSyncUnit" value="beat" type="enum" ordinal="0"/>
+      <Value name="subcycles" value="0" type="int"/>
+      <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
+      <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
+      <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
+      <Value name="syncSource" value="none"/>
+      <Value name="trackSyncUnit" value="loop"/>
+    </ValueSet>
+  </Track>
   <Track id="1" type="midi" name="m1">
     <ValueSet>
       <Value name="beatsPerBar" value="7"/>
@@ -32,32 +58,6 @@
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
     </ValueSet>
   </Track>
-  <Track id="2" type="midi" name="m2">
-    <ValueSet>
-      <Value name="beatsPerBar" value="2"/>
-      <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
-      <Value name="followMute" value="0" type="int"/>
-      <Value name="followQuantizeLocation" value="0" type="int"/>
-      <Value name="followRecord" value="0" type="int"/>
-      <Value name="followRecordEnd" value="0" type="int"/>
-      <Value name="followerMuteStart" value="0" type="int"/>
-      <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
-      <Value name="leaderType" value="none" type="enum" ordinal="0"/>
-      <Value name="loopCount" value="0" type="int"/>
-      <Value name="midiChannelOverride" value="off" type="enum" ordinal="0"/>
-      <Value name="midiOutput" value="Bome MIDI Translator 1"/>
-      <Value name="midiThru" value="false" type="bool"/>
-      <Value name="outputDevice" value="Bome MIDI Translator 1"/>
-      <Value name="quantize" value="off" type="enum" ordinal="0"/>
-      <Value name="slaveSyncUnit" value="beat" type="enum" ordinal="0"/>
-      <Value name="subcycles" value="0" type="int"/>
-      <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
-      <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
-      <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
-      <Value name="syncSource" value="none"/>
-      <Value name="trackSyncUnit" value="loop"/>
-    </ValueSet>
-  </Track>
   <Track id="3" type="audio" name="a1">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
@@ -73,7 +73,6 @@
       <Value name="pluginOutputPort" value="0" type="int"/>
       <Value name="syncSource" value="master"/>
       <Value name="syncUnit" value="bar"/>
-      <Value name="trackGroup" value="Groupuu"/>
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
@@ -185,22 +184,9 @@
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
-  <Track id="10" type="audio" name="a8">
+  <Track id="10" type="audio">
     <ValueSet>
-      <Value name="altFeedback" value="127" type="int"/>
-      <Value name="audioInputPort" value="0" type="int"/>
-      <Value name="audioOutputPort" value="0" type="int"/>
-      <Value name="feedback" value="127" type="int"/>
       <Value name="focus" value="false" type="bool"/>
-      <Value name="input" value="127" type="int"/>
-      <Value name="mono" value="false" type="bool"/>
-      <Value name="output" value="127" type="int"/>
-      <Value name="pan" value="64" type="int"/>
-      <Value name="pluginInputPort" value="0" type="int"/>
-      <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="none"/>
-      <Value name="syncUnit" value="bar"/>
-      <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
   <ValueSet>

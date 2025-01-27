@@ -130,13 +130,22 @@ void TrackManager::loadSession(Session* s)
  */
 void TrackManager::configureTracks(Session* ses)
 {
-    (void)ses;  // already saved this in a member
-    
     // transfer the current track list to a holding area
     juce::Array<LogicalTrack*> oldTracks;
     while (tracks.size() > 0) {
         LogicalTrack* lt = tracks.removeAndReturn(0);
         oldTracks.add(lt);
+    }
+
+    // do not reuse tracks if this is a completely different session
+    // todo: might want to relax this, unless the session came with content
+    // it doesn't really matter if we keep positionally matching audio and midi tracks
+    // might want to do this since people will think of Sessions like Setups and swap
+    // between to change port numbers or something harmless, without adjusting track counts
+    bool reuseTracks = true;
+    if (lastSessionId != ses->getId()) {
+        reuseTracks = false;
+        lastSessionId = ses->getId();
     }
 
     // now put them back or create new ones
@@ -145,14 +154,16 @@ void TrackManager::configureTracks(Session* ses)
 
         // see if we had one with this id before
         LogicalTrack* lt = nullptr;
-        int index = 0;
-        for (auto old : oldTracks) {
-            if (old->getSessionId() == def->id) {
-                // reuse this one
-                lt = oldTracks.removeAndReturn(index);
-                break;
+        if (reuseTracks) {
+            int index = 0;
+            for (auto old : oldTracks) {
+                if (old->getSessionId() == def->id) {
+                    // reuse this one
+                    lt = oldTracks.removeAndReturn(index);
+                    break;
+                }
+                index++;
             }
-            index++;
         }
 
         if (lt == nullptr)

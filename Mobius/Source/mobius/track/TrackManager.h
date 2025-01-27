@@ -139,6 +139,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     class UIActionPool* actionPool = nullptr;
     class Mobius* audioEngine = nullptr;
     class Session* session = nullptr;
+    int lastSessionId = 0;
     class MobiusConfig* configuration = nullptr;
     
     // need a place to hang this, here or in Kernel?

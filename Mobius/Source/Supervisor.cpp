@@ -1513,6 +1513,12 @@ Session* Supervisor::initializeSession()
     // this must be done after symbols are initialized
     Session* neu = producer->readStartupSession();
 
+    // every time we read a session it gets a new id which triggers
+    // a complete track refresh in TrackManager
+    // necessary because Session::Track ids are only unique within
+    // the session they are in
+    neu->setId(++sessionId);
+
     // this is now accessible to the reset of the system
     session.reset(neu);
 
