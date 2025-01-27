@@ -1,10 +1,10 @@
 /**
  * This has been largely gutted during the Great SyncMaster Reorganization
  *
- * There is some potentially valuable commentary in the old code but I'm not doing
+ * There is some potentially valuable commentary in the old code but I'm not going
  * to duplicate all of it here.  The new purpose of Synchronizer is:
  *
- *    - receive internal notificiations of Record start and stop actions to determine
+ *    - receive internal notificiations of Record Start and Stop actions to determine
  *      whether those need to be synchronized
  *
  *    - receive sync pulse notifications from SyncMaster/TimeSlicer to activate
@@ -21,20 +21,12 @@
  *
  */
 
-#include <stdlib.h>
-#include <memory.h>
-#include <math.h>
-
 // StringEqualNoCase
 #include "../../util/Util.h"
 
-#include "../../model/MobiusConfig.h"
-#include "../../model/Setup.h"
-#include "../../model/TrackState.h"
 // TriggerScript
 #include "../../model/Trigger.h"
 
-#include "../MobiusInterface.h"
 #include "../MobiusKernel.h"
 #include "../Notification.h"
 #include "../Notifier.h"
@@ -75,116 +67,6 @@ Synchronizer::~Synchronizer()
  */
 void Synchronizer::globalReset()
 {
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Configuration
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Called on initialization and whenever the configuration is edited.
- *
- * Should also be called whenever the user changes Setups but that
- * may require new intervention?
- *
- * Dig the old sync options out of the Setup and inform SyncMaster about
- * what the tracks want to synchronize with.
- *
- * Some of this could be accessed through the Track, but it all should
- * come from the Setup so don't complicate things with more indirection.
- *
- * !! None of this is actually necessary.
- * The process is this:
- *
- *      Session is converted to MobiusConfig
- *      Synchronizer gets MobiusConfig and converts it back to Session constants
- *      Synchronizer calls SyncMaster
- *      SyncMaster deposits these things on the LogicalTrack
- *
- * This has all been done already when TrackManager loaded the session.
- *      
- */
-void Synchronizer::updateConfiguration(MobiusConfig* config)
-{
-    (void)config;
-#if 0    
-    // doesn't really matter what else is in MobiusConfig
-    // the selected Setup is what matters
-    (void)config;
-    
-    Setup* setup = mMobius->getSetup();
-    
-    OldSyncSource defaultSource = setup->getSyncSource();
-    OldSyncUnit oldSyncUnit = setup->getSyncUnit();
-    SyncTrackUnit defaultTrackUnit = setup->getSyncTrackUnit();
-
-    // this will be the pulse type for all sources except track sync
-    // doesn't appear to be a SetupTrack override for this one
-    SyncUnit pulseUnit = SyncUnitBeat;
-    if (oldSyncUnit == SYNC_UNIT_BAR)
-      pulseUnit = SyncUnitBar;
-
-    int number = 1;
-    for (SetupTrack* st = setup->getTracks() ; st != nullptr ; st = st->getNext()) {
-
-        OldSyncSource actualSource = defaultSource;
-        OldSyncSource overrideSource = st->getSyncSource();
-        if (overrideSource != SYNC_DEFAULT)
-          actualSource = overrideSource;
-        
-        if (actualSource == SYNC_TRACK) {
-            SyncTrackUnit actualTrackUnit = defaultTrackUnit;
-            SyncTrackUnit overrideTrackUnit = st->getSyncTrackUnit();
-            if (overrideTrackUnit != TRACK_UNIT_DEFAULT)
-              actualTrackUnit = overrideTrackUnit;
-
-            SyncUnit trackPulse = SyncUnitNone;
-            if (actualTrackUnit == TRACK_UNIT_SUBCYCLE)
-              trackPulse = SyncUnitBeat;
-            else if (actualTrackUnit == TRACK_UNIT_CYCLE)
-              trackPulse = SyncUnitBar;
-            else if (actualTrackUnit == TRACK_UNIT_LOOP)
-              trackPulse = SyncUnitLoop;
-
-            // core tracks can't follow specific leaders, they can
-            // only follow the TrackSyncMaster atm
-            if (trackPulse != SyncUnitNone)
-              mSyncMaster->follow(number, 0, trackPulse);
-            else
-              mSyncMaster->unfollow(number);
-        }
-        else if (actualSource == SYNC_OUT) {
-            mSyncMaster->follow(number, SyncSourceMaster, pulseUnit);
-        }
-        else if (actualSource == SYNC_TRANSPORT) {
-            mSyncMaster->follow(number, SyncSourceTransport, pulseUnit);
-        }
-        else if (actualSource == SYNC_HOST) {
-            mSyncMaster->follow(number, SyncSourceHost, pulseUnit);
-        }
-        else if (actualSource == SYNC_MIDI) {
-            mSyncMaster->follow(number, SyncSourceMidi, pulseUnit);
-        }
-        else {
-            // SYNC_NONE or SYNC_DEFAULT
-            mSyncMaster->unfollow(number);
-        }
-
-        // I've seen cases where there are more SetupTracks than there
-        // are actual audio tracks, maybe after I was playing around with
-        // increasing the track count then dropping it
-        // if this exceeds the actual audio track range, the numbers
-        // get into MIDI tracks, and we must NOT mess those up
-        number++;
-
-        if (number > config->getCoreTracksDontUseThis()) {
-            Trace(2, "Synchronizer: Ignoring extra SetupTracks");
-            break;
-        }
-    }
-#endif    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1762,8 +1644,11 @@ void Synchronizer::loopResize(Loop* l, bool restart)
 {
     int number = l->getTrack()->getLogicalNumber();
     mSyncMaster->notifyTrackRestructure(number);
-    if (restart)
-      mSyncMaster->notifyTrackStart(number);
+    if (restart) {
+        // restart will be true for the unrounded functions
+        // and StartPoint
+        mSyncMaster->notifyTrackRestart(number);
+    }
 }
 
 /**
@@ -1774,7 +1659,7 @@ void Synchronizer::loopSwitch(Loop* l, bool restart)
     int number = l->getTrack()->getLogicalNumber();
     mSyncMaster->notifyTrackRestructure(number);
     if (restart)
-      mSyncMaster->notifyTrackStart(number);
+      mSyncMaster->notifyTrackRestart(number);
  }      
 
 /**
@@ -1854,7 +1739,7 @@ void Synchronizer::loopRestart(Loop* l)
     int number = l->getTrack()->getLogicalNumber();
     // this one used the weird "checkNear" flag that isn't
     // implemented by the SyncMaster interface, necessary?
-    mSyncMaster->notifyTrackStart(number);
+    mSyncMaster->notifyTrackRestart(number);
 }
 
 /**
@@ -1872,7 +1757,6 @@ void Synchronizer::loopMidiStart(Loop* l)
     int number = l->getTrack()->getLogicalNumber();
     // this uses the "force" flag to bypass checking for manual
     // start mode since we're here after they asked to do it manually
-    // this function really should be handled above Mobius?
     mSyncMaster->notifyMidiStart(number);
 }
 
@@ -1926,7 +1810,7 @@ void Synchronizer::loopSetStartPoint(Loop* l, Event* e)
     int number = l->getTrack()->getLogicalNumber();
     // this isn't a Restructure, but it looks like the track
     // jumped to the start
-    mSyncMaster->notifyTrackStart(number);
+    mSyncMaster->notifyTrackRestart(number);
 }
 
 /****************************************************************************
@@ -1941,7 +1825,8 @@ void Synchronizer::loopSetStartPoint(Loop* l, Event* e)
  * recalculate the symc masters.
  *
  * I don't think Mobius should be in charge of this any more.
- * It's SyncMaster's job.
+ * It's SyncMaster's job.  The notion of what a "Project" is and
+ * the way it propagates through the layers will all be redesigned.
  */
 void Synchronizer::loadProject(Project* p)
 {
@@ -1990,68 +1875,6 @@ Track* Synchronizer::getOutSyncMaster()
     if (number <= mMobius->getTrackCount())
       track = mMobius->getTrack(number - 1);
     return track;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// MIDI Out Support
-//
-// These are here just to get things compiled.  How MIDI transport messages
-// get sent should be under the control of SyncMaster now...
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Helper for several loop callbacks to send a MIDI start event
- * to the external device, and start sending clocks if we aren't already.
- * The tempo must have already been calculated.
- *
- * If the checkManual flag is set, we will only send the START
- * message if the ManualStart setup parameter is off.  
- *
- * If the checkNear flag is set, we will suppress sending START
- * if the tracker says we're already 
- */
-void Synchronizer::sendStart(Loop* l, bool checkManual, bool checkNear)
-{
-	bool doStart = true;
-
-	if (checkManual) {
-        Setup* setup = mMobius->getActiveSetup();
-        doStart = !(setup->isManualStart());
-	}
-
-	if (doStart) {
-		// To avoid a flam, detect if we're already at the external
-		// start point so we don't need to send a START.
-        // !! We could be a long way from the pulse, should we be
-        // checking frame advance as well?
-        
-        bool nearStart = false;
-        if (checkNear) {
-            // don't have this any more, forget what this was trying to do...
-            /*
-            int pulse = mOutTracker->getPulse();
-            if (pulse == 0 || pulse == mOutTracker->getLoopPulses())
-              nearStart = true;
-            */
-        }
-
-        if (nearStart && mSyncMaster->varIsMidiOutStarted()) {
-			// The unit tests want to verify that we at least tried
-			// to send a start event.  If we suppressed one because we're
-			// already there, still increment the start count.
-            Trace(l, 2, "Sync: Suppressing MIDI Start since we're near\n");
-
-            
-			//mSyncMaster->incMidiOutStarts();
-        }
-        else {
-            Trace(l, 2, "Sync: Sending MIDI Start\n");
-            // mTransport->start(l);
-            //mSyncMaster->midiOutStart();
-		}
-	}
 }
 
 //////////////////////////////////////////////////////////////////////

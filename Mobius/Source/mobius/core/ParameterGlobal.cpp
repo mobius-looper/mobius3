@@ -1,3 +1,6 @@
+// UPDATE: None of these should be necessary, they are almost never
+// set by scripts other than old test scripts.
+
 /*
  * Copyright (c) 2010 Jeffrey S. Larson  <jeff@circularlabs.com>
  * All rights reserved.
@@ -718,8 +721,10 @@ void MaxSyncDriftParameterType::setValue(Action* action)
     MobiusConfig* iconfig = m->getConfiguration();
     if (iconfig != NULL) {
         iconfig->setMaxSyncDrift(drift);
-        Synchronizer* sync = m->getSynchronizer();
-        sync->updateConfiguration(iconfig);
+
+        // no longer there
+        //Synchronizer* sync = m->getSynchronizer();
+        //sync->updateConfiguration(iconfig);
     }
 }
 
@@ -784,8 +789,9 @@ void DriftCheckPointParameterType::setValue(Action* action)
     MobiusConfig* iconfig = m->getConfiguration();
     if (iconfig != NULL) {
         iconfig->setDriftCheckPoint(dcp);
-        Synchronizer* sync = m->getSynchronizer();
-        sync->updateConfiguration(iconfig);
+        // no longer there
+        //Synchronizer* sync = m->getSynchronizer();
+        //sync->updateConfiguration(iconfig);
     }
 }
 

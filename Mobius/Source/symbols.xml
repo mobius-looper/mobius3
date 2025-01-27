@@ -604,6 +604,10 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='transportBeatsPerBar' type='int' level='kernel' defaultValue='4'/>
     <Parameter name='transportBarsPerLoop' type='int' level='kernel' defaultValue='1'/>
     <Parameter name='transportMidi' type='bool' level='kernel'/>
+
+    <!-- !! this should actually be an enumeration with default TransportClocksAlways
+         and an optional TransportClocksWhenStarted if you want to support the
+         old conditional clock sending options -->
     <Parameter name='transportClocks' type='bool' level='kernel'/>
     
     <Parameter name='transportManualStart' type='bool' level='kernel'/>

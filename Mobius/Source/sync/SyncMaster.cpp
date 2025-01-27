@@ -60,6 +60,7 @@ void SyncMaster::initialize(MobiusKernel* k, TrackManager* tm)
     kernel = k;
     trackManager = tm;
     container = kernel->getContainer();
+    sessionHelper.setSymbols(container->getSymbols());
 
     // these are now dynamically allocated to reduce header file dependencies
     midiRealizer.reset(new MidiRealizer());
@@ -91,6 +92,9 @@ void SyncMaster::loadSession(Session* s)
     barTender->loadSession(s);
     pulsator->loadSession(s);
     transport->loadSession(s);
+
+    // cached parameters
+    manualStart = sessionHelper.getBool(s, ParamTransportManualStart);
 }
 
 /**
@@ -231,6 +235,12 @@ void SyncMaster::connectTransport(int id)
  * notifyTrackAvailable or make the user do it manually.
  *
  * If this was the TransportMaster, old Synchronizer would send a MIDI Stop command.
+ *
+ * NOTE: This is now being called when the track switches to a loop that is empty.
+ * OG Mobius would not stop clocks when that happened.  That seems inconsistent.
+ * The loop is "silent" so it is similar to entering Mute mode but we don't have
+ * a callback for notifyLoopEmpty or notifyLoopSwitch and then checking for empty.
+ * Revisit based on user requests.
  */
 void SyncMaster::notifyTrackReset(int number)
 {
@@ -273,49 +283,95 @@ void SyncMaster::notifyTrackRestructure(int number)
 
 /**
  * Called when a track Restarts.
- * This can happen for several reasons:  The Start or Retrigger functions,
- * a Switch with the restart option, exiting Mute with the retrigger option,
- * the StartPoint function, etc.
  *
- * It means that the track made a jump back to the beginning rather than playing
- * to the beginning normally.  When this happens old Synchronizer had options
- * to send a MIDI Start event to keep external devices in sync.
+ * A Restart means that the track abruptly went to start point through
+ * a user action rather than simply playing normally to the end and looping.
+ * There are many reasons for this including functions: Start, Realign, StartPoint,
+ * UnroundedMultiply, and Trim.  Also LoopSwitch with switchLocation=Start and
+ * Unmute with muteMode=Start.
  *
- * Now we inform the Transport which may choose to send MIDI Start.
- * !! this needs work, this should be transport->notifyMasterStart or something
- * that makes it clear what is happening.  Right now we're the only thing that
- * directly touches Transport so it is assumed.
+ * When this happens OG Mobius would send MIDI Start if this track was the OutSyncMaster
+ * (now the TransportMaster).  The intent here to realign an external MIDI
+ * sequencer so that it would play from the start along with the track.
+ *
+ * This was controlled with another "manual strt" option.  When this was on, it would
+ * wait until the user explicitly used the functions MidiStart or MuteMidiStart
+ * to schedule when the MIDI Start would be sent.  In those cases the track must call
+ * back to notifyMidiStart.
+ *
+ * todo: Now that the user can interact with the transport using the UI, there are other
+ * ways to request a MIDI start.  These are not the same as using the old MidiStart function
+ * and do not currrently have any synchronization options.  I think I'd like to keep it that
+ * way, if the user presses the Start button, it should just start.  If this suspends waiting
+ * for something in the master track, then we have yet another form of event scheduling
+ * and "synchronize mode" that would have to be visualized in the UI.  That's what the
+ * MidiStart function is for, though a better name for that might be SyncMidiStart or
+ * RequestMidiStart.
+ *
+ * While transportManualStart is technically a Transport parameter, we test it out here
+ * because SyncMaster has the context necessary to know whether this is an auto-start
+ * or an explicit start.
  */
-void SyncMaster::notifyTrackStart(int number)
+void SyncMaster::notifyTrackRestart(int number)
 {
     if (number == transport->getMaster()) {
-        transport->start();
+        if (!manualStart) 
+          transport->start();
     }
+}
+
+/**
+ * Callback for the MidiStart and MuteMidiStart functions.  The user explicitly
+ * asked for a Start so we don't test ManualStart.
+ *
+ * OG Mobius had some thinking around "checkNear" which tried to determine if the
+ * external MIDI loop was already near the start point and if so avoided sending
+ * a redundant MIDI Start which could cause "flamming" of drum notes that had already
+ * been recently played.  This might sound better to the user, but it would put the
+ * external pattern slightly out of alignment with where the master loop is.
+ * I decided not to carry that forward but it could be useful.  If you do decide
+ * to bring that back it should apply to notifyTrackRestart as well.
+ */
+void SyncMaster::notifyMidiStart(int number)
+{
+    // does this have to be the TransportMaster or can it be sent from anywhere?
+    (void)number;
+    transport->start();
 }
 
 /**
  * Called when the track has entered a state of Pause.
  * This can happen with the Pause or GlobalPause functions, or the Stop
  * function which both pauses and rewinds.
+ *
+ * It also happens indirectly when a project is loaded and puts all tracks
+ * in Pause mode.
+ *
+ * OG Synchronzier had MuteSyncMode that would control whether to stop clocks
+ * whenever the loop became silent.  In the EDP this was only for Mute mode
+ * but I extended it to apply to Pause as well.  Since SyncMaster is handling
+ * ManualStart it also needs transportMuteStop to control what happens when
+ * in Mute/Pause modes.  For now, assuming we stop.
  */
 void SyncMaster::notifyTrackPause(int number)
 {
     if (number == transport->getMaster()) {
-
-        // !! here is where we need to be a lot smarter about the difference
-        // between MIDI Start and MIDI Continue, exiting a Pause does not
-        // necessarily mean we send Start
-        // The complication is that MIDI Continue requires a song position pointer,
-        // and these are coarser grained than an audio stream frame location
-        // the MIDI Continue would need to be delayed until the Transport actually
-        // reaches that song position
+        
+        // todo: transportMuteStop parmater to disable this
         transport->stop();
     }
 }
 
 /**
  * Called when the track exists Pause.
- * See commentary in notifyTrackPause about why MIDI Continue is hard.
+ *
+ * OG Synchronizer didn't do anything special here, but this is the place
+ * where it should be trying to send SongPositionPointer.
+ *
+ * The complication is that MIDI Continue requires a song position pointer,
+ * and these are coarser grained than an audio stream frame location
+ * the MIDI Continue would need to be delayed until the Transport actually
+ * reaches that song position.
  */
 void SyncMaster::notifyTrackResume(int number)
 {
@@ -328,9 +384,9 @@ void SyncMaster::notifyTrackResume(int number)
 /**
  * Called when a track enters Mute mode.
  *
- * Old Synchronizer had options to send a MIDI Stop event when this happened,
+ * Old Synchronizer had MuteSyncMode options to send a MIDI Stop event when this happened,
  * and then other options about what happened when the track unmuted.
- * Those should be moved to Transport parameters?  As it stands now, unmute
+ * Those should be moved to Transport parameters.  As it stands now, unmute
  * options are internal to Mobius and it will call back to Start or Resume.
  */
 void SyncMaster::notifyTrackMute(int number)
@@ -363,14 +419,17 @@ void SyncMaster::notifyTrackSpeed(int number)
 }
 
 /**
- * This is a special handler for some old MIDI event generation options.
- * Needs thought.
+ * This is called when OG Mobius evaluates the MidiStop function event.
+ *
+ * Comments say this was "usually scheduled for the start point" but I don't
+ * see that happening.  It would either happen immediately or stacked on a loop
+ * switch, and probably after RecordStopEvent latency.
+ *
+ * A better name for this would be SyncMidiStop to distinguish it from
+ * TransportStop which is always immediate.
+ *
+ * !! The old functions with "Midi" in their names need to be revisited.
  */
-void SyncMaster::notifyMidiStart(int number)
-{
-    (void)number;
-}
-
 void SyncMaster::notifyMidiStop(int number)
 {
     (void)number;

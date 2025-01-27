@@ -20,6 +20,7 @@
 #include <JuceHeader.h>
 
 #include "SyncConstants.h"
+#include "../model/SessionHelper.h"
 
 class SyncMaster
 {
@@ -86,21 +87,18 @@ class SyncMaster
     void notifyTrackAvailable(int id);
     void notifyTrackReset(int id);
     void notifyTrackRestructure(int id);
-    void notifyTrackStart(int id);
+    void notifyTrackRestart(int id);
     void notifyTrackPause(int id);
     void notifyTrackResume(int id);
     void notifyTrackMute(int id);
     void notifyTrackMove(int id);
     void notifyTrackSpeed(int id);
 
-    // Hopefully temporary support for the old MIDI options
-    // that would send START and STOP messages when certain
-    // mode transitions happened or were manually scheduled
-    // e.g. the MidiStart and MuteMidiStart functions
-
+    // notifications of user actions that explicitly requested
+    // start or stop to be sent
     void notifyMidiStart(int id);
     void notifyMidiStop(int id);
-    
+
     // used by Synchronizer for AutoRecord
     int getBarFrames(SyncSource src);
     
@@ -177,6 +175,11 @@ class SyncMaster
     
     int sampleRate = 44100;
     int trackSyncMaster = 0;
+
+    SessionHelper sessionHelper;
+
+    // cached session parameters
+    bool manualStart = false;
 
     std::unique_ptr<class MidiRealizer> midiRealizer;
     std::unique_ptr<class MidiAnalyzer> midiAnalyzer;

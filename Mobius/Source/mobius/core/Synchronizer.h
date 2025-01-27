@@ -78,7 +78,6 @@ class Synchronizer {
         return mSyncMaster;
     }
 
-	void updateConfiguration(class MobiusConfig* config);
     void globalReset();
     
     //
@@ -139,6 +138,7 @@ class Synchronizer {
     class SyncMaster* mSyncMaster = nullptr;
 
     // used by getFramesPerBeat, not sure where this came from
+    // !! this goes away after redesigning AutoRecord
     bool mNoSyncBeatRounding = false;
     
     // record scheduling
@@ -166,8 +166,6 @@ class Synchronizer {
     bool isTransportMaster(class Loop* l);
 
     void muteMidiStop(class Loop* l);
-
-    void sendStart(class Loop* l, bool checkManual, bool checkNear);
 
     void doRealign(class Loop* loop, class Event* pulse, class Event* realign);
     void moveLoopFrame(class Loop* l, long newFrame);

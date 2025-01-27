@@ -753,10 +753,6 @@ void Mobius::propagateConfiguration()
     // let Actionator cache the group names
     mActionator->refreshScopeCache(mConfig);
 
-    // Synchronizer needs maxSyncDrift, driftCheckPoint
-    if (mSynchronizer != NULL)
-      mSynchronizer->updateConfiguration(mConfig);
-
     // Modes track altFeedbackDisables
     MobiusMode::updateConfiguration(mConfig);
 
@@ -1017,9 +1013,6 @@ void Mobius::beginAudioBlock(MobiusAudioStream* stream)
         }
     }
 
-    // no longer need this
-	//mSynchronizer->interruptStart(stream);
-
 	// prepare the tracks before running scripts
     // this is a holdover from the old days, do we still need
     // this or can we just do it in Track::processAudioStream?
@@ -1156,9 +1149,6 @@ void Mobius::endAudioInterrupt(MobiusAudioStream* stream)
 
     long frames = stream->getInterruptFrames();
 
-    // no longer need this
-	//mSynchronizer->interruptEnd();
-	
 	// if we're recording, capture whatever was left in the output buffer
 	// !! need to support merging of all of the output buffers for
 	// each port selected in each track

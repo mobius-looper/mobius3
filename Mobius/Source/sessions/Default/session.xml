@@ -13,6 +13,7 @@
       <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
       <Value name="leaderType" value="none" type="enum" ordinal="0"/>
       <Value name="loopCount" value="0" type="int"/>
+      <Value name="midiBeatsPerBar" value="4" type="int"/>
       <Value name="midiChannelOverride" value="off" type="enum" ordinal="0"/>
       <Value name="midiOutput" value="Bome MIDI Translator 1"/>
       <Value name="midiThru" value="false" type="bool"/>
@@ -23,8 +24,9 @@
       <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
       <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
       <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
-      <Value name="syncSource" value="none"/>
-      <Value name="trackSyncUnit" value="loop"/>
+      <Value name="syncSource" value="master" type="enum" ordinal="5"/>
+      <Value name="syncUnit" value="beat" type="enum" ordinal="0"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
   <Track id="1" type="midi" name="m1">
@@ -43,6 +45,7 @@
       <Value name="leaderTrack" value="1"/>
       <Value name="leaderType" value="track" type="enum" ordinal="1"/>
       <Value name="loopCount" value="2" type="int"/>
+      <Value name="midiBeatsPerBar" value="4" type="int"/>
       <Value name="midiChannelOverride" value="9" type="enum" ordinal="9"/>
       <Value name="midiOutput" value="Bome MIDI Translator 1"/>
       <Value name="midiThru" value="true" type="bool"/>
@@ -54,8 +57,9 @@
       <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
       <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="syncUnit" value="beat" type="enum" ordinal="0"/>
       <Value name="trackGroup" value="Groupuu"/>
-      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
   <Track id="3" type="audio" name="a1">
@@ -217,11 +221,11 @@
     <Value name="spreadRange" value="48" type="int"/>
     <Value name="transportBarsPerLoop" value="1" type="int"/>
     <Value name="transportBeatsPerBar" value="4" type="int"/>
-    <Value name="transportClocks" value="false" type="bool"/>
+    <Value name="transportClocks" value="true" type="bool"/>
     <Value name="transportManualStart" value="false" type="bool"/>
     <Value name="transportMaxTempo" value="300" type="int"/>
     <Value name="transportMetronome" value="false" type="bool"/>
-    <Value name="transportMidi" value="false" type="bool"/>
+    <Value name="transportMidi" value="true" type="bool"/>
     <Value name="transportMidiClocksWhenStopped" value="1" type="int"/>
     <Value name="transportMidiEnable" value="1" type="int"/>
     <Value name="transportMinTempo" value="30" type="int"/>
