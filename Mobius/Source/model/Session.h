@@ -109,6 +109,21 @@ class Session
 
     void setOldConfig(class MobiusConfig* config);
     MobiusConfig* getOldConfig();
+
+    /**
+     * The session version is a transient number set by Supervisor
+     * and returned in the SystemState when the engine finishes a state
+     * refresh.  It is used by MobiusViewer to detect when the engine
+     * has had a chance to fully consume a new Session and the SystemState
+     * may be very different than it was the last time.  This then triggers
+     * a full UI refresh.  It is important that the engine convey this so the
+     * view isn't refreshed early and setting difference detection flags that
+     * will be stale after the engine has had a chance to consume the session.
+     * Kind of a kludge really, but it's a convenient hammer to force a full
+     * refresh after significant things happen.
+     */
+    void setVersion(int v);
+    int getVersion();
     
     //////////////////////////////////////////////////////////////////////
     // Tracks
@@ -137,6 +152,9 @@ class Session
     //Track* ensureTrack(TrackType type, int index);
     //void replaceMidiTracks(Session* src);
     //void clearTracks(TrackType type);
+
+    // for SessionEditor, change the order of the tracks and renumber
+    void move(int sourceIndex, int desiredIndex);
     
     //////////////////////////////////////////////////////////////////////
     // Global Parameters
@@ -156,6 +174,8 @@ class Session
     void setBool(juce::String name, bool value);
     
   private:
+
+    int version = 0;
 
     class MobiusConfig* oldConfig = nullptr;
 

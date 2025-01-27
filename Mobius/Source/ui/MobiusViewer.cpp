@@ -201,6 +201,14 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
     // trackChanged is set, force all the secondary flags on
     if (view->trackChanged)
       forceRefresh(view);
+
+    // This is used to track the progress of an edited or different Session that
+    // was sent to the engine.  When this number comes back different it means that
+    // significant changes were made to the session and it should  trigger a full refresh.
+    if (view->lastSessionVersion != sysstate->sessionVersion) {
+        forceRefresh(view);
+        view->lastSessionVersion = sysstate->sessionVersion;
+    }
 }
 
 /**

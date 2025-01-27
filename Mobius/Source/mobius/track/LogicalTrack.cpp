@@ -451,8 +451,10 @@ int LogicalTrack::getLoopCountFromSession()
         if (v != nullptr) {
             result = v->getInt();
             if (result < 1) {
-                Trace(1, "LogicalTrack: Malformed LoopCount parameter in session %d", number);
-                result = 1;
+                // this isn't unusual if the track was created in the editor
+                // and saved without filling in the form
+                //Trace(1, "LogicalTrack: Malformed LoopCount parameter in session %d", number);
+                result = 2;
             }
         }
     }

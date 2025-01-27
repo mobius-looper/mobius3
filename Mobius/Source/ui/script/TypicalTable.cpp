@@ -188,7 +188,7 @@ int TypicalTable::getNumRows()
  * for borders, though Juce might provide something for selected rows/cells already.
  */
 void TypicalTable::paintRowBackground(juce::Graphics& g, int rowNumber,
-                                      int /*width*/, int /*height*/,
+                                      int width, int height,
                                       bool rowIsSelected)
 {
     // I guess this makes an alternate color that is a variant of the existing background
@@ -201,6 +201,21 @@ void TypicalTable::paintRowBackground(juce::Graphics& g, int rowNumber,
     }
     else if (rowNumber % 2) {
         g.fillAll (alternateColour);
+    }
+
+    if (paintDropTarget) {
+        float left = 0.0f;
+        float right = (float)width;
+        float top = 0.0f;
+        if (rowNumber == dropTargetRow) {
+            g.setColour(juce::Colours::red);
+            g.drawLine(left, top, right, top);
+         }
+        else if (dropTargetRow == -1 && rowNumber == (getRowCount() - 1)) {
+            float bottom = (float)(height - 1);
+            g.setColour(juce::Colours::red);
+            g.drawLine(left, bottom, right, bottom);
+        }
     }
 }
 
@@ -287,10 +302,29 @@ void TypicalTable::cellClicked(int rowNumber, int columnId, const juce::MouseEve
     (void)columnId;
     (void)event;
     if (listener != nullptr) 
-      listener->typicalTableClicked(this, table.getSelectedRow());
+      listener->typicalTableRowClicked(this, table.getSelectedRow());
 }
 
-
+/**
+ * Mouse events come in if the table isn't full of rows and you click in the
+ * empty space that has no rows.  Guess this is because the rows are represented
+ * with child components and those intercept the mouse.  Which is fine here
+ * since it goes through the usual selection process and ends up in cellClicked()
+ *
+ * Inform the listener so it can popup a menu in the case where there is no row
+ * under the mouse.
+ */
+// decided not to do this here, but if you factor out a more opaque table
+// component this is what you do
+#if 0
+void TypicalTable::mouseDown(const juce::MouseEvent& e)
+{
+    (void)e;
+    if (listener != nullptr)
+      listener->typicalTableSpaceClicked(this);
+}
+#endif
+ 
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -54,7 +54,8 @@ void YanPopup::addDivider()
  */
 void YanPopup::show()
 {
-    Trace(2, "YanPopup::show");
+    //Trace(2, "YanPopup::show");
+    
     // second arg is a ModalComponentManager::Callback
     // a lambda that gets called when a selection is made
     

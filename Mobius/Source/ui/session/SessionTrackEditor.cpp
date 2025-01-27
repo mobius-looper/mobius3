@@ -174,6 +174,22 @@ void SessionTrackEditor::typicalTableChanged(TypicalTable* t, int row)
     }
 }
 
+/**
+ * The track table would like to move a row.
+ * sourceRow is the track INDEX it wants to move and
+ * desiredRow is the index the track should have.
+ *
+ * After the Session tracks are restructured everything is renumbered.
+ */
+void SessionTrackEditor::move(int sourceRow, int desiredRow)
+{
+    if (sourceRow != desiredRow) {
+        saveForms(currentTrack);
+
+
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Internal State Transfer

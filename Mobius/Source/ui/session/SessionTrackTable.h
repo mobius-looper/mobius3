@@ -26,7 +26,8 @@ class SessionTrackTableRow
 };
 
 class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
-                          public YanDialog::Listener
+                          public YanDialog::Listener,
+                          public juce::DragAndDropTarget, public juce::DragAndDropContainer
 {
   public:
 
@@ -52,6 +53,18 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
 
     void yanPopupSelected(int id);
     void yanDialogClosed(class YanDialog* d, int button);
+
+    // trying to listener for clicks in the table
+    void mouseDown(const juce::MouseEvent& e) override;
+
+    // reorder hacking
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails&) override;
+    void itemDragEnter (const juce::DragAndDropTarget::SourceDetails&) override;
+    void itemDragMove (const juce::DragAndDropTarget::SourceDetails&) override;
+    void itemDragExit (const juce::DragAndDropTarget::SourceDetails&) override;
+    void itemDropped (const juce::DragAndDropTarget::SourceDetails&) override;
+
+    juce::var getDragSourceDescription (const juce::SparseSet<int>& selectedRows);
     
   private:
     
@@ -61,7 +74,8 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
     int audioTracks = 0;
     int midiTracks = 0;
     
-    YanPopup popup {this};
+    YanPopup rowPopup {this};
+    YanPopup emptyPopup {this};
     YanDialog addAlert {this};
     YanDialog deleteAlert {this};
     YanDialog renameDialog {this};
@@ -87,6 +101,13 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
     void finishRename(int button);
     void finishBulkConfirm(int button);
     void finishBulk(int button);
+
+    // drag and drop hacking
+    bool targetActive = false;
+    bool moveActive = false;
+    int lastInsertIndex = -1;
+    int getDropRow(const juce::DragAndDropTarget::SourceDetails& details);
+    bool doMove(int sourceRow, int dropRow);
     
 };
     

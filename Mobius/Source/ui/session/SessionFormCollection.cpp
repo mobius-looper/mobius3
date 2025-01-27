@@ -89,11 +89,15 @@ void SessionFormCollection::show(Provider* p, juce::String formName)
             form->add(p, formdef);
 
             // must have been loaded by now
-            if (sourceValues == nullptr)
-              Trace(1, "SessionFormCollection: Attempt to show form without source values");
-            else
+            if (sourceValues != nullptr)
               form->load(p, sourceValues);
-
+            else {
+                // no, this will hit when we pre-select the tree element and form to be
+                // showing when the editor is brought up for the first time, it simulates
+                // a mouse click but nothing has actually been loaded yet
+                //Trace(1, "SessionFormCollection: Attempt to show form without source values");
+            }
+            
             currentForm = form;
 
             form->setBounds(getLocalBounds());

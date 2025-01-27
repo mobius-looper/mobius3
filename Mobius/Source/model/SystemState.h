@@ -27,6 +27,11 @@ class SystemState
     SystemState() {}
     ~SystemState() {}
 
+    // the version number of the Session this state was built with
+    // used by MobiusViewer to detect when track configuration has
+    // finished being consumed by the ending to do a full UI refresh
+    int sessionVersion = 0;
+
     // the reference number of the track that has focus
     // this is an argument to the query passed from UI to kernel and determines
     // what is left in FocusedTrackState

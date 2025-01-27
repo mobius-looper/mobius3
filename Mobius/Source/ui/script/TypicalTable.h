@@ -13,7 +13,9 @@ class TypicalTable : public juce::Component,
       public:
         virtual ~Listener() {}
         // this happens when you click on a row
-        virtual void typicalTableClicked(TypicalTable* t, int row) {(void)t; (void)row;}
+        virtual void typicalTableRowClicked(TypicalTable* t, int row) {(void)t; (void)row;}
+        // this happens when you click on empty space
+        virtual void typicalTableSpaceClicked(TypicalTable* t) {(void)t;}
         // this happens when you click or move with the keyboard
         virtual void typicalTableChanged(TypicalTable* t, int row) {(void)t; (void)row;}
     };
@@ -61,12 +63,15 @@ class TypicalTable : public juce::Component,
   protected:
     
     Listener* listener = nullptr;
+    juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};
+
+    bool paintDropTarget = false;
+    int dropTargetRow = -1;
 
   private:
     
     bool hasCommands = false;
     ButtonBar commands;
-    juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};
 
     void initTable();
 

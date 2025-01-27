@@ -1325,7 +1325,11 @@ void Supervisor::sendInitialMobiusConfig()
 {
     Session* ses = getSession();
     MobiusConfig* synth = synthesizeMobiusConfig(ses);
-    
+
+    // bump the session version to trigger a full refresh of the view
+    // when the engine finally gets around to dealing with it
+    ses->setVersion(++sessionVersion);
+
     mobius->initialize(ses, synth);
     
     delete synth;
@@ -1341,6 +1345,10 @@ void Supervisor::sendModifiedMobiusConfig()
 {
     Session* ses = getSession();
     MobiusConfig* synth = synthesizeMobiusConfig(ses);
+
+    // bump the session version to trigger a full refresh of the view
+    // when the engine finally gets around to dealing with it
+    ses->setVersion(++sessionVersion);
     
     mobius->reconfigure(ses, synth);
 
@@ -1510,6 +1518,9 @@ Session* Supervisor::initializeSession()
 
     // make the SystemState match the session
     configureSystemState(neu);
+
+    // bump the session version to trigger a full refresh
+    neu->setVersion(++sessionVersion);
 
     return neu;
 }

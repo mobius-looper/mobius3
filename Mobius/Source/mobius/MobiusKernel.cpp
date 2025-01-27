@@ -278,6 +278,9 @@ void MobiusKernel::refreshStateNow(SystemState* state)
 
     // OldMobiusState called this "globalRecording"
     state->audioCapturing = mCore->isCapturing();
+
+    // return the version of the Session we used when doing this refresh
+    state->sessionVersion = session->getVersion();
 }
 
 void MobiusKernel::refreshPriorityState(PriorityState* state)
@@ -435,6 +438,10 @@ void MobiusKernel::loadSession(KernelMessage* msg)
     }
     
     scriptUtil.configure(configuration, session);
+
+
+    // give TM the new MobiusConfig first to refresh some unfortunate caches
+    mTracks->reconfigure(configuration);
 
     // this will do the second call to core to configureTracks
     mTracks->loadSession(session);

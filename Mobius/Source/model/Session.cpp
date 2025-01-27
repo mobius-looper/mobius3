@@ -16,6 +16,8 @@ Session::~Session()
 
 Session::Session(Session* src)
 {
+    version = src->version;
+    
     for (auto track : src->tracks) {
         tracks.add(new Track(track));
     }
@@ -27,6 +29,16 @@ Session::Session(Session* src)
     assignIds();
     // numbers should also match
     renumber();
+}
+
+int Session::getVersion()
+{
+    return version;
+}
+
+void Session::setVersion(int v)
+{
+    version = v;
 }
 
 /**
@@ -262,6 +274,16 @@ void Session::deleteByNumber(int number)
     if (t != nullptr) {
         tracks.removeObject(t, true);
         renumber();
+    }
+}
+
+void Session::move(int sourceIndex, int desiredIndex)
+{
+    if (sourceIndex != desiredIndex &&
+        sourceIndex >= 0 && sourceIndex < tracks.size() &&
+        desiredIndex >= 0 && desiredIndex < tracks.size()) {
+
+        tracks.move(sourceIndex, desiredIndex);
     }
 }
 

@@ -388,16 +388,18 @@ class MobiusView
     MobiusViewTrack* track = nullptr;
     bool trackChanged = false;
 
-    /**
-     * Set when the active Setup changes.
-     * This impacts a few things like track names.
-     */
-    bool setupChanged = false;
-
     // Counter needs this for time calculations
     int sampleRate = 44100;
 
     SyncState syncState;
+
+    /**
+     * The Session version the last time this view was refreshed.
+     * If this ever differs from the SystemState, it means a session
+     * edit or change has been processed by the engine and we need
+     * to force a full UI refresh.
+     */
+    int lastSessionVersion = 0;
     
   protected:
 

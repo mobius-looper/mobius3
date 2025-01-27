@@ -26,7 +26,7 @@
   </Tree>
 
   <Form name='sessionGlobalGeneral' title='General Parameters'
-        symbols='longPress,noiseFloor,monitorAudio,quickSave,spreadRange,fadeFrames,maxSynDrift,defaultPreset,eventScript,userFileFolder'/>
+        symbols='longPress,noiseFloor,monitorAudio,quickSave,spreadRange,fadeFrames,maxSyncDrift,defaultPreset,eventScript,userFileFolder'/>
 
   <Form name='sessionGlobalPorts' title='IO Ports'
         symbols='pluginInputs,pluginOutputs,inputLatency,outputLatency'/>
@@ -36,7 +36,7 @@
 
   
   <Form name='sessionAudioTrackGeneral' title='General Parameters'
-        symbols='name,trackGroup,trackPreset,focus'/>
+        symbols='trackGroup,trackPreset,focus'/>
     
   <Form name='sessionAudioSync' title='Synchronization Parameters'
         symbols='syncSource,syncUnit,trackSyncUnit'/>

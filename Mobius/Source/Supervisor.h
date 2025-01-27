@@ -480,6 +480,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // focus, initially just on startup, may be useful elsewhere
     bool wantsFocus = false;
 
+    // a number put into the Session when it is sent to the engine
+    // and used to detect when the engine has finished processing it
+    int sessionVersion = 0;
+
     //
     // Methods
     //
