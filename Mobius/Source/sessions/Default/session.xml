@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Session name="Default" audioTracks="8" midiTracks="2">
-  <Track id="1" number="1" type="midi" name="m1">
+  <Track id="1" type="midi" name="m1">
     <ValueSet>
       <Value name="beatsPerBar" value="7"/>
       <Value name="durationMode" value="1" type="int"/>
@@ -32,7 +32,7 @@
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
     </ValueSet>
   </Track>
-  <Track id="2" number="2" type="midi" name="m2">
+  <Track id="2" type="midi" name="m2">
     <ValueSet>
       <Value name="beatsPerBar" value="2"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
@@ -58,7 +58,7 @@
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
-  <Track id="3" number="3" type="audio" name="a1">
+  <Track id="3" type="audio" name="a1">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="3" type="int"/>
@@ -77,7 +77,7 @@
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
-  <Track id="4" number="4" type="audio" name="a2">
+  <Track id="4" type="audio" name="a2">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -95,7 +95,7 @@
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
-  <Track id="5" number="5" type="audio" name="a3">
+  <Track id="5" type="audio" name="a3">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -113,7 +113,7 @@
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
-  <Track id="6" number="6" type="audio" name="a4">
+  <Track id="6" type="audio" name="a4">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -131,7 +131,7 @@
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
-  <Track id="7" number="7" type="audio" name="a5">
+  <Track id="7" type="audio" name="a5">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -149,7 +149,7 @@
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
-  <Track id="8" number="8" type="audio" name="a6">
+  <Track id="8" type="audio" name="a6">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -167,7 +167,7 @@
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
-  <Track id="9" number="9" type="audio" name="a7">
+  <Track id="9" type="audio" name="a7">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -185,7 +185,7 @@
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
-  <Track id="10" number="10" type="audio" name="a8">
+  <Track id="10" type="audio" name="a8">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>

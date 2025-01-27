@@ -65,8 +65,6 @@ void ModelTransformer::merge(Setup* src, Session* dest)
         }
         trackIndex++;
     }
-
-    dest->renumber();
 }
 
 void ModelTransformer::sessionToConfig(Session* src, MobiusConfig* dest)

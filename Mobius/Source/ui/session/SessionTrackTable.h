@@ -20,7 +20,6 @@ class SessionTrackTableRow
     }
 
     juce::String name;
-    int number = 0;
     bool midi = false;
 
 };
@@ -40,9 +39,6 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
     void load(class Provider* p, class Session* s);
     void reload();
     
-    int getSelectedTrackNumber();
-    int getTrackNumber(int row);
-
     bool isMidi(int row);
 
     void clear();

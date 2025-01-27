@@ -2871,7 +2871,7 @@ void Supervisor::loadMidi(MslValue* arguments)
 
     bool error = false;
     if (argTrack > 0) {
-        Session::Track* st = session->getTrackByNumber(argTrack);
+        Session::Track* st = session->getTrackByIndex(argTrack - 1);
         if (st == nullptr) {
             alert("MIDI track number " + juce::String(argTrack) + " out of range");
             error = true;

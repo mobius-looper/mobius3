@@ -57,20 +57,26 @@ LogicalTrack::~LogicalTrack()
  * by TrackManager.  You do not ACT on it yet.  This only happens
  * when tracks are created.
  */
-void LogicalTrack::setSession(Session::Track* trackdef)
+void LogicalTrack::setSession(Session::Track* trackdef, int n)
 {
     sessionTrack = trackdef;
-    // do set these so we can reason about them before creating
-    // the internal tracks
-    number = sessionTrack->number;
-    if (number == 0)
-      Trace(1, "LogicalTrack: No track number in session!");
+    number = n;
     trackType = sessionTrack->type;
 }
 
 Session::Track* LogicalTrack::getSession()
 {
     return sessionTrack;
+}
+
+int LogicalTrack::getNumber()
+{
+    return number;
+}
+
+Session::TrackType LogicalTrack::getType()
+{
+    return trackType;
 }
 
 /**
@@ -85,10 +91,6 @@ void LogicalTrack::loadSession()
         return;
     }
     
-    // pull this out for visibility in the debugger
-    number = sessionTrack->number;
-    trackType = sessionTrack->type;
-
     cacheSyncParameters();
     
     if (track == nullptr) {
@@ -116,9 +118,6 @@ void LogicalTrack::loadSession()
         // since the inner track can always get back to the LogicalTrack we don't
         // need to pass the Session down
         track->loadSession(sessionTrack);
-        // sanity check on numbers
-        if (track->getNumber() != sessionTrack->number)
-          Trace(1, "LogicalTrack::loadSession Track number mismatch");
     }
 }
 
@@ -158,16 +157,6 @@ void LogicalTrack::cacheSyncParameters()
     syncUnit = getSyncUnitFromSession();
     syncLeader = sessionTrack->getInt("leaderTrack");
 }    
-
-Session::TrackType LogicalTrack::getType()
-{
-    return trackType;
-}
-
-int LogicalTrack::getNumber()
-{
-    return number;
-}
 
 /**
  * Hack for the SelectTrack case where we need to assemble a UIAction

@@ -36,7 +36,7 @@ class LogicalTrack
     ~LogicalTrack();
 
     // this just remembers it during track organization
-    void setSession(class Session::Track* def);
+    void setSession(class Session::Track* def, int trackNumber);
     Session::Track* getSession();
     // this causes it to be fully loaded
     void loadSession();

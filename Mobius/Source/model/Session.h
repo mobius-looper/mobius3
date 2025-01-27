@@ -46,17 +46,6 @@ class Session
          */
         int id = 0;
 
-        /**
-         * Tracks are assigned a unique internal reference number after it is loaded
-         * from the file system and as the session is modified at runtime.  This
-         * is always 1+ the index of the track in the session's track array.  It isn't
-         * necessary to store it in XML but is handy when viewing the file.
-         *
-         * All other forms of track identifier should be considered "names" or "tags" and are
-         * completely user defined and stable.
-         */
-        int number = 0;
-
         TrackType type;
 
         // should this be a first-class member or inside the value set?
@@ -105,8 +94,6 @@ class Session
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);
     juce::String toXml();
 
-    void renumber();
-
     void setOldConfig(class MobiusConfig* config);
     MobiusConfig* getOldConfig();
 
@@ -135,26 +122,31 @@ class Session
 
     Track* getTrackByIndex(int index);
     Track* getTrackById(int id);
-    Track* getTrackByNumber(int number);
     Track* getTrackByType(TrackType type, int index);
 
     // add or remove tracks of a given type in bulk
     // when the number decreases, tracks that appear earlier
-    // in the list are retained
+    // in the list are retained and the ones after deleted
     void reconcileTrackCount(TrackType type, int required);
 
-    // for SessionClerk migration
+    //////////////////////////////////////////////////////////////////////
+    // SessionEditor Special Surgery
+    //////////////////////////////////////////////////////////////////////
+
     void add(Track* t);
-    // for SessionEditor
-    void deleteByNumber(int number);
+    void deleteTrack(int index);
 
     // temporary kludge for MidiTrackEditor, weed
     //Track* ensureTrack(TrackType type, int index);
     //void replaceMidiTracks(Session* src);
     //void clearTracks(TrackType type);
 
-    // for SessionEditor, change the order of the tracks and renumber
+    // for SessionEditor, change the order of the tracks
     void move(int sourceIndex, int desiredIndex);
+
+    void steal(juce::Array<Track*>& dest);
+
+    void replace(juce::Array<Track*>& dest);
     
     //////////////////////////////////////////////////////////////////////
     // Global Parameters

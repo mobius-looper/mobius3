@@ -472,7 +472,7 @@ void MobiusViewer::refreshTrackName(SystemState* state, TrackState* tstate,
     (void)state;
     tview->name = "";
     Session* session = provider->getSession();
-    Session::Track* track = session->getTrackByNumber(tstate->number);
+    Session::Track* track = session->getTrackByIndex(tstate->number - 1);
     if (track == nullptr)
       Trace(1, "MobiusViewer: Track number out of range in session %d", tstate->number);
     else

@@ -109,7 +109,6 @@ void SessionTrackTable::reload()
         SessionTrackTableRow* row = new SessionTrackTableRow();
         
         row->name = name;
-        row->number = number;
         row->midi = (t->type == Session::TypeMidi);
         
         tracks.add(row);
@@ -130,27 +129,6 @@ void SessionTrackTable::clear()
     Trace(1, "SessionTrackTable::clear Who is calling this?");
     //tracks.clear();
     //updateContent();
-}
-
-/**
- * This made more sense when session tracks were in random order
- * but now the number is just 1+ row
- */
-int SessionTrackTable::getTrackNumber(int row)
-{
-    int number = 0;
-    SessionTrackTableRow* trow = tracks[row];
-    number = trow->number;
-    return number;
-}
-
-int SessionTrackTable::getSelectedTrackNumber()
-{
-    int number = 0;
-    int row = getSelectedRow();
-    if (row >= 0)
-      number = getTrackNumber(row);
-    return number;
 }
 
 bool SessionTrackTable::isMidi(int row)
@@ -326,25 +304,21 @@ void SessionTrackTable::finishAdd(int button)
 void SessionTrackTable::finishDelete(int button)
 {
     if (button == 0) {
-        editor->deleteTrack(getSelectedTrackNumber());
+        editor->deleteTrack(getSelectedRow());
     }
 }
 
 void SessionTrackTable::finishRename(int button)
 {
     if (button == 0) {
-        int number = getSelectedTrackNumber();
-        Session::Track* t = session->getTrackByNumber(number);
+        int row = getSelectedRow();
+        Session::Track* t = session->getTrackByIndex(row);
         // todo: should have some validation on allowed names
         t->name = newName.getValue();
         reload();
     }
 }
 
-/**
- * You can't define display order in this interface yet.
- * Tracks will be clustered by type and assigned numbers.
- */
 void SessionTrackTable::finishBulk(int button)
 {
     if (button == 0) {
@@ -547,7 +521,7 @@ juce::var SessionTrackTable::getDragSourceDescription (const juce::SparseSet<int
 /**
  * Finally after all that, we have our instructions.
  *
- * sourceRow is the row number you were ON when the drag started.
+ * sourceRow is the row index you were ON when the drag started.
  * dropRow is the row you are on when the drag ended.
  *
  * The insertion line is painted at the top of the dropRow, indicating

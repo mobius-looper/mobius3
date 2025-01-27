@@ -1,4 +1,4 @@
- 
+
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
@@ -24,7 +24,7 @@ SessionTrackEditor::SessionTrackEditor()
     
     tracks->setListener(this);
 
-    currentTrack = 1;
+    currentTrack = 0;
 }
 
 SessionTrackEditor::~SessionTrackEditor()
@@ -79,11 +79,13 @@ void SessionTrackEditor::load(Session* s)
  * Save is a problem.
  * 
  * SessionGlobalEditor was able to keep all editing state in the Forms
- * which could then just be dumped into the destination Session.
+ * which could then just be dumped into the destination Session.  And you can't edit
+ * globals outside the session editor.
  *
  * TrackEditor is more complex because it has been dumping intermediate state
- * into the initial loaded Session as it transitions between tracks.  So some
- * of the editing state is in the initial Session and some is in the Forms.
+ * into the initial loaded Session as it transitions between tracks.  But not all
+ * forms were displayed so some of the editing state is in the initial Session and some
+ * is in the Forms.
  *
  * So we have a data merge problem.  You can't just replace the ValueSets in the
  * destination session with the ValueSets in the edited session because not everything
@@ -98,25 +100,39 @@ void SessionTrackEditor::load(Session* s)
  *        save all forms into the destination session
  *
  * The Track forms effectively perform the filtered merge.
+ *
+ * Then it gets worse.  Tracks may have been added or deleted so positions
+ * of the tracks may not be the same in the edited and destination Session.
+ * To match them we have to use the unique track "ids" in the same way that
+ * TrackManager does when it incorporates a new session.
  */
 void SessionTrackEditor::save(Session* dest)
 {
     // save editing state for the current track back to the intermediate session
     saveForms(currentTrack);
 
-    // make the numbers match
-    dest->reconcileTrackCount(Session::TypeAudio, session->getAudioTracks());
-    dest->reconcileTrackCount(Session::TypeMidi, session->getMidiTracks());
+    // bring out the source and destination tracks
+    juce::Array<Session::Track*> editedTracks;
+    session->steal(editedTracks);
+
+    juce::Array<Session::Track*> originalTracks;
+    dest->steal(originalTracks);
+
+    juce::Array<Session::Track*> resultTracks;
 
     // now load the intermediate session back into the forms one at a time
-    // but save them to the destination session
-    for (int i = 0 ; i < session->getTrackCount() ; i++) {
+    // but save them to the destination tracks
+    int srcIndex = 0;
+    while (srcIndex < editedTracks.size()) {
         
-        Session::Track* srcTrack = session->getTrackByIndex(i);
-        Session::Track* destTrack = dest->getTrackByNumber(srcTrack->number);
+        Session::Track* srcTrack = editedTracks[srcIndex];
+        Session::Track* destTrack = findMatchingTrack(originalTracks, srcTrack->id);
+        
         if (destTrack == nullptr) {
-            // should not be seeing this if reconcileTrackCount worked to flesh them out
-            Trace(1, "SessionTrackEditor: New track save failed");
+            // this must be a new track that wasn't in the original, move it
+            // to the result
+            editedTracks.removeAllInstancesOf(srcTrack);
+            resultTracks.add(srcTrack);
         }
         else {
             // this is the only thing that isn't in the ValueSet
@@ -133,7 +149,41 @@ void SessionTrackEditor::save(Session* dest)
                 audioForms.load(srcValues);
                 audioForms.save(destValues);
             }
+
+            // move the merged destTrack from the original list onto the result
+            originalTracks.removeAllInstancesOf(destTrack);
+            resultTracks.add(destTrack);
+            srcIndex++;
         }
+    }
+
+    // at this point
+    // editedTracks has things that were merged into something from originalTrack
+    // originalTracks has tracks left over that were deleted in the new session
+    // resultTracks has a combination of new tracks and merged tracks
+
+    deleteRemaining(editedTracks);
+    deleteRemaining(originalTracks);
+    dest->replace(resultTracks);
+}
+
+Session::Track* SessionTrackEditor::findMatchingTrack(juce::Array<Session::Track*>& array, int id)
+{
+    Session::Track* found = nullptr;
+    for (auto t : array) {
+        if (t->id == id) {
+            found = t;
+            break;
+        }
+    }
+    return found;
+}
+
+void SessionTrackEditor::deleteRemaining(juce::Array<Session::Track*>& array)
+{
+    while (array.size() > 0) {
+        Session::Track* t = array.removeAndReturn(0);
+        delete t;
     }
 }
 
@@ -166,17 +216,17 @@ void SessionTrackEditor::typicalTableChanged(TypicalTable* t, int row)
     (void)t;
     (void)row;
     
-    int newNumber = tracks->getSelectedTrackNumber();
-    if (newNumber == 0) {
+    int newRow = tracks->getSelectedRow();
+    if (newRow < 0) {
         Trace(1, "SessionTrackEditor: Change alert with no selected track number");
     }
-    else if (newNumber != currentTrack) {
+    else if (newRow != currentTrack) {
         
         saveForms(currentTrack);
         
-        loadForms(newNumber);
+        loadForms(newRow);
         
-        currentTrack = newNumber;
+        currentTrack = newRow;
     }
 }
 
@@ -204,17 +254,17 @@ void SessionTrackEditor::move(int sourceRow, int desiredRow)
 
         int adjustedRow = desiredRow;
         if (desiredRow > sourceRow)
-          desiredRow--;
+          adjustedRow--;
 
         // this does the structural changes in the Session
-        session->move(sourceRow, desiredRow);
+        session->move(sourceRow, adjustedRow);
 
         tracks->reload();
 
         // keep on the same object
-        currentTrack = desiredRow;
         // should already be there but make sure it's in sync
         tracks->selectRow(desiredRow);
+        currentTrack = desiredRow;
         loadForms(currentTrack);
     }
 }
@@ -224,30 +274,24 @@ void SessionTrackEditor::move(int sourceRow, int desiredRow)
  */
 void SessionTrackEditor::addTrack(Session::TrackType type)
 {
-    int currentTypeCount;
-    if (type == Session::TypeAudio)
-      currentTypeCount = session->getAudioTracks();
-    else
-      currentTypeCount = session->getMidiTracks();
-
     saveForms(currentTrack);
-      
-    session->reconcileTrackCount(type, currentTypeCount + 1);
 
-    // it is ecpected to have added it at the end
+    Session::Track* neu = new Session::Track();
+    neu->type = type;
+    session->add(neu);
+
     currentTrack = session->getTrackCount() - 1;
-
     tracks->reload();
     tracks->selectRow(currentTrack);
     
     loadForms(currentTrack);
 }
 
-void SessionTrackEditor::deleteTrack(int number)
+void SessionTrackEditor::deleteTrack(int row)
 {
     saveForms(currentTrack);
 
-    session->deleteByNumber(number);
+    session->deleteTrack(row);
 
     // go back to the beginning, though could try to be one after the
     // deleted one
@@ -283,11 +327,11 @@ void SessionTrackEditor::bulkReconcile(int audioCount, int midiCount)
  * Load the current set of editing forms with data from
  * the selected track.
  */
-void SessionTrackEditor::loadForms(int number)
+void SessionTrackEditor::loadForms(int row)
 {
-    Session::Track* trackdef = session->getTrackByNumber(number);
+    Session::Track* trackdef = session->getTrackByIndex(row);
     if (trackdef == nullptr) {
-        Trace(1, "SessionTrackEditor: Invalid track number %d", number);
+        Trace(1, "SessionTrackEditor: Invalid track index %d", row);
     }
     else {
         ValueSet* values = trackdef->ensureParameters();
@@ -304,11 +348,11 @@ void SessionTrackEditor::loadForms(int number)
     }
 }
 
-void SessionTrackEditor::saveForms(int number)
+void SessionTrackEditor::saveForms(int row)
 {    
-    Session::Track* trackdef = session->getTrackByNumber(number);
+    Session::Track* trackdef = session->getTrackByIndex(row);
     if (trackdef == nullptr) {
-        Trace(1, "SessionTrackEditor: Invalid intermediate session track number %d", number);
+        Trace(1, "SessionTrackEditor: Invalid intermediate session track index %d", row);
     }
     else {
         ValueSet* values = trackdef->ensureParameters();

@@ -160,7 +160,7 @@ void TrackManager::configureTracks(Session* ses)
         tracks.add(lt);
 
         // this remembers it but does not act on it
-        lt->setSession(def);
+        lt->setSession(def, i+1);
     }
     
     configureMobiusTracks();
@@ -1231,17 +1231,18 @@ void TrackManager::refreshState(SystemState* state)
 {
     int audioTracks = 0;
     int midiTracks = 0;
-    for (auto track : tracks) {
-        int trackIndex = track->getNumber() - 1;
-        if (trackIndex >= state->tracks.size()) {
+
+    for (int i = 0 ; i < tracks.size() ; i++) {
+        LogicalTrack* track = tracks[i];
+    
+        if (i >= state->tracks.size()) {
             // this should have been pre-sized
             Trace(1, "TrackManager: Not enough SystemState tracks");
         }
         else {
-            TrackState* tstate = state->tracks[trackIndex];
+            TrackState* tstate = state->tracks[i];
             if (tstate != nullptr) {
-                // make sure this is set properly the BaseTracks may forget
-                tstate->number = track->getNumber();
+                tstate->number = i+1;
                 track->refreshState(tstate);
             }
         }

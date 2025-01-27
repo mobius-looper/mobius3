@@ -27,8 +27,6 @@ Session::Session(Session* src)
 
     // source tracks should already have ids but make sure
     assignIds();
-    // numbers should also match
-    renumber();
 }
 
 int Session::getVersion()
@@ -70,13 +68,6 @@ void Session::assignIds()
         if (track->id == 0)
           track->id = max++;
     }
-}
-
-void Session::renumber()
-{
-    int number = 1;
-    for (auto track : tracks)
-      track->number = number++;
 }
 
 /**
@@ -170,19 +161,6 @@ Session::Track* Session::getTrackById(int id)
     return track;
 }
 
-Session::Track* Session::getTrackByNumber(int number)
-{
-    Track* track = nullptr;
-    for (int i = 0 ; i < tracks.size() ; i++) {
-        Track* t = tracks[i];
-        if (t->number == number) {
-            track = t;
-            break;
-        }
-    }
-    return track;
-}
-
 /**
  * This is intended for ModelTransformer when merging old
  * Setups from MobiusConfig into a Session.  Each SetupTrack
@@ -204,15 +182,6 @@ Session::Track* Session::getTrackByType(TrackType type, int index)
         }
     }
     return found;
-}
-
-/**
- * Used for use by SessionClerk during migration
- */
-void Session::add(Track* t)
-{
-    if (t != nullptr)
-      tracks.add(t);
 }
 
 /**
@@ -265,15 +234,28 @@ void Session::reconcileTrackCount(TrackType type, int required)
     }
 
     assignIds();
-    renumber();
 }
 
-void Session::deleteByNumber(int number)
+//////////////////////////////////////////////////////////////////////
+//
+// Session Editor
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Used for use by SessionClerk during migration
+ */
+void Session::add(Track* t)
 {
-    Session::Track* t = getTrackByNumber(number);
+    if (t != nullptr)
+      tracks.add(t);
+}
+
+void Session::deleteTrack(int index)
+{
+    Session::Track* t = getTrackByIndex(index);
     if (t != nullptr) {
         tracks.removeObject(t, true);
-        renumber();
     }
 }
 
@@ -284,8 +266,23 @@ void Session::move(int sourceIndex, int desiredIndex)
         desiredIndex >= 0 && desiredIndex < tracks.size()) {
 
         tracks.move(sourceIndex, desiredIndex);
-        renumber();
     }
+}
+
+void Session::steal(juce::Array<Track*>& dest)
+{
+    dest.clear();
+    while (tracks.size() > 0) {
+        Track* t = tracks.removeAndReturn(0);
+        dest.add(t);
+    }
+}
+
+void Session::replace(juce::Array<Track*>& src)
+{
+    tracks.clear();
+    for (auto t : src)
+      tracks.add(t);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -443,7 +440,6 @@ void Session::setBool(juce::String pname, bool value)
 Session::Track::Track(Session::Track* src)
 {
     id = src->id;
-    number = src->number;
     type = src->type;
     name = src->name;
     if (src->parameters != nullptr)
@@ -546,7 +542,6 @@ Session::Track* Session::parseTrack(juce::XmlElement* root, juce::StringArray& e
     Session::Track* track = new Session::Track();
 
     track->id = root->getIntAttribute("id");
-    track->number = root->getIntAttribute("number");
     track->name = root->getStringAttribute("name");
     
     juce::String typeString = root->getStringAttribute("type");
@@ -609,9 +604,6 @@ void Session::renderTrack(juce::XmlElement* parent, Session::Track* track)
     // but it is meaningless when saved in a file
     if (track->id > 0)
       root->setAttribute("id", track->id);
-
-    if (track->number > 0)
-      root->setAttribute("number", track->number);
 
     if (track->type == Session::TypeAudio)
       root->setAttribute("type", "audio");
