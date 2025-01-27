@@ -36,8 +36,9 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
     SessionTrackTable();
     ~SessionTrackTable();
 
-    void initialize(class Provider* p);
+    void initialize(class Provider* p, class SessionTrackEditor* e);
     void load(class Provider* p, class Session* s);
+    void reload();
     
     int getSelectedTrackNumber();
     int getTrackNumber(int row);
@@ -69,6 +70,7 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
   private:
     
     class Provider* provider = nullptr;
+    class SessionTrackEditor* editor = nullptr;
     class Session* session = nullptr;
     juce::OwnedArray<class SessionTrackTableRow> tracks;
     int audioTracks = 0;
@@ -86,9 +88,7 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
     YanInput audioCount {"Audio Tracks"};
     YanInput midiCount {"Midi Tracks"};
 
-    void reload();
     void countTracks();
-    void selectRowByNumber(int n);
     
     void startAdd();
     void startDelete();

@@ -11,6 +11,10 @@
 #include "../../Provider.h"
 #include "../MobiusView.h"
 
+// unfortunately can't be that independent unless
+// you add a complex Listener for all the callbacks
+#include "SessionTrackEditor.h"
+
 #include "SessionTrackTable.h"
 
 SessionTrackTable::SessionTrackTable()
@@ -66,11 +70,12 @@ SessionTrackTable::~SessionTrackTable()
 {
 }
 
-void SessionTrackTable::initialize(Provider* p)
+void SessionTrackTable::initialize(Provider* p, SessionTrackEditor* e)
 {
     // nothing to do during initialization, must
     // reload the table every time the editor is opened
     (void)p;
+    editor = e;
     
     // it is vital you call this to get the header and other parts
     // of the table defined, or else it won't display
@@ -313,45 +318,15 @@ void SessionTrackTable::finishAdd(int button)
         // cancel
     }
     else {
-        countTracks();
-        // this will be the internal track number of the new track
-        int newSelection = 0;
-        if (button == 0) {
-            session->reconcileTrackCount(Session::TypeAudio, audioTracks + 1);
-            newSelection = audioTracks + 1;
-        }
-        else {
-            session->reconcileTrackCount(Session::TypeMidi, midiTracks + 1);
-            newSelection = audioTracks + midiTracks + 1;
-        }
-        reload();
-        selectRowByNumber(newSelection);
+        Session::TrackType type = ((button == 0) ? Session::TypeAudio : Session::TypeMidi);
+        editor->addTrack(type);
     }
-}
-
-/**
- * After making structural modifications to the track list, pick
- * a new track to be highlighted and tell the listeners to refresh
- * whatever is following that.
- */
-void SessionTrackTable::selectRowByNumber(int number)
-{
-    // we're currently keeping these in order
-    int row = number - 1;
-    selectRow(row);
-    if (listener != nullptr)
-      listener->typicalTableChanged(this, row);
 }
 
 void SessionTrackTable::finishDelete(int button)
 {
     if (button == 0) {
-        int number = getSelectedTrackNumber();
-        session->deleteByNumber(number);
-        reload();
-        // go back to the beginning, though could try to be one after the
-        // deleted one
-        selectRowByNumber(0);
+        editor->deleteTrack(getSelectedTrackNumber());
     }
 }
 
@@ -373,10 +348,7 @@ void SessionTrackTable::finishRename(int button)
 void SessionTrackTable::finishBulk(int button)
 {
     if (button == 0) {
-        session->reconcileTrackCount(Session::TypeAudio, audioCount.getInt());
-        session->reconcileTrackCount(Session::TypeMidi, midiCount.getInt());
-        reload();
-        selectRowByNumber(0);
+        editor->bulkReconcile(audioCount.getInt(), midiCount.getInt());
     }
 }
 
@@ -499,7 +471,9 @@ void SessionTrackTable::itemDropped (const juce::DragAndDropTarget::SourceDetail
     if (sourceThing.length() > 0) {
         int sourceRow = sourceThing.getIntValue();
         if (doMove(sourceRow, dropRow)) {
-            table.updateContent();
+            // we forward the move request to SessiontTrackEditor which
+            // will normally call back to our reload() if it decided to do it
+            //table.updateContent();
         }
     }
 
@@ -596,7 +570,8 @@ bool SessionTrackTable::doMove(int sourceRow, int dropRow)
     Trace(2, "SessionTrackTable: Move row %d to %d", sourceRow, dropRow);
 
     if (dropRow < 0)
-      dropRow = session->getTrackCount() - 1;
+      // brain hurting, see comments in SessionTrackTable for why this needs to be one past the end
+      dropRow = session->getTrackCount();
 
     if (sourceRow == dropRow) {
         // already there
@@ -606,13 +581,7 @@ bool SessionTrackTable::doMove(int sourceRow, int dropRow)
     }
     else {
         // somewhere to go
-        session->move(sourceRow, dropRow);
-        reload();
-
-        selectRow(dropRow);
-        if (listener != nullptr)
-          listener->typicalTableChanged(this, dropRow);
-
+        editor->move(sourceRow, dropRow);
         moved = true;
     }
     return moved;

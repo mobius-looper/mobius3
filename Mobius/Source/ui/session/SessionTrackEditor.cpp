@@ -37,7 +37,7 @@ void SessionTrackEditor::initialize(Provider* p)
     // get everything it needs from just the hsession
     provider = p;
     
-    tracks->initialize(p);
+    tracks->initialize(p, this);
 
     audioForms.initialize(p, juce::String("sessionAudioTrack"));
     midiForms.initialize(p, juce::String("sessionMidiTrack"));
@@ -147,6 +147,12 @@ void SessionTrackEditor::cancel()
     midiForms.cancel();
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// SessionTrackTable Commands
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * This is called when the selected row changes either by clicking on
  * it or using the keyboard arrow keys after a row has been selected.
@@ -179,15 +185,92 @@ void SessionTrackEditor::typicalTableChanged(TypicalTable* t, int row)
  * sourceRow is the track INDEX it wants to move and
  * desiredRow is the index the track should have.
  *
- * After the Session tracks are restructured everything is renumbered.
+ * After the Session tracks are restructured the track table
+ * will repaint itself to pull the new model.
+ *
+ * oddment:  The sourceRow is the selected row or the row you are ON
+ * and want to move, and desiredRow is the row you were over when the
+ * mouse was released and where you want it to BE.  The way it seems to work
+ * is in two phases, first remove row 0 which shifts everything up.  Then insert
+ * the removed row back into the list.  Because of this upward shift, the insertion
+ * index needs to be one less than what the drop target was.  Or something like that,
+ * maybe I'm just not mathing this right.   Anyway, if you're moving up the
+ * two indexes work, but if you're moving down you have to -1 the desiredRow.
  */
 void SessionTrackEditor::move(int sourceRow, int desiredRow)
 {
     if (sourceRow != desiredRow) {
         saveForms(currentTrack);
 
+        int adjustedRow = desiredRow;
+        if (desiredRow > sourceRow)
+          desiredRow--;
 
+        // this does the structural changes in the Session
+        session->move(sourceRow, desiredRow);
+
+        tracks->reload();
+
+        // keep on the same object
+        currentTrack = desiredRow;
+        // should already be there but make sure it's in sync
+        tracks->selectRow(desiredRow);
+        loadForms(currentTrack);
     }
+}
+
+/**
+ * TrackTable would like to add a new track of the given type
+ */
+void SessionTrackEditor::addTrack(Session::TrackType type)
+{
+    int currentTypeCount;
+    if (type == Session::TypeAudio)
+      currentTypeCount = session->getAudioTracks();
+    else
+      currentTypeCount = session->getMidiTracks();
+
+    saveForms(currentTrack);
+      
+    session->reconcileTrackCount(type, currentTypeCount + 1);
+
+    // it is ecpected to have added it at the end
+    currentTrack = session->getTrackCount() - 1;
+
+    tracks->reload();
+    tracks->selectRow(currentTrack);
+    
+    loadForms(currentTrack);
+}
+
+void SessionTrackEditor::deleteTrack(int number)
+{
+    saveForms(currentTrack);
+
+    session->deleteByNumber(number);
+
+    // go back to the beginning, though could try to be one after the
+    // deleted one
+    currentTrack = 0;
+
+    tracks->reload();
+    tracks->selectRow(currentTrack);
+    loadForms(currentTrack);
+}
+
+void SessionTrackEditor::bulkReconcile(int audioCount, int midiCount)
+{
+    saveForms(currentTrack);
+
+    session->reconcileTrackCount(Session::TypeAudio, audioCount);
+    session->reconcileTrackCount(Session::TypeMidi, midiCount);
+
+    // pick one of the new ones or go back to the top
+    currentTrack = 0;
+
+    tracks->reload();
+    tracks->selectRow(currentTrack);
+    loadForms(currentTrack);
 }
 
 //////////////////////////////////////////////////////////////////////

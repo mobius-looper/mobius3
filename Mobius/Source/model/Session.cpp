@@ -284,6 +284,7 @@ void Session::move(int sourceIndex, int desiredIndex)
         desiredIndex >= 0 && desiredIndex < tracks.size()) {
 
         tracks.move(sourceIndex, desiredIndex);
+        renumber();
     }
 }
 

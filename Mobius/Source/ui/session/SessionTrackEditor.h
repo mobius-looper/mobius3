@@ -26,6 +26,10 @@ class SessionTrackEditor : public juce::Component,
     void resized() override;
 
     void typicalTableChanged(class TypicalTable* t, int row) override;
+    void move(int sourceRow, int desiredRow);
+    void addTrack(Session::TrackType type);
+    void deleteTrack(int number);
+    void bulkReconcile(int audioCount, int midiCount);
     
   private:
 
