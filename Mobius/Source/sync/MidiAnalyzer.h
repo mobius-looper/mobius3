@@ -9,6 +9,8 @@
 
 #include "../MidiManager.h"
 
+#include "../model/SessionHelper.h"
+
 // old stuff, weed
 #include "MidiQueue.h"
 #include "TempoMonitor.h"
@@ -16,6 +18,7 @@
 
 #include "SyncAnalyzer.h"
 #include "SyncAnalyzerResult.h"
+#include "DriftMonitor.h"
 
 class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
 {
@@ -26,6 +29,9 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
 
     void initialize(class SyncMaster* sm, class MidiManager* mm);
     void shutdown();
+    void loadSession(class Session* s);
+    void refreshState(class SyncState* state);
+    void refreshPriorityState(class PriorityState* ps);
 
     //
     // SyncAnslyzer Interface
@@ -70,12 +76,30 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     
     class SyncMaster* syncMaster = nullptr;
     class MidiManager* midiManager = nullptr;
-    
+
+    SessionHelper sessionHelper;
     MidiQueue inputQueue;
     TempoMonitor tempoMonitor;
     SyncAnalyzerResult result;
+    DriftMonitor drifter;
 
+    // pseudo tracking loop
+    int beatsPerBar = 0;
+    int barsPerLoop = 0;
+    int unitLength = 0;
+    int unitPlayHead = 0;
+    int elapsedBeats = 0;
+    int beat = 0;
+    int bar = 0;
+    int loop = 0;
+    
     void detectBeat(MidiSyncEvent* mse);
+    void advance(int frames);
+    void checkDrift();
+
+    void startDetected();
+    void stopDetected();
+    void continueDetected(int songClock);
     
 };
 

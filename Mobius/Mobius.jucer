@@ -480,6 +480,10 @@
                 file="Source/ui/display/LoopWindowElement.cpp"/>
           <FILE id="nlWxmg" name="LoopWindowElement.h" compile="0" resource="0"
                 file="Source/ui/display/LoopWindowElement.h"/>
+          <FILE id="pnI6fx" name="MidiSyncElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/MidiSyncElement.cpp"/>
+          <FILE id="yOWl6E" name="MidiSyncElement.h" compile="0" resource="0"
+                file="Source/ui/display/MidiSyncElement.h"/>
           <FILE id="Z6gJ99" name="MinorModesElement.cpp" compile="1" resource="0"
                 file="Source/ui/display/MinorModesElement.cpp"/>
           <FILE id="JAQb1S" name="MinorModesElement.h" compile="0" resource="0"

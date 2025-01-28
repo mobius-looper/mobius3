@@ -84,6 +84,7 @@ class LogicalTrack
 
     SyncSource getSyncSourceNow();
     SyncUnit getSyncUnitNow();
+    TrackSyncUnit getTrackSyncUnitNow();
     int getSyncLeaderNow();
     Pulse* getLeaderPulse();
     
@@ -134,6 +135,7 @@ class LogicalTrack
     // parameter cache
     SyncSource syncSource = SyncSourceNone;
     SyncUnit syncUnit = SyncUnitBeat;
+    TrackSyncUnit trackSyncUnit = TrackUnitLoop;
     int syncLeader = 0;
 
     // sync Pulse for SyncMaster/Pulsator

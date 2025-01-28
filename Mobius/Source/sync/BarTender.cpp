@@ -431,11 +431,14 @@ int BarTender::getLoop(LogicalTrack* lt)
  */
 int BarTender::getBeatsPerBar(int trackNumber)
 {
+    return getBeatsPerBar(trackManager->getLogicalTrack(trackNumber));
+}
+
+int BarTender::getBeatsPerBar(LogicalTrack* track)
+{
     int bpb = 4;
-    
-    LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
-    if (lt != nullptr) {
-        switch (lt->getSyncSourceNow()) {
+    if (track != nullptr) {
+        switch (track->getSyncSourceNow()) {
             case SyncSourceNone:
                 // technically should return zero?
                 break;
@@ -460,6 +463,7 @@ int BarTender::getBeatsPerBar(int trackNumber)
                 // fall back to the Transport
                 // but really we shouldn't be trying to display beat/bar counts
                 // in the UI if this isn't following somethign with well defined beats
+                Trace(1, "BarTender::getBarsPerLoop More work to do");
             }
                 break;
         }
@@ -483,11 +487,14 @@ int BarTender::getBeatsPerBar(int trackNumber)
  */
 int BarTender::getBarsPerLoop(int trackNumber)
 {
+    return getBarsPerLoop(trackManager->getLogicalTrack(trackNumber));
+}
+
+int BarTender::getBarsPerLoop(LogicalTrack* track)
+{
     int bpl = 1;
-    
-    LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
-    if (lt != nullptr) {
-        switch (lt->getSyncSourceNow()) {
+    if (track != nullptr) {
+        switch (track->getSyncSourceNow()) {
             case SyncSourceNone:
                 break;
 
@@ -506,10 +513,8 @@ int BarTender::getBarsPerLoop(int trackNumber)
                 break;
 
             case SyncSourceTrack: {
-                TrackProperties props;
-                getLeaderProperties(trackNumber, props);
-                if (!props.invalid && props.cycles > 0)
-                  bpl = props.cycles;
+                // unclear what this means
+                Trace(1, "BarTender::getBarsPerLoop More work to do");
             }
                 break;
         }
@@ -532,14 +537,14 @@ SyncSource BarTender::getSyncSource(int trackNumber)
     return source;
 }
 
-void BarTender::getLeaderProperties(int follower, TrackProperties& props)
+void BarTender::getLeaderProperties(LogicalTrack* track, TrackProperties& props)
 {
-    LogicalTrack* lt = trackManager->getLogicalTrack(follower);
-    if (lt == nullptr || lt->getSyncSourceNow() != SyncSourceTrack)
-      props.invalid = true;
+    if (track == nullptr || track->getSyncSourceNow() != SyncSourceTrack) {
+        props.invalid = true;
+    }
     else {
         // this little dance needs to be encapsulated somewhere, probably Pulsator
-        int leader = lt->getSyncLeaderNow();
+        int leader = track->getSyncLeaderNow();
         if (leader == 0)
           leader = syncMaster->getTrackSyncMaster();
         
@@ -549,6 +554,107 @@ void BarTender::getLeaderProperties(int follower, TrackProperties& props)
             trackManager->getTrackProperties(leader, props);
         }
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Unit Lengths
+//
+// These aren't tehnically part of BarTender's core functions but they
+// are closely related and it makes more sense to have them down here
+// than up in SyncMaster and bounce back and forth.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Find the fundamental unit length of a sync source.
+ */
+int BarTender::getUnitLength(int trackNumber)
+{
+    return getUnitLength(trackManager->getLogicalTrack(trackNumber));
+}
+
+int BarTender::getUnitLength(LogicalTrack* track)
+{
+    int frames = 0;
+    if (track != nullptr) {
+        
+        SyncSource src = track->getSyncSourceNow();
+        switch (src) {
+            case SyncSourceNone: {
+                // for the purposes of auto-record, we need to get
+                // a tempo from somewhere, OG Mobius had autoRecordTempo
+                // until we see a need for something more, let the Transport
+                // define this
+                frames = syncMaster->getTransport()->getUnitLength();
+            }
+                break;
+            case SyncSourceTransport: {
+                frames = syncMaster->getTransport()->getUnitLength();
+            }
+                break;
+            case SyncSourceTrack: {
+                frames = getTrackSyncUnitLength(track);
+                // more here
+            }
+                break;
+            case SyncSourceHost: {
+                frames = syncMaster->getHostAnalyzer()->getUnitLength();
+                
+            }
+                break;
+            case SyncSourceMidi: {
+                frames = syncMaster->getMidiAnalyzer()->getUnitLength();
+            }
+                break;
+            case SyncSourceMaster: {
+                // unclear...
+                // need to nail down what a track follows if it wants to be
+                // the Master but some other track was already the Master
+                // it can either fall back to Transport sync or Track sync
+                frames = syncMaster->getTransport()->getUnitLength();
+            }
+                break;
+        }
+    }
+
+    return frames;
+}
+
+/**
+ * Determining the unit length for track sync is complicated since
+ * we don't have as clearly defined notions of what a "beat" or
+ * "time signature" is.
+ *
+ * A track has a length and may be divided into cycles and subcycles.
+ * Cycle is often a "bar" and subcycle is often a "beat", but it's
+ * more arbitrary than other sync sources.
+ */
+int BarTender::getTrackSyncUnitLength(LogicalTrack* track)
+{
+    (void)track;
+    int frames = 0;
+    
+    // note that the track passed here is the FOLLOWING track,
+    // what we need to find is the LEADING track
+
+    int masterNumber = syncMaster->getTrackSyncMaster();
+    if (masterNumber > 0) {
+        LogicalTrack* master = trackManager->getLogicalTrack(masterNumber);
+        if (master != nullptr) {
+
+            // here we need to consule the TrackSyncUnit of the FOLLOWING track
+            // punt and assume Loop
+
+            TrackProperties props;
+            getLeaderProperties(master, props);
+            
+            if (!props.invalid) {
+                frames = props.frames;
+            }
+        }
+    }
+    return frames;
 }
 
 /****************************************************************************/

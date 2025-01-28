@@ -118,9 +118,17 @@ void SyncMaster::addListener(Listener* l)
 /**
  * Needed by BarTender, and eventually TimeSlicer if you move it under here.
  */
-class TrackManager* SyncMaster::getTrackManager()
+TrackManager* SyncMaster::getTrackManager()
 {
     return kernel->getTrackManager();
+}
+
+/**
+ * Needed by MidiAnalyzer so it can pull things from the Session
+ */
+SymbolTable* SyncMaster::getSymbols()
+{
+    return kernel->getContainer()->getSymbols();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -902,9 +910,7 @@ void SyncMaster::refreshState(SystemState* sysstate)
     state->transportMaster = transport->getMaster();
     state->trackSyncMaster = trackSyncMaster;
 
-    state->midiReceiving = midiAnalyzer->isReceiving();
-    state->midiStarted = midiAnalyzer->isRunning();
-    state->midiTempo = midiAnalyzer->getTempo();
+    midiAnalyzer->refreshState(state);
 
     state->hostStarted = hostAnalyzer->isRunning();
     state->hostTempo = hostAnalyzer->getTempo();
@@ -955,6 +961,7 @@ void SyncMaster::refreshState(SystemState* sysstate)
 void SyncMaster::refreshPriorityState(PriorityState* pstate)
 {
     transport->refreshPriorityState(pstate);
+    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1208,6 +1215,83 @@ void SyncMaster::checkDrifts()
             Trace(2, "SyncMaster: Host drift %d", drift);
         }
     }
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+// Auto Record
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the number of frames in one AutoRecord "unit".
+ * This is defined by the base(beat) unit length in the track's
+ * sync source combined with the autoRecordUnit and autoRecordUnits
+ * parameters.
+ *
+ * This takes the place of these older parameters:
+ *
+ *       autoRecordTempo
+ *       autoRecordBars
+ *
+ * It would be nice to simplify this by saying that when you have a SyncSource
+ * the SyncUnit you to synchronize the start of the recording will be the
+ * one used for AutoRecord.  For example if syncUnit=bar, then recording will
+ * wait for a host bar and if you want to AutoRecord, you will also want that
+ * in units of a host bar.
+ *
+ * They COULD however be independent, but I don't think many will want that.
+ * The possible exception is when sync=None.  In that case there syncUnit
+ * is usually undefined, but since this will fall back to the Transport tempo
+ * to calculate the unit length, we might as well also use whatever syncUnit
+ * happens to be for AutoRecord too.  The alternative would be a bunch of flexible
+ * but confusing new parameters.
+ *
+ */
+int SyncMaster::getAutoRecordUnitLength(int number)
+{
+    int frames = 0;
+    
+    LogicalTrack* track = trackManager->getLogicalTrack(number);
+    if (track != nullptr) {
+        
+        frames = barTender->getUnitLength(track);
+
+        // if the syncUnit is bar or loop then the beat unit length
+        // is multipled by whatever the beatsPerBar for that source is
+        SyncUnit unit = track->getSyncUnitNow();
+        if (unit == SyncUnitBar || unit == SyncUnitLoop) {
+            int barMultiplier = barTender->getBeatsPerBar(track);
+            frames *= barMultiplier;
+        }
+
+        // if the syncUnit is Loop, then one more multiple
+        if (unit == SyncUnitLoop) {
+            int loopMultiplier = barTender->getBarsPerLoop(track);
+            frames *= loopMultiplier;
+        }
+    }
+    return frames;
+}
+
+/**
+ * Return the number of units as returned by getAutoRecordUnitLength
+ * are to be included in an AutoRecord.
+ *
+ * This is defined by another parameter.  The two are normally multiplied
+ * to gether to get the total length with the recordUnits number becomming
+ * the number of cycles in the loop.
+ */
+int SyncMaster::getAutoRecordUnits(int number)
+{
+    // this one is not senstiive to the syncSource
+    (void)number;
+    
+    int autoRecordUnits = sessionHelper.getInt(ParamAutoRecordBars);
+    if (autoRecordUnits <= 0)
+      autoRecordUnits = 1;
+    return autoRecordUnits;
 }
 
 /****************************************************************************/

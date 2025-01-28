@@ -36,9 +36,19 @@ class SyncState
     bool midiReceiving = false;
     bool midiStarted = false;
     float midiTempo = 0.0f;
-
+    int midiBeat = 0;
+    int midiBar = 0;
+    int midiLoop = 0;
+    int midiBeatsPerBar = 4;
+    int midiBarsPerLoop = 1;
+    int midiUnitLength = 0;
+    int midiPlayHead = 0;
+    
     bool hostStarted = false;
     float hostTempo = 0.0f;
-    
+    // todo: could have the same time signature stuff
+    // as transport and midi but we can pull this from the session
+    // or SyncMaster at runtime too, unlike MIDI there is no
+    // HostSyncElement for the UI since they can already see the host transport
 };
 

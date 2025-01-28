@@ -880,6 +880,7 @@ void UIConfig::hackDefinitions()
     definitions.add(new UIElementDefinition("TempoElement"));
     definitions.add(new UIElementDefinition("LoopWindowElement"));
     definitions.add(new UIElementDefinition("Transport"));
+    definitions.add(new UIElementDefinition("MidiSync"));
 
 
     // these were from old code and not yet implemented

@@ -4,8 +4,16 @@
 #include "../util/Trace.h"
 #include "../midi/MidiByte.h"
 
+// so we can have a pseudo-loop for tracking progress
+// migth want to put that in a wrapper to keep this focused?
+#include "../model/Session.h"
+#include "../model/SessionHelper.h"
+#include "../model/SyncState.h"
+#include "../model/PriorityState.h"
+
 #include "MidiQueue.h"
 #include "MidiSyncEvent.h"
+#include "SyncMaster.h"
 #include "MidiAnalyzer.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -28,11 +36,55 @@ void MidiAnalyzer::initialize(SyncMaster* sm, MidiManager* mm)
     syncMaster = sm;
     midiManager = mm;
     mm->addRealtimeListener(this);
+
+    // so we can pull things from the Session
+    sessionHelper.setSymbols(sm->getSymbols());
 }
 
 void MidiAnalyzer::shutdown()
 {
     midiManager->removeRealtimeListener(this);
+}
+
+void MidiAnalyzer::loadSession(Session* s)
+{
+    sessionHelper.setSession(s);
+    beatsPerBar = sessionHelper.getInt(ParamMidiBeatsPerBar);
+    barsPerLoop = sessionHelper.getInt(ParamMidiBarsPerLoop);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// State
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiAnalyzer::refreshState(SyncState* state)
+{
+    state->midiReceiving = isReceiving();
+    state->midiStarted = isRunning();
+    state->midiTempo = getTempo();
+
+    state->midiBeat = inputQueue.beat;
+    // need a virtual loop to play like Transport
+    state->midiBar = 1; 
+    state->midiLoop = 1;
+    
+    // need to be capturing these from the session
+    state->midiBeatsPerBar = beatsPerBar;
+    state->midiBarsPerLoop = barsPerLoop;
+    state->midiUnitLength = unitLength;
+    state->midiPlayHead = unitPlayHead;
+}
+
+/**
+ * Capture the priority state from the transport.
+ */
+void MidiAnalyzer::refreshPriorityState(PriorityState* state)
+{
+    state->midiBeat = inputQueue.beat;
+    state->midiBar = 1;
+    state->midiLoop = 1;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -64,7 +116,8 @@ int MidiAnalyzer::getElapsedBeats()
 
 float MidiAnalyzer::getTempo()
 {
-    return tempoMonitor.getTempo();
+    //return tempoMonitor.getTempo();
+    return (float)(tempoMonitor.getSmoothTempo()) / 10.0f;
 }
 
 /**
@@ -212,6 +265,8 @@ void MidiAnalyzer::analyze(int blockFrames)
         mse = inputQueue.iterateNext();
     }
     inputQueue.flushEvents();
+
+    advance(blockFrames);
 }
 
 /**
@@ -229,22 +284,25 @@ void MidiAnalyzer::detectBeat(MidiSyncEvent* mse)
     bool detected = false;
     
     if (mse->isStop) {
-        result.stopped = true;
+        stopDetected();
     }
     else if (mse->isStart) {
         // MidiRealizer deferred this until the first clock
         // after the start message, so it is a true beat
         detected = true;
-        result.started = true;
+        startDetected();
     }
     else if (mse->isContinue) {
+        // note: There is no actual "continue" in MIDI
+        // there is 0xF2 "song position" followed by 0xFA Start
+        
         // !! this needs a shit ton of work
         // only pay attention to this if this is also a beat pulse
         // not sure if this will work, but I don't want to fuck with continue right now
         // treat it like a Start and ignore song position
         if (mse->isBeat) {
             detected = true;
-            result.started = true;
+            continueDetected(mse->songClock);
 
             // this is how older code adjusted the Pulse
             //pulse->mcontinue = true;
@@ -263,6 +321,89 @@ void MidiAnalyzer::detectBeat(MidiSyncEvent* mse)
     }
     
     result.beatDetected = detected;
+}
+
+void MidiAnalyzer::startDetected()
+{
+    Trace(2, "MidiAnalyzer: Start");
+    result.started = true;
+    drifter.orient(unitLength);
+
+    unitPlayHead = 0;
+    elapsedBeats = 0;
+    //lastBeatTime = 0;
+}
+
+void MidiAnalyzer::stopDetected()
+{
+    Trace(2, "MidiAnalyzer: Stop");
+    result.stopped = true;
+}
+
+void MidiAnalyzer::continueDetected(int songClock)
+{
+    Trace(2, "MidiAnalyzer: Continue %d", songClock);
+    result.started = true;
+}
+
+/**
+ * Advance the pseudo loop and keep track of beat bar boundaries
+ *
+ * This one is weirder than transport because we detect beats based on
+ * events actually received, so it's more like HostAnalyzer
+ */
+void MidiAnalyzer::advance(int frames)
+{
+    if (inputQueue.started && unitLength > 0) {
+
+        unitPlayHead = unitPlayHead + frames;
+        if (unitPlayHead >= unitLength) {
+
+            // a unit has transpired
+            int blockOffset = unitPlayHead - unitLength;
+            if (blockOffset > frames || blockOffset < 0)
+              Trace(1, "Transport: You suck at math");
+
+            // effectively a frame wrap too
+            unitPlayHead = blockOffset;
+
+            elapsedBeats++;
+            beat++;
+            
+            //result.beatDetected = true;
+            //result.blockOffset = blockOffset;
+
+            if (!result.beatDetected)
+              Trace(1, "MidiAnalyzer: Beat not detected where we thought");
+
+            if (beat >= beatsPerBar) {
+
+                beat = 0;
+                bar++;
+                result.barDetected = true;
+
+                if (bar >= barsPerLoop) {
+
+                    bar = 0;
+                    loop++;
+                    result.loopDetected = true;
+                }
+            }
+        }
+
+        // todo: also advance the drift monitor
+        //drifter.advanceStreamTime(frames);
+    }
+
+    if (result.loopDetected)
+      checkDrift();
+}
+
+void MidiAnalyzer::checkDrift()
+{
+    //int drift = drifter.getDrift();
+    //if (drift > 256)
+    //Trace(2, "Transport: Drift %d", drift);
 }
 
 /****************************************************************************/

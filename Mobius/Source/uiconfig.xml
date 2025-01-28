@@ -17,6 +17,7 @@
     <Element name="LoopWindowElement" x="452" y="343"/>
     <Element name="RC505 Undo/Redo" x="42" y="258" width="75" height="41"/>
     <Element name="Transport" x="41" y="320" width="289" height="51"/>
+    <Element name="MidiSync" x="939" y="312" width="300" height="50"/>
     <Strip name="Docked">
       <Element name="focusLock"/>
       <Element name="trackNumber"/>

@@ -14,6 +14,7 @@
 
 #include "UIElement.h"
 #include "TransportElement.h"
+#include "MidiSyncElement.h"
 #include "UIElementLight.h"
 #include "UIElementText.h"
 #include "UIElementFactory.h"
@@ -29,6 +30,9 @@ UIElement* UIElementFactory::create(Provider* p, UIElementDefinition* def)
     // for some the visualizers are implicit
     if (def->name == "Transport") {
         element = new TransportElement(p, def);
+    }
+    else if (def->name == "MidiSync") {
+        element = new MidiSyncElement(p, def);
     }
     else {
         // for others, the visualization is part of the definition

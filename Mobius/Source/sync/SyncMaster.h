@@ -27,6 +27,7 @@ class SyncMaster
     friend class Transport;
     friend class Pulsator;
     friend class BarTender;
+    friend class MidiAnalyzer;
     
   public:
 
@@ -99,6 +100,13 @@ class SyncMaster
     void notifyMidiStart(int id);
     void notifyMidiStop(int id);
 
+    //
+    // AutoRecord Support
+    //
+
+    int getAutoRecordUnitLength(int id);
+    int getAutoRecordUnits(int id);
+
     // used by Synchronizer for AutoRecord
     int getBarFrames(SyncSource src);
     
@@ -163,6 +171,8 @@ class SyncMaster
     }
 
     class TrackManager* getTrackManager();
+
+    class SymbolTable* getSymbols();
 
   private:
 

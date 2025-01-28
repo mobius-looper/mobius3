@@ -50,8 +50,14 @@ class BarTender
     int getBar(class LogicalTrack* t);
     int getLoop(int trackNumber);
     int getLoop(class LogicalTrack* t);
+    
     int getBeatsPerBar(int trackNumber);
+    int getBeatsPerBar(class LogicalTrack* t);
     int getBarsPerLoop(int trackNumber);
+    int getBarsPerLoop(class LogicalTrack* t);
+    
+    int getUnitLength(int trackNumber);
+    int getUnitLength(class LogicalTrack* track);
 
   private:
 
@@ -75,5 +81,9 @@ class BarTender
     int getMidiBarsPerLoop();
     
     SyncSource getSyncSource(int trackNumber);
-    void getLeaderProperties(int follower, class TrackProperties& props);
+    void getLeaderProperties(class LogicalTrack* track, class TrackProperties& props);
+
+    int getTrackSyncUnitLength(class LogicalTrack* track);
+
+    
 };

@@ -159,12 +159,12 @@ Session::Track* Session::getTrackByIndex(int index)
     return track;
 }
 
-Session::Track* Session::getTrackById(int id)
+Session::Track* Session::getTrackById(int otherid)
 {
     Track* track = nullptr;
     for (int i = 0 ; i < tracks.size() ; i++) {
         Track* t = tracks[i];
-        if (t->id == id) {
+        if (t->id == otherid) {
             track = t;
             break;
         }

@@ -155,6 +155,7 @@ void LogicalTrack::cacheSyncParameters()
 {
     syncSource = getSyncSourceFromSession();
     syncUnit = getSyncUnitFromSession();
+    trackSyncUnit = getTrackSyncUnitFromSession();
     syncLeader = sessionTrack->getInt("leaderTrack");
 }    
 
@@ -711,6 +712,11 @@ SyncSource LogicalTrack::getSyncSourceNow()
 SyncUnit LogicalTrack::getSyncUnitNow()
 {
     return syncUnit;
+}
+
+TrackSyncUnit LogicalTrack::getTrackSyncUnitNow()
+{
+    return trackSyncUnit;
 }
 
 int LogicalTrack::getSyncLeaderNow()

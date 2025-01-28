@@ -26,6 +26,10 @@ class PriorityState
     int transportBeat = 0;
     int transportBar = 0;
     int transportLoop = 0;
+
+    int midiBeat = 0;
+    int midiBar = 0;
+    int midiLoop = 0;
     
     // todo: other thigns that could go here
     // the focused track loopFrame, the focused track outputLevel
