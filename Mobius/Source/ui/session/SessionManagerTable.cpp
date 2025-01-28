@@ -32,29 +32,21 @@ SessionManagerTable::SessionManagerTable(Supervisor* s)
     emptyPopup.add("New...", DialogNew);
 
     nameDialog.setTitle("New Session");
+    nameDialog.setButtons("Ok,Cancel");
     nameDialog.addField(&newName);
-    nameDialog.addButton("Ok");
-    nameDialog.addButton("Cancel");
 
     deleteAlert.setTitle("Delete Session");
+    deleteAlert.setButtons("Delete,Cancel");
     deleteAlert.setSerious(true);
-    deleteAlert.setMessage("Are you sure you want to delete this session?");
-    deleteAlert.addButton("Delete");
-    deleteAlert.addButton("Cancel");
+    deleteAlert.addMessage("Are you sure you want to delete this session?");
     
     confirmDialog.setTitle("Confirm");
-    confirmDialog.setMessage("Are you sure you want to do that?");
-    confirmDialog.addButton("Ok");
-    confirmDialog.addButton("Cancel");
-    
-    invalidAlert.setTitle("Missing Name");
-    invalidAlert.setSerious(true);
-    invalidAlert.setMessage("A new name was not entered");
-    invalidAlert.addButton("Ok");
+    confirmDialog.setButtons("Ok,Cancel");
+    confirmDialog.addMessage("Are you sure you want to do that?");
     
     errorAlert.setTitle("Error Saving Session");
-    errorAlert.setSerious(true);
     errorAlert.addButton("Ok");
+    errorAlert.setSerious(true);
 
     // add ourselves as a MouseListener to pick up clicks outside the rows
     table.addMouseListener(this, false);
@@ -167,9 +159,10 @@ void SessionManagerTable::yanPopupSelected(YanPopup* src, int id)
 
 void SessionManagerTable::startLoad()
 {
-    if (isSessionModified()) {
+    if (producer->isSessionModified()) {
         confirmDialog.setTitle("Session Modified");
-        confirmDialog.setMessage("The current session has unsaved changes, continue loading new session?");
+        confirmDialog.addMessage("The current session has unsaved changes");
+        confirmDialog.addMessage("Continue loading new session?");
         confirmDialog.setId(DialogLoad);
         confirmDialog.show(getParentComponent());
     }
@@ -177,7 +170,7 @@ void SessionManagerTable::startLoad()
 
 void SessionManagerTable::startNew()
 {
-    nameDialog.setTitle("New Session");
+    nameDialog.setTitle("Create New Session");
     nameDialog.setId(DialogNew);
     newName.setValue("");
     nameDialog.show(getParentComponent());
@@ -232,6 +225,8 @@ void SessionManagerTable::finishLoad(int button)
     if (button == 0) {
         juce::String name = getSelectedName();
         if (name.length() > 0) {
+            Producer::Result result = producer->loadSession(name);
+            showResult(result);
             Trace(2, "SessionManagerTable: Session loaded");
         }
     }
@@ -241,14 +236,10 @@ void SessionManagerTable::finishNew(int button)
 {
     if (button == 0) {
         juce::String name = newName.getValue();
-        if (validateName(name)) {
-            Producer* p = supervisor->getProducer();
-            juce::String error = p->createSession(name);
-            if (checkErrors(error)) {
-                Trace(2, "SessionManagerTable: Session copied");
-                reload();
-            }
-        }
+        Producer::Result result = producer->newSession(name);
+        showResult(result);
+        Trace(2, "SessionManagerTable: Session copied");
+        reload();
     }
 }
 
@@ -256,14 +247,10 @@ void SessionManagerTable::finishCopy(int button)
 {
     if (button == 0) {
         juce::String name = newName.getValue();
-        if (validateName(name)) {
-            Producer* p = supervisor->getProducer();
-            juce::String error = p->copySession(getSelectedName(), name);
-            if (checkErrors(error)) {
-                Trace(2, "SessionManagerTable: Session copied");
-                reload();
-            }
-        }
+        Producer::Result result = producer->copySession(getSelectedName(), name);
+        showResult(result);
+        Trace(2, "SessionManagerTable: Session copied");
+        reload();
     }
 }
 
@@ -271,76 +258,34 @@ void SessionManagerTable::finishRename(int button)
 {
     if (button == 0) {
         juce::String name = newName.getValue();
-        if (validateName(name)) {
-            Producer* p = supervisor->getProducer();
-            juce::String error = p->renameSession(getSelectedName(), name);
-            if (checkErrors(error)) {
-                Trace(2, "SessionManagerTable: Session renamed");
-                reload();
-            }
-        }
+        Producer::Result result = producer->renameSession(getSelectedName(), name);
+        showResult(result);
+        Trace(2, "SessionManagerTable: Session renamed");
+        reload();
     }
 }
 
 void SessionManagerTable::finishDelete(int button)
 {
     if (button == 0) {
-        Producer* p = supervisor->getProducer();
-        juce::String error = p->deleteSession(getSelectedName());
-        if (checkErrors(error)) {
-            Trace(2, "SessionManagerTable: Session deleted");
-            reload();
-        }
+        Producer::Result result = producer->deleteSession(getSelectedName());
+        showResult(result);
+        Trace(2, "SessionManagerTable: Session deleted");
+        reload();
     }
 }
 
-bool SessionManagerTable::validateName(juce::String name)
+void SessionManagerTable::showResult(Producer::Result& result)
 {
-    bool valid = false;
-    
-    if (name.length() == 0) {
-        invalidAlert.setTitle("Missing Name");
-        invalidAlert.setMessage("A new name was not entered");
-        invalidAlert.show(getParentComponent());
-    }
-    else if (names.contains(name)) {
-        invalidAlert.setTitle("Duplicate Name");
-        invalidAlert.setMessage("The entered name is already in use");
-        invalidAlert.show(getParentComponent());
-    }
-    else if (hasInvalidCharacters(name)) {
-        invalidAlert.setTitle("Invalid Name");
-        invalidAlert.setMessage("The entered name contained illegal characters");
-        invalidAlert.show(getParentComponent());
-    }
-    else {
-        valid = true;
-    }
-    return valid;
-}
-
-bool SessionManagerTable::hasInvalidCharacters(juce::String name)
-{
-    return name.containsAnyOf("\\/$.");
-}
-
-bool SessionManagerTable::isSessionModified()
-{
-    return false;
-}
-
-bool SessionManagerTable::checkErrors(juce::String error)
-{
-    bool ok = true;
-    if (error.length() > 0) {
-        errorAlert.setMessage(error);
+    // obviously lots more we could do here
+    if (result.errors.size() > 0) {
+        errorAlert.clearMessages();
+        for (auto e : result.errors)
+          errorAlert.addMessage(e);
         errorAlert.show(getParentComponent());
-        ok = false;
     }
-    return ok;
 }
 
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
-

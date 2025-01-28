@@ -263,17 +263,25 @@ void SessionClerk::fixSession(Session* s)
 /**
  * Write a modified Session back to the library folder.
  */
-void SessionClerk::writeSession(Folder* f, Session* s)
+bool SessionClerk::writeSession(Folder* f, Session* s, juce::StringArray& errors)
 {
+    bool success = false;
+    
     if (f != nullptr && s != nullptr) {
         juce::File root (f->path);
-        juce::File dest = root.getChildFile("session.xml");
+        if (!root.isDirectory()) {
+            addError(errors, juce::String("Unable to access folder for session ") + f->name);
+        }
+        else {
+            juce::File dest = root.getChildFile("session.xml");
 
-        // this doesn't matter since we fix it on read,
-        // but make sure it matches to avoid confusion
-        s->setName(f->name);
+            // this doesn't matter since we fix it on read,
+            // but make sure it matches to avoid confusion
+            s->setName(f->name);
         
-        dest.replaceWithText(s->toXml());
+            if (!dest.replaceWithText(s->toXml()))
+              addError(errors, juce::String("Failure writing session.xml file for ") + f->name);
+        }
     }
 }
 
@@ -325,19 +333,22 @@ Session* SessionClerk::readSession(juce::String name)
     return session;
 }
 
-void SessionClerk::saveSession(Session* s)
+bool SessionClerk::saveSession(Session* s, juce::StringArray& errors)
 {
+    bool success = false;
+    
     juce::String name = s->getName();
     Folder* f = findFolder(name);
     if (f == nullptr) {
         // what would this mean?
-        Trace(1, "SessionClerk: Unable to save session %s", name.toUTF8());
-        Trace(1, "SessionClerk: No session with that name found");
+        addError(errors, juce::String("Unable to save session ") + name);
+        addError(errors, juce::String("No session with that name found"));
     }
     else {
-        writeSession(f, s);
+        success = writeSession(f, s, errors);
         s->setModified(false);
     }
+    return success;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -426,7 +437,8 @@ void SessionClerk::migrateSetups(bool bootstrapped)
                     // default SessionTracks will have been stubbed out
                     Trace(1, "SessionClerk: No default Setup found during migration");
                 }
-                writeSession(f, dest);
+                juce::StringArray errors;
+                (void)writeSession(f, dest, errors);
                 delete dest;
             }
         }
@@ -460,7 +472,8 @@ void SessionClerk::migrateSetups(bool bootstrapped)
                 // after getting the track counts right, then migrate the tracks
                 transformer.merge(setup, neu);
 
-                createSession(neu);
+                juce::StringArray errors;
+                (void)createSession(neu, errors);
                 delete neu;
             }
             else {
@@ -476,7 +489,8 @@ void SessionClerk::migrateSetups(bool bootstrapped)
                     }
                     else {
                         transformer.merge(setup, dest);
-                        writeSession(f, dest);
+                        juce::StringArray errors;
+                        (void)writeSession(f, dest, errors);
                         delete dest;
                     }
                 }
@@ -485,45 +499,91 @@ void SessionClerk::migrateSetups(bool bootstrapped)
     }
 }
 
-/**
- * Given a Session fresly created from an old Setup, save it
- * in the library.
- */
-void SessionClerk::createSession(Session* neu)
+//////////////////////////////////////////////////////////////////////
+//
+// Producer and SessionManager
+//
+//////////////////////////////////////////////////////////////////////
+
+void SessionClerk::createSession(Session* neu, juce::StringArray& errors)
 {
-    juce::String name = neu->getName();
+    juce::String name = neu->name;
+    if (name.length() == 0) {
+        addError(errors, "Missing session name");
+    }
+    else {
+        // this can't fail
+        juce::String xml = neu->toXml();
+        // returns nullptr if it failed and left errors
+        Folder* f = createFolder(name, errors);
+        if (f != nullptr) {
+            juce::File dir (f->path);
+            if (!dir.isDirectory()) {
+                // shouldn't be here if createFolder said it succeeded
+                addError(errors, "Unable to access session library folder");
+            }
+            else {
+                juce::File dest = dir.getChildFile("session.xml");
+                if (!dest.replaceWithText(xml))
+                    addError(errors, "Session file write failed");
+            }
+
+            if (errors.size() >= 0)
+              delete f;
+        }
+    }
+}
+
+Session::Folder* SessionClerk::createFolder(juce::String name, juce::StringArray& errors)
+{
+    Folder* result = nullptr;
     
     if (!libraryValid) {
-        Trace(1, "SessionClerk: Can't create session, invalid library");
-    }
-    else if (name.length() == 0) {
-        Trace(1, "SessionClerk: Can't create session without name");
+        addError(errors, "Library folder is invalid");
     }
     else {
         Folder* f = findFolder(name);
         if (f != nullptr) {
-            // not expecting this here
-            Trace(1, "SessionClerk: Session already exists %s", name.toUTF8());
+            addError(errors, juce::String("Session already exists: ") + name);
         }
         else {
             juce::File dir = libraryRoot.getChildFile(name);
             juce::Result res = dir.createDirectory();
             if (res.failed()) {
-                Trace(1, "SessionClerk: Unable to create session library folder");
-                Trace(1, "  %s", res.getErrorMessage().toUTF8());
+                errors.add("Unable to create session folder");
+                errors.add(res.getErrorMessage());
             }
             else {
-                juce::File dest = dir.getChildFile("session.xml");
-                dest.replaceWithText(neu->toXml());
-
-                f = new Folder();
-                f->name = name;
-                f->path = dir.getFullPathName();
-                f->valid = true;
-                folders.add(f);
+                result = new Folder();
+                result->name = name;
+                result->path = dir.getFullPathName();
+                result->valid = true;
             }
         }
     }
+    return result;
+}
+
+void SessionClerk::addError(juce::StringArray& errors, juce::String msg)
+{
+    errors.add(msg);
+    juce::String tracemsg = juce::String("SessionClerk: ") + msg;
+    Trace(1, "%s", tracemsg.toUTF8());
+}
+
+bool SessionClerk::renameSession(juce::String name, juce::String newName, juce::StringArray& errors)
+{
+    bool success = true;
+    Folder* f = findFolder(name);
+    if (f == nullptr) {
+        addError(errors, juce::String("Unknown session ") + name);
+    }
+    else {
+        // it doesn't really matter what the name is in the .xml file, it
+        // will be fixed to match the directory when read
+        success = false;
+    }
+    return (errors.size() == 0);
 }
 
 /****************************************************************************/

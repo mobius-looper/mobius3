@@ -24,28 +24,42 @@ class Producer
 {
   public:
 
-    Producer(class Provider* p);
+    class Result {
+      public:
+        juce::StringArray errors;
+    };
+
+    Producer(class Supervisor* s);
     ~Producer();
 
     void initialize();
 
+    // Supervisor Interface
+
     class Session* readStartupSession();
-    Session* readSession(int ordinal);
     void saveSession(class Session* s);
     Session* changeSession(juce::String name);
 
-    void getSessionNames(juce::StringArray& names);
+    // Manu Handlers
+    void getRecentSessions(juce::StringArray& names);
+    Session* readSession(int ordinal);
 
-    juce::String createSession(juce::String name);
-    juce::String copySession(juce::String src, juce::String dest);
-    juce::String renameSession(juce::String src, juce::String newName);
-    juce::String deleteSession(juce::String src);
+    // SessionManager Interface
+    void getSessionNames(juce::StringArray& names);
+    bool isSessionModified();
+    Result loadSession(juce::String name);
+    Result newSession(juce::String name);
+    Result copySession(juce::String name, juce::String destName);
+    Result renameSession(juce::String name, juce::String newName);
+    Result deleteSession(juce::String name);
 
   private:
 
-    class Provider* provider = nullptr;
+    class Supervisor* supervisor = nullptr;
 
     std::unique_ptr<class SessionClerk> clerk;
+
+    bool hasInvalidCharacters(juce::String name);
     
 };
 

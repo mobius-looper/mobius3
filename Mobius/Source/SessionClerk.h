@@ -41,7 +41,7 @@ class SessionClerk
     void saveSession(Session* s);
 
     juce::OwnedArray<Folder>* getFolders();
-
+    
   private:
 
     class Provider* provider = nullptr;
@@ -59,7 +59,10 @@ class SessionClerk
     void writeSession(Folder* f, Session* s);
 
     void migrateSetups(bool bootstrapped);
-    void createSession(class Session* neu);
+
+    bool createSession(Session* neu, juce::StringArray& errors);
+    
+    Folder* createFolder(juce::String name, juce::StringArray& errors);
 
     void fixSession(class Session* s);
 };

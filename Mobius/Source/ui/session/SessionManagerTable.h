@@ -10,6 +10,8 @@
 #include "../common/YanPopup.h"
 #include "../common/YanDialog.h"
 
+#include "../../Producer.h"
+
 class SessionManagerTableRow
 {
   public:
@@ -56,6 +58,8 @@ class SessionManagerTable : public TypicalTable, public YanPopup::Listener,
   private:
     
     class Supervisor* supervisor = nullptr;
+    class Producer* producer = nullptr;
+    
     juce::OwnedArray<class SessionManagerTableRow> sessions;
     juce::StringArray names;
     
@@ -65,8 +69,6 @@ class SessionManagerTable : public TypicalTable, public YanPopup::Listener,
     YanDialog nameDialog {this};
     YanDialog deleteAlert {this};
     YanDialog confirmDialog {this};
-    
-    YanDialog invalidAlert {this};
     YanDialog errorAlert {this};
     
     YanInput newName {"New Name"};
@@ -86,9 +88,6 @@ class SessionManagerTable : public TypicalTable, public YanPopup::Listener,
     void finishRename(int button);
     void finishDelete(int button);
     
-    bool validateName(juce::String name);
-    bool hasInvalidCharacters(juce::String name);
-    bool isSessionModified();
-    bool checkErrors(juce::String error);
+    void showResult(Producer::Result& result);
 };
     

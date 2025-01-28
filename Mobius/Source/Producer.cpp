@@ -86,10 +86,25 @@ Session* Producer::readSession(int ordinal)
     return session;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// SessionManager Interface
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * Special interface for MainMenu/MainWindow
  * Return the list of "recent" sessions.  The index of the items in this
  * list will be passed to changeSession(ordinal)
+ */
+void Producer::getRecentSessions(juce::StringArray& names)
+{
+    getSessionNames(names);
+}
+
+/**
+ * Interface for SessionManager.
+ * Return the list of ALL sessions.
  */
 void Producer::getSessionNames(juce::StringArray& names)
 {
@@ -98,44 +113,53 @@ void Producer::getSessionNames(juce::StringArray& names)
       names.add(folder->name);
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// SessionManager Interface
-//
-//////////////////////////////////////////////////////////////////////
+/**
+ * In theory this should look into the current session and return true
+ * if it has unsaved changes.
+ *
+ * In practice, that's really hard to do.  Just about any menu item
+ * or action sent to the engine would technically modify the session.
+ */
+bool Producer::isSessionModified()
+{
+    return false;
+}
 
-juce::String Producer::createSession(juce::String name)
+Producer::Result Producer::loadSession(juce::String name)
 {
     (void)name;
-    juce::String error;
-    
-    return error;
+    return Producer::Result();
 }
 
-juce::String Producer::copySession(juce::String src, juce::String dest)
+Producer::Result Producer::newSession(juce::String name)
 {
-    (void)src;
-    (void)dest;
-    juce::String error;
-    
-    return error;
+    (void)name;
+    return Producer::Result();
 }
 
-juce::String Producer::renameSession(juce::String src, juce::String newName)
+Producer::Result Producer::copySession(juce::String name, juce::String newName)
+{
+    (void)name;
+    (void)newName;
+    return Producer::Result();
+}
+
+Producer::Result Producer::renameSession(juce::String name, juce::String newName)
 {
     (void)src;
     (void)newName;
-    juce::String error;
-
-    return error;
+    return Producer::Result();
 }
 
-juce::String Producer::deleteSession(juce::String src)
+Producer::Result Producer::deleteSession(juce::String name)
 {
-    (void)src;
-    juce::String error;
+    (void)name;
+    return Producer::Result();
+}
 
-    return error;
+bool SessionManagerTable::hasInvalidCharacters(juce::String name)
+{
+    return name.containsAnyOf("\\/$.");
 }
 
 /****************************************************************************/

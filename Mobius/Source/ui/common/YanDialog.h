@@ -26,20 +26,19 @@ class YanDialog : public juce::Component, public juce::Button::Listener
   public:
 
     static const int DefaultWidth = 300;
-    static const int DefaultHeight = 200;
-
+    static const int DefaultHeight = 500;
     static const int BorderWidth = 2;
     static const int TitleInset = 6;
     static const int TitleHeight = 20;
     static const int TitleMessageGap = 10;
-    static const int MessageHeight = 20;
-    static const int MessageFontHeight = 14;
+    static const int MessageFontHeight = 12;
+    static const int MinMessageRows = 3;
     static const int ContentInset = 8;
 
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void yanDialogClosed(YanDialog* d, int button) = 0;
+        virtual void yanDialogClosed(YanDialog* d, int buttonIndex) = 0;
     };
 
     YanDialog();
@@ -52,9 +51,12 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     void setListener(Listener* l);
     void setSerious(bool b);
     void setTitle(juce::String s);
+    void clearMessages();
+    void addMessage(juce::String s);
     void setMessage(juce::String s);
-    void setMessageHeight(int h);
+    void clearButtons();
     void addButton(juce::String text);
+    void setButtons(juce::String csv);
     void addField(class YanField* f);
     void setContent(juce::Component* c);
 
@@ -73,8 +75,7 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     bool serious = false;
     juce::Colour borderColor;
     juce::String title;
-    juce::String message;
-    int messageHeight = 0;
+    juce::StringArray messages;
     
     // built-in form you can add fields to
     YanForm form;
@@ -83,15 +84,14 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     juce::Component* content = nullptr;
     
     // dynamic button list
+    juce::StringArray buttonNames;
     juce::OwnedArray<juce::TextButton> buttons;
     BasicButtonRow buttonRow;
-
-    juce::TextButton okButton {"Ok"};
-    juce::TextButton cancelButton {"Cancel"};
     
     void init();
     //void layoutButtons(juce::Rectangle<int> area);
     int getMessageHeight();
+    int getDefaultHeight();
 };
 
 
