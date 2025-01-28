@@ -17,6 +17,7 @@
 SessionManagerTable::SessionManagerTable(Supervisor* s)
 {
     supervisor = s;
+    producer = s->getProducer();
     setName("SessionManagerTable");
 
     initialize();

@@ -26,7 +26,7 @@ class YanDialog : public juce::Component, public juce::Button::Listener
   public:
 
     static const int DefaultWidth = 300;
-    static const int DefaultHeight = 500;
+    static const int DefaultHeight = 300;
     static const int BorderWidth = 2;
     static const int TitleInset = 6;
     static const int TitleHeight = 20;

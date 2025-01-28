@@ -151,7 +151,7 @@ void YanDialog::show(juce::Component* parent)
     int height = getHeight();
     if (width == 0 || height == 0) {
         int newWidth = (width == 0) ? DefaultWidth : width;
-        int newHeight = (height == 0) ? DefaultHeight : height;
+        int newHeight = (height == 0) ? getDefaultHeight() : height;
         setSize(newWidth, newHeight);
     }
     show();
@@ -161,6 +161,10 @@ int YanDialog::getDefaultHeight()
 {
     int height = BorderWidth + 4 + 20 + TitleInset + TitleHeight + TitleMessageGap;
     height += getMessageHeight();
+
+    if (DefaultHeight > height)
+      height = DefaultHeight;
+    
     return height;
 }
 
@@ -172,11 +176,7 @@ int YanDialog::getDefaultHeight()
  */
 int YanDialog::getMessageHeight()
 {
-    int rows = MinMessageRows;
-    if (messages.size() > 0) {
-        rows = messages.size();
-    }
-    return rows * MessageFontHeight;
+    return (messages.size() * MessageFontHeight);
 }
 
 void YanDialog::resized()
@@ -242,7 +242,6 @@ void YanDialog::paint(juce::Graphics& g)
 
         g.setColour(juce::Colours::white);
         g.setFont(JuceUtil::getFont(MessageFontHeight));
-        // ugh, messy
         int top = messageArea.getX();
         for (auto msg : messages) {
             g.drawFittedText(msg, top, messageArea.getY(),
