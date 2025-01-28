@@ -188,7 +188,7 @@
       <Value name="trackSyncUnit" value="loop"/>
     </ValueSet>
   </Track>
-  <Track id="10" type="audio">
+  <Track id="10" type="audio" name="something">
     <ValueSet>
       <Value name="focus" value="false" type="bool"/>
     </ValueSet>

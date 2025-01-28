@@ -36,7 +36,7 @@
 
   
   <Form name='sessionAudioTrackGeneral' title='General Parameters'
-        symbols='trackGroup,trackPreset,focus'/>
+        symbols='trackName,trackGroup,trackPreset,focus'/>
     
   <Form name='sessionAudioSync' title='Synchronization Parameters'
         symbols='syncSource,syncUnit,trackSyncUnit'/>
@@ -51,7 +51,7 @@
         symbols='syncSource,syncUnit,trackSyncUnit'/>
 
   <Form name='sessionMidiTrackGeneral' title='General Parameters'
-        symbols='midiInput,midiOutput,midiChannelOverride,midiThru,*spacer*,trackGroup,loopCount,quantize,subcycles'/>
+        symbols='trackName,trackGroup,midiInput,midiOutput,midiChannelOverride,midiThru,*spacer*,loopCount,quantize,subcycles'/>
 
   <Form name='sessionMidiTrackSync' title='Synchronization Parameters'
         symbols='syncSource,syncUnit,trackSyncUnit,midiBeatsPerBar'/>

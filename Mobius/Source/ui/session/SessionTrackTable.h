@@ -48,7 +48,7 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
     juce::String getCellText(int rowNumber, int columnId) override;
     void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
-    void yanPopupSelected(int id);
+    void yanPopupSelected(class YanPopup* src, int id);
     void yanDialogClosed(class YanDialog* d, int button);
 
     // trying to listener for clicks in the table

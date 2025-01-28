@@ -13,7 +13,7 @@ class YanPopup
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void yanPopupSelected(int id) = 0;
+        virtual void yanPopupSelected(YanPopup* pop, int id) = 0;
     };
 
     YanPopup();

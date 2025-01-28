@@ -64,6 +64,29 @@ Session* Producer::changeSession(juce::String name)
 }
 
 /**
+ * Handler for MainMenu/MainWindow, request a session load with an ordinal
+ * that is an index into the array of names returned by getSessionNames.
+ *
+ * When we had Setups the MainMenu changed them by submitting a UIAction
+ * using the activeSetup Symbol.  Sessions don't have a symbol yet, and I don't
+ * think I want that to be the interface for changing them.
+ */
+Session* Producer::readSession(int ordinal)
+{
+    Session* session = nullptr;
+    
+    juce::OwnedArray<SessionClerk::Folder>* folders = clerk->getFolders();
+    if (ordinal >= 0 && ordinal < folders->size()) {
+        SessionClerk::Folder *f = (*folders)[ordinal];
+        session = clerk->readSession(f->name);
+    }
+    else {
+        Trace(1, "Producer: Session ordinal out of range %d", ordinal);
+    }
+    return session;
+}
+
+/**
  * Special interface for MainMenu/MainWindow
  * Return the list of "recent" sessions.  The index of the items in this
  * list will be passed to changeSession(ordinal)
@@ -75,17 +98,44 @@ void Producer::getSessionNames(juce::StringArray& names)
       names.add(folder->name);
 }
 
-/**
- * Handler for MainMenu/MainWindow, request a session load with an ordinal
- * that is an index into the array of names returned by getSessionNames.
- *
- * When we had Setups the MainMenu changed them by submitting a UIAction
- * using the activeSetup Symbol.  Sessions don't have a symbol yet, and I don't
- * think I want that to be the interface for changing them.
- */
-void Producer::changeSession(int ordinal)
+//////////////////////////////////////////////////////////////////////
+//
+// SessionManager Interface
+//
+//////////////////////////////////////////////////////////////////////
+
+juce::String Producer::createSession(juce::String name)
 {
-    Trace(1, "Producer: Change session by ordinal not implemented %d", ordinal);
+    (void)name;
+    juce::String error;
+    
+    return error;
+}
+
+juce::String Producer::copySession(juce::String src, juce::String dest)
+{
+    (void)src;
+    (void)dest;
+    juce::String error;
+    
+    return error;
+}
+
+juce::String Producer::renameSession(juce::String src, juce::String newName)
+{
+    (void)src;
+    (void)newName;
+    juce::String error;
+
+    return error;
+}
+
+juce::String Producer::deleteSession(juce::String src)
+{
+    (void)src;
+    juce::String error;
+
+    return error;
 }
 
 /****************************************************************************/

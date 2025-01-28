@@ -257,7 +257,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void menuQuickSave();
     void menuActivateBindings(BindingSet* set);
     void menuLoadMidi(bool analyze);
-    void menuLoadSession(juce::String name);
+    void menuLoadSession(int ordinal);
     
     // MobiusContainer
     int getSampleRate() override;
@@ -502,6 +502,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     class Session* initializeSession();
     void configureSystemState(class Session* s);
+    void loadSession(class Session* neu);
 
     void sendInitialMobiusConfig();
     void sendModifiedMobiusConfig();

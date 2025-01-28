@@ -536,6 +536,9 @@ Once those models are fully converted, these symbols can be removed.
     
     <!-- these are the ones from SetupTrack that we still use -->
 
+    <!-- The name is not actually stored in the ValueSet, it will be a top-level
+         property of the Session::Track object.  But it can be trreated as if
+         it were a normal parameter.  -->
     <Parameter name='trackName' codeName='Name' type='string' options='noBinding'/>
 
     <Parameter name='trackPreset'

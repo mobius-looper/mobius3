@@ -193,8 +193,11 @@ void SessionTrackTable::mouseDown(const juce::MouseEvent& event)
 //
 //////////////////////////////////////////////////////////////////////
 
-void SessionTrackTable::yanPopupSelected(int id)
+void SessionTrackTable::yanPopupSelected(YanPopup* src, int id)
 {
+    // the first one is Add in both cases
+    (void)src;
+    
     switch (id) {
         case 1: startAdd(); break;
         case 2: startDelete(); break;

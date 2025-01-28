@@ -46,6 +46,9 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     YanDialog(Listener* l);
     ~YanDialog();
 
+    void setId(int id);
+    int getId();
+
     void setListener(Listener* l);
     void setSerious(bool b);
     void setTitle(juce::String s);
@@ -65,7 +68,8 @@ class YanDialog : public juce::Component, public juce::Button::Listener
   private:
 
     Listener* listener = nullptr;
-
+    int id = 0;
+    
     bool serious = false;
     juce::Colour borderColor;
     juce::String title;

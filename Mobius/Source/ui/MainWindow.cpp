@@ -178,8 +178,9 @@ void MainWindow::mainMenuSelection(int id)
         // sigh, this assumes that the Folder list won't change since the time the
         // menu was built till now, which is relatively safe, but it would be nicer
         // if we could get the session name here
-        Producer* producer = supervisor->getProducer();
-        producer->changeSession(ordinal);
+        // not sure why I felt it necessary to send an action to Supervisor to change
+        // things, but we can just call it
+        supervisor->menuLoadSession(ordinal);
     }
     else if (id >= MainMenu::MenuLayoutOffset && id <= MainMenu::MenuLayoutMax) {
         int layoutOrdinal = id - MainMenu::MenuLayoutOffset;

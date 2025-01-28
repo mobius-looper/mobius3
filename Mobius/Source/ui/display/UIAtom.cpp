@@ -596,7 +596,10 @@ void UIAtomText::setBackColor(juce::Colour c)
 
 void UIAtomText::setOn(bool b)
 {
-    on = b;
+    if (b != on) {
+        on = b;
+        repaint();
+    }
 }
 
 void UIAtomText::setFlash(bool b)

@@ -71,7 +71,7 @@ void YanPopup::popupSelection(int result)
 {
     //Trace(2, "Popup menu selected %d\n", result);
     if (listener != nullptr)
-      listener->yanPopupSelected(result);
+      listener->yanPopupSelected(this, result);
 }
 
 /****************************************************************************/

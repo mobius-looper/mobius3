@@ -53,6 +53,7 @@ class MidiSyncElement : public UIElement, public Provider::HighRefreshListener
     int lastLoop = 0;
     int lastBpb = 0;
     int lastBars = 0;
+    bool lastStarted = false;
     
     void sizeAtom(juce::Rectangle<int> area, juce::Component* comp);
     void updateRadar(class MobiusView* v);

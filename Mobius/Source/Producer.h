@@ -30,12 +30,16 @@ class Producer
     void initialize();
 
     class Session* readStartupSession();
+    Session* readSession(int ordinal);
     void saveSession(class Session* s);
     Session* changeSession(juce::String name);
 
     void getSessionNames(juce::StringArray& names);
 
-    void changeSession(int ordinal);
+    juce::String createSession(juce::String name);
+    juce::String copySession(juce::String src, juce::String dest);
+    juce::String renameSession(juce::String src, juce::String newName);
+    juce::String deleteSession(juce::String src);
 
   private:
 

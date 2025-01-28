@@ -31,6 +31,16 @@ YanDialog::~YanDialog()
 {
 }
 
+void YanDialog::setId(int i)
+{
+    id = i;
+}
+
+int YanDialog::getId()
+{
+    return id;
+}
+
 void YanDialog::setListener(Listener* l)
 {
     listener = l;

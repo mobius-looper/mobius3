@@ -3,6 +3,7 @@
 
 #include "../../util/Trace.h"
 #include "../../model/Session.h"
+#include "../../model/SessionConstants.h"
 #include "../../Provider.h"
 #include "../JuceUtil.h"
 
@@ -335,6 +336,12 @@ void SessionTrackEditor::loadForms(int row)
     }
     else {
         ValueSet* values = trackdef->ensureParameters();
+
+        // demote the Session::Track::name into the ValueSet so it
+        // can be dealt with through the ParamTrackName parameter like
+        // any of the others
+        values->setJString(SessionTrackName, trackdef->name);
+        
         if (trackdef->type == Session::TypeMidi) {
             midiForms.load(values);
             audioForms.setVisible(false);
@@ -360,6 +367,18 @@ void SessionTrackEditor::saveForms(int row)
           midiForms.save(values);
         else
           audioForms.save(values);
+
+        // upgrade the track name from the value map back to the track object
+        MslValue* v = values->get(SessionTrackName);
+        if (v != nullptr) {
+            juce::String newName = juce::String(v->getString());
+            if (newName != trackdef->name) {
+                trackdef->name = newName;
+                // refresh the table to have the new name
+                tracks->reload();
+            }
+            values->remove(SessionTrackName);
+        }
     }
 }
 

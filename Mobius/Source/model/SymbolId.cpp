@@ -108,7 +108,6 @@ const char* ParamNameSpeedSyncAdjust = "speedSyncAdjust";
 const char* ParamNameRealignTime = "realignTime";
 const char* ParamNameActiveTrack = "activeTrack";
     
-const char* ParamNameTrackName =  "trackName";
 const char* ParamNameTrackPreset = "trackPreset";
 const char* ParamNameActivePreset = "activePreset";
 const char* ParamNameFocus = "focus";
@@ -192,7 +191,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {"followCut", ParamFollowCut},
     {"followQuantizeLocation", ParamFollowQuantizeLocation},
 
-    {ParamNameTrackName, ParamTrackName},
+    {SessionTrackName, ParamTrackName},
     {ParamNameTrackPreset, ParamTrackPreset},
     {ParamNameFocus, ParamFocus},
     {ParamNameMono, ParamMono},

@@ -32,3 +32,7 @@ static const char* SessionMidiBeatsPerBar = "midiBeatsPerBar";
 static const char* SessionMidiBarsPerLoop = "midiBarsPerLoop";
 
 static const char* SessionLongPress = "longPress";
+
+// this one is used by SessionEditor to move the Session::Track.name in and out
+// of the parameter ValueSet
+static const char* SessionTrackName = "trackName";

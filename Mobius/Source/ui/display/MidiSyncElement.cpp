@@ -47,6 +47,7 @@ MidiSyncElement::MidiSyncElement(Provider* p, UIElementDefinition* d) :
 
     // tempo.setFlash(true);
     tempoAtom.setDigits(3, 1);
+    tempoAtom.setOnColor(juce::Colours::green);
     topRow.add(&tempoAtom);
 
     bpb.setLabel("Beats/Bar");
@@ -164,6 +165,11 @@ void MidiSyncElement::update(MobiusView* v)
         lastBars = newBars;
     }
 
+    bool newStarted = v->syncState.midiStarted;
+    if (newStarted != lastStarted) {
+        tempoAtom.setOn(newStarted);
+        lastStarted = newStarted;
+    }
 }
 
 /**

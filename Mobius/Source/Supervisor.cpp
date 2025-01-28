@@ -1532,6 +1532,37 @@ Session* Supervisor::initializeSession()
 }
 
 /**
+ * This does half of what initializeSession does except it also propagates
+ * it.  Try to share this
+ */
+void Supervisor::loadSession(Session* neu)
+{
+    // every time we read a session it gets a new id which triggers
+    // a complete track refresh in TrackManager
+    // necessary because Session::Track ids are only unique within
+    // the session they are in
+    neu->setId(++sessionId);
+
+    // this is now accessible to the reset of the system
+    session.reset(neu);
+
+    // make the SystemState match the session
+    configureSystemState(neu);
+
+    // bump the session version to trigger a full refresh
+    neu->setVersion(++sessionVersion);
+
+    // tell the view to prepare for track changes
+    mobiusViewer.configure(&mobiusView);
+
+    // propagate config changes to other components
+    propagateConfiguration();
+
+    // send it down to the engine
+    sendModifiedMobiusConfig();
+}
+
+/**
  * This is what everything else uses to get to the Session
  * after it has been initialized.
  */
@@ -2344,6 +2375,20 @@ bool Supervisor::doQuery(Query* query)
 // Menu Handlers
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * Load a session.  For MainMenu/MainWindow it's far more convenient to deal
+ * with these by ordinal.  Don't like it.
+ */
+void Supervisor::menuLoadSession(int ordinal)
+{
+    // this will read the session by ordinal, and save it as the startup session
+    // that feels wonky, we should do that up here if we want to actually make
+    // it the startup session
+    Session* neu = producer->readSession(ordinal);
+    if (neu != nullptr)
+      loadSession(neu);
+}
 
 /**
  * Reload the samples.
