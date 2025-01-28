@@ -5,15 +5,15 @@
 #include "model/Session.h"
 #include "model/SystemConfig.h"
 
-#include "Provider.h"
+#include "Supervisor.h"
 #include "SessionClerk.h"
 
 #include "Producer.h"
 
-Producer::Producer(Provider* p)
+Producer::Producer(Supervisor* s)
 {
-    provider = p;
-    clerk.reset(new SessionClerk(p));
+    supervisor = s;
+    clerk.reset(new SessionClerk(s));
 }
 
 Producer::~Producer()
@@ -29,7 +29,7 @@ Session* Producer::readStartupSession()
 {
     Session* session = nullptr;
     
-    SystemConfig* sys = provider->getSystemConfig();
+    SystemConfig* sys = supervisor->getSystemConfig();
     juce::String name = sys->getStartupSession();
 
     if (name.length() > 0) {
@@ -46,7 +46,9 @@ Session* Producer::readStartupSession()
 
 void Producer::saveSession(Session* s)
 {
-    clerk->saveSession(s);
+    juce::StringArray errors;
+    clerk->saveSession(s, errors);
+    // what to do with errors?
 }
 
 /**
@@ -56,9 +58,9 @@ Session* Producer::changeSession(juce::String name)
 {
     Session* session = clerk->readSession(name);
     if (session != nullptr) {
-        SystemConfig* sys = provider->getSystemConfig();
+        SystemConfig* sys = supervisor->getSystemConfig();
         sys->setStartupSession(name);
-        provider->updateSystemConfig();
+        supervisor->updateSystemConfig();
     }
     return session;
 }
@@ -128,36 +130,46 @@ bool Producer::isSessionModified()
 Producer::Result Producer::loadSession(juce::String name)
 {
     (void)name;
-    return Producer::Result();
+    Producer::Result result;
+    result.errors.add("loadSession not implemented");
+    return result;
 }
 
 Producer::Result Producer::newSession(juce::String name)
 {
     (void)name;
-    return Producer::Result();
+    Producer::Result result;
+    result.errors.add("newSession not implemented");
+    return result;
 }
 
 Producer::Result Producer::copySession(juce::String name, juce::String newName)
 {
     (void)name;
     (void)newName;
-    return Producer::Result();
+    Producer::Result result;
+    result.errors.add("copySession not implemented");
+    return result;
 }
 
 Producer::Result Producer::renameSession(juce::String name, juce::String newName)
 {
-    (void)src;
+    (void)name;
     (void)newName;
-    return Producer::Result();
+    Producer::Result result;
+    result.errors.add("renameSession not implemented");
+    return result;
 }
 
 Producer::Result Producer::deleteSession(juce::String name)
 {
     (void)name;
-    return Producer::Result();
+    Producer::Result result;
+    result.errors.add("deleteSession not implemented");
+    return result;
 }
 
-bool SessionManagerTable::hasInvalidCharacters(juce::String name)
+bool Producer::hasInvalidCharacters(juce::String name)
 {
     return name.containsAnyOf("\\/$.");
 }

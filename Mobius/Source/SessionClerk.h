@@ -38,7 +38,7 @@ class SessionClerk
 
     class Session* readDefaultSession();
     Session* readSession(juce::String name);
-    void saveSession(Session* s);
+    void saveSession(Session* s, juce::StringArray& errors);
 
     juce::OwnedArray<Folder>* getFolders();
     
@@ -56,13 +56,15 @@ class SessionClerk
     void logErrors(const char* filename, juce::StringArray& errors);
     
     Session* readSession(Folder* f);
-    void writeSession(Folder* f, Session* s);
+    void writeSession(Folder* f, Session* s, juce::StringArray& errors);
 
     void migrateSetups(bool bootstrapped);
 
-    bool createSession(Session* neu, juce::StringArray& errors);
+    void createSession(Session* neu, juce::StringArray& errors);
     
     Folder* createFolder(juce::String name, juce::StringArray& errors);
 
     void fixSession(class Session* s);
+    void renameSession(juce::String name, juce::String newName, juce::StringArray& errors);
+    void addError(juce::StringArray& errors, juce::String msg);
 };

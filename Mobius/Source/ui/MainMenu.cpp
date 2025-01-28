@@ -170,7 +170,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         Producer* producer = provider->getProducer();
         juce::String currentSessionName = provider->getSession()->getName();
         juce::StringArray sessions;
-        producer->getSessionNames(sessions);
+        producer->getRecentSessions(sessions);
         
         int index = 0;
         for (auto name : sessions) {

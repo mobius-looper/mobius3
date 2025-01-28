@@ -85,7 +85,7 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     
     // dynamic button list
     juce::StringArray buttonNames;
-    juce::OwnedArray<juce::TextButton> buttons;
+    juce::OwnedArray<juce::Button> buttons;
     BasicButtonRow buttonRow;
     
     void init();

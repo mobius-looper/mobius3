@@ -50,7 +50,6 @@ SessionTrackTable::SessionTrackTable()
 
     bulkDialog.setTitle("Bulk Add/Remove Tracks");
     bulkDialog.setMessage("Enter the total number of tracks of each type you wish to have.");
-    bulkDialog.setMessageHeight(40);
     bulkDialog.addField(&audioCount);
     bulkDialog.addField(&midiCount);
     bulkDialog.addButton("Modify");
@@ -58,7 +57,6 @@ SessionTrackTable::SessionTrackTable()
     
     bulkConfirm.setTitle("Are you sure?");
     bulkConfirm.setSerious(true);
-    bulkConfirm.setMessageHeight(100);
     bulkConfirm.addButton("Modify");
     bulkConfirm.addButton("Cancel");
 
@@ -256,24 +254,20 @@ void SessionTrackTable::startBulkConfirm(int button)
             finishBulk(0);
         }
         else {
-            juce::String msg("You are deleting the highest ");
             if (newAudio < audioTracks) {
+                juce::String msg = juce::String("Deleting highest ");
                 msg += juce::String(audioTracks - newAudio);
                 msg += juce::String(" audio tracks");
+                bulkConfirm.addMessage(msg);
             }
             if (newMidi < midiTracks) {
-                if (newAudio < audioTracks)
-                  msg += " and ";
+                juce::String msg = juce::String("Deleting highest ");
                 msg += juce::String(midiTracks - newMidi);
-                msg += juce::String(" midi tracks.");
+                msg += juce::String(" MIDI tracks");
+                bulkConfirm.addMessage(msg);
             }
-            else {
-                msg += ".";
-            }
-
-            msg += "\nYou will lose all configuration and content for those tracks.\nThis cannot be undone.";
-            
-            bulkConfirm.setMessage(msg);
+            bulkConfirm.addMessage("You will lose all configuration and content for those tracks");
+            bulkConfirm.addMessage("This cannot be undone");
             bulkConfirm.show(getParentComponent());
         }
     }

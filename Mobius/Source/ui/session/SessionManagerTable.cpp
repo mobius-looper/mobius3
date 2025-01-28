@@ -66,9 +66,7 @@ void SessionManagerTable::reload()
     sessions.clear();
     names.clear();
     
-    Producer* producer = supervisor->getProducer();
     producer->getSessionNames(names);
-
     for (auto name : names) {
         SessionManagerTableRow* row = new SessionManagerTableRow();
         row->name = name;

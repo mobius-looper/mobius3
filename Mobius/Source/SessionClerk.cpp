@@ -263,10 +263,8 @@ void SessionClerk::fixSession(Session* s)
 /**
  * Write a modified Session back to the library folder.
  */
-bool SessionClerk::writeSession(Folder* f, Session* s, juce::StringArray& errors)
+void SessionClerk::writeSession(Folder* f, Session* s, juce::StringArray& errors)
 {
-    bool success = false;
-    
     if (f != nullptr && s != nullptr) {
         juce::File root (f->path);
         if (!root.isDirectory()) {
@@ -333,10 +331,8 @@ Session* SessionClerk::readSession(juce::String name)
     return session;
 }
 
-bool SessionClerk::saveSession(Session* s, juce::StringArray& errors)
+void SessionClerk::saveSession(Session* s, juce::StringArray& errors)
 {
-    bool success = false;
-    
     juce::String name = s->getName();
     Folder* f = findFolder(name);
     if (f == nullptr) {
@@ -345,10 +341,9 @@ bool SessionClerk::saveSession(Session* s, juce::StringArray& errors)
         addError(errors, juce::String("No session with that name found"));
     }
     else {
-        success = writeSession(f, s, errors);
+        writeSession(f, s, errors);
         s->setModified(false);
     }
-    return success;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -507,7 +502,7 @@ void SessionClerk::migrateSetups(bool bootstrapped)
 
 void SessionClerk::createSession(Session* neu, juce::StringArray& errors)
 {
-    juce::String name = neu->name;
+    juce::String name = neu->getName();
     if (name.length() == 0) {
         addError(errors, "Missing session name");
     }
@@ -534,7 +529,7 @@ void SessionClerk::createSession(Session* neu, juce::StringArray& errors)
     }
 }
 
-Session::Folder* SessionClerk::createFolder(juce::String name, juce::StringArray& errors)
+SessionClerk::Folder* SessionClerk::createFolder(juce::String name, juce::StringArray& errors)
 {
     Folder* result = nullptr;
     
@@ -571,9 +566,8 @@ void SessionClerk::addError(juce::StringArray& errors, juce::String msg)
     Trace(1, "%s", tracemsg.toUTF8());
 }
 
-bool SessionClerk::renameSession(juce::String name, juce::String newName, juce::StringArray& errors)
+void SessionClerk::renameSession(juce::String name, juce::String newName, juce::StringArray& errors)
 {
-    bool success = true;
     Folder* f = findFolder(name);
     if (f == nullptr) {
         addError(errors, juce::String("Unknown session ") + name);
@@ -581,9 +575,7 @@ bool SessionClerk::renameSession(juce::String name, juce::String newName, juce::
     else {
         // it doesn't really matter what the name is in the .xml file, it
         // will be fixed to match the directory when read
-        success = false;
     }
-    return (errors.size() == 0);
 }
 
 /****************************************************************************/

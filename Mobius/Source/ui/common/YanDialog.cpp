@@ -58,7 +58,7 @@ void YanDialog::clearMessages()
     messages.clear();
 }
 
-void YanDialog::addMesssage(juce::String s)
+void YanDialog::addMessage(juce::String s)
 {
     messages.add(s);
 }
@@ -67,11 +67,6 @@ void YanDialog::setMessage(juce::String s)
 {
     messages.clear();
     messages.add(s);
-}
-
-void YanDialog::setMessageRows(int r)
-{
-    messageRows = r;
 }
 
 void YanDialog::setContent(juce::Component* c)
@@ -101,7 +96,7 @@ void YanDialog::clearButtons()
 {
     buttonNames.clear();
     while (buttons.size() > 0) {
-        juce::TextButton* b = buttons.removeAndReturn(0);
+        juce::Button* b = buttons.removeAndReturn(0);
         buttonRow.remove(b);
         delete b;
     }
@@ -126,7 +121,7 @@ void YanDialog::setButtons(juce::String csv)
 
 void YanDialog::show()
 {
-    if (getParentComonent() == nullptr) {
+    if (getParentComponent() == nullptr) {
         Trace(1, "YanDialog: Parent component not set");
     }
     else if (buttonNames.size() == 0) {
@@ -178,8 +173,8 @@ int YanDialog::getDefaultHeight()
 int YanDialog::getMessageHeight()
 {
     int rows = MinMessageRows;
-    if (messageRows.size() > 0) {
-        rows = messageRows.size();
+    if (messages.size() > 0) {
+        rows = messages.size();
     }
     return rows * MessageFontHeight;
 }
@@ -243,25 +238,26 @@ void YanDialog::paint(juce::Graphics& g)
 
         // temporary background to test layout
         g.setColour(juce::Colours::darkgrey);
-        g.fillRect(messagesArea);
+        g.fillRect(messageArea);
 
         g.setColour(juce::Colours::white);
         g.setFont(JuceUtil::getFont(MessageFontHeight));
         // ugh, messy
         int top = messageArea.getX();
         for (auto msg : messages) {
-            g.drawFittedText(message, top, messageArea.getY(),
+            g.drawFittedText(msg, top, messageArea.getY(),
                              messageArea.getWidth(), MessageFontHeight,
                              juce::Justification::centred,
                              1, // max lines
                              1.0f);
+            top += MessageFontHeight;
         }
     }
 }
 
 void YanDialog::buttonClicked(juce::Button* b)
 {
-    int ordinal = buttonNames.indexOf(b->getText());
+    int ordinal = buttons.indexOf(b);
     if (listener != nullptr)
       listener->yanDialogClosed(this, ordinal);
 
