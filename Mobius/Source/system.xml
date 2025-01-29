@@ -2,6 +2,6 @@
 
 <SystemConfig>
   <ValueSet>
-    <Value name="startupSession" value="asdf"/>
+    <Value name="startupSession" value="Default"/>
   </ValueSet>
 </SystemConfig>

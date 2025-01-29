@@ -23,6 +23,7 @@ SessionManagerTable::SessionManagerTable(Supervisor* s)
     initialize();
 
     addColumn("Name", ColumnName, 200);
+    addColumn("Status", ColumnStatus, 50);
     
     rowPopup.add("Load...", DialogLoad);
     rowPopup.add("Copy...", DialogCopy);
@@ -69,6 +70,7 @@ void SessionManagerTable::reload()
     sessions.clear();
     names.clear();
     
+    activeSession = producer->getActiveSessionName();
     producer->getSessionNames(names);
     for (auto name : names) {
         SessionManagerTableRow* row = new SessionManagerTableRow();
@@ -77,7 +79,6 @@ void SessionManagerTable::reload()
     }
     
     updateContent();
-    repaint();
 }
 
 // this doesn't make sense right?
@@ -107,6 +108,10 @@ juce::String SessionManagerTable::getCellText(int rowNumber, int columnId)
 
     if (columnId == ColumnName) {
         cell = row->name;
+    }
+    else if (columnId == ColumnStatus) {
+        if (row->name == activeSession)
+          cell = "Active";
     }
 
     return cell;
@@ -230,6 +235,7 @@ void SessionManagerTable::finishLoad(int button)
         juce::String name = getSelectedName();
         Producer::Result result = producer->loadSession(name);
         showResult(result);
+        reload();
     }
 }
 

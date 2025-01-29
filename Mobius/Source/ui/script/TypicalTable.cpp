@@ -231,8 +231,8 @@ void TypicalTable::paintRowBackground(juce::Graphics& g, int rowNumber,
 void TypicalTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
                              int width, int height, bool rowIsSelected)
 {
-    (void)columnId;
     //TypicalTableRow* row = symbols[rowNumber];
+    //Trace(2, "TypicalTable: Painting row %d cell column %d", rowNumber, columnId);
 
     // what the tutorial did
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));

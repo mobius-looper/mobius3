@@ -224,7 +224,7 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
 		break;
 		case MS_CLOCK: {
             inputQueue.add(status, now);
-            tempoMonitor.clock(now);
+            tempoMonitor.clock(now, msg.getTimeStamp());
 		}
 		break;
 		case MS_START: {

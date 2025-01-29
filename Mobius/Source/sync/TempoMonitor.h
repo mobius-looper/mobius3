@@ -32,7 +32,7 @@ class TempoMonitor {
 	~TempoMonitor();
 
 	void reset();
-	void clock(long msec);
+	void clock(long msec, double juceTime);
 
 	float getPulseWidth();
 	float getTempo();
@@ -41,6 +41,7 @@ class TempoMonitor {
   private:
 
 	void initSamples();
+    int timeTraceCount = 0;
 
 	long mSamples[MIDI_TEMPO_SAMPLES];
 	long mLastTime;

@@ -113,6 +113,12 @@ void Producer::getRecentSessions(juce::StringArray& names)
     getSessionNames(names);
 }
 
+juce::String Producer::getActiveSessionName()
+{
+    Session* s = supervisor->getSession();
+    return s->getName();
+}
+
 /**
  * Interface for SessionManager.
  * Return the list of ALL sessions.

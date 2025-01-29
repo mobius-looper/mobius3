@@ -88,8 +88,22 @@ int TempoMonitor::getSmoothTempo()
 #define MAX_CLOCK_DELTA 500
 #define MIN_CLOCK_DELTA 5
 
-void TempoMonitor::clock(long msec)
+void TempoMonitor::clock(long msec, double juceTime)
 {
+    // trace time lag for awhile
+    // juceTime is the timestamp from the MidiMessage which when coming
+    // from a MidiInput the docs say:
+    // "a value equivalent to (Time::getMillisecondCounter() / 1000.0)"
+    if (timeTraceCount < 50) {
+        juce::uint32 umsec = juce::Time::getMillisecondCounter();
+        double dmsec = juce::Time::getMillisecondCounterHiRes();
+
+        char buf[128];
+        sprintf(buf, "%u %f %f", umsec, dmsec, juceTime);
+        Trace(2, buf);
+        timeTraceCount++;
+    }
+    
 	if (mLastTime == 0) {
 		// first one, wait for another
         Trace(3, "TempoMonitor: Clocks start at msec %ld\n", msec);

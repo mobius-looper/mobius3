@@ -45,6 +45,7 @@ class Producer
     Session* readSession(int ordinal);
 
     // SessionManager Interface
+    juce::String getActiveSessionName();
     void getSessionNames(juce::StringArray& names);
     bool isSessionModified();
     Result loadSession(juce::String name);

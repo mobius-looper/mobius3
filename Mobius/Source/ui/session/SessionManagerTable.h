@@ -30,7 +30,8 @@ class SessionManagerTable : public TypicalTable, public YanPopup::Listener,
   public:
 
     const int ColumnName = 1;
-
+    const int ColumnStatus = 2;
+    
     typedef enum {
         DialogLoad = 1,
         DialogCopy,
@@ -62,6 +63,7 @@ class SessionManagerTable : public TypicalTable, public YanPopup::Listener,
     
     juce::OwnedArray<class SessionManagerTableRow> sessions;
     juce::StringArray names;
+    juce::String activeSession;
     
     YanPopup rowPopup {this};
     YanPopup emptyPopup {this};
