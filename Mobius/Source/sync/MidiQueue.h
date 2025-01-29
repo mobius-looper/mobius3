@@ -51,6 +51,11 @@ class MidiQueue
     void setSongPosition(int songpos);
 
     /**
+     * True if we've received a Start.
+     */
+    bool isStarted();
+
+    /**
      * Accumulate a realtime message: Start/Stop/Continue/Clock.
      */
     void add(int status, int millisecond);

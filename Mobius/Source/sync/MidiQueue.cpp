@@ -108,6 +108,11 @@ void MidiQueue::setEnableEvents(bool b)
     enableEvents = b;
 }
 
+bool MidiQueue::isStarted()
+{
+    return started;
+}
+
 /**
  * Expected to be called at regular intervals with the current system time
  * so we can detect sudden clock stoppages, such as turning off or

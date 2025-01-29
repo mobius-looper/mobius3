@@ -40,7 +40,12 @@ TrackManager::TrackManager(MobiusKernel* k) : mslHandler(k, this)
 {
     kernel = k;
     actionPool = k->getActionPool();
-    watcher.initialize(&(pools.midiPool));
+    watcher.initialize(&(midiPools.midiPool));
+
+    // this isn't owned by MidiPools, but it's convenient to bundle
+    // it up with the others
+    // why?  we don't have TrackEventPool in there
+    //midiPools.actionPool = actionPool;
 }
 
 TrackManager::~TrackManager()
@@ -59,9 +64,6 @@ void TrackManager::initialize(Session* ses, MobiusConfig* config, Mobius* core)
     configuration = config;
     audioEngine = core;
 
-    // this isn't owned by MidiPools, but it's convenient to bundle
-    // it up with the others
-    pools.actionPool = kernel->getActionPool();
     scopes.refresh(config);
 
     // start with this here, but should move to Kernel once
@@ -224,7 +226,10 @@ void TrackManager::configureTracks(Session* ses)
     
     while (oldTracks.size() > 0) {
         LogicalTrack* lt = oldTracks.removeAndReturn(0);
-        Trace(2, "TrackManager: Removing unused track");
+        const char* tracktype = "Audio";
+        if (lt->getType() == Session::TypeMidi)
+          tracktype = "Midi";
+        Trace(2, "TrackManager: Removing unused %s track", tracktype);
         delete lt;
     }
 }
@@ -253,9 +258,25 @@ void TrackManager::configureMobiusTracks()
 //
 //////////////////////////////////////////////////////////////////////
 
-MidiPools* TrackManager::getPools()
+int TrackManager::getTrackCount()
 {
-    return &pools;
+    return tracks.size();
+}
+
+MidiPools* TrackManager::getMidiPools()
+{
+    return &midiPools;
+}
+
+// keep this outside MidiPools, it is unrelated?
+TrackEventPool* TrackManager::getTrackEventPool()
+{
+    return &trackEventPool;
+}
+
+UIActionPool* TrackManager::getActionPool()
+{
+    return actionPool;
 }
 
 MobiusConfig* TrackManager::getConfigurationForGroups()
@@ -381,7 +402,7 @@ void TrackManager::midiEvent(MidiEvent* e)
     for (auto track : tracks)
       track->midiEvent(e);
     
-    pools.checkin(e);
+    midiPools.checkin(e);
 }
 
 /**
@@ -389,7 +410,7 @@ void TrackManager::midiEvent(MidiEvent* e)
  */
 void TrackManager::midiEvent(juce::MidiMessage& msg, int deviceId)
 {
-    MidiEvent* e = pools.newEvent();
+    MidiEvent* e = midiPools.newEvent();
     e->juceMessage = msg;
     e->device = deviceId;
     midiEvent(e);
@@ -1243,7 +1264,7 @@ void TrackManager::loadLoop(MidiSequence* seq, int track, int loop)
     MidiTrack* mt = lt->getMidiTrack();
     if (mt == nullptr) {
         Trace(1, "TrackManager::loadLoop Invalid track number %d", track);
-        pools.reclaim(seq);
+        midiPools.reclaim(seq);
     }
     else {
         mt->loadLoop(seq, loop);

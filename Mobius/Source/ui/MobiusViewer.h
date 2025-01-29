@@ -31,7 +31,7 @@ class MobiusViewer
     class Provider* provider = nullptr;
     Query subcyclesQuery;
 
-    void grow(class Session* session, MobiusView* view);
+    void grow(MobiusView* view, int required);
     void resetRefreshTriggers(class MobiusView* view);
 
     void refreshAllTracks(class SystemState* state, class MobiusView* view);

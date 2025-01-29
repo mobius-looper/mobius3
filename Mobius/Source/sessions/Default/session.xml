@@ -65,7 +65,7 @@
   <Track id="3" type="audio" name="a1">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
-      <Value name="audioInputPort" value="3" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
       <Value name="focus" value="false" type="bool"/>
@@ -190,7 +190,11 @@
   </Track>
   <Track id="10" type="audio" name="something">
     <ValueSet>
+      <Value name="audioInputPort" value="-1" type="int"/>
+      <Value name="audioOutputPort" value="-1" type="int"/>
       <Value name="focus" value="false" type="bool"/>
+      <Value name="pluginInputPort" value="-1" type="int"/>
+      <Value name="pluginOutputPort" value="-1" type="int"/>
     </ValueSet>
   </Track>
   <ValueSet>

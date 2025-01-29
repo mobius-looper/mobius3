@@ -108,7 +108,7 @@ void LooperSwitcher::scheduleSwitch(UIAction* src)
         }
         else {
             // the switch is quantized or pending confirmation
-            TrackEvent* event = scheduler.eventPool.newEvent();
+            TrackEvent* event = scheduler.eventPool->newEvent();
             event->type = TrackEvent::EventSwitch;
             event->switchTarget = getSwitchTarget(src);
 
@@ -402,7 +402,7 @@ void LooperSwitcher::doSwitchEvent(TrackEvent* e, int target)
                 case SWITCH_ONCE: {
                     // the new loop is supposed to play once and enter Mute
                     // synthesize a Mute action and "quantize" it to the end of the loop
-                    TrackEvent* event = scheduler.eventPool.newEvent();
+                    TrackEvent* event = scheduler.eventPool->newEvent();
                     event->type = TrackEvent::EventAction;
                     UIAction* action = scheduler.actionPool->newAction();
                     action->symbol = scheduler.symbols->getSymbol(FuncMute); 
@@ -417,7 +417,7 @@ void LooperSwitcher::doSwitchEvent(TrackEvent* e, int target)
                     // the new loop is supposed to play once and return to the previous one
                     // this is also referred to as a Return event, though it's just a Switch
                     // event with a special flag
-                    TrackEvent* event = scheduler.eventPool.newEvent();
+                    TrackEvent* event = scheduler.eventPool->newEvent();
                     event->type = TrackEvent::EventSwitch;
                     event->isReturn = true;
                     event->switchTarget = startingLoop;

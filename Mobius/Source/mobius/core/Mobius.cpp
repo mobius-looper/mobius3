@@ -511,16 +511,29 @@ void Mobius::configureTracks(juce::Array<MobiusLooperTrack*>& trackdefs)
       tracksChanged = true;
     else {
         for (int i = 0 ; i < mTrackCount ; i++) {
+            Track* native = mTracks[i];
             MobiusLooperTrack* mlt = trackdefs[i];
-            if (mTracks[i] != mlt->getCoreTrack()) {
+            if (native != mlt->getCoreTrack()) {
                 tracksChanged = true;
                 break;
+            }
+            // make sure the numbers track, can this happen without
+            // the previous test catching it?
+            if (!tracksChanged && 
+                native->getLogicalNumber() != mlt->getNumber()) {
+                // tracks may have changed logical number but still
+                // have the same count and position, happens if for example
+                // you delete MIDI tracks that were in front of audio tracks
+                //Trace(2, "Mobius: Adjusting logical track number from %d to %d",
+                //native->getLogicalNumber(), mlt->getNumber());
+                native->setLogicalNumber(mlt->getNumber());
             }
         }
     }
 
-    if (!tracksChanged)
-      Trace(2, "Mobius::configureTracks No tracks changed");
+    if (!tracksChanged) {
+        Trace(2, "Mobius::configureTracks No tracks changed");
+    }
     else {
         Trace(2, "Mobius::configureTracks Reconfiguring tracks");
             

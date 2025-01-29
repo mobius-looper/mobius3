@@ -1008,8 +1008,23 @@ void MidiManager::handleIncomingMidiMessage (juce::MidiInput* source,
 {
     // had to get this into an intermediate to avoid a "nonstandard extension" warning
     // passing source->getName() directly as a reference arg
+    // !! there shouldn't be a need to pass the name around, tag them with an id
+    // or something for internal use
     juce::String sourceName = source->getName();
-    postListenerMessage(message, sourceName);
+
+    // handle realtime messages in this thread so they can be timestamp analyzed and
+    // queued without delay
+    const juce::uint8* raw = message.getRawData();
+    const juce::uint8 status = *raw;
+
+    if (status > 0xF0) {
+        for (auto listener : realtimeListeners) {
+            listener->midiRealtime(message, sourceName);
+        }
+    }
+    else {
+        postListenerMessage(message, sourceName);
+    }
 
     // unclear whether sending MIDI is considered dangerous to do in the receiver thread,
     // let's try
@@ -1143,9 +1158,7 @@ void MidiManager::notifyListeners(const juce::MidiMessage& message, juce::String
     const juce::uint8 status = *raw;
 
     if (status > 0xF0) {
-        for (auto listener : realtimeListeners) {
-            listener->midiRealtime(message, source);
-        }
+        // should have caught this above
     }
     else {
         bool processIt = true;

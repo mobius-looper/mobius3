@@ -946,7 +946,7 @@ void LooperScheduler::scheduleNormalAction(UIAction* src)
  */
 void LooperScheduler::scheduleRounding(UIAction* src, TrackState::Mode mode)
 {
-    TrackEvent* event = eventPool.newEvent();
+    TrackEvent* event = eventPool->newEvent();
     event->type = TrackEvent::EventRound;
 
     bool roundRelative = false;
@@ -1025,7 +1025,7 @@ void LooperScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
             Trace(2, "LooperScheduler: Quantized %s to leader", src->symbol->getName());
         }
         else {
-            e = eventPool.newEvent();
+            e = eventPool->newEvent();
             e->type = TrackEvent::EventAction;
             e->frame = getQuantizedFrame(src->symbol->id, q);
             e->primary = copyAction(src);
@@ -1230,7 +1230,7 @@ TrackEvent* LooperScheduler::scheduleRecordEnd()
  */
 TrackEvent* LooperScheduler::addRecordEvent()
 {
-    TrackEvent* e = eventPool.newEvent();
+    TrackEvent* e = eventPool->newEvent();
     e->type = TrackEvent::EventRecord;
     e->pending = true;
     e->pulsed = true;
@@ -1344,7 +1344,7 @@ void LooperScheduler::addExtensionEvent(int frame)
     if (event != nullptr)
       Trace(1, "LooperScheduler: Insert extension event already scheduled");
     else {
-        event = eventPool.newEvent();
+        event = eventPool->newEvent();
         event->type = TrackEvent::EventRound;
         event->frame = frame;
         event->extension = true;

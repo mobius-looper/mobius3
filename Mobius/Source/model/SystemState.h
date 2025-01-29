@@ -35,7 +35,7 @@ class SystemState
     int sessionVersion = 0;
 
     // full state for each track
-    juce::OwnedArray<TrackState> tracks
+    juce::OwnedArray<TrackState> tracks;
 
     // number of tracks used, this may be smaller than the array size
     int totalTracks = 0;

@@ -130,7 +130,7 @@ void MobiusLooperTrack::refreshState(TrackState* state)
     track->refreshState(state);
     int expected = logicalTrack->getNumber();
     if (expected != state->number) {
-        Trace(1, "MobiusLooperTrac: Shit");
+        Trace(1, "MobiusLooperTrack: Shit");
         state->number = expected;
     }
 }

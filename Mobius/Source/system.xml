@@ -1,13 +1,7 @@
-<!--
-    Random configuration settings that apply to the entire installation
-    and exist outside of any one Session.
-
-    This is behaviorally similar to DeviceConfig and devices.xml and could
-    consider merging them.  
--->
+<?xml version="1.0" encoding="UTF-8"?>
 
 <SystemConfig>
   <ValueSet>
-    <Value name="startupSession" value="Default"/>
+    <Value name="startupSession" value="asdf"/>
   </ValueSet>
 </SystemConfig>

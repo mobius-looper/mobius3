@@ -144,6 +144,10 @@ Producer::Result Producer::loadSession(juce::String name)
 
     if (neu != nullptr) {
         supervisor->loadSession(neu);
+
+        SystemConfig* sys = supervisor->getSystemConfig();
+        sys->setStartupSession(name);
+        supervisor->updateSystemConfig();
     }
 
     return result;

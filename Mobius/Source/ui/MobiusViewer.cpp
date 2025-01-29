@@ -146,16 +146,16 @@ void MobiusViewer::grow(MobiusView* view, int required)
  * One important thing is that it needs to move the focused track
  * if the track count was reduced.
  */
-void MobiusViewer::configure(Sesion* session, MobiusView* view)
+void MobiusViewer::configure(Session* session, MobiusView* view)
 {
     grow(view, session->getTrackCount());
-
+    
     if (view->focusedTrack >= view->totalTracks) {
         // go to the highest or the first?
         view->focusedTrack = view->totalTracks - 1;
         view->track = view->tracks[view->focusedTrack];
     }
-
+    
     // this now because the only version of SystemState we accept
     // during refresh, if you get one that doesn't match this it means
     // there was a stale state in the queue and should be ignored
@@ -185,7 +185,9 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
     // if not, here we are
     if (view->tracks.size() < sysstate->totalTracks)
       Trace(1, "MobiusViewer: SystemState came back with more tracks than expected");
-    grow(sysstate->totalTracks, view);
+
+    // this doesn't just grow, it sets totalTracks in the view
+    grow(view, sysstate->totalTracks);
     
     // sanity check on focus
     if (view->focusedTrack >= 0 && view->focusedTrack < view->totalTracks) 

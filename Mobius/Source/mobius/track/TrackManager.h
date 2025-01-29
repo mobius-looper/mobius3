@@ -21,6 +21,7 @@
 #include "TrackListener.h"
 #include "TrackMslHandler.h"
 #include "LongWatcher.h"
+#include "TrackEvent.h"
 #include "../midi/MidiWatcher.h"
 #include "../midi/MidiPools.h"
 
@@ -59,7 +60,9 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     // Services
 
     class Session* getSession();
-    class MidiPools* getPools();
+    class MidiPools* getMidiPools();
+    class TrackEventPool* getTrackEventPool();
+    class UIActionPool* getActionPool();
     class SyncMaster* getSyncMaster();
     class SymbolTable* getSymbols();
     void getTrackProperties(int number, TrackProperties& props);
@@ -69,8 +72,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     void alert(const char* msg);
     void writeDump(juce::String file, juce::String content);
-    int getMidiTrackCount();
-    int getAudioTrackCount();
+    int getTrackCount();
     int getFocusedTrackIndex();
 
     juce::OwnedArray<LogicalTrack>& getTracks() {
@@ -143,8 +145,9 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     class MobiusConfig* configuration = nullptr;
     
     // need a place to hang this, here or in Kernel?
-    MidiPools pools;
-
+    MidiPools midiPools;
+    TrackEventPool trackEventPool;
+    
     LongWatcher longWatcher;
     bool longDisable = false;
     MidiWatcher watcher;

@@ -50,16 +50,16 @@
 BaseScheduler::BaseScheduler(TrackManager*tm, LogicalTrack* lt, ScheduledTrack* st)
 {
     manager = tm;
+    eventPool = tm->getTrackEventPool();
+    actionPool = tm->getActionPool();
     // this is now accessible through ScheduledTrack, don't need to pass it in
     logicalTrack = lt;
     scheduledTrack = st;
     
-    MidiPools* pools = tm->getPools();
-    actionPool = pools->actionPool;
     syncMaster = tm->getSyncMaster();
     symbols = tm->getSymbols();
-    
-    events.initialize(&eventPool);
+
+    events.initialize(eventPool);
 }
 
 BaseScheduler::~BaseScheduler()
@@ -320,7 +320,7 @@ TrackEvent* BaseScheduler::scheduleLeaderQuantization(int leader, QuantizeMode q
     (void)leaderFrame;
     
     // add a pending local event
-    TrackEvent* event = eventPool.newEvent();
+    TrackEvent* event = eventPool->newEvent();
     event->type = type;
     event->pending = true;
     event->correlationId = correlationId;
@@ -923,7 +923,7 @@ void BaseScheduler::dispose(TrackEvent* e)
     }
     
     e->stacked = nullptr;
-    eventPool.checkin(e);
+    eventPool->checkin(e);
 }
 
 /**

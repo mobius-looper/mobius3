@@ -76,7 +76,7 @@ MidiTrack::MidiTrack(class TrackManager* tm, LogicalTrack* lt) :
 {
     // temporary, should be used only by LooperScheduler
     syncMaster = tm->getSyncMaster();
-    pools = tm->getPools();
+    pools = tm->getMidiPools();
 
     recorder.initialize(pools);
     player.initialize(pools);

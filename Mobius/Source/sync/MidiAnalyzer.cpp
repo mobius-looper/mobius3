@@ -223,7 +223,7 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
 		}
 		break;
 		case MS_CLOCK: {
-			inputQueue.add(status, now);
+            inputQueue.add(status, now);
             tempoMonitor.clock(now);
 		}
 		break;
@@ -261,7 +261,8 @@ void MidiAnalyzer::analyze(int blockFrames)
     inputQueue.iterateStart();
     MidiSyncEvent* mse = inputQueue.iterateNext();
     while (mse != nullptr) {
-        detectBeat(mse);
+        if (inputQueue.isStarted())
+          detectBeat(mse);
         mse = inputQueue.iterateNext();
     }
     inputQueue.flushEvents();

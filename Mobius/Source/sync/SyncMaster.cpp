@@ -925,7 +925,7 @@ void SyncMaster::refreshState(SystemState* sysstate)
         totalTracks = maxStates;
     }
     
-    for (int i = 0 ; i < maxStates ; i++) {
+    for (int i = 0 ; i < totalTracks ; i++) {
         TrackState* tstate = sysstate->tracks[i];
         int trackNumber = i+1;
 

@@ -1483,6 +1483,7 @@ Session* Supervisor::initializeSession()
     // doing a gradual migration toward Session from MobiusConfig
     // this must be done after symbols are initialized
     Session* neu = producer->readStartupSession();
+    Trace(2, "Supervisor: Loading startup session %s", neu->getName().toUTF8());
 
     // every time we read a session it gets a new id which triggers
     // a complete track refresh in TrackManager
@@ -1514,6 +1515,8 @@ Session* Supervisor::initializeSession()
  */
 void Supervisor::loadSession(Session* neu)
 {
+    Trace(2, "Supervisor: Loading session %s", neu->getName().toUTF8());
+    
     // every time we read a session it gets a new id which triggers
     // a complete track refresh in TrackManager
     // necessary because Session::Track ids are only unique within

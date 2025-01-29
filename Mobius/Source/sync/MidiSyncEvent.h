@@ -4,13 +4,6 @@
  *
  * Note that there is no isClock flag.  Insignificant clock messages
  * are represented by an event with all flags off.
- *
- * This is part of the model shared between the UI and the engine.
- * They will be created by MidiQueue and held until the next audio interrupt
- * then are exepected to be consumed.
- *
- * The engine gets the next message by calling MobiusMidiTransport::nextInputEvent
- * and nextOutputEvent which is implemented by MidiRealizer.
  */
 
 #pragma once

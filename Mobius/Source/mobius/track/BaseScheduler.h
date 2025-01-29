@@ -53,7 +53,7 @@ class BaseScheduler
     // Event list access for tracks
     // might be okay to expose the TrackEventList?
     TrackEvent* newEvent() {
-        return eventPool.newEvent();
+        return eventPool->newEvent();
     }
 
     bool isScheduled(TrackEvent* e) {
@@ -79,11 +79,11 @@ class BaseScheduler
     
     class TrackManager* manager = nullptr;
     class UIActionPool* actionPool = nullptr;
+    class TrackEventPool* eventPool = nullptr;
     class SyncMaster* syncMaster = nullptr;
     class SymbolTable* symbols = nullptr;
     
     TrackEventList events;
-    TrackEventPool eventPool;
 
     // leader options pulled from the Session
     LeaderType leaderType;

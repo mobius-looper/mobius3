@@ -153,7 +153,7 @@ void MidiRealizer::setSampleRate(int rate)
 void MidiRealizer::startThread()
 {
     if (thread == nullptr) {
-        Trace(2, "MidiTransport: Starting clock thread\n");
+        Trace(2, "MidiRealizer: Starting clock thread\n");
         thread = new MidiClockThread(this);
         if (!thread->start()) {
             // what now? safe to delete?
@@ -171,7 +171,7 @@ void MidiRealizer::startThread()
 void MidiRealizer::stopThread()
 {
     if (thread != nullptr) {
-        Trace(2, "MidiTransport: Stopping clock thread\n");
+        Trace(2, "MidiRealizer: Stopping clock thread\n");
         thread->stop();
         // stop() is assumed to have waited for it
         delete thread;
@@ -500,7 +500,7 @@ void MidiRealizer::start()
       Trace(2, "MidiRealizer::start Set pendingStart");
     
     if (!midiManager->hasOutputDevice(MidiManager::OutputSync)) {
-        Trace(1, "MidiTransport: No MIDI Output device\n");
+        Trace(1, "MidiRealizer: No MIDI Output device\n");
         // note that if you call Supervisor::alert here it will
         // try to show the AlertPanel which we can't do without
         // a Juce runtime assertion since we're usually in the audio thread
@@ -619,7 +619,7 @@ void MidiRealizer::setTempoNow(float newTempo)
     tempo = newTempo;
     msecsPerPulse = 60000.0f / tempo / 24.0f;
 
-    Trace(2, "MidiTransport: tempo %d msecsPerPulse %d\n",
+    Trace(2, "MidiRealizer: tempo %d msecsPerPulse %d\n",
           (int)(tempo * 100.0f), (int)(msecsPerPulse * 100.0f));
 
     pendingTempo = 0.0f;

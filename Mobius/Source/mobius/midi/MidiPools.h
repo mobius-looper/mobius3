@@ -39,7 +39,7 @@
 // needs work on where all the pools go, nice to have them in one place
 // but then it's kind of a mess
 // this one probably can be on it's own or in a TrackPools
-#include "../track/TrackEvent.h"
+//#include "../track/TrackEvent.h"
 
 
 class MidiPools
@@ -59,10 +59,12 @@ class MidiPools
     MidiLayerPool layerPool;
     MidiSegmentPool segmentPool;
     MidiFragmentPool fragmentPool;
-    TrackEventPool trackEventPool;
+
+    // doesn't belong here
+    //TrackEventPool trackEventPool;
 
     // this one we don't own
-    class UIActionPool* actionPool = nullptr;
+    //class UIActionPool* actionPool = nullptr;
 
     //
     // MidiEvent
@@ -186,14 +188,15 @@ class MidiPools
 
     //
     // TrackEvent
-    //
-
+    // moved to TrackManager
+#if 0    
     TrackEvent* newTrackEvent() {
         return trackEventPool.newEvent();
     }
     void checkin(TrackEvent* e) {
         trackEventPool.checkin(e);
     }
+#endif    
 
     // don't need the others atm
 
@@ -202,6 +205,7 @@ class MidiPools
     //
 
     // free a list of actions
+#if 0    
     void reclaim(UIAction* actions) {
         while (actions != nullptr) {
             UIAction* next = actions->next;
@@ -209,6 +213,7 @@ class MidiPools
             actions = next;
         }
     }
+#endif
     
   private:
 
