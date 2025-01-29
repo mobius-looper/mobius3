@@ -917,42 +917,43 @@ void SyncMaster::refreshState(SystemState* sysstate)
 
     transport->refreshState(state);
 
-    int totalTracks = sysstate->audioTracks + sysstate->midiTracks;
+    int totalTracks = trackManager->getTrackCount();
     int maxStates = sysstate->tracks.size();
-    if (maxStates < totalTracks)
-      Trace(1, "SyncMaster: Not enough TrackStates for sync state");
+
+    if (maxStates < totalTracks) {
+        Trace(1, "SyncMaster: Not enough TrackStates for sync state");
+        totalTracks = maxStates;
+    }
     
-    for (int i = 0 ; i < totalTracks ; i++) {
-        if (i < maxStates) {
-            TrackState* tstate = sysstate->tracks[i];
-            int trackNumber = i+1;
+    for (int i = 0 ; i < maxStates ; i++) {
+        TrackState* tstate = sysstate->tracks[i];
+        int trackNumber = i+1;
 
-            // we have so far been the one to put sync state in SystemState
-            // but since this is all on the LogicalTrack now TM could do it
+        // we have so far been the one to put sync state in SystemState
+        // but since this is all on the LogicalTrack now TM could do it
 
-            LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
-            if (lt != nullptr) {
-                tstate->syncSource = lt->getSyncSourceNow();
-                tstate->syncUnit = lt->getSyncUnitNow();
+        LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
+        if (lt != nullptr) {
+            tstate->syncSource = lt->getSyncSourceNow();
+            tstate->syncUnit = lt->getSyncUnitNow();
 
-                // old convention was to suppress beat/bar display
-                // if the source was not in a started state
-                bool running = true;
-                if (tstate->syncSource == SyncSourceMidi)
-                  running = midiAnalyzer->isRunning();
-                else if (tstate->syncSource == SyncSourceHost)
-                  running = hostAnalyzer->isRunning();
+            // old convention was to suppress beat/bar display
+            // if the source was not in a started state
+            bool running = true;
+            if (tstate->syncSource == SyncSourceMidi)
+              running = midiAnalyzer->isRunning();
+            else if (tstate->syncSource == SyncSourceHost)
+              running = hostAnalyzer->isRunning();
 
-                // the convention has been that if beat or bar are
-                // zero they are undefined and not shown, TempoElement assumes this
-                if (running) {
-                    tstate->syncBeat = barTender->getBeat(lt) + 1;
-                    tstate->syncBar = barTender->getBar(lt) + 1;
-                }
-                else {
-                    tstate->syncBeat = 0;
-                    tstate->syncBar = 0;
-                }
+            // the convention has been that if beat or bar are
+            // zero they are undefined and not shown, TempoElement assumes this
+            if (running) {
+                tstate->syncBeat = barTender->getBeat(lt) + 1;
+                tstate->syncBar = barTender->getBar(lt) + 1;
+            }
+            else {
+                tstate->syncBeat = 0;
+                tstate->syncBar = 0;
             }
         }
     }
@@ -961,7 +962,6 @@ void SyncMaster::refreshState(SystemState* sysstate)
 void SyncMaster::refreshPriorityState(PriorityState* pstate)
 {
     transport->refreshPriorityState(pstate);
-    
 }
 
 //////////////////////////////////////////////////////////////////////

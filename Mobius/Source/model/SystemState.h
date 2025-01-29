@@ -29,32 +29,32 @@ class SystemState
 
     // the version number of the Session this state was built with
     // used by MobiusViewer to detect when track configuration has
-    // finished being consumed by the ending to do a full UI refresh
+    // finished being consumed by the engine which needs a full UI refresh
+    // also used to ignore old state objects in the queue built with
+    // the old version
     int sessionVersion = 0;
 
-    // the reference number of the track that has focus
-    // this is an argument to the query passed from UI to kernel and determines
-    // what is left in FocusedTrackState
-    int focusedTrack = 0;
-
-    // the number of tracks of each type, returned by the engine
-    // try not to use these
-    int audioTracks = 0;
-    int midiTracks = 0;
-
-    // an OldMobiusState flag
-    // true if Mobius is in "capturing" mode, OldMobiusState called
-    // this "globalRecording"
-    bool audioCapturing = false;
-
     // full state for each track
-    juce::OwnedArray<TrackState> tracks;
+    juce::OwnedArray<TrackState> tracks
+
+    // number of tracks used, this may be smaller than the array size
+    int totalTracks = 0;
+
+    // the reference number of the track that has focus
+    // this is passed down from Supervisor to TrackManager to tell
+    // it which track should be used to fill FocusedTrackState
+    int focusedTrackNumber = 0;
 
     // details for the focused track only
     FocusedTrackState focusedState;
 
     // common synchronization state that is not track related
     SyncState syncState;
+
+    // an OldMobiusState flag
+    // true if Mobius is in "capturing" mode, OldMobiusState called
+    // this "globalRecording"
+    bool audioCapturing = false;
 };
 
    

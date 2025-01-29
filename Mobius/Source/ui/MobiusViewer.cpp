@@ -84,80 +84,85 @@ MobiusViewer::~MobiusViewer()
 /**
  * Initialize the view at startup.
  *
- * Since we reuse track view objects in the array once created, in fringe cases where you are
- * adding and removing tracks of different types this should be doing a better job of initializing
- * track views that become unused, then reused.
+ * The important thing here is that the view be fleshed out with the
+ * same number of tracks as the initial session because the view can be used
+ * during the startup process and it gets crashy if there isn't anything in it.
+ *
+ * I don't think it is necessary for the view tracks to actually resemble the
+ * session tracks, just that they exist.
  */
-void MobiusViewer::initialize(MobiusView* view)
+void MobiusViewer::initialize(Session* session, MobiusView* view)
 {
-    Session* session = provider->getSession();
+    grow(view, session->getTrackCount());
 
-    view->xaudioTracks = session->getAudioTracks();
-    if (view->xaudioTracks == 0) {
-        // crashy if we don't have at least one, force it
-        // !! why  fix this
-        Trace(1, "MobiusViewer: Forcing a single audio track, why?");
-        view->xaudioTracks = 1;
+    // during the period before the first state refresh, it was important
+    // to be able to use the view to verify track types, somehad an init
+    // script or something that tried loading MIDI tracks or something
+    // immediately after the plugin was installed and this failed
+    // verification, unclear if that's still an issue but make
+    // the view resemble what it will be after the first refresh
+    for (int i = 0 ; i < session->getTrackCount() ; i++) {
+        Session::Track* st = session->getTrackByIndex(i);
+        MobiusViewTrack* mvt = view->tracks[i];
+        mvt->type = st->type;
     }
-
-    view->xmidiTracks = session->getMidiTracks();
-    view->totalTracks = view->xaudioTracks + view->xmidiTracks;
-
-    // flesh these out ahead of time, they can grow if configuration is changed
-    // but start with enough for the current session
-    // whether these are midi or not is set during refresh
-    for (int i = 0 ; i < view->totalTracks ; i++) {
-        MobiusViewTrack* vt = new MobiusViewTrack();
-        vt->index = i;
-        view->tracks.add(vt);
-    }
-
-    // always start on the first one
-    // this may conflict with the Setup on the first refresh
+    
+    // always start on the first one on startup
     view->focusedTrack = 0;
     view->track = view->tracks[0];
 }
 
 /**
- * Reconfigure the view after changing the track counts in the session.
- * This has unfortunate race conditions with the kernel since it won't
- * reconfigure itself until the next audio interrupt.  If you change
- * the view then hit a refresh cycle before kernel had a chance to adapt
- * there will be a mismatch between the view and the state objects returned
- * by the engine.  This actually doesn't matter much to the display, it just
- * may cause a little flicker as the tracks change out from under it.
- *
- * The only thing this needs to do is move the focused track, if the track
- * under it was taken away.
+ * This does two things: It ensures that we have enough tracks
+ * in the view to satisfy the SystemState that wants to deposit things
+ * into them, and it sets totalTracks to be the number of tracks
+ * that will actually be in use.
  */
-void MobiusViewer::configure(MobiusView* view)
+void MobiusViewer::grow(MobiusView* view, int required)
 {
-    Session* session = provider->getSession();
-    
-    if (view->xaudioTracks != session->getAudioTracks()) {
-        Trace(1, "MobiusViewer: Audio track counts changed");
-    }
-    view->xaudioTracks = session->getAudioTracks();
-    if (view->xaudioTracks == 0) {
+    if (required == 0) {
         // crashy if we don't have at least one, force it
-        view->xaudioTracks = 1;
+        Trace(1, "MobiusViewer: Forcing a single audio track, why?");
+        required = 1;
     }
 
-    view->xmidiTracks = session->getMidiTracks();
-    view->totalTracks = view->xaudioTracks + view->xmidiTracks;
-
-    // grow this when necessary, don't bother with shrinking it
-    for (int i = view->tracks.size() ; i < view->totalTracks ; i++) {
+    for (int i = view->tracks.size() ; i < required ; i++) {
         MobiusViewTrack* vt = new MobiusViewTrack();
         vt->index = i;
         view->tracks.add(vt);
     }
+
+    view->totalTracks = required;
+}
+
+/**
+ * Reconfigure the view after changing the track counts in the session.
+ *
+ * Growing the track array isn't really necessary since this needs
+ * to adapt to whatever comes back in the SystemState on each refresh.
+ * There might be some things that will get confused if the count doesn't
+ * immediately reflect the new session though.
+ *
+ * One important thing is that it needs to move the focused track
+ * if the track count was reduced.
+ */
+void MobiusViewer::configure(Sesion* session, MobiusView* view)
+{
+    grow(view, session->getTrackCount());
 
     if (view->focusedTrack >= view->totalTracks) {
         // go to the highest or the first?
         view->focusedTrack = view->totalTracks - 1;
         view->track = view->tracks[view->focusedTrack];
     }
+
+    // this now because the only version of SystemState we accept
+    // during refresh, if you get one that doesn't match this it means
+    // there was a stale state in the queue and should be ignored
+    // until Kernel finishes building the new one
+
+    // actually don't need this here, can compare during refresh
+    //sessionVersion = session->getVersion();
 }
 
 /**
@@ -170,22 +175,33 @@ void MobiusViewer::configure(MobiusView* view)
  */
 void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
 {
+    Session* session = provider->getSession();
+    if (session->getVersion() != sysstate->sessionVersion) {
+        Trace(2, "MobiusViewer: Ignoring refresh of stale state after session change");
+        return;
+    }
+
+    // we normally pre-size the track arrays before sending it down but
+    // if not, here we are
+    if (view->tracks.size() < sysstate->totalTracks)
+      Trace(1, "MobiusViewer: SystemState came back with more tracks than expected");
+    grow(sysstate->totalTracks, view);
+    
+    // sanity check on focus
+    if (view->focusedTrack >= 0 && view->focusedTrack < view->totalTracks) 
+      view->track = view->tracks[view->focusedTrack];
+    else {
+        Trace(1, "MobiusViewer: focusedTrack is out of whack");
+        view->focusedTrack = 0;
+        view->track = view->tracks[0];
+    }
+    
     // Counter needs this
     view->sampleRate = provider->getSampleRate();
 
-    // move the track view to the one that has focus
-    // !! now that tracks can be higher than the configured number to use, may
-    // need to constrain focus here?
-    if (view->focusedTrack >= 0 && view->focusedTrack < view->tracks.size()) 
-      view->track = view->tracks[view->focusedTrack];
-    else
-      Trace(1, "MobiusViewer: focusedTrack is out of whack");
-
     resetRefreshTriggers(view);
 
-    // detect when the selected track changes, this be driven by the state object
-    // for audio tracks, but when switching between audio and midi, or within midi
-    // we have to detect that at the root
+    // detect when the selected track changes so we do a full refresh
     if (view->lastFocusedTrack != view->focusedTrack) {
         view->trackChanged = true;
         view->lastFocusedTrack = view->focusedTrack;
@@ -209,6 +225,7 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
         forceRefresh(view);
         view->lastSessionVersion = sysstate->sessionVersion;
     }
+    
 }
 
 /**
@@ -267,27 +284,7 @@ void MobiusViewer::forceRefresh(MobiusView* view)
  */
 void MobiusViewer::refreshAllTracks(SystemState* state, MobiusView* view)
 {
-    // state changes along with the Session, but the view can lag
-    // if things got bigger, grow
-    if (view->xmidiTracks != state->midiTracks) {
-        Trace(2, "MobiusViewer: Adjusting MIDI track view to %d", state->midiTracks);
-        view->xmidiTracks = state->midiTracks;
-    }
-
-    if (view->xaudioTracks != state->audioTracks) {
-        Trace(2, "MobiusViewer: Adjusting audio tracks to %d", state->audioTracks);
-        view->xaudioTracks = state->audioTracks;
-    }
-    
-    // add new ones
-    int required = view->xaudioTracks + view->xmidiTracks;
-    while (required > view->tracks.size()) {
-        MobiusViewTrack *vt = new MobiusViewTrack();
-        vt->index = view->tracks.size();
-        view->tracks.add(vt);
-    }
-
-    for (int i = 0 ; i < required ; i++) {
+    for (int i = 0 ; i < state->totalTracks ; i++) {
 
         // sanity check before we start indexing
         // neither of these should happen
@@ -321,7 +318,7 @@ void MobiusViewer::refreshAllTracks(SystemState* state, MobiusView* view)
         }
     }
 
-    if (view->focusedTrack < 0 || view->focusedTrack >= view->tracks.size()) {
+    if (view->focusedTrack < 0 || view->focusedTrack >= view->totalTracks) {
         Trace(1, "MobiusViewer: view->focused track out of range");
     }
     else {

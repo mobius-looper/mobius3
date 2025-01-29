@@ -1906,7 +1906,12 @@ void Track::reset(Action* action)
 
     // Do the notification at the track level rather than the loop level
     // or else we'll get a duplicate notification for every loop in this track
-    mNotifier->notify(this, NotificationReset);
+    // 
+    // note: Mobius now needs to call this without an action during track reconfiguration
+    // and during that time, TrackManager will not respond to LogicalTrack requests
+    // from the Notifier, skip notifications to avoid a log error
+    if (action != nullptr)
+      mNotifier->notify(this, NotificationReset);
 }
 
 /**

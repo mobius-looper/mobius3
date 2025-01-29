@@ -196,22 +196,21 @@ void SessionClerk::logErrors(const char* filename, juce::StringArray& errors)
  * create a Session object.  The Session is owned by the caller
  * and must be cached or deleted.
  */
-Session* SessionClerk::readSession(Folder* f)
+Session* SessionClerk::readSession(Folder* f, juce::StringArray& errors)
 {
     Session* session = nullptr;
     if (f != nullptr) {
         juce::File root (f->path);
         if (!root.isDirectory()) {
-            Trace(1, "SessionClerk: Missing session folder %s", f->path.toUTF8());
+            addError(errors, juce::String("Missing session folder"));
+            addError(errors, f->path);
         }
         else {
             juce::File src = root.getChildFile("session.xml");
             juce::XmlElement* el = readSessionElement(src);
             if (el != nullptr) {
-                juce::StringArray errors;
                 session = new Session();
                 session->parseXml(el, errors);
-                logErrors("session.xml", errors);
                 delete el;
 
                 // it doesn't matter what the .xml file had for name
@@ -292,19 +291,17 @@ void SessionClerk::writeSession(Folder* f, Session* s, juce::StringArray& errors
 /**
  * This one is special, we don't bail if it doesn't exist.
  */
-Session* SessionClerk::readDefaultSession()
+Session* SessionClerk::readDefaultSession(juce::StringArray& errors)
 {
     Session* session = nullptr;
 
-    if (libraryValid) {
-        Folder* f = findFolder(juce::String("Default"));
-        if (f == nullptr) {
-            // bootstratpDefaultSession should have done this during initialize()
-            Trace(1, "SessionClerk: Default session not found");
-        }
-        else {
-            session = readSession(f);
-        }
+    Folder* f = findFolder(juce::String("Default"));
+    if (f == nullptr) {
+        // bootstratpDefaultSession should have done this during initialize()
+        addError(errors, "Default session not found");
+    }
+    else {
+        session = readSession(f, errors);
     }
 
     // prevent NPEs
@@ -316,16 +313,16 @@ Session* SessionClerk::readDefaultSession()
     return session;
 }
 
-Session* SessionClerk::readSession(juce::String name)
+Session* SessionClerk::readSession(juce::String name, juce::StringArray& errors)
 {
     Session* session = nullptr;
     
     Folder* f = findFolder(name);
     if (f == nullptr) {
-        Trace(1, "SessionClerk: Unknown session %s", name.toUTF8());
+        addError(errors, juce::String("Session ") + name + " not found");
     }
     else {
-        session = readSession(f);
+        session = readSession(f, errors);
     }
     
     return session;
@@ -398,7 +395,8 @@ void SessionClerk::migrateSetups(bool bootstrapped)
             Trace(1, "SessionClerk: Default session not found during migration");
         }
         else {
-            Session* dest = readSession(f);
+            juce::StringArray errors;
+            Session* dest = readSession(f, errors);
             if (dest == nullptr) {
                 Trace(1, "SessionClerk: Unable to read bootstrap Session %s", f->name.toUTF8());
             }
@@ -432,8 +430,7 @@ void SessionClerk::migrateSetups(bool bootstrapped)
                     // default SessionTracks will have been stubbed out
                     Trace(1, "SessionClerk: No default Setup found during migration");
                 }
-                juce::StringArray errors;
-                (void)writeSession(f, dest, errors);
+                writeSession(f, dest, errors);
                 delete dest;
             }
         }
@@ -477,15 +474,14 @@ void SessionClerk::migrateSetups(bool bootstrapped)
                 bool testMerge = false;
                 if (testMerge) {
                     Trace(2, "SessionClerk: Merging Setup %s", setup->getName());
-                
-                    Session* dest = readSession(f);
+                    juce::StringArray errors;
+                    Session* dest = readSession(f, errors);
                     if (dest == nullptr) {
                         Trace(1, "SessionClerk: Unable to read Session to merge into %s", f->name.toUTF8());
                     }
                     else {
                         transformer.merge(setup, dest);
-                        juce::StringArray errors;
-                        (void)writeSession(f, dest, errors);
+                        writeSession(f, dest, errors);
                         delete dest;
                     }
                 }
@@ -500,13 +496,17 @@ void SessionClerk::migrateSetups(bool bootstrapped)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Create a new session.
+ * An error is returned if a session with this name already exists.
+ */
 void SessionClerk::createSession(Session* neu, juce::StringArray& errors)
 {
     juce::String name = neu->getName();
     if (name.length() == 0) {
         addError(errors, "Missing session name");
     }
-    else {
+    else if (validateFileName(name, errors)) {
         // this can't fail
         juce::String xml = neu->toXml();
         // returns nullptr if it failed and left errors
@@ -523,10 +523,29 @@ void SessionClerk::createSession(Session* neu, juce::StringArray& errors)
                     addError(errors, "Session file write failed");
             }
 
-            if (errors.size() >= 0)
+            if (errors.size() > 0)
               delete f;
+            else
+              folders.add(f);
         }
     }
+}
+
+/**
+ * Check the name for invalid characters before we pass it off to the
+ * Juce file functions since it is unclear how verbose they'll be about
+ * what went wrong.
+ *
+ * Could be a lot more rigorous here but catch the usual punctuation.
+ */
+bool SessionClerk::validateFileName(juce::String name, juce::StringArray& errors)
+{
+    bool valid = false;
+    if (name.containsAnyOf("\\/$."))
+      errors.add("Session name contains illegal punctuation");
+    else
+      valid = true;
+    return valid;
 }
 
 SessionClerk::Folder* SessionClerk::createFolder(juce::String name, juce::StringArray& errors)
@@ -539,7 +558,7 @@ SessionClerk::Folder* SessionClerk::createFolder(juce::String name, juce::String
     else {
         Folder* f = findFolder(name);
         if (f != nullptr) {
-            addError(errors, juce::String("Session already exists: ") + name);
+            addError(errors, juce::String("Session " + name + " already exists"));
         }
         else {
             juce::File dir = libraryRoot.getChildFile(name);
@@ -566,15 +585,152 @@ void SessionClerk::addError(juce::StringArray& errors, juce::String msg)
     Trace(1, "%s", tracemsg.toUTF8());
 }
 
-void SessionClerk::renameSession(juce::String name, juce::String newName, juce::StringArray& errors)
+void SessionClerk::deleteSession(juce::String name, juce::StringArray& errors)
 {
     Folder* f = findFolder(name);
     if (f == nullptr) {
-        addError(errors, juce::String("Unknown session ") + name);
+        addError(errors, juce::String("Session ") + name + " does not exist");
     }
     else {
-        // it doesn't really matter what the name is in the .xml file, it
-        // will be fixed to match the directory when read
+        juce::File dir (f->path);
+        if (!dir.isDirectory()) {
+            addError(errors, juce::String("Unable to locate session folder"));
+            addError(errors, f->path);
+            // it shouldn't have been there to begin with, someone must
+            // have deleted it out from under us
+            removeFolder(f);
+        }
+        else {
+            // will want to be a lot more selective about how deletion
+            // is performed, especially if there is content do one file at a time
+            // and fail better
+            // this interface doesn't say anything about why it failed
+            if (!dir.deleteRecursively()) {
+                addError(errors, juce::String("Errors during deletion of session folder"));
+                addError(errors, f->path);
+            }
+            
+            // take it out of the folder list even if the delete failed
+            // because we can't tell what shape it's in without further
+            // forensics
+            removeFolder(f);
+        }
+    }
+}
+
+/**
+ * Take the Folder object out of the list (assuming it is there)
+ * and delete it.
+ */
+void SessionClerk::removeFolder(Folder* f)
+{
+    int index = folders.indexOf(f);
+    if (index < 0) {
+        // odd, where did it come from?
+        Trace(1, "SessionClerk: Found zombie folder");
+        delete f;
+    }
+    else {
+        folders.remove(index);
+    }
+}
+
+void SessionClerk::copySession(juce::String name, juce::String newName, juce::StringArray& errors)
+{
+    Folder* src = findFolder(name);
+    Folder* other = findFolder(newName);
+
+    if (!libraryValid) {
+        addError(errors, "Library folder is invalid");
+    }
+    else if (src == nullptr) {
+        addError(errors, juce::String("Session ") + name + " does not exist");
+    }
+    else if (other != nullptr) {
+        addError(errors, juce::String("Session ") + name + " already exists");
+    }
+    else {
+        juce::File srcdir (src->path);
+        if (!srcdir.isDirectory()) {
+            addError(errors, juce::String("Unable to locate session folder"));
+            addError(errors, src->path);
+            // it shouldn't have been there to begin with, someone must
+            // have deleted it out from under us
+            removeFolder(src);
+        }
+        else if (validateFileName(newName, errors)) {
+            // returns nullptr if it failed and left errors
+            Folder* dest = createFolder(newName, errors);
+            if (dest != nullptr) {
+
+                // way too much can go wrong in here, need to break this
+                // out and do our own recursive copy once we start having
+                // content
+                juce::File destdir (dest->path);
+
+                bool status = srcdir.copyDirectoryTo(destdir);
+
+                if (!status) {
+                    addError(errors, "Failed to copy session folder to:");
+                    addError(errors, dest->path);
+                    // at this point, the copy may have done nothing or it may
+                    // have failed in the middle, try to clean up
+                    if (!destdir.deleteRecursively()) {
+                        addError(errors, "Unable to cleanup failed session folder");
+                    }
+                    delete dest;
+                }
+                else {
+                    folders.add(dest);
+
+                    // technically we should now read the session.xml file
+                    // and change the name, but can also just leave it there and
+                    // fix it when it is read
+                }
+            }
+        }
+    }
+}
+
+void SessionClerk::renameSession(juce::String name, juce::String newName, juce::StringArray& errors)
+{
+    Folder* src = findFolder(name);
+    Folder* other = findFolder(newName);
+
+    if (!libraryValid) {
+        addError(errors, "Library folder is invalid");
+    }
+    else if (src == nullptr) {
+        addError(errors, juce::String("Session ") + name + " does not exist");
+    }
+    else if (other != nullptr) {
+        addError(errors, juce::String("Session ") + name + " already exists");
+    }
+    else {
+        juce::File srcdir (src->path);
+        if (!srcdir.isDirectory()) {
+            addError(errors, juce::String("Unable to locate session folder"));
+            addError(errors, src->path);
+            // it shouldn't have been there to begin with, someone must
+            // have deleted it out from under us
+            removeFolder(src);
+        }
+        else if (validateFileName(newName, errors)) {
+
+            // just rename the outer directory
+            // technically need to read the session.xml and change the name
+            // but we can fix it on load
+            
+            juce::File destdir = libraryRoot.getChildFile(newName);
+
+            if (!srcdir.moveFileTo(destdir)) {
+                addError(errors, "Unable to rename session folder");
+            }
+            else {
+                src->name = newName;
+                src->path = destdir.getFullPathName();
+            }
+        }
     }
 }
 

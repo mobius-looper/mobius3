@@ -58,8 +58,6 @@ class Producer
     class Supervisor* supervisor = nullptr;
 
     std::unique_ptr<class SessionClerk> clerk;
-
-    bool hasInvalidCharacters(juce::String name);
     
 };
 

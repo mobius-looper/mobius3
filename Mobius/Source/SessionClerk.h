@@ -36,11 +36,18 @@ class SessionClerk
 
     void initialize();
 
-    class Session* readDefaultSession();
-    Session* readSession(juce::String name);
+    juce::OwnedArray<Folder>* getFolders();
+    
+    class Session* readDefaultSession(juce::StringArray& errors);
+
+    Session* readSession(juce::String name, juce::StringArray& errors);
     void saveSession(Session* s, juce::StringArray& errors);
 
-    juce::OwnedArray<Folder>* getFolders();
+    // Producer Interface
+    void createSession(Session* neu, juce::StringArray& errors);
+    void deleteSession(juce::String name, juce::StringArray& errors);
+    void copySession(juce::String name, juce::String newName, juce::StringArray& errors);
+    void renameSession(juce::String name, juce::String newName, juce::StringArray& errors);
     
   private:
 
@@ -55,16 +62,16 @@ class SessionClerk
     juce::XmlElement* readSessionElement(juce::File src);
     void logErrors(const char* filename, juce::StringArray& errors);
     
-    Session* readSession(Folder* f);
+    Session* readSession(Folder* f, juce::StringArray& errors);
     void writeSession(Folder* f, Session* s, juce::StringArray& errors);
 
     void migrateSetups(bool bootstrapped);
-
-    void createSession(Session* neu, juce::StringArray& errors);
-    
-    Folder* createFolder(juce::String name, juce::StringArray& errors);
-
     void fixSession(class Session* s);
-    void renameSession(juce::String name, juce::String newName, juce::StringArray& errors);
+    
     void addError(juce::StringArray& errors, juce::String msg);
+    
+    bool validateFileName(juce::String name, juce::StringArray& errors);
+    Folder* createFolder(juce::String name, juce::StringArray& errors);
+    void removeFolder(Folder* f);
+
 };

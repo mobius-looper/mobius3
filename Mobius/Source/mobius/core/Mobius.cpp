@@ -504,70 +504,92 @@ void Mobius::installSymbols()
  */
 void Mobius::configureTracks(juce::Array<MobiusLooperTrack*>& trackdefs)
 {
-    // remember the ones we have now in a better collection
-    juce::Array<Track*> existing;
-    for (int i = 0 ; i < mTrackCount ; i++)
-      existing.add(mTracks[i]);
-
-    int newCount = trackdefs.size();
-    Track** newTracks = nullptr;
-    
-    if (newCount <= 0) {
-        // the engine probably will misbehave if we don't have at least
-        // one track, so make a dummy one
-        Trace(1, "Mobius: Configured track count was zero, this is not allowed");
-        newTracks = new Track*[1];
-        newTracks[0] = new Track(this, mSynchronizer, 0);
-        newCount = 1;
-    }
+    // optimize out the array hacking in the usual case where there
+    // will be no changes
+    bool tracksChanged = false;
+    if (trackdefs.size() != mTrackCount)
+      tracksChanged = true;
     else {
-        newTracks = new Track*[newCount];
-        int index = 0;
-        for (auto def : trackdefs) {
-            Track* native = def->getCoreTrack();
-            if (native != nullptr) {
-                // reuse this one
-                newTracks[index] = native;
-                // it changes numbers internally
-                native->renumber(index);
-                existing.removeAllInstancesOf(native);
+        for (int i = 0 ; i < mTrackCount ; i++) {
+            MobiusLooperTrack* mlt = trackdefs[i];
+            if (mTracks[i] != mlt->getCoreTrack()) {
+                tracksChanged = true;
+                break;
             }
-            else {
-                // make a new one
-                native = new Track(this, mSynchronizer, index);
-                newTracks[index] = native;
-                def->setCoreTrack(this, native);
-            }
-            // need to remember this too when communicating with SyncMaster
-            // and sending notifications
-            native->setLogicalNumber(def->getNumber());
-            index++;
         }
     }
 
-    // reset and delete remaining tracks we didn't use
-    for (auto t : existing) {
-        doTrackReset(t);
-        if (mTrack == t) mTrack = nullptr;
-        delete t;
-    }
+    if (!tracksChanged)
+      Trace(2, "Mobius::configureTracks No tracks changed");
+    else {
+        Trace(2, "Mobius::configureTracks Reconfiguring tracks");
+            
+        // remember the ones we have now in a better collection
+        juce::Array<Track*> existing;
+        for (int i = 0 ; i < mTrackCount ; i++)
+          existing.add(mTracks[i]);
+
+        int newCount = trackdefs.size();
+        Track** newTracks = nullptr;
     
-    // install the new array
-    delete mTracks;
-    mTracks = newTracks;
-    mTrackCount = newCount;
+        if (newCount <= 0) {
+            // the engine probably will misbehave if we don't have at least
+            // one track, so make a dummy one
+            Trace(1, "Mobius: Configured track count was zero, this is not allowed");
+            newTracks = new Track*[1];
+            newTracks[0] = new Track(this, mSynchronizer, 0);
+            newCount = 1;
+        }
+        else {
+            newTracks = new Track*[newCount];
+            int index = 0;
+            for (auto def : trackdefs) {
+                Track* native = def->getCoreTrack();
+                if (native != nullptr) {
+                    // reuse this one
+                    newTracks[index] = native;
+                    // it changes numbers internally
+                    native->renumber(index);
+                    existing.removeAllInstancesOf(native);
+                }
+                else {
+                    // make a new one
+                    native = new Track(this, mSynchronizer, index);
+                    newTracks[index] = native;
+                    def->setCoreTrack(this, native);
+                }
+                // need to remember this too when communicating with SyncMaster
+                // and sending notifications
+                native->setLogicalNumber(def->getNumber());
+                index++;
+            }
+        }
 
-    // if we lost the active track, make it the first
-    if (mTrack == nullptr)
-      mTrack = mTracks[0];
+        // reset and delete remaining tracks we didn't use
+        for (auto t : existing) {
+            doTrackReset(t);
+            if (mTrack == t) mTrack = nullptr;
+            delete t;
+        }
+    
+        // install the new array
+        delete mTracks;
+        mTracks = newTracks;
+        mTrackCount = newCount;
+
+        // if we lost the active track, make it the first
+        if (mTrack == nullptr)
+          mTrack = mTracks[0];
                 
-    // unclear what to do about this, but it's obscure
-    // this is what globalReset() does
-    if (mCaptureAudio != NULL)
-      mCaptureAudio->reset();
-    mCapturing = false;
+        // unclear what to do about this, but it's obscure
+        // this is what globalReset() does
+        if (mCaptureAudio != NULL)
+          mCaptureAudio->reset();
+        mCapturing = false;
+    }
 
-    // we defer configuration propagation to the tracks till now too
+    // this part we do whether or not we reordered tracks,
+    // this is now how Setup changes get propagated to core tracks
 
     // Track has an optimization to ignore configuration propagation
     // unless these two flags are on.  Since we are initializing for the
@@ -583,10 +605,10 @@ void Mobius::configureTracks(juce::Array<MobiusLooperTrack*>& trackdefs)
     // allocate memory.  It also won't adjust tracks that are still doing
     // something with audio.  This also refreshes the Track's Preset
     // copy if it isn't doing anything
-	for (int i = 0 ; i < mTrackCount ; i++) {
-		Track* t = mTracks[i];
-		t->updateConfiguration(mConfig);
-	}
+    for (int i = 0 ; i < mTrackCount ; i++) {
+        Track* t = mTracks[i];
+        t->updateConfiguration(mConfig);
+    }
 
     // now turn them off, don't think this is necessary since
     // reconfigure will always be called with a different object

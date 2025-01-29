@@ -40,6 +40,8 @@ SessionManagerTable::SessionManagerTable(Supervisor* s)
     deleteAlert.setButtons("Delete,Cancel");
     deleteAlert.setSerious(true);
     deleteAlert.addMessage("Are you sure you want to delete this session?");
+    deleteAlert.addMessage("All files associated with this session will be deleted");
+    deleteAlert.addMessage("This cannot be undone");
     
     confirmDialog.setTitle("Confirm");
     confirmDialog.setButtons("Ok,Cancel");
@@ -165,6 +167,9 @@ void SessionManagerTable::startLoad()
         confirmDialog.setId(DialogLoad);
         confirmDialog.show(getParentComponent());
     }
+    else {
+        finishLoad(0);
+    }
 }
 
 void SessionManagerTable::startNew()
@@ -196,7 +201,7 @@ void SessionManagerTable::startRename()
 void SessionManagerTable::startDelete()
 {
     deleteAlert.setId(DialogDelete);
-    
+
     deleteAlert.show(getParentComponent());
 }
 
@@ -223,11 +228,8 @@ void SessionManagerTable::finishLoad(int button)
 {
     if (button == 0) {
         juce::String name = getSelectedName();
-        if (name.length() > 0) {
-            Producer::Result result = producer->loadSession(name);
-            showResult(result);
-            Trace(2, "SessionManagerTable: Session loaded");
-        }
+        Producer::Result result = producer->loadSession(name);
+        showResult(result);
     }
 }
 
@@ -237,7 +239,6 @@ void SessionManagerTable::finishNew(int button)
         juce::String name = newName.getValue();
         Producer::Result result = producer->newSession(name);
         showResult(result);
-        Trace(2, "SessionManagerTable: Session copied");
         reload();
     }
 }
@@ -248,7 +249,6 @@ void SessionManagerTable::finishCopy(int button)
         juce::String name = newName.getValue();
         Producer::Result result = producer->copySession(getSelectedName(), name);
         showResult(result);
-        Trace(2, "SessionManagerTable: Session copied");
         reload();
     }
 }
@@ -259,7 +259,6 @@ void SessionManagerTable::finishRename(int button)
         juce::String name = newName.getValue();
         Producer::Result result = producer->renameSession(getSelectedName(), name);
         showResult(result);
-        Trace(2, "SessionManagerTable: Session renamed");
         reload();
     }
 }
@@ -269,7 +268,6 @@ void SessionManagerTable::finishDelete(int button)
     if (button == 0) {
         Producer::Result result = producer->deleteSession(getSelectedName());
         showResult(result);
-        Trace(2, "SessionManagerTable: Session deleted");
         reload();
     }
 }

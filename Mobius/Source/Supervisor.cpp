@@ -280,9 +280,6 @@ bool Supervisor::start()
     producer.reset(new Producer(this));
     (void)initializeSession();
     
-    // initialize the view for the known track counts
-    mobiusViewer.initialize(&mobiusView);
-
     // now that Sessions and MobiusConfig are sanitized, can
     // install activation symbols
     symbolizer.installActivationSymbols();
@@ -378,6 +375,9 @@ bool Supervisor::start()
     // state after initialization, don't need to use the normal async state
     // refresh protocol yet
     mobius->initializeState(&systemState);
+    mobiusViewer.refresh(&systemState, &mobiusView);
+    // nothing has been displayed set so turn on all the flags
+    mobiusViewer.forceRefresh(&mobiusView);
 
     // ScriptConfig no longer goes in through MobiusConfig
     // extract one from the new ScriptRegistry and send it down
@@ -422,13 +422,11 @@ bool Supervisor::start()
     meter("Display Update");
     
     // initial display update if we're standalone
+
     // new: having some timing problems in GP with MIDI commands to
     // initialize things needing to have a refreshed view before the
-    // editor window is open, always do a view refresh
-
-    initializeView();
-
-    // sanity check for that GP initialization issues
+    // editor window is open, should have fixed this with the synchronous
+    // view refresh done earlier
     for (auto track : mobiusView.tracks) {
         if (track->loopCount == 0)
           Trace(1, "Supervisor: Initial loop count zero in track %d", track->index + 1);
@@ -615,33 +613,6 @@ void Supervisor::shutdown()
     
     TraceFile.flush();
     Trace(2, "Supervisor: Shutdown finished\n");
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// SystemState
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * There were some odd problems with GP if the view was not in a fleshed out
- * state during startup.  Now that SystemState is refreshed with an asynchronous
- * query, we need to pretend that we did a full refresh just to get the track arrays
- * and what-not populated.
- */
-void Supervisor::initializeView()
-{
-    Session* s = getSession();
-
-    // I think this is all that is needed, the track arrays will be built out and
-    // in a good enough default stsate
-    systemState.audioTracks = s->getAudioTracks();
-    systemState.midiTracks = s->getMidiTracks();
-    
-    mobiusViewer.refresh(&systemState, &mobiusView);
-
-    // nothing has been displayed set so turn on all the flags
-    mobiusViewer.forceRefresh(&mobiusView);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1016,7 +987,7 @@ void Supervisor::advance()
             stateRefreshRequested = true;
 
             // set this to get details for the focused track
-            systemState.focusedTrack = mobiusView.focusedTrack + 1;
+            systemState.focusedTrackNumber = mobiusView.focusedTrack + 1;
             
             mobius->requestState(&systemState);
         }
@@ -1523,17 +1494,23 @@ Session* Supervisor::initializeSession()
     session.reset(neu);
 
     // make the SystemState match the session
-    configureSystemState(neu);
+    resizeSystemState(neu);
+
+    // initialize the view for the known track counts
+    mobiusViewer.initialize(session.get(), &mobiusView);
 
     // bump the session version to trigger a full refresh
     neu->setVersion(++sessionVersion);
-
+    
     return neu;
 }
 
 /**
  * This does half of what initializeSession does except it also propagates
- * it.  Try to share this
+ * it.  Try to share this.
+ *
+ * Called by Producer after being instructed to by SessionManager.
+ * Also from menuLoadSession.
  */
 void Supervisor::loadSession(Session* neu)
 {
@@ -1547,13 +1524,12 @@ void Supervisor::loadSession(Session* neu)
     session.reset(neu);
 
     // make the SystemState match the session
-    configureSystemState(neu);
+    resizeSystemState(neu);
 
     // bump the session version to trigger a full refresh
     neu->setVersion(++sessionVersion);
 
-    // tell the view to prepare for track changes
-    mobiusViewer.configure(&mobiusView);
+    mobiusViewer.configure(neu, &mobiusView);
 
     // propagate config changes to other components
     propagateConfiguration();
@@ -1580,23 +1556,15 @@ Session* Supervisor::getSession()
 
 /**
  * Configure the SystemState object so that it has enough TrackStates
- * to match the tracks defined in the session.  Since TrackState is a
- * generic model used for all track types, it doesn't really matter what
- * order these are in.  If Session changes result in track reording the
- * TrackState it depisits things into may change or have stale data.  Could
- * tag TrackStates with the Session::Track::id and reorder those if it
- * becomes important.
+ * to match the tracks defined in the session.  This doesn't need to
+ * make it smaller, but it always needs to be larger than necessary
+ * so the engine has enough space to deposit things.
  *
- * The main thing is that TrackState needs a flag to force a full refresh and
- * ignore any of the change flags that may currently be in it.
- *
- * Besides allocating TrackState objects, each of those needs a pre-allocated
- * array of TrackState::Loops.  In the old days, these were defined in the Preset
- * and could be different for each track.  In the new world, they should be in
- * the Session::Track.  Assume a maximum of 16 which should be more than enough
- * for most users.
+ * todo: If you reorder tracks in the session, then the existing state
+ * will contain stale data that may not match what the track actually is.
+ * May want to reset everything to some clean initial values.
  */
-void Supervisor::configureSystemState(Session* s)
+void Supervisor::resizeSystemState(Session* s)
 {
     int maxTracks = s->getTrackCount();
     
@@ -1658,10 +1626,9 @@ void Supervisor::sessionEditorSave()
     
     producer->saveSession(s);
 
-    configureSystemState(s);
+    resizeSystemState(s);
         
-    // tell the view to prepare for track changes
-    mobiusViewer.configure(&mobiusView);
+    mobiusViewer.configure(s, &mobiusView);
 
     // from here on down, it needs to match what updateMobiusConfig would do
 

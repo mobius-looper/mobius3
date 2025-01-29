@@ -121,12 +121,30 @@ void TrackManager::loadSession(Session* s)
 
 /**
  * Organize the track array for a new session.
+ * The Session is authoritative over the track order and numbering.
  *
- * The Session gets to be authoritative over the track order and numbering.
- * At the moment it will always put the audio tracks first, and the engine
- * will have been configured to have that many.  
+ * Note: this is going to do a small amount of memory allocation which
+ * we ordinarlly try not to do in the audio thread.  I'm too tired to bother
+ * with it, and since this represents the propagation of a session change
+ * it only happens during a significant period of quiet time.
  *
- * The Session must have normalized track numbers.  Session Tracks can be in any order.
+ * Still, in the future some parameter changes like adjusting audio port
+ * routing might come down this way and need to be done "live" so revisit this.
+ *
+ * There are two philosophies on how to reuse existing tracks.
+ * In "strict" mode, we only reuse a track if the unique id in the Session::Track
+ * matches what it was the last time AND this is the same session that was
+ * installed the last time.  This prevents tracks that were deleted in the session
+ * from being used again, which could happen if you deleted one track and then added
+ * a new one of the same type.  If the old track had content and was playing, then
+ * it should technically not be reused and allowed to keep playing.
+ *
+ * However, since Sessions are going to be used initially a lot like Setups
+ * used to be, Session swaps can happen frequently to do relatively minor
+ * parameter changes without changing the track structure.  In those cases
+ * it is better to use "loose" mode where we match tracks simply by position
+ * rather than the uuid in the Session.  
+ * 
  */
 void TrackManager::configureTracks(Session* ses)
 {
@@ -137,32 +155,53 @@ void TrackManager::configureTracks(Session* ses)
         oldTracks.add(lt);
     }
 
-    // do not reuse tracks if this is a completely different session
-    // todo: might want to relax this, unless the session came with content
-    // it doesn't really matter if we keep positionally matching audio and midi tracks
-    // might want to do this since people will think of Sessions like Setups and swap
-    // between to change port numbers or something harmless, without adjusting track counts
+    bool strictMode = false;    // keep this off unless it becomes interesting
     bool reuseTracks = true;
+    bool checkSessionIds = true;
     if (lastSessionId != ses->getId()) {
-        reuseTracks = false;
+        if (strictMode) {
+            // this flag prevents any track reuse
+            // important because there can be overlaps in uuids
+            // between sessions
+            reuseTracks = false;
+        }
+        else {
+            // session ids aren't going to ever match so do positional matching
+            checkSessionIds = false;
+        }
         lastSessionId = ses->getId();
     }
 
     // now put them back or create new ones
+    // hmm, is positional assignment really that bad?
+    // if the tracks are in reset, it really doesn't matter,
+    // but if they're playing it could potentially be confusing if they don't move
     for (int i = 0 ; i < session->getTrackCount() ; i++) {
         Session::Track* def = session->getTrackByIndex(i);
-
-        // see if we had one with this id before
         LogicalTrack* lt = nullptr;
+
         if (reuseTracks) {
-            int index = 0;
-            for (auto old : oldTracks) {
-                if (old->getSessionId() == def->id) {
-                    // reuse this one
-                    lt = oldTracks.removeAndReturn(index);
-                    break;
+            if (checkSessionIds) {
+                // reassign by id
+                int index = 0;
+                for (auto old : oldTracks) {
+                    if (old->getSessionId() == def->id) {
+                        lt = oldTracks.removeAndReturn(index);
+                        break;
+                    }
+                    index++;
                 }
-                index++;
+            }
+            else {
+                // reassign by position
+                int index = 0;
+                for (auto old : oldTracks) {
+                    if (old->getType() == def->type) {
+                        lt = oldTracks.removeAndReturn(index);
+                        break;
+                    }
+                    index++;
+                }
             }
         }
 
@@ -1240,45 +1279,44 @@ juce::StringArray TrackManager::saveLoop(int trackNumber, int loopNumber, juce::
 
 void TrackManager::refreshState(SystemState* state)
 {
-    int audioTracks = 0;
-    int midiTracks = 0;
+    int totalTracks = tracks.size();
+    int maxStates = state->tracks.size();
 
-    for (int i = 0 ; i < tracks.size() ; i++) {
-        LogicalTrack* track = tracks[i];
+    if (totalTracks > maxStates) {
+        Trace(1, "TrackManager: Not enough states for tracks");
+        totalTracks = maxStates;
+    }
     
-        if (i >= state->tracks.size()) {
-            // this should have been pre-sized
-            Trace(1, "TrackManager: Not enough SystemState tracks");
+    for (int i = 0 ; i < totalTracks ; i++) {
+
+        LogicalTrack* track = tracks[i];
+        TrackState* tstate = state->tracks[i];
+        
+        if (tstate != nullptr) {
+            tstate->number = i+1;
+            track->refreshState(tstate);
         }
         else {
-            TrackState* tstate = state->tracks[i];
-            if (tstate != nullptr) {
-                tstate->number = i+1;
-                track->refreshState(tstate);
-            }
+            Trace(1, "TrackManager: Empty state object in array");
         }
-
-        if (track->getType() == Session::TypeMidi)
-          midiTracks++;
-        else
-          audioTracks++;
     }
 
-    state->audioTracks = audioTracks;
-    state->midiTracks = midiTracks;
+    state->totalTracks = totalTracks;
 
-    // both types support the new focused state for events
-    // this must have been set by Supervisor when the SystemState
-    // was passed down for refresh
-    if (state->focusedTrack > 0) {
-        LogicalTrack* lt = getLogicalTrack(state->focusedTrack);
-        lt->refreshFocusedState(&(state->focusedState));
+    // this is passed down by Supervisor to tell us which track to
+    // include in focused state
+    if (state->focusedTrackNumber > 0) {
+        LogicalTrack* lt = getLogicalTrack(state->focusedTrackNumber);
+        if (lt != nullptr)
+          lt->refreshFocusedState(&(state->focusedState));
+        else
+          Trace(1, "TrackManager: Focused track number requested is out of range");
     }
 }
 
 void TrackManager::refreshPriorityState(PriorityState* state)
 {
-    // don't really have anything to say yet
+    // tracks don't have anything to contribute yet
     for (auto track : tracks) {
         track->refreshPriorityState(state);
     }

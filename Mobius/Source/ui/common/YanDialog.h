@@ -25,16 +25,20 @@ class YanDialog : public juce::Component, public juce::Button::Listener
 {
   public:
 
-    static const int DefaultWidth = 300;
-    static const int DefaultHeight = 300;
+    static const int DefaultWidth = 400;
+    static const int DefaultContentHeight = 200;
     static const int BorderWidth = 2;
-    static const int TitleInset = 6;
-    static const int TitleHeight = 20;
-    static const int TitleMessageGap = 10;
+    static const int MainInset = 2;
+    
+    static const int TitleHeight = 16;
+    static const int TitlePostGap = 8;
     static const int MessageFontHeight = 12;
-    static const int MinMessageRows = 3;
+    static const int MessagePostGap = 4;
     static const int ContentInset = 8;
-
+    static const int ButtonGap = 8;
+    static const int BottomGap = 4;
+    static const int ButtonHeight = 20;
+    
     class Listener {
       public:
         virtual ~Listener() {}
@@ -79,7 +83,7 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     
     // built-in form you can add fields to
     YanForm form;
-
+    
     // replaces the built-in form for complex content
     juce::Component* content = nullptr;
     

@@ -71,15 +71,16 @@ SymbolTable* SessionHelper::getSymbols()
 Session* SessionHelper::getSession()
 {
     Session* result = session;
-    if (session == nullptr && provider != nullptr) {
+    if (result == nullptr && provider != nullptr) {
         // note we don't cache this, unlike SymbolTable
         // the Session can go stale and will have to be
         // passed in again
         result = provider->getSession();
     }
-    else {
-        Trace(1, "SessionHelper: Unable to locate the Session");
-    }
+
+    if (result == nullptr)
+      Trace(1, "SessionHelper: Unable to locate the Session");
+    
     return result;
 }
 

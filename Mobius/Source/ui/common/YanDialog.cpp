@@ -87,8 +87,9 @@ void YanDialog::addField(YanField* f)
     }
     else {
         form.add(f);
-        if (form.getParentComponent() == nullptr)
-          addAndMakeVisible(form);
+        if (form.getParentComponent() == nullptr) {
+            addAndMakeVisible(form);
+        }
     }
 }
 
@@ -159,12 +160,29 @@ void YanDialog::show(juce::Component* parent)
 
 int YanDialog::getDefaultHeight()
 {
-    int height = BorderWidth + 4 + 20 + TitleInset + TitleHeight + TitleMessageGap;
-    height += getMessageHeight();
+    int height = (BorderWidth * 2) + (MainInset * 2) + BottomGap + ButtonHeight + ButtonGap;
 
-    if (DefaultHeight > height)
-      height = DefaultHeight;
-    
+    if (title.length() > 0)
+      height += TitleHeight + TitlePostGap;
+
+    int mheight = getMessageHeight();
+    if (mheight > 0) {
+        height += mheight + MessagePostGap;
+    }
+
+    // user defined content, this may be our form or something custom
+    int cheight = 0;
+    if (content != nullptr) {
+        cheight = content->getHeight();
+        if (cheight == 0)
+          cheight = DefaultContentHeight;
+    }
+    else if (form.getParentComponent() != nullptr) {
+        cheight = form.getPreferredHeight();
+    }
+    if (cheight > 0)
+      height += cheight + (ContentInset * 2);
+
     return height;
 }
 
@@ -182,20 +200,19 @@ int YanDialog::getMessageHeight()
 void YanDialog::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-    area = area.reduced(BorderWidth);
+    area = area.reduced(BorderWidth + MainInset);
 
-    area.removeFromBottom(4);
-    buttonRow.setBounds(area.removeFromBottom(20));
+    area.removeFromBottom(BottomGap);
+    buttonRow.setBounds(area.removeFromBottom(ButtonHeight));
+    (void)area.removeFromBottom(ButtonGap);
     
     if (title.length() > 0) {
-        area = area.reduced(TitleInset);
-        (void)area.removeFromTop(TitleHeight);
+        (void)area.removeFromTop(TitleHeight + TitlePostGap);
     }
 
     if (messages.size() > 0) {
-        if (title.length() > 0)
-          (void)area.removeFromTop(TitleMessageGap);
-        (void)area.removeFromTop(getMessageHeight());
+        int mheight = getMessageHeight();
+        (void)area.removeFromTop(mheight + MessagePostGap);
     }
 
     area = area.reduced(ContentInset);
@@ -211,18 +228,17 @@ void YanDialog::paint(juce::Graphics& g)
 {
     juce::Rectangle<int> area = getLocalBounds();
     
-    g.fillAll (juce::Colours::black);
+    g.fillAll(juce::Colours::black);
     
     if (borderColor == juce::Colour())
-      borderColor = juce::Colours::yellow;
+      borderColor = juce::Colours::white;
 
     g.setColour(borderColor);
     g.drawRect(area, BorderWidth);
 
-    area = area.reduced(BorderWidth);
+    area = area.reduced(BorderWidth + MainInset);
     
     if (title.length() > 0) {
-        area = area.reduced(TitleInset);
         juce::Rectangle<int> titleArea = area.removeFromTop(TitleHeight);
         g.setFont(JuceUtil::getFont(TitleHeight));
         if (serious)
@@ -230,25 +246,23 @@ void YanDialog::paint(juce::Graphics& g)
         else
           g.setColour(juce::Colours::green);
         g.drawText(title, titleArea, juce::Justification::centred);
-        (void)area.removeFromTop(TitleMessageGap);
+        (void)area.removeFromTop(TitlePostGap);
     }
 
     if (messages.size() > 0) {
         juce::Rectangle<int> messageArea = area.removeFromTop(getMessageHeight());
 
         // temporary background to test layout
-        g.setColour(juce::Colours::darkgrey);
-        g.fillRect(messageArea);
+        //g.setColour(juce::Colours::darkgrey);
+        //g.fillRect(messageArea);
 
         g.setColour(juce::Colours::white);
         g.setFont(JuceUtil::getFont(MessageFontHeight));
-        int top = messageArea.getX();
+        int top = messageArea.getY();
         for (auto msg : messages) {
-            g.drawFittedText(msg, top, messageArea.getY(),
+            g.drawFittedText(msg, messageArea.getX(), top,
                              messageArea.getWidth(), MessageFontHeight,
-                             juce::Justification::centred,
-                             1, // max lines
-                             1.0f);
+                             juce::Justification::centred, 1);
             top += MessageFontHeight;
         }
     }

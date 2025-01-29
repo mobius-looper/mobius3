@@ -28,19 +28,22 @@ void Producer::initialize()
 Session* Producer::readStartupSession()
 {
     Session* session = nullptr;
+    juce::StringArray errors;
     
     SystemConfig* sys = supervisor->getSystemConfig();
     juce::String name = sys->getStartupSession();
 
     if (name.length() > 0) {
-        session = clerk->readSession(name);
+        session = clerk->readSession(name, errors);
         // clerk does enough trace, don't need to add more
     }
 
     if (session == nullptr)
-      session = clerk->readDefaultSession();
+      session = clerk->readDefaultSession(errors);
 
     // Clerk returned a dummy Session if the library was corrupt
+    // do something about startup errors...
+    
     return session;
 }
 
@@ -56,12 +59,17 @@ void Producer::saveSession(Session* s)
  */
 Session* Producer::changeSession(juce::String name)
 {
-    Session* session = clerk->readSession(name);
+    juce::StringArray errors;
+    Session* session = clerk->readSession(name, errors);
     if (session != nullptr) {
         SystemConfig* sys = supervisor->getSystemConfig();
         sys->setStartupSession(name);
         supervisor->updateSystemConfig();
     }
+
+    // we're in a menu handler so no place for errors to go unless
+    // you want to pop up a window
+    
     return session;
 }
 
@@ -80,7 +88,8 @@ Session* Producer::readSession(int ordinal)
     juce::OwnedArray<SessionClerk::Folder>* folders = clerk->getFolders();
     if (ordinal >= 0 && ordinal < folders->size()) {
         SessionClerk::Folder *f = (*folders)[ordinal];
-        session = clerk->readSession(f->name);
+        juce::StringArray errors;
+        session = clerk->readSession(f->name, errors);
     }
     else {
         Trace(1, "Producer: Session ordinal out of range %d", ordinal);
@@ -129,49 +138,67 @@ bool Producer::isSessionModified()
 
 Producer::Result Producer::loadSession(juce::String name)
 {
-    (void)name;
     Producer::Result result;
-    result.errors.add("loadSession not implemented");
+
+    Session* neu = clerk->readSession(name, result.errors);
+
+    if (neu != nullptr) {
+        supervisor->loadSession(neu);
+    }
+
     return result;
 }
 
 Producer::Result Producer::newSession(juce::String name)
 {
-    (void)name;
     Producer::Result result;
-    result.errors.add("newSession not implemented");
+    
+    Session* neu = new Session();
+    neu->setName(name);
+
+    // sessiosn must have at least one looping track
+    // 8 has been the default for a long time but may want to lower that
+    neu->reconcileTrackCount(Session::TypeAudio, 8);
+
+    clerk->createSession(neu, result.errors);
+
+    delete neu;
     return result;
 }
 
+/**
+ * Copy is more than just reading and writing under a differet name
+ * if this session has associated content files.  Clerk must make
+ * a recursive copy of the entire directory.
+ *
+ * Future options include copy without content, or some way to share
+ * content.
+ */
 Producer::Result Producer::copySession(juce::String name, juce::String newName)
 {
-    (void)name;
-    (void)newName;
     Producer::Result result;
-    result.errors.add("copySession not implemented");
+
+    clerk->copySession(name, newName, result.errors);
+
     return result;
 }
 
 Producer::Result Producer::renameSession(juce::String name, juce::String newName)
 {
-    (void)name;
-    (void)newName;
     Producer::Result result;
-    result.errors.add("renameSession not implemented");
+
+    clerk->renameSession(name, newName, result.errors);
+
     return result;
 }
 
 Producer::Result Producer::deleteSession(juce::String name)
 {
-    (void)name;
     Producer::Result result;
-    result.errors.add("deleteSession not implemented");
-    return result;
-}
 
-bool Producer::hasInvalidCharacters(juce::String name)
-{
-    return name.containsAnyOf("\\/$.");
+    clerk->deleteSession(name, result.errors);
+
+    return result;
 }
 
 /****************************************************************************/
