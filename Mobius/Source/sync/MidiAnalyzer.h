@@ -28,6 +28,7 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     ~MidiAnalyzer();
 
     void initialize(class SyncMaster* sm, class MidiManager* mm);
+    void setSampleRate(int rate);
     void shutdown();
     void loadSession(class Session* s);
     void refreshState(class SyncState* state);
@@ -76,7 +77,8 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     
     class SyncMaster* syncMaster = nullptr;
     class MidiManager* midiManager = nullptr;
-
+    int sampleRate = 44100;
+    
     SessionHelper sessionHelper;
     MidiQueue inputQueue;
     TempoMonitor tempoMonitor;
@@ -84,7 +86,7 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     DriftMonitor drifter;
 
     // Stream monitoring, eventual replacement for MidiQueue
-
+    bool inClocksReceiving = false;
     bool inStartPending = false;
     bool inContinuePending = false;
     bool inStarted = false;
@@ -93,7 +95,24 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     int inBeat = 0;
     int inSongPosition = 0;
     double inClockTime = 0.0f;
-    
+    int inTraceCount = 0;
+
+    static const int TraceMax = 100;
+    double inTraceCapture[TraceMax + 1];
+    bool inTraceDumped = false;
+
+    static const int SmoothSampleMax = 100;
+    double inTempoSamples[SmoothSampleMax + 1];
+    int inSampleLimit = 50;
+    int inSampleCount = 0;
+    int inSampleIndex = 0;
+    double inSampleTotal = 0.0f;
+    double inSmoothTempo = 0.0f;
+    double lastSmoothTraceTime = 0.0f;
+    int lockedUnitLength = 0;
+    int lockedUnitHead = 0;
+    bool monitorPlaying = false;
+
     // pseudo tracking loop
     int beatsPerBar = 0;
     int barsPerLoop = 0;
@@ -111,6 +130,11 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     void startDetected();
     void stopDetected();
     void continueDetected(int songClock);
+
+    void midiMonitor(const juce::MidiMessage& msg);
+    void tempoMonitorAdvance(double clockTime);
+    void midiMonitorClockCheck();
+    void tempoMonitorReset();
     
 };
 

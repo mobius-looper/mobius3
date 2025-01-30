@@ -736,6 +736,7 @@ void SyncMaster::refreshSampleRate(int rate)
     hostAnalyzer->setSampleRate(rate);
     transport->setSampleRate(rate);
     midiRealizer->setSampleRate(rate);
+    midiAnalyzer->setSampleRate(rate);
 }
 
 void SyncMaster::advance(MobiusAudioStream* stream)

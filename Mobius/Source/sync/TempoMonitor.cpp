@@ -90,10 +90,12 @@ int TempoMonitor::getSmoothTempo()
 
 void TempoMonitor::clock(long msec, double juceTime)
 {
+    (void)juceTime;
     // trace time lag for awhile
     // juceTime is the timestamp from the MidiMessage which when coming
     // from a MidiInput the docs say:
     // "a value equivalent to (Time::getMillisecondCounter() / 1000.0)"
+#if 0    
     if (timeTraceCount < 50) {
         juce::uint32 umsec = juce::Time::getMillisecondCounter();
         double dmsec = juce::Time::getMillisecondCounterHiRes();
@@ -103,6 +105,7 @@ void TempoMonitor::clock(long msec, double juceTime)
         Trace(2, buf);
         timeTraceCount++;
     }
+#endif
     
 	if (mLastTime == 0) {
 		// first one, wait for another

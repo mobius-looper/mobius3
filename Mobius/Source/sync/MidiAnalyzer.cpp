@@ -41,6 +41,11 @@ void MidiAnalyzer::initialize(SyncMaster* sm, MidiManager* mm)
     sessionHelper.setSymbols(sm->getSymbols());
 }
 
+void MidiAnalyzer::setSampleRate(int rate)
+{
+    sampleRate = rate;
+}
+
 void MidiAnalyzer::shutdown()
 {
     midiManager->removeRealtimeListener(this);
@@ -181,6 +186,8 @@ void MidiAnalyzer::checkClocks()
 {
     int now = juce::Time::getMillisecondCounter();
     inputQueue.checkClocks(now);
+
+    midiMonitorClockCheck();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -357,6 +364,9 @@ void MidiAnalyzer::continueDetected(int songClock)
  */
 void MidiAnalyzer::advance(int frames)
 {
+    midiMonitorAdvance(frames);
+
+    
     if (inputQueue.started && unitLength > 0) {
 
         unitPlayHead = unitPlayHead + frames;
@@ -417,7 +427,7 @@ void MidiAnalyzer::checkDrift()
 //
 //////////////////////////////////////////////////////////////////////
 
-void MidiAnalyzer::midiMonitor(juce::MidiMessage& msg)
+void MidiAnalyzer::midiMonitor(const juce::MidiMessage& msg)
 {
     const juce::uint8* data = msg.getRawData();
     const juce::uint8 status = *data;
@@ -431,7 +441,7 @@ void MidiAnalyzer::midiMonitor(juce::MidiMessage& msg)
                 inClock = 0;
             }
             else {
-                Trace(1, "MidiAnalyzer: Redundant Start");
+                Trace(1, "MA: Redundant Start");
             }
 		}
             break;
@@ -441,7 +451,7 @@ void MidiAnalyzer::midiMonitor(juce::MidiMessage& msg)
                 inContinuePending = true;
             }
             else {
-                Trace(1, "MidiAnalyzer: Redundant Continue");
+                Trace(1, "MA: Redundant Continue");
             }
 		}
             break;
@@ -450,10 +460,10 @@ void MidiAnalyzer::midiMonitor(juce::MidiMessage& msg)
                 inStarted = false;
                 inStartPending = false;
                 inContinuePending = false;
-                Trace(2, "MidiAnalyzer: Stop");
+                Trace(2, "MA: Stop");
             }
             else {
-                Trace(1, "MidiAnalyzer: Redundant Stop");
+                Trace(1, "MA: Redundant Stop");
             }
 		}
             break;
@@ -462,10 +472,14 @@ void MidiAnalyzer::midiMonitor(juce::MidiMessage& msg)
                 inSongPosition = msg.getSongPositionPointerMidiBeat();
             }
             else
-              Trace(1, "MidiAnalyzer: Redundant Stop");
+              Trace(1, "MA: Unexpected SongPosition");
 		}
             break;
 		case MS_CLOCK: {
+            if (!inClocksReceiving) {
+                Trace(2, "MA: Clocks starting");
+                inClocksReceiving = true;
+            }
             if (inStartPending) {
                 inStarted = true;
                 inStartPending = false;
@@ -474,9 +488,9 @@ void MidiAnalyzer::midiMonitor(juce::MidiMessage& msg)
                 inBeatClock = 0;
                 inBeat = 0;
                 if (inContinuePending)
-                  Trace(2, "MidiAnalyzer: Continue");
+                  Trace(2, "MA: Continue");
                 else
-                  Trace(2, "MidiAnalyzer: Start");
+                  Trace(2, "MA: Start");
             }
             else if (inStarted) {
                 inClock++;
@@ -484,29 +498,162 @@ void MidiAnalyzer::midiMonitor(juce::MidiMessage& msg)
                 if (inBeatClock == 24) {
                     inBeat++;
                     inBeatClock = 0;
-                    Trace(2, "MidiAnalyzer: Beat");
+                    Trace(2, "MA: Beat");
                 }
             }
-            tempoMonitorAdvance();
+            tempoMonitorAdvance(msg.getTimeStamp());
         }
 		break;
 	}
 }
 
+/**
+ * The juce::MidiMessage timestamp is "milliseconds / 1000.0f"
+ * in other words a "seconds" timestamp.  The delta
+ * between clocks is then "seconds per clock".
+ *
+ * There are 24 clocks per quarter note so tempo is:
+ *
+ *      60 / secsPerClock * 24
+ *
+ * There is jitter even when using a direct path to the MidiInput
+ * callback.  Trace clouds this to dump the results after capture.
+ *
+ *  90.016129, 89.714100, 91.415700, 89.285714, 89.285714, 89.836927
+ *  90.074510, 90.446661, 89.819500, 90.219159, 89.572989, 90.302910
+ *  90.456154, 89.710558, 89.877946. 90.039149, 89.891842, 90.047257
+ *  89.885053
+ *
+ * The MC-101 tempo for those measurements was 90.0.
+ *
+ * 
+ */
 void MidiAnalyzer::tempoMonitorAdvance(double clockTime)
 {
     if (inClockTime > 0.0f) {
         double delta = clockTime - inClockTime;
         if (delta < 0.0f) {
-            Trace(2, "MidiAnalyzer: Clock went back in time");
+            Trace(2, "MA: Clock went back in time");
+            tempoMonitorReset();
         }
         else {
+            // we now have the milliseconds between two clocks
+            // calculate the tempo in BPM
+            // juce timestamp is milliseconds / 1000
+
+            // this captures the tempo
+#if 0            
+            double secsPerQuarter = delta * 24.0f;
+            double tempo = 60.0f / secsPerQuarter;
+            if (inTraceCount < TempoTraceMax) {
+                inTraceCapture[inTraceCount] = tempo;
+                inTraceCount++;
+            }
+#endif
+            // this just captures the delta and computes tempo later
+            if (inTraceCount < TraceMax) {
+                inTraceCapture[inTraceCount] = delta;
+                inTraceCount++;
+            }
             
+            double newTempo = 60.0f / (delta * 24.0f);
+
+            if (inSampleCount == inSampleLimit) {
+                // we have gathered enough samples, drop the first one
+                int firstIndex = inSampleIndex - inSampleLimit;
+                if (firstIndex < 0)
+                  firstIndex += SmoothSampleMax;
+                double firstSample = inTempoSamples[firstIndex];
+                inSampleTotal -= firstSample;
+            }
+            else {
+                inSampleCount++;
+            }
+            
+            // deposit the new sample
+            inSampleTotal += newTempo;
+            inTempoSamples[inSampleIndex] = newTempo;
+            inSampleIndex++;
+            if (inSampleIndex == SmoothSampleMax)
+              inSampleIndex = 0;
+
+            if (inSampleCount == inSampleLimit)
+              inSmoothTempo = inSampleTotal / (float)inSampleLimit;
+        }
+    }
+    else {
+        Trace(2, "MidiMonitor: Clocks starting");
+    }
+    inClockTime = clockTime;
+}
+
+void MidiAnalyzer::tempoMonitorReset()
+{
+    inSampleCount = 0;
+    inSampleIndex = 0;
+    inSampleTotal = 0.0f;
+}
+
+void MidiAnalyzer::midiMonitorClockCheck()
+{
+    double now = juce::Time::getMillisecondCounterHiRes();
+    
+    if (inClocksReceiving && inClockTime > 0.0f) {
+        // juce timestamp is divided by 1000 for some reason
+        double nowSeconds = now / 1000.0f;
+        double delta = nowSeconds - inClockTime;
+        if (delta > 1000.0f) {
+            // clocks dead for more than a second
+            Trace(2, "MA: Clocks stopped");
+            inClocksReceiving = false;
+            tempoMonitorReset();
         }
     }
 
-    inClockTime = clockTime;
+    if (!inTraceDumped && inTraceCount >= TraceMax) {
+        char buf[64];
+        for (int i = 0 ; i < TraceMax ; i++) {
+
+            // this assumes tempo was pre calculated
+            //sprintf(buf, "%f", inTraceCapture[i]);
+
+            // this doesn't
+            double tempo = 60.0f / (inTraceCapture[i] * 24.0f);
+            sprintf(buf, "%f", tempo);
+            Trace(2, buf);
+        }
+        inTraceDumped = true;
+    }
+
+    double smoothTraceDelta = now - lastSmoothTraceTime;
+    if (lastSmoothTraceTime == 0.0f || smoothTraceDelta > 1000.0f) {
+
+        double secsPerBeat = (60.0f / inSmoothTempo);
+        double samplesPerBeat = (float)sampleRate * secsPerBeat;
+        int smoothUnitLength = (int)samplesPerBeat;
+        if ((smoothUnitLength % 2) == 1)
+          smoothUnitLength++;
+        
+        char buf[64];
+        sprintf(buf, "Smooth tempo: %f unit %d", inSmoothTempo, smoothUnitLength);
+        Trace(2, buf);
+        lastSmoothTraceTime = now;
+    }
 }
+
+void MidiAnalyzer::midiMonitorAdvance(int frames)
+{
+    if (lockedUnitLength > 0) {
+        lockedUnitHead += frames;
+        if (lockedUnitHead > lockedUnitLength) {
+            lockedUnitHead -= lockedUnitFrames;
+        }
+    }
+}
+
+void MidiAnalyzer::consumeMonitor()
+{
+    
 
 /****************************************************************************/
 /****************************************************************************/
