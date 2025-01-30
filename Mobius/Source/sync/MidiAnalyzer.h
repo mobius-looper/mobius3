@@ -83,6 +83,17 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     SyncAnalyzerResult result;
     DriftMonitor drifter;
 
+    // Stream monitoring, eventual replacement for MidiQueue
+
+    bool inStartPending = false;
+    bool inContinuePending = false;
+    bool inStarted = false;
+    int inClock = 0;
+    int inBeatClock = 0;
+    int inBeat = 0;
+    int inSongPosition = 0;
+    double inClockTime = 0.0f;
+    
     // pseudo tracking loop
     int beatsPerBar = 0;
     int barsPerLoop = 0;

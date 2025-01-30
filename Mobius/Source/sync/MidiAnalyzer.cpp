@@ -199,6 +199,8 @@ void MidiAnalyzer::checkClocks()
 void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& source)
 {
     (void)source;
+
+    midiMonitor(msg);
     
     const juce::uint8* data = msg.getRawData();
     const juce::uint8 status = *data;
@@ -405,6 +407,105 @@ void MidiAnalyzer::checkDrift()
     //int drift = drifter.getDrift();
     //if (drift > 256)
     //Trace(2, "Transport: Drift %d", drift);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Midi Stream Monitoring
+//
+// This is a simplification of and eventual replacemenet for MidiQueue
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiAnalyzer::midiMonitor(juce::MidiMessage& msg)
+{
+    const juce::uint8* data = msg.getRawData();
+    const juce::uint8 status = *data;
+    
+	switch (status) {
+		case MS_START: {
+            if (!inStarted) {
+                inStartPending = true;
+                inContinuePending = false;
+                inSongPosition = 0;
+                inClock = 0;
+            }
+            else {
+                Trace(1, "MidiAnalyzer: Redundant Start");
+            }
+		}
+            break;
+		case MS_CONTINUE: {
+            if (!inStarted) {
+                inStartPending = true;
+                inContinuePending = true;
+            }
+            else {
+                Trace(1, "MidiAnalyzer: Redundant Continue");
+            }
+		}
+            break;
+		case MS_STOP: {
+            if (inStarted) {
+                inStarted = false;
+                inStartPending = false;
+                inContinuePending = false;
+                Trace(2, "MidiAnalyzer: Stop");
+            }
+            else {
+                Trace(1, "MidiAnalyzer: Redundant Stop");
+            }
+		}
+            break;
+		case MS_SONGPOSITION: {
+            if (!inStarted) {
+                inSongPosition = msg.getSongPositionPointerMidiBeat();
+            }
+            else
+              Trace(1, "MidiAnalyzer: Redundant Stop");
+		}
+            break;
+		case MS_CLOCK: {
+            if (inStartPending) {
+                inStarted = true;
+                inStartPending = false;
+                // no this isn't accurate, we can start on a sixteenth with song position
+                inClock = 0;
+                inBeatClock = 0;
+                inBeat = 0;
+                if (inContinuePending)
+                  Trace(2, "MidiAnalyzer: Continue");
+                else
+                  Trace(2, "MidiAnalyzer: Start");
+            }
+            else if (inStarted) {
+                inClock++;
+                inBeatClock++;
+                if (inBeatClock == 24) {
+                    inBeat++;
+                    inBeatClock = 0;
+                    Trace(2, "MidiAnalyzer: Beat");
+                }
+            }
+            tempoMonitorAdvance();
+        }
+		break;
+	}
+}
+
+void MidiAnalyzer::tempoMonitorAdvance(double clockTime)
+{
+    if (inClockTime > 0.0f) {
+        double delta = clockTime - inClockTime;
+        if (delta < 0.0f) {
+            Trace(2, "MidiAnalyzer: Clock went back in time");
+        }
+        else {
+            
+        }
+    }
+
+    inClockTime = clockTime;
 }
 
 /****************************************************************************/
