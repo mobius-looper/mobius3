@@ -1,0 +1,9 @@
+echo "Compiling documentation"
+
+cd c:/dev/mobius3/web/circularlabs
+
+# See here for command line arguments https://gohugo.io/commands/hugo/
+# -D and --buildDrafts are the same thing
+
+hugo --buildDrafts
+

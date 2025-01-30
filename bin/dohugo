@@ -1,0 +1,17 @@
+#
+# see here form command line arguments
+# https://gohugo.io/commands/hugo_server/
+#
+# -D is the same as --buildDrafts and includes content marked as draft
+#
+# -c is the path to the content directory
+#
+# -O or --openbrowser opens a browser immediately
+#   didn't work for me
+#
+# default port is 1313
+
+hugo server -D -c c:/dev/mobius3/web/circularlabs
+
+
+

@@ -6,9 +6,9 @@
 <StaticConfig>
 
   <Tree name='sessionGlobal'>
-    <Tree name='General'/>
     <Tree name='Ports'/>
     <Tree name='Sync'/>
+    <Tree name='Miscellany'/>
   </Tree>
   
   <Tree name='sessionAudioTrack'>
@@ -25,7 +25,7 @@
     <Tree name='LoopSwitch'/>
   </Tree>
 
-  <Form name='sessionGlobalGeneral' title='General Parameters'
+  <Form name='sessionGlobalMiscellany' title='Obscure Things for Advanced Users'
         symbols='longPress,noiseFloor,monitorAudio,quickSave,spreadRange,fadeFrames,maxSyncDrift,defaultPreset,eventScript,userFileFolder'/>
 
   <Form name='sessionGlobalPorts' title='IO Ports'
