@@ -89,6 +89,7 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     bool inClocksReceiving = false;
     bool inStartPending = false;
     bool inContinuePending = false;
+    bool inBeatPending = false;
     bool inStarted = false;
     int inClock = 0;
     int inBeatClock = 0;
@@ -109,11 +110,10 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     double inSampleTotal = 0.0f;
     double inSmoothTempo = 0.0f;
     double lastSmoothTraceTime = 0.0f;
-    int lockedUnitLength = 0;
-    int lockedUnitHead = 0;
-    bool monitorPlaying = false;
+    int inStreamTime = 0;
 
     // pseudo tracking loop
+    bool playing = false;
     int beatsPerBar = 0;
     int barsPerLoop = 0;
     int unitLength = 0;

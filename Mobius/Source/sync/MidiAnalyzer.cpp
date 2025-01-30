@@ -267,15 +267,60 @@ void MidiAnalyzer::analyze(int blockFrames)
     
     result.reset();
 
-    inputQueue.iterateStart();
-    MidiSyncEvent* mse = inputQueue.iterateNext();
-    while (mse != nullptr) {
-        if (inputQueue.isStarted())
-          detectBeat(mse);
-        mse = inputQueue.iterateNext();
+    bool useMidiQueue = false;
+    if (useMidiQueue) {
+        inputQueue.iterateStart();
+        MidiSyncEvent* mse = inputQueue.iterateNext();
+        while (mse != nullptr) {
+            if (inputQueue.isStarted())
+              detectBeat(mse);
+            mse = inputQueue.iterateNext();
+        }
+        inputQueue.flushEvents();
     }
-    inputQueue.flushEvents();
+    else {
+        // look at flags left behind by the clock monitor
+        if (playing != inStarted) {
+            if (inStarted) {
+                // since we're always behind, start the beat at frame zero
+                result.started = true;
+                //drifter.orient(unitLength);
+                unitPlayHead = 0;
+                // shold always be zero
+                elapsedBeats = inBeat;
+                playing = true;
+                unitLength = 0;
 
+                // todo: deal with continue
+                inContinuePending = false;
+            }
+            else {
+                result.stopped = true;
+                unitLength = 0;
+            }
+        }
+        else if (playing) {
+            if (elapsedBeats != inBeat) {
+                drifter.addBeat(0);
+                if (unitLength == 0) {
+                    // the first beat after starting
+                    double secsPerBeat = (60.0f / inSmoothTempo);
+                    double samplesPerBeat = (float)sampleRate * secsPerBeat;
+                    int smoothUnitLength = (int)samplesPerBeat;
+                    if ((smoothUnitLength % 2) == 1)
+                      smoothUnitLength++;
+                    unitLength = smoothUnitLength;
+                    Trace(2, "MidiAnalyzer: Locking unit length %d", unitLength);
+                    result.beatDetected = true;
+                }
+                else {
+                    // once the unit length is set, beats are determined by the
+                    // virtual loop
+                }
+                elapsedBeats = inBeat;
+            }
+        }
+    }
     advance(blockFrames);
 }
 
@@ -364,9 +409,7 @@ void MidiAnalyzer::continueDetected(int songClock)
  */
 void MidiAnalyzer::advance(int frames)
 {
-    midiMonitorAdvance(frames);
-
-    
+#if 0    
     if (inputQueue.started && unitLength > 0) {
 
         unitPlayHead = unitPlayHead + frames;
@@ -410,6 +453,7 @@ void MidiAnalyzer::advance(int frames)
 
     if (result.loopDetected)
       checkDrift();
+#endif    
 }
 
 void MidiAnalyzer::checkDrift()
@@ -460,6 +504,7 @@ void MidiAnalyzer::midiMonitor(const juce::MidiMessage& msg)
                 inStarted = false;
                 inStartPending = false;
                 inContinuePending = false;
+                inBeatPending = false;
                 Trace(2, "MA: Stop");
             }
             else {
@@ -483,6 +528,8 @@ void MidiAnalyzer::midiMonitor(const juce::MidiMessage& msg)
             if (inStartPending) {
                 inStarted = true;
                 inStartPending = false;
+                inBeatPending = true;
+                inStreamTime = 0;
                 // no this isn't accurate, we can start on a sixteenth with song position
                 inClock = 0;
                 inBeatClock = 0;
@@ -499,6 +546,11 @@ void MidiAnalyzer::midiMonitor(const juce::MidiMessage& msg)
                     inBeat++;
                     inBeatClock = 0;
                     Trace(2, "MA: Beat");
+                    if (inBeatPending) {
+                        // don't need this here, let the audio thread handle it
+                        //midiMonitorFirstBeat();
+                        inBeatPending = false;
+                    }
                 }
             }
             tempoMonitorAdvance(msg.getTimeStamp());
@@ -640,20 +692,6 @@ void MidiAnalyzer::midiMonitorClockCheck()
         lastSmoothTraceTime = now;
     }
 }
-
-void MidiAnalyzer::midiMonitorAdvance(int frames)
-{
-    if (lockedUnitLength > 0) {
-        lockedUnitHead += frames;
-        if (lockedUnitHead > lockedUnitLength) {
-            lockedUnitHead -= lockedUnitFrames;
-        }
-    }
-}
-
-void MidiAnalyzer::consumeMonitor()
-{
-    
 
 /****************************************************************************/
 /****************************************************************************/
