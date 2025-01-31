@@ -9,6 +9,7 @@
   longPress='500'
   spreadRange='48'
   driftCheckPoint='loop'
+  midiRecordMode='average'
   setup='Default'
   controllerActionThreshold='64'>
   <Preset
@@ -131,6 +132,10 @@
     active='0'
     defaultSyncSource='none'
     defaultTrackSyncUnit='loop'
+    maxTempo='300'
+    minTempo='20'
+    muteSyncMode='transport'
+    outRealign='midiStart'
     realignTime='start'
     resizeSyncAdjust='none'
     slaveSyncUnit='bar'
@@ -225,6 +230,10 @@
     active='0'
     defaultSyncSource='track'
     defaultTrackSyncUnit='subcycle'
+    maxTempo='300'
+    minTempo='20'
+    muteSyncMode='transport'
+    outRealign='midiStart'
     realignTime='start'
     resizeSyncAdjust='none'
     slaveSyncUnit='beat'
@@ -316,6 +325,7 @@
     <Binding name='Message' trigger='key' release='true' value='80' args='p up'/>
     <Binding name='NextTrack' trigger='note' value='41' channel='1'/>
     <Binding name='PrevTrack' trigger='note' value='43' channel='1'/>
+    <Binding name='Record' trigger='note' value='36' channel='3'/>
   </BindingSet>
   <BindingSet name='midi1'>
     <Binding name='Overdub' trigger='note' value='50' channel='1'/>

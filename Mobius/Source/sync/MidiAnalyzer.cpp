@@ -188,6 +188,8 @@ void MidiAnalyzer::checkClocks()
     inputQueue.checkClocks(now);
 
     midiMonitorClockCheck();
+
+    newTempoMonitor.checkStop();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -207,7 +209,9 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
 {
     (void)source;
 
+    // experiments
     midiMonitor(msg);
+    newTempoMonitor.consume(msg);
     
     const juce::uint8* data = msg.getRawData();
     const juce::uint8 status = *data;

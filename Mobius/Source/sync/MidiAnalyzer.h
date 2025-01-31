@@ -19,6 +19,7 @@
 #include "SyncAnalyzer.h"
 #include "SyncAnalyzerResult.h"
 #include "DriftMonitor.h"
+#include "MidiTempoMonitor.h"
 
 class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
 {
@@ -84,6 +85,7 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     TempoMonitor tempoMonitor;
     SyncAnalyzerResult result;
     DriftMonitor drifter;
+    MidiTempoMonitor newTempoMonitor;
 
     // Stream monitoring, eventual replacement for MidiQueue
     bool inClocksReceiving = false;

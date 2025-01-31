@@ -34,6 +34,10 @@
               file="Source/sync/MidiRealizer.cpp"/>
         <FILE id="TbaOqY" name="MidiRealizer.h" compile="0" resource="0" file="Source/sync/MidiRealizer.h"/>
         <FILE id="BvMR0q" name="MidiSyncEvent.h" compile="0" resource="0" file="Source/sync/MidiSyncEvent.h"/>
+        <FILE id="yB2R7n" name="MidiTempoMonitor.cpp" compile="1" resource="0"
+              file="Source/sync/MidiTempoMonitor.cpp"/>
+        <FILE id="nRMyn6" name="MidiTempoMonitor.h" compile="0" resource="0"
+              file="Source/sync/MidiTempoMonitor.h"/>
         <FILE id="blqXw9" name="Pulsator.cpp" compile="1" resource="0" file="Source/sync/Pulsator.cpp"/>
         <FILE id="bLVZYB" name="Pulsator.h" compile="0" resource="0" file="Source/sync/Pulsator.h"/>
         <FILE id="efK3Bv" name="Pulse.h" compile="0" resource="0" file="Source/sync/Pulse.h"/>

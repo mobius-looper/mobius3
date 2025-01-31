@@ -12,6 +12,7 @@ New documentation will be focused on new features and things that have changed s
 ## New Documentation
 
 - [Sessions](../docs/sessions)
+- [Transport](../docs/transport)
 - [Upgrading from 2.5](../docs/upgrading)
 
 ## Feature Notes
