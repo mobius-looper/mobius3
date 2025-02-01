@@ -261,9 +261,6 @@ void MidiAnalyzer::analyze(int blockFrames)
             if (elapsedBeats + 1 != eventMonitor.elapsedBeats)
               Trace(1, "MidiAnalyzer: Elapsed beat mismatch");
 
-            // drifter monitor always gets a native beat
-            drifter.addBeat(0);
-
             if (unitLength == 0 || resyncUnitLength) {
                 // virtual loop isn't running yet
                 lockUnitLength(blockFrames);
@@ -301,10 +298,16 @@ void MidiAnalyzer::deriveTempo()
  */
 void MidiAnalyzer::lockUnitLength(int blockFrames)
 {
+    (void)blockFrames;
+    double clockLength = tempoMonitor.getAverageClockLength();
     int newUnitLength = tempoMonitor.getAverageUnitLength();
 
-    if (unitLength == 0)
-      Trace(2, "MidiAnalyzer: Locked unit length %d", newUnitLength);
+    if (unitLength == 0) {
+        char buf[128];
+        sprintf(buf, "MidiAnalyzer: Locked unit length %d clock length %f running average %f",
+                newUnitLength, clockLength, tempoMonitor.getAverageClock());
+        Trace(2, buf);
+    }
     else if (unitLength == newUnitLength)
       Trace(2, "MidiAnalyzer: Locked unit length remains %d", unitLength);
     else 
@@ -313,26 +316,15 @@ void MidiAnalyzer::lockUnitLength(int blockFrames)
 
     unitLength = newUnitLength;
     resyncUnitLength = false;
-    drifter.orient(unitLength);
 
-    if (unitLength < unitPlayHead) {
-        // the unit length is less than the amount of block frames
-        // we've consumed, unclear if this can happen
-        Trace(1, "MidiAnalyzer: Locked unit length less than advance length %d", unitPlayHead);
-        unitLength = unitPlayHead;
+    unitLength = newUnitLength;
+    unitPlayHead = 0;
+    beat = 1;
 
-        // register a beat, and orient the play head so advance doesn't try to do it again
-        result.beatDetected = true;
-        unitPlayHead = 0;
-        beat = 1;
-    }
-    else {
-        // unit extends into or beyond this block, let advance handle it
-        if (unitPlayHead + blockFrames < unitLength) {
-            // unit ended up being larger than one block away, can this happen?
-            Trace(1, "MidiAnalyzer: UnitLength moved beyond block where first beat detected");
-        }
-    }
+    // stream time advance may not be exactly on a unit, but sonce we are
+    // reorienting the unit length and consider this to be exactly on beta 1
+    // adjust the stream time to match for drift checking
+    streamTime = unitLength;
 }
 
 /**
@@ -360,14 +352,6 @@ void MidiAnalyzer::advance(int frames)
 
             beat++;
             
-            // on every beat, we advance our stream time by a full unit length
-            // this will mean that drift will be large between virtual beats
-            // could also advance it the full block size every time which
-            // makes it possible to monitor after ever clock, but then there will
-            // be a clock's worth of drift in the midi stream, to get accurate drift
-            // you really need to check only on virtual beat boundaries
-            streamTime += unitLength;
-
             result.beatDetected = true;
             result.blockOffset = blockOffset;
 
@@ -386,19 +370,13 @@ void MidiAnalyzer::advance(int frames)
             }
         }
     }
+    
+    streamTime += frames;
+    tempoMonitor.setAudioStreamTime(streamTime);
 
-    // TempoMonitor has been advance it's stream time as clocks came in
-    // we can check drift any time after we detect a beat
-    if (result.loopDetected)
-      checkDrift();
-}
-
-void MidiAnalyzer::checkDrift()
-{
-    int midiStreamTime = tempoMonitor.getStreamTime();
-    int drift = streamTime - midiStreamTime;
-    //if (drift > 256)
-    Trace(2, "Transport: Drift %d", drift);
+    if (result.loopDetected) {
+        Trace(2, "TempoMonitor: Drift %d", tempoMonitor.getDrift());
+    }
 }
 
 /****************************************************************************/

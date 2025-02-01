@@ -21,11 +21,25 @@ void MidiTempoMonitor::reset()
     runningAverage = 0.0f;
     receiving = false;
     streamTime = 0;
+    audioStreamTime = 0;
+    drift = 0;
 }
 
 void MidiTempoMonitor::resetStreamTime()
 {
     streamTime = 0;
+    audioStreamTime = 0;
+    drift = 0;
+}
+
+void MidiTempoMonitor::setAudioStreamTime(int ast)
+{
+    audioStreamTime = ast;
+}
+
+int MidiTempoMonitor::getDrift()
+{
+    return drift;
 }
 
 bool MidiTempoMonitor::isReceiving()
@@ -90,7 +104,9 @@ void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
 
             // regardless of whether we decided to include this in the tempo average
             // the stream time advances
-            streamTime += (float)sampleRate * delta;
+            streamTime += (int)((float)sampleRate * delta);
+
+            drift = audioStreamTime - streamTime;
         }
         lastTimeStamp = ts;
     }
@@ -122,6 +138,16 @@ bool MidiTempoMonitor::looksReasonable(double delta)
         reset();
     }
     return reasonable;
+}
+
+double MidiTempoMonitor::getAverageClock()
+{
+    return runningAverage;
+}
+
+double MidiTempoMonitor::getAverageClockLength()
+{
+    return (float)sampleRate * runningAverage;
 }
 
 /**

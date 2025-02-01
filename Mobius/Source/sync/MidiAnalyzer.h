@@ -15,7 +15,6 @@
 #include "SyncAnalyzerResult.h"
 #include "MidiEventMonitor.h"
 #include "MidiTempoMonitor.h"
-#include "DriftMonitor.h"
 
 class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
 {
@@ -72,7 +71,6 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     MidiEventMonitor eventMonitor;
     MidiTempoMonitor tempoMonitor;
     SyncAnalyzerResult result;
-    DriftMonitor drifter;
 
     // Session parameters
     int beatsPerBar = 0;
@@ -99,7 +97,6 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     void deriveTempo();
     void lockUnitLength(int blockFrames);
     void advance(int frames);
-    void checkDrift();
 };
 
 /****************************************************************************/
