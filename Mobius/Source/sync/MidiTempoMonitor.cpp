@@ -7,6 +7,11 @@
 
 #define MS_CLOCK      0xF8
 
+void MidiTempoMonitor::setSampleRate(int rate)
+{
+    sampleRate = rate;
+}
+
 void MidiTempoMonitor::reset()
 {
     windowPosition = 0;
@@ -15,11 +20,22 @@ void MidiTempoMonitor::reset()
     runningTotal = 0.0f;
     runningAverage = 0.0f;
     receiving = false;
+    streamTime = 0;
+}
+
+void MidiTempoMonitor::resetStreamTime()
+{
+    streamTime = 0;
 }
 
 bool MidiTempoMonitor::isReceiving()
 {
     return receiving;
+}
+
+int MidiTempoMonitor::getStreamTime()
+{
+    return streamTime;
 }
 
 void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
@@ -41,6 +57,8 @@ void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
             // not expecting this
             Trace(1, "MidiTempoMonitor: TimeStamp went back in time");
             reset();
+            // this will have reset stream time which will make drift detection
+            // way out of wack, but it really shouldn't happen
         }
         else {
             double delta = ts - lastTimeStamp;
@@ -69,6 +87,10 @@ void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
                 if (windowFull)
                   runningAverage = runningTotal / (float)windowSize;
             }
+
+            // regardless of whether we decided to include this in the tempo average
+            // the stream time advances
+            streamTime += (float)sampleRate * delta;
         }
         lastTimeStamp = ts;
     }
@@ -123,8 +145,10 @@ void MidiTempoMonitor::checkStop()
     if (traceEnabled) {
         double traceDelta = now - lastTrace;
         if (traceDelta > 1000.0f) {
+            int unit = getAverageUnitLength();
             char buf[64];
-            sprintf(buf, "MidiTempoMonitor: Average %f", runningAverage);
+            sprintf(buf, "MidiTempoMonitor: Average seconds %f unit %d",
+                    runningAverage, unit);
             Trace(2, buf);
             lastTrace = now;
         }
@@ -145,7 +169,7 @@ float MidiTempoMonitor::getAverageTempo()
     return (float)beatsPerMinute;
 }
 
-int MidiTempoMonitor::getAverageUnitLength(int sampleRate)
+int MidiTempoMonitor::getAverageUnitLength()
 {
     double secondsPerBeat = runningAverage * 24;
     double framesPerBeat = (float)sampleRate * secondsPerBeat;
@@ -155,10 +179,12 @@ int MidiTempoMonitor::getAverageUnitLength(int sampleRate)
     return unitLength;
 }
 
-float MidiTempoMonitor::unitLengthToTempo(int length, int sampleRate)
+float MidiTempoMonitor::unitLengthToTempo(int length)
 {
     float tempo = 0.0f;
-    if (length > 0) {
+    if (sampleRate <= 0)
+      Trace(1, "MidiTempoMonitor::unitLengthToTempo Sample rate not set");
+    else {
         double secondsPerBeat = (float)length / (float)sampleRate;
         double beatsPerMinute = 60.0f / secondsPerBeat;
         tempo = (float)beatsPerMinute;

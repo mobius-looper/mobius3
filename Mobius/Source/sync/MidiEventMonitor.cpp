@@ -57,10 +57,11 @@ void MidiEventMonitor::reset()
     beatClock = 0;
 }
 
-void MidiEventMonitor::consume(const juce::MidiMessage& msg)
+bool MidiEventMonitor::consume(const juce::MidiMessage& msg)
 {
     const juce::uint8* data = msg.getRawData();
     const juce::uint8 status = *data;
+    bool startPoint = false;
     
 	switch (status) {
 		case MS_START: {
@@ -109,6 +110,7 @@ void MidiEventMonitor::consume(const juce::MidiMessage& msg)
             if (startPending) {
                 started = true;
                 startPending = false;
+                startPoint = true;
                 clock = 0;
                 elapsedBeats = 0;
                 if (!continuePending) {
@@ -147,6 +149,7 @@ void MidiEventMonitor::consume(const juce::MidiMessage& msg)
         }
 		break;
 	}
+    return startPoint;
 }
 
 /****************************************************************************/

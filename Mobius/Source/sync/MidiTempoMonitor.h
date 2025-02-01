@@ -43,13 +43,26 @@ class MidiTempoMonitor
     MidiTempoMonitor() {}
     ~MidiTempoMonitor() {}
 
+    void setSampleRate(int rate);
     void reset();
+
+    /**
+     * This is called by MidiEventMonitor any time the "start point" is detected.
+     * This happens after both MIDI Start and Continue messages are received
+     * and the first clock after those two messages is received.
+     * The stream time for drift detected is reset to zero.
+     */
+    void resetStreamTime();
     
     /**
-     * This is called for every MIDI realtime message received.
+     * This is called for every MIDI clock message.
      */
     void consume(const juce::MidiMessage& msg);
 
+    /**
+     * Called periodically from the audio thread to detect when clocks
+     * have stopped being received.
+     */
     void checkStop();
 
     /**
@@ -65,14 +78,21 @@ class MidiTempoMonitor
     /**
      * Return the unit length calculated from the tempo.
      */
-    int getAverageUnitLength(int sampleRate);
+    int getAverageUnitLength();
 
     /**
      * Reverse calculate tempo from unit length after rounding.
      */
-    float unitLengthToTempo(int length, int sampleRate);
+    float unitLengthToTempo(int length);
+
+    int getStreamTime();
 
   private:
+
+    /**
+     * Necessary for doing time to sample length conversion.
+     */
+    int sampleRate = 0;
 
     /**
      * True if we are receiving clocks
@@ -122,6 +142,11 @@ class MidiTempoMonitor
     double runningAverage = 0.0f;
 
     /**
+     * The "audio stream time" in samples since the last start point.
+     */
+    int streamTime = 0;
+
+    /**
      * The last time we traced what we're doing if trace was enabled.
      */
     double lastTrace = 0.0f;
@@ -129,7 +154,7 @@ class MidiTempoMonitor
     /**
      * True to enable detailed trace
      */
-    bool traceEnabled = false;
+    bool traceEnabled = true;
 
     bool looksReasonable(double delta);
      

@@ -11,8 +11,6 @@
 #include "../model/SyncState.h"
 #include "../model/PriorityState.h"
 
-#include "MidiQueue.h"
-#include "MidiSyncEvent.h"
 #include "SyncMaster.h"
 #include "MidiAnalyzer.h"
 
@@ -43,6 +41,7 @@ void MidiAnalyzer::initialize(SyncMaster* sm, MidiManager* mm)
 void MidiAnalyzer::setSampleRate(int rate)
 {
     sampleRate = rate;
+    tempoMonitor.setSampleRate(rate);
 }
 
 void MidiAnalyzer::shutdown()
@@ -186,8 +185,14 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
 {
     (void)source;
 
-    eventMonitor.consume(msg);
+    // important TempoMonitor first since EventMonitor may need to
+    // reset it's stream time if a start point is detected
     tempoMonitor.consume(msg);
+    
+    bool startPoint = eventMonitor.consume(msg);
+    
+    if (startPoint)
+      tempoMonitor.resetStreamTime();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -218,6 +223,7 @@ void MidiAnalyzer::analyze(int blockFrames)
             beat = 0;
             bar = 0;
             loop = 0;
+            streamTime = 0;
 
             if (!eventMonitor.continued) {
                 Trace(2, "MidiAnalyzer: Start");
@@ -295,7 +301,7 @@ void MidiAnalyzer::deriveTempo()
  */
 void MidiAnalyzer::lockUnitLength(int blockFrames)
 {
-    int newUnitLength = tempoMonitor.getAverageUnitLength(sampleRate);
+    int newUnitLength = tempoMonitor.getAverageUnitLength();
 
     if (unitLength == 0)
       Trace(2, "MidiAnalyzer: Locked unit length %d", newUnitLength);
@@ -353,6 +359,14 @@ void MidiAnalyzer::advance(int frames)
             unitPlayHead = blockOffset;
 
             beat++;
+            
+            // on every beat, we advance our stream time by a full unit length
+            // this will mean that drift will be large between virtual beats
+            // could also advance it the full block size every time which
+            // makes it possible to monitor after ever clock, but then there will
+            // be a clock's worth of drift in the midi stream, to get accurate drift
+            // you really need to check only on virtual beat boundaries
+            streamTime += unitLength;
 
             result.beatDetected = true;
             result.blockOffset = blockOffset;
@@ -372,19 +386,17 @@ void MidiAnalyzer::advance(int frames)
             }
         }
     }
-    
-    // we can advance the drift monitor even if we're not playing but
-    // if they're adjusting the tempo while stopped, this could cause
-    // a lot of trace warnings
-    drifter.advanceStreamTime(frames);
 
+    // TempoMonitor has been advance it's stream time as clocks came in
+    // we can check drift any time after we detect a beat
     if (result.loopDetected)
       checkDrift();
 }
 
 void MidiAnalyzer::checkDrift()
 {
-    int drift = drifter.getDrift();
+    int midiStreamTime = tempoMonitor.getStreamTime();
+    int drift = streamTime - midiStreamTime;
     //if (drift > 256)
     Trace(2, "Transport: Drift %d", drift);
 }

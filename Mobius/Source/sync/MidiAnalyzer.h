@@ -94,7 +94,8 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     int beat = 0;
     int bar = 0;
     int loop = 0;
-
+    int streamTime = 0;
+    
     void deriveTempo();
     void lockUnitLength(int blockFrames);
     void advance(int frames);

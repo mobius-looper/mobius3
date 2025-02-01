@@ -2,7 +2,7 @@
  * Small utility that implements the basic algorithm for MIDI realtime event stream
  * monitoring and detecting state transitions.
  *
- * Analysis of clock tempo is performed by MidiTempoMonitor
+ * This is called in the MIDI Thread, as timestamped events are received.
  *
  */
 
@@ -17,9 +17,10 @@ class MidiEventMonitor
 
     /**
      * Consume a received message and adjust internal state.
+     * Returns true if we reached a Start Point.
      */
-    void consume(const juce::MidiMessage& msg);
-
+    bool consume(const juce::MidiMessage& msg);
+    
     /**
      * Reset all analysis results.
      * This may be done when disruptions happen in the MIDI stream such as
@@ -82,6 +83,11 @@ class MidiEventMonitor
      * The elapsed clock count since the last Start or Continue
      */
     int clock = 0;
+
+    /**
+     * The elapsed audio stream time in samples since the start point.
+     */
+    int streamTime = 0;
 
   private:
 
