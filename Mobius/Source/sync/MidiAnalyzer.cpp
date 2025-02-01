@@ -24,7 +24,6 @@
 
 MidiAnalyzer::MidiAnalyzer()
 {
-	inputQueue.setName("external");
 }
 
 MidiAnalyzer::~MidiAnalyzer()
@@ -69,13 +68,14 @@ void MidiAnalyzer::refreshState(SyncState* state)
     state->midiReceiving = isReceiving();
     state->midiStarted = isRunning();
     state->midiTempo = getTempo();
-
-    state->midiBeat = inputQueue.beat;
-    // need a virtual loop to play like Transport
+    state->midiNativeBeat = eventMonitor.beat;
+    state->midiSongPosition = eventMonitor.songPosition;
+    
+    // !! need a virtual loop to play like Transport
+    state->midiBeat = eventMonitor.beat;
     state->midiBar = 1; 
     state->midiLoop = 1;
     
-    // need to be capturing these from the session
     state->midiBeatsPerBar = beatsPerBar;
     state->midiBarsPerLoop = barsPerLoop;
     state->midiUnitLength = unitLength;
@@ -87,7 +87,7 @@ void MidiAnalyzer::refreshState(SyncState* state)
  */
 void MidiAnalyzer::refreshPriorityState(PriorityState* state)
 {
-    state->midiBeat = inputQueue.beat;
+    state->midiBeat = eventMonitor.beat;
     state->midiBar = 1;
     state->midiLoop = 1;
 }
@@ -108,21 +108,22 @@ SyncAnalyzerResult* MidiAnalyzer::getResult()
  */
 bool MidiAnalyzer::isRunning()
 {
-    return inputQueue.started;
+    return eventMonitor.started;
 }
 
-/**
- * !! Is this really elapsed or did MidiQueue orient it for SongPosition?
- */
+int MidiAnalyzer::getNativeBeat()
+{
+    return eventMonitor.beat;
+}
+
 int MidiAnalyzer::getElapsedBeats()
 {
-    return inputQueue.beat;
+    return elapsedBeats;
 }
 
 float MidiAnalyzer::getTempo()
 {
-    //return tempoMonitor.getTempo();
-    return (float)(tempoMonitor.getSmoothTempo()) / 10.0f;
+    return 120.0f;
 }
 
 /**
@@ -130,7 +131,7 @@ float MidiAnalyzer::getTempo()
  */
 int MidiAnalyzer::getUnitLength()
 {
-    return 0;
+    return 22050;
 }
 
 int MidiAnalyzer::getDrift()
@@ -146,36 +147,17 @@ int MidiAnalyzer::getDrift()
 
 bool MidiAnalyzer::isReceiving()
 {
-    return inputQueue.receivingClocks;
+    return tempoMonitor.isReceiving();
 }
 
 int MidiAnalyzer::getSmoothTempo()
 {
-    return tempoMonitor.getSmoothTempo();
+    return smoothTempo;
 }
 
-int MidiAnalyzer::getSongClock()
+int MidiAnalyzer::getSongPosition()
 {
-    return inputQueue.songClock;
-}
-
-/**
- * Allow enabling and disabling of MidiSyncEvents in cases where
- * Mobius may not be responding and we don't want to overflow the event buffer.
- */
-void MidiAnalyzer::disableEvents()
-{
-    inputQueue.setEnableEvents(false);
-}
-
-void MidiAnalyzer::enableEvents()
-{
-    inputQueue.setEnableEvents(true);
-}
-
-void MidiAnalyzer::flushEvents()
-{
-    inputQueue.flushEvents();
+    return eventMonitor.songPosition;
 }
 
 /**
@@ -184,12 +166,7 @@ void MidiAnalyzer::flushEvents()
  */
 void MidiAnalyzer::checkClocks()
 {
-    int now = juce::Time::getMillisecondCounter();
-    inputQueue.checkClocks(now);
-
-    midiMonitorClockCheck();
-
-    newTempoMonitor.checkStop();
+    tempoMonitor.checkStop();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -209,50 +186,8 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
 {
     (void)source;
 
-    // experiments
-    midiMonitor(msg);
-    newTempoMonitor.consume(msg);
-    
-    const juce::uint8* data = msg.getRawData();
-    const juce::uint8 status = *data;
-    int now = juce::Time::getMillisecondCounter();
-    
-	switch (status) {
-		case MS_QTRFRAME: {
-			// not sure what this is, ignore
-		}
-		break;
-		case MS_SONGPOSITION: {
-			// only considered actionable if a MS_CONTINUE is received later
-            // does not generate a MidiSyncEvent, just save it
-            // I'm not sure what Juce does with this value, assume it's
-            // the usual combination of message bytes
-            inputQueue.setSongPosition(msg.getSongPositionPointerMidiBeat());
-		}
-		break;
-		case MS_SONGSELECT: {
-			// nothing meaningful for Mobius?
-			// could use it to select loops?
-		}
-		break;
-		case MS_CLOCK: {
-            inputQueue.add(status, now);
-            tempoMonitor.clock(now, msg.getTimeStamp());
-		}
-		break;
-		case MS_START: {
-			inputQueue.add(status, now);
-		}
-		break;
-		case MS_STOP: {
-			inputQueue.add(status, now);
-		}
-		break;
-		case MS_CONTINUE: {
-			inputQueue.add(status, now);
-		}
-		break;
-	}
+    eventMonitor.consume(msg);
+    tempoMonitor.consume(msg);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -267,142 +202,131 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
  */
 void MidiAnalyzer::analyze(int blockFrames)
 {
-    (void)blockFrames;
-    
     result.reset();
 
-    bool useMidiQueue = false;
-    if (useMidiQueue) {
-        inputQueue.iterateStart();
-        MidiSyncEvent* mse = inputQueue.iterateNext();
-        while (mse != nullptr) {
-            if (inputQueue.isStarted())
-              detectBeat(mse);
-            mse = inputQueue.iterateNext();
-        }
-        inputQueue.flushEvents();
-    }
-    else {
-        // look at flags left behind by the clock monitor
-        if (playing != inStarted) {
-            if (inStarted) {
-                // since we're always behind, start the beat at frame zero
-                result.started = true;
-                //drifter.orient(unitLength);
-                unitPlayHead = 0;
-                // shold always be zero
-                elapsedBeats = inBeat;
-                playing = true;
-                unitLength = 0;
+    deriveTempo();
+    
+    // detect start and stop
+    if (playing != eventMonitor.started) {
+        if (eventMonitor.started) {
+            // since we're always behind, leave the beat at block frame zero
+            result.started = true;
+            playing = true;
+            resyncUnitLength = true;
+            unitPlayHead = 0;
+            elapsedBeats = 0;
+            beat = 0;
+            bar = 0;
+            loop = 0;
 
-                // todo: deal with continue
-                inContinuePending = false;
+            if (!eventMonitor.continued) {
+                Trace(2, "MidiAnalyzer: Start");
             }
             else {
-                result.stopped = true;
-                unitLength = 0;
+                Trace(2, "MidiAnalyzer: Continue %d", eventMonitor.songPosition);
+                // orient the virtual loop for the song position
+                // number of clocks in one bar
+                int barClocks = beatsPerBar * 24;
+                // the number of clocks in one virtual loop
+                int loopClocks = barsPerLoop * barClocks;
+                // the clock of the native song position we're starting from
+                int songPositionClocks = eventMonitor.songPosition * 6;
+                // the number of loops that elapsed to get there
+                loop = songPositionClocks / loopClocks;
+                // remaining clocks after the last virtual loop
+                int remainingLoopClocks = songPositionClocks % loopClocks;
+                // bars in the remainder
+                bar = remainingLoopClocks / barClocks;
+                // beats in the last bar
+                beat = remainingLoopClocks % barClocks;
             }
         }
-        else if (playing) {
-            if (elapsedBeats != inBeat) {
-                drifter.addBeat(0);
-                if (unitLength == 0) {
-                    // the first beat after starting
-                    double secsPerBeat = (60.0f / inSmoothTempo);
-                    double samplesPerBeat = (float)sampleRate * secsPerBeat;
-                    int smoothUnitLength = (int)samplesPerBeat;
-                    if ((smoothUnitLength % 2) == 1)
-                      smoothUnitLength++;
-                    unitLength = smoothUnitLength;
-                    Trace(2, "MidiAnalyzer: Locking unit length %d", unitLength);
-                    result.beatDetected = true;
-                }
-                else {
-                    // once the unit length is set, beats are determined by the
-                    // virtual loop
-                }
-                elapsedBeats = inBeat;
-            }
+        else {
+            Trace(2, "MidiAnalyzer: Stop");
+            result.stopped = true;
+            playing = false;
         }
     }
+    else if (playing) {
+        if (elapsedBeats != eventMonitor.elapsedBeats) {
+            // if this isn't 1 away, it means we missed a beat
+            // while there can be multiple clocks per block, there should
+            // never be multiple beats per block unless the tempo is unusably fast
+            if (elapsedBeats + 1 != eventMonitor.elapsedBeats)
+              Trace(1, "MidiAnalyzer: Elapsed beat mismatch");
+
+            // drifter monitor always gets a native beat
+            drifter.addBeat(0);
+
+            if (unitLength == 0 || resyncUnitLength) {
+                // virtual loop isn't running yet
+                lockUnitLength(blockFrames);
+            }
+            else {
+                // once the unit length is set, beats are determined by the
+                // virtual loop
+            }
+            elapsedBeats = eventMonitor.elapsedBeats;
+        }
+    }
+    
     advance(blockFrames);
 }
 
-/**
- * Convert a queued MidiSyncEvent into fields in the SyncAnalyzerResult
- * for later consumption by Pulsator.
- * 
- * todo: this is place where we should try to offset the event into the buffer
- * to make it align more accurately with real time.
- *
- * This still queues queues MidiSyncEvents for each clock although only
- * one of them should have the beat flag set within one audio block.
- */
-void MidiAnalyzer::detectBeat(MidiSyncEvent* mse)
+void MidiAnalyzer::deriveTempo()
 {
-    bool detected = false;
-    
-    if (mse->isStop) {
-        stopDetected();
+    float newTempo = tempoMonitor.getAverageTempo();
+    if (tempo == 0.0f) {
+        char buf[64];
+        sprintf(buf, "MidiAnalyzer: Derived tempo %f", newTempo);
+        Trace(2, buf);
     }
-    else if (mse->isStart) {
-        // MidiRealizer deferred this until the first clock
-        // after the start message, so it is a true beat
-        detected = true;
-        startDetected();
-    }
-    else if (mse->isContinue) {
-        // note: There is no actual "continue" in MIDI
-        // there is 0xF2 "song position" followed by 0xFA Start
-        
-        // !! this needs a shit ton of work
-        // only pay attention to this if this is also a beat pulse
-        // not sure if this will work, but I don't want to fuck with continue right now
-        // treat it like a Start and ignore song position
-        if (mse->isBeat) {
-            detected = true;
-            continueDetected(mse->songClock);
-
-            // this is how older code adjusted the Pulse
-            //pulse->mcontinue = true;
-            //pulse->continuePulse = mse->songClock;
-        }
-    }
-    else {
-        // ordinary clock
-        // ignore if this isn't also a beat
-        detected = (mse->isBeat);
-    }
-
-    if (detected && result.beatDetected) {
-        // more than one beat in this block, bad
-        Trace(1, "MidiAnalyzer: Multiple beats detected in block");
-    }
-    
-    result.beatDetected = detected;
+    tempo = newTempo;
 }
 
-void MidiAnalyzer::startDetected()
+/**
+ * Here on the first beat after restarting.
+ * If there is a unit length, it means we stopped and restarted or
+ * continued after running for awhile and the resyncUnitLength flag was set.
+ *
+ * The play head has been advancing without generating beat pulses.
+ * Once the unit length is set, control will fall into advance, whih
+ * will then normally detect a beat in this block.
+ */
+void MidiAnalyzer::lockUnitLength(int blockFrames)
 {
-    Trace(2, "MidiAnalyzer: Start");
-    result.started = true;
+    int newUnitLength = tempoMonitor.getAverageUnitLength(sampleRate);
+
+    if (unitLength == 0)
+      Trace(2, "MidiAnalyzer: Locked unit length %d", newUnitLength);
+    else if (unitLength == newUnitLength)
+      Trace(2, "MidiAnalyzer: Locked unit length remains %d", unitLength);
+    else 
+      Trace(2, "MidiAnalyzer: Locked unit length changes from %d to %d",
+            unitLength, newUnitLength);
+
+    unitLength = newUnitLength;
+    resyncUnitLength = false;
     drifter.orient(unitLength);
 
-    unitPlayHead = 0;
-    elapsedBeats = 0;
-    //lastBeatTime = 0;
-}
+    if (unitLength < unitPlayHead) {
+        // the unit length is less than the amount of block frames
+        // we've consumed, unclear if this can happen
+        Trace(1, "MidiAnalyzer: Locked unit length less than advance length %d", unitPlayHead);
+        unitLength = unitPlayHead;
 
-void MidiAnalyzer::stopDetected()
-{
-    Trace(2, "MidiAnalyzer: Stop");
-    result.stopped = true;
-}
-
-void MidiAnalyzer::continueDetected(int songClock)
-{
-    Trace(2, "MidiAnalyzer: Continue %d", songClock);
-    result.started = true;
+        // register a beat, and orient the play head so advance doesn't try to do it again
+        result.beatDetected = true;
+        unitPlayHead = 0;
+        beat = 1;
+    }
+    else {
+        // unit extends into or beyond this block, let advance handle it
+        if (unitPlayHead + blockFrames < unitLength) {
+            // unit ended up being larger than one block away, can this happen?
+            Trace(1, "MidiAnalyzer: UnitLength moved beyond block where first beat detected");
+        }
+    }
 }
 
 /**
@@ -413,11 +337,12 @@ void MidiAnalyzer::continueDetected(int songClock)
  */
 void MidiAnalyzer::advance(int frames)
 {
-#if 0    
-    if (inputQueue.started && unitLength > 0) {
-
-        unitPlayHead = unitPlayHead + frames;
-        if (unitPlayHead >= unitLength) {
+    if (playing) {
+        unitPlayHead += frames;
+        if (unitLength == 0 || resyncUnitLength) {
+            // still "recording" the initial unit
+        }
+        else if (unitPlayHead >= unitLength) {
 
             // a unit has transpired
             int blockOffset = unitPlayHead - unitLength;
@@ -427,14 +352,10 @@ void MidiAnalyzer::advance(int frames)
             // effectively a frame wrap too
             unitPlayHead = blockOffset;
 
-            elapsedBeats++;
             beat++;
-            
-            //result.beatDetected = true;
-            //result.blockOffset = blockOffset;
 
-            if (!result.beatDetected)
-              Trace(1, "MidiAnalyzer: Beat not detected where we thought");
+            result.beatDetected = true;
+            result.blockOffset = blockOffset;
 
             if (beat >= beatsPerBar) {
 
@@ -450,117 +371,22 @@ void MidiAnalyzer::advance(int frames)
                 }
             }
         }
-
-        // todo: also advance the drift monitor
-        //drifter.advanceStreamTime(frames);
     }
+    
+    // we can advance the drift monitor even if we're not playing but
+    // if they're adjusting the tempo while stopped, this could cause
+    // a lot of trace warnings
+    drifter.advanceStreamTime(frames);
 
     if (result.loopDetected)
       checkDrift();
-#endif    
 }
 
 void MidiAnalyzer::checkDrift()
 {
-    //int drift = drifter.getDrift();
+    int drift = drifter.getDrift();
     //if (drift > 256)
-    //Trace(2, "Transport: Drift %d", drift);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Midi Stream Monitoring
-//
-// This is a simplification of and eventual replacemenet for MidiQueue
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiAnalyzer::midiMonitor(const juce::MidiMessage& msg)
-{
-    const juce::uint8* data = msg.getRawData();
-    const juce::uint8 status = *data;
-    
-	switch (status) {
-		case MS_START: {
-            if (!inStarted) {
-                inStartPending = true;
-                inContinuePending = false;
-                inSongPosition = 0;
-                inClock = 0;
-            }
-            else {
-                Trace(1, "MA: Redundant Start");
-            }
-		}
-            break;
-		case MS_CONTINUE: {
-            if (!inStarted) {
-                inStartPending = true;
-                inContinuePending = true;
-            }
-            else {
-                Trace(1, "MA: Redundant Continue");
-            }
-		}
-            break;
-		case MS_STOP: {
-            if (inStarted) {
-                inStarted = false;
-                inStartPending = false;
-                inContinuePending = false;
-                inBeatPending = false;
-                Trace(2, "MA: Stop");
-            }
-            else {
-                Trace(1, "MA: Redundant Stop");
-            }
-		}
-            break;
-		case MS_SONGPOSITION: {
-            if (!inStarted) {
-                inSongPosition = msg.getSongPositionPointerMidiBeat();
-            }
-            else
-              Trace(1, "MA: Unexpected SongPosition");
-		}
-            break;
-		case MS_CLOCK: {
-            if (!inClocksReceiving) {
-                Trace(2, "MA: Clocks starting");
-                inClocksReceiving = true;
-            }
-            if (inStartPending) {
-                inStarted = true;
-                inStartPending = false;
-                inBeatPending = true;
-                inStreamTime = 0;
-                // no this isn't accurate, we can start on a sixteenth with song position
-                inClock = 0;
-                inBeatClock = 0;
-                inBeat = 0;
-                if (inContinuePending)
-                  Trace(2, "MA: Continue");
-                else
-                  Trace(2, "MA: Start");
-            }
-            else if (inStarted) {
-                inClock++;
-                inBeatClock++;
-                if (inBeatClock == 24) {
-                    inBeat++;
-                    inBeatClock = 0;
-                    Trace(2, "MA: Beat");
-                    if (inBeatPending) {
-                        // don't need this here, let the audio thread handle it
-                        //midiMonitorFirstBeat();
-                        inBeatPending = false;
-                    }
-                }
-            }
-            tempoMonitorAdvance(msg.getTimeStamp());
-        }
-		break;
-	}
+    Trace(2, "Transport: Drift %d", drift);
 }
 
 /****************************************************************************/

@@ -1,12 +1,84 @@
 +++
 title = 'The Transport'
 draft = false
-summary = 'Instructions for using the Transport to synchronize tracks and sending MIDI clocks.'
+summary = 'Instructions for using the Transport to synchronize tracks and send MIDI clocks.'
 +++
 
-The *Transport* is a new feature in build 30.  It can be used in several ways, and takes the place of
-the older features involving the generation of MIDI clocks to control external devices, and can
-serve as an alternative to *Track Sync* for synchronizing the recording of Mobius tracks.
+The *Transport* is a new feature in build 30.   It is responsible for the generation of MIDI clocks that can be used to synchronize with external hardware devices, or other software applications.  It is also the primary mechanism for recording multiple tracks that play in synchronization with each other without drifting apart.
+
+What the Transport does can be difficult to talk about, depending on
+your history with Mobius.  For those that are relatively new, the
+Transport may seem obvious.  All DAWs have a similar concept: a tape-like
+timeline with a tempo, time signature, a metronome, and control buttons like *Play*
+and *Stop*.  Some of the more sophisticated hardware loopers do as
+well.
+
+For those that have used Mobius for a long time, the need for the transport may
+not seem obvious.  Tracks have long been able to generate MIDI clocks and synchronize
+with each other, so why would you be interested in something new that does the same thing?
+
+I'm going to start by describing how the transport can be used from the perspective
+of someone new to Mobius, without any preconcieved notions about how things were done in the past.
+Later there is a section intended for older users that compares the transport with older, similar
+features and explains why you might wish to use the transport instead.
+
+### Transport Basics
+
+Fundamentally, the transport is like a metronome.   You give it a tempo, start it, and while it
+is running it will generate *pulses* or *beats* at that tempo.   You can use these beats for several
+things, but mostly they are used to start and stop the recording of a track at exact times.
+
+Simple metronomes only generate beats at a defined tempo.  But it is usually desireable to think
+about music in larger units of time.  No one turns to their band and says "let's play a 48
+beat blues!".  Beats are usually combined into larger units called *measures* or *bars*, and bars
+are then combined into even larger units called *songs* or in our case *loops*.
+
+The Transport allows you to define three units of time: *beat*, *bar* and *loop*.
+When you create a synchronized recording you can choose to start and stop the recording
+on any of these three time units.  The reordings may not all be exactly the same length but they
+will all share the same *fundamental beat length*.
+
+These concepts should be familiar to anyone that has experience using a DAW.  Synchronizing
+things with the Mobius transport is very much like synchronizing with the plugin host.  It's just
+that the transport lives inside Mobius and that gives us more control over how it behaves.
+
+### Transport Parameters
+
+The transport supports a number of parameters to define how it generates synchronization pulses.
+These are currently set in the [Session](session) but other more convenient ways will be provided
+in the future.  The most important transport parameters are:
+
+* Default Tempo
+* Beats Per Bar
+* Bars Per Loop
+
+The transport always generates beat pulses at a defined tempo.  There are several ways to define this
+tempo, the session just defines the default or *starting* tempo the transport will have when you
+bring up Mobius for the first time.
+
+The *Beats Per Bar* parameter defines the length of a bar in units of beats, and *Bars Per Loop* defines the length of a loop in units of bars.  The most common value for *Beats Per Bar* is 4.  The value of *Bars Per Loop* is often just 1 in which case a bar and a loop will be the same size.
+
+### Transport Control
+
+
+
+
+
+
+### Recording Synchronized Tracks
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 The Transport is not visible in the UI by default.  To see the Transport, you will need to add it
 to the *Main Elements* list in the display layout.  From the *Display* menu, select *Edit Layouts*,

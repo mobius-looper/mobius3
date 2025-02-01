@@ -38,6 +38,7 @@
 
 #define MS_START            0xFA
 #define MS_CONTINUE         0xFB
+#define MS_STOP             0xFC
 #define MS_SONGPOSITION		0xF2
 #define MS_CLOCK            0xF8
 
@@ -48,6 +49,7 @@ void MidiEventMonitor::reset()
     songPosition = 0;
     beat = 0;
     clock = 0;
+    elapsedBeats = 0;
     
     startPending = false;
     continuePending = false;
@@ -108,6 +110,7 @@ void MidiEventMonitor::consume(const juce::MidiMessage& msg)
                 started = true;
                 startPending = false;
                 clock = 0;
+                elapsedBeats = 0;
                 if (!continuePending) {
                     songPosition = 0;
                     songUnitClock = 0;
@@ -134,6 +137,7 @@ void MidiEventMonitor::consume(const juce::MidiMessage& msg)
                 if (beatClock == 24) {
                     beat++;
                     beatClock = 0;
+                    elapsedBeats++;
                 }
             }
             else {
@@ -144,3 +148,7 @@ void MidiEventMonitor::consume(const juce::MidiMessage& msg)
 		break;
 	}
 }
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

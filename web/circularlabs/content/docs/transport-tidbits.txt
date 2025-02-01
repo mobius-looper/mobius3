@@ -1,0 +1,4 @@
+While there are certainly exceptions, most people perform music with an obvious rhythm.  If you
+want to record several loops and have them playing at the same time, you need to ensure that those
+loops have exactly the same length (or have musically compatible lengths).
+

@@ -793,13 +793,11 @@ void SyncMaster::advance(MobiusAudioStream* stream)
 void SyncMaster::enableEventQueue()
 {
     midiRealizer->enableEvents();
-    midiAnalyzer->enableEvents();
 }
 
 void SyncMaster::disableEventQueue()
 {
     midiRealizer->disableEvents();
-    midiAnalyzer->disableEvents();
 }
 
 //////////////////////////////////////////////////////////////////////

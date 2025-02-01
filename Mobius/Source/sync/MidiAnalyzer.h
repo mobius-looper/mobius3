@@ -11,15 +11,11 @@
 
 #include "../model/SessionHelper.h"
 
-// old stuff, weed
-#include "MidiQueue.h"
-#include "TempoMonitor.h"
-#include "MidiSyncEvent.h"
-
 #include "SyncAnalyzer.h"
 #include "SyncAnalyzerResult.h"
-#include "DriftMonitor.h"
+#include "MidiEventMonitor.h"
 #include "MidiTempoMonitor.h"
+#include "DriftMonitor.h"
 
 class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
 {
@@ -35,6 +31,9 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     void refreshState(class SyncState* state);
     void refreshPriorityState(class PriorityState* ps);
 
+    // MidiManager::RealtimeListener
+    void midiRealtime(const juce::MidiMessage& msg, juce::String& source) override;
+
     //
     // SyncAnslyzer Interface
     //
@@ -42,9 +41,8 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     void analyze(int blockFrames) override;
     SyncAnalyzerResult* getResult() override;
     bool isRunning() override;
-    // actually, this can be true if we do SongPositionPointer properly
-    bool hasNativeBeat() override {return false;}
-    int getNativeBeat() override {return getElapsedBeats();}
+    bool hasNativeBeat() override {return true;};
+    int getNativeBeat() override;
     bool hasNativeBar() override {return false;}
     int getNativeBar() override {return 0;}
     int getElapsedBeats() override;
@@ -55,24 +53,14 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     int getDrift() override;
 
     //
-    // SyncMster Interface
+    // Extended interface for MIDI
     //
-
-    // MidiManager::RealtimeListener
-    void midiRealtime(const juce::MidiMessage& msg, juce::String& source) override;
-
-    // check for termination of MIDI clocks without warning
-    void checkClocks();
-
+    
     // this is different than isRunning, it means we are receiving clocks
     bool isReceiving();
+    int getSongPosition();
     int getSmoothTempo();
-    int getSongClock();
-
-    void setTraceEnabled(bool b);
-    void enableEvents();
-    void disableEvents();
-    void flushEvents();
+    void checkClocks();
     
   private:
     
@@ -81,63 +69,36 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     int sampleRate = 44100;
     
     SessionHelper sessionHelper;
-    MidiQueue inputQueue;
-    TempoMonitor tempoMonitor;
+    MidiEventMonitor eventMonitor;
+    MidiTempoMonitor tempoMonitor;
     SyncAnalyzerResult result;
     DriftMonitor drifter;
-    MidiTempoMonitor newTempoMonitor;
 
-    // Stream monitoring, eventual replacement for MidiQueue
-    bool inClocksReceiving = false;
-    bool inStartPending = false;
-    bool inContinuePending = false;
-    bool inBeatPending = false;
-    bool inStarted = false;
-    int inClock = 0;
-    int inBeatClock = 0;
-    int inBeat = 0;
-    int inSongPosition = 0;
-    double inClockTime = 0.0f;
-    int inTraceCount = 0;
-
-    static const int TraceMax = 100;
-    double inTraceCapture[TraceMax + 1];
-    bool inTraceDumped = false;
-
-    static const int SmoothSampleMax = 100;
-    double inTempoSamples[SmoothSampleMax + 1];
-    int inSampleLimit = 50;
-    int inSampleCount = 0;
-    int inSampleIndex = 0;
-    double inSampleTotal = 0.0f;
-    double inSmoothTempo = 0.0f;
-    double lastSmoothTraceTime = 0.0f;
-    int inStreamTime = 0;
-
-    // pseudo tracking loop
-    bool playing = false;
+    // Session parameters
     int beatsPerBar = 0;
     int barsPerLoop = 0;
+
+    //
+    // Processed event state
+    //
+
+    bool playing = false;
+    float tempo = 0.0f;
+    int smoothTempo = 0;
     int unitLength = 0;
+    
+    // virtual tracking loop
+    bool resyncUnitLength = false;
     int unitPlayHead = 0;
     int elapsedBeats = 0;
     int beat = 0;
     int bar = 0;
     int loop = 0;
-    
-    void detectBeat(MidiSyncEvent* mse);
+
+    void deriveTempo();
+    void lockUnitLength(int blockFrames);
     void advance(int frames);
     void checkDrift();
-
-    void startDetected();
-    void stopDetected();
-    void continueDetected(int songClock);
-
-    void midiMonitor(const juce::MidiMessage& msg);
-    void tempoMonitorAdvance(double clockTime);
-    void midiMonitorClockCheck();
-    void tempoMonitorReset();
-    
 };
 
 /****************************************************************************/

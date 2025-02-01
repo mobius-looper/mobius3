@@ -30,12 +30,15 @@ class SyncState
     int transportUnitLength = 0;
     int transportPlayHead = 0;
     bool transportStarted = false;
-    
-    // Other Sources
 
+    // MIDI
     bool midiReceiving = false;
     bool midiStarted = false;
     float midiTempo = 0.0f;
+    int midiNativeBeat = 0;
+    int midiSongPosition = 0;
+    // we do not have time signature overrides for MIDI like
+    // we do for host so all tracks will share normalized beat state
     int midiBeat = 0;
     int midiBar = 0;
     int midiLoop = 0;
@@ -43,6 +46,12 @@ class SyncState
     int midiBarsPerLoop = 1;
     int midiUnitLength = 0;
     int midiPlayHead = 0;
+    
+    // Host
+    // This has less in it because the tracks can override the host
+    // time signature and TempoElement needs to look in the TrackState
+    // for beat/bar counts
+    // Still shouldn't this return the native beat/bar here like we do for MIDI?
     
     bool hostStarted = false;
     float hostTempo = 0.0f;

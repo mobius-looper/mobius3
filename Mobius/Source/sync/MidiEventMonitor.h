@@ -61,7 +61,7 @@ class MidiEventMonitor
     int songPosition = 0;
 
     /**
-     * The raw beat number.
+     * The native beat number.
      *
      * This starts at zero after a Start message and increments by 1 after
      * every 24 clocks have been received.  It may jump to non-sequential value
@@ -72,6 +72,11 @@ class MidiEventMonitor
      * units of the Song Position Pointer.
      */
     int beat = 0;
+
+    /**
+     * The elapsed beat number after starting.
+     */
+    int elapsedBeats = 0;
 
     /**
      * The elapsed clock count since the last Start or Continue

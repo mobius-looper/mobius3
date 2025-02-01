@@ -14,6 +14,12 @@ void MidiTempoMonitor::reset()
     lastTimeStamp = 0.0f;
     runningTotal = 0.0f;
     runningAverage = 0.0f;
+    receiving = false;
+}
+
+bool MidiTempoMonitor::isReceiving()
+{
+    return receiving;
 }
 
 void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
@@ -22,6 +28,8 @@ void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
     const juce::uint8 status = *data;
 
     if (status == MS_CLOCK) {
+
+        receiving = true;
         
         double ts = msg.getTimeStamp();
 
@@ -121,6 +129,41 @@ void MidiTempoMonitor::checkStop()
             lastTrace = now;
         }
     }
+}
+
+/**
+ * The runningAverage is secondsPerClock since Juce timestamps
+ * are the milliisecond counter / 1000.
+ * seconds per beat is that * 24.
+ * seconds per beat is that / 1000
+ * beats per second is 1 / seconds per beatk
+ */
+float MidiTempoMonitor::getAverageTempo()
+{
+    double secondsPerBeat = runningAverage * 24;
+    double beatsPerMinute = 60.0f / secondsPerBeat;
+    return (float)beatsPerMinute;
+}
+
+int MidiTempoMonitor::getAverageUnitLength(int sampleRate)
+{
+    double secondsPerBeat = runningAverage * 24;
+    double framesPerBeat = (float)sampleRate * secondsPerBeat;
+    int unitLength = (int)framesPerBeat;
+    // make it even
+    if ((unitLength % 2) > 0) unitLength++;
+    return unitLength;
+}
+
+float MidiTempoMonitor::unitLengthToTempo(int length, int sampleRate)
+{
+    float tempo = 0.0f;
+    if (length > 0) {
+        double secondsPerBeat = (float)length / (float)sampleRate;
+        double beatsPerMinute = 60.0f / secondsPerBeat;
+        tempo = (float)beatsPerMinute;
+    }
+    return tempo;
 }
 
 /****************************************************************************/

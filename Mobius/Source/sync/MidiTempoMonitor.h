@@ -51,67 +51,86 @@ class MidiTempoMonitor
     void consume(const juce::MidiMessage& msg);
 
     void checkStop();
-    
+
     /**
-     * Return the average distance between clocks.
-     * The value is in fractions of seconds.
+     * Trie if clocks are being received at regular intervals.
      */
-    double getClockAverage();
+    bool isReceiving();
+
+    /**
+     * Return the average tempo of the measured clock distances.
+     */
+    float getAverageTempo();
+
+    /**
+     * Return the unit length calculated from the tempo.
+     */
+    int getAverageUnitLength(int sampleRate);
+
+    /**
+     * Reverse calculate tempo from unit length after rounding.
+     */
+    float unitLengthToTempo(int length, int sampleRate);
 
   private:
 
     /**
+     * True if we are receiving clocks
+     */
+    bool receiving = false;
+
+    /**
      * The maximum number of clock averaging samples that can be maintained.
      */
-     static const int ClockSampleMax = 100;
+    static const int ClockSampleMax = 100;
 
-     /**
-      * The clock delta samples.
-      */
-     double clockSamples[ClockSampleMax];
+    /**
+     * The clock delta samples.
+     */
+    double clockSamples[ClockSampleMax];
 
-     /**
-      * The number of clock samples to use in averaging.
-      * This can be tuned but must be less than or equal to ClockSampleMax
-      * and normally significantly higher than zero.
-      */
-     int windowSize = 50;
+    /**
+     * The number of clock samples to use in averaging.
+     * This can be tuned but must be less than or equal to ClockSampleMax
+     * and normally significantly higher than zero.
+     */
+    int windowSize = 50;
 
-     /**
-      * The location of the next sample to be added.
-      * This will loop between zero and windowSize.
-      */
-     int windowPosition = 0;
+    /**
+     * The location of the next sample to be added.
+     * This will loop between zero and windowSize.
+     */
+    int windowPosition = 0;
 
-     /**
-      * Set to true when enough samples have been received to begin
-      * doing tempo analysis.  This becomes true the first time
-      * windowPosition reaches windowSize and remains true until
-      * the analyzer is reset.
-      */
-     bool windowFull = false;
+    /**
+     * Set to true when enough samples have been received to begin
+     * doing tempo analysis.  This becomes true the first time
+     * windowPosition reaches windowSize and remains true until
+     * the analyzer is reset.
+     */
+    bool windowFull = false;
 
-     /**
-      * The timestamp of the last clock received.
-      */
-     double lastTimeStamp = 0.0f;
+    /**
+     * The timestamp of the last clock received.
+     */
+    double lastTimeStamp = 0.0f;
 
-     /**
-      * The running total and average.
-      */
-     double runningTotal = 0.0f;
-     double runningAverage = 0.0f;
+    /**
+     * The running total and average.
+     */
+    double runningTotal = 0.0f;
+    double runningAverage = 0.0f;
 
-     /**
-      * The last time we traced what we're doing if trace was enabled.
-      */
-     double lastTrace = 0.0f;
+    /**
+     * The last time we traced what we're doing if trace was enabled.
+     */
+    double lastTrace = 0.0f;
 
-     /**
-      * True to enable detailed trace
-      */
-     bool traceEnabled = true;
+    /**
+     * True to enable detailed trace
+     */
+    bool traceEnabled = false;
 
-     bool looksReasonable(double delta);
+    bool looksReasonable(double delta);
      
 };
