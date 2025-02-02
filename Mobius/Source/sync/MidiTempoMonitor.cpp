@@ -20,36 +20,33 @@ void MidiTempoMonitor::reset()
     runningTotal = 0.0f;
     runningAverage = 0.0f;
     receiving = false;
+    orient();
+}
+
+void MidiTempoMonitor::orient()
+{
+    clocks = 0;
     streamTime = 0;
-    audioStreamTime = 0;
-    drift = 0;
 }
 
-void MidiTempoMonitor::resetStreamTime()
+int MidiTempoMonitor::getElapsedClocks()
 {
-    streamTime = 0;
-    audioStreamTime = 0;
-    drift = 0;
-}
-
-void MidiTempoMonitor::setAudioStreamTime(int ast)
-{
-    audioStreamTime = ast;
-}
-
-int MidiTempoMonitor::getDrift()
-{
-    return drift;
-}
-
-bool MidiTempoMonitor::isReceiving()
-{
-    return receiving;
+    return clocks;
 }
 
 int MidiTempoMonitor::getStreamTime()
 {
     return streamTime;
+}
+
+void MidiTempoMonitor::resetStreamTime()
+{
+    streamTime = 0;
+}
+
+bool MidiTempoMonitor::isReceiving()
+{
+    return receiving;
 }
 
 void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
@@ -97,16 +94,22 @@ void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
                 // and add it to the total
                 runningTotal += delta;
 
-                // once the window is full we can calculate the average
+                // calculate the running average
                 if (windowFull)
                   runningAverage = runningTotal / (float)windowSize;
+                else
+                  runningAverage = runningTotal / (float)windowPosition;
+
+
+                // simulate a corresponding advance in "audio time" based on the time
+                // difference between the clocks
+                streamTime += (int)((float)sampleRate * delta);
+        
+                clocks++;
             }
-
-            // regardless of whether we decided to include this in the tempo average
-            // the stream time advances
-            streamTime += (int)((float)sampleRate * delta);
-
-            drift = audioStreamTime - streamTime;
+            else {
+                // we reoriented, treat this like the first clock
+            }
         }
         lastTimeStamp = ts;
     }
@@ -123,7 +126,7 @@ void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
  * Second, we could try to suppress the occasional outlier to prevent them from adding
  * noise to the average.  Punting on this, since it is difficult to know whether this is
  * in fact a jitter outlier, or if it represents a deliberate tempo change.  I suppose
- * if we get more than a few outliers in a row then it's a tempo change.
+ * if we get more than a few outliers in a row then it's a tempo change.  
  *
  * For stop detection, at 30BPM, there are .5 beats per second, or 12 clocks per second
  * each delta would be 1/12 or .0833.  So once the delta passes .1 it's REALLY slow.
@@ -172,10 +175,12 @@ void MidiTempoMonitor::checkStop()
         double traceDelta = now - lastTrace;
         if (traceDelta > 1000.0f) {
             int unit = getAverageUnitLength();
-            char buf[64];
-            sprintf(buf, "MidiTempoMonitor: Average seconds %f unit %d",
-                    runningAverage, unit);
-            Trace(2, buf);
+            if (unit > 0) {
+                char buf[64];
+                sprintf(buf, "MidiTempoMonitor: Average seconds %f unit %d",
+                        runningAverage, unit);
+                Trace(2, buf);
+            }
             lastTrace = now;
         }
     }

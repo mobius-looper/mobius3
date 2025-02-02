@@ -8,14 +8,20 @@
 class TrackProperties
 {
   public:
-    int number = 0;
-    int frames = 0;
-    int cycles = 0;
-    int currentFrame = 0;
-    // todo: the syncMode used to record it?
-
+    
     // set when a request is made for track properties that is out of range
     bool invalid = false;
+
+    // the track number, used when pushing track properties at a follower
+    int number = 0;
+
+    // length of the current loop in this track
+    int unitLength = 0;
+    int frames = 0;
+    int cycles = 0;
+
+    // where it is
+    int currentFrame = 0;
 
     // set when this information is relevant for a specific follower
     // this doesn't really belong here, but this is the only payload

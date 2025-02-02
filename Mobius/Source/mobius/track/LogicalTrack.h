@@ -70,6 +70,9 @@ class LogicalTrack
 
     void syncPulse(class Pulse* p);
 
+    int getUnitLength();
+    void setUnitLength(int l);
+
     //////////////////////////////////////////////////////////////////////
     // Notifier State
     //////////////////////////////////////////////////////////////////////
@@ -137,6 +140,9 @@ class LogicalTrack
     SyncUnit syncUnit = SyncUnitBeat;
     TrackSyncUnit trackSyncUnit = TrackUnitLoop;
     int syncLeader = 0;
+
+    // unit length this track was recorded with if synchronizing
+    int unitLength = 0;
 
     // sync Pulse for SyncMaster/Pulsator
     Pulse leaderPulse;

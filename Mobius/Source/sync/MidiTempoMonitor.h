@@ -43,36 +43,43 @@ class MidiTempoMonitor
     MidiTempoMonitor() {}
     ~MidiTempoMonitor() {}
 
-    void setSampleRate(int rate);
-    void reset();
-
     /**
-     * This is called by MidiEventMonitor any time the "start point" is detected.
-     * This happens after both MIDI Start and Continue messages are received
-     * and the first clock after those two messages is received.
-     * The stream time for drift detected is reset to zero.
-     */
-    void resetStreamTime();
-
-    /**
-     * This is called by MidiAnalyzer on each audio block to say where the true audio stream
-     * time is at the end of this block.
-     * When TempoMonitor reaches a clock boundary it compares it's internal stream time
-     * with the audio stream time and the result is drift.
-     * This needs to be controlled by TM because clocks are coarse grained,
-     * at 120BPM with a sample rate of 48000 and block size of 256, there are 5.2 blocks for every
-     * clock.  So checking this in the audio thread can result in large jitter if the MIDI clock
-     * is about ready to come in but hasn't yet.
-     */
-    void setAudioStreamTime(int ast);
-
-    int getDrift();
-    
-    /**
-     * This is called for every MIDI clock message.
+     * This is called in the MIDI thread for every MIDI clock message.
+     * This is the only public method that is called from the MIDI thread.
      */
     void consume(const juce::MidiMessage& msg);
 
+    /**
+     * Set the current audio device sample rate for simulating elapsed
+     * "stream time" on each clock.
+     */
+    void setSampleRate(int rate);
+
+    /**
+     * Do a full reset, including the averaging samples.
+     * This should only be done after a clock stoppage is detected.
+     * Normally averaging continues as long as there are clocks being received.
+     */
+    void reset();
+
+    /**
+     * Reorient the clock counter after the audio stream has locked a unit length.
+     * It goes back to zero and counts up from there.
+     */
+    void orient();
+
+    void resetStreamTime();
+
+    /**
+     * Get the current elapsed clock counter since orientation.
+     */
+    int getElapsedClocks();
+
+    /**
+     * Get the current simulated stream time as of the last clock.
+     */
+    int getStreamTime();
+    
     /**
      * Called periodically from the audio thread to detect when clocks
      * have stopped being received.
@@ -80,35 +87,25 @@ class MidiTempoMonitor
     void checkStop();
 
     /**
-     * Trie if clocks are being received at regular intervals.
+     * True if clocks are being received at regular intervals.
      */
     bool isReceiving();
 
+    /**
+     * Various averaging calculations
+     */
     double getAverageClock();
     double getAverageClockLength();
-
-    /**
-     * Return the average tempo of the measured clock distances.
-     */
     float getAverageTempo();
-
-    /**
-     * Return the unit length calculated from the tempo.
-     */
     int getAverageUnitLength();
 
     /**
-     * Reverse calculate tempo from unit length after rounding.
+     * Utility to reverse calculate tempo from unit length after rounding.
      */
     float unitLengthToTempo(int length);
 
-    int getStreamTime();
-
   private:
 
-    /**
-     * Necessary for doing time to sample length conversion.
-     */
     int sampleRate = 0;
 
     /**
@@ -159,20 +156,13 @@ class MidiTempoMonitor
     double runningAverage = 0.0f;
 
     /**
-     * The "midi stream time" in samples since the last start point.
+     * The number of clocks that have been receieved since orientation.
      */
+    int clocks = 0;
+
+    // experimental stream time simulation
     int streamTime = 0;
 
-    /**
-     * The "audio stream time" given to us by MidiAnayzer on each audio block.
-     */
-    int audioStreamTime = 0;
-
-    /**
-     * Drift calculated on the last clock
-     */
-    int drift = 0;
-    
     /**
      * The last time we traced what we're doing if trace was enabled.
      */
@@ -181,7 +171,7 @@ class MidiTempoMonitor
     /**
      * True to enable detailed trace
      */
-    bool traceEnabled = true;
+    bool traceEnabled = false;
 
     bool looksReasonable(double delta);
      

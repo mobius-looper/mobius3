@@ -166,6 +166,8 @@ int MidiAnalyzer::getSongPosition()
 void MidiAnalyzer::checkClocks()
 {
     tempoMonitor.checkStop();
+    if (!tempoMonitor.isReceiving())
+      resyncUnitLength = true;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -190,7 +192,6 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
     tempoMonitor.consume(msg);
     
     bool startPoint = eventMonitor.consume(msg);
-    
     if (startPoint)
       tempoMonitor.resetStreamTime();
 }
@@ -207,6 +208,7 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
  */
 void MidiAnalyzer::analyze(int blockFrames)
 {
+    bool unitLocked = false;
     result.reset();
 
     deriveTempo();
@@ -224,6 +226,7 @@ void MidiAnalyzer::analyze(int blockFrames)
             bar = 0;
             loop = 0;
             streamTime = 0;
+            lastMonitorBeat = 0;
 
             if (!eventMonitor.continued) {
                 Trace(2, "MidiAnalyzer: Start");
@@ -251,31 +254,35 @@ void MidiAnalyzer::analyze(int blockFrames)
             Trace(2, "MidiAnalyzer: Stop");
             result.stopped = true;
             playing = false;
+            resyncUnitLength = true;
         }
     }
     else if (playing) {
-        if (elapsedBeats != eventMonitor.elapsedBeats) {
+        if (lastMonitorBeat != eventMonitor.elapsedBeats) {
+            
             // if this isn't 1 away, it means we missed a beat
             // while there can be multiple clocks per block, there should
             // never be multiple beats per block unless the tempo is unusably fast
-            if (elapsedBeats + 1 != eventMonitor.elapsedBeats)
+            if (lastMonitorBeat + 1 != eventMonitor.elapsedBeats)
               Trace(1, "MidiAnalyzer: Elapsed beat mismatch");
 
             if (unitLength == 0 || resyncUnitLength) {
                 // virtual loop isn't running yet
-                lockUnitLength(blockFrames);
+                unitLocked = lockUnitLength(blockFrames);
             }
-            else {
-                // once the unit length is set, beats are determined by the
-                // virtual loop
-            }
-            elapsedBeats = eventMonitor.elapsedBeats;
+            lastMonitorBeat = eventMonitor.elapsedBeats;
         }
     }
-    
-    advance(blockFrames);
+
+    // if we didn't relock the unit length go through normal advance
+    // otherwise lockUnitLength did it
+    if (!unitLocked)
+      advance(blockFrames);
 }
 
+/**
+ * Derive the tempo used for display purposes.
+ */
 void MidiAnalyzer::deriveTempo()
 {
     float newTempo = tempoMonitor.getAverageTempo();
@@ -293,38 +300,111 @@ void MidiAnalyzer::deriveTempo()
  * continued after running for awhile and the resyncUnitLength flag was set.
  *
  * The play head has been advancing without generating beat pulses.
- * Once the unit length is set, control will fall into advance, whih
+ * Once the unit length is set, control will fall into advance, which
  * will then normally detect a beat in this block.
  */
-void MidiAnalyzer::lockUnitLength(int blockFrames)
+bool MidiAnalyzer::lockUnitLength(int blockFrames)
 {
     (void)blockFrames;
     double clockLength = tempoMonitor.getAverageClockLength();
     int newUnitLength = tempoMonitor.getAverageUnitLength();
+    bool relock = false;
 
-    if (unitLength == 0) {
-        char buf[128];
-        sprintf(buf, "MidiAnalyzer: Locked unit length %d clock length %f running average %f",
-                newUnitLength, clockLength, tempoMonitor.getAverageClock());
-        Trace(2, buf);
+    if (unitLength != newUnitLength) {
+
+        if (unitLength == 0 || resyncUnitLength) {
+            // first time here after a start point, can always relock
+            relock = true;
+        }
+        else {
+            // only allow a relock if there are no followers
+            // here is where we should check to see if there are any tracks
+            // following this sync source, and if there are defer the relock until
+            // drift is excessive, otherwise relock immediately
+            int followers = 1;
+            if (followers == 0)
+              relock = true;
+        }
+
+        if (relock) {
+            char buf[256];
+            if (unitLength == 0)
+              sprintf(buf, "MidiAnalyzer: Locked unit length %d clock length %f running average %f tempo %f",
+                      newUnitLength, clockLength, tempoMonitor.getAverageClock(),
+                      tempoMonitor.getAverageTempo());
+            else
+              sprintf(buf, "MidiAnalyzer: Adjusted unit length from %d to %d tempo tempo %f",
+                      unitLength, newUnitLength, tempoMonitor.getAverageTempo());
+              
+            Trace(2, buf);
+
+            unitLength = newUnitLength;
+            unitLength = newUnitLength;
+
+            // orient the play heaad and beging normal advancing
+            // beat jumps to 1
+            unitPlayHead = 0;
+            beat = 1;
+            elapsedBeats = 1;
+
+            // since advance won't cross a beat boundary, have to do it here
+            result.beatDetected = true;
+
+            // stream time advance may not be exactly on a unit, but sonce we are
+            // reorienting the unit length and consider this to be exactly on beta 1
+            // adjust the stream time to match for drift checking
+            streamTime = unitLength;
+        }
+        else {
+            char buf[256];
+            sprintf(buf, "MidiAnalyzer: Supressing unit adjust from %d to %d tempo %f",
+                    unitLength, newUnitLength, tempoMonitor.getAverageTempo());
+            Trace(2, buf);
+        }
+        
     }
-    else if (unitLength == newUnitLength)
-      Trace(2, "MidiAnalyzer: Locked unit length remains %d", unitLength);
-    else 
-      Trace(2, "MidiAnalyzer: Locked unit length changes from %d to %d",
-            unitLength, newUnitLength);
 
-    unitLength = newUnitLength;
     resyncUnitLength = false;
 
-    unitLength = newUnitLength;
-    unitPlayHead = 0;
-    beat = 1;
+    return relock;
+}
 
-    // stream time advance may not be exactly on a unit, but sonce we are
-    // reorienting the unit length and consider this to be exactly on beta 1
-    // adjust the stream time to match for drift checking
-    streamTime = unitLength;
+/**
+ * Here on each beat after the first.
+ *
+ * The unit length will aready have been calculated but if there aren't any active followers,
+ * we're free to make adjustments to it to better smooth out the tempo for devices
+ * that don't continuously send clocks.  If you don't actually start recording a track
+ * until the device has played for a few bars, then we don't need to lock it until recording
+ * starts.
+ *
+ * Alternately: We could just continually adjust the unit length on every beat until the
+ * time at which a track wants to sync record.
+ */
+bool MidiAnalyzer::relockUnitLength(int blockFrames)
+{
+    (void)blockFrames;
+    double clockLength = tempoMonitor.getAverageClockLength();
+    int newUnitLength = tempoMonitor.getAverageUnitLength();
+    bool relock = false;
+
+    if (unitLength != newUnitLength) {
+
+        // todo: count active followers
+        int followers = syncMaster->getActiveFollowers(SyncSourceMidi);
+        if (followers == 0) {
+
+            char buf[256];
+            sprintf(buf, "MidiAnalyzer: Adjusting unit length from %d to %d tempo %f",
+                    unitLength, newUnitLength, tempoMonitor.getAverageTempo());
+            Trace(2, buf);
+
+            unitLength = newUnitLength;
+            relock = true;
+            
+        }
+    }
+    return relock;
 }
 
 /**
@@ -350,6 +430,7 @@ void MidiAnalyzer::advance(int frames)
             // effectively a frame wrap too
             unitPlayHead = blockOffset;
 
+            elapsedBeats++;
             beat++;
             
             result.beatDetected = true;
@@ -368,15 +449,54 @@ void MidiAnalyzer::advance(int frames)
                     result.loopDetected = true;
                 }
             }
+
+            // on each beat we can adjust the unit length if nothing
+            // is depending on this to maintain stable pulses
+            // note that unlike lockUnitLength which is triggered by a change
+            // in the native beat, this one is triggered by a change to the
+            // normalized beat, mostly to avoid some ugly math around adjusting
+            // the playHead if the unit length gets shorter
+            if (relockUnitLength()) {
+                if (unitPlayHead < unitLength) {
+                    // really can't happen, the new unit length would have to be less
+                    // than the block size
+                    Trace(1, "MidiAnalyzer: Relocked unit length less than block size");
+                    // we're fucked at this point so don't need to be too smart about it,
+                    // just make it not die
+                    unitPlayHead = 0;
+                }
+            }
         }
     }
     
-    streamTime += frames;
-    tempoMonitor.setAudioStreamTime(streamTime);
-
     if (result.loopDetected) {
-        Trace(2, "TempoMonitor: Drift %d", tempoMonitor.getDrift());
+
+        // perfection is when our elapsed best counter matches the
+        // the MIDI thread's elapsed clock counter
+        // it will often be 1 clock lower or higher due to normal jitter
+        // but once it becomes higher it is a tempo change
+        int elapsedMidiClocks = tempoMonitor.getElapsedClocks();
+        int expectedClocks = elapsedBeats * 24;
+
+        if (elapsedMidiClocks != expectedClocks) {
+            // drift is negative when the audio stream is behind
+            Trace(2, "MidiAnalyzer: Clock drift %d", expectedClocks - elapsedMidiClocks);
+        }
+
+        // comparing stream times gives more insignt into the distance between clocks
+        // it has more jitter but could be used to detect drift before it gets to the
+        // point of being a full clock
+        // update: This seems to be wrong and not very useful, after deliberate tempo
+        // change from 120 to 121, the clock drift starts increasing as expected: -2, -3, etc.
+        // but the stream drift stays about the same...math error somewhere
+#if 0        
+        int midiStreamTime = tempoMonitor.getStreamTime();
+        // do this before including the advance in this block
+        Trace(2, "MidiAnalyzer: Stream drift %d", streamTime - midiStreamTime);
+#endif        
     }
+    
+    streamTime += frames;
 }
 
 /****************************************************************************/

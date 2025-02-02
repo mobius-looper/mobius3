@@ -301,6 +301,16 @@ void LogicalTrack::syncPulse(Pulse* p)
     track->syncPulse(p);
 }
 
+void LogicalTrack::setUnitLength(int l)
+{
+    unitLength = l;
+}
+
+int LogicalTrack::getUnitLength()
+{
+    return unitLength;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Parameters

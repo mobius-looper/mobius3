@@ -84,19 +84,22 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     float tempo = 0.0f;
     int smoothTempo = 0;
     int unitLength = 0;
+    int elapsedBeats = 0;
+    int lastMonitorBeat = 0;
     
     // virtual tracking loop
     bool resyncUnitLength = false;
     int unitPlayHead = 0;
-    int elapsedBeats = 0;
     int beat = 0;
     int bar = 0;
     int loop = 0;
     int streamTime = 0;
     
     void deriveTempo();
-    void lockUnitLength(int blockFrames);
+    bool lockUnitLength(int blockFrames);
+    bool relockUnitLength(int blockFrames);
     void advance(int frames);
+    
 };
 
 /****************************************************************************/

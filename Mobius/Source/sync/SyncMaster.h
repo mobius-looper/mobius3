@@ -120,6 +120,8 @@ class SyncMaster
     // notify that a leader pulse has been reached
     void addLeaderPulse(int leader, SyncUnit unit, int frameOffset);
 
+    int getActiveFollowers(SyncSource src);
+
     //////////////////////////////////////////////////////////////////////
     //
     // Old Variable Support

@@ -169,7 +169,25 @@ void SyncMaster::notifyTrackRecord(int number)
  */
 int SyncMaster::notifyTrackRecordEnding(int number)
 {
-    (void)number;
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+
+        // for MIDI mostly, but potentially others, remember the unit length
+        // used to record this track
+        SyncSource src = lt->getSyncSourceNow();
+        if (src == SyncSourceMidi) {
+            int unitLength = midiAnalyzer->getUnitLength();
+            if (unitLength == 0) {
+                // should have locked this before or immediately
+                // after recording began
+                Trace(1, "SyncMaster: Failed to lock unit length during recording");
+            }
+            else {
+                lt->setUnitLength(unitLength);
+            }
+        }
+    }
+    
     return 0;
 }
 
@@ -191,8 +209,10 @@ void SyncMaster::notifyTrackAvailable(int number)
         // anything can become the track sync master
         if (trackSyncMaster == 0)
           trackSyncMaster = number;
+
+        SyncSource src = lt->getSyncSourceNow();
         
-        if (lt->getSyncSourceNow() == SyncSourceMaster) {
+        if (src == SyncSourceMaster) {
             // this one wants to be special
             int currentMaster = transport->getMaster();
             if (currentMaster == 0) {
@@ -216,6 +236,7 @@ void SyncMaster::notifyTrackAvailable(int number)
                 // can make that decision later
             }
         }
+
     }
 }
 
@@ -1033,6 +1054,33 @@ SyncSource SyncMaster::getEffectiveSource(int id)
 void SyncMaster::addLeaderPulse(int leader, SyncUnit unit, int frameOffset)
 {
     pulsator->addLeaderPulse(leader, unit, frameOffset);
+}
+
+/**
+ * A follower is "active" it it uses this sync source and it is not empty (in reset).
+ * This is called only by MidiAnalyzer ATM to know whether it is safe to make continuous
+ * adjustments to the locked unit length or whether it needs to retain the current unit
+ * length and do drift notifications.
+ *
+ * Once fully recorded, a follower is only active if it was recorded with the same unit
+ * length that is active now.  This allows the following to be broken after the user deliberately
+ * changes the device tempo, forcing a unit recalculation which is then used for new recordings.
+ */
+int SyncMaster::getActiveFollowers(SyncSource src, int unitLength)
+{
+    int followers = 0;
+    
+    for (int i = 0 ; i < trackManager->getTrackCount() ; i++) {
+        LogicalTrack* t = trackManager->getLogicalTrack(i+1);
+        if (lt->getSyncSourceNow() == src) {
+            // todo: still some lingering issues if the track has multiple loops
+            // and they were recorded with different unit lenghts, that would be unusual
+            // but is possible
+            if (lt->getUnitLength() == unitLength)
+              followers++;
+        }
+    }
+    return followers;
 }
 
 //////////////////////////////////////////////////////////////////////
