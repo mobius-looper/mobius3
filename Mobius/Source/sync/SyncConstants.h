@@ -51,13 +51,9 @@ typedef enum {
  * The sync unit defines the granularity of a pulse from a sync source.
  * The smallest unit is Beat.  Bars are made up of multiiple beats, and
  * loops are made up of multiple bars.
- *  
- * None is used in a few contexts may indiciate falling back to a default or
- * global unit.  In others it is nonsensical and will default to Beat.
  */
 typedef enum {
 
-    SyncUnitNone,
     SyncUnitBeat,
     SyncUnitBar,
     SyncUnitLoop

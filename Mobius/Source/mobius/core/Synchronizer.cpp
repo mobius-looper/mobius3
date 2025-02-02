@@ -99,6 +99,11 @@ bool Synchronizer::isRecordStartSynchronized(Loop* l)
 
     sync = (source != SyncSourceNone && source != SyncSourceMaster);
 
+    if (sync) {
+        SyncUnit unit = mSyncMaster->getSyncUnit(number);
+        Trace(2, "Synchronizer: Track %d waiting for sync pulse %d", unit);
+    }
+
     return sync;
 }
 

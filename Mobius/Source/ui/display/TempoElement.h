@@ -27,7 +27,7 @@ class TempoElement : public StatusElement
   private:
 
     SyncSource mSyncSource = SyncSourceNone;
-    SyncUnit mSyncUnit = SyncUnitNone;
+    SyncUnit mSyncUnit = SyncUnitBeat;
 	int mTempo = 0;
 	int mBeat = 0;
 	int mBar = 0;

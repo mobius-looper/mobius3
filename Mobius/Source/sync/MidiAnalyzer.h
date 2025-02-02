@@ -28,7 +28,6 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     void shutdown();
     void loadSession(class Session* s);
     void refreshState(class SyncState* state);
-    void refreshPriorityState(class PriorityState* ps);
 
     // MidiManager::RealtimeListener
     void midiRealtime(const juce::MidiMessage& msg, juce::String& source) override;
@@ -66,15 +65,11 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     class SyncMaster* syncMaster = nullptr;
     class MidiManager* midiManager = nullptr;
     int sampleRate = 44100;
+    bool shuttingDown = false;
     
-    SessionHelper sessionHelper;
     MidiEventMonitor eventMonitor;
     MidiTempoMonitor tempoMonitor;
     SyncAnalyzerResult result;
-
-    // Session parameters
-    int beatsPerBar = 0;
-    int barsPerLoop = 0;
 
     //
     // Processed event state
@@ -86,20 +81,18 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     int unitLength = 0;
     int elapsedBeats = 0;
     int lastMonitorBeat = 0;
-    
+        
     // virtual tracking loop
     bool resyncUnitLength = false;
     int unitPlayHead = 0;
-    int beat = 0;
-    int bar = 0;
-    int loop = 0;
     int streamTime = 0;
+
+    int driftCheckCounter = 0;
     
     void deriveTempo();
     bool lockUnitLength(int blockFrames);
     bool relockUnitLength(int blockFrames);
     void advance(int frames);
-    
 };
 
 /****************************************************************************/

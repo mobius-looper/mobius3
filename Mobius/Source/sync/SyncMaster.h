@@ -78,7 +78,8 @@ class SyncMaster
     int getTransportMaster();
 
     SyncSource getEffectiveSource(int id);
-
+    SyncUnit getSyncUnit(int id);
+    
     //
     // Track Notifications
     //
@@ -120,7 +121,7 @@ class SyncMaster
     // notify that a leader pulse has been reached
     void addLeaderPulse(int leader, SyncUnit unit, int frameOffset);
 
-    int getActiveFollowers(SyncSource src);
+    int getActiveFollowers(SyncSource src, int unitLength);
 
     //////////////////////////////////////////////////////////////////////
     //

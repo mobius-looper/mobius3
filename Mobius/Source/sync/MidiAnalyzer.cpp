@@ -33,9 +33,6 @@ void MidiAnalyzer::initialize(SyncMaster* sm, MidiManager* mm)
     syncMaster = sm;
     midiManager = mm;
     mm->addRealtimeListener(this);
-
-    // so we can pull things from the Session
-    sessionHelper.setSymbols(sm->getSymbols());
 }
 
 void MidiAnalyzer::setSampleRate(int rate)
@@ -46,14 +43,13 @@ void MidiAnalyzer::setSampleRate(int rate)
 
 void MidiAnalyzer::shutdown()
 {
+    shuttingDown = true;
     midiManager->removeRealtimeListener(this);
 }
 
 void MidiAnalyzer::loadSession(Session* s)
 {
-    sessionHelper.setSession(s);
-    beatsPerBar = sessionHelper.getInt(ParamMidiBeatsPerBar);
-    barsPerLoop = sessionHelper.getInt(ParamMidiBarsPerLoop);
+    (void)s;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -62,6 +58,10 @@ void MidiAnalyzer::loadSession(Session* s)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * This fills in everything except the normalized
+ * beat/bar/loop counts which SyncMaster/BarTender will add
+ */
 void MidiAnalyzer::refreshState(SyncState* state)
 {
     state->midiReceiving = isReceiving();
@@ -70,25 +70,8 @@ void MidiAnalyzer::refreshState(SyncState* state)
     state->midiNativeBeat = eventMonitor.beat;
     state->midiSongPosition = eventMonitor.songPosition;
     
-    // !! need a virtual loop to play like Transport
-    state->midiBeat = eventMonitor.beat;
-    state->midiBar = 1; 
-    state->midiLoop = 1;
-    
-    state->midiBeatsPerBar = beatsPerBar;
-    state->midiBarsPerLoop = barsPerLoop;
     state->midiUnitLength = unitLength;
     state->midiPlayHead = unitPlayHead;
-}
-
-/**
- * Capture the priority state from the transport.
- */
-void MidiAnalyzer::refreshPriorityState(PriorityState* state)
-{
-    state->midiBeat = eventMonitor.beat;
-    state->midiBar = 1;
-    state->midiLoop = 1;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -120,19 +103,26 @@ int MidiAnalyzer::getElapsedBeats()
     return elapsedBeats;
 }
 
+/**
+ * Once the unit length is locked, display the locked tempo so the UI doesn't flicker.
+ * Might want to also have a way to display the fluctuating raw tempo.
+ */
 float MidiAnalyzer::getTempo()
 {
-    return 120.0f;
+    if (unitLength > 0)
+      return tempoMonitor.unitLengthToTempo(unitLength);
+    else
+      return tempoMonitor.getAverageTempo();
+}
+
+int MidiAnalyzer::getUnitLength()
+{
+    return unitLength;
 }
 
 /**
- * !! Not doing units and drift yet.
+ * MIDI does drift a different way, and needs a different interface.
  */
-int MidiAnalyzer::getUnitLength()
-{
-    return 22050;
-}
-
 int MidiAnalyzer::getDrift()
 {
     return 0;
@@ -187,13 +177,16 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
 {
     (void)source;
 
+    if (shuttingDown) return;
+
     // important TempoMonitor first since EventMonitor may need to
     // reset it's stream time if a start point is detected
     tempoMonitor.consume(msg);
     
     bool startPoint = eventMonitor.consume(msg);
-    if (startPoint)
-      tempoMonitor.resetStreamTime();
+    if (startPoint) {
+        tempoMonitor.orient();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -222,32 +215,19 @@ void MidiAnalyzer::analyze(int blockFrames)
             resyncUnitLength = true;
             unitPlayHead = 0;
             elapsedBeats = 0;
-            beat = 0;
-            bar = 0;
-            loop = 0;
             streamTime = 0;
             lastMonitorBeat = 0;
+            driftCheckCounter = 0;
 
             if (!eventMonitor.continued) {
                 Trace(2, "MidiAnalyzer: Start");
             }
             else {
                 Trace(2, "MidiAnalyzer: Continue %d", eventMonitor.songPosition);
-                // orient the virtual loop for the song position
-                // number of clocks in one bar
-                int barClocks = beatsPerBar * 24;
-                // the number of clocks in one virtual loop
-                int loopClocks = barsPerLoop * barClocks;
                 // the clock of the native song position we're starting from
                 int songPositionClocks = eventMonitor.songPosition * 6;
-                // the number of loops that elapsed to get there
-                loop = songPositionClocks / loopClocks;
-                // remaining clocks after the last virtual loop
-                int remainingLoopClocks = songPositionClocks % loopClocks;
-                // bars in the remainder
-                bar = remainingLoopClocks / barClocks;
-                // beats in the last bar
-                beat = remainingLoopClocks % barClocks;
+                // the native beat number this is
+                elapsedBeats = songPositionClocks / 24;
             }
         }
         else {
@@ -270,6 +250,10 @@ void MidiAnalyzer::analyze(int blockFrames)
                 // virtual loop isn't running yet
                 unitLocked = lockUnitLength(blockFrames);
             }
+            else {
+                unitLocked = relockUnitLength(blockFrames);
+            }
+            
             lastMonitorBeat = eventMonitor.elapsedBeats;
         }
     }
@@ -344,7 +328,6 @@ bool MidiAnalyzer::lockUnitLength(int blockFrames)
             // orient the play heaad and beging normal advancing
             // beat jumps to 1
             unitPlayHead = 0;
-            beat = 1;
             elapsedBeats = 1;
 
             // since advance won't cross a beat boundary, have to do it here
@@ -380,28 +363,70 @@ bool MidiAnalyzer::lockUnitLength(int blockFrames)
  *
  * Alternately: We could just continually adjust the unit length on every beat until the
  * time at which a track wants to sync record.
+ *
+ * The virtual track will be playing at this point so changing the unit length may
+ * cause the current playHead to be outside the unit if it was made shorter.
+ * It doesn't really matter where it is since nothing should be tracking it, just
+ * resync it to the start of the current native beat.  This might cause the UI
+ * to go backwards a bit.
+ *
+ * Sigh, even with a relatively high smoothing window of 128 clock samples, this still
+ * results in a unit bounce almost every beat.  It's very minor:
+ *
+ * MidiAnalyzer: Adjusting unit length from 32000 to 31998 tempo 90.008209
+ * MidiAnalyzer: Adjusting unit length from 31998 to 32000 tempo 89.999329
+ * MidiAnalyzer: Adjusting unit length from 32000 to 31998 tempo 90.007492
+ * MidiAnalyzer: Adjusting unit length from 31998 to 32000 tempo 90.001404
+ * MidiAnalyzer: Adjusting unit length from 32000 to 31998 tempo 90.003922
+ * MidiAnalyzer: Adjusting unit length from 31998 to 32000 tempo 90.002602
+ *
+ * To further reduce noise, don't relock unless the unit length changes more
+ * than some number of samples from it's current value.  Needs to be tunable...
+ * Should further suppress the ocassional outlier that jumps way out of wack
+ * then comes back down.  It needs to be sustained in one direction before we relock.
  */
 bool MidiAnalyzer::relockUnitLength(int blockFrames)
 {
     (void)blockFrames;
-    double clockLength = tempoMonitor.getAverageClockLength();
     int newUnitLength = tempoMonitor.getAverageUnitLength();
     bool relock = false;
 
+    // play around with this, 4 may be enough, but really user tempo changes are rare
+    // and the initial guess is usually pretty close
+    int relockThreshold = 8;
+
     if (unitLength != newUnitLength) {
 
-        // todo: count active followers
-        int followers = syncMaster->getActiveFollowers(SyncSourceMidi);
-        if (followers == 0) {
+        int change = abs(unitLength - newUnitLength);
+        if (change > relockThreshold) {
 
-            char buf[256];
-            sprintf(buf, "MidiAnalyzer: Adjusting unit length from %d to %d tempo %f",
-                    unitLength, newUnitLength, tempoMonitor.getAverageTempo());
-            Trace(2, buf);
+            // todo: count active followers
+            int followers = syncMaster->getActiveFollowers(SyncSourceMidi, unitLength);
+            if (followers == 0) {
 
-            unitLength = newUnitLength;
-            relock = true;
+                char buf[256];
+                sprintf(buf, "MidiAnalyzer: Adjusting unit length from %d to %d tempo %f",
+                        unitLength, newUnitLength, tempoMonitor.getAverageTempo());
+                Trace(2, buf);
+
+                unitLength = newUnitLength;
+
+                // orient the play heaad and beging normal advancing
+                // beat jumps to 1
+                unitPlayHead = 0;
+                elapsedBeats = eventMonitor.elapsedBeats;
+
+                // technically we're on a beat pulse now, though nothing
+                // should be following it
+                result.beatDetected = true;
+
+                // stream time likewise goes to where it would be if we had had
+                // this unit length all along
+                streamTime = elapsedBeats * unitLength;
             
+                relock = true;
+            
+            }
         }
     }
     return relock;
@@ -431,69 +456,46 @@ void MidiAnalyzer::advance(int frames)
             unitPlayHead = blockOffset;
 
             elapsedBeats++;
-            beat++;
             
             result.beatDetected = true;
             result.blockOffset = blockOffset;
-
-            if (beat >= beatsPerBar) {
-
-                beat = 0;
-                bar++;
-                result.barDetected = true;
-
-                if (bar >= barsPerLoop) {
-
-                    bar = 0;
-                    loop++;
-                    result.loopDetected = true;
-                }
-            }
-
-            // on each beat we can adjust the unit length if nothing
-            // is depending on this to maintain stable pulses
-            // note that unlike lockUnitLength which is triggered by a change
-            // in the native beat, this one is triggered by a change to the
-            // normalized beat, mostly to avoid some ugly math around adjusting
-            // the playHead if the unit length gets shorter
-            if (relockUnitLength()) {
-                if (unitPlayHead < unitLength) {
-                    // really can't happen, the new unit length would have to be less
-                    // than the block size
-                    Trace(1, "MidiAnalyzer: Relocked unit length less than block size");
-                    // we're fucked at this point so don't need to be too smart about it,
-                    // just make it not die
-                    unitPlayHead = 0;
-                }
-            }
         }
     }
+
+    // now that we don't have bar/loop detection down here, need a good point
+    // to check for drift, every 4 beats seems fine
     
-    if (result.loopDetected) {
+    if (result.beatDetected) {
 
-        // perfection is when our elapsed best counter matches the
-        // the MIDI thread's elapsed clock counter
-        // it will often be 1 clock lower or higher due to normal jitter
-        // but once it becomes higher it is a tempo change
-        int elapsedMidiClocks = tempoMonitor.getElapsedClocks();
-        int expectedClocks = elapsedBeats * 24;
+        driftCheckCounter++;
+        // should be configurable!
+        if (driftCheckCounter >= 4) {
+            driftCheckCounter = 0;
+            
+            // perfection is when our elapsed best counter matches the
+            // the MIDI thread's elapsed clock counter
+            // it will often be 1 clock lower or higher due to normal jitter
+            // but once it becomes higher it is a tempo change
+            int elapsedMidiClocks = tempoMonitor.getElapsedClocks();
+            int expectedClocks = elapsedBeats * 24;
 
-        if (elapsedMidiClocks != expectedClocks) {
-            // drift is negative when the audio stream is behind
-            Trace(2, "MidiAnalyzer: Clock drift %d", expectedClocks - elapsedMidiClocks);
-        }
+            if (elapsedMidiClocks != expectedClocks) {
+                // drift is negative when the audio stream is behind
+                Trace(2, "MidiAnalyzer: Clock drift %d", expectedClocks - elapsedMidiClocks);
+            }
 
-        // comparing stream times gives more insignt into the distance between clocks
-        // it has more jitter but could be used to detect drift before it gets to the
-        // point of being a full clock
-        // update: This seems to be wrong and not very useful, after deliberate tempo
-        // change from 120 to 121, the clock drift starts increasing as expected: -2, -3, etc.
-        // but the stream drift stays about the same...math error somewhere
+            // comparing stream times gives more insignt into the distance between clocks
+            // it has more jitter but could be used to detect drift before it gets to the
+            // point of being a full clock
+            // update: This seems to be wrong and not very useful, after deliberate tempo
+            // change from 120 to 121, the clock drift starts increasing as expected: -2, -3, etc.
+            // but the stream drift stays about the same...math error somewhere
 #if 0        
-        int midiStreamTime = tempoMonitor.getStreamTime();
-        // do this before including the advance in this block
-        Trace(2, "MidiAnalyzer: Stream drift %d", streamTime - midiStreamTime);
+            int midiStreamTime = tempoMonitor.getStreamTime();
+            // do this before including the advance in this block
+            Trace(2, "MidiAnalyzer: Stream drift %d", streamTime - midiStreamTime);
 #endif        
+        }
     }
     
     streamTime += frames;

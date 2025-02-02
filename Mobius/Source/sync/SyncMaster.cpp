@@ -930,11 +930,29 @@ void SyncMaster::refreshState(SystemState* sysstate)
     state->transportMaster = transport->getMaster();
     state->trackSyncMaster = trackSyncMaster;
 
+    // the MidiSyncElement wants to display normalized beat/bar/loop numbers
+    // and this is not track specific
+    // !! need to seriously rethink kthe utility of track-specific BPB and BPL
+    // overrides, why can't this just be global?  it only really matters
+    // for the initial recording, then it's just for display
+    
+    // Analyzer fills everything except normalized beats
     midiAnalyzer->refreshState(state);
-
+    state->midiBeat = barTender->getBeat(SyncSourceMidi);
+    state->midiBar = barTender->getBar(SyncSourceMidi);
+    state->midiLoop = barTender->getLoop(SyncSourceMidi);
+    state->midiBeatsPerBar = barTender->getBeatsPerBar(SyncSourceMidi);
+    state->midiBarsPerLoop = barTender->getBeatsPerBar(SyncSourceMidi);
+    
+    // the host doesn't have a UI element since you're usually just watching the
+    // host UI, but if you have overrides it should
+    // same issues about global vs. track-specific time signatures as MIDI sync
     state->hostStarted = hostAnalyzer->isRunning();
     state->hostTempo = hostAnalyzer->getTempo();
 
+    // transport maintains all this inside itself because the time signaturek
+    // adapts to the connected loop rather than being always controlled from
+    // Session parameters
     transport->refreshState(state);
 
     int totalTracks = trackManager->getTrackCount();
@@ -1047,6 +1065,16 @@ SyncSource SyncMaster::getEffectiveSource(int id)
     return source;
 }
 
+SyncUnit SyncMaster::getSyncUnit(int id)
+{
+    SyncUnit unit = SyncUnitBeat;
+    LogicalTrack* t = trackManager->getLogicalTrack(id);
+    if (t != nullptr) {
+        unit = t->getSyncUnitNow();
+    }
+    return unit;
+}
+
 /**
  * Must be called during track advance by anything that can lead.  Will
  * be ignored unless something is following it.
@@ -1071,7 +1099,7 @@ int SyncMaster::getActiveFollowers(SyncSource src, int unitLength)
     int followers = 0;
     
     for (int i = 0 ; i < trackManager->getTrackCount() ; i++) {
-        LogicalTrack* t = trackManager->getLogicalTrack(i+1);
+        LogicalTrack* lt = trackManager->getLogicalTrack(i+1);
         if (lt->getSyncSourceNow() == src) {
             // todo: still some lingering issues if the track has multiple loops
             // and they were recorded with different unit lenghts, that would be unusual

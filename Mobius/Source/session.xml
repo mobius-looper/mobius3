@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Session audioTracks="8" midiTracks="2">
-  <Track type="midi" index="0">
+  <Track id="1" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="7"/>
       <Value name="durationMode" value="1" type="int"/>
@@ -30,7 +30,7 @@
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
     </ValueSet>
   </Track>
-  <Track type="midi" index="1">
+  <Track id="2" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="2"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
@@ -53,7 +53,7 @@
       <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
-  <Track type="midi" index="2">
+  <Track id="3" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="2"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>

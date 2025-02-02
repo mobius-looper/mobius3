@@ -550,10 +550,14 @@ void Supervisor::shutdown()
     
     binderator.stop();
     scriptenv.shutdown();
+
+    // doing devices first so they don't fire off events at the
+    // realtime listener buried down in Mobius
+    midiManager.shutdown();
+
     // formerly midiRealizer.shutdown()
     // stop the realtime clock threads
     mobius->shutdown();
-    midiManager.shutdown();
 
     Trace(2, "Supervisor: Stopping Mobius engine\n");
     // used to be a singleton with MobiusInterface::shutdown()

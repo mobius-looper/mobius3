@@ -42,23 +42,30 @@ class BarTender
     void advance(int blockFrames);
     Pulse* annotate(class LogicalTrack* t, Pulse* p);
 
-    // should this take numbers or a follower?
-    // Follower is more common internally
     int getBeat(int trackNumber);
     int getBeat(class LogicalTrack* t);
+    int getBeat(SyncSource src);
+    
     int getBar(int trackNumber);
     int getBar(class LogicalTrack* t);
+    int getBar(SyncSource src);
+    
     int getLoop(int trackNumber);
     int getLoop(class LogicalTrack* t);
+    int getLoop(SyncSource src);
     
     int getBeatsPerBar(int trackNumber);
     int getBeatsPerBar(class LogicalTrack* t);
+    int getBeatsPerBar(SyncSource src);
+        
     int getBarsPerLoop(int trackNumber);
     int getBarsPerLoop(class LogicalTrack* t);
+    int getBarsPerLoop(SyncSource src);
     
     int getUnitLength(int trackNumber);
     int getUnitLength(class LogicalTrack* track);
-
+    int getUnitLength(SyncSource src);
+    
   private:
 
     class SyncMaster* syncMaster = nullptr;

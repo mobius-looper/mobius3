@@ -141,6 +141,8 @@ void MidiManager::shutdown()
 {
     closeAllInputs();
     closeAllOutputs();
+    listeners.clear();
+    realtimeListeners.clear();
 }
 
 void MidiManager::addListener(Listener* l)

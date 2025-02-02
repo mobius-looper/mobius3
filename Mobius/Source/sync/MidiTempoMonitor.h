@@ -68,6 +68,10 @@ class MidiTempoMonitor
      */
     void orient();
 
+    /**
+     * Start the stream time tracker back to zero.
+     * Normally called after Start or Continue is received by MidiEventMonitor.
+     */
     void resetStreamTime();
 
     /**
@@ -116,7 +120,7 @@ class MidiTempoMonitor
     /**
      * The maximum number of clock averaging samples that can be maintained.
      */
-    static const int ClockSampleMax = 100;
+    static const int ClockSampleMax = 256;
 
     /**
      * The clock delta samples.
@@ -127,8 +131,11 @@ class MidiTempoMonitor
      * The number of clock samples to use in averaging.
      * This can be tuned but must be less than or equal to ClockSampleMax
      * and normally significantly higher than zero.
+     *
+     * Larger numbers will result in smoother tempos but take longer to adapt to changes.
+     * At a tempo of 120 there are 2 beats per second or 48 midi clocks per second
      */
-    int windowSize = 50;
+    int windowSize = 128;
 
     /**
      * The location of the next sample to be added.

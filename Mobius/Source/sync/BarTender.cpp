@@ -266,52 +266,63 @@ int BarTender::getBeat(int trackNumber)
 int BarTender::getBeat(LogicalTrack* lt)
 {
     int beat = 0;
-    
-    Transport* transport = syncMaster->getTransport();
-    
     if (lt != nullptr) {
-        switch (lt->getSyncSourceNow()) {
-            case SyncSourceNone:
-                // technically should return zero?
-                break;
+        SyncSource src = lt->getSyncSourceNow();
+        if (src == SyncSourceTrack) {
+            // unclear what this means, it could be the subcycle number from
+            // the leader track, but really we shouldn't be trying to display beat/bar counts
+            // in the UI if this isn't following somethign with well defined beats
+        }
+        else {
+            beat = getBeat(src);
+        }
+    }
+    return beat;
+}
 
-            case SyncSourceMidi: {
-                MidiAnalyzer* anal = syncMaster->getMidiAnalyzer();
-                int raw = anal->getElapsedBeats();
-                if (raw > 0) {
-                    int bpb = getMidiBeatsPerBar();
-                    beat = (raw % bpb);
-                }
-            }
-                break;
+int BarTender::getBeat(SyncSource src)
+{
+    int beat = 0;
+    switch (src) {
+        case SyncSourceNone:
+            break;
 
-            case SyncSourceTransport:
-            case SyncSourceMaster: {
-                // this maintains it it's own self
-                beat = transport->getBeat();
-            }
-                break;
-                
-            case SyncSourceHost: {
-                HostAnalyzer* anal = syncMaster->getHostAnalyzer();
-
-                // see detectHostBar for some words about the difference
-                // between elapsed beat and nativeBeat here
-                // may need more options
-                int raw = anal->getElapsedBeats();
-                int bpb = getHostBeatsPerBar();
+        case SyncSourceMidi: {
+            MidiAnalyzer* anal = syncMaster->getMidiAnalyzer();
+            int raw = anal->getElapsedBeats();
+            if (raw > 0) {
+                int bpb = getMidiBeatsPerBar();
                 beat = (raw % bpb);
             }
-                break;
-
-            case SyncSourceTrack: {
-                // unclear what this means, it could be the subcycle number from
-                // the leader track, 
-                // but really we shouldn't be trying to display beat/bar counts
-                // in the UI if this isn't following somethign with well defined beats
-            }
-                break;
         }
+            break;
+
+        case SyncSourceTransport:
+        case SyncSourceMaster: {
+            // this maintains it it's own self
+            Transport* transport = syncMaster->getTransport();
+            beat = transport->getBeat();
+        }
+            break;
+                
+        case SyncSourceHost: {
+            HostAnalyzer* anal = syncMaster->getHostAnalyzer();
+
+            // see detectHostBar for some words about the difference
+            // between elapsed beat and nativeBeat here
+            // may need more options
+            int raw = anal->getElapsedBeats();
+            int bpb = getHostBeatsPerBar();
+            beat = (raw % bpb);
+        }
+            break;
+
+        case SyncSourceTrack: {
+            // this method can't be done for TrackSync, needs to be in the context
+            // of a LogicalTrack
+            Trace(1, "BarTender::getBeat(SyncSource) with SyncSourceTrack");
+        }
+            break;
     }
 
     return beat;
@@ -325,49 +336,57 @@ int BarTender::getBar(int trackNumber)
 int BarTender::getBar(LogicalTrack* lt)
 {
     int bar = 0;
-    
-    Transport* transport = syncMaster->getTransport();
-    
     if (lt != nullptr) {
-        switch (lt->getSyncSourceNow()) {
-            case SyncSourceNone:
-                // technically should return zero?
-                break;
-
-            case SyncSourceMidi: {
-                MidiAnalyzer* anal = syncMaster->getMidiAnalyzer();
-                int raw = anal->getElapsedBeats();
-                if (raw > 0) {
-                    int bpb = getMidiBeatsPerBar();
-                    bar = (raw / bpb);
-                }
-            }
-                break;
-
-            case SyncSourceTransport:
-            case SyncSourceMaster:
-                // this maintains it it's own self
-                bar = transport->getBar();
-                break;
-                
-            case SyncSourceHost: {
-                HostAnalyzer* anal = syncMaster->getHostAnalyzer();
-                int raw = anal->getElapsedBeats();
-                int bpb = getHostBeatsPerBar();
-                bar = (raw / bpb);
-            }
-                break;
-
-            case SyncSourceTrack: {
-                // unclear what this means, it could be the subcycle number from
-                // the leader track, 
-                // but really we shouldn't be trying to display beat/bar counts
-                // in the UI if this isn't following somethign with well defined beats
-            }
-                break;
+        SyncSource src = lt->getSyncSourceNow();
+        if (src == SyncSourceTrack) {
+            // unclear what this means, it could be the cycle number from
+            // the leader track, but really we shouldn't be trying to display beat/bar counts
+            // in the UI if this isn't following somethign with well defined beats
+        }
+        else {
+            bar = getBar(src);
         }
     }
+    return bar;
+}
 
+int BarTender::getBar(SyncSource src)
+{
+    int bar = 0;
+    switch (src) {
+        case SyncSourceNone:
+            break;
+
+        case SyncSourceMidi: {
+            MidiAnalyzer* anal = syncMaster->getMidiAnalyzer();
+            int raw = anal->getElapsedBeats();
+            if (raw > 0) {
+                int bpb = getMidiBeatsPerBar();
+                bar = (raw / bpb);
+            }
+        }
+            break;
+
+        case SyncSourceTransport:
+        case SyncSourceMaster: {
+            Transport* transport = syncMaster->getTransport();
+            bar = transport->getBar();
+        }
+            break;
+                
+        case SyncSourceHost: {
+            HostAnalyzer* anal = syncMaster->getHostAnalyzer();
+            int raw = anal->getElapsedBeats();
+            int bpb = getHostBeatsPerBar();
+            bar = (raw / bpb);
+        }
+            break;
+
+        case SyncSourceTrack: {
+            Trace(1, "BarTender::getBar(SyncSource) with SyncSourceTrack");
+        }
+            break;
+    }
     return bar;
 }
 
@@ -379,50 +398,62 @@ int BarTender::getLoop(int trackNumber)
 int BarTender::getLoop(LogicalTrack* lt)
 {
     int loop = 0;
-    
-    Transport* transport = syncMaster->getTransport();
-    
     if (lt != nullptr) {
-        switch (lt->getSyncSourceNow()) {
-            case SyncSourceNone:
-                break;
-
-            case SyncSourceMidi: {
-                MidiAnalyzer* anal = syncMaster->getMidiAnalyzer();
-                int raw = anal->getElapsedBeats();
-                if (raw > 0) {
-                    int bpb = getMidiBeatsPerBar();
-                    int bpl = getMidiBarsPerLoop();
-                    int beatsPerLoop = bpb * bpl;
-                    loop = (raw / beatsPerLoop);
-                }
-            }
-                break;
-
-            case SyncSourceTransport:
-            case SyncSourceMaster:
-                // this maintains it it's own self
-                loop = transport->getLoop();
-                break;
-                
-            case SyncSourceHost: {
-                HostAnalyzer* anal = syncMaster->getHostAnalyzer();
-                // todo: this has the host bar number vs. elapsed origin issue?
-                int raw = anal->getElapsedBeats();
-                int bpb = getHostBeatsPerBar();
-                int bpl = getHostBarsPerLoop();
-                int beatsPerLoop = bpb * bpl;
-                loop = (raw / beatsPerLoop);
-            }
-                break;
-
-            case SyncSourceTrack: {
-                // we don't remember the number of times these iterate
-            }
-                break;
+        SyncSource src = lt->getSyncSourceNow();
+        if (src == SyncSourceTrack) {
+            // unclear what this means, tracks don't remember how many times they've
+            // played a loop
+        }
+        else {
+            loop = getLoop(src);
         }
     }
 
+    return loop;
+}
+
+int BarTender::getLoop(SyncSource src)
+{
+    int loop = 0;
+    switch (src) {
+        case SyncSourceNone:
+            break;
+
+        case SyncSourceMidi: {
+            MidiAnalyzer* anal = syncMaster->getMidiAnalyzer();
+            int raw = anal->getElapsedBeats();
+            if (raw > 0) {
+                int bpb = getMidiBeatsPerBar();
+                int bpl = getMidiBarsPerLoop();
+                int beatsPerLoop = bpb * bpl;
+                loop = (raw / beatsPerLoop);
+            }
+        }
+            break;
+
+        case SyncSourceTransport:
+        case SyncSourceMaster: {
+            Transport* transport = syncMaster->getTransport();
+            loop = transport->getLoop();
+        }
+            break;
+                
+        case SyncSourceHost: {
+            HostAnalyzer* anal = syncMaster->getHostAnalyzer();
+            // todo: this has the host bar number vs. elapsed origin issue?
+            int raw = anal->getElapsedBeats();
+            int bpb = getHostBeatsPerBar();
+            int bpl = getHostBarsPerLoop();
+            int beatsPerLoop = bpb * bpl;
+            loop = (raw / beatsPerLoop);
+        }
+            break;
+
+        case SyncSourceTrack: {
+            Trace(1, "BarTender::getLoop(SyncSource) with SyncSourceTrack");
+        }
+            break;
+    }
     return loop;
 }
 
@@ -438,42 +469,51 @@ int BarTender::getBeatsPerBar(LogicalTrack* track)
 {
     int bpb = 4;
     if (track != nullptr) {
-        switch (track->getSyncSourceNow()) {
-            case SyncSourceNone:
-                // technically should return zero?
-                break;
-
-            case SyncSourceMidi:
-                bpb = getMidiBeatsPerBar();
-                break;
-                
-            case SyncSourceTransport:
-            case SyncSourceMaster:
-                bpb = syncMaster->getTransport()->getBeatsPerBar();
-                break;
-                
-            case SyncSourceHost: {
-                bpb = getHostBeatsPerBar();
-            }
-                break;
-
-            case SyncSourceTrack: {
-                // unclear what this means, it could be the subcycle count
-                // of the leader track, but that's pretty random, or it could
-                // fall back to the Transport
-                // but really we shouldn't be trying to display beat/bar counts
-                // in the UI if this isn't following somethign with well defined beats
-                Trace(1, "BarTender::getBarsPerLoop More work to do");
-            }
-                break;
+        SyncSource src = track->getSyncSourceNow();
+        if (src == SyncSourceTrack) {
+            // work to do
+        }
+        else {
+            bpb = getBeatsPerBar(src);
         }
     }
     
-    // since this is commonly used for division, always be sure
-    // it has life
-    if (bpb <= 0)
-      bpb = 4;
+    // since this is commonly used for division,
+    // always be sure it has life
+    if (bpb <= 0) bpb = 4;
+    return bpb;
+}
 
+int BarTender::getBeatsPerBar(SyncSource src)
+{
+    int bpb = 4;
+    switch (src) {
+        case SyncSourceNone:
+            // undefined, leave at 4
+            break;
+
+        case SyncSourceMidi:
+            bpb = getMidiBeatsPerBar();
+            break;
+                
+        case SyncSourceTransport:
+        case SyncSourceMaster:
+            bpb = syncMaster->getTransport()->getBeatsPerBar();
+            break;
+                
+        case SyncSourceHost:
+            bpb = getHostBeatsPerBar();
+            break;
+
+        case SyncSourceTrack: {
+            Trace(1, "BarTender::getBeatsPerBar(SyncSource) with SyncSourceTrack");
+        }
+            break;
+    }
+    
+    // since this is commonly used for division,
+    // always be sure it has life
+    if (bpb <= 0) bpb = 4;
     return bpb;
 }
 
@@ -494,32 +534,42 @@ int BarTender::getBarsPerLoop(LogicalTrack* track)
 {
     int bpl = 1;
     if (track != nullptr) {
-        switch (track->getSyncSourceNow()) {
-            case SyncSourceNone:
-                break;
-
-            case SyncSourceMidi:
-                bpl = getMidiBarsPerLoop();
-                break;
-                
-            case SyncSourceTransport:
-            case SyncSourceMaster:
-                bpl = syncMaster->getTransport()->getBarsPerLoop();
-                break;
-                
-            case SyncSourceHost: {
-                bpl = getHostBarsPerLoop();
-            }
-                break;
-
-            case SyncSourceTrack: {
-                // unclear what this means
-                Trace(1, "BarTender::getBarsPerLoop More work to do");
-            }
-                break;
+        SyncSource src = track->getSyncSourceNow();
+        if (src == SyncSourceTrack) {
+            // work to do
+        }
+        else {
+            bpl = getBarsPerLoop(src);
         }
     }
+    if (bpl < 1) bpl = 1;
+    return bpl;
+}
 
+int BarTender::getBarsPerLoop(SyncSource src)
+{
+    int bpl = 1;
+    switch (src) {
+        case SyncSourceNone:
+            break;
+
+        case SyncSourceMidi:
+            bpl = getMidiBarsPerLoop();
+            break;
+                
+        case SyncSourceTransport:
+        case SyncSourceMaster:
+            bpl = syncMaster->getTransport()->getBarsPerLoop();
+            break;
+                
+        case SyncSourceHost:
+            bpl = getHostBarsPerLoop();
+            break;
+
+        case SyncSourceTrack:
+            Trace(1, "BarTender::getBarsPerLoop(SyncSource) with SyncSourceTrack");
+            break;
+    }
     if (bpl < 1) bpl = 1;
     return bpl;
 }
@@ -578,46 +628,56 @@ int BarTender::getUnitLength(LogicalTrack* track)
 {
     int frames = 0;
     if (track != nullptr) {
-        
         SyncSource src = track->getSyncSourceNow();
-        switch (src) {
-            case SyncSourceNone: {
-                // for the purposes of auto-record, we need to get
-                // a tempo from somewhere, OG Mobius had autoRecordTempo
-                // until we see a need for something more, let the Transport
-                // define this
-                frames = syncMaster->getTransport()->getUnitLength();
-            }
-                break;
-            case SyncSourceTransport: {
-                frames = syncMaster->getTransport()->getUnitLength();
-            }
-                break;
-            case SyncSourceTrack: {
-                frames = getTrackSyncUnitLength(track);
-                // more here
-            }
-                break;
-            case SyncSourceHost: {
-                frames = syncMaster->getHostAnalyzer()->getUnitLength();
-                
-            }
-                break;
-            case SyncSourceMidi: {
-                frames = syncMaster->getMidiAnalyzer()->getUnitLength();
-            }
-                break;
-            case SyncSourceMaster: {
-                // unclear...
-                // need to nail down what a track follows if it wants to be
-                // the Master but some other track was already the Master
-                // it can either fall back to Transport sync or Track sync
-                frames = syncMaster->getTransport()->getUnitLength();
-            }
-                break;
+        if (src == SyncSourceTrack) {
+            frames = getTrackSyncUnitLength(track);
+            // more here
+        }
+        else {
+            frames = getUnitLength(src);
         }
     }
+    return frames;
+}
 
+int BarTender::getUnitLength(SyncSource src)
+{
+    int frames = 0;
+    switch (src) {
+        case SyncSourceNone: {
+            // for the purposes of auto-record, we need to get
+            // a tempo from somewhere, OG Mobius had autoRecordTempo
+            // until we see a need for something more, let the Transport
+            // define this
+            frames = syncMaster->getTransport()->getUnitLength();
+        }
+            break;
+            
+        case SyncSourceTransport:
+            frames = syncMaster->getTransport()->getUnitLength();
+            break;
+            
+        case SyncSourceTrack:
+            Trace(1, "BarTender::getUnitLength(SyncSource) with SyncSourceTrack");
+            break;
+            
+        case SyncSourceHost:
+            frames = syncMaster->getHostAnalyzer()->getUnitLength();
+            break;
+            
+        case SyncSourceMidi:
+            frames = syncMaster->getMidiAnalyzer()->getUnitLength();
+            break;
+            
+        case SyncSourceMaster: {
+            // unclear...
+            // need to nail down what a track follows if it wants to be
+            // the Master but some other track was already the Master
+            // it can either fall back to Transport sync or Track sync
+            frames = syncMaster->getTransport()->getUnitLength();
+        }
+            break;
+    }
     return frames;
 }
 
