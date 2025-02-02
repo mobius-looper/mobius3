@@ -47,6 +47,7 @@ MidiSyncElement::MidiSyncElement(Provider* p, UIElementDefinition* d) :
 
     // tempo.setFlash(true);
     tempoAtom.setDigits(3, 1);
+    tempoAtom.setInvisibleZero(true);
     tempoAtom.setOnColor(juce::Colours::green);
     topRow.add(&tempoAtom);
 
@@ -142,9 +143,9 @@ void MidiSyncElement::update(MobiusView* v)
     
     float ftempo = v->syncState.midiTempo;
     
-    // trunicate to two decimal places to prevent excessive
+    // trunicate to one decimal places to prevent excessive
     // fluctuations
-    int itempo = (int)(ftempo * 100);
+    int itempo = (int)(ftempo * 10);
     if (itempo != tempoValue) {
         tempoAtom.setValue(ftempo);
         tempoValue = itempo;

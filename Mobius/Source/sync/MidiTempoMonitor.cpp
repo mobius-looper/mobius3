@@ -191,22 +191,32 @@ void MidiTempoMonitor::checkStop()
  * are the milliisecond counter / 1000.
  * seconds per beat is that * 24.
  * seconds per beat is that / 1000
- * beats per second is 1 / seconds per beatk
+ * beats per second is 1 / seconds per beat
+ *
+ * Returns zero on startup if we haven't received any clocks which
+ * should suppress the display.
  */
 float MidiTempoMonitor::getAverageTempo()
 {
-    double secondsPerBeat = runningAverage * 24;
-    double beatsPerMinute = 60.0f / secondsPerBeat;
-    return (float)beatsPerMinute;
+    float tempo = 0.0f;
+    if (runningAverage > 0.0f) {
+        double secondsPerBeat = runningAverage * 24;
+        double beatsPerMinute = 60.0f / secondsPerBeat;
+        tempo = (float)beatsPerMinute;
+    }
+    return tempo;
 }
 
 int MidiTempoMonitor::getAverageUnitLength()
 {
-    double secondsPerBeat = runningAverage * 24;
-    double framesPerBeat = (float)sampleRate * secondsPerBeat;
-    int unitLength = (int)framesPerBeat;
-    // make it even
-    if ((unitLength % 2) > 0) unitLength++;
+    int unitLength = 0;
+    if (runningAverage > 0.0f) {
+        double secondsPerBeat = runningAverage * 24;
+        double framesPerBeat = (float)sampleRate * secondsPerBeat;
+        unitLength = (int)framesPerBeat;
+        // make it even
+        if ((unitLength % 2) > 0) unitLength++;
+    }
     return unitLength;
 }
 

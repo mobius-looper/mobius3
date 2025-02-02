@@ -239,10 +239,10 @@ void MidiAnalyzer::analyze(int blockFrames)
     }
     else if (playing) {
         if (lastMonitorBeat != eventMonitor.elapsedBeats) {
-            
+            // a native beat came in
             // if this isn't 1 away, it means we missed a beat
-            // while there can be multiple clocks per block, there should
-            // never be multiple beats per block unless the tempo is unusably fast
+            // can't happen in practice unless the tempo is unusably fast
+            // or you're suspending in the debugger
             if (lastMonitorBeat + 1 != eventMonitor.elapsedBeats)
               Trace(1, "MidiAnalyzer: Elapsed beat mismatch");
 
@@ -251,6 +251,8 @@ void MidiAnalyzer::analyze(int blockFrames)
                 unitLocked = lockUnitLength(blockFrames);
             }
             else {
+                // virtual loop is running, but we may be able to relock if
+                // nothing is depending on it
                 unitLocked = relockUnitLength(blockFrames);
             }
             
@@ -270,7 +272,7 @@ void MidiAnalyzer::analyze(int blockFrames)
 void MidiAnalyzer::deriveTempo()
 {
     float newTempo = tempoMonitor.getAverageTempo();
-    if (tempo == 0.0f) {
+    if (tempo == 0.0f && newTempo > 0.0f) {
         char buf[64];
         sprintf(buf, "MidiAnalyzer: Derived tempo %f", newTempo);
         Trace(2, buf);
@@ -283,9 +285,10 @@ void MidiAnalyzer::deriveTempo()
  * If there is a unit length, it means we stopped and restarted or
  * continued after running for awhile and the resyncUnitLength flag was set.
  *
- * The play head has been advancing without generating beat pulses.
- * Once the unit length is set, control will fall into advance, which
- * will then normally detect a beat in this block.
+ * What this does is mostly the same as relockUnitLength but adds a little
+ * extra trace information.
+ *
+ * todo: merge these!
  */
 bool MidiAnalyzer::lockUnitLength(int blockFrames)
 {
@@ -302,7 +305,7 @@ bool MidiAnalyzer::lockUnitLength(int blockFrames)
         }
         else {
             // only allow a relock if there are no followers
-            // here is where we should check to see if there are any tracks
+            // todo: here is where we should check to see if there are any tracks
             // following this sync source, and if there are defer the relock until
             // drift is excessive, otherwise relock immediately
             int followers = 1;

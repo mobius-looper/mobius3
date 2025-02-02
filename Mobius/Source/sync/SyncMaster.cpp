@@ -1000,6 +1000,10 @@ void SyncMaster::refreshState(SystemState* sysstate)
 void SyncMaster::refreshPriorityState(PriorityState* pstate)
 {
     transport->refreshPriorityState(pstate);
+
+    pstate->midiBeat = barTender->getBeat(SyncSourceMidi);
+    pstate->midiBar = barTender->getBar(SyncSourceMidi);
+    pstate->midiLoop = barTender->getLoop(SyncSourceMidi);
 }
 
 //////////////////////////////////////////////////////////////////////

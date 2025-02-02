@@ -712,27 +712,41 @@ void UIAtomFloat::setDigits(int d, int f)
     fractions = f;
 }
 
+/**
+ * For things like a tempo, allow the display to be
+ * blanked if it is zero.
+ */
+void UIAtomFloat::setInvisibleZero(bool b)
+{
+    invisibleZero = b;
+}
+
 int UIAtomFloat::getMinWidth()
 {
     // actual width will be the combined number of digits
     // plus a little extra for the '.'
     // this allows the use of a single Text atom for the value
     // rather than a container with three strings
-    return getNumberTextWidth(decimals) + getNumberTextWidth(fractions) + 6;
+    // started with 6 for the dot but still getting ellipses,
+    return getNumberTextWidth(decimals) + getNumberTextWidth(fractions) + 8;
 }
 
 void UIAtomFloat::setValue(float f)
 {
-    int dpart = (int)f;
-    int fpart = (int)((f - dpart) * (fractions * 10));
-    
-    juce::String s (dpart);
-    if (fpart > 0) {
-        s += ".";
-        s += fpart;
+    if (f == 0.0f && invisibleZero) {
+        setText("");
     }
+    else {
+        int dpart = (int)f;
+        int fpart = (int)((f - dpart) * (fractions * 10));
     
-    setText(s);
+        juce::String s (dpart);
+        if (fpart > 0) {
+            s += ".";
+            s += fpart;
+        }
+        setText(s);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -230,6 +230,7 @@ class UIAtomFloat : public UIAtomText
     ~UIAtomFloat();
 
     void setDigits(int decimal, int fraction);
+    void setInvisibleZero(bool b);
     void setValue(float v);
     
     int getMinWidth() override;
@@ -238,6 +239,7 @@ class UIAtomFloat : public UIAtomText
 
     int decimals = 0;
     int fractions = 0;
+    bool invisibleZero = false;
 
 };
 
