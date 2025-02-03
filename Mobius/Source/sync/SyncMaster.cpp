@@ -113,6 +113,10 @@ void SyncMaster::shutdown()
 void SyncMaster::globalReset()
 {
     transport->globalReset();
+    barTender->globalReset();
+
+    // host analyzer doesn't reset, it continues monitoring the host
+    // same with MIDI
 }
 
 /**
@@ -854,9 +858,11 @@ bool SyncMaster::doAction(UIAction* a)
             setTransportMaster(a);
             break;
             
-        default:
-            // Transport is the only thing under us that takes actions
+        default: {
             handled = transport->doAction(a);
+            if (!handled)
+              handled = barTender->doAction(a);
+        }
             break;
     }
     
@@ -875,6 +881,8 @@ bool SyncMaster::doQuery(Query* q)
     // todo: the masters, host and midi settings
 
     handled = transport->doQuery(q);
+    if (!handled)
+      handled = barTender->doQuery(q);
     
     return handled;
 }
@@ -903,7 +911,7 @@ void SyncMaster::refreshState(SystemState* sysstate)
     state->midiBar = barTender->getBar(SyncSourceMidi);
     state->midiLoop = barTender->getLoop(SyncSourceMidi);
     state->midiBeatsPerBar = barTender->getBeatsPerBar(SyncSourceMidi);
-    state->midiBarsPerLoop = barTender->getBeatsPerBar(SyncSourceMidi);
+    state->midiBarsPerLoop = barTender->getBarsPerLoop(SyncSourceMidi);
     
     // the host doesn't have a UI element since you're usually just watching the
     // host UI, but if you have overrides it should

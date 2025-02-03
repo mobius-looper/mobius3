@@ -13,11 +13,20 @@
 #include "UIAtomList.h"
 #include "UIElement.h"
 #include "../../Provider.h"
+#include "../common/YanPopup.h"
 
 class TransportElement : public UIElement, public UIAtomButton::Listener,
+                         public YanPopup::Listener,                         
                          public Provider::HighRefreshListener
 {
   public:
+
+    typedef enum {
+        MenuMidi = 1,
+        MenuClocks,
+        MenuBeats,
+        MenuBars
+    } MenuItems;
     
     TransportElement(class Provider* p, class UIElementDefinition* d);
     ~TransportElement();
@@ -34,8 +43,10 @@ class TransportElement : public UIElement, public UIAtomButton::Listener,
     // do Jucy things
     void resized() override;
     void paint(juce::Graphics& g) override;
-
+    void mouseDown(const juce::MouseEvent& e) override;
+    
     void atomButtonPressed(UIAtomButton* b) override;
+    void yanPopupSelected(class YanPopup* src, int id);
 
     void highRefresh(class PriorityState* state) override;
     
@@ -55,6 +66,8 @@ class TransportElement : public UIElement, public UIAtomButton::Listener,
     UIAtomList bottomRow;
     UIAtomList column;
     UIAtomSpacer spacer;
+
+    YanPopup popup {this};
     
     int tempoValue = 0;
     int tapStart = 0;
@@ -63,6 +76,9 @@ class TransportElement : public UIElement, public UIAtomButton::Listener,
     int lastLoop = 0;
     int lastBpb = 0;
     int lastBars = 0;
+
+    bool midiEnabled = false;
+    bool clocksEnabled = false;
     
     void sizeAtom(juce::Rectangle<int> area, juce::Component* comp);
     void updateRadar(class MobiusView* v);

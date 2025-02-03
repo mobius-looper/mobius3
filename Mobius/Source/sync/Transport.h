@@ -91,6 +91,7 @@ class Transport : public SyncAnalyzer
 
     class SyncMaster* syncMaster = nullptr;
     class MidiRealizer* midiRealizer = nullptr;
+    class Session* session = nullptr;
     
     int sampleRate = 44100;
     
@@ -134,6 +135,9 @@ class Transport : public SyncAnalyzer
     int beat = 0;
     int bar = 0;
     int loop = 0;
+
+    void cacheSessionParameters(bool force);
+    void recalculateBeats();
     
     int deriveTempo(int tapFrames);
     void resetLocation();
@@ -154,7 +158,7 @@ class Transport : public SyncAnalyzer
     void userSetTempoDuration(int millis);
     void userSetBarsPerLoop(int bpl);
     void userSetMidiEnabled(bool b);
-    void setSetMidiClocks(bool b);
+    void userSetMidiClocks(bool b);
     void userSetTempoRange(int min, int max);
     void userSetMetronome(bool b);
     

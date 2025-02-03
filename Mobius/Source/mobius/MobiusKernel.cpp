@@ -1176,7 +1176,7 @@ void MobiusKernel::doAction(UIAction* action)
         // that live at the same level as TrackManager, this probably needs to be LevelKernel
         // in the symbol definition
         if (symbol->id == FuncGlobalReset) {
-            syncMaster->globalReset();
+            syncMaster.globalReset();
             // also notify Supervisor in case this is comming from the bottom up
             if (listener != nullptr) listener->mobiusGlobalReset();
         }
@@ -1473,7 +1473,18 @@ void MobiusKernel::coreTimeBoundary()
  */
 bool MobiusKernel::doQuery(Query* q)
 {
-    return mTracks->doQuery(q);
+    bool success = false;
+    
+    if (q->symbol->level == LevelKernel) {
+        // most are here
+        success = syncMaster.doQuery(q);
+        if (!success)
+          Trace(1, "MobiusKernel: Unhandled kernel query for %s", q->symbol->getName());
+    }
+    else {
+        success = mTracks->doQuery(q);
+    }
+    return success;
 }
 
 //////////////////////////////////////////////////////////////////////

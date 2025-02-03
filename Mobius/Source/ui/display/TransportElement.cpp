@@ -27,6 +27,8 @@
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
 #include "../../model/PriorityState.h"
+#include "../../model/UIAction.h"
+#include "../../model/Query.h"
 
 #include "../JuceUtil.h"
 #include "../MobiusView.h"
@@ -165,8 +167,9 @@ void TransportElement::update(MobiusView* v)
 {
     // only needed this to test flashing
     //tempo.advance();
-
     updateRadar(v);
+
+    start.setOn(v->syncState.transportStarted);
 
     // todo: SourceMidi has the notion of the raw and "smooth" tempo
     // figure out which one to show
@@ -213,7 +216,9 @@ void TransportElement::updateRadar(MobiusView* v)
     else {
         // 0=beat, 1=bar, 2=loop
         // could have this configurable
-        int option = 1;
+        // tracks show the entire loop, need to be consistent about this
+        // same with midi
+        int option = 2;
 
         int unit = v->syncState.transportUnitLength;
         int head = v->syncState.transportPlayHead;
@@ -227,11 +232,12 @@ void TransportElement::updateRadar(MobiusView* v)
             range = barLength;
             location = head + (v->syncState.transportBeat * unit);
         }
-        else {
+        else if (option == 2) {
             // loop
             int bpl = v->syncState.transportBarsPerLoop;
             range = barLength * bpl;
-            location = head + (v->syncState.transportBar * barLength);
+            location = head + (v->syncState.transportBeat * unit) +
+                (v->syncState.transportBar * barLength);
         }
 
         radar.setRange(range);
@@ -329,6 +335,62 @@ void TransportElement::atomButtonPressed(UIAtomButton* b)
         else
           a.symbol = provider->getSymbols()->getSymbol(FuncTransportStop);
         provider->doAction(&a);
+    }
+}
+
+void TransportElement::mouseDown(const juce::MouseEvent& e)
+{
+    if (e.mods.isRightButtonDown()) {
+        popup.clear();
+        Query q;
+        q.symbol = provider->getSymbols()->getSymbol(ParamTransportMidi);
+        provider->doQuery(&q);
+        popup.add("MIDI Enable", MenuMidi, (q.value != 0));
+        
+        q.symbol = provider->getSymbols()->getSymbol(ParamTransportClocks);
+        provider->doQuery(&q);
+        popup.add("MIDI Clocks When Stopped", MenuClocks, (q.value != 0));
+        
+        popup.add("Beats Per Bar...", MenuBeats);
+        popup.add("Bars Per Loop...", MenuBars);
+        
+        popup.show();
+    }
+}
+
+void TransportElement::yanPopupSelected(YanPopup* src, int id)
+{
+    // the first one is Add in both cases
+    (void)src;
+
+    switch (id) {
+        case MenuMidi: {
+            Query q;
+            q.symbol = provider->getSymbols()->getSymbol(ParamTransportMidi);
+            provider->doQuery(&q);
+            UIAction a;
+            a.symbol = q.symbol;
+            a.value = (q.value == 0) ? 1 : 0;
+            provider->doAction(&a);
+        }
+            break;
+        case MenuClocks: {
+            Query q;
+            q.symbol = provider->getSymbols()->getSymbol(ParamTransportClocks);
+            provider->doQuery(&q);
+            UIAction a;
+            a.symbol = q.symbol;
+            a.value = (q.value == 0) ? 1 : 0;
+            provider->doAction(&a);
+        }
+            break;
+        case MenuBeats:
+            break;
+        case MenuBars:
+            break;
+        default:
+            Trace(1, "TransportElement: Unknown menu item %d", id);
+            break;
     }
 }
 

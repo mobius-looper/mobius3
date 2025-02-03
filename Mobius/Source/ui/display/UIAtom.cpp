@@ -395,7 +395,10 @@ void UIAtomButton::setToggle(bool b)
 
 void UIAtomButton::setOn(bool b)
 {
-    on = b;
+    if (on != b) {
+        on = b;
+        repaint();
+    }
 }
 
 bool UIAtomButton::isOn()

@@ -47,11 +47,6 @@ void MidiAnalyzer::shutdown()
     midiManager->removeRealtimeListener(this);
 }
 
-void MidiAnalyzer::loadSession(Session* s)
-{
-    (void)s;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // State
@@ -453,7 +448,7 @@ void MidiAnalyzer::advance(int frames)
             // a unit has transpired
             int blockOffset = unitPlayHead - unitLength;
             if (blockOffset > frames || blockOffset < 0)
-              Trace(1, "Transport: You suck at math");
+              Trace(1, "MidiAnalyzer: You suck at math");
 
             // effectively a frame wrap too
             unitPlayHead = blockOffset;

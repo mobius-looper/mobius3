@@ -38,7 +38,10 @@ class BarTender
     ~BarTender();
 
     void loadSession(class Session* s);
-
+    void globalReset();
+    bool doAction(class UIAction* a);
+    bool doQuery(class Query* q);
+    
     void advance(int blockFrames);
     Pulse* annotate(class LogicalTrack* t, Pulse* p);
 
@@ -70,6 +73,8 @@ class BarTender
 
     class SyncMaster* syncMaster = nullptr;
     class TrackManager* trackManager = nullptr;
+    class Session* session = nullptr;
+    
     int hostBeatsPerBar = 0;
     int hostBarsPerLoop = 0;
     bool hostOverride = false;
@@ -79,6 +84,13 @@ class BarTender
 
     // the annotated Pulse passed back to TimeSlicer
     Pulse annotated;
+
+    void cacheSessionParameters();
+    void setHostBeatsPerBar(int bpb);
+    void setHostBarsPerLoop(int bpl);
+    void setHostOverride(bool b);
+    void setMidiBeatsPerBar(int bpb);
+    void setMidiBarsPerLoop(int bpl);
 
     void detectHostBar(bool& onBar, bool& onLoop);
     

@@ -154,13 +154,13 @@ void MidiSyncElement::update(MobiusView* v)
     // this is necessary to flash beats
     light.advance();
 
-    int newBpb = v->syncState.transportBeatsPerBar;
+    int newBpb = v->syncState.midiBeatsPerBar;
     if (lastBpb != newBpb) {
         bpb.setValue(newBpb);
         lastBpb = newBpb;
     }
     
-    int newBars = v->syncState.transportBarsPerLoop;
+    int newBars = v->syncState.midiBarsPerLoop;
     if (lastBars != newBars) {
         bars.setValue(newBars);
         lastBars = newBars;
@@ -188,7 +188,7 @@ void MidiSyncElement::updateRadar(MobiusView* v)
     else {
         // 0=beat, 1=bar, 2=loop
         // could have this configurable
-        int option = 1;
+        int option = 2;
 
         int unit = v->syncState.midiUnitLength;
         int head = v->syncState.midiPlayHead;
@@ -202,11 +202,12 @@ void MidiSyncElement::updateRadar(MobiusView* v)
             range = barLength;
             location = head + (v->syncState.midiBeat * unit);
         }
-        else {
+        else if (option == 2) {
             // loop
             int bpl = v->syncState.midiBarsPerLoop;
             range = barLength * bpl;
-            location = head + (v->syncState.midiBar * barLength);
+            location = head + (v->syncState.midiBeat * unit) +
+                (v->syncState.midiBar * barLength);
         }
 
         radar.setRange(range);

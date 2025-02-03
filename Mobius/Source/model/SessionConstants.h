@@ -15,7 +15,7 @@
 
 static const char* SessionTransportTempo = "transportTempo";
 static const char* SessionTransportLength = "transportLength";
-static const char* SessionTransportBeatsPerBar = "transortBeatsPerBar";
+static const char* SessionTransportBeatsPerBar = "transportBeatsPerBar";
 static const char* SessionTransportBarsPerLoop = "transportBarsPerLoop";
 static const char* SessionTransportMidi = "transportMidi";
 static const char* SessionTransportClocks = "transportClocks";

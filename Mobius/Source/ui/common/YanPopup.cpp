@@ -24,12 +24,18 @@ void YanPopup::setListener(Listener* l)
     listener = l;
 }
 
-void YanPopup::add(juce::String text, int id)
+void YanPopup::clear()
+{
+    menu.clear();
+}
+
+void YanPopup::add(juce::String text, int id, bool ticked)
 {
     // other things you can do
     // setEnabled, setTicked, setAction, setImage
     juce::PopupMenu::Item item (text);
     item.setID(id);
+    item.setTicked(ticked);
     menu.addItem(item);
 }
 

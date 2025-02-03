@@ -45,6 +45,8 @@
 #include "../model/Session.h"
 #include "../model/SyncState.h"
 #include "../model/PriorityState.h"
+#include "../model/UIAction.h"
+#include "../model/Query.h"
 #include "../mobius/track/TrackProperties.h"
 
 #include "SyncConstants.h"
@@ -178,44 +180,63 @@ void Transport::setSampleRate(int rate)
  */
 void Transport::loadSession(Session* s)
 {
-    defaultTempo = (float)(s->getInt(SessionTransportTempo));
-    defaultBeatsPerBar = s->getInt(SessionTransportBeatsPerBar);
-    defaultBarsPerLoop = s->getInt(SessionTransportBarsPerLoop);
+    session = s;
+    cacheSessionParameters(false);
+}
 
-    midiEnabled = s->getBool(SessionTransportMidi);
-    sendClocksWhenStopped = s->getBool(SessionTransportClocks);
-    manualStart = s->getBool(SessionTransportManualStart);
-    metronomeEnabled = s->getBool(SessionTransportMetronome);
+/**
+ * Should be called when a GlobalReset happens.
+ * Restore any runtime parameters to the session defaults.
+ *
+ * Might need options to make these "sticky" and survive a GR.
+ */
+void Transport::globalReset()
+{
+    userStop();
+    cacheSessionParameters(true);
+}
+
+/**
+ * This one behaves differently than most because once a master
+ * track connects, it determines the tempo and time signature.
+ * Normally on globalReset, the master track will be reset too.
+ * But for simple session edit/propagation we leave the current
+ * values in place if there is a connected track.
+ */
+void Transport::cacheSessionParameters(bool force)
+{
+    defaultTempo = (float)(session->getInt(SessionTransportTempo));
+    defaultBeatsPerBar = session->getInt(SessionTransportBeatsPerBar);
+    defaultBarsPerLoop = session->getInt(SessionTransportBarsPerLoop);
+
+    // correct uninitialized sessions
+    if (defaultBeatsPerBar < 1)
+      defaultBeatsPerBar = 4;
     
-    int min = s->getInt(SessionTransportMinTempo);
+    if (defaultBarsPerLoop < 1)
+      defaultBarsPerLoop = 1;
+    
+    midiEnabled = session->getBool(SessionTransportMidi);
+    sendClocksWhenStopped = session->getBool(SessionTransportClocks);
+    manualStart = session->getBool(SessionTransportManualStart);
+    metronomeEnabled = session->getBool(SessionTransportMetronome);
+    
+    int min = session->getInt(SessionTransportMinTempo);
     if (min == 0) min = 30;
     minTempo = (float)min;
 
-    int max = s->getInt(SessionTransportMaxTempo);
+    int max = session->getInt(SessionTransportMaxTempo);
     if (max == 0) max = 300;
     maxTempo = (float)max;
 
-    if (defaultBeatsPerBar < 1) {
-        Trace(2, "Transport: Correcting missing transportBeatsPerBar %d",
-              defaultBeatsPerBar);
-        defaultBeatsPerBar = 4;
-    }
-    
-    if (defaultBarsPerLoop < 1) {
-        Trace(2, "Transport: Correcting missing transportBarsPerLoop %d",
-              defaultBarsPerLoop);
-        defaultBarsPerLoop = 1;
+    // only if disconnected or doing global reset
+    if (force || master == 0) {
+        tempo = defaultTempo;
+        beatsPerBar = defaultBeatsPerBar;
+        barsPerLoop = defaultBarsPerLoop;
     }
 
-    if (tempo == 0.0f)
-      tempo = defaultTempo;
-    
-    if (beatsPerBar == 0)
-      beatsPerBar = defaultBeatsPerBar;
-
-    if (barsPerLoop == 0)
-      barsPerLoop = defaultBarsPerLoop;
-
+    // reflect midi options
     if (!midiEnabled) {
         midiRealizer->stop();
     }
@@ -223,26 +244,9 @@ void Transport::loadSession(Session* s)
         if (!started)
           midiRealizer->startClocks();
     }
-    else {
-        if (!started)
-          midiRealizer->stopSelective(false, true);
+    else if (!started) {
+        midiRealizer->stopSelective(false, true);
     }
-}
-
-/**
- * Should be called when a GlobalReset happens.
- * Restore any runtime parameters to the session defaults.
- *
- * This is going to start being a common pattern.  Rather than making everything
- * remember what was in the Session, could just pass the Session in on GR.
- *
- * Might need an option to make these "sticky" and survive a GR.
- */
-void Transport::globalReset()
-{
-    tempo = defaultTempo;
-    beatsPerBar = defaultBeatsPerBar;
-    barsPerLoop = defaultBarsPerLoop;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -300,9 +304,10 @@ bool Transport::doAction(UIAction* a)
             // Action doesn't have a way to pass floats right now so the
             // integer value is x100
             
-            // !! if the Transport is locked to a Master track, this should be ignored
-            float tempo = (float)(a->value) / 100.0f;
-            userSetTempo(tempo);
+            // !! if the Transport is locked to a Master track, this should be ignored??
+            // if you allow tempo to be changed, then the master should be disconnected
+            float newTempo = (float)(a->value) / 100.0f;
+            userSetTempo(newTempo);
         }
             break;
             
@@ -325,7 +330,7 @@ bool Transport::doAction(UIAction* a)
             break;
 
         case ParamTransportClocks:
-            userSetSetMidiClocks(a->value != 0);
+            userSetMidiClocks(a->value != 0);
             break;
 
         case ParamTransportManualStart:
@@ -400,7 +405,7 @@ bool Transport::doQuery(Query* q)
             break;
 
         case ParamTransportMetronome:
-            q->value = metronome;
+            q->value = metronomeEnabled;
             break;
 
         default: handled = false; break;
@@ -560,15 +565,26 @@ void Transport::userSetBeatsPerBar(int bpb)
         Trace(2, "Transport: User changing BeatsPerBar %d", bpb);
 
         beatsPerBar = bpb;
+        recalculateBeats();
     }
+}
+
+void Transport::recalculateBeats()
+{
+    int loopBeats = beatsPerBar * barsPerLoop;
+    loop = elapsedUnits / loopBeats;
+    int loopRemainder = elapsedUnits % loopBeats;
+    bar = loopRemainder / beatsPerBar;
+    beat = loopRemainder % beatsPerBar;
 }
 
 void Transport::userSetBarsPerLoop(int bpl)
 {
     if (bpl > 0 && bpl != barsPerLoop) {
         Trace(2, "Transport: User changing BarsPerLoop %d", bpl);
-
+        
         barsPerLoop = bpl;
+        recalculateBeats();
     }
 }
 
@@ -605,7 +621,7 @@ void Transport::userSetTempoRange(int min, int max)
       minTempo = (float)min;
 
     if (max > 0 && max <= 300)
-      maxTempo = max;
+      maxTempo = (float)max;
 }
 
 /**

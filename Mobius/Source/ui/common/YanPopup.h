@@ -21,7 +21,8 @@ class YanPopup
     ~YanPopup();
 
     void setListener(Listener* l);
-    void add(juce::String name, int id);
+    void clear();
+    void add(juce::String name, int id, bool ticked=false);
     void addDivider();
 
     void show();

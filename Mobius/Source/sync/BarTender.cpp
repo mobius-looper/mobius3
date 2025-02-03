@@ -18,6 +18,8 @@
 
 #include "../model/SessionConstants.h"
 #include "../model/Session.h"
+#include "../model/UIAction.h"
+#include "../model/Query.h"
 
 #include "../mobius/track/TrackManager.h"
 #include "../mobius/track/LogicalTrack.h"
@@ -42,29 +44,29 @@ BarTender::~BarTender()
 {
 }
 
-/**
- * The first was intended to be the BPB for the Transport, but that can
- * go out the window if the Transport locks onto a master track.  That new
- * value isn't in the Session so if you edit the Session that will get pushed
- * back to the Transport.
- * Needs thought...
- *
- * Problem 2: Pulsator assumes followers are abstract things that aren't
- * necessarily tracks but BarTender does assume they are tracks and follower
- * numbers can be used as indexes in to the Session.  For all purposes, there
- * is no difference between a follower and a track, but may need more here.
- *
- */
 void BarTender::loadSession(Session* s)
 {
-    // !! todo: all these need to be actionable for scripts
-    
-    hostBeatsPerBar = s->getInt(SessionHostBeatsPerBar);
-    hostBarsPerLoop = s->getInt(SessionHostBarsPerLoop);
-    hostOverride = s->getBool(SessionHostOverride);
+    session = s;
+    cacheSessionParameters();
+}
 
-    midiBeatsPerBar = s->getInt(SessionMidiBeatsPerBar);
-    midiBarsPerLoop = s->getInt(SessionMidiBarsPerLoop);
+void BarTender::cacheSessionParameters()
+{
+    setHostBeatsPerBar(session->getInt(SessionHostBeatsPerBar));
+    setHostBarsPerLoop(session->getInt(SessionHostBarsPerLoop));
+    setHostOverride(session->getBool(SessionHostOverride));
+
+    setMidiBeatsPerBar(session->getInt(SessionMidiBeatsPerBar));
+    setMidiBarsPerLoop(session->getInt(SessionMidiBarsPerLoop));
+}
+
+/**
+ * GlobalReset in effect cancels runtime bindings to the time
+ * signature parametres and restores them to those in the Session.
+ */
+void BarTender::globalReset()
+{
+    cacheSessionParameters();
 }
 
 /**
@@ -91,6 +93,109 @@ void BarTender::advance(int frames)
     // the Transport can also manage a time signature, if you need to
     // do it for Host, you need it there too
     
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Actions and Queries
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * !! todo: Don't have the notion of temporary overrides with GlobalReset
+ * revisit
+ */
+bool BarTender::doAction(UIAction* a)
+{
+    bool handled = true;
+
+    switch (a->symbol->id) {
+
+        case ParamHostBeatsPerBar:
+            setHostBeatsPerBar(a->value);
+            break;
+            
+        case ParamHostBarsPerLoop:
+            setHostBarsPerLoop(a->value);
+            break;
+            
+        case ParamHostOverride:
+            setHostOverride(a->value != 0);
+            break;
+            
+        case ParamMidiBeatsPerBar:
+            setMidiBeatsPerBar(a->value);
+            break;
+            
+        case ParamMidiBarsPerLoop:
+            setMidiBarsPerLoop(a->value);
+            break;
+
+        default: handled = false;
+    }
+    return handled;
+}
+
+// todo: better range limits
+
+void BarTender::setHostBeatsPerBar(int bpb)
+{
+    if (bpb > 0)
+      hostBeatsPerBar = bpb;
+}
+
+void BarTender::setHostBarsPerLoop(int bpl)
+{
+    if (bpl > 0)
+      hostBarsPerLoop = bpl;
+}
+
+void BarTender::setHostOverride(bool b)
+{
+    hostOverride = b;
+}
+
+void BarTender::setMidiBeatsPerBar(int bpb)
+{
+    if (bpb > 0)
+      midiBeatsPerBar = bpb;
+}
+
+void BarTender::setMidiBarsPerLoop(int bpl)
+{
+    if (bpl > 0)
+      midiBarsPerLoop = bpl;
+}
+
+bool BarTender::doQuery(Query* q)
+{
+    bool handled = true;
+
+    switch (q->symbol->id) {
+
+        case ParamHostBeatsPerBar:
+            q->value = hostBeatsPerBar;
+            break;
+            
+        case ParamHostBarsPerLoop:
+            q->value = hostBarsPerLoop;
+            break;
+            
+        case ParamHostOverride:
+            q->value = hostOverride;
+            break;
+            
+        case ParamMidiBeatsPerBar:
+            q->value = midiBeatsPerBar;
+            break;
+            
+        case ParamMidiBarsPerLoop:
+            q->value = midiBarsPerLoop;
+            break;
+
+        default: handled = false;
+    }
+    return handled;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -363,6 +468,12 @@ int BarTender::getBar(SyncSource src)
             if (raw > 0) {
                 int bpb = getMidiBeatsPerBar();
                 bar = (raw / bpb);
+
+                // this is "elapsed bars"
+                // two schools of thought here...this could just increase
+                // without end like host does, or it could wrap on barsPerLoop like transport does
+                // to show a spinning radar in MidiSyncElement, it needs to wrap
+                bar = bar % midiBarsPerLoop;
             }
         }
             break;

@@ -26,7 +26,6 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     void initialize(class SyncMaster* sm, class MidiManager* mm);
     void setSampleRate(int rate);
     void shutdown();
-    void loadSession(class Session* s);
     void refreshState(class SyncState* state);
 
     // MidiManager::RealtimeListener
