@@ -49,6 +49,11 @@ bool MidiTempoMonitor::isReceiving()
     return receiving;
 }
 
+bool MidiTempoMonitor::isFilling()
+{
+    return !windowFull;
+}
+
 void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
 {
     const juce::uint8* data = msg.getRawData();

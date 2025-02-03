@@ -20,6 +20,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Sanity checks on tempo/unit length.
+ * See wild ranges occasionally after emergency resync, should be preventing
+ * those.
+ */
+static const int MidiMinTempo = 30;
+static const int MidiMaxTempo = 300;
+
 MidiAnalyzer::MidiAnalyzer()
 {
 }
@@ -243,12 +251,12 @@ void MidiAnalyzer::analyze(int blockFrames)
 
             if (unitLength == 0 || resyncUnitLength) {
                 // virtual loop isn't running yet
-                unitLocked = lockUnitLength(blockFrames);
+                unitLocked = lockUnitLength(blockFrames, true);
             }
             else {
                 // virtual loop is running, but we may be able to relock if
                 // nothing is depending on it
-                unitLocked = relockUnitLength(blockFrames);
+                unitLocked = relockUnitLength(blockFrames, false);
             }
             
             lastMonitorBeat = eventMonitor.elapsedBeats;
@@ -276,85 +284,15 @@ void MidiAnalyzer::deriveTempo()
 }
 
 /**
- * Here on the first beat after restarting.
- * If there is a unit length, it means we stopped and restarted or
- * continued after running for awhile and the resyncUnitLength flag was set.
+ * Here on each full beat from the MIDI input.
  *
- * What this does is mostly the same as relockUnitLength but adds a little
- * extra trace information.
- *
- * todo: merge these!
- */
-bool MidiAnalyzer::lockUnitLength(int blockFrames)
-{
-    (void)blockFrames;
-    double clockLength = tempoMonitor.getAverageClockLength();
-    int newUnitLength = tempoMonitor.getAverageUnitLength();
-    bool relock = false;
-
-    if (unitLength != newUnitLength) {
-
-        if (unitLength == 0 || resyncUnitLength) {
-            // first time here after a start point, can always relock
-            relock = true;
-        }
-        else {
-            // only allow a relock if there are no followers
-            // todo: here is where we should check to see if there are any tracks
-            // following this sync source, and if there are defer the relock until
-            // drift is excessive, otherwise relock immediately
-            int followers = 1;
-            if (followers == 0)
-              relock = true;
-        }
-
-        if (relock) {
-            char buf[256];
-            if (unitLength == 0)
-              sprintf(buf, "MidiAnalyzer: Locked unit length %d clock length %f running average %f tempo %f",
-                      newUnitLength, clockLength, tempoMonitor.getAverageClock(),
-                      tempoMonitor.getAverageTempo());
-            else
-              sprintf(buf, "MidiAnalyzer: Adjusted unit length from %d to %d tempo tempo %f",
-                      unitLength, newUnitLength, tempoMonitor.getAverageTempo());
-              
-            Trace(2, buf);
-
-            unitLength = newUnitLength;
-            unitLength = newUnitLength;
-
-            // orient the play heaad and beging normal advancing
-            // beat jumps to 1
-            unitPlayHead = 0;
-            elapsedBeats = 1;
-
-            // since advance won't cross a beat boundary, have to do it here
-            result.beatDetected = true;
-
-            // stream time advance may not be exactly on a unit, but sonce we are
-            // reorienting the unit length and consider this to be exactly on beta 1
-            // adjust the stream time to match for drift checking
-            streamTime = unitLength;
-        }
-        else {
-            char buf[256];
-            sprintf(buf, "MidiAnalyzer: Supressing unit adjust from %d to %d tempo %f",
-                    unitLength, newUnitLength, tempoMonitor.getAverageTempo());
-            Trace(2, buf);
-        }
-        
-    }
-
-    resyncUnitLength = false;
-
-    return relock;
-}
-
-/**
- * Here on each beat after the first.
- *
- * The unit length will aready have been calculated but if there aren't any active followers,
- * we're free to make adjustments to it to better smooth out the tempo for devices
+ * If we decide to reorient the unit length, the play head is reset
+ * and this must return true to prevent falling into the normal advance()
+ * process.  The paths are slighly different if this is the initial lock after the
+ * first beat, or a relock on later beats.
+ * 
+ * Once unit length has been calculated and there there aren't any active followers,
+ * we're free to make adjustments to better smooth out the tempo for devices
  * that don't continuously send clocks.  If you don't actually start recording a track
  * until the device has played for a few bars, then we don't need to lock it until recording
  * starts.
@@ -382,19 +320,142 @@ bool MidiAnalyzer::lockUnitLength(int blockFrames)
  * than some number of samples from it's current value.  Needs to be tunable...
  * Should further suppress the ocassional outlier that jumps way out of wack
  * then comes back down.  It needs to be sustained in one direction before we relock.
+ *
+ * Tempo anomolies that result in a resync of the tempo monitor, or wildly out
+ * of range tempos are common when you've been stopped in the debugger while
+ * MIDI clocks keep coming in.  Suppress those, but they're unexpected normally
+ * to trace an error.
+ */
+bool MidiAnalyzer::lockUnitLength(int blockFrames, bool firstTime)
+{
+    (void)blockFrames;
+    double clockLength = tempoMonitor.getAverageClockLength();
+    int newUnitLength = tempoMonitor.getAverageUnitLength();
+    // convert length to tempo to make it easier to sanity check
+    int newTempo = (int)(tempoMonitor.getAverageTempo());
+    bool relock = false;
+
+    if (newUnitLength == 0) {
+        // common after an emergency resync during debugging but not
+        // on the first lock
+        if (firstTime)
+          Trace(1, "MidiAnalyzer: Unable to do first unit lock");
+    }
+    else if (newTempo < MidiMinTempo || newTempo > MidiMaxTempo) {
+        // something went haywire in TempoMonitor, if we're not filling this is unusual
+        Trace(1, "MidiAnalyzer: Ignoring unusual unit length %d", newUnitLength);
+    }
+    else if (tempoMonitor.isFilling() && !firstTime) {
+        // common after emergency resync after debugging, continue with the
+        // old length until the buffer fills
+    }
+    else {
+        // decide whether relock is allowed
+
+        if (unitLength == 0 || firstTime) {
+            // first time here after a start point, can always relock
+            relock = true;
+        }
+        else if (newUnitLength != unitLength) {
+
+            // only allow a relock if there are no followers
+            int followers = syncMaster->getActiveFollowers(SyncSourceMidi, unitLength);
+            if (followers == 0) {
+                // prevent excessive relock when the clock wobbles around
+                // play around with this, 4 may be enough, but user initiated tempo changes are rare
+                // and the initial guess is usually pretty close
+                int relockThreshold = 8;
+                int change = abs(unitLength - newUnitLength);
+                if (change > relockThreshold)
+                  relock = true;
+            }
+        }
+
+        if (relock) {
+            // on the initial lock, we're expected to go ahead and define
+            // a unit even if the smoothing window isn't full, it will be less accurate
+            if (tempoMonitor.isFilling() && firstTime)
+              Trace(2, "MidiAnalyzer: Deriving unit during fill period, potentially unstable");
+
+            char buf[256];
+            if (unitLength == 0)
+              sprintf(buf, "MidiAnalyzer: Locked unit length %d clock length %f running average %f tempo %f",
+                      newUnitLength, clockLength, tempoMonitor.getAverageClock(),
+                      newTempo);
+            else
+              sprintf(buf, "MidiAnalyzer: Adjusted unit length from %d to %d tempo %f",
+                      unitLength, newUnitLength, newTempo);
+            Trace(2, buf);
+
+            unitLength = newUnitLength;
+
+            // orient the play heaad and beging normal advancing
+            // beat jumps to 1
+            unitPlayHead = 0;
+            if (firstTime)
+              elapsedBeats = 1;
+            else {
+                // we're just adjusting for tempo wobble, keep the beat
+                // counter going
+                elapsedBeats = eventMonitor.elapsedBeats;
+            }
+
+            // since advance won't cross a beat boundary, have to do it here
+            result.beatDetected = true;
+
+            if (firstTime) {
+                // stream time advance may not be exactly on a unit, but sonce we are
+                // reorienting the unit length and consider this to be exactly on beta 1
+                // adjust the stream time to match for drift checking
+                streamTime = unitLength;
+            }
+            else {
+                // stream time likewise goes to where it would be if we had had
+                // this unit length all along
+                streamTime = elapsedBeats * unitLength;
+            }
+        }
+        else {
+            char buf[256];
+            sprintf(buf, "MidiAnalyzer: Supressing unit adjust from %d to %d tempo %f",
+                    unitLength, newUnitLength, newTempo);
+            Trace(2, buf);
+        }
+    }
+
+    resyncUnitLength = false;
+
+    return relock;
+}
+
+/**
+ * Here on each beat after the first.
+ *
  */
 bool MidiAnalyzer::relockUnitLength(int blockFrames)
 {
     (void)blockFrames;
     int newUnitLength = tempoMonitor.getAverageUnitLength();
+    int newTempo = (int)(tempoMonitor.getAverageTempo());
     bool relock = false;
 
-    // play around with this, 4 may be enough, but really user tempo changes are rare
-    // and the initial guess is usually pretty close
-    int relockThreshold = 8;
-
-    if (unitLength != newUnitLength) {
-
+    if (tempoMonitor.isFilling()) {
+        // normally happens only after resetting after an extreme delta,
+        // commonly when suspending in the debugger, ignore until the
+        // smoothing window fills again
+        Trace(2, "MidiAnalyzer: Ignoring relock during smoothing");
+    }
+    else if (newUnitLength == 0) {
+        // commonly zero immediately after resync, wait
+    }
+    else if (newTempo < MidiMinTempo || newTempo > MidiMaxTempo) {
+        // something went haywire in TempoMonitor, if we're not filling this is unusual
+        Trace(1, "MidiAnalyzer: Ignoring unusual unit length %d", newUnitLength);
+    }
+    else if (newUnitLength != unitLength) {
+        // play around with this, 4 may be enough, but really user tempo changes are rare
+        // and the initial guess is usually pretty close
+        int relockThreshold = 8;
         int change = abs(unitLength - newUnitLength);
         if (change > relockThreshold) {
 

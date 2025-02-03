@@ -96,6 +96,12 @@ class MidiTempoMonitor
     bool isReceiving();
 
     /**
+     * True if it is still in the process of filling the sample window.
+     * Tempo will be less reliabla.
+     */
+    bool isFilling();
+
+    /**
      * Various averaging calculations
      */
     double getAverageClock();

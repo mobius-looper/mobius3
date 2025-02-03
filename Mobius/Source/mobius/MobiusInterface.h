@@ -796,8 +796,6 @@ class MobiusAudioStream
 
     /**
      * The number of frames in the next audio block.
-     * This is long for historical reasons, it doesn't need to be because int and long
-     * are the same size.
      */
 	virtual int getInterruptFrames() = 0;
 

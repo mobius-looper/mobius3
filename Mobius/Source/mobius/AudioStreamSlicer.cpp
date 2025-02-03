@@ -1,5 +1,4 @@
 
-
 #include "../util/Trace.h"
 
 #include "MobiusInterface.h"
@@ -8,6 +7,7 @@
 AudioStreamSlicer::AudioStreamSlicer(MobiusAudioStream* src)
 {
     containerStream = src;
+    fullBlockSize = src->getInterruptFrames();
 }
 
 AudioStreamSlicer::~AudioStreamSlicer()
@@ -16,8 +16,16 @@ AudioStreamSlicer::~AudioStreamSlicer()
 
 void AudioStreamSlicer::setSlice(int offset, int length)
 {
-    blockOffset = offset;
-    blockLength = length;
+    int potentialEnd = offset + length;
+    if (potentialEnd > fullBlockSize) {
+        Trace(1, "AudioStreamSlicer: Supressing slice beyond source block");
+        blockOffset = 0;
+        blockLength = 0;
+    }
+    else {
+        blockOffset = offset;
+        blockLength = length;
+    }
 }
 
 /**
@@ -54,8 +62,17 @@ void AudioStreamSlicer::getInterruptBuffers(int inport, float** input,
 
     containerStream->getInterruptBuffers(inport, &adjustedInput, outport, &adjustedOutput);
 
-    adjustedInput += (blockOffset * 2);
-    adjustedOutput += (blockOffset * 2);
+    // should have prevented this in setSlice but check again
+    // before we let the caller scribble all over it
+    if (blockLength == 0 || ((blockOffset + blockLength) > fullBlockSize)) {
+        Trace(1, "AudioStreamSlicer: Supressing slice beyond source block, part 2");
+        adjustedInput = nullptr;
+        adjustedOutput = nullptr;
+    }
+    else {
+        adjustedInput += (blockOffset * 2);
+        adjustedOutput += (blockOffset * 2);
+    }
 
     if (input != nullptr) *input = adjustedInput;
     if (output != nullptr) *output = adjustedOutput;

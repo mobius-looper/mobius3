@@ -44,6 +44,7 @@ class AudioStreamSlicer : public MobiusAudioStream
   private:
 
     MobiusAudioStream* containerStream = nullptr;
+    int fullBlockSize = 0;
     int blockOffset = 0;
     int blockLength = 0;
     
