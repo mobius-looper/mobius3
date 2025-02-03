@@ -1172,6 +1172,15 @@ void MobiusKernel::doAction(UIAction* action)
     }
     else if (symbol->level == LevelCore) {
 
+        // GlobalReset is important to intercept so we can reset some of the components
+        // that live at the same level as TrackManager, this probably needs to be LevelKernel
+        // in the symbol definition
+        if (symbol->id == FuncGlobalReset) {
+            syncMaster->globalReset();
+            // also notify Supervisor in case this is comming from the bottom up
+            if (listener != nullptr) listener->mobiusGlobalReset();
+        }
+
         // TrackManager does it's magic
         mTracks->doAction(action);
         passed = true;

@@ -31,6 +31,9 @@ class Transport : public SyncAnalyzer
 
     void globalReset();
     int getMaster();
+
+    bool doAction(UIAction* a);
+    bool doQuery(Query* q);
     
     //
     // SyncAnalyzer Interface
@@ -66,9 +69,6 @@ class Transport : public SyncAnalyzer
     
     void userStop();
     void userStart();
-    void userSetBeatsPerBar(int bpb);
-    void userSetTempo(float tempo);
-    void userSetTempoDuration(int millis);
 
     // Internal Control
 
@@ -146,6 +146,18 @@ class Transport : public SyncAnalyzer
 
     void consumeMidiBeats();
     void checkDrift();
+
+    // internal action handlers
+    
+    void userSetBeatsPerBar(int bpb);
+    void userSetTempo(float tempo);
+    void userSetTempoDuration(int millis);
+    void userSetBarsPerLoop(int bpl);
+    void userSetMidiEnabled(bool b);
+    void setSetMidiClocks(bool b);
+    void userSetTempoRange(int min, int max);
+    void userSetMetronome(bool b);
+    
 };
 
 /****************************************************************************/

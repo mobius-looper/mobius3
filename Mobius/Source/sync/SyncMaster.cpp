@@ -108,6 +108,14 @@ void SyncMaster::shutdown()
 }
 
 /**
+ * Here when a FuncGlobalReset action is intercepted.
+ */
+void SyncMaster::globalReset()
+{
+    transport->globalReset();
+}
+
+/**
  * Only for TimeSlicer, don't need a list yet.
  */
 void SyncMaster::addListener(Listener* l)
@@ -836,9 +844,7 @@ bool SyncMaster::doAction(UIAction* a)
 {
     bool handled = true;
     
-    Symbol* s = a->symbol;
-
-    switch (s->id) {
+    switch (a->symbol->id) {
 
         case FuncSyncMasterTrack:
             setTrackSyncMaster(a);
@@ -847,43 +853,13 @@ bool SyncMaster::doAction(UIAction* a)
         case FuncSyncMasterTransport:
             setTransportMaster(a);
             break;
-        
-        case FuncTransportStop:
-            transport->userStop();
-            break;
-
-        case FuncTransportStart:
-            transport->userStart();
-            break;
-
-        case ParamTransportTempo: {
-            // Action doesn't have a way to pass floats right now so the
-            // integer value is x100
-            
-            // !! if the Transport is locked to a Master track, this should be ignored
-            float tempo = (float)(a->value) / 100.0f;
-            transport->userSetTempo(tempo);
-        }
-            break;
-            
-        case ParamTransportLength: {
-            // !! if the Transport is locked to a Master track, this should be ignored
-            transport->userSetTempoDuration(a->value);
-        }
-            break;
-            
-        case ParamTransportBeatsPerBar: {
-            transport->userSetBeatsPerBar(a->value);
-        }
-            break;
             
         default:
-            // don't whine about this, we may be just one of several
-            // potential LevelKernel action handlers
-            //Trace(1, "SyncMaster: Unhandled action %s", s->getName());
-            handled = false;
+            // Transport is the only thing under us that takes actions
+            handled = transport->doAction(a);
             break;
     }
+    
     return handled;
 }
 
@@ -894,28 +870,13 @@ bool SyncMaster::doAction(UIAction* a)
  */
 bool SyncMaster::doQuery(Query* q)
 {
-    bool success = false;
-    Symbol* s = q->symbol;
+    bool handled = false;
 
-    switch (s->id) {
-        case ParamTransportTempo: {
-            // no floats in Query yet...
-            q->value = (int)(transport->getTempo() * 100.0f);
-            success = true;
-        }
-            break;
-            
-        case ParamTransportBeatsPerBar: {
-            q->value = transport->getBeatsPerBar();
-            success = true;
-        }
-            break;
-            
-        default:
-            Trace(1, "SyncMaster: Unhandled query %s", s->getName());
-            break;
-    }
-    return success;
+    // todo: the masters, host and midi settings
+
+    handled = transport->doQuery(q);
+    
+    return handled;
 }
 
 /**

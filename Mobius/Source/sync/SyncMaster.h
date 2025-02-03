@@ -48,6 +48,7 @@ class SyncMaster
     void initialize(class MobiusKernel* k, class TrackManager* tm);
     void loadSession(class Session* s);
     void shutdown();
+    void globalReset();
 
     //
     // Block Lifecycle

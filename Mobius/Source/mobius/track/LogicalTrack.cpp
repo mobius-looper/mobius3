@@ -215,11 +215,6 @@ void LogicalTrack::processAudioStream(MobiusAudioStream* stream)
     track->processAudioStream(stream);
 }
 
-void LogicalTrack::doAction(UIAction* a)
-{
-    track->doAction(a);
-}
-
 bool LogicalTrack::doQuery(Query* q)
 {
     return track->doQuery(q);
@@ -314,6 +309,32 @@ void LogicalTrack::setUnitLength(int l)
 int LogicalTrack::getUnitLength()
 {
     return unitLength;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Actions
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * There are a few things we intercept, the reset are passed to the inner track.
+ *
+ * !! This is where we need to add the concept of temporary parameter bindings.
+ * Core Mobius does this by maintaining a copy of the Preset on every track, need
+ * to unwind that eventually.
+ *
+ * MidiTrack calls back to our bindParameter if it isn't one of the control parameters.
+ */
+void LogicalTrack::doAction(UIAction* a)
+{
+    SymbolId sid = a->symbol->id;
+
+    if (sid == FuncTrackReset || sid == FuncGlobalReset) {
+        clearBindings();
+    }
+    
+    track->doAction(a);
 }
 
 //////////////////////////////////////////////////////////////////////

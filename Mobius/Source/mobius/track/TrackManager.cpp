@@ -902,8 +902,6 @@ void TrackManager::doGlobal(UIAction* src)
     // make sure to clear them
     if (src->symbol->id == FuncGlobalReset) {
         watcher.flushHeld();
-        MobiusListener* l = kernel->getListener();
-        l->mobiusGlobalReset();
     }
     
     actionPool->checkin(src);

@@ -286,6 +286,130 @@ void Transport::refreshPriorityState(PriorityState* state)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Actions and Queries
+//
+//////////////////////////////////////////////////////////////////////
+
+bool Transport::doAction(UIAction* a)
+{
+    bool handled = true;
+
+    switch (a->symbol->id) {
+
+        case ParamTransportTempo: {
+            // Action doesn't have a way to pass floats right now so the
+            // integer value is x100
+            
+            // !! if the Transport is locked to a Master track, this should be ignored
+            float tempo = (float)(a->value) / 100.0f;
+            userSetTempo(tempo);
+        }
+            break;
+            
+        case ParamTransportLength: {
+            // !! if the Transport is locked to a Master track, this should be ignored
+            userSetTempoDuration(a->value);
+        }
+            break;
+            
+        case ParamTransportBeatsPerBar:
+            userSetBeatsPerBar(a->value);
+            break;
+            
+        case ParamTransportBarsPerLoop:
+            userSetBarsPerLoop(a->value);
+            break;
+
+        case ParamTransportMidi:
+            userSetMidiEnabled(a->value != 0);
+            break;
+
+        case ParamTransportClocks:
+            userSetSetMidiClocks(a->value != 0);
+            break;
+
+        case ParamTransportManualStart:
+            manualStart = (a->value != 0);
+            break;
+
+        case ParamTransportMinTempo:
+            userSetTempoRange(a->value, 0);
+            break;
+
+        case ParamTransportMaxTempo:
+            userSetTempoRange(0, a->value);
+            break;
+
+        case ParamTransportMetronome:
+            userSetMetronome(a->value != 0);
+            break;
+            
+        case FuncTransportStop:
+            userStop();
+            break;
+
+        case FuncTransportStart:
+            userStart();
+            break;
+
+        default: handled = false; break;
+    }
+
+    return handled;
+}
+
+bool Transport::doQuery(Query* q)
+{
+    bool handled = true;
+
+    switch (q->symbol->id) {
+        
+        case ParamTransportTempo: {
+            // no floats in Query yet...
+            q->value = (int)(getTempo() * 100.0f);
+        }
+            break;
+            
+        case ParamTransportBeatsPerBar:
+            q->value = getBeatsPerBar();
+            break;
+            
+        case ParamTransportBarsPerLoop:
+            q->value = getBarsPerLoop();
+            break;
+            
+        case ParamTransportMidi:
+            q->value = midiEnabled;
+            break;
+
+        case ParamTransportClocks:
+            q->value = sendClocksWhenStopped;
+            break;
+
+        case ParamTransportManualStart:
+            q->value = manualStart;
+            break;
+
+        case ParamTransportMinTempo:
+            // really need to decide what to do about floats in Query
+            q->value = (int)minTempo;
+            break;
+
+        case ParamTransportMaxTempo:
+            q->value = (int)maxTempo;
+            break;
+
+        case ParamTransportMetronome:
+            q->value = metronome;
+            break;
+
+        default: handled = false; break;
+    }
+    return handled;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // SyncAnalyzer Interface
 //
 // We're not really an "analyzer" we're a source that creates it's own
@@ -437,6 +561,61 @@ void Transport::userSetBeatsPerBar(int bpb)
 
         beatsPerBar = bpb;
     }
+}
+
+void Transport::userSetBarsPerLoop(int bpl)
+{
+    if (bpl > 0 && bpl != barsPerLoop) {
+        Trace(2, "Transport: User changing BarsPerLoop %d", bpl);
+
+        barsPerLoop = bpl;
+    }
+}
+
+void Transport::userSetMidiEnabled(bool b)
+{
+    midiEnabled = b;
+    if (!midiEnabled)
+      midiRealizer->stop();
+}
+
+void Transport::userSetMidiClocks(bool b)
+{
+    sendClocksWhenStopped = b;
+    if (sendClocksWhenStopped) {
+        if (!started)
+          midiRealizer->startClocks();
+    }
+    else if (!started) {
+        midiRealizer->stopSelective(false, true);
+    }
+}
+
+/**
+ * This is an action handler so we only need to deal with ints
+ * Zero is passed to mean unspecified
+ *
+ * If we are currently at a tempo that is outside this range, it
+ * does not change it.  This is used only for the next tempo
+ * derivation.
+ */
+void Transport::userSetTempoRange(int min, int max)
+{
+    if (min >= 30)
+      minTempo = (float)min;
+
+    if (max > 0 && max <= 300)
+      maxTempo = max;
+}
+
+/**
+ * Turn the metronome on and off with an action.
+ * Not implemented yet but will likely be more than just
+ * setting a flag.
+ */
+void Transport::userSetMetronome(bool b)
+{
+    metronomeEnabled = b;
 }
 
 /**
