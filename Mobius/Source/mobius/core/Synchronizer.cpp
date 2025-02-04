@@ -1354,8 +1354,19 @@ void Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
                 // leave stop non-null to end after one unit
             }
             
-            if (stop != nullptr)
-              activateRecordStop(l, p, stop);
+            if (stop != nullptr) {
+                // Tell syncMaster we're ending to it can lock the unit length
+                // for this track.  Since that's just going to call back down
+                // here to propagate it to the Loop, we could instead just ask for it
+                int number = t->getLogicalNumber();
+                int adjust = mSyncMaster->notifyTrackRecordEnding(number);
+                // not expecting an adjustment here, we've already been waiting
+                // for an exact pulse
+                if (adjust != 0)
+                  Trace(1, "Synchronizer: SyncMaster thinks we need to adjust the ending, why?");
+                
+                activateRecordStop(l, p, stop);
+            }
         }
     }
     else {

@@ -114,6 +114,7 @@ void SyncMaster::globalReset()
 {
     transport->globalReset();
     barTender->globalReset();
+    midiAnalyzer->globalReset();
 
     // host analyzer doesn't reset, it continues monitoring the host
     // same with MIDI
@@ -188,6 +189,15 @@ int SyncMaster::notifyTrackRecordEnding(int number)
         // used to record this track
         SyncSource src = lt->getSyncSourceNow();
         if (src == SyncSourceMidi) {
+
+            // todo: I thought about savint the unit length on the LT when it
+            // was recorded, but tracks can contain multiple loops, each in theory
+            // with a different size if you're twiddling sync modes live that becomes
+            // unreliable.  I guess we could ignore that, the unit length sticks
+            // until the track is reset and if you switch to an empty loop it retains
+            // the same potential unit length even though it is empty
+            // added getSyncLength so we could modulo and verify this, though not necessary
+            
             int unitLength = midiAnalyzer->getUnitLength();
             if (unitLength == 0) {
                 // should have locked this before or immediately
@@ -196,6 +206,10 @@ int SyncMaster::notifyTrackRecordEnding(int number)
             }
             else {
                 lt->setUnitLength(unitLength);
+
+
+
+                
             }
         }
     }
@@ -249,6 +263,24 @@ void SyncMaster::notifyTrackAvailable(int number)
             }
         }
 
+        // verify that the track obeyed the sync unit
+        // should actually be doing this for all sources?
+        if (src == SyncSourceMidi) {
+            int unitLength = midiAnalyzer->getUnitLength();
+            int trackUnitLength = lt->getUnitLength();
+            if (unitLength != trackUnitLength) {
+                Trace(1, "SymcMaster: Unit length not properly stored on LogicalTrack");
+                // fix it?
+            }
+            int syncLength = lt->getSyncLength();
+            if (syncLength > 0) {
+                int leftover = syncLength % unitLength;
+                if (leftover > 0) {
+                    Trace(1, "SyncMaster: Track length doesn't match unit length %d %d",
+                          syncLength, unitLength);
+                }
+            }
+        }
     }
 }
 
@@ -1077,7 +1109,19 @@ int SyncMaster::getActiveFollowers(SyncSource src, int unitLength)
             // todo: still some lingering issues if the track has multiple loops
             // and they were recorded with different unit lenghts, that would be unusual
             // but is possible
-            if (lt->getUnitLength() == unitLength)
+
+            int trackUnitLength = lt->getUnitLength();
+            // not saving this on every loop, see if a disconnect happened
+            int syncLength = lt->getSyncLength();
+            if (syncLength > 0) {
+                int leftover = syncLength % unitLength;
+                if (leftover > 0) {
+                    Trace(1, "SyncMaster: Track length doesn't match unit length %d %d",
+                          syncLength, unitLength);
+                }
+            }
+            
+            if (trackUnitLength == unitLength)
               followers++;
         }
     }

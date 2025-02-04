@@ -75,7 +75,7 @@ class MidiEventMonitor
     int beat = 0;
 
     /**
-     * The elapsed beat number after starting.
+     * The elapsed beat count after starting.
      */
     int elapsedBeats = 0;
 
@@ -83,11 +83,6 @@ class MidiEventMonitor
      * The elapsed clock count since the last Start or Continue
      */
     int clock = 0;
-
-    /**
-     * The elapsed audio stream time in samples since the start point.
-     */
-    int streamTime = 0;
 
   private:
 

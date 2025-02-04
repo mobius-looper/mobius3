@@ -362,6 +362,15 @@ void Track::syncPulse(class Pulse* p)
 }
 
 /**
+ * This is always the same as the loop frame length and is used
+ * to derive the unit length this loop was recorded with.
+ */
+int Track::getSyncLength()
+{
+    return mLoop->getFrames();
+}
+
+/**
  * This is the first notification that requires an argument beyond
  * what is in TrackProperties.
  */

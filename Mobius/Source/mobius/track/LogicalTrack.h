@@ -72,6 +72,7 @@ class LogicalTrack
 
     int getUnitLength();
     void setUnitLength(int l);
+    int getSyncLength();
 
     //////////////////////////////////////////////////////////////////////
     // Notifier State

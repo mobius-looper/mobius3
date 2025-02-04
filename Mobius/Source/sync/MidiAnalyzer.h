@@ -26,6 +26,7 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     void initialize(class SyncMaster* sm, class MidiManager* mm);
     void setSampleRate(int rate);
     void shutdown();
+    void globalReset();
     void refreshState(class SyncState* state);
 
     // MidiManager::RealtimeListener
@@ -56,7 +57,6 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     // this is different than isRunning, it means we are receiving clocks
     bool isReceiving();
     int getSongPosition();
-    int getSmoothTempo();
     void checkClocks();
     
   private:
@@ -76,21 +76,18 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
 
     bool playing = false;
     float tempo = 0.0f;
-    int smoothTempo = 0;
     int unitLength = 0;
     int elapsedBeats = 0;
     int lastMonitorBeat = 0;
         
     // virtual tracking loop
-    bool resyncUnitLength = false;
+    bool resyncingUnitLength = false;
     int unitPlayHead = 0;
     int streamTime = 0;
 
     int driftCheckCounter = 0;
     
-    void deriveTempo();
-    bool lockUnitLength(int blockFrames);
-    bool relockUnitLength(int blockFrames);
+    bool lockUnitLength();
     void advance(int frames);
 };
 

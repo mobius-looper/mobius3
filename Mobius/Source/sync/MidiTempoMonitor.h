@@ -29,11 +29,25 @@
  * handler, but I expect it does it about as well as can be done.  Clock jitter is
  * just inherant with MIDI and you need to take steps to compensate for it.
  *
- * The easiest approach is Averaging, where the distance between successive clocks
- * is measured and a running average is maintained.
+ * Clock jitter is smoothed using the usual "averaging" approach which makes it better
+ * but still not great.  There is a "window" of clock distance samples that is averaged
+ * to produce the tempo/unit length.  The number of clocks to include in the window
+ * is tunable but typically a number of quarter notes like 4.  A larger window yields
+ * smoother tempos but responds to deliberate tempo changes more gradually.
  *
- * This duplicates some of the logic found in other MIDI byte stream analyzers
- * but I want to keep this self contained.
+ * For Mobius, I'm erring on the side of user initiated tempo changes being rare.
+ * It is far more common for the tempo to just sit there for the duration of a
+ * "song" so it is better to eliminate tempo wobble than it is to track it.
+ *
+ * A state of "Cold Start" exists for devices that do not send clocks when in
+ * a stopped state.  When that happens, the monitor resumes from a reset state and
+ * begins filling the sample window, this is called the "warmup period".  Decisions
+ * made about tempo during this period should be given less emphasis than after.
+ *
+ * The monitor is called periodically in the audio thread to detect clock stoppages.
+ * When a stoppage happens, the state is reset and it will enter the warmup period
+ * upon recipt of the next clock.
+ *
  */
 
 class MidiTempoMonitor
@@ -52,6 +66,7 @@ class MidiTempoMonitor
     /**
      * Set the current audio device sample rate for simulating elapsed
      * "stream time" on each clock.
+     * update: This turned out to be unuseful.
      */
     void setSampleRate(int rate);
 
@@ -64,7 +79,8 @@ class MidiTempoMonitor
 
     /**
      * Reorient the clock counter after the audio stream has locked a unit length.
-     * It goes back to zero and counts up from there.
+     * It goes back to zero and counts up from there.  The elapsed clock count
+     * from this point forward is used in drift detection.
      */
     void orient();
 
@@ -96,8 +112,8 @@ class MidiTempoMonitor
     bool isReceiving();
 
     /**
-     * True if it is still in the process of filling the sample window.
-     * Tempo will be less reliabla.
+     * True if it is still in the process of filling the sample window
+     * ala the "warmup period". Tempo will be unreliable.
      */
     bool isFilling();
 
@@ -124,9 +140,20 @@ class MidiTempoMonitor
     bool receiving = false;
 
     /**
-     * The maximum number of clock averaging samples that can be maintained.
+     * The default width of the average window in clocks.
+     * 4 beats = 96 clocks.
+     *
+     * Could allow a parameter to tune what is actually used,
+     * but not bothering for now.
      */
-    static const int ClockSampleMax = 256;
+    static const int ClockWindowDefault = 96;
+
+    /**
+     * The maximum number of clock averaging samples that can be maintained.
+     * It doesn't really mattern what this is but the windowSize is not allowed
+     * to exceed this.  4 bars should be enough.
+     */
+    static const int ClockSampleMax = ClockWindowDefault * 4;
 
     /**
      * The clock delta samples.
@@ -137,11 +164,8 @@ class MidiTempoMonitor
      * The number of clock samples to use in averaging.
      * This can be tuned but must be less than or equal to ClockSampleMax
      * and normally significantly higher than zero.
-     *
-     * Larger numbers will result in smoother tempos but take longer to adapt to changes.
-     * At a tempo of 120 there are 2 beats per second or 48 midi clocks per second
      */
-    int windowSize = 128;
+    int windowSize = ClockWindowDefault;
 
     /**
      * The location of the next sample to be added.

@@ -311,6 +311,11 @@ int LogicalTrack::getUnitLength()
     return unitLength;
 }
 
+int LogicalTrack::getSyncLength()
+{
+    return track->getSyncLength();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Actions
@@ -332,6 +337,7 @@ void LogicalTrack::doAction(UIAction* a)
 
     if (sid == FuncTrackReset || sid == FuncGlobalReset) {
         clearBindings();
+        unitLength = 0;
     }
     
     track->doAction(a);

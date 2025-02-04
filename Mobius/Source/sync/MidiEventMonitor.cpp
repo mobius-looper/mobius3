@@ -2,7 +2,7 @@
  * Montior each realtime event as it comes in and set various flags
  * to indiciate what state we're in.
  *
- * To NOT trace the major Start/Stop/Continue transitions here,
+ * Do NOT trace the major Start/Stop/Continue transitions here,
  * just trace anomolies.
  *
  * The only thing obscure here is the orientation of the beat number

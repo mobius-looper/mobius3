@@ -181,6 +181,11 @@ void MidiTrack::syncPulse(class Pulse* p)
     scheduler.syncPulse(p);
 }
 
+int MidiTrack::getSyncLength()
+{
+    return getFrames();
+}
+
 /**
  * Query uses LogicalTrack for most things but doesn't
  * for the controllers and a few important parameters which are

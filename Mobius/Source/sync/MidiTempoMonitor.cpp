@@ -5,6 +5,7 @@
 
 #include "MidiTempoMonitor.h"
 
+
 #define MS_CLOCK      0xF8
 
 void MidiTempoMonitor::setSampleRate(int rate)
@@ -23,6 +24,11 @@ void MidiTempoMonitor::reset()
     orient();
 }
 
+void MidiTempoMonitor::resetStreamTime()
+{
+    streamTime = 0;
+}
+
 void MidiTempoMonitor::orient()
 {
     clocks = 0;
@@ -39,11 +45,6 @@ int MidiTempoMonitor::getStreamTime()
     return streamTime;
 }
 
-void MidiTempoMonitor::resetStreamTime()
-{
-    streamTime = 0;
-}
-
 bool MidiTempoMonitor::isReceiving()
 {
     return receiving;
@@ -53,6 +54,12 @@ bool MidiTempoMonitor::isFilling()
 {
     return !windowFull;
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// The Meat
+//
+//////////////////////////////////////////////////////////////////////
 
 void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
 {
@@ -73,7 +80,7 @@ void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
             // not expecting this
             Trace(1, "MidiTempoMonitor: TimeStamp went back in time");
             reset();
-            // this will have reset stream time which will make drift detection
+            // this will have reset the clock counter which will make drift detection
             // way out of wack, but it really shouldn't happen
         }
         else {
@@ -131,7 +138,8 @@ void MidiTempoMonitor::consume(const juce::MidiMessage& msg)
  * Second, we could try to suppress the occasional outlier to prevent them from adding
  * noise to the average.  Punting on this, since it is difficult to know whether this is
  * in fact a jitter outlier, or if it represents a deliberate tempo change.  I suppose
- * if we get more than a few outliers in a row then it's a tempo change.  
+ * if we get more than a few outliers in a row then it's a tempo change.
+ * Do the standard deviation thing.
  *
  * For stop detection, at 30BPM, there are .5 beats per second, or 12 clocks per second
  * each delta would be 1/12 or .0833.  So once the delta passes .1 it's REALLY slow.
@@ -146,16 +154,6 @@ bool MidiTempoMonitor::looksReasonable(double delta)
         reset();
     }
     return reasonable;
-}
-
-double MidiTempoMonitor::getAverageClock()
-{
-    return runningAverage;
-}
-
-double MidiTempoMonitor::getAverageClockLength()
-{
-    return (float)sampleRate * runningAverage;
 }
 
 /**
@@ -189,6 +187,22 @@ void MidiTempoMonitor::checkStop()
             lastTrace = now;
         }
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Results
+//
+//////////////////////////////////////////////////////////////////////
+
+double MidiTempoMonitor::getAverageClock()
+{
+    return runningAverage;
+}
+
+double MidiTempoMonitor::getAverageClockLength()
+{
+    return (float)sampleRate * runningAverage;
 }
 
 /**

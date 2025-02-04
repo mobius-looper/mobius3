@@ -160,6 +160,11 @@ void MobiusLooperTrack::syncPulse(class Pulse* p)
     track->syncPulse(p);
 }
 
+int MobiusLooperTrack::getSyncLength()
+{
+    return track->getSyncLength();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MslTrack Waits

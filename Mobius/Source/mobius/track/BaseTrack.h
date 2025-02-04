@@ -78,7 +78,8 @@ class BaseTrack
 
     // it pays attention well
     virtual void syncPulse(class Pulse* p) = 0;
-
+    virtual int getSyncLength() = 0;
+    
   protected:
 
     class TrackManager* manager = nullptr;
