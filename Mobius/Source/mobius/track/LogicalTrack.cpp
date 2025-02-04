@@ -322,6 +322,7 @@ bool LogicalTrack::isPendingSyncRecord()
 }
 
 void LogicalTrack::setPendingSyncRecord(bool b)
+{
     pendingSyncRecord = b;
 }
 

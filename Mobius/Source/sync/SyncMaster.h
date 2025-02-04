@@ -216,6 +216,10 @@ class SyncMaster
     void connectTransport(int id);
 
     void checkDrifts();
+
+    bool isTrackSynced(class LogicalTrack* lt);
+
+    
 };
 
 /****************************************************************************/

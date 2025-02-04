@@ -1554,7 +1554,7 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
  */
 void Synchronizer::loopRecordStart(Loop* l)
 {
-    mSyncMaster->notifyTrackRecord(l->getTrack()->getLogicalNumber());
+    mSyncMaster->notifyTrackRecordStarting(l->getTrack()->getLogicalNumber());
 }
 
 /**

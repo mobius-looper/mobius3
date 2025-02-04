@@ -205,7 +205,7 @@ bool SyncMaster::isTrackSynced(LogicalTrack* lt)
                 // this track reverse to either SyncSourceTrack or SyncTransport
                 // depending on options
                 // todo: that option doesn't exist, assume Transport
-                if (transport->getMaster() != 0 && transport->getMaster() != number) {
+                if (transport->getMaster() != 0 && transport->getMaster() != lt->getNumber()) {
                     sync = true;
                 }
             }
@@ -228,8 +228,8 @@ bool SyncMaster::notifyTrackRecordEndRequest(int number)
         sync = isTrackSynced(lt);
         // if this started without syncing, you can't suddenly decide
         // to sync the ending, I suppose you could but why?
-        if (!lt->isPendingRecord()) {
-            Trace(2d1, "SyncMaster: Sync record end ignored for track with unsynced start");
+        if (!lt->isPendingSyncRecord()) {
+            Trace(1, "SyncMaster: Sync record end ignored for track with unsynced start");
             sync = false;
         }
     }
@@ -312,11 +312,11 @@ void SyncMaster::notifyTrackRecordEnded(int number)
     LogicalTrack* lt = trackManager->getLogicalTrack(number);
     if (lt != nullptr) {
         
-        lt->setSyncRecordPending(false);
+        lt->setPendingSyncRecord(false);
 
         SyncSource src = lt->getSyncSourceNow();
         if (src == SyncSourceMidi) {
-            midiAnalyzer->lockUnitLength();
+            midiAnalyzer->lock();
             lt->setUnitLength(midiAnalyzer->getUnitLength());
         }
         

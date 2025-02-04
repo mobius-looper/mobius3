@@ -37,6 +37,11 @@
 #include "SyncMaster.h"
 #include "MidiAnalyzer.h"
 
+// todo
+void MidiAnalyzer::lock()
+{
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Configuration
