@@ -155,11 +155,93 @@ SymbolTable* SyncMaster::getSymbols()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * This is called when a track would like to begin recording.
+ * Return false if the track may start recording right away, true
+ * if the track needs to wait for a sync pulse.
+ *
+ * If a pulse is necessary SM will call syncRecordStart when ready.
+ */
+bool SyncMaster::notifyTrackRecordRequest(int number)
+{
+    bool sync = false;
+
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+        sync = isTrackSynced(lt);
+        if (sync) {
+            // this is not expected to be ignored
+            lt->setPendingSyncRecord(true);
+        }
+    }
+    return sync;
+}
+
+bool SyncMaster::isTrackSynced(LogicalTrack* lt)
+{
+    bool sync = false;
+
+    if (lt != nullptr) {
+        SyncSource source = lt->getSyncSourceNow();
+        switch (source) {
+            case SyncSourceNone:
+                break;
+            case SyncSourceTransport:
+            case SyncSourceHost:
+            case SyncSourceMidi:
+                sync = true;
+                break;
+            case SyncSourceTrack: {
+                if (trackSyncMaster > 0) {
+                    // yes, but only if it has content
+                    LogicalTrack* mlt = trackManager->getLogicalTrack(trackSyncMaster);
+                    if (mlt != nullptr)
+                      sync = (mlt->getSyncLength() > 0);
+                }
+            }
+                break; 
+            case SyncSourceMaster: {
+                // If there is no master or this track is already theh master
+                // no need to wait.  If there is a different master,
+                // this track reverse to either SyncSourceTrack or SyncTransport
+                // depending on options
+                // todo: that option doesn't exist, assume Transport
+                if (transport->getMaster() != 0 && transport->getMaster() != number) {
+                    sync = true;
+                }
+            }
+                break;
+        }
+    }
+
+    return sync;
+}
+
+/**
+ * This is called when a track would to end recording.
+ * Similar to RecordRequest, return true if this needs to be synchronized.
+ */
+bool SyncMaster::notifyTrackRecordEndRequest(int number)
+{
+    bool sync = false;
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+        sync = isTrackSynced(lt);
+        // if this started without syncing, you can't suddenly decide
+        // to sync the ending, I suppose you could but why?
+        if (!lt->isPendingRecord()) {
+            Trace(2d1, "SyncMaster: Sync record end ignored for track with unsynced start");
+            sync = false;
+        }
+    }
+    return sync;
+}
+
+/**
  * This is called when a track begins recording.
  * If this is the TransportMaster, Synchronizer in the past would do a "full stop"
  * to send a STOP event and stop sending MIDI clocks.
  */
-void SyncMaster::notifyTrackRecord(int number)
+void SyncMaster::notifyTrackRecordStarting(int number)
 {
     // continue calling MidiRealizer but this needs to be under the control of the Transport
     if (number == transport->getMaster()) {
@@ -179,6 +261,8 @@ void SyncMaster::notifyTrackRecord(int number)
  *
  * This requires all the same calculations that Transport::connect does allowing
  * it to return the ideal length.  Needs work...
+ *
+ * todo: I think this goes away, merge with RecordEndRequest
  */
 int SyncMaster::notifyTrackRecordEnding(int number)
 {
@@ -215,6 +299,29 @@ int SyncMaster::notifyTrackRecordEnding(int number)
     }
     
     return 0;
+}
+
+/**
+ * This is called when a recording has offically ended.
+ * It may have been synced or not.
+ *
+ * This also makes the track available for mastership.
+ */
+void SyncMaster::notifyTrackRecordEnded(int number)
+{
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+        
+        lt->setSyncRecordPending(false);
+
+        SyncSource src = lt->getSyncSourceNow();
+        if (src == SyncSourceMidi) {
+            midiAnalyzer->lockUnitLength();
+            lt->setUnitLength(midiAnalyzer->getUnitLength());
+        }
+        
+        notifyTrackAvailable(number);
+    }
 }
 
 /**

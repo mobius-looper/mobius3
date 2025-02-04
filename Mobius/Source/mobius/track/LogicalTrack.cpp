@@ -316,6 +316,15 @@ int LogicalTrack::getSyncLength()
     return track->getSyncLength();
 }
 
+bool LogicalTrack::isPendingSyncRecord()
+{
+    return pendingSyncRecord;
+}
+
+void LogicalTrack::setPendingSyncRecord(bool b)
+    pendingSyncRecord = b;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Actions
@@ -338,6 +347,7 @@ void LogicalTrack::doAction(UIAction* a)
     if (sid == FuncTrackReset || sid == FuncGlobalReset) {
         clearBindings();
         unitLength = 0;
+        pendingSyncRecord = false;
     }
     
     track->doAction(a);

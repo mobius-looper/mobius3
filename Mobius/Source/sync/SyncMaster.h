@@ -85,7 +85,11 @@ class SyncMaster
     // Track Notifications
     //
 
-    void notifyTrackRecord(int id);
+    bool notifyTrackRecordRequest(int id);
+    void notifyTrackRecordStarting(int id);
+    bool notifyTrackRecordEndRequest(int id);
+    void notifyTrackRecordEnded(int id);
+    
     int notifyTrackRecordEnding(int id);
     void notifyTrackAvailable(int id);
     void notifyTrackReset(int id);

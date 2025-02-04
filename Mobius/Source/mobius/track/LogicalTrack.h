@@ -73,6 +73,8 @@ class LogicalTrack
     int getUnitLength();
     void setUnitLength(int l);
     int getSyncLength();
+    void setPendingSyncRecord(bool b);
+    bool isPendingSyncRecord();
 
     //////////////////////////////////////////////////////////////////////
     // Notifier State
@@ -144,6 +146,8 @@ class LogicalTrack
 
     // unit length this track was recorded with if synchronizing
     int unitLength = 0;
+
+    bool pendingSyncRecord = false;
 
     // sync Pulse for SyncMaster/Pulsator
     Pulse leaderPulse;
