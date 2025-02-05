@@ -9,8 +9,8 @@
 #include "../../model/UIAction.h"
 #include "../../model/FunctionProperties.h"
 #include "../../model/TrackState.h"
+#include "../../model/SyncConstants.h"
 
-#include "../sync/SyncConstants.h"
 #include "../sync/SyncMaster.h"
 
 #include "TrackManager.h"

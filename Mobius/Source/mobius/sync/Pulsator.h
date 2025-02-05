@@ -15,7 +15,7 @@
 
 #include <JuceHeader.h>
 
-#include "SyncConstants.h"
+#include "../../model/SyncConstants.h"
 #include "Pulse.h"
 #include "BarTender.h"
 

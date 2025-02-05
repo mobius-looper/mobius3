@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "SyncConstants.h"
+#include "../../model/SyncConstants.h"
 #include "Pulse.h"
 
 class BarTender

@@ -19,7 +19,7 @@
 
 #include <JuceHeader.h>
 
-#include "SyncConstants.h"
+#include "../../model/SyncConstants.h"
 #include "../../model/SessionHelper.h"
 
 class SyncMaster

@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "../sync/SyncConstants.h"
+#include "../../model/SyncConstants.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 #include "../../model/SymbolId.h"

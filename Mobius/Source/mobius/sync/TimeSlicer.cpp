@@ -21,7 +21,7 @@
 #include "../MobiusInterface.h"
 #include "../MobiusKernel.h"
 
-#include "SyncConstants.h"
+#include "../../model/SyncConstants.h"
 #include "Pulse.h"
 #include "SyncMaster.h"
 #include "../track/LogicalTrack.h"

@@ -27,7 +27,7 @@
 #include "../../model/SystemState.h"
 #include "../../model/TrackState.h"
 
-#include "../sync/SyncConstants.h"
+#include "../../model/SyncConstants.h"
 #include "../sync/SyncMaster.h"
 #include "../../script/MslWait.h"
 // only for MobiusAudioStream

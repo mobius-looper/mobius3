@@ -26,12 +26,12 @@
 
 // TriggerScript
 #include "../../model/Trigger.h"
+#include "../../model/SyncConstants.h"
 
 #include "../MobiusKernel.h"
 #include "../Notification.h"
 #include "../Notifier.h"
 
-#include "../sync/SyncConstants.h"
 #include "../sync/Pulse.h"
 #include "../sync/SyncMaster.h"
 

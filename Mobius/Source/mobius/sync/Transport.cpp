@@ -42,6 +42,7 @@
 #include "../../util/Trace.h"
 
 #include "../../model/SessionConstants.h"
+#include "../../model/SyncConstants.h"
 #include "../../model/Session.h"
 #include "../../model/SyncState.h"
 #include "../../model/PriorityState.h"
@@ -49,7 +50,6 @@
 #include "../../model/Query.h"
 #include "../track/TrackProperties.h"
 
-#include "SyncConstants.h"
 #include "SyncAnalyzerResult.h"
 #include "MidiRealizer.h"
 #include "SyncMaster.h"

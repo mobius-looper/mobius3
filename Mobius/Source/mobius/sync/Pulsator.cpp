@@ -8,12 +8,12 @@
 #include "../../util/Trace.h"
 #include "../../model/SessionConstants.h"
 #include "../../model/Session.h"
+#include "../../model/SyncConstants.h"
 #include "../MobiusInterface.h"
 
 #include "../track/LogicalTrack.h"
 #include "../track/TrackManager.h"
 
-#include "SyncConstants.h"
 #include "Pulse.h"
 
 #include "MidiAnalyzer.h"

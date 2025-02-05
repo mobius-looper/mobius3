@@ -603,6 +603,10 @@
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
         <GROUP id="{A627AF61-F720-1E88-4B5F-20F61B64F721}" name="sync">
+          <FILE id="gwQdZs" name="AudioStreamSlicer.cpp" compile="1" resource="0"
+                file="Source/mobius/sync/AudioStreamSlicer.cpp"/>
+          <FILE id="zQaNMj" name="AudioStreamSlicer.h" compile="0" resource="0"
+                file="Source/mobius/sync/AudioStreamSlicer.h"/>
           <FILE id="LInigs" name="BarTender.cpp" compile="1" resource="0" file="Source/mobius/sync/BarTender.cpp"/>
           <FILE id="qG1xuT" name="BarTender.h" compile="0" resource="0" file="Source/mobius/sync/BarTender.h"/>
           <FILE id="NqyDSK" name="DriftMonitor.cpp" compile="1" resource="0"
@@ -634,7 +638,6 @@
           <FILE id="BzcuUR" name="SyncAnalyzer.h" compile="0" resource="0" file="Source/mobius/sync/SyncAnalyzer.h"/>
           <FILE id="Usp2vk" name="SyncAnalyzerResult.h" compile="0" resource="0"
                 file="Source/mobius/sync/SyncAnalyzerResult.h"/>
-          <FILE id="wov20D" name="SyncConstants.h" compile="0" resource="0" file="Source/mobius/sync/SyncConstants.h"/>
           <FILE id="TrPjH8" name="SyncMaster.cpp" compile="1" resource="0" file="Source/mobius/sync/SyncMaster.cpp"/>
           <FILE id="dUy6Dl" name="SyncMaster.h" compile="0" resource="0" file="Source/mobius/sync/SyncMaster.h"/>
           <FILE id="f0p3FR" name="SyncTrace.cpp" compile="1" resource="0" file="Source/mobius/sync/SyncTrace.cpp"/>

@@ -11,7 +11,7 @@
 
 #include <JuceHeader.h>
 // !! this belongs in model
-#include "../mobius/sync/SyncConstants.h"
+#include "SyncConstants.h"
 #include "SyncState.h"
 #include "SymbolId.h"
 #include "Session.h"

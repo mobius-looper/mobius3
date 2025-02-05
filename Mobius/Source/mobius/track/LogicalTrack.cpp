@@ -4,6 +4,7 @@
 #include "../../util/Trace.h"
 #include "../../util/StructureDumper.h"
 #include "../../model/ParameterConstants.h"
+#include "../../model/SyncConstants.h"
 #include "../../model/Session.h"
 #include "../../model/Symbol.h"
 #include "../../model/Enumerator.h"
@@ -11,8 +12,6 @@
 #include "../../model/ParameterProperties.h"
 #include "../../model/UIParameterHandler.h"
 #include "../../model/ExValue.h"
-
-#include "../sync/SyncConstants.h"
 
 #include "../../script/MslEnvironment.h"
 #include "../../script/MslBinding.h"

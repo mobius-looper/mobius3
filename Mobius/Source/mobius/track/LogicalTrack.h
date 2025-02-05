@@ -19,7 +19,7 @@
 #include "../../model/ParameterConstants.h"
 #include "../../model/Session.h"
 #include "../../model/ValueSet.h"
-#include "../sync/SyncConstants.h"
+#include "../../model/SyncConstants.h"
 
 // don't need a full Pulse here, make it simpler?
 #include "../sync/Pulse.h"

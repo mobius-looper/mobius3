@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "SyncConstants.h"
+#include "../../model/SyncConstants.h"
 
 class Pulse
 {

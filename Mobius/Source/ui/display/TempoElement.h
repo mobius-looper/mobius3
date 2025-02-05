@@ -7,7 +7,7 @@
 
 #include <JuceHeader.h>
 
-#include "../../mobius/sync/SyncConstants.h"
+#include "../../model/SyncConstants.h"
 #include "StatusElement.h"
 
 class TempoElement : public StatusElement

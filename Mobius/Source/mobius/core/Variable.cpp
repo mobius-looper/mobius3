@@ -31,13 +31,13 @@
 #include "../../util/Util.h"
 #include "../../util/Vbuf.h"
 #include "../../model/Trigger.h"
+#include "../../model/SyncConstants.h"
 
 // for AUDIO_FRAMES_PER_BUFFER
 #include "AudioConstants.h"
 
 // for getLastSampleFrames
 #include "../MobiusKernel.h"
-#include "../sync/SyncConstants.h"
 #include "../sync/SyncMaster.h"
 
 #include "Event.h"
