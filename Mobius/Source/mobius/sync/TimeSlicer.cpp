@@ -30,14 +30,10 @@
 #include "AudioStreamSlicer.h"
 #include "TimeSlicer.h"
 
-TimeSlicer::TimeSlicer(MobiusKernel* k, SyncMaster* sm, TrackManager* tm)
+TimeSlicer::TimeSlicer(SyncMaster* sm, TrackManager* tm)
 {
-    kernel = k;
     syncMaster = sm;
     trackManager = tm;
-
-    // be informed about follower changes
-    syncMaster->addListener(this);
 
     // make sure this is large enough to contain a reasonably high number
     // of slices without dynamic allocation in the audio thread

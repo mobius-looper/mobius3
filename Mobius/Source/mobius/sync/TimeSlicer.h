@@ -20,7 +20,7 @@
 
 #pragma once
 
-class TimeSlicer : public SyncMaster::Listener
+class TimeSlicer
 {
   public:
 
@@ -31,7 +31,7 @@ class TimeSlicer : public SyncMaster::Listener
         // todo: other slice types are Script Waits, leader pulses
     };
 
-    TimeSlicer(class MobiusKernel* k, class SyncMaster* sm, class TrackManager* tm);
+    TimeSlicer(class SyncMaster* sm, class TrackManager* tm);
     ~TimeSlicer();
 
     void loadSession(class Session* s);
@@ -41,7 +41,6 @@ class TimeSlicer : public SyncMaster::Listener
 
   private:
 
-    class MobiusKernel* kernel = nullptr;
     class SyncMaster* syncMaster = nullptr;
     class TrackManager* trackManager = nullptr;
 

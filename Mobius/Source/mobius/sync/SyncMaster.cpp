@@ -26,6 +26,7 @@
 #include "MidiAnalyzer.h"
 #include "HostAnalyzer.h"
 #include "Transport.h"
+#include "TimeSlicer.h"
 
 #include "SyncMaster.h"
 
@@ -78,6 +79,8 @@ void SyncMaster::initialize(MobiusKernel* k, TrackManager* tm)
     midiRealizer->initialize(this, mm);
     midiAnalyzer->initialize(this, mm);
 
+    timeSlicer.reset(new TimeSlicer(this, trackManager));
+
     // start everything off with a default sample rate, but this
     // may change as soon as the audio devices are open
     refreshSampleRate(44100);
@@ -92,6 +95,7 @@ void SyncMaster::loadSession(Session* s)
     barTender->loadSession(s);
     pulsator->loadSession(s);
     transport->loadSession(s);
+    timeSlicer->loadSession(s);
 
     // cached parameters
     manualStart = sessionHelper.getBool(s, ParamTransportManualStart);
@@ -118,14 +122,6 @@ void SyncMaster::globalReset()
 
     // host analyzer doesn't reset, it continues monitoring the host
     // same with MIDI
-}
-
-/**
- * Only for TimeSlicer, don't need a list yet.
- */
-void SyncMaster::addListener(Listener* l)
-{
-    listener = l;
 }
 
 /**
@@ -787,8 +783,7 @@ void SyncMaster::setTrackSyncMaster(int leaderId)
     // changing this may result in reordering of tracks
     // during an advance
     if (oldMaster != trackSyncMaster) {
-        if (listener != nullptr)
-          listener->syncFollowerChanges();
+        timeSlicer->syncFollowerChanges();
     }
 }
 
@@ -881,12 +876,17 @@ void SyncMaster::setTransportMaster(UIAction* a)
 
 /**
  * This must be called very early in the kernel block processing phase.
- * It initializes the subcomponents for the call to advance() which
- * happens after various things in the kernel, such as action handling.
+ * It initializes the subcomponents for the call to processAudioStream() which
+ * happens after various things in the kernel, in particular after
+ * any action handling which may assign sync sources to tracks.
  *
- * The decision whether to put something here or in advance() is vague.
- * Basically this should only set things up for advance without thinking
- * too hard, and advance does the interestingn work.
+ * The decision whether to put something here or in processAudioStream() is vague.
+ * Basically this should only set things up without thinking too hard, and processAudioStream
+ * does the interesting work.
+ *
+ * For reasons that escape me, HostAnalyzer was allowed to run here rather than after
+ * actions.  I don't think it matters, but it is important that MidiAnalyzer run after
+ * actions, it is the only analyzer that asks SM questions about how tracks use it.
  */
 void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
 {
@@ -911,7 +911,7 @@ void SyncMaster::refreshSampleRate(int rate)
     midiAnalyzer->setSampleRate(rate);
 }
 
-void SyncMaster::advance(MobiusAudioStream* stream)
+void SyncMaster::processAudioStream(MobiusAudioStream* stream)
 {
     int frames = stream->getInterruptFrames();
 
@@ -952,6 +952,8 @@ void SyncMaster::advance(MobiusAudioStream* stream)
 
     // temporary diagnostics
     checkDrifts();
+
+    timeSlicer->processAudioStream(stream);
 }
 
 /**

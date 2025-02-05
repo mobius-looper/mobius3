@@ -28,22 +28,12 @@ class SyncMaster
     friend class Pulsator;
     friend class BarTender;
     friend class MidiAnalyzer;
+    friend class TimeSlicer;
     
   public:
 
-    /**
-     * Used by TimeSlicer to know when leaders or followers have changed.
-     */
-    class Listener {
-      public:
-        virtual ~Listener() {}
-        virtual void syncFollowerChanges() = 0;
-    };
-    
     SyncMaster();
     ~SyncMaster();
-
-    void addListener(Listener* l);
 
     void initialize(class MobiusKernel* k, class TrackManager* tm);
     void loadSession(class Session* s);
@@ -55,7 +45,7 @@ class SyncMaster
     //
 
     void beginAudioBlock(class MobiusAudioStream* stream);
-    void advance(class MobiusAudioStream* stream);
+    void processAudioStream(class MobiusAudioStream* stream);
     bool doAction(class UIAction* a);
     bool doQuery(class Query* q);
     void refreshState(class SystemState* s);
@@ -188,9 +178,6 @@ class SyncMaster
     class MobiusContainer* container = nullptr;
     class TrackManager* trackManager = nullptr;
 
-    // this is dumb, reorganize
-    Listener* listener = nullptr;
-    
     int sampleRate = 44100;
     int trackSyncMaster = 0;
 
@@ -205,6 +192,7 @@ class SyncMaster
     std::unique_ptr<class Transport> transport;
     std::unique_ptr<class BarTender> barTender;
     std::unique_ptr<class Pulsator> pulsator;
+    std::unique_ptr<class TimeSlicer> timeSlicer;
     
     void refreshSampleRate(int rate);
     void enableEventQueue();

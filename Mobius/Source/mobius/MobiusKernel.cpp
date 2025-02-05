@@ -36,7 +36,6 @@
 
 #include "Audio.h"
 #include "SampleManager.h"
-#include "sync/TimeSlicer.h"
 
 // drag this bitch in
 #include "core/Mobius.h"
@@ -174,8 +173,6 @@ void MobiusKernel::initialize(MobiusContainer* cont, Session* ses, MobiusConfig*
 
     syncMaster.initialize(this, mTracks.get());
     syncMaster.loadSession(ses);
-
-    mTimeSlicer.reset(new TimeSlicer(this, &syncMaster, mTracks.get()));
 }
 
 void MobiusKernel::propagateSymbolProperties()
@@ -448,8 +445,6 @@ void MobiusKernel::loadSession(KernelMessage* msg)
     
     notifier.configure(session);
     syncMaster.loadSession(session);
-    // do this AFTER tracks in case it wants to look at leader/folloers
-    mTimeSlicer->loadSession(session);
 
     // reuse the request message to respond with the
     // old one to be deleted
@@ -657,7 +652,6 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // thought we might need to separate this into a begin/advance phases
     // but we don't really need to
     syncMaster.beginAudioBlock(stream);
-    syncMaster.advance(stream);
     
     // won't be necessary once we stop queuing actions
     mTracks->beginAudioBlock();
@@ -696,7 +690,7 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // !! The TimeSlicer is going to need to include MSL track Waits in its
     // dependency analysis which will complicate what mCore->beginAudioBlockAfterActions
     // above is doing.  Need to merge that with whatever the surgeon is doing
-    mTimeSlicer->processAudioStream(stream);
+    syncMaster.processAudioStream(stream);
 
     mCore->finishAudioBlock(stream);
     
