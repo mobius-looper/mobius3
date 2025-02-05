@@ -151,6 +151,22 @@ SymbolTable* SyncMaster::getSymbols()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Older function for Synchronizer that tests for sync needs.
+ * Functionally similar to notifyTrackRecordRequest but a little
+ * esier for the old Synchronizer logic.
+ */
+bool SyncMaster::isRecordStartSynchronized(int number)
+{
+    bool sync = false;
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+        SyncSource src = getEffectiveSource(number);
+        sync = (src != SyncSourceNone && src != SyncSourceMaster);
+    }
+    return sync;
+}
+
+/**
  * This is called when a track would like to begin recording.
  * Return false if the track may start recording right away, true
  * if the track needs to wait for a sync pulse.
@@ -1152,7 +1168,18 @@ void SyncMaster::sendAlert(juce::String msg)
  */
 Pulse* SyncMaster::getBlockPulse(int trackNumber)
 {
-    return pulsator->getRelevantBlockPulse(trackNumber);
+    Pulse* p = pulsator->getRelevantBlockPulse(trackNumber);
+    if (p != nullptr) {
+        // and now we have another layer of relevance
+        // we can further filter out pulse noise by only allowing
+        // pulses when the track is actually waiting for one
+        // atm, this means it is sync recording or doing Realign
+        LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
+        if (lt == nullptr || lt->isPendingSyncRecord())
+          p = nullptr;
+    }
+    return p;
+    
 }
 
 /**

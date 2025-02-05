@@ -143,7 +143,6 @@ class Synchronizer {
     
     // record scheduling
     
-    bool isRecordStartSynchronized(class Loop* l);
     bool isThresholdRecording(class Loop* l);
     class Event* schedulePendingRecord(class Action* action, class Loop* l, class MobiusMode* mode);
     

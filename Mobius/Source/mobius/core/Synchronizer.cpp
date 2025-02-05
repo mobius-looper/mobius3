@@ -85,29 +85,6 @@ void Synchronizer::globalReset()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Called by scheduleRecordStart to see if the start of a recording
- * needs to be synchronized.
- *
- * In the new world, this is indiciated by a track that is following something.
- */
-bool Synchronizer::isRecordStartSynchronized(Loop* l)
-{
-    bool sync = false;
-    Track* t = l->getTrack();
-    int number = t->getLogicalNumber();
-    SyncSource source = mSyncMaster->getEffectiveSource(number);
-
-    sync = (source != SyncSourceNone && source != SyncSourceMaster);
-
-    if (sync) {
-        SyncUnit unit = mSyncMaster->getSyncUnit(number);
-        Trace(2, "Synchronizer: Track %d waiting for sync pulse %d", unit);
-    }
-
-    return sync;
-}
-
-/**
  * Schedule a recording event.
  *
  * This is the first step in the recording process.  A UIAction/Action has
@@ -122,6 +99,7 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
     EventManager* em = l->getTrack()->getEventManager();
 	MobiusMode* mode = l->getMode();
     bool notifyRecordStart = false;
+    int number = l->getTrack()->getLogicalNumber();
     
     // When we moved this over from RecordFunction we may have lost
     // the original function, make sure.  I don't think this hurts 
@@ -165,7 +143,8 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
             event = scheduleRecordStop(action, l);
         }
     }
-	else if (!action->noSynchronization && isRecordStartSynchronized(l)) {
+	else if (!action->noSynchronization &&
+             mSyncMaster->isRecordStartSynchronized(number)) {
 
         // Putting the loop in Threshold or Synchronize mode is treated
         // as "not advancing" and screws up playing.  Need to rethink this
@@ -281,10 +260,11 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 bool Synchronizer::isThresholdRecording(Loop* l)
 {
 	bool threshold = false;
+    int number = l->getTrack()->getLogicalNumber();
 
 	Preset* p = l->getPreset();
 	if (p->getRecordThreshold() > 0) {
-		threshold = !isRecordStartSynchronized(l);
+		threshold = !mSyncMaster->isRecordStartSynchronized(number);
 	}
 
 	return threshold;
@@ -490,9 +470,9 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
         // If we didn't schedule an AutoRecord event, and we didn't detect
         // an AutoRecord scheduling error, procees with normal scheduling
         if (event == NULL && scheduleEnd) {
-
+            int number = loop->getTrack()->getLogicalNumber();
             // if the start was synchronized, so too the end
-            if (isRecordStartSynchronized(loop)) {
+            if (mSyncMaster->isRecordStartSynchronized(number)) {
 
                 event = scheduleSyncRecordStop(action, loop);
             }
@@ -518,7 +498,6 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
                   stopFrame += loop->getInputLatency();
 
                 // sync master may ask for rounding adjustments
-                int number = loop->getTrack()->getLogicalNumber();
                 int adjust = mSyncMaster->notifyTrackRecordEnding(number);
                 stopFrame += adjust;
                 
@@ -566,7 +545,8 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
  */
 bool Synchronizer::isRecordStopPulsed(Loop* l)
 {
-    return isRecordStartSynchronized(l);
+    int number = l->getTrack()->getLogicalNumber();
+    return mSyncMaster->isRecordStartSynchronized(number);
 }
 
 /**
@@ -1117,10 +1097,11 @@ bool Synchronizer::undoRecordStop(Loop* loop)
 	bool undone = false;
     EventManager* em = loop->getTrack()->getEventManager();
 	Event* stop = em->findEvent(RecordStopEvent);
-
+    int number = loop->getTrack()->getLogicalNumber();
+    
 	if (stop != NULL &&
 		((stop->function == AutoRecord) ||
-		 (stop->function == Record && isRecordStartSynchronized(loop)))) {
+		 (stop->function == Record && mSyncMaster->isRecordStartSynchronized(number)))) {
 		
 		// calculate the unit length
 		float barFrames;

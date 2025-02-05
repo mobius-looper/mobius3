@@ -75,6 +75,7 @@ class SyncMaster
     // Track Notifications
     //
 
+    bool isRecordStartSynchronized(int number);
     bool notifyTrackRecordRequest(int id);
     void notifyTrackRecordStarting(int id);
     bool notifyTrackRecordEndRequest(int id);
