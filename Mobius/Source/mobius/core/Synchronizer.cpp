@@ -31,9 +31,9 @@
 #include "../Notification.h"
 #include "../Notifier.h"
 
-#include "../../sync/SyncConstants.h"
-#include "../../sync/Pulse.h"
-#include "../../sync/SyncMaster.h"
+#include "../sync/SyncConstants.h"
+#include "../sync/Pulse.h"
+#include "../sync/SyncMaster.h"
 
 #include "Action.h"
 #include "Event.h"

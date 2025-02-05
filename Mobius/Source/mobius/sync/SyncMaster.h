@@ -20,7 +20,7 @@
 #include <JuceHeader.h>
 
 #include "SyncConstants.h"
-#include "../model/SessionHelper.h"
+#include "../../model/SessionHelper.h"
 
 class SyncMaster
 {

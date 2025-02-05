@@ -24,15 +24,15 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
-#include "../midi/MidiByte.h"
+#include "../../util/Trace.h"
+#include "../../midi/MidiByte.h"
 
 // so we can have a pseudo-loop for tracking progress
 // migth want to put that in a wrapper to keep this focused?
-#include "../model/Session.h"
-#include "../model/SessionHelper.h"
-#include "../model/SyncState.h"
-#include "../model/PriorityState.h"
+#include "../../model/Session.h"
+#include "../../model/SessionHelper.h"
+#include "../../model/SyncState.h"
+#include "../../model/PriorityState.h"
 
 #include "SyncMaster.h"
 #include "MidiAnalyzer.h"

@@ -7,9 +7,9 @@
 
 #include <JuceHeader.h>
 
-#include "../MidiManager.h"
+#include "../../MidiManager.h"
 
-#include "../model/SessionHelper.h"
+#include "../../model/SessionHelper.h"
 
 #include "SyncAnalyzer.h"
 #include "SyncAnalyzerResult.h"

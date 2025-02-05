@@ -11,7 +11,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/UIAction.h"
 
-#include "../../sync/SyncMaster.h"
+#include "../sync/SyncMaster.h"
 
 #include "TrackProperties.h"
 #include "LooperScheduler.h"

@@ -37,8 +37,8 @@
 
 // for getLastSampleFrames
 #include "../MobiusKernel.h"
-#include "../../sync/SyncConstants.h"
-#include "../../sync/SyncMaster.h"
+#include "../sync/SyncConstants.h"
+#include "../sync/SyncMaster.h"
 
 #include "Event.h"
 #include "EventManager.h"

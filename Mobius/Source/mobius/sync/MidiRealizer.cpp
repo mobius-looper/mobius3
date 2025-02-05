@@ -112,9 +112,9 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
-#include "../midi/MidiByte.h"
-#include "../MidiManager.h"
+#include "../../util/Trace.h"
+#include "../../midi/MidiByte.h"
+#include "../../MidiManager.h"
 
 #include "SyncTrace.h"
 #include "MidiQueue.h"

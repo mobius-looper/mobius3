@@ -5,13 +5,13 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
-#include "../model/SessionConstants.h"
-#include "../model/Session.h"
-#include "../mobius/MobiusInterface.h"
+#include "../../util/Trace.h"
+#include "../../model/SessionConstants.h"
+#include "../../model/Session.h"
+#include "../MobiusInterface.h"
 
-#include "../mobius/track/LogicalTrack.h"
-#include "../mobius/track/TrackManager.h"
+#include "../track/LogicalTrack.h"
+#include "../track/TrackManager.h"
 
 #include "SyncConstants.h"
 #include "Pulse.h"

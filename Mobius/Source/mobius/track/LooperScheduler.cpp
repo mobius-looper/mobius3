@@ -10,8 +10,8 @@
 #include "../../model/FunctionProperties.h"
 #include "../../model/TrackState.h"
 
-#include "../../sync/SyncConstants.h"
-#include "../../sync/SyncMaster.h"
+#include "../sync/SyncConstants.h"
+#include "../sync/SyncMaster.h"
 
 #include "TrackManager.h"
 #include "TrackProperties.h"

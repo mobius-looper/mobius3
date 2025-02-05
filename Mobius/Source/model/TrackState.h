@@ -10,7 +10,8 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../sync/SyncConstants.h"
+// !! this belongs in model
+#include "../mobius/sync/SyncConstants.h"
 #include "SyncState.h"
 #include "SymbolId.h"
 #include "Session.h"

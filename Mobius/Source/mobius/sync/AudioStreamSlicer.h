@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "MobiusInterface.h"
+#include "../MobiusInterface.h"
 
 class AudioStreamSlicer : public MobiusAudioStream
 {

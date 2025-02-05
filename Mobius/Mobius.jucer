@@ -16,46 +16,6 @@
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
-      <GROUP id="{17D1AD70-C175-4456-F59E-2C7879A600B9}" name="sync">
-        <FILE id="b8WpS8" name="BarTender.cpp" compile="1" resource="0" file="Source/sync/BarTender.cpp"/>
-        <FILE id="p3yoLU" name="BarTender.h" compile="0" resource="0" file="Source/sync/BarTender.h"/>
-        <FILE id="LIOiwp" name="DriftMonitor.cpp" compile="1" resource="0"
-              file="Source/sync/DriftMonitor.cpp"/>
-        <FILE id="HYQ3tR" name="DriftMonitor.h" compile="0" resource="0" file="Source/sync/DriftMonitor.h"/>
-        <FILE id="N1Ldzj" name="HostAnalyzer.cpp" compile="1" resource="0"
-              file="Source/sync/HostAnalyzer.cpp"/>
-        <FILE id="AIzaaJ" name="HostAnalyzer.h" compile="0" resource="0" file="Source/sync/HostAnalyzer.h"/>
-        <FILE id="xCfCPz" name="MidiAnalyzer.cpp" compile="1" resource="0"
-              file="Source/sync/MidiAnalyzer.cpp"/>
-        <FILE id="Gk3yQx" name="MidiAnalyzer.h" compile="0" resource="0" file="Source/sync/MidiAnalyzer.h"/>
-        <FILE id="uN7iix" name="MidiEventMonitor.cpp" compile="1" resource="0"
-              file="Source/sync/MidiEventMonitor.cpp"/>
-        <FILE id="Ey9MWY" name="MidiEventMonitor.h" compile="0" resource="0"
-              file="Source/sync/MidiEventMonitor.h"/>
-        <FILE id="DmwDFl" name="MidiQueue.cpp" compile="1" resource="0" file="Source/sync/MidiQueue.cpp"/>
-        <FILE id="gJLcbw" name="MidiQueue.h" compile="0" resource="0" file="Source/sync/MidiQueue.h"/>
-        <FILE id="YQpF3E" name="MidiRealizer.cpp" compile="1" resource="0"
-              file="Source/sync/MidiRealizer.cpp"/>
-        <FILE id="TbaOqY" name="MidiRealizer.h" compile="0" resource="0" file="Source/sync/MidiRealizer.h"/>
-        <FILE id="BvMR0q" name="MidiSyncEvent.h" compile="0" resource="0" file="Source/sync/MidiSyncEvent.h"/>
-        <FILE id="yB2R7n" name="MidiTempoMonitor.cpp" compile="1" resource="0"
-              file="Source/sync/MidiTempoMonitor.cpp"/>
-        <FILE id="nRMyn6" name="MidiTempoMonitor.h" compile="0" resource="0"
-              file="Source/sync/MidiTempoMonitor.h"/>
-        <FILE id="blqXw9" name="Pulsator.cpp" compile="1" resource="0" file="Source/sync/Pulsator.cpp"/>
-        <FILE id="bLVZYB" name="Pulsator.h" compile="0" resource="0" file="Source/sync/Pulsator.h"/>
-        <FILE id="efK3Bv" name="Pulse.h" compile="0" resource="0" file="Source/sync/Pulse.h"/>
-        <FILE id="dUI2f1" name="SyncAnalyzer.h" compile="0" resource="0" file="Source/sync/SyncAnalyzer.h"/>
-        <FILE id="VRIuUf" name="SyncAnalyzerResult.h" compile="0" resource="0"
-              file="Source/sync/SyncAnalyzerResult.h"/>
-        <FILE id="G5Wugr" name="SyncConstants.h" compile="0" resource="0" file="Source/sync/SyncConstants.h"/>
-        <FILE id="XnnDpK" name="SyncMaster.cpp" compile="1" resource="0" file="Source/sync/SyncMaster.cpp"/>
-        <FILE id="G80cvL" name="SyncMaster.h" compile="0" resource="0" file="Source/sync/SyncMaster.h"/>
-        <FILE id="MKxdyp" name="SyncTrace.cpp" compile="1" resource="0" file="Source/sync/SyncTrace.cpp"/>
-        <FILE id="s49iPd" name="SyncTrace.h" compile="0" resource="0" file="Source/sync/SyncTrace.h"/>
-        <FILE id="zGop4e" name="Transport.cpp" compile="1" resource="0" file="Source/sync/Transport.cpp"/>
-        <FILE id="nCVKQR" name="Transport.h" compile="0" resource="0" file="Source/sync/Transport.h"/>
-      </GROUP>
       <GROUP id="{F958D1D1-0714-F899-8A96-C4B8CCDAC94D}" name="ff_meters">
         <FILE id="MHymLv" name="ff_meters.cpp" compile="1" resource="0" file="Source/ff_meters/ff_meters.cpp"/>
         <FILE id="QGYdos" name="ff_meters.h" compile="0" resource="0" file="Source/ff_meters/ff_meters.h"/>
@@ -642,6 +602,51 @@
         <FILE id="einvVL" name="MainWindow.h" compile="0" resource="0" file="Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
+        <GROUP id="{A627AF61-F720-1E88-4B5F-20F61B64F721}" name="sync">
+          <FILE id="LInigs" name="BarTender.cpp" compile="1" resource="0" file="Source/mobius/sync/BarTender.cpp"/>
+          <FILE id="qG1xuT" name="BarTender.h" compile="0" resource="0" file="Source/mobius/sync/BarTender.h"/>
+          <FILE id="NqyDSK" name="DriftMonitor.cpp" compile="1" resource="0"
+                file="Source/mobius/sync/DriftMonitor.cpp"/>
+          <FILE id="lnsK4h" name="DriftMonitor.h" compile="0" resource="0" file="Source/mobius/sync/DriftMonitor.h"/>
+          <FILE id="LDnRm9" name="HostAnalyzer.cpp" compile="1" resource="0"
+                file="Source/mobius/sync/HostAnalyzer.cpp"/>
+          <FILE id="fpbokI" name="HostAnalyzer.h" compile="0" resource="0" file="Source/mobius/sync/HostAnalyzer.h"/>
+          <FILE id="ovX4M1" name="MidiAnalyzer.cpp" compile="1" resource="0"
+                file="Source/mobius/sync/MidiAnalyzer.cpp"/>
+          <FILE id="ZfH3Xg" name="MidiAnalyzer.h" compile="0" resource="0" file="Source/mobius/sync/MidiAnalyzer.h"/>
+          <FILE id="mLZMRh" name="MidiEventMonitor.cpp" compile="1" resource="0"
+                file="Source/mobius/sync/MidiEventMonitor.cpp"/>
+          <FILE id="YUOy0E" name="MidiEventMonitor.h" compile="0" resource="0"
+                file="Source/mobius/sync/MidiEventMonitor.h"/>
+          <FILE id="YkyDKn" name="MidiQueue.cpp" compile="1" resource="0" file="Source/mobius/sync/MidiQueue.cpp"/>
+          <FILE id="xfMWao" name="MidiQueue.h" compile="0" resource="0" file="Source/mobius/sync/MidiQueue.h"/>
+          <FILE id="WbxUYW" name="MidiRealizer.cpp" compile="1" resource="0"
+                file="Source/mobius/sync/MidiRealizer.cpp"/>
+          <FILE id="vLLlWl" name="MidiRealizer.h" compile="0" resource="0" file="Source/mobius/sync/MidiRealizer.h"/>
+          <FILE id="DFrxHu" name="MidiSyncEvent.h" compile="0" resource="0" file="Source/mobius/sync/MidiSyncEvent.h"/>
+          <FILE id="d4e1D4" name="MidiTempoMonitor.cpp" compile="1" resource="0"
+                file="Source/mobius/sync/MidiTempoMonitor.cpp"/>
+          <FILE id="DhbnDN" name="MidiTempoMonitor.h" compile="0" resource="0"
+                file="Source/mobius/sync/MidiTempoMonitor.h"/>
+          <FILE id="suBLqU" name="Pulsator.cpp" compile="1" resource="0" file="Source/mobius/sync/Pulsator.cpp"/>
+          <FILE id="ESMJ5d" name="Pulsator.h" compile="0" resource="0" file="Source/mobius/sync/Pulsator.h"/>
+          <FILE id="JoORkY" name="Pulse.h" compile="0" resource="0" file="Source/mobius/sync/Pulse.h"/>
+          <FILE id="BzcuUR" name="SyncAnalyzer.h" compile="0" resource="0" file="Source/mobius/sync/SyncAnalyzer.h"/>
+          <FILE id="Usp2vk" name="SyncAnalyzerResult.h" compile="0" resource="0"
+                file="Source/mobius/sync/SyncAnalyzerResult.h"/>
+          <FILE id="wov20D" name="SyncConstants.h" compile="0" resource="0" file="Source/mobius/sync/SyncConstants.h"/>
+          <FILE id="TrPjH8" name="SyncMaster.cpp" compile="1" resource="0" file="Source/mobius/sync/SyncMaster.cpp"/>
+          <FILE id="dUy6Dl" name="SyncMaster.h" compile="0" resource="0" file="Source/mobius/sync/SyncMaster.h"/>
+          <FILE id="f0p3FR" name="SyncTrace.cpp" compile="1" resource="0" file="Source/mobius/sync/SyncTrace.cpp"/>
+          <FILE id="E0YtiX" name="SyncTrace.h" compile="0" resource="0" file="Source/mobius/sync/SyncTrace.h"/>
+          <FILE id="XTDaQc" name="TempoMonitor.cpp" compile="1" resource="0"
+                file="Source/mobius/sync/TempoMonitor.cpp"/>
+          <FILE id="KYpJgt" name="TempoMonitor.h" compile="0" resource="0" file="Source/mobius/sync/TempoMonitor.h"/>
+          <FILE id="I21MGe" name="TimeSlicer.cpp" compile="1" resource="0" file="Source/mobius/sync/TimeSlicer.cpp"/>
+          <FILE id="AVNwTh" name="TimeSlicer.h" compile="0" resource="0" file="Source/mobius/sync/TimeSlicer.h"/>
+          <FILE id="DKstkR" name="Transport.cpp" compile="1" resource="0" file="Source/mobius/sync/Transport.cpp"/>
+          <FILE id="XM77tx" name="Transport.h" compile="0" resource="0" file="Source/mobius/sync/Transport.h"/>
+        </GROUP>
         <GROUP id="{D9CEF926-5070-AF3E-4E9F-1323713390DF}" name="track">
           <FILE id="feGMpx" name="BaseScheduler.cpp" compile="1" resource="0"
                 file="Source/mobius/track/BaseScheduler.cpp"/>
@@ -688,10 +693,6 @@
                 file="Source/mobius/track/TrackProperties.h"/>
         </GROUP>
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
-          <FILE id="uo1Wve" name="AudioStreamSlicer.cpp" compile="1" resource="0"
-                file="Source/mobius/AudioStreamSlicer.cpp"/>
-          <FILE id="EyVrAj" name="AudioStreamSlicer.h" compile="0" resource="0"
-                file="Source/mobius/AudioStreamSlicer.h"/>
           <FILE id="N2rO6u" name="MidiEngine.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiEngine.cpp"/>
           <FILE id="xn2n6u" name="MidiEngine.h" compile="0" resource="0" file="Source/mobius/midi/MidiEngine.h"/>
           <FILE id="Sbv33s" name="MidiFollower.cpp" compile="1" resource="0"
@@ -722,6 +723,89 @@
           <FILE id="QmMmv7" name="MidiWatcher.h" compile="0" resource="0" file="Source/mobius/midi/MidiWatcher.h"/>
         </GROUP>
         <GROUP id="{8E4BAFF4-3AEF-CED4-3179-55768C778B1C}" name="core">
+          <GROUP id="{AF593FE0-3ECC-DDB4-DBDB-FC6DA34DEFDE}" name="script">
+            <FILE id="nn3BzH" name="ActionAdapter.cpp" compile="1" resource="0"
+                  file="Source/script/ActionAdapter.cpp"/>
+            <FILE id="Vg0bmb" name="ActionAdapter.h" compile="0" resource="0" file="Source/script/ActionAdapter.h"/>
+            <FILE id="zfsEO0" name="MslArgumentParser.cpp" compile="1" resource="0"
+                  file="Source/script/MslArgumentParser.cpp"/>
+            <FILE id="x3DxF0" name="MslArgumentParser.h" compile="0" resource="0"
+                  file="Source/script/MslArgumentParser.h"/>
+            <FILE id="gucP7Y" name="MslBinding.cpp" compile="1" resource="0" file="Source/script/MslBinding.cpp"/>
+            <FILE id="oflUBe" name="MslBinding.h" compile="0" resource="0" file="Source/script/MslBinding.h"/>
+            <FILE id="QIzNz4" name="MslCollision.h" compile="0" resource="0" file="Source/script/MslCollision.h"/>
+            <FILE id="UK2N5a" name="MslConductor.cpp" compile="1" resource="0"
+                  file="Source/script/MslConductor.cpp"/>
+            <FILE id="NNSWtD" name="MslConductor.h" compile="0" resource="0" file="Source/script/MslConductor.h"/>
+            <FILE id="DVlw0b" name="MslConstants.h" compile="0" resource="0" file="Source/script/MslConstants.h"/>
+            <FILE id="hAbJ2X" name="MslContext.h" compile="0" resource="0" file="Source/script/MslContext.h"/>
+            <FILE id="BC7kAK" name="MslDetails.h" compile="0" resource="0" file="Source/script/MslDetails.h"/>
+            <FILE id="rl8nR0" name="MslEnvironment.cpp" compile="1" resource="0"
+                  file="Source/script/MslEnvironment.cpp"/>
+            <FILE id="kMdC7i" name="MslEnvironment.h" compile="0" resource="0"
+                  file="Source/script/MslEnvironment.h"/>
+            <FILE id="bhfqpU" name="MslError.cpp" compile="1" resource="0" file="Source/script/MslError.cpp"/>
+            <FILE id="ig20Fx" name="MslError.h" compile="0" resource="0" file="Source/script/MslError.h"/>
+            <FILE id="j4d2od" name="MslExternal.h" compile="0" resource="0" file="Source/script/MslExternal.h"/>
+            <FILE id="Ibco1Z" name="MslGarbage.cpp" compile="1" resource="0" file="Source/script/MslGarbage.cpp"/>
+            <FILE id="YEYQ6w" name="MslGarbage.h" compile="0" resource="0" file="Source/script/MslGarbage.h"/>
+            <FILE id="e3Mo4J" name="MslLinkage.h" compile="0" resource="0" file="Source/script/MslLinkage.h"/>
+            <FILE id="pZhd29" name="MslLinker.cpp" compile="1" resource="0" file="Source/script/MslLinker.cpp"/>
+            <FILE id="BpzbIB" name="MslLinker.h" compile="0" resource="0" file="Source/script/MslLinker.h"/>
+            <FILE id="TlgSMG" name="MslMessage.cpp" compile="1" resource="0" file="Source/script/MslMessage.cpp"/>
+            <FILE id="HsNAna" name="MslMessage.h" compile="0" resource="0" file="Source/script/MslMessage.h"/>
+            <FILE id="s2BlCY" name="MslModel.cpp" compile="1" resource="0" file="Source/script/MslModel.cpp"/>
+            <FILE id="mEdRvY" name="MslModel.h" compile="0" resource="0" file="Source/script/MslModel.h"/>
+            <FILE id="lVGF7R" name="MslObject.cpp" compile="1" resource="0" file="Source/script/MslObject.cpp"/>
+            <FILE id="yvN1wL" name="MslObject.h" compile="0" resource="0" file="Source/script/MslObject.h"/>
+            <FILE id="wCqtDL" name="MslObjectPool.cpp" compile="1" resource="0"
+                  file="Source/script/MslObjectPool.cpp"/>
+            <FILE id="ei82LK" name="MslObjectPool.h" compile="0" resource="0" file="Source/script/MslObjectPool.h"/>
+            <FILE id="Y9Hjcr" name="MslParser.cpp" compile="1" resource="0" file="Source/script/MslParser.cpp"/>
+            <FILE id="yxTHnC" name="MslParser.h" compile="0" resource="0" file="Source/script/MslParser.h"/>
+            <FILE id="mH7jkQ" name="MslPools.cpp" compile="1" resource="0" file="Source/script/MslPools.cpp"/>
+            <FILE id="y6hrow" name="MslPools.h" compile="0" resource="0" file="Source/script/MslPools.h"/>
+            <FILE id="zgZGYe" name="MslPreprocessor.cpp" compile="1" resource="0"
+                  file="Source/script/MslPreprocessor.cpp"/>
+            <FILE id="qtqfqu" name="MslPreprocessor.h" compile="0" resource="0"
+                  file="Source/script/MslPreprocessor.h"/>
+            <FILE id="is2GnL" name="MslProcess.cpp" compile="1" resource="0" file="Source/script/MslProcess.cpp"/>
+            <FILE id="S1tVF7" name="MslProcess.h" compile="0" resource="0" file="Source/script/MslProcess.h"/>
+            <FILE id="lavRAY" name="MslResult.cpp" compile="1" resource="0" file="Source/script/MslResult.cpp"/>
+            <FILE id="cg5Mmk" name="MslResult.h" compile="0" resource="0" file="Source/script/MslResult.h"/>
+            <FILE id="YAN8PG" name="MslSession.cpp" compile="1" resource="0" file="Source/script/MslSession.cpp"/>
+            <FILE id="VRVGi3" name="MslSession.h" compile="0" resource="0" file="Source/script/MslSession.h"/>
+            <FILE id="gJ3Lt9" name="MslStack.cpp" compile="1" resource="0" file="Source/script/MslStack.cpp"/>
+            <FILE id="qXRxdX" name="MslStandardLibrary.cpp" compile="1" resource="0"
+                  file="Source/script/MslStandardLibrary.cpp"/>
+            <FILE id="DvS5PU" name="MslStandardLibrary.h" compile="0" resource="0"
+                  file="Source/script/MslStandardLibrary.h"/>
+            <FILE id="snZFMI" name="MslSymbol.cpp" compile="1" resource="0" file="Source/script/MslSymbol.cpp"/>
+            <FILE id="QjoJyt" name="MslSymbol.h" compile="0" resource="0" file="Source/script/MslSymbol.h"/>
+            <FILE id="gv4inU" name="MslTokenizer.cpp" compile="1" resource="0"
+                  file="Source/script/MslTokenizer.cpp"/>
+            <FILE id="Sc7E1Z" name="MslTokenizer.h" compile="0" resource="0" file="Source/script/MslTokenizer.h"/>
+            <FILE id="mMNdWj" name="MslValue.cpp" compile="1" resource="0" file="Source/script/MslValue.cpp"/>
+            <FILE id="WkVWlt" name="MslValue.h" compile="0" resource="0" file="Source/script/MslValue.h"/>
+            <FILE id="oGwfxv" name="MslVariable.cpp" compile="1" resource="0" file="Source/script/MslVariable.cpp"/>
+            <FILE id="aYeYrr" name="MslWait.cpp" compile="1" resource="0" file="Source/script/MslWait.cpp"/>
+            <FILE id="wjcsXg" name="MslWait.h" compile="0" resource="0" file="Source/script/MslWait.h"/>
+            <FILE id="xZVLas" name="MslWaitNode.cpp" compile="1" resource="0" file="Source/script/MslWaitNode.cpp"/>
+            <FILE id="tiIAWA" name="ScriptClerk.cpp" compile="1" resource="0" file="Source/script/ScriptClerk.cpp"/>
+            <FILE id="GZ8e5a" name="ScriptClerk.h" compile="0" resource="0" file="Source/script/ScriptClerk.h"/>
+            <FILE id="iaezmp" name="ScriptExternalId.h" compile="0" resource="0"
+                  file="Source/script/ScriptExternalId.h"/>
+            <FILE id="F0wdJK" name="ScriptExternals.cpp" compile="1" resource="0"
+                  file="Source/script/ScriptExternals.cpp"/>
+            <FILE id="Xfnqz4" name="ScriptExternals.h" compile="0" resource="0"
+                  file="Source/script/ScriptExternals.h"/>
+            <FILE id="xHC9sn" name="ScriptRegistry.cpp" compile="1" resource="0"
+                  file="Source/script/ScriptRegistry.cpp"/>
+            <FILE id="bpoxPm" name="ScriptRegistry.h" compile="0" resource="0"
+                  file="Source/script/ScriptRegistry.h"/>
+            <FILE id="vR36s3" name="ScriptUtil.cpp" compile="1" resource="0" file="Source/script/ScriptUtil.cpp"/>
+            <FILE id="dcKk80" name="ScriptUtil.h" compile="0" resource="0" file="Source/script/ScriptUtil.h"/>
+          </GROUP>
           <GROUP id="{7F4264E6-7D7C-D713-8A19-178DDC4B82F9}" name="functions">
             <FILE id="e38cai" name="Alert.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Alert.cpp"/>
             <FILE id="bJwqIY" name="Bounce.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Bounce.cpp"/>
@@ -904,93 +988,8 @@
         <FILE id="JOsfQX" name="SampleReader.cpp" compile="1" resource="0"
               file="Source/mobius/SampleReader.cpp"/>
         <FILE id="RDP88j" name="SampleReader.h" compile="0" resource="0" file="Source/mobius/SampleReader.h"/>
-        <FILE id="G2Qgyf" name="TimeSlicer.cpp" compile="1" resource="0" file="Source/mobius/TimeSlicer.cpp"/>
-        <FILE id="yWDOik" name="TimeSlicer.h" compile="0" resource="0" file="Source/mobius/TimeSlicer.h"/>
         <FILE id="BCqKCe" name="WaveFile.cpp" compile="1" resource="0" file="Source/mobius/WaveFile.cpp"/>
         <FILE id="F6kToV" name="WaveFile.h" compile="0" resource="0" file="Source/mobius/WaveFile.h"/>
-      </GROUP>
-      <GROUP id="{AF593FE0-3ECC-DDB4-DBDB-FC6DA34DEFDE}" name="script">
-        <FILE id="nn3BzH" name="ActionAdapter.cpp" compile="1" resource="0"
-              file="Source/script/ActionAdapter.cpp"/>
-        <FILE id="Vg0bmb" name="ActionAdapter.h" compile="0" resource="0" file="Source/script/ActionAdapter.h"/>
-        <FILE id="zfsEO0" name="MslArgumentParser.cpp" compile="1" resource="0"
-              file="Source/script/MslArgumentParser.cpp"/>
-        <FILE id="x3DxF0" name="MslArgumentParser.h" compile="0" resource="0"
-              file="Source/script/MslArgumentParser.h"/>
-        <FILE id="gucP7Y" name="MslBinding.cpp" compile="1" resource="0" file="Source/script/MslBinding.cpp"/>
-        <FILE id="oflUBe" name="MslBinding.h" compile="0" resource="0" file="Source/script/MslBinding.h"/>
-        <FILE id="QIzNz4" name="MslCollision.h" compile="0" resource="0" file="Source/script/MslCollision.h"/>
-        <FILE id="UK2N5a" name="MslConductor.cpp" compile="1" resource="0"
-              file="Source/script/MslConductor.cpp"/>
-        <FILE id="NNSWtD" name="MslConductor.h" compile="0" resource="0" file="Source/script/MslConductor.h"/>
-        <FILE id="DVlw0b" name="MslConstants.h" compile="0" resource="0" file="Source/script/MslConstants.h"/>
-        <FILE id="hAbJ2X" name="MslContext.h" compile="0" resource="0" file="Source/script/MslContext.h"/>
-        <FILE id="BC7kAK" name="MslDetails.h" compile="0" resource="0" file="Source/script/MslDetails.h"/>
-        <FILE id="rl8nR0" name="MslEnvironment.cpp" compile="1" resource="0"
-              file="Source/script/MslEnvironment.cpp"/>
-        <FILE id="kMdC7i" name="MslEnvironment.h" compile="0" resource="0"
-              file="Source/script/MslEnvironment.h"/>
-        <FILE id="bhfqpU" name="MslError.cpp" compile="1" resource="0" file="Source/script/MslError.cpp"/>
-        <FILE id="ig20Fx" name="MslError.h" compile="0" resource="0" file="Source/script/MslError.h"/>
-        <FILE id="j4d2od" name="MslExternal.h" compile="0" resource="0" file="Source/script/MslExternal.h"/>
-        <FILE id="Ibco1Z" name="MslGarbage.cpp" compile="1" resource="0" file="Source/script/MslGarbage.cpp"/>
-        <FILE id="YEYQ6w" name="MslGarbage.h" compile="0" resource="0" file="Source/script/MslGarbage.h"/>
-        <FILE id="e3Mo4J" name="MslLinkage.h" compile="0" resource="0" file="Source/script/MslLinkage.h"/>
-        <FILE id="pZhd29" name="MslLinker.cpp" compile="1" resource="0" file="Source/script/MslLinker.cpp"/>
-        <FILE id="BpzbIB" name="MslLinker.h" compile="0" resource="0" file="Source/script/MslLinker.h"/>
-        <FILE id="TlgSMG" name="MslMessage.cpp" compile="1" resource="0" file="Source/script/MslMessage.cpp"/>
-        <FILE id="HsNAna" name="MslMessage.h" compile="0" resource="0" file="Source/script/MslMessage.h"/>
-        <FILE id="s2BlCY" name="MslModel.cpp" compile="1" resource="0" file="Source/script/MslModel.cpp"/>
-        <FILE id="mEdRvY" name="MslModel.h" compile="0" resource="0" file="Source/script/MslModel.h"/>
-        <FILE id="lVGF7R" name="MslObject.cpp" compile="1" resource="0" file="Source/script/MslObject.cpp"/>
-        <FILE id="yvN1wL" name="MslObject.h" compile="0" resource="0" file="Source/script/MslObject.h"/>
-        <FILE id="wCqtDL" name="MslObjectPool.cpp" compile="1" resource="0"
-              file="Source/script/MslObjectPool.cpp"/>
-        <FILE id="ei82LK" name="MslObjectPool.h" compile="0" resource="0" file="Source/script/MslObjectPool.h"/>
-        <FILE id="Y9Hjcr" name="MslParser.cpp" compile="1" resource="0" file="Source/script/MslParser.cpp"/>
-        <FILE id="yxTHnC" name="MslParser.h" compile="0" resource="0" file="Source/script/MslParser.h"/>
-        <FILE id="mH7jkQ" name="MslPools.cpp" compile="1" resource="0" file="Source/script/MslPools.cpp"/>
-        <FILE id="y6hrow" name="MslPools.h" compile="0" resource="0" file="Source/script/MslPools.h"/>
-        <FILE id="zgZGYe" name="MslPreprocessor.cpp" compile="1" resource="0"
-              file="Source/script/MslPreprocessor.cpp"/>
-        <FILE id="qtqfqu" name="MslPreprocessor.h" compile="0" resource="0"
-              file="Source/script/MslPreprocessor.h"/>
-        <FILE id="is2GnL" name="MslProcess.cpp" compile="1" resource="0" file="Source/script/MslProcess.cpp"/>
-        <FILE id="S1tVF7" name="MslProcess.h" compile="0" resource="0" file="Source/script/MslProcess.h"/>
-        <FILE id="lavRAY" name="MslResult.cpp" compile="1" resource="0" file="Source/script/MslResult.cpp"/>
-        <FILE id="cg5Mmk" name="MslResult.h" compile="0" resource="0" file="Source/script/MslResult.h"/>
-        <FILE id="YAN8PG" name="MslSession.cpp" compile="1" resource="0" file="Source/script/MslSession.cpp"/>
-        <FILE id="VRVGi3" name="MslSession.h" compile="0" resource="0" file="Source/script/MslSession.h"/>
-        <FILE id="gJ3Lt9" name="MslStack.cpp" compile="1" resource="0" file="Source/script/MslStack.cpp"/>
-        <FILE id="qXRxdX" name="MslStandardLibrary.cpp" compile="1" resource="0"
-              file="Source/script/MslStandardLibrary.cpp"/>
-        <FILE id="DvS5PU" name="MslStandardLibrary.h" compile="0" resource="0"
-              file="Source/script/MslStandardLibrary.h"/>
-        <FILE id="snZFMI" name="MslSymbol.cpp" compile="1" resource="0" file="Source/script/MslSymbol.cpp"/>
-        <FILE id="QjoJyt" name="MslSymbol.h" compile="0" resource="0" file="Source/script/MslSymbol.h"/>
-        <FILE id="gv4inU" name="MslTokenizer.cpp" compile="1" resource="0"
-              file="Source/script/MslTokenizer.cpp"/>
-        <FILE id="Sc7E1Z" name="MslTokenizer.h" compile="0" resource="0" file="Source/script/MslTokenizer.h"/>
-        <FILE id="mMNdWj" name="MslValue.cpp" compile="1" resource="0" file="Source/script/MslValue.cpp"/>
-        <FILE id="WkVWlt" name="MslValue.h" compile="0" resource="0" file="Source/script/MslValue.h"/>
-        <FILE id="oGwfxv" name="MslVariable.cpp" compile="1" resource="0" file="Source/script/MslVariable.cpp"/>
-        <FILE id="aYeYrr" name="MslWait.cpp" compile="1" resource="0" file="Source/script/MslWait.cpp"/>
-        <FILE id="wjcsXg" name="MslWait.h" compile="0" resource="0" file="Source/script/MslWait.h"/>
-        <FILE id="xZVLas" name="MslWaitNode.cpp" compile="1" resource="0" file="Source/script/MslWaitNode.cpp"/>
-        <FILE id="tiIAWA" name="ScriptClerk.cpp" compile="1" resource="0" file="Source/script/ScriptClerk.cpp"/>
-        <FILE id="GZ8e5a" name="ScriptClerk.h" compile="0" resource="0" file="Source/script/ScriptClerk.h"/>
-        <FILE id="iaezmp" name="ScriptExternalId.h" compile="0" resource="0"
-              file="Source/script/ScriptExternalId.h"/>
-        <FILE id="F0wdJK" name="ScriptExternals.cpp" compile="1" resource="0"
-              file="Source/script/ScriptExternals.cpp"/>
-        <FILE id="Xfnqz4" name="ScriptExternals.h" compile="0" resource="0"
-              file="Source/script/ScriptExternals.h"/>
-        <FILE id="xHC9sn" name="ScriptRegistry.cpp" compile="1" resource="0"
-              file="Source/script/ScriptRegistry.cpp"/>
-        <FILE id="bpoxPm" name="ScriptRegistry.h" compile="0" resource="0"
-              file="Source/script/ScriptRegistry.h"/>
-        <FILE id="vR36s3" name="ScriptUtil.cpp" compile="1" resource="0" file="Source/script/ScriptUtil.cpp"/>
-        <FILE id="dcKk80" name="ScriptUtil.h" compile="0" resource="0" file="Source/script/ScriptUtil.h"/>
       </GROUP>
       <GROUP id="{0A345570-CA35-1A9D-5BC1-209B7CD2412C}" name="test">
         <FILE id="c69T5i" name="AudioDifferencer.cpp" compile="1" resource="0"

@@ -24,7 +24,7 @@
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
-#include "../../sync/SyncMaster.h"
+#include "../sync/SyncMaster.h"
 #include "../../script/MslWait.h"
 
 #include "../track/LogicalTrack.h"

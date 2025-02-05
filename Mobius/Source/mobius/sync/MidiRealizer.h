@@ -22,7 +22,7 @@
 
 #include <JuceHeader.h>
 
-#include "../MidiManager.h"
+#include "../../MidiManager.h"
 
 #include "MidiQueue.h"
 #include "SyncAnalyzerResult.h"

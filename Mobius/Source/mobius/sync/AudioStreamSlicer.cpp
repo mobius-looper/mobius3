@@ -1,7 +1,7 @@
 
-#include "../util/Trace.h"
+#include "../../util/Trace.h"
 
-#include "MobiusInterface.h"
+#include "../MobiusInterface.h"
 #include "AudioStreamSlicer.h"
 
 AudioStreamSlicer::AudioStreamSlicer(MobiusAudioStream* src)

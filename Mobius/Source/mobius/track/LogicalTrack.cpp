@@ -12,7 +12,7 @@
 #include "../../model/UIParameterHandler.h"
 #include "../../model/ExValue.h"
 
-#include "../../sync/SyncConstants.h"
+#include "../sync/SyncConstants.h"
 
 #include "../../script/MslEnvironment.h"
 #include "../../script/MslBinding.h"

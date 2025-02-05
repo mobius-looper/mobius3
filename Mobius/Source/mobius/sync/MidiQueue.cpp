@@ -24,8 +24,8 @@
 
 #include <memory.h>
 
-#include "../util/Trace.h"
-#include "../midi/MidiByte.h"
+#include "../../util/Trace.h"
+#include "../../midi/MidiByte.h"
 #include "SyncTrace.h"
 #include "MidiSyncEvent.h"
 

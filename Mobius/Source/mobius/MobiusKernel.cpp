@@ -36,7 +36,7 @@
 
 #include "Audio.h"
 #include "SampleManager.h"
-#include "TimeSlicer.h"
+#include "sync/TimeSlicer.h"
 
 // drag this bitch in
 #include "core/Mobius.h"

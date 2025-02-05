@@ -1,7 +1,7 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
+#include "../../util/Trace.h"
 
 #include "MidiTempoMonitor.h"
 

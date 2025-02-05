@@ -14,7 +14,7 @@
 // for MobiusContainer
 #include "../MobiusInterface.h"
 #include "../MobiusKernel.h"
-#include "../../sync/SyncMaster.h"
+#include "../sync/SyncMaster.h"
 
 #include "MslTrack.h"
 

@@ -18,14 +18,14 @@
  
 #include <JuceHeader.h>
 
-#include "MobiusInterface.h"
-#include "MobiusKernel.h"
+#include "../MobiusInterface.h"
+#include "../MobiusKernel.h"
 
-#include "../sync/SyncConstants.h"
-#include "../sync/Pulse.h"
-#include "../sync/SyncMaster.h"
-#include "track/LogicalTrack.h"
-#include "track/TrackManager.h"
+#include "SyncConstants.h"
+#include "Pulse.h"
+#include "SyncMaster.h"
+#include "../track/LogicalTrack.h"
+#include "../track/TrackManager.h"
 
 #include "AudioStreamSlicer.h"
 #include "TimeSlicer.h"

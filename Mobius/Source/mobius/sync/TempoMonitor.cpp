@@ -5,7 +5,7 @@
  * This was dug out of the old MidiTimer class.
  */
 
-#include "../util/Trace.h"
+#include "../../util/Trace.h"
 
 #include "TempoMonitor.h"
 

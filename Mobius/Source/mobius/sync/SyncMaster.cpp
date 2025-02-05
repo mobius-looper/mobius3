@@ -1,24 +1,24 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
+#include "../../util/Trace.h"
 
-#include "../model/Symbol.h"
-#include "../model/Session.h"
-#include "../model/UIAction.h"
-#include "../model/Query.h"
-#include "../model/SystemState.h"
-#include "../model/SyncState.h"
-#include "../model/TrackState.h"
-#include "../model/PriorityState.h"
+#include "../../model/Symbol.h"
+#include "../../model/Session.h"
+#include "../../model/UIAction.h"
+#include "../../model/Query.h"
+#include "../../model/SystemState.h"
+#include "../../model/SyncState.h"
+#include "../../model/TrackState.h"
+#include "../../model/PriorityState.h"
 
 // for some of the old sync related modes
-#include "../model/ParameterConstants.h"
+#include "../../model/ParameterConstants.h"
 
-#include "../mobius/MobiusKernel.h"
-#include "../mobius/track/TrackManager.h"
-#include "../mobius/track/LogicalTrack.h"
-#include "../mobius/track/TrackProperties.h"
+#include "../MobiusKernel.h"
+#include "../track/TrackManager.h"
+#include "../track/LogicalTrack.h"
+#include "../track/TrackProperties.h"
 
 #include "Pulsator.h"
 #include "Pulse.h"

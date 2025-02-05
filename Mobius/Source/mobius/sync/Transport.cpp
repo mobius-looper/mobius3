@@ -39,15 +39,15 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
+#include "../../util/Trace.h"
 
-#include "../model/SessionConstants.h"
-#include "../model/Session.h"
-#include "../model/SyncState.h"
-#include "../model/PriorityState.h"
-#include "../model/UIAction.h"
-#include "../model/Query.h"
-#include "../mobius/track/TrackProperties.h"
+#include "../../model/SessionConstants.h"
+#include "../../model/Session.h"
+#include "../../model/SyncState.h"
+#include "../../model/PriorityState.h"
+#include "../../model/UIAction.h"
+#include "../../model/Query.h"
+#include "../track/TrackProperties.h"
 
 #include "SyncConstants.h"
 #include "SyncAnalyzerResult.h"

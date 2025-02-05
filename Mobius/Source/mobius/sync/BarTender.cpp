@@ -14,16 +14,16 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
+#include "../../util/Trace.h"
 
-#include "../model/SessionConstants.h"
-#include "../model/Session.h"
-#include "../model/UIAction.h"
-#include "../model/Query.h"
+#include "../../model/SessionConstants.h"
+#include "../../model/Session.h"
+#include "../../model/UIAction.h"
+#include "../../model/Query.h"
 
-#include "../mobius/track/TrackManager.h"
-#include "../mobius/track/LogicalTrack.h"
-#include "../mobius/track/TrackProperties.h"
+#include "../track/TrackManager.h"
+#include "../track/LogicalTrack.h"
+#include "../track/TrackProperties.h"
 
 #include "Pulse.h"
 #include "Transport.h"

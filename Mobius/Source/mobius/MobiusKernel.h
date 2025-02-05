@@ -21,7 +21,7 @@
 #include "../script/MslContext.h"
 #include "../script/ScriptUtil.h"
 
-#include "../sync/SyncMaster.h"
+#include "sync/SyncMaster.h"
 
 #include "MobiusInterface.h"
 #include "KernelEvent.h"

@@ -32,7 +32,7 @@
  *
  */
 
-#include "../util/Trace.h"
+#include "../../util/Trace.h"
 
 #include "MidiEventMonitor.h"
 
