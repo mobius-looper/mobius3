@@ -181,10 +181,6 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
             value->setInt(((Preset*)obj)->getSoundCopyMode());
             break;
             
-        case ParamRecordThreshold:
-            value->setInt(((Preset*)obj)->getRecordThreshold());
-            break;
-            
         case ParamSwitchVelocity:
             value->setBool(((Preset*)obj)->isSwitchVelocity());
             break;
@@ -239,14 +235,6 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
             
         case ParamSlipTime:
             value->setInt(((Preset*)obj)->getSlipTime());
-            break;
-            
-        case ParamAutoRecordTempo:
-            value->setInt(((Preset*)obj)->getAutoRecordTempo());
-            break;
-            
-        case ParamAutoRecordBars:
-            value->setInt(((Preset*)obj)->getAutoRecordBars());
             break;
             
         case ParamRecordTransfer:
@@ -598,10 +586,6 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             ((Preset*)obj)->setSoundCopyMode((CopyMode)value->getInt());
             break;
             
-        case ParamRecordThreshold:
-            ((Preset*)obj)->setRecordThreshold(value->getInt());
-            break;
-            
         case ParamSwitchVelocity:
             ((Preset*)obj)->setSwitchVelocity(value->getBool());
             break;
@@ -656,14 +640,6 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             
         case ParamSlipTime:
             ((Preset*)obj)->setSlipTime(value->getInt());
-            break;
-            
-        case ParamAutoRecordTempo:
-            ((Preset*)obj)->setAutoRecordTempo(value->getInt());
-            break;
-            
-        case ParamAutoRecordBars:
-            ((Preset*)obj)->setAutoRecordBars(value->getInt());
             break;
             
         case ParamRecordTransfer:

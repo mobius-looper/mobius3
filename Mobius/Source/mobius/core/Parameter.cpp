@@ -481,8 +481,6 @@ void Parameter::initParameters()
 
         // Preset
         add(AltFeedbackEnableParameter);
-        add(AutoRecordBarsParameter);
-        add(AutoRecordTempoParameter);
         add(BounceQuantizeParameter);
         add(EmptyLoopActionParameter);
         add(EmptyTrackActionParameter);
@@ -510,7 +508,6 @@ void Parameter::initParameters()
         add(SpeedTransferParameter);
         add(TimeStretchRangeParameter);
         add(RecordResetsFeedbackParameter);
-        add(RecordThresholdParameter);
         add(RecordTransferParameter);
         add(ReturnLocationParameter);
         add(ReverseTransferParameter);

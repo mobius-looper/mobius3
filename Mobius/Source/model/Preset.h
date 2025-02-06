@@ -147,9 +147,6 @@ class Preset : public Structure {
     // Record
     //
 
-	void setRecordThreshold(int i);
-	int getRecordThreshold();
-
 	void setRecordResetsFeedback(bool b);
 	bool isRecordResetsFeedback();
 
@@ -281,16 +278,6 @@ class Preset : public Structure {
 	TransferMode getPitchTransfer();
 
     //
-    // AutoRecord
-    //
-
-	void setAutoRecordTempo(int t);
-	int getAutoRecordTempo();
-	void setAutoRecordBars(int t);
-	int getAutoRecordBars();
-	int getAutoBeatsPerBar();
-
-    //
     // Synchronization 
     // Move this to Setup with the rest of the sync parameters?
     //
@@ -408,12 +395,6 @@ class Preset : public Structure {
     //
     // Record
     //
-
-	/**
-	 * Enables threshold recording.
-	 * values: 0-8, default: 0
-	 */
-	int mRecordThreshold;
 
     /**
      * When true, feedback is reset to the value from the setup
@@ -635,20 +616,6 @@ class Preset : public Structure {
 	 * Determines what happens to pitch when switching loops.
 	 */
 	TransferMode mPitchTransfer;
-
-    //
-    // AutoRecord
-    //
-
-	/**
-	 * The tempo used with the AutoRecord function.
-	 */
-	int mAutoRecordTempo;
-
-	/**
-	 * The number of bars used with the AutoRecord function.
-	 */
-	int mAutoRecordBars;
 
     //
     // Synchronizationm

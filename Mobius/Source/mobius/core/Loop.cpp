@@ -1879,7 +1879,7 @@ int Loop::getEffectiveFeedback()
 bool Loop::checkThreshold()
 {
     bool ok = false;
-
+    
 	// determine the absolute maximum sample, remember to convert
 	// frames to samples
 	float max = 0.0f;
@@ -1890,18 +1890,18 @@ bool Loop::checkThreshold()
 		if (s > max) max = s;
 	}
 	int imax = SampleFloatToInt16(max);
-
+    
 	// doc says: Each successive number represents a 6db increase
-	// in the volume necessary to trigger recording, so 1 is very 
+	// in the volume necessary to trigger recording, so 1 is very
 	// sensitive and 8 requires Pete-Townshend like moves
 
-	// ?? Being DSP challenged, I don't know how to map a "db" 
+	// ?? Being DSP challenged, I don't know how to map a "db"
 	// into a sample value.  Started by carving up the range
 	// evenly (divide by 9), but it required too much force even at 1.
 	// I think this needs to be a logarithmic scale.  Dividing
-	// by 32 makes level 1 and 2 usable.
-	int required = mPreset->getRecordThreshold() * (32768 / 32);
-
+	// by 32 makes level 1 and 2 usable
+    int required = mMobius->getRecordThreshold() * (32768 / 32);
+    
 	if (imax >= required) {
 		// technically, we should begin recording at or near
 		// the frame that contained the max sample

@@ -218,8 +218,6 @@ class Parameter : public SystemConstant {
 // Preset Parameters
 
 extern Parameter* AltFeedbackEnableParameter;
-extern Parameter* AutoRecordBarsParameter;
-extern Parameter* AutoRecordTempoParameter;
 extern Parameter* BounceQuantizeParameter;
 extern Parameter* EmptyLoopActionParameter;
 extern Parameter* EmptyTrackActionParameter;
@@ -247,7 +245,6 @@ extern Parameter* SpeedStepRangeParameter;
 extern Parameter* SpeedTransferParameter;
 extern Parameter* TimeStretchRangeParameter;
 extern Parameter* RecordResetsFeedbackParameter;
-extern Parameter* RecordThresholdParameter;
 extern Parameter* RecordTransferParameter;
 extern Parameter* ReturnLocationParameter;
 extern Parameter* ReverseTransferParameter;

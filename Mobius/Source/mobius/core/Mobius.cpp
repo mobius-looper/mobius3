@@ -38,6 +38,7 @@
 
 #include "../track/TrackProperties.h"
 #include "../track/MobiusLooperTrack.h"
+#include "../sync/SyncMaster.h"
 
 #include "Action.h"
 #include "Actionator.h"
@@ -1964,6 +1965,12 @@ void Mobius::midiSendExport(juce::MidiMessage& msg)
 void Mobius::trackSelectMidi(int number)
 {
     mKernel->trackSelectFromCore(number);
+}
+
+int Mobius::getRecordThreshold()
+{
+    SyncMaster* sm = mKernel->getSyncMaster();
+    return sm->getRecordThreshold();
 }
 
 //////////////////////////////////////////////////////////////////////

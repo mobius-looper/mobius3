@@ -274,8 +274,7 @@ bool Synchronizer::isThresholdRecording(Loop* l)
 	bool threshold = false;
     int number = l->getTrack()->getLogicalNumber();
 
-	Preset* p = l->getPreset();
-	if (p->getRecordThreshold() > 0) {
+	if (mSyncMaster->getRecordThreshold() > 0) {
 		threshold = !mSyncMaster->isRecordSynchronized(number);
 	}
 
@@ -581,8 +580,9 @@ bool Synchronizer::isRecordStopPulsed(Loop* l)
 void Synchronizer::getAutoRecordUnits(Loop* loop,
                                       float* retFrames, int* retBars)
 {
-    Preset* preset = loop->getPreset();
-    int bars = preset->getAutoRecordBars();
+    //Preset* preset = loop->getPreset();
+    //int bars = preset->getAutoRecordBars();
+    int bars = 1;
     if (bars <= 0) bars = 1;
 
     SyncUnitInfo unit;
@@ -615,8 +615,9 @@ void Synchronizer::setAutoStopEvent(Action* action, Loop* loop, Event* stop,
 
 			int moreBars;
 			if (action->getFunction() == AutoRecord) {
-                Preset* p = loop->getPreset();
-				moreBars = p->getAutoRecordBars();
+                //Preset* p = loop->getPreset();
+				//moreBars = p->getAutoRecordBars();
+				moreBars = 1;
 				if (moreBars <= 0) moreBars = 1;
 			}
 			else {

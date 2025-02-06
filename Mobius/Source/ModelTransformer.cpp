@@ -645,7 +645,6 @@ void Upgrader::convertPreset(Preset* preset, MainConfig* main)
     convertEnum(symbols->getName(ParamSwitchQuantize), preset->getSwitchQuantize(), neu);
     convertEnum(symbols->getName(ParamTimeCopyMode), preset->getTimeCopyMode(), neu);
     convertEnum(symbols->getName(ParamSoundCopyMode), preset->getSoundCopyMode(), neu);
-    neu->setInt(symbols->getName(ParamRecordThreshold), preset->getRecordThreshold());
     neu->setBool(symbols->getName(ParamSwitchVelocity), preset->isSwitchVelocity());
     neu->setInt(symbols->getName(ParamMaxUndo), preset->getMaxUndo());
     neu->setInt(symbols->getName(ParamMaxRedo), preset->getMaxRedo());
@@ -660,8 +659,6 @@ void Upgrader::convertPreset(Preset* preset, MainConfig* main)
     neu->setInt(symbols->getName(ParamTimeStretchRange), preset->getTimeStretchRange());
     convertEnum(symbols->getName(ParamSlipMode), preset->getSlipMode(), neu);
     neu->setInt(symbols->getName(ParamSlipTime), preset->getSlipTime());
-    neu->setInt(symbols->getName(ParamAutoRecordTempo), preset->getAutoRecordTempo());
-    neu->setInt(symbols->getName(ParamAutoRecordBars), preset->getAutoRecordBars());
     convertEnum(symbols->getName(ParamRecordTransfer), preset->getRecordTransfer(), neu);
     convertEnum(symbols->getName(ParamOverdubTransfer), preset->getOverdubTransfer(), neu);
     convertEnum(symbols->getName(ParamReverseTransfer), preset->getReverseTransfer(), neu);

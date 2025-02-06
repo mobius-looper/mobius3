@@ -640,8 +640,6 @@ void XmlRenderer::render(XmlBuffer* b, Preset* p)
 	renderStructure(b, p);
 
     render(b, UIParameterAltFeedbackEnable, p->isAltFeedbackEnable());
-    render(b, UIParameterAutoRecordBars, p->getAutoRecordBars());
-    render(b, UIParameterAutoRecordTempo, p->getAutoRecordTempo());
     render(b, UIParameterBounceQuantize, p->getBounceQuantize());
     render(b, UIParameterEmptyLoopAction, p->getEmptyLoopAction());
     render(b, UIParameterEmptyTrackAction, p->getEmptyTrackAction());
@@ -669,7 +667,6 @@ void XmlRenderer::render(XmlBuffer* b, Preset* p)
     render(b, UIParameterSpeedTransfer, p->getSpeedTransfer());
     render(b, UIParameterTimeStretchRange, p->getTimeStretchRange());
     render(b, UIParameterRecordResetsFeedback, p->isRecordResetsFeedback());
-    render(b, UIParameterRecordThreshold, p->getRecordThreshold());
     render(b, UIParameterRecordTransfer, p->getRecordTransfer());
     render(b, UIParameterReturnLocation, p->getReturnLocation());
     render(b, UIParameterReverseTransfer, p->getReverseTransfer());
@@ -700,8 +697,6 @@ void XmlRenderer::parse(XmlElement* e, Preset* p)
 	parseStructure(e, p);
 
     p->setAltFeedbackEnable(parse(e, UIParameterAltFeedbackEnable));
-    p->setAutoRecordBars(parse(e, UIParameterAutoRecordBars));
-    p->setAutoRecordTempo(parse(e, UIParameterAutoRecordTempo));
     p->setBounceQuantize(parse(e, UIParameterBounceQuantize));
     p->setEmptyLoopAction(parse(e, UIParameterEmptyLoopAction));
     p->setEmptyTrackAction(parse(e, UIParameterEmptyTrackAction));
@@ -729,7 +724,6 @@ void XmlRenderer::parse(XmlElement* e, Preset* p)
     p->setSpeedTransfer(parse(e, UIParameterSpeedTransfer));
     p->setTimeStretchRange(parse(e, UIParameterTimeStretchRange));
     p->setRecordResetsFeedback(parse(e, UIParameterRecordResetsFeedback));
-    p->setRecordThreshold(parse(e, UIParameterRecordThreshold));
     p->setRecordTransfer(parse(e, UIParameterRecordTransfer));
     p->setReturnLocation(parse(e, UIParameterReturnLocation));
     p->setReverseTransfer(parse(e, UIParameterReverseTransfer));

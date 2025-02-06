@@ -10,6 +10,7 @@
 
 #include "Session.h"
 #include "Symbol.h"
+#include "Enumerator.h"
 
 #include "../Provider.h"
 
@@ -163,3 +164,17 @@ bool SessionHelper::getBool(SymbolId id)
     return result;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Enumerations
+//
+//////////////////////////////////////////////////////////////////////
+
+SyncUnit SessionHelper::getAutoRecordUnit(Session* s)
+{
+    return (SyncUnit)Enumerator::getOrdinal(getSymbols(), ParamAutoRecordUnit, s->ensureGlobals(), SyncUnitBar);
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

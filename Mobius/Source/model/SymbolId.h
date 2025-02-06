@@ -136,6 +136,9 @@ typedef enum {
     ParamHostOverride,
     ParamMidiBeatsPerBar,
     ParamMidiBarsPerLoop,
+    ParamAutoRecordUnit,
+    ParamAutoRecordUnits,
+    ParamRecordThreshold,
 
     // Random new things
     ParamNoReset,
@@ -174,7 +177,6 @@ typedef enum {
     ParamSwitchQuantize,
     ParamTimeCopyMode,
     ParamSoundCopyMode,
-    ParamRecordThreshold,
     ParamSwitchVelocity,
     ParamMaxUndo,
     ParamMaxRedo,
@@ -189,8 +191,6 @@ typedef enum {
     ParamTimeStretchRange,
     ParamSlipMode,
     ParamSlipTime,
-    ParamAutoRecordTempo,
-    ParamAutoRecordBars,
     ParamRecordTransfer,
     ParamOverdubTransfer,
     ParamReverseTransfer,

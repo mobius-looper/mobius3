@@ -255,8 +255,6 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='soundCopyMode' values='play,overdub,multiply,insert'
                enumName='Preset::CopyMode'/>
 
-    <Parameter name='recordThreshold' high='8' />
-
     <Parameter name='switchVelocity' type='bool' />
 
     <Parameter name='maxUndo' options='noBinding'/>
@@ -285,10 +283,6 @@ Once those models are fully converted, these symbols can be removed.
 
     <Parameter name='slipTime' high='128' />
     
-    <Parameter name='autoRecordTempo' high='500' />
-
-    <Parameter name='autoRecordBars' low='1' high='64' />
-
     <!-- StringList
          List of functions that are sustainable.  Not configurable any more
          but could make this a FunctionProperties flag like the three former global parameters.
@@ -626,7 +620,14 @@ Once those models are fully converted, these symbols can be removed.
     <!-- Midi In -->
     <Parameter name='midiBeatsPerBar' type='int' level='kernel' defaultValue='4'/>
     <Parameter name='midiBarsPerLoop' type='int' level='kernel' defaultValue='1'/>
-    
+
+    <!-- AutoRecord -->
+    <Parameter name='autoRecordUnit' values='beat,bar,loop' level='kernel'/>
+    <Parameter name='autoRecordUnits' low='1' high='64' level='kernel'/>
+
+    <!-- Threshold  Recording -->
+    <Parameter name='recordThreshold' high='8' />
+
   </ParameterScope>
     
   <!-- =======================================================================

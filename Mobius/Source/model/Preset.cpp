@@ -72,7 +72,6 @@ void Preset::reset()
 	mSwitchQuantize		= SWITCH_QUANT_OFF;
 
     // Record
-   	mRecordThreshold	= 0;
     mRecordResetsFeedback = false;
 	mSpeedRecord			= false;
 
@@ -109,10 +108,6 @@ void Preset::reset()
 	mReverseTransfer	= XFER_FOLLOW;
 	mSpeedTransfer		= XFER_FOLLOW;
 	mPitchTransfer		= XFER_FOLLOW;
-
-    // AutoRecord
-	mAutoRecordTempo	= DEFAULT_AUTO_RECORD_TEMPO;
-	mAutoRecordBars		= DEFAULT_AUTO_RECORD_BARS;
 
     // Sync
     mEmptyTrackAction   = EMPTY_LOOP_NONE;
@@ -165,7 +160,6 @@ void Preset::copyNoAlloc(Preset* src)
 	mBounceQuantize = src->mBounceQuantize;
 	mSwitchQuantize = src->mSwitchQuantize;
     // Record
-	mRecordThreshold = src->mRecordThreshold;
     mRecordResetsFeedback = src->mRecordResetsFeedback;
 	mSpeedRecord = src->mSpeedRecord;
     // Multiply
@@ -201,9 +195,6 @@ void Preset::copyNoAlloc(Preset* src)
 	mReverseTransfer = src->mReverseTransfer;
 	mSpeedTransfer = src->mSpeedTransfer;
 	mPitchTransfer = src->mPitchTransfer;
-    // AutoRecord
-	mAutoRecordTempo = src->mAutoRecordTempo;
-	mAutoRecordBars = src->mAutoRecordBars;
     // Sync
 	mEmptyTrackAction = src->mEmptyTrackAction;
     mTrackLeaveAction = src->mTrackLeaveAction;
@@ -555,15 +546,6 @@ CopyMode Preset::getSoundCopyMode() {
 	return mSoundCopyMode;
 }
 
-void Preset::setRecordThreshold(int i) {
-	if (i >= 0 && i <= 8)
-	  mRecordThreshold = i;
-}
-
-int Preset::getRecordThreshold() {
-	return mRecordThreshold;
-}
-
 void Preset::setSwitchVelocity(bool b) {
 	mSwitchVelocity = b;
 }
@@ -600,30 +582,6 @@ int Preset::getMaxRedo()
 void Preset::setMaxRedo(int i)
 {
 	mMaxRedo = i;
-}
-
-int Preset::getAutoRecordTempo()
-{
-	return mAutoRecordTempo;
-}
-
-void Preset::setAutoRecordTempo(int i)
-{
-	mAutoRecordTempo = i;
-}
-
-int Preset::getAutoRecordBars()
-{
-	return mAutoRecordBars;
-}
-
-void Preset::setAutoRecordBars(int i)
-{
-	// this can't go below 1
-	if (i > 0)
-	  mAutoRecordBars = i;
-	else
-	  mAutoRecordBars = 1;
 }
 
 void Preset::setNoLayerFlattening(bool b)

@@ -91,6 +91,7 @@ class SyncMaster
     bool isRecordSynchronized(int number);
     Result requestRecordStart(int number);
     Result requestRecordStop(int number);
+    int getRecordThreshold();
     
     //
     // Track Notifications
@@ -204,7 +205,10 @@ class SyncMaster
 
     // cached session parameters
     bool manualStart = false;
-
+    SyncUnit autoRecordUnit = SyncUnitBar;
+    int autoRecordUnits = 1;
+    int recordThreshold = 0;
+    
     std::unique_ptr<class MidiRealizer> midiRealizer;
     std::unique_ptr<class MidiAnalyzer> midiAnalyzer;
     std::unique_ptr<class HostAnalyzer> hostAnalyzer;

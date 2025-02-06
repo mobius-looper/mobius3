@@ -67,7 +67,6 @@ const char* ParamNameSwitchDuration = "switchDuration";
 const char* ParamNameSwitchQuantize = "switchQuantize";
 const char* ParamNameTimeCopyMode = "timeCopyMode";
 const char* ParamNameSoundCopyMode = "soundCopyMode";
-const char* ParamNameRecordThreshold = "recordThreshold";
 const char* ParamNameSwitchVelocity = "switchVelocity";
 const char* ParamNameMaxUndo = "maxUndo";
 const char* ParamNameMaxRedo = "maxRedo";
@@ -82,8 +81,6 @@ const char* ParamNamePitchBendRange = "pitchBendRange";
 const char* ParamNameTimeStretchRange = "timeStretchRange";
 const char* ParamNameSlipMode = "slipMode";
 const char* ParamNameSlipTime = "slipTime";
-const char* ParamNameAutoRecordTempo = "autoRecordTempo";
-const char* ParamNameAutoRecordBars = "autoRecordBars";
 const char* ParamNameRecordTransfer = "recordTransfer";
 const char* ParamNameOverdubTransfer = "overdubTransfer";
 const char* ParamNameReverseTransfer = "reverseTransfer";
@@ -227,6 +224,9 @@ SymbolDefinition SymbolDefinitions[] = {
     {SessionHostOverride, ParamHostOverride},
     {SessionMidiBeatsPerBar, ParamMidiBeatsPerBar},
     {SessionMidiBarsPerLoop, ParamMidiBarsPerLoop},
+    {"autoRecordUnit", ParamAutoRecordUnit},
+    {"autoRecordUnits", ParamAutoRecordUnits},
+    {"recordThreshold", ParamRecordThreshold},
 
     {"trackNoReset", ParamNoReset},
     {"trackNoEdit", ParamNoEdit},
@@ -257,7 +257,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameSwitchQuantize, ParamSwitchQuantize},
     {ParamNameTimeCopyMode, ParamTimeCopyMode},
     {ParamNameSoundCopyMode, ParamSoundCopyMode},
-    {ParamNameRecordThreshold, ParamRecordThreshold},
     {ParamNameSwitchVelocity, ParamSwitchVelocity},
     {ParamNameMaxUndo, ParamMaxUndo},
     {ParamNameMaxRedo, ParamMaxRedo},
@@ -272,8 +271,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameTimeStretchRange, ParamTimeStretchRange},
     {ParamNameSlipMode, ParamSlipMode},
     {ParamNameSlipTime, ParamSlipTime},
-    {ParamNameAutoRecordTempo, ParamAutoRecordTempo},
-    {ParamNameAutoRecordBars, ParamAutoRecordBars},
     {ParamNameRecordTransfer, ParamRecordTransfer},
     {ParamNameOverdubTransfer, ParamOverdubTransfer},
     {ParamNameReverseTransfer, ParamReverseTransfer},

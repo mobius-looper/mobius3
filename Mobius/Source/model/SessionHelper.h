@@ -16,6 +16,8 @@
 
 #include "Symbol.h"
 
+#include "SyncConstants.h"
+
 class SessionHelper
 {
   public:
@@ -35,6 +37,8 @@ class SessionHelper
     const char* getString(Session* s, SymbolId id);
     int getInt(Session* s, SymbolId id);
     bool getBool(Session* s, SymbolId id);
+
+    SyncUnit getAutoRecordUnit(class Session* s);
 
   private:
 

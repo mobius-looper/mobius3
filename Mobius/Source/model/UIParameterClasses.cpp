@@ -1241,34 +1241,6 @@ void UIParameterSoundCopyModeClass::setValue(void* obj, ExValue* value)
 UIParameterSoundCopyModeClass UIParameterSoundCopyModeObj;
 UIParameter* UIParameterSoundCopyMode = &UIParameterSoundCopyModeObj;
 
-////////////// RecordThreshold
-
-class UIParameterRecordThresholdClass : public UIParameter
-{
-  public:
-    UIParameterRecordThresholdClass();
-    void getValue(void* obj, class ExValue* value) override;
-    void setValue(void* obj, class ExValue* value) override;
-};
-UIParameterRecordThresholdClass::UIParameterRecordThresholdClass()
-{
-    name = "recordThreshold";
-    displayName = "Record Threshold";
-    scope = ScopePreset;
-    type = TypeInt;
-    high = 8;
-}
-void UIParameterRecordThresholdClass::getValue(void* obj, ExValue* value)
-{
-    value->setInt(((Preset*)obj)->getRecordThreshold());
-}
-void UIParameterRecordThresholdClass::setValue(void* obj, ExValue* value)
-{
-    ((Preset*)obj)->setRecordThreshold(value->getInt());
-}
-UIParameterRecordThresholdClass UIParameterRecordThresholdObj;
-UIParameter* UIParameterRecordThreshold = &UIParameterRecordThresholdObj;
-
 ////////////// SwitchVelocity
 
 class UIParameterSwitchVelocityClass : public UIParameter
@@ -1672,63 +1644,6 @@ void UIParameterSlipTimeClass::setValue(void* obj, ExValue* value)
 }
 UIParameterSlipTimeClass UIParameterSlipTimeObj;
 UIParameter* UIParameterSlipTime = &UIParameterSlipTimeObj;
-
-////////////// AutoRecordTempo
-
-class UIParameterAutoRecordTempoClass : public UIParameter
-{
-  public:
-    UIParameterAutoRecordTempoClass();
-    void getValue(void* obj, class ExValue* value) override;
-    void setValue(void* obj, class ExValue* value) override;
-};
-UIParameterAutoRecordTempoClass::UIParameterAutoRecordTempoClass()
-{
-    name = "autoRecordTempo";
-    displayName = "Auto Record Tempo";
-    scope = ScopePreset;
-    type = TypeInt;
-    high = 500;
-}
-void UIParameterAutoRecordTempoClass::getValue(void* obj, ExValue* value)
-{
-    value->setInt(((Preset*)obj)->getAutoRecordTempo());
-}
-void UIParameterAutoRecordTempoClass::setValue(void* obj, ExValue* value)
-{
-    ((Preset*)obj)->setAutoRecordTempo(value->getInt());
-}
-UIParameterAutoRecordTempoClass UIParameterAutoRecordTempoObj;
-UIParameter* UIParameterAutoRecordTempo = &UIParameterAutoRecordTempoObj;
-
-////////////// AutoRecordBars
-
-class UIParameterAutoRecordBarsClass : public UIParameter
-{
-  public:
-    UIParameterAutoRecordBarsClass();
-    void getValue(void* obj, class ExValue* value) override;
-    void setValue(void* obj, class ExValue* value) override;
-};
-UIParameterAutoRecordBarsClass::UIParameterAutoRecordBarsClass()
-{
-    name = "autoRecordBars";
-    displayName = "Auto Record Bars";
-    scope = ScopePreset;
-    type = TypeInt;
-    low = 1;
-    high = 64;
-}
-void UIParameterAutoRecordBarsClass::getValue(void* obj, ExValue* value)
-{
-    value->setInt(((Preset*)obj)->getAutoRecordBars());
-}
-void UIParameterAutoRecordBarsClass::setValue(void* obj, ExValue* value)
-{
-    ((Preset*)obj)->setAutoRecordBars(value->getInt());
-}
-UIParameterAutoRecordBarsClass UIParameterAutoRecordBarsObj;
-UIParameter* UIParameterAutoRecordBars = &UIParameterAutoRecordBarsObj;
 
 ////////////// RecordTransfer
 

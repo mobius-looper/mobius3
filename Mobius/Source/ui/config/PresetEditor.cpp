@@ -311,9 +311,6 @@ void PresetEditor::initForm()
 
     // Record
 
-    addField("Record", UIParameterRecordThreshold);
-    addField("Record", UIParameterAutoRecordBars);
-    addField("Record", UIParameterAutoRecordTempo);
     addField("Record", UIParameterSpeedRecord);
     addField("Record", UIParameterRecordResetsFeedback);
 

@@ -100,6 +100,9 @@ void SyncMaster::loadSession(Session* s)
 
     // cached parameters
     manualStart = sessionHelper.getBool(s, ParamTransportManualStart);
+    autoRecordUnit = sessionHelper.getAutoRecordUnit(s);
+    autoRecordUnits = sessionHelper.getInt(s, ParamAutoRecordUnits);
+    recordThreshold = sessionHelper.getInt(s, ParamRecordThreshold);
 }
 
 /**
@@ -139,6 +142,11 @@ TrackManager* SyncMaster::getTrackManager()
 SymbolTable* SyncMaster::getSymbols()
 {
     return kernel->getContainer()->getSymbols();
+}
+
+int SyncMaster::getRecordThreshold()
+{
+    return recordThreshold;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1514,11 +1522,9 @@ int SyncMaster::getAutoRecordUnits(int number)
 {
     // this one is not senstiive to the syncSource
     (void)number;
-    
-    int autoRecordUnits = sessionHelper.getInt(ParamAutoRecordBars);
-    if (autoRecordUnits <= 0)
-      autoRecordUnits = 1;
-    return autoRecordUnits;
+    int units = autoRecordUnits;
+    if (units <= 0) units = 1;
+    return units;
 }
 
 /****************************************************************************/

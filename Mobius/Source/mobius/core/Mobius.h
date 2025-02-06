@@ -331,6 +331,9 @@ class Mobius
     // needed for Script compilation
     class Parameter* getParameter(const char* name);
 
+    // replacement for threshold in the Preset
+    int getRecordThreshold();
+
     //////////////////////////////////////////////////////////////////////
     // Global Function Handlers
     //////////////////////////////////////////////////////////////////////
