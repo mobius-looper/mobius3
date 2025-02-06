@@ -623,10 +623,10 @@ Once those models are fully converted, these symbols can be removed.
 
     <!-- AutoRecord -->
     <Parameter name='autoRecordUnit' values='beat,bar,loop' level='kernel'/>
-    <Parameter name='autoRecordUnits' low='1' high='64' level='kernel'/>
+    <Parameter name='autoRecordUnits' type='int' low='1' high='64' level='kernel'/>
 
     <!-- Threshold  Recording -->
-    <Parameter name='recordThreshold' high='8' />
+    <Parameter name='recordThreshold' type='int' high='8' level='kernel'/>
 
   </ParameterScope>
     
