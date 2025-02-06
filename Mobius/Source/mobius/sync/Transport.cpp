@@ -249,6 +249,14 @@ void Transport::cacheSessionParameters(bool force)
     }
 }
 
+
+/**
+ * Transport analyzer does not lock since tempo does not fluctuate like MIDI.
+ */
+void Transport::lock()
+{
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // State
@@ -922,7 +930,7 @@ void Transport::connect(TrackProperties& props)
                 // some number was odd in the loop's final length calculation
                 // the last cycle will not be the same size as the others
                 // the truncated cycle length can't be used as a reliable basis
-                // this isn't supposed to happen if notifyTrackRecordEnding did it's job
+                // this isn't supposed to happen if SyncMaster::requestRecordStop did it's job
                 // but it could happen when loading random loops, or the user has taken
                 // manual control over the cycle count
                 // need more intelligence here

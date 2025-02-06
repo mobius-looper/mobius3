@@ -32,6 +32,18 @@ class SyncMaster
     
   public:
 
+    // a little struct that conveys the relevant bits of information
+    // on an isRecordSynced or requestRecordStart call
+    class Result {
+      public:
+        // true if the recording must be synchronized
+        bool synchronized = false;
+        // true if the start/end must be pulsed
+        bool pulsed = false;
+        // unit length if known
+        int unitLength = 0;
+    };
+
     SyncMaster();
     ~SyncMaster();
 
@@ -69,14 +81,21 @@ class SyncMaster
     int getTransportMaster();
 
     SyncSource getEffectiveSource(int id);
+    SyncSource getEffectiveSource(class LogicalTrack* t);
     SyncUnit getSyncUnit(int id);
+
+    //
+    // Sync Recording
+    //
+
+    bool isRecordSynchronized(int number);
+    Result requestRecordStart(int number);
+    Result requestRecordStop(int number);
     
     //
     // Track Notifications
     //
-
-    bool isRecordStartSynchronized(int number);
-    bool notifyTrackRecordRequest(int id);
+    
     void notifyTrackRecordStarting(int id);
     bool notifyTrackRecordEndRequest(int id);
     void notifyTrackRecordEnded(int id);
@@ -206,8 +225,9 @@ class SyncMaster
 
     void checkDrifts();
 
-    bool isTrackSynced(class LogicalTrack* lt);
-
+    // new stuff
+    int getBaseUnitLength(SyncSource src);
+    int getRecordUnitLength(class LogicalTrack* lt, SyncSource src);
     
 };
 

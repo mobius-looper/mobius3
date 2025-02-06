@@ -144,7 +144,16 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
         }
     }
 	else if (!action->noSynchronization &&
-             mSyncMaster->isRecordStartSynchronized(number)) {
+             mSyncMaster->isRecordSynchronized(number)) {
+
+        // don't like the handoff here and the assumption that one requires
+        // the other, better to have request return two things
+        // 1) yes/no it is synchronized and 2) the unit length IF known
+        SyncMaster::Result result = mSyncMaster->requestRecordStart(number);
+        if (!result.synchronized)
+          Trace(l, 1, "Synchronizer: SyncMaster said we shouldn't be synchronized and I can't deal");
+        else
+          Trace(l, 2, "Synchronizer: Scheduling synchronzied record start");
 
         // Putting the loop in Threshold or Synchronize mode is treated
         // as "not advancing" and screws up playing.  Need to rethink this
@@ -162,6 +171,9 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 	else if (!action->noSynchronization && isThresholdRecording(l)) {
         // see comments above for SynchronizeMode
         // should noSynchronization control threshold too?
+
+        // todo: Threshold and Synchronization raise a host of issues
+        
 		l->stopPlayback();
 		event = schedulePendingRecord(action, l, ThresholdMode);
         notifyRecordStart = true;
@@ -264,7 +276,7 @@ bool Synchronizer::isThresholdRecording(Loop* l)
 
 	Preset* p = l->getPreset();
 	if (p->getRecordThreshold() > 0) {
-		threshold = !mSyncMaster->isRecordStartSynchronized(number);
+		threshold = !mSyncMaster->isRecordSynchronized(number);
 	}
 
 	return threshold;
@@ -472,7 +484,8 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
         if (event == NULL && scheduleEnd) {
             int number = loop->getTrack()->getLogicalNumber();
             // if the start was synchronized, so too the end
-            if (mSyncMaster->isRecordStartSynchronized(number)) {
+            // any reason to make these different?  doubt it...
+            if (mSyncMaster->isRecordSynchronized(number)) {
 
                 event = scheduleSyncRecordStop(action, loop);
             }
@@ -546,7 +559,7 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
 bool Synchronizer::isRecordStopPulsed(Loop* l)
 {
     int number = l->getTrack()->getLogicalNumber();
-    return mSyncMaster->isRecordStartSynchronized(number);
+    return mSyncMaster->isRecordSynchronized(number);
 }
 
 /**
@@ -635,6 +648,72 @@ void Synchronizer::setAutoStopEvent(Action* action, Loop* loop, Event* stop,
  *         
  * Action ownership is handled by the caller
  */
+Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
+{
+    (void)action;
+    Event* stop = NULL;
+    EventManager* em = l->getTrack()->getEventManager();
+    int number = l->getTrack()->getLogicalNumber();
+
+    // again there is a dependency on SyncMaster::isRecordSynchronized
+    // and requestRecordStop
+
+    SyncMaster::Result result = mSyncMaster->requestRecordStop(number);
+    if (result.pulsed || result.unitLength == 0) {
+        // ending must be pulsed
+        // unitLength == 0 is unusual, it means that we're using MIDI sync and started
+        // on MIDIStart and stopped before the first full beat was received to define the unit
+        // in this case we must wait for a pulse
+        stop = em->newEvent(Record, RecordStopEvent, 0);
+        stop->pending = true;
+        Trace(l, 2, "Sync: Added pulsed RecordStop\n");
+    }
+    else {
+        // round up to the next unit boundary
+        int loopFrames = l->getFrames();
+        int units = (int)ceil((double)loopFrames / (double)result.unitLength);
+        int stopFrame = units * result.unitLength;
+
+        // todo: original code factored speed into this
+        // this is interesting, and messes up some of the assumptions
+        // If the goal here is to end up with a loop that is a unit length
+        // multiple, and you are recording in halfspeed, we are throwing away
+        // every other frame so that the loop plays twice as fast at normal speed
+        // so this will stop with the right length, but from the user's perspective
+        // recording will end after the beat/bar.  What needs ot happen is that the
+        // recoring starts and ends as if it was pulsed, this means though that
+        // the loop will be of a random size, it only matches the unit length when playing
+        // at the recording rate
+        // so a loop recorded at halfspeed between two unit pulses will be one half
+        // of a unit in length
+        // Really, I don't think this is worth fucking with.  Recording is something
+        // that should be done without rate adjustments, if you want it to play twice
+        // as fast when you're done, just end it with Doublespeed.
+        // I'm not seeing any reason to add the enormous complication of "recorded at this rate"
+        // into this.  Overdub while playing with rate shift is different.
+        // speed needs to have been canceled as soon as recording started
+        float speed = getSpeed(l);
+        if (speed != 1.0)
+          Trace(1, "Synchronizer: Ending synchronized recording with active rate shift");
+
+        Trace(l, 2, "Synchronzier: Scheduled RecordStop currentFrames %d unitFrames %d units %d stopFrame %ld\n",
+              loopFrames, result.unitLength, units, stopFrame);
+        
+        // todo: think about scheduling a PrepareRecordStop event
+        // so we close off the loop and begin preplay like we do
+        // when the end isn't being synchronized
+        stop = em->newEvent(Record, RecordStopEvent, stopFrame);
+        // so we see it
+        stop->quantized = true;
+
+        l->setRecordCycles(units);
+    }
+
+    return stop;
+}
+
+// original implementation
+#if 0
 Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
 {
     (void)action;
@@ -734,6 +813,7 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
 
     return stop;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1101,7 +1181,7 @@ bool Synchronizer::undoRecordStop(Loop* loop)
     
 	if (stop != NULL &&
 		((stop->function == AutoRecord) ||
-		 (stop->function == Record && mSyncMaster->isRecordStartSynchronized(number)))) {
+		 (stop->function == Record && mSyncMaster->isRecordSynchronized(number)))) {
 		
 		// calculate the unit length
 		float barFrames;
@@ -1336,7 +1416,7 @@ void Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
             }
             
             if (stop != nullptr) {
-                // Tell syncMaster we're ending to it can lock the unit length
+                // Tell mSyncMaster we're ending to it can lock the unit length
                 // for this track.  Since that's just going to call back down
                 // here to propagate it to the Loop, we could instead just ask for it
                 int number = t->getLogicalNumber();

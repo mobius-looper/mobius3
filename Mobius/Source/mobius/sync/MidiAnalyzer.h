@@ -48,14 +48,15 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     int getNativeBeatsPerBar() {return 0;}
     float getTempo() override;
     int getUnitLength() override;
+    void lock() override;
     int getDrift() override;
 
-    void lock();
 
     //
     // Extended interface for MIDI
     //
-    
+
+    bool isLocked();
     // this is different than isRunning, it means we are receiving clocks
     bool isReceiving();
     int getSongPosition();
@@ -75,7 +76,8 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     //
     // Processed event state
     //
-
+    
+    bool locked = false;
     bool playing = false;
     float tempo = 0.0f;
     int unitLength = 0;
@@ -83,13 +85,12 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     int lastMonitorBeat = 0;
         
     // virtual tracking loop
-    bool resyncingUnitLength = false;
     int unitPlayHead = 0;
     int streamTime = 0;
 
     int driftCheckCounter = 0;
     
-    bool lockUnitLength();
+    void ponderUnitLength();
     void advance(int frames);
 };
 

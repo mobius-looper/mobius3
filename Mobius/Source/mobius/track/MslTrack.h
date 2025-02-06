@@ -18,7 +18,7 @@ class MslTrack
 
     virtual ~MslTrack() {}
 
-    // used by TrackMslHandler
+    // used by TrackMslHandler and SyncMaster
 
     virtual int getSubcycleFrames() = 0;
     virtual int getCycleFrames() = 0;

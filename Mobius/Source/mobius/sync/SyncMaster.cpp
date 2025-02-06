@@ -18,6 +18,7 @@
 #include "../MobiusKernel.h"
 #include "../track/TrackManager.h"
 #include "../track/LogicalTrack.h"
+#include "../track/MslTrack.h"
 #include "../track/TrackProperties.h"
 
 #include "Pulsator.h"
@@ -142,6 +143,243 @@ SymbolTable* SyncMaster::getSymbols()
 
 //////////////////////////////////////////////////////////////////////
 //
+// Synchronized Recording
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Returns true if the start/stop of a recording is synchronized.
+ * If this returns true, it will usually be followed immediately
+ * by a call to requestRecordStart or requestRecordStop and it is
+ * expected that those succeed.  Not liking the dependency, but
+ * works well enough.
+ */
+bool SyncMaster::isRecordSynchronized(int number)
+{
+    bool sync = false;
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+        SyncSource src = getEffectiveSource(lt);
+        sync = (src != SyncSourceNone && src != SyncSourceMaster);
+    }
+    return sync;
+}
+
+/**
+ * This is when a track would like to begin recording.
+ * It returns the locked unit length if there is one.
+ * This is expected to be called only if there was an immediately
+ * preceeding call to isRecordSynchronized and that returned true.
+ *
+ * Record starts are always pulsed, and the track must schedule
+ * a suitable pending event.
+ *
+ * Hating how we redo all the work isRecordSynchronized does...
+ */
+SyncMaster::Result SyncMaster::requestRecordStart(int number)
+{
+    Result result;
+
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+        SyncSource src = getEffectiveSource(lt);
+        if (src == SyncSourceNone || src == SyncSourceMaster) {
+            Trace(1, "SyncMaster::requestRecordStart Should not have been called");
+        }
+        else {
+            lt->setPendingSyncRecord(true);
+            result.synchronized = true;
+            result.pulsed = true;
+            result.unitLength = getRecordUnitLength(lt, src);
+        }
+    }
+    return result;
+}
+
+/**
+ * Return the base unit length of one record unit in samples/frames.
+ * Zero is acceptable for MidiAnalyzer if we're before the first beat,
+ * so this can't be used for an "am I synced" test.
+ * This is not relevant for Track sync.
+ */
+int SyncMaster::getBaseUnitLength(SyncSource src)
+{
+    int length = 0;
+    switch (src) {
+        case SyncSourceNone:
+        case SyncSourceMaster:
+        case SyncSourceTrack:
+            break;
+        case SyncSourceMidi:
+            length = midiAnalyzer->getUnitLength();
+            break;
+        case SyncSourceHost:
+            length = hostAnalyzer->getUnitLength();
+            break;
+        case SyncSourceTransport:
+            length = transport->getUnitLength();
+            break;
+    }
+    return length;
+}
+
+/**
+ * Return the record unit length for a track.
+ * This combines the base unit length from the source with
+ * the beat/bar/loop unit settings for this track.
+ *
+ * I'm not certain if track sync should be handled this way.
+ * It is probably better if that is always pulsed like it originally was?
+ * That makes AutoRecord impossible though...
+ */
+int SyncMaster::getRecordUnitLength(LogicalTrack* lt, SyncSource src)
+{
+    int length = 0;
+    
+    if (src == SyncSourceTrack) {
+        // this is quite different than the others
+        // should just have LT methods for all this?
+        if (trackSyncMaster == 0) {
+            Trace(1, "SyncMaster: Asking about TrackSyncMaster and there is none");
+        }
+        else {
+            LogicalTrack* tsm = trackManager->getLogicalTrack(trackSyncMaster);
+            if (tsm == nullptr) {
+                Trace(1, "SyncMaster: Invalid TrackSyncMaster number %d", trackSyncMaster);
+            }
+            else {
+                // what we want out of this isn't specific to MSL, but this
+                // is where it is packaged atm, really this should just be part of
+                // LogicalTrack
+                MslTrack* innerTrack = tsm->getMslTrack();
+                if (innerTrack == nullptr) {
+                    Trace(1, "SyncMaster: What the hell is this?  It isn't a track sync master");
+                }
+                else {
+                    TrackSyncUnit tsu = lt->getTrackSyncUnitNow();
+                    switch (tsu) {
+                        case TrackUnitLoop:
+                            length = innerTrack->getFrames();
+                            break;
+                        case TrackUnitCycle:
+                            length = innerTrack->getCycleFrames();
+                            break;
+                        case TrackUnitSubcycle:
+                            length = innerTrack->getSubcycleFrames();
+                            break;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        length = getBaseUnitLength(src);
+        if (length > 0) {
+            SyncUnit unit = lt->getSyncUnitNow();
+            if (unit == SyncUnitLoop) {
+                length = (length * barTender->getBeatsPerBar(lt)) * barTender->getBarsPerLoop(lt);
+            }
+            else if (unit == SyncUnitBar) {
+                length = (length * barTender->getBeatsPerBar(lt));
+            }
+        }
+    }
+    return length;
+}
+
+SyncSource SyncMaster::getEffectiveSource(int id)
+{
+    SyncSource source = SyncSourceNone;
+    LogicalTrack* t = trackManager->getLogicalTrack(id);
+    if (t != nullptr) {
+        source = getEffectiveSource(t);
+    }
+    return source;
+}
+        
+/**
+ * Get the effective sync source for a track.
+ *
+ * There are two complications here:  
+ * The complication here is around SourceMaster which is only allowed
+ * if there is no other sync master.
+ */
+SyncSource SyncMaster::getEffectiveSource(LogicalTrack* lt)
+{
+    SyncSource source = SyncSourceNone;
+    if (lt != nullptr) {
+        source = lt->getSyncSourceNow();
+        if (source == SyncSourceMaster) {
+            int transportMaster = transport->getMaster();
+            if (transportMaster > 0 && transportMaster != lt->getNumber()) {
+                // there is already a transport master, this track
+                // reverts to following the transport
+                // !! here is where we need an option to fall back to SyncSourceTrack
+                // like we used to
+                source = SyncSourceTransport;
+            }
+        }
+        else if (source == SyncSourceTrack) {
+            // this is relevant only if there is a track sync master
+            source = SyncSourceNone;
+            if (trackSyncMaster > 0) {
+                // yes, but only if it has content?
+                // I suppose this could just start waiting until you record something
+                // into the current master track but this raises complications...
+                LogicalTrack* mlt = trackManager->getLogicalTrack(trackSyncMaster);
+                if (mlt != nullptr && mlt != lt)
+                  source = SyncSourceTrack;
+            }
+        }
+    }
+    return source;
+}
+
+/**
+ * This is called when a track wants to end recording.
+ * It is expected to have called isRecordSynced first, or be able to deal
+ * with this returning a Result that says it isn't synchronized.
+ */
+SyncMaster::Result SyncMaster::requestRecordStop(int number)
+{
+    Result result;
+    
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+        SyncSource src = getEffectiveSource(lt);
+        if (src == SyncSourceNone || src == SyncSourceMaster) {
+            Trace(1, "SyncMaster::requestRecordStop Should not have been called");
+        }
+        else {
+            // and now we lock
+            // the only one that really needs this is MIDI, but go through the motions
+            switch (src) {
+                case SyncSourceMidi:
+                    midiAnalyzer->lock();
+                    break;
+                case SyncSourceHost:
+                    hostAnalyzer->lock();
+                    break;
+                case SyncSourceTransport:
+                    transport->lock();
+                    break;
+                default: break;
+            }
+                    
+            result.synchronized = true;
+            result.unitLength = getRecordUnitLength(lt, src);
+
+            if (src == SyncSourceTrack) {
+                // these are always pulsed?
+                result.pulsed = true;
+            }
+        }
+    }
+    return result;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Track Notifications
 //
 // These are expected to be called when a track enters various states.
@@ -149,104 +387,6 @@ SymbolTable* SyncMaster::getSymbols()
 // or TransportMaster.
 //
 //////////////////////////////////////////////////////////////////////
-
-/**
- * Older function for Synchronizer that tests for sync needs.
- * Functionally similar to notifyTrackRecordRequest but a little
- * esier for the old Synchronizer logic.
- */
-bool SyncMaster::isRecordStartSynchronized(int number)
-{
-    bool sync = false;
-    LogicalTrack* lt = trackManager->getLogicalTrack(number);
-    if (lt != nullptr) {
-        SyncSource src = getEffectiveSource(number);
-        sync = (src != SyncSourceNone && src != SyncSourceMaster);
-    }
-    return sync;
-}
-
-/**
- * This is called when a track would like to begin recording.
- * Return false if the track may start recording right away, true
- * if the track needs to wait for a sync pulse.
- *
- * If a pulse is necessary SM will call syncRecordStart when ready.
- */
-bool SyncMaster::notifyTrackRecordRequest(int number)
-{
-    bool sync = false;
-
-    LogicalTrack* lt = trackManager->getLogicalTrack(number);
-    if (lt != nullptr) {
-        sync = isTrackSynced(lt);
-        if (sync) {
-            // this is not expected to be ignored
-            lt->setPendingSyncRecord(true);
-        }
-    }
-    return sync;
-}
-
-bool SyncMaster::isTrackSynced(LogicalTrack* lt)
-{
-    bool sync = false;
-
-    if (lt != nullptr) {
-        SyncSource source = lt->getSyncSourceNow();
-        switch (source) {
-            case SyncSourceNone:
-                break;
-            case SyncSourceTransport:
-            case SyncSourceHost:
-            case SyncSourceMidi:
-                sync = true;
-                break;
-            case SyncSourceTrack: {
-                if (trackSyncMaster > 0) {
-                    // yes, but only if it has content
-                    LogicalTrack* mlt = trackManager->getLogicalTrack(trackSyncMaster);
-                    if (mlt != nullptr)
-                      sync = (mlt->getSyncLength() > 0);
-                }
-            }
-                break; 
-            case SyncSourceMaster: {
-                // If there is no master or this track is already theh master
-                // no need to wait.  If there is a different master,
-                // this track reverse to either SyncSourceTrack or SyncTransport
-                // depending on options
-                // todo: that option doesn't exist, assume Transport
-                if (transport->getMaster() != 0 && transport->getMaster() != lt->getNumber()) {
-                    sync = true;
-                }
-            }
-                break;
-        }
-    }
-
-    return sync;
-}
-
-/**
- * This is called when a track would to end recording.
- * Similar to RecordRequest, return true if this needs to be synchronized.
- */
-bool SyncMaster::notifyTrackRecordEndRequest(int number)
-{
-    bool sync = false;
-    LogicalTrack* lt = trackManager->getLogicalTrack(number);
-    if (lt != nullptr) {
-        sync = isTrackSynced(lt);
-        // if this started without syncing, you can't suddenly decide
-        // to sync the ending, I suppose you could but why?
-        if (!lt->isPendingSyncRecord()) {
-            Trace(1, "SyncMaster: Sync record end ignored for track with unsynced start");
-            sync = false;
-        }
-    }
-    return sync;
-}
 
 /**
  * This is called when a track begins recording.
@@ -264,52 +404,24 @@ void SyncMaster::notifyTrackRecordStarting(int number)
 
 /**
  * This is called when a track is preparing to end a recording.
- * If the track is not following another track, the ending may need to be adjusted
- * so that it have a final length that is even and results in the calculation
- * of a stable unit length.
  *
- * The adjustment if any is returned and the final loop length should be shorter
- * or longer at the time notifyTrackAvailable is called.
+ * The recording may have been unsynchronized, pulsed, or pre-calculated
+ * based on the starting unit length.
  *
- * This requires all the same calculations that Transport::connect does allowing
- * it to return the ideal length.  Needs work...
+ * This was originally where I thought unit length rounding would happen,
+ * but it isn't any more.  The rounding is conveyed either by the Result
+ * returned by requestRecordStop or by being pulsed.
  *
- * todo: I think this goes away, merge with RecordEndRequest
+ * Keep this around for awhile but can probably get rid of it.
+ *
+ * Might use this to force it to have an even length?
+ *
+ * The recording may not actually completely end until after a latency delay, but
+ * there is nothing that's going to stop it now.
  */
 int SyncMaster::notifyTrackRecordEnding(int number)
 {
-    LogicalTrack* lt = trackManager->getLogicalTrack(number);
-    if (lt != nullptr) {
-
-        // for MIDI mostly, but potentially others, remember the unit length
-        // used to record this track
-        SyncSource src = lt->getSyncSourceNow();
-        if (src == SyncSourceMidi) {
-
-            // todo: I thought about savint the unit length on the LT when it
-            // was recorded, but tracks can contain multiple loops, each in theory
-            // with a different size if you're twiddling sync modes live that becomes
-            // unreliable.  I guess we could ignore that, the unit length sticks
-            // until the track is reset and if you switch to an empty loop it retains
-            // the same potential unit length even though it is empty
-            // added getSyncLength so we could modulo and verify this, though not necessary
-            
-            int unitLength = midiAnalyzer->getUnitLength();
-            if (unitLength == 0) {
-                // should have locked this before or immediately
-                // after recording began
-                Trace(1, "SyncMaster: Failed to lock unit length during recording");
-            }
-            else {
-                lt->setUnitLength(unitLength);
-
-
-
-                
-            }
-        }
-    }
-    
+    (void)number;
     return 0;
 }
 
@@ -323,13 +435,44 @@ void SyncMaster::notifyTrackRecordEnded(int number)
 {
     LogicalTrack* lt = trackManager->getLogicalTrack(number);
     if (lt != nullptr) {
-        
-        lt->setPendingSyncRecord(false);
 
-        SyncSource src = lt->getSyncSourceNow();
-        if (src == SyncSourceMidi) {
-            midiAnalyzer->lock();
-            lt->setUnitLength(midiAnalyzer->getUnitLength());
+        // this stops sending pulses to the track
+        if (lt->isPendingSyncRecord()) {
+            
+            lt->setPendingSyncRecord(false);
+
+            SyncSource src = lt->getSyncSourceNow();
+            if (src == SyncSourceMidi) {
+                // this one is complicated, verify some things
+                if (!midiAnalyzer->isLocked())
+                  Trace(1, "SyncMaster: MidiAnalyzer was not locked after recording ended");
+                
+                int unit = midiAnalyzer->getUnitLength();
+                if (unit == 0) {
+                    // this is the "first beat recording" fringe case
+                    // the end should have been pulsed and remembered
+                    Trace(1, "SyncMaster: Expected MIDI to know what was going on by now");
+                }
+            }
+
+            // verify that the unit length was obeyed
+            int trackLength = lt->getSyncLength();
+            if (src != SyncSourceTrack) {
+                int baseUnit = getBaseUnitLength(src);
+                if (baseUnit == 0) {
+                    Trace(1, "SyncMaster: Unable to verify unit length compliance");
+                }
+                else {
+                    int leftover = trackLength % baseUnit;
+                    if (leftover != 0) {
+                        Trace(1, "SyncMaster: Synchronzied recording leftovers %d", leftover);
+                    }
+                }
+            }
+            else {
+                // oh we should probably do this too...
+                Trace(2, "SyncMaster: Punting on verification of track sync recording");
+            }
         }
         
         notifyTrackAvailable(number);
@@ -379,25 +522,6 @@ void SyncMaster::notifyTrackAvailable(int number)
                 // this can't be the sync master, it will revert
                 // to either SourceLeader or SourceTransport
                 // can make that decision later
-            }
-        }
-
-        // verify that the track obeyed the sync unit
-        // should actually be doing this for all sources?
-        if (src == SyncSourceMidi) {
-            int unitLength = midiAnalyzer->getUnitLength();
-            int trackUnitLength = lt->getUnitLength();
-            if (unitLength != trackUnitLength) {
-                Trace(1, "SymcMaster: Unit length not properly stored on LogicalTrack");
-                // fix it?
-            }
-            int syncLength = lt->getSyncLength();
-            if (syncLength > 0) {
-                int leftover = syncLength % unitLength;
-                if (leftover > 0) {
-                    Trace(1, "SyncMaster: Track length doesn't match unit length %d %d",
-                          syncLength, unitLength);
-                }
             }
         }
     }
@@ -451,6 +575,11 @@ void SyncMaster::notifyTrackReset(int number)
 
         transport->disconnect();
     }
+
+    // it can no longer be recording
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr)
+      lt->setPendingSyncRecord(false);
 }
 
 /**
@@ -896,13 +1025,9 @@ void SyncMaster::setTransportMaster(UIAction* a)
  * happens after various things in the kernel, in particular after
  * any action handling which may assign sync sources to tracks.
  *
- * The decision whether to put something here or in processAudioStream() is vague.
- * Basically this should only set things up without thinking too hard, and processAudioStream
- * does the interesting work.
- *
- * For reasons that escape me, HostAnalyzer was allowed to run here rather than after
- * actions.  I don't think it matters, but it is important that MidiAnalyzer run after
- * actions, it is the only analyzer that asks SM questions about how tracks use it.
+ * It is important that sync pulses be analyzed BEFORE actions are processed
+ * so that the initiation of synchronized recordings has the updated
+ * sync state.
  */
 void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
 {
@@ -913,8 +1038,41 @@ void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
     if (newSampleRate != sampleRate)
       refreshSampleRate(newSampleRate);
 
-    // pull in the host information before we get very far
-    hostAnalyzer->analyze(stream->getInterruptFrames());
+    // once we start receiving audio blocks, it is okay to start converting
+    // MIDI events into MidiSyncMessages, if you allow event queueing before
+    // blocks come in, the queue can overflow
+    // !! this is old and needs to go away, no longer used by MidiAnalyzer
+    // and MidiRealizer needs to stop
+    enableEventQueue();
+    
+    // tickle the analyzers
+
+    // Detect whether MIDI clocks have stopped comming in
+    //
+    // Supervisor formerly called this on the maintenance thread
+    // interval, since we don't get a performMaintenance ping down here
+    // we can check it on every block, the granularity doesn't really matter
+    // since it is based off millisecond time advance
+    // !! why can't this just be done in analyze() now?
+    midiAnalyzer->checkClocks();
+
+    int frames = stream->getInterruptFrames();
+    hostAnalyzer->analyze(frames);
+    midiAnalyzer->analyze(frames);
+    // Transport should be controlling this but until it does it is important
+    // to get the event queue consumed, Transport can just ask for the Result
+    // when it advances
+    midiRealizer->advance(frames);
+    transport->advance(frames);
+    barTender->advance(frames);
+    pulsator->advance(frames);
+
+    // see commentary about why this is complicated
+    // no longer necessary, Transport does it's own drift checking
+    //transport->checkDrift(frames);
+
+    // temporary diagnostics
+    checkDrifts();
 }
 
 void SyncMaster::refreshSampleRate(int rate)
@@ -927,48 +1085,14 @@ void SyncMaster::refreshSampleRate(int rate)
     midiAnalyzer->setSampleRate(rate);
 }
 
+/**
+ * Here after actions have been performed, events have been scheduled
+ * and we're ready to advance the tracks.
+ *
+ * This process is controlled by TimeSlicer.
+ */
 void SyncMaster::processAudioStream(MobiusAudioStream* stream)
 {
-    int frames = stream->getInterruptFrames();
-
-    // once we start receiving audio blocks, it is okay to start converting
-    // MIDI events into MidiSyncMessages, if you allow event queueing before
-    // blocks come in, the queue can overflow
-    // todo: while not normally a problem, if you disconnect the audio stream
-    // after initialization, then the queue will get stuck and overflow, the maintenance
-    // thread could monitor for a suspension of audio blocks and disable the queue
-    enableEventQueue();
-
-    // host was advanced in beginAudioBlock
-    
-    midiAnalyzer->analyze(frames);
-
-    // Transport should be controlling this but until it does it is important
-    // to get the event queue consumed, Transport can just ask for the Result
-    // when it advances
-    midiRealizer->advance(frames);
-    
-    transport->advance(frames);
-
-    barTender->advance(frames);
-    
-    pulsator->advance(frames);
-
-    // see commentary about why this is complicated
-    // no longer necessary, Transport does it's own drift checking
-    //transport->checkDrift(frames);
-
-    // Detect whether MIDI clocks have stopped comming in
-    //
-    // Supervisor formerly called this on the maintenance thread
-    // interval, since we don't get a performMaintenance ping down here
-    // we can check it on every block, the granularity doesn't really matter
-    // since it is based off millisecond time advance
-    midiAnalyzer->checkClocks();
-
-    // temporary diagnostics
-    checkDrifts();
-
     timeSlicer->processAudioStream(stream);
 }
 
@@ -1180,30 +1304,6 @@ Pulse* SyncMaster::getBlockPulse(int trackNumber)
     }
     return p;
     
-}
-
-/**
- * Get the effective sync source for a track.
- * The complication here is around SourceMaster which is only allowed
- * if there is no other sync master.
- */
-SyncSource SyncMaster::getEffectiveSource(int id)
-{
-    SyncSource source = SyncSourceNone;
-    
-    LogicalTrack* t = trackManager->getLogicalTrack(id);
-    if (t != nullptr) {
-        source = t->getSyncSourceNow();
-        if (source == SyncSourceMaster) {
-            int transportMaster = transport->getMaster();
-            if (transportMaster > 0 && transportMaster != id) {
-                // there is already a transport master, this track
-                // reverts to following the transport
-                source = SyncSourceTransport;
-            }
-        }
-    }
-    return source;
 }
 
 SyncUnit SyncMaster::getSyncUnit(int id)

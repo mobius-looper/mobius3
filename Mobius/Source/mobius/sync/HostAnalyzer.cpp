@@ -90,6 +90,13 @@ void HostAnalyzer::setSampleRate(int rate)
     sampleRate = rate;
 }
 
+/**
+ * Host analyzer does not lock since host tempo does not fluctuate like MIDI.
+ */
+void HostAnalyzer::lock()
+{
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // SyncAnalyzer Properties

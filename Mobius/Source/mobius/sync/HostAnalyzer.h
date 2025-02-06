@@ -39,6 +39,7 @@ class HostAnalyzer : public SyncAnalyzer
     int getNativeBeatsPerBar() override;
     float getTempo() override;
     int getUnitLength() override;
+    void lock() override;
     int getDrift() override;
     
   private:

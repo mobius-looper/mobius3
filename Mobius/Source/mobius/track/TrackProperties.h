@@ -15,7 +15,6 @@ class TrackProperties
     // the track number, used when pushing track properties at a follower
     int number = 0;
 
-    // length of the current loop in this track
     int unitLength = 0;
     int frames = 0;
     int cycles = 0;

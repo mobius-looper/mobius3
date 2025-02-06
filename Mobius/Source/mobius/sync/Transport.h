@@ -51,6 +51,7 @@ class Transport : public SyncAnalyzer
     int getNativeBeatsPerBar();
     float getTempo() override;
     int getUnitLength() override;
+    void lock() override;
     int getDrift() override;
 
     //
