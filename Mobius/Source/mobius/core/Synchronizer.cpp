@@ -1392,6 +1392,18 @@ void Synchronizer::startRecording(Loop* l)
 
 /**
  * Called on each pulse during Record mode.
+ *
+ * Note regarding the !stop->pending clause...
+ *
+ * In the olden days, stops were usually pulsed.  Now with locked unit lengths
+ * they can be scheduled normally for an exact sync unit boundary.  SyncMaster will
+ * send down a final pulse to activate the RecordStop though.  We don't need both mechanisms
+ * but I'm keeping the machinery in place in case pulses work better for some things.
+ * ATM, though liking scheduling them normally because it is consistent with how
+ * AutoRecord works.
+ *
+ * What this does provide is a useful place to verify that pulses are being scheduled
+ * correctly.  
  */
 void Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
 {
@@ -1403,11 +1415,13 @@ void Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
     if (stop != nullptr) {
 
         if (!stop->pending) {
-            // Already activated the StopEvent
-            // This is unusual.  Assuming nothing is broken we could only get here
-            // if this track is syncing to an EXTREMELY short pulse, shorter than
-            // the input latency we're waiting for to end the recording.  We can safely
-            // ignore it, but it is not expected
+            // Already activated the StopEvent, see method header notes
+            // If we were activating this on a pulse the final frame would be calculated
+            // as loopFrames plus latency if this was a MIDI pulse.  There is some noise
+            // around rounding and "extra" frames that was never enabled.
+            
+            
+
             Trace(l, 1, "Sync: extra pulse after record stop activated");
         }
         else {
