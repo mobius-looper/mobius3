@@ -68,7 +68,10 @@ class BarTender
     int getUnitLength(int trackNumber);
     int getUnitLength(class LogicalTrack* track);
     int getUnitLength(SyncSource src);
-    
+
+    int getBaseRecordUnitLength(SyncSource src);
+    int getRecordUnitLength(class LogicalTrack* lt, SyncSource src);
+
   private:
 
     class SyncMaster* syncMaster = nullptr;

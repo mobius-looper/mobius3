@@ -670,7 +670,10 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
     }
     else {
         // round up to the next unit boundary
-        int loopFrames = l->getFrames();
+        // note well: getFrames returns zero here during the initial recording, to know
+        // where you are, use the record frame
+        // int loopFrames = l->getFrames();
+        int loopFrames = l->getFrame();
         int units = (int)ceil((double)loopFrames / (double)result.unitLength);
         int stopFrame = units * result.unitLength;
 
@@ -1656,8 +1659,12 @@ void Synchronizer::loopRecordStop(Loop* l, Event* stop)
 {
     (void)stop;
 	Track* track = l->getTrack();
+    int number = track->getLogicalNumber();
+
+    mSyncMaster->notifyTrackRecordEnded(number);
 
     // any track with content can become the track sync master
+    // ?? should this just be automatic with notifyTrackRecordEnded?
     mSyncMaster->notifyTrackAvailable(track->getLogicalNumber());
 
     // if we're here, we've stopped recording, let the MIDI track followers start

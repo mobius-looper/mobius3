@@ -279,8 +279,6 @@ void MidiAnalyzer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
  */
 void MidiAnalyzer::analyze(int blockFrames)
 {
-    bool unitLocked = false;
-    
     result.reset();
 
     // detect start and stop
@@ -388,10 +386,12 @@ void MidiAnalyzer::ponderUnitLength()
     else if (tempoMonitor.isFilling() && unitLength != 0) {
         // common after emergency resync after debugging, continue with the
         // old length until the buffer fills
-        //Trace(2, "MidiAnalyzer: Waiting for tempo smoother to fill");
+        Trace(2, "MidiAnalyzer: Waiting for tempo smoother to fill");
     }
-    else if (newUnitLength != unitLength) {
-
+    else if (newUnitLength == unitLength) {
+        //Trace(2, "MidiAnalyzer: Unit length remains %d", unitLength);
+    }
+    else {
         // cut down on noise by suppressing minor wobbles
         // play around with this, 4 may be enough, but user initiated tempo changes are rare
         // and the initial guess is usually pretty close
@@ -439,24 +439,33 @@ void MidiAnalyzer::ponderUnitLength()
                     // but may be adjusted over time if the recording goes on long enough
                     if (tempoMonitor.isFilling())
                       Trace(2, "MidiAnalyzer: Deriving unit during fill period, potentially unstable");
+                    
+                    // initial advance should always be around 5.3 blocks per clock,
+                    // 24 clocks per beat, in the first beat 256 block size
+                    // MidiAnalyzer: Start
+                    // MidiAnalyzer: Initial advance 32640
+                    // MidiAnalyzer: Starting unit length 32580 clock length 1357.459050 running average 0.028280 tempo 88.397797
+                    //Trace(2, "MidiAnalyzer: Initial advance %d", unitPlayHead);
                 }
                 Trace(2, buf);
 
                 unitLength = newUnitLength;
                 tempo = newTempo;
-
-                // generate a beat pulse in this block
-                result.beatDetected = true;
-                
-                // start the virtual play head over from the beginning 
-                unitPlayHead = 0;
-
-                // we're perfectly aligned with the native beat count
-                // this will be 1 if we're starting, greater if continuing
-                elapsedBeats = eventMonitor.elapsedBeats;
-                streamTime = elapsedBeats * unitLength;
             }
         }
+    }
+
+    // advance doesn't bump the beat counter if we're unlocked so need to do
+    // it here
+    if (!locked || unitLength == 0) {
+        // generate a beat pulse in this block
+        result.beatDetected = true;
+                
+        // start the virtual play head over from the beginning
+        unitPlayHead = 0;
+
+        elapsedBeats = eventMonitor.elapsedBeats;
+        streamTime = elapsedBeats * unitLength;
     }
 }
 
@@ -564,6 +573,8 @@ void MidiAnalyzer::lock()
             if (unitPlayHead > unitLength) {
                 Trace(1, "MidiAnalyzer: Unexpected play head during lock %d unit length %d",
                       unitPlayHead, unitLength);
+                // not uncommon for this to be larger than unit length if we're very close to the end?
+                unitPlayHead -= unitLength;
             }
             else if (unitPlayHead == unitLength) {
                 // I think this can happen if the stars align and the recording

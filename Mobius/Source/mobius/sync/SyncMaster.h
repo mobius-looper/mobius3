@@ -98,9 +98,9 @@ class SyncMaster
     
     void notifyTrackRecordStarting(int id);
     bool notifyTrackRecordEndRequest(int id);
+    int notifyTrackRecordEnding(int id);
     void notifyTrackRecordEnded(int id);
     
-    int notifyTrackRecordEnding(int id);
     void notifyTrackAvailable(int id);
     void notifyTrackReset(int id);
     void notifyTrackRestructure(int id);
@@ -130,7 +130,6 @@ class SyncMaster
     // Internal Component Services
     //
     
-    int getMilliseconds();
     void sendAlert(juce::String msg);
 
     // notify that a leader pulse has been reached
@@ -224,10 +223,6 @@ class SyncMaster
     void connectTransport(int id);
 
     void checkDrifts();
-
-    // new stuff
-    int getBaseUnitLength(SyncSource src);
-    int getRecordUnitLength(class LogicalTrack* lt, SyncSource src);
     
 };
 

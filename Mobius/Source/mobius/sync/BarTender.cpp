@@ -23,6 +23,7 @@
 
 #include "../track/TrackManager.h"
 #include "../track/LogicalTrack.h"
+#include "../track/MslTrack.h"
 #include "../track/TrackProperties.h"
 
 #include "Pulse.h"
@@ -725,6 +726,10 @@ void BarTender::getLeaderProperties(LogicalTrack* track, TrackProperties& props)
 // are closely related and it makes more sense to have them down here
 // than up in SyncMaster and bounce back and forth.
 //
+// !! this is a mess, there are two sets here made at different times
+// the newer getBaseRecordUnitLength and getRecordUnitLength are what
+// SyncMaster uses for synchronized recordings.  What are the others for?
+//
 //////////////////////////////////////////////////////////////////////
 
 /**
@@ -751,6 +756,10 @@ int BarTender::getUnitLength(LogicalTrack* track)
     return frames;
 }
 
+/**
+ * This is different than getBaseRecordUnitLength
+ * and I don't remember why.  Merge if possible.
+ */
 int BarTender::getUnitLength(SyncSource src)
 {
     int frames = 0;
@@ -826,6 +835,98 @@ int BarTender::getTrackSyncUnitLength(LogicalTrack* track)
         }
     }
     return frames;
+}
+
+/**
+ * Return the base unit length of one record unit in samples/frames.
+ * Zero is acceptable for MidiAnalyzer if we're before the first beat,
+ * so this can't be used for an "am I synced" test.
+ * This is not relevant for Track sync.
+ */
+int BarTender::getBaseRecordUnitLength(SyncSource src)
+{
+    int length = 0;
+    switch (src) {
+        case SyncSourceNone:
+        case SyncSourceMaster:
+        case SyncSourceTrack:
+            break;
+        case SyncSourceMidi:
+            length = syncMaster->getMidiAnalyzer()->getUnitLength();
+            break;
+        case SyncSourceHost:
+            length = syncMaster->getHostAnalyzer()->getUnitLength();
+            break;
+        case SyncSourceTransport:
+            length = syncMaster->getTransport()->getUnitLength();
+            break;
+    }
+    return length;
+}
+
+/**
+ * Return the record unit length for a track.
+ * This combines the base unit length from the source with
+ * the beat/bar/loop unit settings for this track.
+ *
+ * I'm not certain if track sync should be handled this way.
+ * It is probably better if that is always pulsed like it originally was?
+ * That makes AutoRecord impossible though...
+ */
+int BarTender::getRecordUnitLength(LogicalTrack* lt, SyncSource src)
+{
+    int length = 0;
+    
+    if (src == SyncSourceTrack) {
+        // this is quite different than the others
+        // should just have LT methods for all this?
+        int trackSyncMaster = syncMaster->getTrackSyncMaster();
+        if (trackSyncMaster) {
+            Trace(1, "SyncMaster: Asking about TrackSyncMaster and there is none");
+        }
+        else {
+            LogicalTrack* tsm = trackManager->getLogicalTrack(trackSyncMaster);
+            if (tsm == nullptr) {
+                Trace(1, "SyncMaster: Invalid TrackSyncMaster number %d", trackSyncMaster);
+            }
+            else {
+                // what we want out of this isn't specific to MSL, but this
+                // is where it is packaged atm, really this should just be part of
+                // LogicalTrack
+                MslTrack* innerTrack = tsm->getMslTrack();
+                if (innerTrack == nullptr) {
+                    Trace(1, "SyncMaster: What the hell is this?  It isn't a track sync master");
+                }
+                else {
+                    TrackSyncUnit tsu = lt->getTrackSyncUnitNow();
+                    switch (tsu) {
+                        case TrackUnitLoop:
+                            length = innerTrack->getFrames();
+                            break;
+                        case TrackUnitCycle:
+                            length = innerTrack->getCycleFrames();
+                            break;
+                        case TrackUnitSubcycle:
+                            length = innerTrack->getSubcycleFrames();
+                            break;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        length = getBaseRecordUnitLength(src);
+        if (length > 0) {
+            SyncUnit unit = lt->getSyncUnitNow();
+            if (unit == SyncUnitLoop) {
+                length = (length * getBeatsPerBar(lt)) * getBarsPerLoop(lt);
+            }
+            else if (unit == SyncUnitBar) {
+                length = (length * getBeatsPerBar(lt));
+            }
+        }
+    }
+    return length;
 }
 
 /****************************************************************************/
