@@ -310,8 +310,9 @@ class Loop : public TraceContext {
 
 	// Synchronizer interface
 
-	void setRecordCycles(long cycles);
-
+	void setRecordCycles(int cycles);
+    int getRecordCycles();
+    
   private:
 
     // need to remove this

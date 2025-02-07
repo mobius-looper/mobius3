@@ -37,7 +37,8 @@ class Pulsator
     // called by leaders to register a pulse in this block
     void addLeaderPulse(int leader, SyncUnit unit, int blockOffset);
 
-    Pulse* getRelevantBlockPulse(int follower);
+    // called by SyncMaster to get the relevant pulse for a track
+    Pulse* getRelevantBlockPulse(class LogicalTrack* t, SyncUnit unit);
 
   private:
 
@@ -60,10 +61,9 @@ class Pulsator
     void gatherHost();
     void gatherMidi();
 
-    Pulse* getPulseObject(SyncSource source, int leader);
-    Pulse* getBlockPulse(SyncSource source, int leader);
     Pulse* getAnyBlockPulse(class LogicalTrack* t);
-    bool isRelevant(class LogicalTrack* t, Pulse* p);
+    Pulse* getBlockPulse(SyncSource source, int leader);
+    Pulse* getPulseObject(SyncSource source, int leader);
 
     void trace();
     void trace(Pulse& p);

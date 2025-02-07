@@ -6247,10 +6247,15 @@ void Loop::trackCopyTiming(Track* src)
 /**
  * Called by Synchronizer when we've begun recording another cycle
  */
-void Loop::setRecordCycles(long cycles)
+void Loop::setRecordCycles(int cycles)
 {
-	if (mRecord != NULL)
+	if (mRecord != nullptr)
 	  mRecord->setCycles((int)cycles);
+}
+
+int Loop::getRecordCycles()
+{
+    return (mRecord != nullptr) ? mRecord->getCycles() : 0;
 }
 
 /**

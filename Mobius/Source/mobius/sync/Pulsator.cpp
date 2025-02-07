@@ -140,93 +140,6 @@ void Pulsator::addLeaderPulse(int leaderId, SyncUnit unit, int frameOffset)
     }
 }
 
-/**
- * This is where it all comes together...
- *
- * TimeSlicer wants to know if a given track has any sync pulses in this block
- * that are RELEVANT to what this track is synchronizing on.  Relevance involves
- * both the SyncSource and the SyncUnit.   SyncAnalyzers give us beat pulses
- * that have been captured and converted into Pulse objects for each source.
- *
- * Those pulses now pass through BarTender which determines whether those pulses
- * are more than just beats.  A massaged pulse is then returned for TimeSlicer
- * to do its thing.
- *
- * Note: For SyncSourceTrack, leader pulses will not be available until the
- * leader tracks advance so TimeSlicer needs to order them according to
- * leader dependencies.
- *
- * Control flow is annoying here.  SyncMaster owns BarTender which we
- * need, in order to pass a result back to SyncMaster.  Perhaps it would
- * be better if Pulsator was just in charge of getAnyBlockPulse,
- * then let SyncMaster and/or BarTender be in control over relevance checking.
- */
-Pulse* Pulsator::getRelevantBlockPulse(int trackNumber)
-{
-    Pulse* pulse = nullptr;
-    
-    LogicalTrack* t = trackManager->getLogicalTrack(trackNumber);
-    if (t != nullptr) {
-
-        // start by locating the base pulse for the source this
-        // track is following
-        Pulse* base = getAnyBlockPulse(t);
-
-        if (base != nullptr) {
-
-            // derive a track-specific Pulse with bar awareness
-            // this object is transient and maintained by BarTender,
-            // it must be consumed before calling BarTender again
-            Pulse* annotated = barTender->annotate(t, base);
-
-            if (annotated != nullptr) {
-
-                if (isRelevant(t, annotated)) {
-
-                    pulse = annotated;
-                }
-            }
-        }
-    }
-    return pulse;
-}
-
-bool Pulsator::isRelevant(LogicalTrack* t, Pulse* p)
-{
-    bool relevant = false;
-    if (p != nullptr && !p->pending && p->source != SyncSourceNone) {
-        SyncUnit unit = t->getSyncUnitNow();
-        // there was a pulse from this source
-        if (unit == SyncUnitBeat) {
-            // anything is a beat
-            relevant = true;
-        }
-        else if (unit == SyncUnitBar) {
-            // loops are also bars
-            relevant = (p->unit == SyncUnitBar || p->unit == SyncUnitLoop);
-        }
-        else {
-            // only loops will do
-            if (p->unit == SyncUnitLoop) {
-                relevant = true;
-            }
-            else {
-                // ugh, this only makes sense for sources that support loops
-                // but you can configure the follower to watch for them even though
-                // the source doesn't support it
-                // when that happens, treat bars as loops
-                // might be better to let BarTender sort that out?
-                if (p->source != SyncSourceTrack &&
-                    p->source != SyncSourceTransport) {
-
-                    relevant = (p->unit == SyncUnitBar);
-                }
-            }
-        }
-    }
-    return relevant;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Pulse Gathering
@@ -319,6 +232,50 @@ void Pulsator::gatherTransport()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Return any block pulse that may be relevant for a follower.
+ */
+Pulse* Pulsator::getAnyBlockPulse(LogicalTrack* t)
+{
+    Pulse* pulse = nullptr;
+    if (t != nullptr) {
+
+        // once the follower is locked, you can't change the source out
+        // from under it
+        // ?? why was this necessary
+        SyncSource source = t->getSyncSourceNow();
+        int leader = 0;
+        if (source == SyncSourceTrack) {
+            leader = t->getSyncLeaderNow();
+            if (leader == 0)
+              leader = syncMaster->getTrackSyncMaster();
+        }
+
+        // special case, if the leader is the follower, it means we couldn't find
+        // a leader after starting which means it self-leads and won't have pulses
+        if (leader != t->getNumber()) {
+
+            pulse = getBlockPulse(source, leader);
+        }
+    }
+    return pulse;
+}
+
+/**
+ * Return the pulse object for a source if it is active in this block.
+ */
+Pulse* Pulsator::getBlockPulse(SyncSource source, int leader)
+{
+    Pulse* pulse = getPulseObject(source, leader);
+    if (pulse != nullptr) {
+        if (pulse->source == SyncSourceNone || pulse->pending) {
+            // pulse either not detected, or spilled into the next block
+            pulse = nullptr;
+        }
+    }
+    return pulse;
+}
+
+/**
  * Return the pulse tracking object for a particular source.
  */
 Pulse* Pulsator::getPulseObject(SyncSource source, int leader)
@@ -360,44 +317,63 @@ Pulse* Pulsator::getPulseObject(SyncSource source, int leader)
 }
 
 /**
- * Return the pulse object for a source if it is active in this block.
+ * This is where it all comes together...
+ *
+ * TimeSlicer wants to know if a given track has any sync pulses in this block
+ * that are RELEVANT to what this track is synchronizing on.  Relevance involves
+ * both the SyncSource and the SyncUnit.   SyncAnalyzers give us beat pulses
+ * that have been captured and converted into Pulse objects for each source.
+ *
+ * Those pulses now pass through BarTender which determines whether those pulses
+ * are more than just beats.  A massaged pulse is then returned for TimeSlicer
+ * to do its thing.
+ *
+ * Note: For SyncSourceTrack, leader pulses will not be available until the
+ * leader tracks advance so TimeSlicer needs to order them according to
+ * leader dependencies.
+ *
+ * Control flow is annoying here.  SyncMaster owns BarTender which we
+ * need, in order to pass a result back to SyncMaster.  Perhaps it would
+ * be better if Pulsator was just in charge of getAnyBlockPulse,
+ * then let SyncMaster and/or BarTender be in control over relevance checking.
  */
-Pulse* Pulsator::getBlockPulse(SyncSource source, int leader)
-{
-    Pulse* pulse = getPulseObject(source, leader);
-    if (pulse != nullptr) {
-        if (pulse->source == SyncSourceNone || pulse->pending) {
-            // pulse either not detected, or spilled into the next block
-            pulse = nullptr;
-        }
-    }
-    return pulse;
-}
-
-/**
- * Return any block pulse that may be relevant for a follower.
- */
-Pulse* Pulsator::getAnyBlockPulse(LogicalTrack* t)
+Pulse* Pulsator::getBlockPulse(LogicalTrack* lt, SyncUnit unit)
 {
     Pulse* pulse = nullptr;
-    if (t != nullptr) {
+    
+    // start by locating the base pulse for the source this
+    // track is following
+    Pulse* base = getAnyBlockPulse(t);
+    if (base != nullptr) {
 
-        // once the follower is locked, you can't change the source out
-        // from under it
-        // ?? why was this necessary
-        SyncSource source = t->getSyncSourceNow();
-        int leader = 0;
-        if (source == SyncSourceTrack) {
-            leader = t->getSyncLeaderNow();
-            if (leader == 0)
-              leader = syncMaster->getTrackSyncMaster();
-        }
+        // derive a track-specific Pulse with bar awareness
+        // this object is transient and maintained by BarTender,
+        // it must be consumed before calling BarTender again
+        Pulse* annotated = barTender->annotate(t, base);
 
-        // special case, if the leader is the follower, it means we couldn't find
-        // a leader after starting which means it self-leads and won't have pulses
-        if (leader != t->getNumber()) {
+        if (annotated != nullptr) {
 
-            pulse = getBlockPulse(source, leader);
+            // filter out pulses that don't match the given unit
+
+            // there was a pulse from this source
+            if (unit == SyncUnitBeat) {
+                // anything is a beat
+                pulse = annotated;
+            }
+            else if (unit == SyncUnitBar) {
+                // loops are also bars
+                if (p->unit == SyncUnitBar || p->unit == SyncUnitLoop)
+                  pulse = annotated;
+            }
+            else {
+                // only loops will do
+                if (p->unit == SyncUnitLoop) {
+                    pulse = annotated;
+                }
+                // formerly had a fallback to accept Bar units if the
+                // host didn't support the concept of a Loop, but they
+                // all should now and BarTender will flag it
+            }
         }
     }
     return pulse;

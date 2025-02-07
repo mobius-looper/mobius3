@@ -155,6 +155,26 @@ int SyncMaster::getRecordThreshold()
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * This has historically only returned true if the track was not synchronizaing.
+ * If you're synchronizing, waiting for a threshold is much less useful since
+ * you know when it's going to start and have time to prepare.
+ *
+ * Still, they could potentially be combined.  The threshold would be necessary
+ * to start the process which may then suspend waiting for a sync pulse.  But this
+ * 
+ * todo: While threshold is useful on the recording of the first loop, it should
+ * be disabled for EmptyLoopAction=Record and some other things.
+ */
+bool SyncMaster::isThresholdRecording(int number)
+{
+	bool threshold = false;
+    if (recordThreshold > 0) {
+        threshold = !mSyncMaster->isRecordSynchronized(number);
+	}
+    return threshold;
+}
+
 SyncSource SyncMaster::getEffectiveSource(int id)
 {
     SyncSource source = SyncSourceNone;

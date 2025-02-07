@@ -92,7 +92,6 @@ class Synchronizer {
 
     class Event* scheduleRecordStart(class Action* action, class Function* function, class Loop* l);
     class Event* scheduleRecordStop(class Action* action, class Loop* loop);
-    void extendRecordStop(class Action* action, class Loop* loop, class Event* stop);
     bool undoRecordStop(class Loop* loop);
 
     // 
@@ -131,38 +130,29 @@ class Synchronizer {
     
   private:
 
-	// our leader
 	class Mobius* mMobius;
-
-    // our eventual upstart replacement, the ass kissing bastard
     class SyncMaster* mSyncMaster = nullptr;
 
-    // record scheduling
+    // Recording
     
-    bool isThresholdRecording(class Loop* l);
     class Event* schedulePendingRecord(class Action* action, class Loop* l, class MobiusMode* mode);
-    
-    bool isRecordStopPulsed(class Loop* l);
-    void getAutoRecordUnits(class Loop* loop, float* retFrames, int* retBars);
-    void setAutoStopEvent(class Action* action, class Loop* loop, class Event* stop, 
-                          float barFrames, int bars);
+    class Event* scheduleNormalRecordStop(class Action* action, class Loop* loop);
     class Event* scheduleSyncRecordStop(class Action* action, class Loop* l);
-    void getRecordUnit(class Loop* l, SyncUnitInfo* unit);
-    float getSpeed(class Loop* l);
+    class Event* scheduleAutoRecordStop(class Action* action, class Loop* loop, class Event* startEvent);
 
+    void extendRecordStop(class Action* action, class Loop* loop, class Event* stop);
+    
+    float getSpeed(class Loop* l);
 
     void startRecording(class Loop* l);
     void syncPulseRecording(class Loop* l, class Pulse* p);
     void activateRecordStop(class Loop* l, class Pulse* pulse, class Event* stop);
+
+    // Realign
     
-    bool isTransportMaster(class Loop* l);
-
-    void muteMidiStop(class Loop* l);
-
     void doRealign(class Loop* loop, class Event* pulse, class Event* realign);
     void moveLoopFrame(class Loop* l, long newFrame);
     void realignSlave(class Loop* l, class Event* pulse);
     long wrapFrame(class Loop* l, long frame);
-
 
 };

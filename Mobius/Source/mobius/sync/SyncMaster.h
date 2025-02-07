@@ -98,6 +98,7 @@ class SyncMaster
     //
 
     bool isRecordSynchronized(int number);
+    bool isThresholdRecording(int number);
     int getRecordThreshold();
 
     RequestResult requestRecordStart(int number, SyncUnit startUnit, SyncUnit pulseUnit);
