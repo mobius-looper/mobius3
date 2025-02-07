@@ -89,7 +89,7 @@ void Synchronizer::globalReset()
  *
  * This is the first step in the recording process.  A UIAction/Action has
  * been recieved with one of the record family functions (Record, AutoRecord, Rehearse).
- * If were already in Record mode should have called scheduleModStop first.
+ * If we're already in Record mode should have called scheduleModStop first.
  */
 Event* Synchronizer::scheduleRecordStart(Action* action,
                                          Function* function,
@@ -115,6 +115,9 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 		// These cases are almost identical: schedule a RecordStop
 		// event to end the recording after the number of auto-record bars.
 		// If there is already a RecordStop event, extend it by one bar.
+
+        // !! this can't be right for ThresholdMode, that only applies to
+        // starting the recoring, not stopping it
 
         event = em->findEvent(RecordStopEvent);
         if (event != NULL) {
@@ -146,9 +149,8 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 	else if (!action->noSynchronization &&
              mSyncMaster->isRecordSynchronized(number)) {
 
-        // don't like the handoff here and the assumption that one requires
-        // the other, better to have request return two things
-        // 1) yes/no it is synchronized and 2) the unit length IF known
+        // don't like the handoff here calling isRecordSynchronized first but
+        // it fits better with the old logic
         SyncMaster::Result result = mSyncMaster->requestRecordStart(number);
         if (!result.synchronized)
           Trace(l, 1, "Synchronizer: SyncMaster said we shouldn't be synchronized and I can't deal");
@@ -183,10 +185,10 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 		// don't need to wait for the event, stop playback now
 		l->stopPlayback();
 
-        // If this is AudoRecord we'll be scheudlign both a start   
+        // If this is AudoRecord we'll be scheduling both a start   
         // and an end event.  The one that owns the action will be
-        // the "primary" event that scripts will wait on.  It feels like
-        // this should be the stop event.
+        // the "primary" event that scripts will wait on.
+        // It feels like this should be the stop event.
         
         Action* startAction = action;
         if (f == AutoRecord)
@@ -241,7 +243,7 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 	// Script Kludge: If we're in a script context with this
 	// special flag set, set yet another kludgey flag on the event
 	// that will set a third kludgey option in the Layer to suppress
-	// the next fade.  
+	// the next fade.
 	if (event != NULL && 
         action->arg.getType() == EX_STRING &&
         StringEqualNoCase(action->arg.getString(), "noFade"))
@@ -268,6 +270,9 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
  * a threshold on the very first loop record, but then disable it
  * for things like AutoRecord=On since we'll already
  * have momentum going.
+ *
+ * Need to gut and revisit Threshold mode.  Might as well allow
+ * it when syncing too?
  */
 bool Synchronizer::isThresholdRecording(Loop* l)
 {
@@ -322,7 +327,7 @@ Event* Synchronizer::schedulePendingRecord(Action* action, Loop* l,
         // scheduleRecordStop will take ownership of the action
         event = scheduleRecordStop(action, l);
 
-        // !! this may return null in which we should have allowed
+        // this may return null in which we should have allowed
         // the original Action to own the start event
         if (event == nullptr)
           Trace(1, "Synchronizer: Possible event anomoly");
@@ -361,13 +366,10 @@ Event* Synchronizer::schedulePendingRecord(Action* action, Loop* l,
  *   - waiting until we receive a sync pulse
  *   - calculating the end frame based on the sync tempo
  *
- * Waiting for sync pulses is used in sync modes where the pulses
- * are immune to jitter (track sync, tracker sync, host sync).  
- * Calculating a specific end frame is used when the pulses are not
- * stable (MIDI sync).
- *
- * update: No it should not, use pulses always and let SyncMastser sort
- * out the details.
+ * There is logic here to support both styles, but SyncMaster now expectes
+ * endings to be scheduled normally using the locked unit length from
+ * the SyncSource.  It will still send down a final pulse that can be
+ * used for verification.
  *
  * If we use the pulse waiting approach, the RecordStopEvent is marked
  * pending and Synchronizer will activate it when the appropriate pulse
@@ -380,7 +382,7 @@ Event* Synchronizer::schedulePendingRecord(Action* action, Loop* l,
  * we're waiting for the stop event, further presses of Record and Undo 
  * can be used to increase or decrease the length of the recording.
  *
- * NOTE: If we decide to schedule the event far enough in the future, there
+ * todo: If we decide to schedule the event far enough in the future, there
  * is opportunity to schedule a JumpPlayEvent to begin playback without
  * an output latency jump.
  *
@@ -415,8 +417,8 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
     }
     else {
         // Pressing Record during Synchronize mode is handled the same as
-        // an AutoRecord, except that the bar length is limited to 1 rather
-        // than using the RecordBars parameter
+        // an AutoRecord, except that the unit length is limited to 1 rather
+        // than using the autoRecordUnits parameter
 
         bool scheduleEnd = true;
 
@@ -432,6 +434,10 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
             // Only one bar if not using AutoRecord
             if (function != AutoRecord)
               bars = 1;
+
+            // !! this is wrong now
+            // AutoRecord or Record/Synchronize/Record should
+            // be scheduling a normal end event like the other cases
 
             if (isRecordStopPulsed(loop)) {
                 // Schedule a pending event and wait for a pulse.
@@ -510,6 +516,9 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
                   stopFrame += loop->getInputLatency();
 
                 // sync master may ask for rounding adjustments
+                // update: no, it won't, sync recording will be based
+                // on the locked unit length which will already have the
+                // necessary rounding
                 int adjust = mSyncMaster->notifyTrackRecordEnding(number);
                 stopFrame += adjust;
                 
@@ -554,6 +563,8 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
  *
  * Update: this used to be more complicated, but now we're always assuming
  * it will be pulsed if the track is following something.
+ *
+ * !!!! This needs to either go away or become much more complicated.
  */
 bool Synchronizer::isRecordStopPulsed(Loop* l)
 {
@@ -644,7 +655,7 @@ void Synchronizer::setAutoStopEvent(Action* action, Loop* loop, Event* stop,
  * Called by scheduleRecordStop when a RecordStop event needs to be 
  * synchronized to a pulse or pre-scheduled based on tempo.
  *
- * Returns the RecordStop event or NULL if it was not scheduled for some 
+ * Returns the RecordStop event or nullptr if it was not scheduled for some 
  * reason.
  *         
  * Action ownership is handled by the caller
@@ -716,109 +727,6 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
     return stop;
 }
 
-// original implementation
-#if 0
-Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
-{
-    (void)action;
-    Event* stop = NULL;
-    EventManager* em = l->getTrack()->getEventManager();
-
-    if (isRecordStopPulsed(l)) {
-        // schedule a pending RecordStop and wait for the pulse
-        // syncPulseRecording will figure out which pulse to stop on
-        // must force this to use Record since the action function
-        // can be anyhting
-        stop = em->newEvent(Record, RecordStopEvent, 0);
-        stop->pending = true;
-
-        Trace(l, 2, "Sync: Added pulsed RecordStop\n");
-    }
-    else {
-        // update: should not be here any more since we always pulse the stop
-        
-        // Should only be here for SYNC_MIDI but the logic is more general
-        // than it needs to be in case we want to do this for other modes.
-        // Things like this will be necessary if we want to support immediate
-        // recording with rounding.
-
-        // Calculate the base unit size, this will represent either a beat
-        // or bar depending on sync mode.
-        SyncUnitInfo unit;
-        getRecordUnit(l, &unit);
-
-        float unitFrames = unit.adjustedFrames;
-        long loopFrames = l->getFrame();
-
-        if (unitFrames == 0.0f) {
-            // should never happen, do something so we can end the loop
-            Trace(l, 1, "Sync: unitFrames zero!\n");
-            unitFrames = (float)loopFrames;
-        }
-
-        long units = (long)((float)loopFrames / unitFrames);
-
-        if (loopFrames == 0) {
-            // should never happen, isn't this more severe should
-            // we even be scheduling a StopEvent??
-            Trace(l, 1, "Sync: Scheduling record end with empty loop!\n");
-            units = 1;
-        }
-        else {
-            // now we need to round up to the next granule
-            // !! will float rounding screw us here? what if remainder
-            // is .00000000001, may be best to truncate this 
-            float remainder = fmodf((float)loopFrames, unitFrames);
-            if (remainder > 0.0) {
-                // we're beyond the last boundary, add another
-                units++;
-            }
-        }
-
-        long stopFrame = (long)((float)units * unitFrames);
-
-        Trace(l, 2, "Sync: Scheduled RecordStop currentFrames %ld unitFrames %ld units %ld stopFrame %ld\n",
-              loopFrames, (long)unitFrames, (long)units, stopFrame);
-        
-
-        // sanity check
-        if (stopFrame < loopFrames) {
-            Trace(l, 1, "Sync: Record end scheduling underflow %ld to %ld\n",
-                  stopFrame, loopFrames);
-            stopFrame = loopFrames;
-        }
-        
-        // !! think about scheduling a PrepareRecordStop event
-        // so we close off the loop and begin preplay like we do
-        // when the end isn't being synchronized
-        stop = em->newEvent(Record, RecordStopEvent, stopFrame);
-        // so we see it
-        stop->quantized = true;
-
-        // remember the unadjusted tracker frames and pulses
-        long trackerFrames = (long)((float)units * unit.frames);
-        int trackerPulses = (int)(unit.pulses * units);
-
-        //Track* t = l->getTrack();
-        // Once the RecordStop event is not pending, syncPulseRecording
-        // will stop trying to calculate the number of cycles, we have
-        // to set the final cycle count.
-        // !! does this need to be speed adjusted?
-        int cycles = (int)(unit.cycles * (float)units);
-        if (cycles == 0) {
-            Trace(l, 1, "Sync: something hootered with cycles!\n");
-            cycles = 1;
-        }
-        l->setRecordCycles(cycles);
-
-        Trace(l, 2, "Sync: scheduleRecorStop trackerPulses %ld trackerFrames %ld cycles %ld\n",
-              (long)trackerPulses, (long)trackerFrames, (long)cycles);
-    }
-
-    return stop;
-}
-#endif
-
 //////////////////////////////////////////////////////////////////////
 //
 // Record Units
@@ -880,221 +788,11 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
     unit->adjustedFrames = unit->frames;
 }
 
-#if 0
-void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
-{
-    Track* t = l->getTrack();
-    SyncState* state = t->getSyncState();
-
-    // note that this must be the *effective* source
-    OldSyncSource src = state->getEffectiveSyncSource();
-
-	unit->frames = 0.0f;
-    unit->pulses = 1;
-    unit->cycles = 1.0f;
-    unit->adjustedFrames = 0.0f;
-
-    // kludge, need to support MIDI
-    Track* mTrackSyncMaster = getTrackSyncMaster();
-        
-    if (src == SYNC_TRACK && mTrackSyncMaster != nullptr) {
-
-        // !! todo: SyncMaster should be handling this so MIDI
-        // tracks can be the track sync master
-
-        Loop* masterLoop = mTrackSyncMaster->getLoop();
-        Preset* p = masterLoop->getPreset();
-        int subCycles = p->getSubcycles();
-        SyncTrackUnit tsunit = state->getSyncTrackUnit();
-
-        switch (tsunit) {
-            case TRACK_UNIT_LOOP: {
-                int cycles = (int)(masterLoop->getCycles());
-				unit->frames = (float)masterLoop->getFrames();
-                unit->pulses = cycles * subCycles;
-                unit->cycles = (float)cycles;
-            }
-            break;
-            case TRACK_UNIT_CYCLE: {
-				unit->frames = (float)masterLoop->getCycleFrames();
-                unit->pulses = subCycles;
-            }
-			break;
-			case TRACK_UNIT_SUBCYCLE: {
-				// NOTE: This could result in a fractional value if the
-				// number of subcyles is odd.  The issues here
-                // are similar to those in SyncTracker when determining
-                // beat boundaries.
-				long cycleFrames = masterLoop->getCycleFrames();
-				unit->frames = (float)cycleFrames / (float)subCycles;
-                unit->cycles = 1.0f / (float)subCycles;
-                
-                long iframes = (long)unit->frames;
-                if ((float)iframes != unit->frames)
-                  Trace(2, "Sync: WARNING Fractional track sync subcycle %ld (x100)\n",
-                        (long)(unit->cycles * 100));
-            }
-            break;
-			case TRACK_UNIT_DEFAULT:
-				// xcode 5 whines if this isn't here
-				break;
-        }
-    }
-    else if (src == SYNC_TRANSPORT) {
-        // this is normally the bar length
-        unit->frames = (float)(mSyncMaster->getMasterBarFrames());
-    }
-    else if (src == SYNC_HOST) {
-
-        // formerly asked the Host tracker for PulseFrames
-        // or derived FramesPerBeat from the HostTempo
-        // SyncMaster can do this now
-        unit->frames = (float)(mSyncMaster->getBarFrames(SyncSourceHost));
-        adjustBarUnit(l, state, src, unit);
-    }
-    else if (src == SYNC_MIDI) {
-
-        unit->frames = (float)(mSyncMaster->getBarFrames(SyncSourceMidi));
-        adjustBarUnit(l, state, src, unit);
-    }
-    else {
-        // NONE, OUT
-        // only here for AutoRecord, we control the tempo
-        // the unit size is one bar
-        Preset* p = t->getPreset();
-        float tempo = (float)p->getAutoRecordTempo();
-        traceTempo(l, "Auto", tempo);
-        unit->frames = getFramesPerBeat(tempo);
-
-        // !! do we care about the OUT tracker for SYNC_NONE?
-        // formerly got BeatsPerBar from a preset parameter, now it
-        // comes from the setup so all sync modes can use it consistently
-        //int bpb = p->getAutoRecordBeats();
-
-        // !! get this from SyncMaster too
-        int bpb = getBeatsPerBar(src, l);
-
-        if (bpb <= 0)
-          Trace(l, 1, "ERROR: Sync: BeatsPerBar not set, assuming 1\n");
-        else {
-            unit->pulses = bpb;
-            unit->frames *= (float)bpb;
-        }
-    }
-
-    Trace(l, 2, "Sync: getRecordUnit %s frames %ld pulses %ld cycles %ld\n",    
-          GetSyncSourceName(src), (long)unit->frames, (long)unit->pulses, 
-          (long)unit->cycles);
-
-    // NOTE: This could result in a fractional value if the
-    // number of subcyles is odd, we won't always handle this well.
-    // This can also happen with fractional MIDI tempos and proabbly
-    // host tempos.  We may need to round down here...
-    float intpart;
-    float frac = modff(unit->frames, &intpart);
-    if (frac != 0) {
-        // supported but it will cause problems...
-        Trace(l, 2, "WARNING: Sync: getRecordUnit non-integral unit frames %ld fraction %ld\n",
-              (long)unit->frames, (long)frac);
-    }
-
-    // factor in the speed
-    float speed = getSpeed(l);
-    if (speed == 1.0)
-      unit->adjustedFrames = unit->frames;
-    else {
-        // !! won't this have the same issues with tracker rounding?
-        unit->adjustedFrames = unit->frames * speed;
-        Trace(l, 2, "Sync: getRecordUnit speed %ld (x100) adjusted frames %ld (x100)\n",
-              (long)(speed * 100), (long)(unit->adjustedFrames * 100));
-    }
-}
-#endif
-
 float Synchronizer::getSpeed(Loop* l)
 {
     InputStream* is = l->getInputStream();
     return is->getSpeed();
 }
-
-void Synchronizer::traceTempo(Loop* l, const char* type, float tempo)
-{
-    long ltempo = (long)tempo;
-    long frac = (long)((tempo - (float)ltempo) * 100);
-    Trace(l, 2, "Sync: getRecordUnit %s tempo %ld.%ld\n", type, ltempo, frac);
-}
-
-/**
- * Helper for getRecordUnit.  Convert a tempo in beats per minute
- * into framesPerBeat.
- * 
- * Optionally truncate fractions so we can always deal with integer
- * beat lengths which is best for inter-track sync although it
- * may produce more drift relative to the host.
- */
-float Synchronizer::getFramesPerBeat(float tempo)
-{
-    float beatsPerSecond = tempo / 60.0f;
-
-    float framesPerSecond = (float)mMobius->getSampleRate();
-
-    float fpb = framesPerSecond / beatsPerSecond;
-
-    if (!mNoSyncBeatRounding) {
-        int ifpb = (int)fpb;
-        if ((float)ifpb != fpb) 
-          Trace(2, "Sync: Rouding framesPerBeat for tempo %ld (x100) from %ld (x100) to %ld\n", 
-                (long)(tempo * 100), (long)(fpb * 100), (long)ifpb);
-        fpb = (float)ifpb;
-    }
-    
-    return fpb;
-}
-
-/**
- * A stub for something that used to be a lot more complicated.
- * Unclear where this should come from now, always get it from the transport or
- * allow the old Preset/Setup parameters?
- */
-#if 0
-int Synchronizer::getBeatsPerBar(OldSyncSource src, Loop* l)
-{
-    (void)src;
-    (void)l;
-    return mSyncMaster->varGetBeatsPerBar(SyncSourceTransport);
-}
-#endif
-
-/**
- * Helper for getRecordUnit.
- * After calculating the beat frames, check for bar sync and multiply
- * the unit by beats per bar.
- *
- * !! Sumething looks funny about this.  getBeatsPerBar() goes out
- * and gets the SyncTracker but state also captured it.  Follow this
- * mess and make sure if the tracker isn't locked we get it from the state.
- */
-#if 0
-void Synchronizer::adjustBarUnit(Loop* l, SyncState* state, OldSyncSource src,
-                                 SyncUnitInfo* unit)
-{
-    int bpb = getBeatsPerBar(src, l);
-    if (state->getSyncUnit() == SYNC_UNIT_BAR) {
-        if (bpb <= 0)
-          Trace(l, 1, "ERROR: Sync: BeastPerBar not set, assuming 1\n");
-        else {
-            unit->pulses = bpb;
-            unit->frames *= (float)bpb;
-        }
-    }
-    else {
-        // one bar is one cycle, but if the unit is beat should
-        // we still use BeatsPerBar to calculate cycles?
-        if (bpb > 0)
-          unit->cycles = 1.0f / (float)bpb;
-    }
-}
-#endif
 
 ///////////////////////////////////////////////////////////////////////
 //

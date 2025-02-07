@@ -32,16 +32,25 @@ class SyncMaster
     
   public:
 
-    // a little struct that conveys the relevant bits of information
-    // on an isRecordSynced or requestRecordStart call
-    class Result {
+    /**
+     * Structure returned by the SyncMaster's requestRecordStart
+     * or requestRecordStop methods.
+     */
+    class RequestResult {
       public:
-        // true if the recording must be synchronized
+        // true if the recording is expected to be synchronized based
+        // on the track's SyncMode 
         bool synchronized = false;
-        // true if the start/end must be pulsed
-        bool pulsed = false;
         // unit length if known
         int unitLength = 0;
+    };
+    
+    /**
+     * Structure returned by the track's syncPulse method.
+     */
+    class PulseResult {
+        // true if the track has decided to end recording on this pulse
+        bool ended = false;
     };
 
     SyncMaster();
@@ -89,18 +98,19 @@ class SyncMaster
     //
 
     bool isRecordSynchronized(int number);
-    Result requestRecordStart(int number);
-    Result requestRecordStop(int number);
     int getRecordThreshold();
-    
+
+    RequestResult requestRecordStart(int number, SyncUnit startUnit, SyncUnit pulseUnit);
+    RequestResult requestRecordStart(int number, SyncUnit unit);
+    RequestResult requestRecordStart(int number);
+    RequestResult requestRecordStop(int number);
+   
     //
     // Track Notifications
     //
     
-    void notifyTrackRecordStarting(int id);
-    bool notifyTrackRecordEndRequest(int id);
-    int notifyTrackRecordEnding(int id);
-    void notifyTrackRecordEnded(int id);
+    void notifyRecordStarted(int id);
+    void notifyRecordStopped(int id);
     
     void notifyTrackAvailable(int id);
     void notifyTrackReset(int id);
@@ -192,6 +202,8 @@ class SyncMaster
 
     class SymbolTable* getSymbols();
 
+    void handlePulseResult(class LogicalTrack* track, PulseResult result);
+    
   private:
 
     class MobiusKernel* kernel = nullptr;

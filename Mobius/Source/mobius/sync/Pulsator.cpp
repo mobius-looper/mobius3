@@ -191,6 +191,42 @@ Pulse* Pulsator::getRelevantBlockPulse(int trackNumber)
     return pulse;
 }
 
+bool Pulsator::isRelevant(LogicalTrack* t, Pulse* p)
+{
+    bool relevant = false;
+    if (p != nullptr && !p->pending && p->source != SyncSourceNone) {
+        SyncUnit unit = t->getSyncUnitNow();
+        // there was a pulse from this source
+        if (unit == SyncUnitBeat) {
+            // anything is a beat
+            relevant = true;
+        }
+        else if (unit == SyncUnitBar) {
+            // loops are also bars
+            relevant = (p->unit == SyncUnitBar || p->unit == SyncUnitLoop);
+        }
+        else {
+            // only loops will do
+            if (p->unit == SyncUnitLoop) {
+                relevant = true;
+            }
+            else {
+                // ugh, this only makes sense for sources that support loops
+                // but you can configure the follower to watch for them even though
+                // the source doesn't support it
+                // when that happens, treat bars as loops
+                // might be better to let BarTender sort that out?
+                if (p->source != SyncSourceTrack &&
+                    p->source != SyncSourceTransport) {
+
+                    relevant = (p->unit == SyncUnitBar);
+                }
+            }
+        }
+    }
+    return relevant;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Pulse Gathering
@@ -365,42 +401,6 @@ Pulse* Pulsator::getAnyBlockPulse(LogicalTrack* t)
         }
     }
     return pulse;
-}
-
-bool Pulsator::isRelevant(LogicalTrack* t, Pulse* p)
-{
-    bool relevant = false;
-    if (p != nullptr && !p->pending && p->source != SyncSourceNone) {
-        SyncUnit unit = t->getSyncUnitNow();
-        // there was a pulse from this source
-        if (unit == SyncUnitBeat) {
-            // anything is a beat
-            relevant = true;
-        }
-        else if (unit == SyncUnitBar) {
-            // loops are also bars
-            relevant = (p->unit == SyncUnitBar || p->unit == SyncUnitLoop);
-        }
-        else {
-            // only loops will do
-            if (p->unit == SyncUnitLoop) {
-                relevant = true;
-            }
-            else {
-                // ugh, this only makes sense for sources that support loops
-                // but you can configure the follower to watch for them even though
-                // the source doesn't support it
-                // when that happens, treat bars as loops
-                // might be better to let BarTender sort that out?
-                if (p->source != SyncSourceTrack &&
-                    p->source != SyncSourceTransport) {
-
-                    relevant = (p->unit == SyncUnitBar);
-                }
-            }
-        }
-    }
-    return relevant;
 }
 
 //////////////////////////////////////////////////////////////////////

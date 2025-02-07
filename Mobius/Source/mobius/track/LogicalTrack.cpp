@@ -315,14 +315,44 @@ int LogicalTrack::getSyncLength()
     return track->getSyncLength();
 }
 
-bool LogicalTrack::isPendingSyncRecord()
+bool LogicalTrack::isSyncRecording()
 {
-    return pendingSyncRecord;
+    return syncRecording;
 }
 
-void LogicalTrack::setPendingSyncRecord(bool b)
+void LogicalTrack::setSyncRecording(bool b)
 {
-    pendingSyncRecord = b;
+    syncRecording = b;
+}
+
+bool LogicalTrack::isSyncRecordStarted()
+{
+    return syncRecordStarted;
+}
+
+void LogicalTrack::setSyncRecordStarted(bool b)
+{
+    syncRecordStarted = b;
+}
+
+SyncUnit LogicalTrack::getSyncStartUnit()
+{
+    return syncStartUnit;
+}
+
+void LogicalTrack::setSyncStartUnit(SyncUnit unit)
+{
+    syncPulseUnit = unit;
+}
+
+SyncUnit LogicalTrack::getSyncPulseUnit()
+{
+    return syncPulseUnit;
+}
+
+void LogicalTrack::setSyncPulseUnit(SyncUnit unit)
+{
+    syncPulseUnit = unit;
 }
 
 //////////////////////////////////////////////////////////////////////

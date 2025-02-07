@@ -85,7 +85,7 @@ void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
                 }
 
                 // now let the track know about this pulse
-                notifyPulse(track, s);
+                sendPulse(track, s);
             }
 
             int remainder = stream->getInterruptFrames() - blockOffset;
@@ -127,11 +127,12 @@ void TimeSlicer::advanceTrack(LogicalTrack* track, MobiusAudioStream* stream)
 /**
  * Here we've just advanced the track up to the frame where a pulse resides.
  */
-void TimeSlicer::notifyPulse(LogicalTrack* track, Slice& slice)
+void TimeSlicer::sendPulse(LogicalTrack* track, Slice& slice)
 {
     // these can only be Pulses right now, eventually other types of
     // slice may exist
-    track->syncPulse(slice.pulse);
+    SyncMaster::PulseResult result = track->syncPulse(slice.pulse);
+    syncMaster->handlePulseResult(track, result);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -153,7 +154,7 @@ void TimeSlicer::gatherSlices(LogicalTrack* track)
     slices.clearQuick();
 
     // first the sync pulses
-    insertPulse(syncMaster->getBlockPulse(track->getNumber()));
+    insertPulse(syncMaster->getBlockPulse(track));
                 
     // todo: now add slices for external quantization points
     // or other more obscure things

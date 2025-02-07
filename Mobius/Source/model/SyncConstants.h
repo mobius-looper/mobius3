@@ -56,7 +56,12 @@ typedef enum {
 
     SyncUnitBeat,
     SyncUnitBar,
-    SyncUnitLoop
+    SyncUnitLoop,
+
+    // This is a hidden value used internally to indiciate that
+    // the unit is specified in a different way.  It is not included
+    // in the ParameterProperties definition and won't be visible in the UI
+    SyncUnitNone
     
 } SyncUnit;
 

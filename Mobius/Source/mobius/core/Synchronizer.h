@@ -137,10 +137,6 @@ class Synchronizer {
     // our eventual upstart replacement, the ass kissing bastard
     class SyncMaster* mSyncMaster = nullptr;
 
-    // used by getFramesPerBeat, not sure where this came from
-    // !! this goes away after redesigning AutoRecord
-    bool mNoSyncBeatRounding = false;
-    
     // record scheduling
     
     bool isThresholdRecording(class Loop* l);
@@ -153,9 +149,6 @@ class Synchronizer {
     class Event* scheduleSyncRecordStop(class Action* action, class Loop* l);
     void getRecordUnit(class Loop* l, SyncUnitInfo* unit);
     float getSpeed(class Loop* l);
-    void traceTempo(class Loop* l, const char* type, float tempo);
-    float getFramesPerBeat(float tempo);
-    //int getBeatsPerBar(OldSyncSource src, Loop* l);
 
 
     void startRecording(class Loop* l);

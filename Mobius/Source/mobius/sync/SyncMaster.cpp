@@ -232,19 +232,31 @@ bool SyncMaster::isRecordSynchronized(int number)
 }
 
 /**
- * This is when a track would like to begin recording.
- * It returns the locked unit length if there is one.
- * This is expected to be called only if there was an immediately
- * preceeding call to isRecordSynchronized and that returned true.
+ * Called by the track in response to an action to begin the
+ * recording process.   This interface provides the most flexibility
+ * to control the recording pulses.  Other signatures derive the arguments
+ * from session parameters.
  *
- * Record starts are always pulsed, and the track must schedule
- * a suitable pending event.
+ * This does not allow overriding the track's SyncMode from the session.
+ * I suppose it could, but it's easy enough to do it with scripts.  The two
+ * units may be specified in a script or as action arguments.
  *
- * Hating how we redo all the work isRecordSynchronized does...
+ * If the result has the synchronized flag set, the track is expected to
+ * schedule an internal event that will be activated on the next startUnit pulse.
+ *
+ * While the track is being recorded, pulseUnit pulses will be sent to the track
+ * to do things like increment cycle counts or other state related to the increasing
+ * length of the loop.
+ *
+ * The recording process may be ended at any time by the track calling
+ * requestRecordStop or by the return value of any syncPulse as pulses are
+ * sent into the track.
  */
-SyncMaster::Result SyncMaster::requestRecordStart(int number)
+SyncMaster::RequestResult SyncMaster::requestRecordStart(int number,
+                                                         SyncUnit startUnit,
+                                                         SyncUnit pulseUnit)
 {
-    Result result;
+    RequestResult result;
 
     LogicalTrack* lt = trackManager->getLogicalTrack(number);
     if (lt != nullptr) {
@@ -253,21 +265,51 @@ SyncMaster::Result SyncMaster::requestRecordStart(int number)
             Trace(1, "SyncMaster::requestRecordStart Should not have been called");
         }
         else {
-            lt->setPendingSyncRecord(true);
             result.synchronized = true;
-            result.pulsed = true;
             result.unitLength = barTender->getRecordUnitLength(lt, src);
+
+            if (startUnit == SyncUnitNone)
+              startUnit = lt->getSyncUnitNow();
+                
+            if (pulseUnit == SyncUnitNone)
+              pulseUnit = startUnit;
+            
+            lt->setSyncRecording(true);
+            lt->setSyncStartUnit(startUnit);
+            lt->setSyncPulseUnit(pulseUnit);
         }
     }
     return result;
 }
 
 /**
- * This is called when a track wants to end recording.
+ * Used when the start and pulse units are the same.
+ */
+SyncMaster::RequestResult SyncMaster::requestRecordStart(int number,
+                                                         SyncUnit unit)
+{
+    return requestRecordStart(number, unit, unit);
+}
+
+/**
+ * Used when the start and pulse units come from session parameters.
+ */
+SyncMaster::RequestResult SyncMaster::requestRecordStart(int number)
+{
+    return requestRecordStart(number, SyncUnitNone, SyncUnitNone);
+}
+
+/**
+ * This is called when a track responds to an action that triggers
+ * the ending of the recording.  The recording normally ends
+ * on the next sync pulse whose unit was defined in requestRecordStart.
+ * But the track is free to ignore this and we'll continue sending
+ * record pulses until it calls notifyRecordStop.
+ * 
  * It is expected to have called isRecordSynced first, or be able to deal
  * with this returning a Result that says it isn't synchronized.
  */
-SyncMaster::Result SyncMaster::requestRecordStop(int number)
+SyncMaster::RequestResult SyncMaster::requestRecordStop(int number)
 {
     Result result;
     
@@ -278,7 +320,7 @@ SyncMaster::Result SyncMaster::requestRecordStop(int number)
             Trace(1, "SyncMaster::requestRecordStop Should not have been called");
         }
         else {
-            // and now we lock
+            // do deferred unit locking if not already locked
             // the only one that really needs this is MIDI, but go through the motions
             switch (src) {
                 case SyncSourceMidi:
@@ -295,14 +337,53 @@ SyncMaster::Result SyncMaster::requestRecordStop(int number)
                     
             result.synchronized = true;
             result.unitLength = barTender->getRecordUnitLength(lt, src);
-
-            if (src == SyncSourceTrack) {
-                // these are always pulsed?
-                result.pulsed = true;
-            }
         }
     }
     return result;
+}
+
+/**
+ * Called by TimeSlicer to return the relevant sync pulse for this track.
+ */
+Pulse* SyncMaster::getBlockPulse(LogicalTrack* track)
+{
+    Pulse* pulse = nullptr;
+    
+    if (track->isSyncRecording()) {
+        SyncUnit unit = SyncUnitNone;
+        if (track->isSyncRecordStarted())
+          unit = track->getSyncPulseUnit();
+        else
+          unit = track->getSyncStartUnit();
+
+        if (unit == SyncUnitNone) {
+            // should have stored these when we started all this
+            Trace(1, "SyncMaster: Someone forgot to store their units");
+            unit = track->getSyncUnitNow();
+        }
+
+        pulse = pulsator->getBlockPulse(track, unit);
+    }
+    return pulse;
+}
+
+/**
+ * Called by TimeSlicer to pass back the PulseRequest sent back on the
+ * last syncPulse call sent to the track.
+ */
+void SyncMaster::handlePulseResult(class LogicalTrack* lt, PulseResult result)
+{
+    SyncSource src = getEffectiveSource(lt);
+    if (src == SyncSourceNone || src == SyncSourceMaster) {
+        // not supposed to be here, we won't be sending sync pulses to respond
+        // to if this were happening
+        Trace(1, "SyncMaster::handlPulseResult Mystery pulse");
+    }
+    else if (result.ended) {
+        // this is an alternative to the track calling notifyRecordStop
+        // though it can do that too
+        notifyRecordStopped(number);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -320,7 +401,7 @@ SyncMaster::Result SyncMaster::requestRecordStop(int number)
  * If this is the TransportMaster, Synchronizer in the past would do a "full stop"
  * to send a STOP event and stop sending MIDI clocks.
  */
-void SyncMaster::notifyTrackRecordStarting(int number)
+void SyncMaster::notifyRecordStarted(int number)
 {
     // continue calling MidiRealizer but this needs to be under the control of the Transport
     if (number == transport->getMaster()) {
@@ -330,35 +411,12 @@ void SyncMaster::notifyTrackRecordStarting(int number)
 }
 
 /**
- * This is called when a track is preparing to end a recording.
- *
- * The recording may have been unsynchronized, pulsed, or pre-calculated
- * based on the starting unit length.
- *
- * This was originally where I thought unit length rounding would happen,
- * but it isn't any more.  The rounding is conveyed either by the Result
- * returned by requestRecordStop or by being pulsed.
- *
- * Keep this around for awhile but can probably get rid of it.
- *
- * Might use this to force it to have an even length?
- *
- * The recording may not actually completely end until after a latency delay, but
- * there is nothing that's going to stop it now.
- */
-int SyncMaster::notifyTrackRecordEnding(int number)
-{
-    (void)number;
-    return 0;
-}
-
-/**
  * This is called when a recording has offically ended.
  * It may have been synced or not.
  *
  * This also makes the track available for mastership.
  */
-void SyncMaster::notifyTrackRecordEnded(int number)
+void SyncMaster::notifyRecordStopped(int number)
 {
     LogicalTrack* lt = trackManager->getLogicalTrack(number);
     if (lt != nullptr) {
@@ -1197,30 +1255,6 @@ void SyncMaster::refreshPriorityState(PriorityState* pstate)
 void SyncMaster::sendAlert(juce::String msg)
 {
     kernel->sendAlert(msg);
-}
-
-/**
- * Return the relevant block pulse for a follower.
- * e.g. don't return Beat if the follower wants Bar
- * Used by TimeSlicer to slice the block around pulses.
- */
-Pulse* SyncMaster::getBlockPulse(int trackNumber)
-{
-    Pulse* p = pulsator->getRelevantBlockPulse(trackNumber);
-    if (p != nullptr) {
-        // and now we have another layer of relevance
-        // we can further filter out pulse noise by only allowing
-        // pulses when the track is actually waiting for one
-        // atm, this means it is sync recording or doing Realign
-        LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
-        if (lt == nullptr || !lt->isPendingSyncRecord())
-          p = nullptr;
-        else {
-            Trace(2, "SyncMaster: Sending recording pulse");
-        }
-    }
-    return p;
-    
 }
 
 /**

@@ -267,7 +267,7 @@ extern Parameter* WindowSlideUnitParameter;
 
 // Deprecated Parameters
 
-extern Parameter* AutoRecordParameter;
+//extern Parameter* AutoRecordParameter;
 extern Parameter* InsertModeParameter;
 extern Parameter* InterfaceModeParameter;
 extern Parameter* LoopCopyParameter;
