@@ -315,13 +315,18 @@ Event* Synchronizer::schedulePendingRecord(Action* action, Loop* l,
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Decide how to end Record mode.
+ * This is what gets called when you are currently IN Record mode
+ * and it needs to end so another function or mode can take over.
+ * It is only called by Record::scheduleModeStop which is called
+ * in a few places.
  *
- * Here from a bunch of paths:
- *   - RecordFunction from its scheduleModeStop method.
- *   - Indirectly by Function::invoke whenever we're in Record mode
- *     and a function is recieved that wants to change modes. This will be called
- *     from a function handler, not an event handler.
+ * The event returned will be given a child event by LoopSwitch
+ * TrackSelect looks at it to see what frame it is on.
+ * The common Function::invoke handler calls this when in Record mode
+ * but ignores the return event.
+ *
+ * Old notes say these calls as well:
+ *
  *   - From LoopTriggerFunction::scheduleTrigger, 
  *      RunScriptFunction::invoke, and TrackSelectFunction::invoke, via
  *      RecordFunction::scheduleModeStop.
