@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Session name="asdf" audioTracks="8">
+  <Track id="1" number="1" type="audio" name="whe555e">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="0" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="track"/>
+      <Value name="syncUnit" value="beat"/>
+      <Value name="trackSyncUnit" value="subcycle"/>
+    </ValueSet>
+  </Track>
+  <Track id="2" number="2" type="audio">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="track"/>
+      <Value name="syncUnit" value="beat"/>
+      <Value name="trackSyncUnit" value="subcycle"/>
+    </ValueSet>
+  </Track>
+  <Track id="3" number="3" type="audio">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="track"/>
+      <Value name="syncUnit" value="beat"/>
+      <Value name="trackSyncUnit" value="subcycle"/>
+    </ValueSet>
+  </Track>
+  <Track id="4" number="4" type="audio">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="track"/>
+      <Value name="syncUnit" value="beat"/>
+      <Value name="trackSyncUnit" value="subcycle"/>
+    </ValueSet>
+  </Track>
+  <Track id="5" number="5" type="audio">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="track"/>
+      <Value name="syncUnit" value="beat"/>
+      <Value name="trackSyncUnit" value="subcycle"/>
+    </ValueSet>
+  </Track>
+  <Track id="6" number="6" type="audio">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="track"/>
+      <Value name="syncUnit" value="beat"/>
+      <Value name="trackSyncUnit" value="subcycle"/>
+    </ValueSet>
+  </Track>
+  <Track id="7" number="7" type="audio">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="track"/>
+      <Value name="syncUnit" value="beat"/>
+      <Value name="trackSyncUnit" value="subcycle"/>
+    </ValueSet>
+  </Track>
+  <Track id="8" number="8" type="audio">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="track"/>
+      <Value name="syncUnit" value="beat"/>
+      <Value name="trackSyncUnit" value="subcycle"/>
+    </ValueSet>
+  </Track>
+  <ValueSet>
+    <Value name="controllerActionThreshold" value="64" type="int"/>
+    <Value name="fadeFrames" value="128" type="int"/>
+    <Value name="inputLatency" value="0" type="int"/>
+    <Value name="longPress" value="500" type="int"/>
+    <Value name="maxLoops" value="2" type="int"/>
+    <Value name="maxSyncDrift" value="50" type="int"/>
+    <Value name="monitorAudio" value="0" type="int"/>
+    <Value name="noiseFloor" value="50" type="int"/>
+    <Value name="outputLatency" value="0" type="int"/>
+    <Value name="quickSave" value="mobiusloop"/>
+    <Value name="spreadRange" value="48" type="int"/>
+  </ValueSet>
+</Session>
