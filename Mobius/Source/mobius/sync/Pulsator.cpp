@@ -149,7 +149,7 @@ void Pulsator::addLeaderPulse(int leaderId, SyncUnit unit, int frameOffset)
 /**
  * Convert a SyncAnalyzerResult from an analyzer into a Pulse
  */
-void Pulsator::convertPulse(SyncAnalyzerResult* result, Pulse& pulse)
+void Pulsator::convertPulse(SyncSource source, SyncAnalyzerResult* result, Pulse& pulse)
 {
     if (result != nullptr) {
 
@@ -158,7 +158,7 @@ void Pulsator::convertPulse(SyncAnalyzerResult* result, Pulse& pulse)
         
         if (result->beatDetected) {
 
-            pulse.reset(SyncSourceHost, millisecond);
+            pulse.reset(source, millisecond);
             pulse.blockFrame = result->blockOffset;
 
             // it's starts as a Beat, BarTender may change this later
@@ -182,7 +182,7 @@ void Pulsator::convertPulse(SyncAnalyzerResult* result, Pulse& pulse)
             // means we're starting in the middle of a beat
             // !! don't have a Pulse for start that isn't also
             // a UnitBeat, may need one
-            pulse.reset(SyncSourceHost, millisecond);
+            pulse.reset(source, millisecond);
             pulse.unit = SyncUnitBeat;
             pulse.start = true;
             // doesn't really matter what this is
@@ -192,7 +192,7 @@ void Pulsator::convertPulse(SyncAnalyzerResult* result, Pulse& pulse)
             // do we actually need a pulse for these?
             // unlike Start, Stop can happen pretty randomly
             // let BarTender sort it out
-            pulse.reset(SyncSourceHost, millisecond);
+            pulse.reset(source, millisecond);
             pulse.unit = SyncUnitBeat;
             pulse.stop = true;
             // doesn't really matter what this is
@@ -206,7 +206,7 @@ void Pulsator::gatherHost()
     HostAnalyzer* analyzer = syncMaster->getHostAnalyzer();
     SyncAnalyzerResult* result = analyzer->getResult();
 
-    convertPulse(result, hostPulse);
+    convertPulse(SyncSourceHost, result, hostPulse);
 }
 
 void Pulsator::gatherMidi()
@@ -214,7 +214,7 @@ void Pulsator::gatherMidi()
     MidiAnalyzer* analyzer = syncMaster->getMidiAnalyzer();
     SyncAnalyzerResult* result = analyzer->getResult();
 
-    convertPulse(result, midiPulse);
+    convertPulse(SyncSourceMidi, result, midiPulse);
 }    
 
 void Pulsator::gatherTransport()
@@ -222,7 +222,7 @@ void Pulsator::gatherTransport()
     Transport* t = syncMaster->getTransport();
     SyncAnalyzerResult* result = t->getResult();
 
-    convertPulse(result, transportPulse);
+    convertPulse(SyncSourceTransport, result, transportPulse);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -362,12 +362,12 @@ Pulse* Pulsator::getBlockPulse(LogicalTrack* t, SyncUnit unit)
             }
             else if (unit == SyncUnitBar) {
                 // loops are also bars
-                if (base->unit == SyncUnitBar || base->unit == SyncUnitLoop)
+                if (annotated->unit == SyncUnitBar || annotated->unit == SyncUnitLoop)
                   pulse = annotated;
             }
             else {
                 // only loops will do
-                if (base->unit == SyncUnitLoop) {
+                if (annotated->unit == SyncUnitLoop) {
                     pulse = annotated;
                 }
                 // formerly had a fallback to accept Bar units if the

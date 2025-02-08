@@ -211,6 +211,9 @@ void Transport::cacheSessionParameters(bool force)
     defaultBarsPerLoop = session->getInt(SessionTransportBarsPerLoop);
 
     // correct uninitialized sessions
+    if (defaultTempo == 0.0f)
+      defaultTempo = 90.0f;
+    
     if (defaultBeatsPerBar < 1)
       defaultBeatsPerBar = 4;
     
@@ -1115,6 +1118,8 @@ void Transport::start()
 {
     started = true;
 
+    Trace(2, "Transport: Starting unitPlayHead %d", unitPlayHead);
+
     // going to need a lot more state here
     if (midiEnabled) {
         // We're normally in a UIAction handler at this point before
@@ -1190,14 +1195,16 @@ void Transport::advance(int frames)
 
         unitPlayHead = unitPlayHead + frames;
         if (unitPlayHead >= unitLength) {
-
             // a unit has transpired
-            int blockOffset = unitPlayHead - unitLength;
-            if (blockOffset > frames || blockOffset < 0)
-              Trace(1, "Transport: You suck at math");
-
-            // effectively a frame wrap too
-            unitPlayHead = blockOffset;
+            int over = unitPlayHead - unitLength;
+            if (over > frames || over < 0) {
+                // can happen with MIDI when suspended in the debugger, shouldn't here
+                Trace(1, "Transport: You suck at math");
+                over = 0;
+            }
+            
+            int blockOffset = frames - over;
+            unitPlayHead = over;
 
             elapsedUnits++;
             unitCounter++;

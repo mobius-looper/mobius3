@@ -810,16 +810,30 @@ void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
 bool Synchronizer::syncPulse(Track* track, Pulse* pulse)
 {
     bool ended = false;
+    bool traceDetails = false;
     
     Loop* l = track->getLoop();
     MobiusMode* mode = l->getMode();
 
-    if (mode == SynchronizeMode)
-      startRecording(l);
-
-    else if (l->isSyncRecording())
-      ended = syncPulseRecording(l, pulse);
-
+    if (mode == SynchronizeMode) {
+        if (traceDetails) {
+            Trace(l, 2, "Sync: Start record pulse offset %d loop frame %d",
+                  pulse->blockFrame, l->getFrame());
+            int unitLength = mSyncMaster->getSyncUnitLength(track->getLogicalNumber());
+            Trace(l, 2, "Sync: Unit frames %d", unitLength);
+        }
+        startRecording(l);
+    }
+    else if (l->isSyncRecording()) {
+        if (traceDetails) {
+            Trace(l, 2, "Sync: Recording pulse offset %d loop frame %d",
+                  pulse->blockFrame, l->getFrame());
+            int unitLength = mSyncMaster->getSyncUnitLength(track->getLogicalNumber());
+            Trace(l, 2, "Sync: Unit frames %d", unitLength);
+        }
+        ended = syncPulseRecording(l, pulse);
+    }
+    
     return ended;
 }
 

@@ -487,19 +487,18 @@ void MidiAnalyzer::advance(int frames)
             }
             else if (unitPlayHead >= unitLength) {
                 // a unit has transpired
-            
-                int blockOffset = unitPlayHead - unitLength;
-                if (blockOffset > frames || blockOffset < 0) {
+                int over = unitPlayHead - unitLength;
+                if (over > frames || over < 0) {
                     // this has happened after suspending in the debugger and
                     // the threads start advancing in unusual ways
                     // or maybe you're just bad at this
                     Trace(1, "MidiAnalyzer: The universe is wrong and/or you suck at math");
                     // don't let bizarre buffer offsets escape and confuse the TimeSlicer
-                    blockOffset = 0;
+                    over = 0;
                 }
-
-                // effectively a frame wrap too
-                unitPlayHead = blockOffset;
+                
+                int blockOffset = frames - over;
+                unitPlayHead = over;
 
                 elapsedBeats++;
             

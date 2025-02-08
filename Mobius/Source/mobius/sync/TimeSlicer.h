@@ -62,7 +62,6 @@ class TimeSlicer
     void orderTracks();
     void orderTracks(class LogicalTrack* t);
     class LogicalTrack* nextTrack();
-    void sendPulse(class LogicalTrack* track, Slice& slice);
     void advanceTrack(class LogicalTrack* track, class MobiusAudioStream* stream);
 
 };

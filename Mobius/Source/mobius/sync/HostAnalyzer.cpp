@@ -765,14 +765,16 @@ void HostAnalyzer::advanceAudioStream(int blockFrames)
 
         unitPlayHead = unitPlayHead + blockFrames;
         if (unitPlayHead >= unitLength) {
-
             // a unit has transpired
-            int blockOffset = unitPlayHead - unitLength;
-            if (blockOffset > blockFrames || blockOffset < 0)
-              Trace(1, "Transport: You suck at math");
-
-            // effectively a frame wrap too
-            unitPlayHead = blockOffset;
+            int over = unitPlayHead - unitLength;
+            if (over > blockFrames || over < 0) {
+                // can happen with MIDI when suspended in the debugger, shouldn't here
+                Trace(1, "Transport: You suck at math");
+                over = 0;
+            }
+            
+            int blockOffset = blockFrames - over;
+            unitPlayHead = over;
 
             elapsedUnits++;
             unitCounter++;

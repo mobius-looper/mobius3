@@ -1,3 +1,7 @@
+// update: This should no longer be used, TrackManager has it's own mechanism
+// for long-press detection that is shared by both audio and midi tracks
+// rip this out
+
 /**
  * Small utility used by Actionator to detect long-press of
  * a trigger, which may result in auto-generated Actions.  This is to
@@ -166,7 +170,10 @@ void TriggerState::assimilate(Action* action)
             else
               msg = "TriggerState: ending press for %s\n";
 
-            Trace(2, msg, tw->function->getDisplayName());
+            // new: only trace if this was a long press since we're not
+            // expecting those
+            if (tw->longPress)
+              Trace(2, msg, tw->function->getDisplayName());
 
             // convey long press state in the action
             action->longPress = tw->longPress;
@@ -221,8 +228,9 @@ void TriggerState::assimilate(Action* action)
                       func->getDisplayName());
             }
             else {
-                Trace(2, "TriggerState: Beginning press for %s\n",
-                      func->getDisplayName());
+                // cut the noise
+                //Trace(2, "TriggerState: Beginning press for %s\n",
+                //func->getDisplayName());
 
                 tw = mPool;
                 mPool = tw->next;

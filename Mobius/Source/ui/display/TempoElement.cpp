@@ -79,7 +79,7 @@ void TempoElement::paint(juce::Graphics& g)
     }
     
     if (showIt) {
-        
+
         switch (mSyncUnit) {
             case SyncUnitBeat: status += "Beat "; break;
             case SyncUnitBar: status += "Bar "; break;
@@ -98,7 +98,15 @@ void TempoElement::paint(juce::Graphics& g)
         // If the source has no tempo, we have not displayed the beat/bar either
         // assumign that you can't have beats without a tempo
 
-        if (tempo > 0) {
+        // hack: if this is the Transport, don't bother showing the tempo or the
+        // beat counter since they would almost always have the Transport UI
+        // element displayed and it is redundant here
+        // same can be said for Midi.  Host is more useful since we don't have
+        // a host sync display element
+
+        bool showTempo = (mSyncSource == SyncSourceHost);
+
+        if (showTempo && tempo > 0) {
 
             // we've used a Beat of zero to mean it should not be displayed
             // because MIDI Start has not been received or the Host transport is stopped

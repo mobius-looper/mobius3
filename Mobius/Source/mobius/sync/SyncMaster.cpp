@@ -246,6 +246,16 @@ SyncUnit SyncMaster::getSyncUnit(int id)
     return unit;
 }
 
+int SyncMaster::getSyncUnitLength(int number)
+{
+    int frames = 0;
+    LogicalTrack* track = trackManager->getLogicalTrack(number);
+    if (track != nullptr) {
+        frames = barTender->getUnitLength(track);
+    }
+    return frames;
+}
+
 /**
  * Returns true if the start/stop of a recording is synchronized.
  * If this returns true, it will usually be followed immediately

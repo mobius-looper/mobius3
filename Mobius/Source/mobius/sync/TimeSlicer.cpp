@@ -55,6 +55,7 @@ TimeSlicer::~TimeSlicer()
  */
 void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
 {
+    bool traceDetails = false;
     prepareTracks();
     
     LogicalTrack* track = nextTrack();
@@ -78,6 +79,11 @@ void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
                 // than one pulse on the same frame
                 if (sliceLength > 0) {
                     ass.setSlice(blockOffset, sliceLength);
+
+                    if (traceDetails) {
+                        Trace(2, "TimeSlicer: Track %d slice advance %d", track->getNumber(),
+                              sliceLength);
+                    }
                     
                     advanceTrack(track, &ass);
                     
@@ -85,12 +91,29 @@ void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
                 }
 
                 // now let the track know about this pulse
-                sendPulse(track, s);
+
+                if (traceDetails) {
+                    Trace(2, "TimeSlicer: Track %d pulse %d", track->getNumber(),
+                          s.blockOffset);
+                }
+                
+                bool ended = track->syncPulse(s.pulse);
+                syncMaster->handlePulseResult(track, ended);
+
+                if (traceDetails) {
+                    Trace(2, "TimeSlicer: Track %d post pulse length %d", track->getNumber(),
+                          track->getSyncLength());
+                }
             }
 
             int remainder = stream->getInterruptFrames() - blockOffset;
             if(remainder > 0) {
                 ass.setSlice(blockOffset, remainder);
+
+                if (traceDetails) {
+                    Trace(2, "TimeSlicer: Track %d advance remainder %d", track->getNumber(),
+                          remainder);
+                }
             
                 advanceTrack(track, &ass);
             }
@@ -122,17 +145,6 @@ void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
 void TimeSlicer::advanceTrack(LogicalTrack* track, MobiusAudioStream* stream)
 {
     track->processAudioStream(stream);
-}
-
-/**
- * Here we've just advanced the track up to the frame where a pulse resides.
- */
-void TimeSlicer::sendPulse(LogicalTrack* track, Slice& slice)
-{
-    // these can only be Pulses right now, eventually other types of
-    // slice may exist
-    bool ended = track->syncPulse(slice.pulse);
-    syncMaster->handlePulseResult(track, ended);
 }
 
 //////////////////////////////////////////////////////////////////////

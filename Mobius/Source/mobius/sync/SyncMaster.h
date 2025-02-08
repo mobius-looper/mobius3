@@ -84,6 +84,7 @@ class SyncMaster
     SyncSource getEffectiveSource(int id);
     SyncSource getEffectiveSource(class LogicalTrack* t);
     SyncUnit getSyncUnit(int id);
+    int getSyncUnitLength(int id);
 
     //
     // Sync Recording

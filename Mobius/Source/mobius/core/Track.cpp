@@ -1356,6 +1356,25 @@ void Track::updateLatencies(int inputLatency, int outputLatency)
 {
     mInput->setLatency(inputLatency);
     mOutput->setLatency(outputLatency);
+
+    // !! Loops normally rewind themselves to -inputLatency when
+    // they are in Reset.  On startup, they will be initializaed at a time
+    // before the block size is known so they will be sitting at frame zero
+    // until you do the first GlobalReset after the first block is received.
+    // So once the block size is known need to modify their start points.
+    // This will only happen if the loop is in Reset, but changing latencies isn't
+    // something that happens often and never during an active performance so I don't
+    // think we need to try too hard here.  Still this does raise much larger issues
+    // around shifting latencies as things around the plugin are inserted between the
+    // audio interface and whether Mobius is even receiving live audio at all or just
+    // something that exists within the host which will have no latency.
+    // Need to revisit all this with the eventual "Mixer" component.
+
+    for (int i = 0 ; i < mLoopCount ; i++) {
+        Loop* l = mLoops[i];
+        if (l->getMode() == ResetMode)
+          l->setFrame(-inputLatency);
+    }
 }
 
 /**

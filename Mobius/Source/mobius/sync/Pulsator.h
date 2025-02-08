@@ -56,7 +56,7 @@ class Pulsator
     
     void reset();
     
-    void convertPulse(class SyncAnalyzerResult* result, Pulse& pulse);
+    void convertPulse(SyncSource source, class SyncAnalyzerResult* result, Pulse& pulse);
     void gatherTransport();
     void gatherHost();
     void gatherMidi();

@@ -247,7 +247,12 @@ void LoopMeterElement::paint(juce::Graphics& g)
             MobiusViewEvent& ev = track->events.getReference(i);
 
             int eventOffset = getMeterOffset(ev.frame, track->frames);
+            // slide pending all the way to the right
+            if (ev.pending)
+              eventOffset = MeterBarWidth;
+            
             int eventCenter = eventInfoLeft + eventOffset;
+            
             // should also stack if "close enough"
             // should really be testing the scaled location of the markers
             // the loop frame

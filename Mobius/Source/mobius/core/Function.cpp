@@ -645,11 +645,16 @@ Event* Function::invoke(Action* action, Loop* loop)
 			// Oh, I supposed it could, but it is clearer to turn quantization
 			// off temporarily if that's what you want.  This does however
 			// mean that the script recorder may record somethign that
-			// was actually escaped, but won't be played back that way. 	
+			// was actually escaped, but won't be played back that way.
 			// Will need a flag in the script that says whether to perform
 			// quantize escaping or not and test it here
 
-			if (prev != NULL && !sus && action->trigger != TriggerScript) {
+            // new: if this is Record or AutoRecord allow it through even if
+            // we're in Synchronized mode, Synchronizer has special handling for it
+            Function* f = action->getFunction();
+            bool isRecord = (f == Record || f == AutoRecord);
+
+			if (!isRecord && prev != NULL && !sus && action->trigger != TriggerScript) {
 
 				// an event was already posted, treat the second invocation
 				// as a "double click" and process the event immediately
