@@ -131,8 +131,8 @@ void TimeSlicer::sendPulse(LogicalTrack* track, Slice& slice)
 {
     // these can only be Pulses right now, eventually other types of
     // slice may exist
-    SyncMaster::PulseResult result = track->syncPulse(slice.pulse);
-    syncMaster->handlePulseResult(track, result);
+    bool ended = track->syncPulse(slice.pulse);
+    syncMaster->handlePulseResult(track, ended);
 }
 
 //////////////////////////////////////////////////////////////////////

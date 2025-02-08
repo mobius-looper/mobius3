@@ -111,7 +111,7 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
     // the original function, make sure
     Function* f = action->getFunction();
     if (f != function)
-      Trace(1, "Sync: Mismatched function in scheduleRecordStart\n");
+      Trace(l, 1, "Sync: Mismatched function in scheduleRecordStart\n");
 
     EventManager* em = l->getTrack()->getEventManager();
 	MobiusMode* mode = l->getMode();
@@ -171,11 +171,9 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 
         // todo: This is where we could support startUnit and pulseUnit overrides
         // based on action arguments
-        SyncMaster::Result result = mSyncMaster->requestRecordStart(number);
+        SyncMaster::RequestResult result = mSyncMaster->requestRecordStart(number);
         if (!result.synchronized)
-          Trace(l, 1, "Synchronizer: SyncMaster said we shouldn't be synchronized and I can't deal");
-        else
-          Trace(l, 2, "Synchronizer: Scheduling synchronzied record start");
+          Trace(l, 1, "Sync: SyncMaster said we shouldn't be synchronized and I can't deal");
 
         // Putting the loop in Threshold or Synchronize mode is treated
         // as "not advancing" and screws up playing.  Need to rethink this
@@ -188,7 +186,7 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 		l->stopPlayback();
 		startEvent = schedulePendingRecord(action, l, SynchronizeMode);
 	}
-	else if (!action->noSynchronization && mSyncMaster->isThresholdRecording(number)) {
+	else if (!action->noSynchronization && mSyncMaster->hasRecordThreshold(number)) {
         // Threshold recording is similar to synchronized recording
         // in that we schedule a pending start and let it be activated later
         // old comments wonder if the noSynchronization option in the action should
@@ -211,10 +209,10 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 		// !! does the source matter, do this always?
 		if (action->trigger == TriggerScript) {
 			long frame = l->getFrame();
-			if (frame == event->frame) {
+			if (frame == startEvent->frame) {
 				l->setFrame(0);
 				l->setPlayFrame(0);
-				event->frame = 0;
+				startEvent->frame = 0;
 			}
 		}
 
@@ -304,6 +302,8 @@ Event* Synchronizer::schedulePendingRecord(Action* action, Loop* l,
 	em->addEvent(event);
 
     action->setEvent(event);
+
+    Trace(l, 2, "Sync: Scheduled pulsed RecordStart");
 
 	return event;
 }
@@ -409,11 +409,9 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
 	else if (!action->noSynchronization &&
              mSyncMaster->isRecordSynchronized(number)) {
 
-        SyncMaster::Result result = mSyncMaster->requestRecordStop(number);
+        SyncMaster::RequestResult result = mSyncMaster->requestRecordStop(number);
         if (!result.synchronized)
-          Trace(l, 1, "Synchronizer: SyncMaster said we shouldn't be synchronized and I can't deal");
-        else
-          Trace(l, 2, "Synchronizer: Scheduling synchronzied record stop");
+          Trace(loop, 1, "Sync: SyncMaster said we shouldn't be synchronized and I can't deal");
 
         event = scheduleSyncRecordStop(action, loop);
     }
@@ -453,6 +451,7 @@ Event* Synchronizer::scheduleNormalRecordStop(Action* action, Loop* loop)
     // rounding adjustments at the end but this is no longer the case
     // Loop::prepareLoop ignores the adjust argument anyway
 #if 0    
+    int number = loop->getTrack()->getLogicalNumber();
     int adjust = mSyncMaster->notifyTrackRecordEnding(number);
     stopFrame += adjust;
                 
@@ -460,12 +459,13 @@ Event* Synchronizer::scheduleNormalRecordStop(Action* action, Loop* loop)
         // SM wants to pull the ending back, but this can't rewind
         // before it is now, I suppose it could but it's hard
         stopFrame = currentFrame;
-        Trace(1, "Synchronizer: SyncMaster wanted a negative adjustment back in time");
+        Trace(loop, 1, "Sync: SyncMaster wanted a negative adjustment back in time");
     }
 #endif    
 
     // Must use Record function since the invoking function
     // can be anything that ends Record mode
+    EventManager* em = loop->getTrack()->getEventManager();
     Event* event = em->newEvent(Record, RecordStopEvent, stopFrame);
     
     // prepare the loop early so we can beging playing
@@ -504,8 +504,8 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
     // again there is a dependency on SyncMaster::isRecordSynchronized
     // and requestRecordStop
 
-    SyncMaster::Result result = mSyncMaster->requestRecordStop(number);
-    if (result.pulsed || result.unitLength == 0) {
+    SyncMaster::RequestResult result = mSyncMaster->requestRecordStop(number);
+    if (result.synchronized || result.unitLength == 0) {
         // ending must be pulsed
         // unitLength == 0 is unusual, it means that we're using MIDI sync and started
         // on MIDIStart and stopped before the first full beat was received to define the unit
@@ -543,9 +543,9 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
         // speed needs to have been canceled as soon as recording started
         float speed = getSpeed(l);
         if (speed != 1.0)
-          Trace(1, "Synchronizer: Ending synchronized recording with active rate shift");
+          Trace(l, 1, "Sync: Ending synchronized recording with active rate shift");
 
-        Trace(l, 2, "Synchronzier: Scheduled RecordStop currentFrames %d unitFrames %d units %d stopFrame %ld\n",
+        Trace(l, 2, "Sync: Scheduled RecordStop currentFrames %d unitFrames %d units %d stopFrame %ld\n",
               loopFrames, result.unitLength, units, stopFrame);
         
         // todo: think about scheduling a PrepareRecordStop event
@@ -558,7 +558,17 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
         l->setRecordCycles(units);
     }
 
+    // take ownership of the Action
+    action->setEvent(stop);
+    em->addEvent(stop);
+    
     return stop;
+}
+
+float Synchronizer::getSpeed(Loop* l)
+{
+    InputStream* is = l->getInputStream();
+    return is->getSpeed();
 }
 
 /**
@@ -567,13 +577,16 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
  */
 Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop, Event* startEvent)
 {
+    // not sure why I thought this would be interesting
+    (void)startEvent;
+    
     Event* event = nullptr;
     Track* track = loop->getTrack();
-    int number = loop->getTrack()->getLogicalNumber();
-    
-    EventManager* em = loop->getTrack()->getEventManager();
+    EventManager* em = track->getEventManager();
     Event* prev = em->findEvent(RecordStopEvent);
     MobiusMode* mode = loop->getMode();
+    Function* function = action->getFunction();
+    int number = track->getLogicalNumber();
     
     if (prev != nullptr) {
         // Since the mode doesn't change until the event is processed, we
@@ -597,8 +610,6 @@ Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop, Event* s
 
         event = em->newEvent(function, RecordStopEvent, 0);
         event->pending = true;
-        action->setEvent(event);
-        em->addEvent(event);
 
         // the number put here on the event is what shows up in the UI
         // it has historically been the number of "auto record units" which
@@ -611,8 +622,6 @@ Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop, Event* s
         
         event = em->newEvent(function, RecordStopEvent, 0);
         event->quantized = true;	// makes it visible in the UI
-        action->setEvent(event);
-        em->addEvent(event);
 
         // show number of units like pulsed AR
         int units = mSyncMaster->getAutoRecordUnits(number);
@@ -620,7 +629,7 @@ Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop, Event* s
 
         // this will use the Transport tempo combined with
         // autoRecordUnit to calculate a length
-        int length = mSyncMaster->getAutoRecordLength(number);
+        int length = mSyncMaster->getAutoRecordUnitLength(number);
 
         event->frame = length;
 
@@ -628,7 +637,12 @@ Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop, Event* s
         // the loop cycle count since Synchronizer is no longer watching.
         loop->setRecordCycles(units);
     }
-    
+
+    if (event != nullptr && event != prev) {
+        action->setEvent(event);
+        em->addEvent(event);
+    }
+        
     return event;
 }
 
@@ -657,7 +671,8 @@ Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop, Event* s
  */
 void Synchronizer::extendRecordStop(Action* action, Loop* loop, Event* stop)
 {
-    Function* function = action->getFunction();
+    (void)action;
+    
     int number = loop->getTrack()->getLogicalNumber();
     
     // for both, the pulse number increases
@@ -672,10 +687,10 @@ void Synchronizer::extendRecordStop(Action* action, Loop* loop, Event* stop)
     // for unsynced AutoRecord also increase the length
     if (!stop->pending) {
     
-        int length = mSyncMaster->getAutoRecordLength(number);
+        int length = mSyncMaster->getAutoRecordUnitLength(number);
         length *= extension;
 
-        event->frame += length;
+        stop->frame += length;
 
         // scheduled endings need to set their own cycle count
         loop->setRecordCycles(loop->getRecordCycles() + extension);
@@ -715,13 +730,13 @@ bool Synchronizer::undoRecordStop(Loop* loop)
         int newRemaining = stop->number - reduction;
         if (newRemaining > 1) {
 
-            if (stop->pulsed) {
+            if (stop->pending) {
                 stop->number = newRemaining;
                 undone = true;
             }
             else {
                 // the number of frames we want to remove
-                int removeLength = mSyncMaster->getAutoRecordLength(number);
+                int removeLength = mSyncMaster->getAutoRecordUnitLength(number);
                 removeLength *= reduction;
 
                 int currentFrame = loop->getFrame();
@@ -792,8 +807,10 @@ void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
  * comes from the source we want to follow and is of the right type.
  * We don't need to verify this, just activate any pending record events.
  */
-void Synchronizer::syncPulse(Track* track, Pulse* pulse)
+bool Synchronizer::syncPulse(Track* track, Pulse* pulse)
 {
+    bool ended = false;
+    
     Loop* l = track->getLoop();
     MobiusMode* mode = l->getMode();
 
@@ -801,7 +818,9 @@ void Synchronizer::syncPulse(Track* track, Pulse* pulse)
       startRecording(l);
 
     else if (l->isSyncRecording())
-      syncPulseRecording(l, pulse);
+      ended = syncPulseRecording(l, pulse);
+
+    return ended;
 }
 
 /**
@@ -921,12 +940,13 @@ void Synchronizer::startRecording(Loop* l)
  * What this does provide is a useful place to verify that pulses are being scheduled
  * correctly.  
  */
-void Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
+bool Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
 {
+    bool ended = false;
+    
     Track* t = l->getTrack();
     EventManager* em = t->getEventManager();
     Event* stop = em->findEvent(RecordStopEvent);
-
 
     if (stop != nullptr) {
 
@@ -935,10 +955,7 @@ void Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
             // If we were activating this on a pulse the final frame would be calculated
             // as loopFrames plus latency if this was a MIDI pulse.  There is some noise
             // around rounding and "extra" frames that was never enabled.
-            
-            
-
-            Trace(l, 1, "Sync: extra pulse after record stop activated");
+            Trace(l, 1, "Sync: Extra pulse after record stop activated");
         }
         else {
             if (stop->function == AutoRecord) {
@@ -951,16 +968,25 @@ void Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
             
             if (stop != nullptr) {
                 // Tell mSyncMaster we're ending to it can lock the unit length
-                // for this track.  Since that's just going to call back down
-                // here to propagate it to the Loop, we could instead just ask for it
+                // for this track.
                 int number = t->getLogicalNumber();
-                int adjust = mSyncMaster->notifyTrackRecordEnding(number);
-                // not expecting an adjustment here, we've already been waiting
-                // for an exact pulse
-                if (adjust != 0)
-                  Trace(1, "Synchronizer: SyncMaster thinks we need to adjust the ending, why?");
+                SyncMaster::RequestResult res = mSyncMaster->requestRecordStop(number);
                 
                 activateRecordStop(l, p, stop);
+
+                // a number of places we could do this validation, this is one
+                if (res.unitLength == 0) {
+                    Trace(l, 1, "Sync: Activated pulsed stop without a unit length");
+                }
+                else {
+                    int remainder = stop->frame % res.unitLength;
+                    if (remainder != 0) {
+                        Trace(1, "Sync: Pulsed stop frame %d incompatible with unit length %d",
+                              stop->frame, res.unitLength);
+                    }
+                }
+                
+                ended = true;
             }
         }
     }
@@ -981,6 +1007,8 @@ void Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
             l->setRecordCycles(l->getCycles() + 1);
         }
     }
+
+    return ended;
 }
 
 /**
@@ -1000,8 +1028,6 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
 {
     //Track* track = l->getTrack();
 
-	Trace(l, 2, "Sync: Activating RecordStop");
-
     // prepareLoop will set the final frame count in the Record layer
     // which is what Loop::getFrames will return.  If we're following raw
     // MIDI pulses have to adjust for latency.
@@ -1014,7 +1040,7 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
     int extra = 0;
     long currentFrames = l->getFrames();
     if ((currentFrames % 2) > 0) {
-        Trace(l, 2, "WARNING: Odd number of frames in new loop\n");
+        Trace(l, 1, "Sync::activateRecordStop Odd number of frames in new loop\n");
         // actually no, we don't want to do this if we're following
         // a SyncTracker or using SYNC_TRACK, we have to be exact 
         // only do this for HOST/MIDI recording from raw pulses 
@@ -1024,17 +1050,15 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
 	l->prepareLoop(inputLatency, extra);
 	long finalFrames = l->getFrames();
 
-    #if 0
-	int pulses = state->getRecordPulses();
-    // save final state and wait for loopRecordStop
-    state->scheduleStop(pulses, finalFrames);
-    #endif
-
     // activate the event
 	stop->pending = false;
 	stop->frame = finalFrames;
 
+	Trace(l, 2, "Sync: Activating RecordStop at %d frames", stop->frame);
+    
     // set the ending cycle count
+    // !! is this even relevant any more?  We can bump the cycle count
+    // as sync pulses are received, don't need to wait till activation
 
     // For TrackSync, this used to compare our side with the master track size
     // to determine the number of cycles
@@ -1058,7 +1082,7 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
           Trace(l, 1, "Error in ending frame calculation!\n");
 
         if (mTrackSyncMaster == nullptr) {
-            Trace(l, 1, "Synchronizer::stopRecording track sync master gone!\n");
+            Trace(l, 1, "Sync::stopRecording track sync master gone!\n");
         }
         else {
             Track
@@ -1149,7 +1173,7 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
  */
 void Synchronizer::loopRecordStart(Loop* l)
 {
-    mSyncMaster->notifyTrackRecordStarting(l->getTrack()->getLogicalNumber());
+    mSyncMaster->notifyRecordStarted(l->getTrack()->getLogicalNumber());
 }
 
 /**
@@ -1192,7 +1216,7 @@ void Synchronizer::loopRecordStop(Loop* l, Event* stop)
 	Track* track = l->getTrack();
     int number = track->getLogicalNumber();
 
-    mSyncMaster->notifyTrackRecordEnded(number);
+    mSyncMaster->notifyRecordStopped(number);
 
     // any track with content can become the track sync master
     // ?? should this just be automatic with notifyTrackRecordEnded?
@@ -1590,7 +1614,7 @@ void Synchronizer::realignSlave(Loop* l, Event* pulse)
             // we no longer have these events and shouldn't be here with a SyncEvent
             // now, punt
             //newFrame = (long)pulse->fields.sync.pulseFrame;
-            Trace(1, "Synchronizer::realignSlave with an event that doesn't exist");
+            Trace(l, 1, "Sync::realignSlave with an event that doesn't exist");
             newFrame = 0;
         }
         else {
@@ -1699,14 +1723,14 @@ void Synchronizer::doRealign(Loop* loop, Event* pulse, Event* realign)
     else {
         // going to need to revisit this for SyncMaster
 		//realignSlave(loop, pulse);
-        Trace(1, "Synchronizer::doRealign with a mystery event");
+        Trace(loop, 1, "Sync::doRealign with a mystery event");
     }
 
 #if 0
     else if (pulse->fields.sync.source == SYNC_TRACK) {
         // going to need to revisit this for SyncMaster
 		//realignSlave(loop, pulse);
-        Trace(1, "Synchronizer::doRealign 
+        Trace(loop, 1, "Sync::doRealign 
     }
     else if (pulse->fields.sync.source == SYNC_TRANSPORT) {
         // no drift on these?
@@ -1798,7 +1822,7 @@ long Synchronizer::wrapFrame(Loop* l, long frame)
 {
     long max = l->getFrames();
     if (max <= 0) {
-        Trace(l, 1, "Sync:wrapFrame loop is empty!\n");
+        Trace(l, 1, "Sync: wrapFrame loop is empty!\n");
         frame = 0;
     }
     else {

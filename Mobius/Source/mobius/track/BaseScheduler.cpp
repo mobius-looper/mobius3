@@ -953,8 +953,10 @@ void BaseScheduler::dispose(TrackEvent* e)
  * Again in theory, this could be in front of other scheduled events and because
  * events must be in order, it is removed and reinserted after giving it a frame.
  */
-void BaseScheduler::syncPulse(Pulse* p)
+bool BaseScheduler::syncPulse(Pulse* p)
 {
+    bool ended = false;
+    
     // doesn't really matter what this is, SyncMaster is only supposed
     // to provide relevant pulses for the track
     (void)p;
@@ -968,7 +970,19 @@ void BaseScheduler::syncPulse(Pulse* p)
         pulsed->pending = false;
         pulsed->pulsed = false;
         events.add(pulsed);
+
+        // supposed to return true if the track decided to end a recording
+        // on this pulse, all this really does is automate the
+        // callback to SyncMaster::notifyRecordStopped, but it is important
+        // this happens because SM cleans up some state around synchronzied
+        // recording
+        // !! are there any issues with returning a positive now rather
+        // than waiting for the MidiTrack to actually process this event?
+        if (scheduledTrack->getMode() == TrackState::ModeRecord)
+          ended = true;
+        
     }
+    return ended;
 }
 
 //////////////////////////////////////////////////////////////////////

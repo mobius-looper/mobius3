@@ -38,7 +38,7 @@ class Pulsator
     void addLeaderPulse(int leader, SyncUnit unit, int blockOffset);
 
     // called by SyncMaster to get the relevant pulse for a track
-    Pulse* getRelevantBlockPulse(class LogicalTrack* t, SyncUnit unit);
+    Pulse* getBlockPulse(class LogicalTrack* t, SyncUnit unit);
 
   private:
 

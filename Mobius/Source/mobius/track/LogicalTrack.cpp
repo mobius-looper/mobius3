@@ -295,9 +295,9 @@ MidiTrack* LogicalTrack::getMidiTrack()
     return mt;
 }
 
-void LogicalTrack::syncPulse(Pulse* p)
+bool LogicalTrack::syncPulse(Pulse* p)
 {
-    track->syncPulse(p);
+    return track->syncPulse(p);
 }
 
 void LogicalTrack::setUnitLength(int l)
@@ -323,6 +323,11 @@ bool LogicalTrack::isSyncRecording()
 void LogicalTrack::setSyncRecording(bool b)
 {
     syncRecording = b;
+    if (!b) {
+        // clear this too since it is no longer relevant
+        syncRecordStarted = false;
+        // what about the pulse units?
+    }
 }
 
 bool LogicalTrack::isSyncRecordStarted()
@@ -342,7 +347,7 @@ SyncUnit LogicalTrack::getSyncStartUnit()
 
 void LogicalTrack::setSyncStartUnit(SyncUnit unit)
 {
-    syncPulseUnit = unit;
+    syncStartUnit = unit;
 }
 
 SyncUnit LogicalTrack::getSyncPulseUnit()
@@ -377,7 +382,10 @@ void LogicalTrack::doAction(UIAction* a)
     if (sid == FuncTrackReset || sid == FuncGlobalReset) {
         clearBindings();
         unitLength = 0;
-        pendingSyncRecord = false;
+        syncRecording = false;
+        syncRecordStarted = false;
+        syncStartUnit = SyncUnitNone;
+        syncPulseUnit = SyncUnitNone;
     }
     
     track->doAction(a);

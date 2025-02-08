@@ -337,7 +337,7 @@ Pulse* Pulsator::getPulseObject(SyncSource source, int leader)
  * be better if Pulsator was just in charge of getAnyBlockPulse,
  * then let SyncMaster and/or BarTender be in control over relevance checking.
  */
-Pulse* Pulsator::getBlockPulse(LogicalTrack* lt, SyncUnit unit)
+Pulse* Pulsator::getBlockPulse(LogicalTrack* t, SyncUnit unit)
 {
     Pulse* pulse = nullptr;
     
@@ -362,12 +362,12 @@ Pulse* Pulsator::getBlockPulse(LogicalTrack* lt, SyncUnit unit)
             }
             else if (unit == SyncUnitBar) {
                 // loops are also bars
-                if (p->unit == SyncUnitBar || p->unit == SyncUnitLoop)
+                if (base->unit == SyncUnitBar || base->unit == SyncUnitLoop)
                   pulse = annotated;
             }
             else {
                 // only loops will do
-                if (p->unit == SyncUnitLoop) {
+                if (base->unit == SyncUnitLoop) {
                     pulse = annotated;
                 }
                 // formerly had a fallback to accept Bar units if the

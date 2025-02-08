@@ -156,6 +156,19 @@ int SyncMaster::getRecordThreshold()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Track wants to know this when scheduling AutoRecord stop
+ */
+bool SyncMaster::isSyncRecording(int number)
+{
+    bool syncing = false;
+    LogicalTrack* t = trackManager->getLogicalTrack(number);
+    if (t != nullptr) {
+        syncing = t->isSyncRecording();
+    }
+    return syncing;
+}
+
+/**
  * This has historically only returned true if the track was not synchronizaing.
  * If you're synchronizing, waiting for a threshold is much less useful since
  * you know when it's going to start and have time to prepare.
@@ -166,11 +179,11 @@ int SyncMaster::getRecordThreshold()
  * todo: While threshold is useful on the recording of the first loop, it should
  * be disabled for EmptyLoopAction=Record and some other things.
  */
-bool SyncMaster::isThresholdRecording(int number)
+bool SyncMaster::hasRecordThreshold(int number)
 {
 	bool threshold = false;
     if (recordThreshold > 0) {
-        threshold = !mSyncMaster->isRecordSynchronized(number);
+        threshold = !isRecordSynchronized(number);
 	}
     return threshold;
 }
@@ -288,8 +301,13 @@ SyncMaster::RequestResult SyncMaster::requestRecordStart(int number,
             result.synchronized = true;
             result.unitLength = barTender->getRecordUnitLength(lt, src);
 
-            if (startUnit == SyncUnitNone)
-              startUnit = lt->getSyncUnitNow();
+            if (startUnit == SyncUnitNone) {
+                startUnit = lt->getSyncUnitNow();
+                if (startUnit == SyncUnitNone) {
+                    Trace(1, "SyncMaster: Someone stored SyncUnitNone in the session");
+                    startUnit = SyncUnitBar;
+                }
+            }
                 
             if (pulseUnit == SyncUnitNone)
               pulseUnit = startUnit;
@@ -331,7 +349,7 @@ SyncMaster::RequestResult SyncMaster::requestRecordStart(int number)
  */
 SyncMaster::RequestResult SyncMaster::requestRecordStop(int number)
 {
-    Result result;
+    RequestResult result;
     
     LogicalTrack* lt = trackManager->getLogicalTrack(number);
     if (lt != nullptr) {
@@ -390,8 +408,14 @@ Pulse* SyncMaster::getBlockPulse(LogicalTrack* track)
 /**
  * Called by TimeSlicer to pass back the PulseRequest sent back on the
  * last syncPulse call sent to the track.
+ *
+ * !!! Okay, hating this
+ * Why was it the pulse's job to do this, since pulses often just activate
+ * events and what processes those might be in a different call stack
+ * This should be calling back to notifyRecordEnded or requestRecordStop
+ * or something, revisit this mess
  */
-void SyncMaster::handlePulseResult(class LogicalTrack* lt, PulseResult result)
+void SyncMaster::handlePulseResult(class LogicalTrack* lt, bool ended)
 {
     SyncSource src = getEffectiveSource(lt);
     if (src == SyncSourceNone || src == SyncSourceMaster) {
@@ -399,10 +423,10 @@ void SyncMaster::handlePulseResult(class LogicalTrack* lt, PulseResult result)
         // to if this were happening
         Trace(1, "SyncMaster::handlPulseResult Mystery pulse");
     }
-    else if (result.ended) {
+    else if (ended) {
         // this is an alternative to the track calling notifyRecordStop
         // though it can do that too
-        notifyRecordStopped(number);
+        notifyRecordStopped(lt->getNumber());
     }
 }
 
@@ -442,9 +466,9 @@ void SyncMaster::notifyRecordStopped(int number)
     if (lt != nullptr) {
 
         // this stops sending pulses to the track
-        if (lt->isPendingSyncRecord()) {
+        if (lt->isSyncRecording()) {
             
-            lt->setPendingSyncRecord(false);
+            lt->setSyncRecording(false);
 
             SyncSource src = lt->getSyncSourceNow();
             if (src == SyncSourceMidi) {
@@ -572,7 +596,7 @@ void SyncMaster::notifyTrackReset(int number)
     // it can no longer be recording
     LogicalTrack* lt = trackManager->getLogicalTrack(number);
     if (lt != nullptr)
-      lt->setPendingSyncRecord(false);
+      lt->setSyncRecording(false);
 }
 
 /**

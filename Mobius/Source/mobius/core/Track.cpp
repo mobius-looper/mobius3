@@ -356,9 +356,9 @@ int Track::getCycles()
  * A sync pulse has been received from SyncMaster/TimeSlicer
  * Forward to the Synchronizer.
  */
-void Track::syncPulse(class Pulse* p)
+bool Track::syncPulse(class Pulse* p)
 {
-    mSynchronizer->syncPulse(this, p);
+    return mSynchronizer->syncPulse(this, p);
 }
 
 /**

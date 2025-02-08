@@ -84,7 +84,7 @@ class Synchronizer {
     // Sync Pulses
     //
 
-    void syncPulse(class Track* t, class Pulse* p);
+    bool syncPulse(class Track* t, class Pulse* p);
 
     //
     // Record scheduling
@@ -145,7 +145,7 @@ class Synchronizer {
     float getSpeed(class Loop* l);
 
     void startRecording(class Loop* l);
-    void syncPulseRecording(class Loop* l, class Pulse* p);
+    bool syncPulseRecording(class Loop* l, class Pulse* p);
     void activateRecordStop(class Loop* l, class Pulse* pulse, class Event* stop);
 
     // Realign

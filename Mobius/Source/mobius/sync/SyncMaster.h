@@ -45,14 +45,6 @@ class SyncMaster
         int unitLength = 0;
     };
     
-    /**
-     * Structure returned by the track's syncPulse method.
-     */
-    class PulseResult {
-        // true if the track has decided to end recording on this pulse
-        bool ended = false;
-    };
-
     SyncMaster();
     ~SyncMaster();
 
@@ -77,7 +69,7 @@ class SyncMaster
     // This is really the entire reason we exist
     //
 
-    class Pulse* getBlockPulse(int trackNumber);
+    class Pulse* getBlockPulse(class LogicalTrack* t);
 
     //
     // Masters
@@ -98,7 +90,9 @@ class SyncMaster
     //
 
     bool isRecordSynchronized(int number);
-    bool isThresholdRecording(int number);
+    bool hasRecordThreshold(int number);
+    bool isSyncRecording(int number);
+    
     int getRecordThreshold();
 
     RequestResult requestRecordStart(int number, SyncUnit startUnit, SyncUnit pulseUnit);
@@ -203,7 +197,7 @@ class SyncMaster
 
     class SymbolTable* getSymbols();
 
-    void handlePulseResult(class LogicalTrack* track, PulseResult result);
+    void handlePulseResult(class LogicalTrack* track, bool ended);
     
   private:
 

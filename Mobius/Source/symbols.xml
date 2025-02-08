@@ -594,7 +594,7 @@ Once those models are fully converted, these symbols can be removed.
     <!-- These are runtime symbols used for actions.  They may be saved in the session
          and restored, but are not edited in the SessionEditor
     -->
-    <Parameter name='transportTempo' type='int' level='kernel' defaultValue='90'/>
+    <Parameter name='transportTempo' type='int' level='kernel' defaultValue='90' displayName='Transport Default Tempo'/>
     <Parameter name='transportLength' type='int' level='kernel' options='noBinding'/>
 
     <!-- accessible transport parameters -->

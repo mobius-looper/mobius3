@@ -69,7 +69,7 @@ class LogicalTrack
     class MobiusLooperTrack* getMobiusTrack();
 
     // Sync recording state
-    SyncMaster::PulseResult syncPulse(class Pulse* p);
+    bool syncPulse(class Pulse* p);
 
     int getUnitLength();
     void setUnitLength(int l);

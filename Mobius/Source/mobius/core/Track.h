@@ -256,7 +256,7 @@ class Track : public TraceContext
 	void prepareForInterrupt();
 
     void processAudioStream(class MobiusAudioStream* stream);
-    void syncPulse(class Pulse* p);
+    bool syncPulse(class Pulse* p);
     int getSyncLength();
     
 	//

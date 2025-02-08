@@ -120,7 +120,8 @@ Transport::Transport(SyncMaster* sm)
     
     // start off with a reasonable tempo, this will change
     // soon when the session is loaded
-    userSetTempo(90.0f);
+    defaultTempo = 90.0f;
+    userSetTempo(defaultTempo);
 
     //midiRealizer->setTraceEnabled(true);
 
