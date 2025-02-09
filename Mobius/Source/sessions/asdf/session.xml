@@ -14,7 +14,7 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="midi" type="enum" ordinal="4"/>
+      <Value name="syncSource" value="transport" type="enum" ordinal="1"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="trackSyncUnit" value="subcycle" type="enum" ordinal="0"/>
     </ValueSet>
@@ -147,7 +147,7 @@
   </Track>
   <ValueSet>
     <Value name="autoRecordUnit" value="bar" type="enum" ordinal="1"/>
-    <Value name="autoRecordUnits" value="1" type="int"/>
+    <Value name="autoRecordUnits" value="2" type="int"/>
     <Value name="controllerActionThreshold" value="64" type="int"/>
     <Value name="fadeFrames" value="128" type="int"/>
     <Value name="hostBarsPerLoop" value="1" type="int"/>
