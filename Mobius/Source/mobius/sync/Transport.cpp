@@ -1116,24 +1116,44 @@ void Transport::resetLocation()
 
 void Transport::start()
 {
-    started = true;
+    if (!started) {
+        started = true;
+        Trace(2, "Transport: Starting unitPlayHead %d", unitPlayHead);
 
-    Trace(2, "Transport: Starting unitPlayHead %d", unitPlayHead);
+        // this may be considered a beat pulse in case a track is stuck in Synchronize
+        // waiting for the transport to start back up
+        if (unitPlayHead == 0) {
+            // if this was an external action queued for MobiusKernel, then we'll be
+            // in the action processing phase after beginAudioBlock which called advance()
+            // and Pulsator has already converted sync source beats into Pulses
+            // to get this into Pulsator have to call up to a special SyncMaster method
+            // that tells Pulsator to look again
+            //
+            // what this doesn't handle is actions that come in the middle of a block
+            // after a script wait, that's harder since we don't know the TimeSlicer
+            // block offset at this point, but this isn't the usual case
+            result.started = true;
+            result.beatDetected = true;
+            result.barDetected = true;
+            result.loopDetected = true;
+            result.blockOffset = 0;
+            syncMaster->notifyTransportStarted();
+        }
 
-    // going to need a lot more state here
-    if (midiEnabled) {
-        // We're normally in a UIAction handler at this point before
-        // MobiusKernel advances SyncMaster.  MS_START and clocks will begin on
-        // the next timer thread cycle, but even if that happens soon, MidiRealizer
-        // may have captured the queue early.  The end result is that we won't see
-        // any events in the queue until the next block.  DriftMonitor needs to
-        // be reoriented when the started event comes in, but it can't hurt to do
-        // it now, and helps measure initial lag.
-        midiRealizer->start();
-        drifter.orient(unitLength);
+        // going to need a lot more state here
+        if (midiEnabled) {
+            // We're normally in a UIAction handler at this point before
+            // MobiusKernel advances SyncMaster.  MS_START and clocks will begin on
+            // the next timer thread cycle, but even if that happens soon, MidiRealizer
+            // may have captured the queue early.  The end result is that we won't see
+            // any events in the queue until the next block.  DriftMonitor needs to
+            // be reoriented when the started event comes in, but it can't hurt to do
+            // it now, and helps measure initial lag.
+            midiRealizer->start();
+            drifter.orient(unitLength);
+        }
     }
 }
-
 void Transport::startClocks()
 {
     // in theory could be watching drift now too, but

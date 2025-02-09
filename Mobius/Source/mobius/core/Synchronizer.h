@@ -135,10 +135,10 @@ class Synchronizer {
 
     // Recording
     
-    class Event* schedulePendingRecord(class Action* action, class Loop* l, class MobiusMode* mode);
+    class Event* scheduleSyncRecord(class Action* action, class Loop* l, class MobiusMode* mode);
     class Event* scheduleNormalRecordStop(class Action* action, class Loop* loop);
     class Event* scheduleSyncRecordStop(class Action* action, class Loop* l);
-    class Event* scheduleAutoRecordStop(class Action* action, class Loop* loop, class Event* startEvent);
+    class Event* scheduleAutoRecordStop(class Action* action, class Loop* loop);
 
     void extendRecordStop(class Action* action, class Loop* loop, class Event* stop);
     

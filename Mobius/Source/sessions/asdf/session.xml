@@ -14,7 +14,7 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="transport" type="enum" ordinal="1"/>
+      <Value name="syncSource" value="midi" type="enum" ordinal="4"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="trackSyncUnit" value="subcycle" type="enum" ordinal="0"/>
     </ValueSet>

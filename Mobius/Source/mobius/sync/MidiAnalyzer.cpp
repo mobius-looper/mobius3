@@ -558,7 +558,8 @@ void MidiAnalyzer::advance(int frames)
 void MidiAnalyzer::lock()
 {
     if (!locked) {
-        Trace(2, "MidiAnalyzer: Locking unit length %d", unitLength);
+        Trace(2, "MidiAnalyzer: Locking unit length %d playHead %d",
+              unitLength, unitPlayHead);
 
         if (unitLength == 0) {
             // we're in the "first beat dead zone" and will wait until the

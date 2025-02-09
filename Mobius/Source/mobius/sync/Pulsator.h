@@ -37,6 +37,9 @@ class Pulsator
     // called by leaders to register a pulse in this block
     void addLeaderPulse(int leader, SyncUnit unit, int blockOffset);
 
+    // called indirectly by Transport when it is started
+    void notifyTransportStarted();
+
     // called by SyncMaster to get the relevant pulse for a track
     Pulse* getBlockPulse(class LogicalTrack* t, SyncUnit unit);
 

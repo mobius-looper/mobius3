@@ -225,6 +225,11 @@ void Pulsator::gatherTransport()
     convertPulse(SyncSourceTransport, result, transportPulse);
 }
 
+void Pulsator::notifyTransportStarted()
+{
+    gatherTransport();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Pulse Detection

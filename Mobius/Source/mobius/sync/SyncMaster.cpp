@@ -411,6 +411,14 @@ Pulse* SyncMaster::getBlockPulse(LogicalTrack* track)
         }
 
         pulse = pulsator->getBlockPulse(track, unit);
+
+        bool tracePulseBlocks = true;
+        if (tracePulseBlocks) {
+            if (pulse != nullptr) {
+                Trace(2, "SyncMaster: Block pulse %d offset %d", blockCount,
+                      pulse->blockFrame);
+            }
+        }
     }
     return pulse;
 }
@@ -1058,6 +1066,11 @@ void SyncMaster::setTransportMaster(UIAction* a)
 //
 //////////////////////////////////////////////////////////////////////
 
+int SyncMaster::getBlockCount()
+{
+    return blockCount;
+}
+
 /**
  * This must be called very early in the kernel block processing phase.
  * It initializes the subcomponents for the call to processAudioStream() which
@@ -1070,6 +1083,8 @@ void SyncMaster::setTransportMaster(UIAction* a)
  */
 void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
 {
+    blockCount++;
+    
     // monitor changes to the sample rate once the audio device is pumping
     // and adjust internal calculations
     // this should come through MobiusAudioStream, that's where it lives
@@ -1133,6 +1148,16 @@ void SyncMaster::refreshSampleRate(int rate)
 void SyncMaster::processAudioStream(MobiusAudioStream* stream)
 {
     timeSlicer->processAudioStream(stream);
+}
+
+/**
+ * Called by Transport whenever it starts as the result of an action.
+ * Since this happens after Pulsator was advanced in beginAudioBlock, have
+ * to ask it to look again.
+ */
+void SyncMaster::notifyTransportStarted()
+{
+    pulsator->notifyTransportStarted();
 }
 
 /**

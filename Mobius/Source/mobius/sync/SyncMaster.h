@@ -57,6 +57,7 @@ class SyncMaster
     // Block Lifecycle
     //
 
+    int getBlockCount();
     void beginAudioBlock(class MobiusAudioStream* stream);
     void processAudioStream(class MobiusAudioStream* stream);
     bool doAction(class UIAction* a);
@@ -199,6 +200,7 @@ class SyncMaster
     class SymbolTable* getSymbols();
 
     void handlePulseResult(class LogicalTrack* track, bool ended);
+    void notifyTransportStarted();
     
   private:
 
@@ -207,6 +209,7 @@ class SyncMaster
     class TrackManager* trackManager = nullptr;
 
     int sampleRate = 44100;
+    int blockCount = 0;
     int trackSyncMaster = 0;
 
     SessionHelper sessionHelper;

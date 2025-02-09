@@ -71,7 +71,7 @@ void Synchronizer::globalReset()
 
 //////////////////////////////////////////////////////////////////////
 //
-// Record Scheduling
+// Record Start
 //
 // There are four Synchronizer calls the Record function makes during the
 // recording process:
@@ -88,13 +88,11 @@ void Synchronizer::globalReset()
  * Schedule a recording event.
  *
  * This is the first step in the recording process.  A UIAction/Action has
- * been recieved with one of the record family functions (Record, AutoRecord, Rehearse).
+ * been recieved with one of the record family functions (Record, SUSRecord,AutoRecord,
+ * Rehearse).
+ * 
  * If we're already in Record mode should have called scheduleModeStop first.
- *
- * This needs some serious refactoring, but it's all a twisted mess right now so I'm
- * starting by factoring out AutoRecord handling into an independent set of
- * methods.  There will be duplication, can factor out commonalities later.
- *
+ * 
  * Abandon Rehearse mode.  It's obscure and no one ever used it.  It's basically
  * just Record but enters into this weird alternate mode afterward where I think it
  * just plays once allowing for review then starts recording again.  Better to do all that
@@ -114,53 +112,44 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
       Trace(l, 1, "Sync: Mismatched function in scheduleRecordStart\n");
 
     EventManager* em = l->getTrack()->getEventManager();
+    Event* prevStopEvent = em->findEvent(RecordStopEvent);
 	MobiusMode* mode = l->getMode();
     int number = l->getTrack()->getLogicalNumber();
+
+    // AutoRecord needs to associate the Action with the ENDING event
+    // not the starting event.  Each Event we schedule likes to own an Action
+    // for context, so clone it if this is going to be an AutoRecord start
+    Action* startAction = action;
+    if (f == AutoRecord)
+      startAction = mMobius->cloneAction(action);
 
 	if (mode == SynchronizeMode ||
         mode == ThresholdMode ||
         mode == RecordMode) {
 
 		// These cases are almost identical: schedule a RecordStop
-		// event to end the recording after one sync unit
-		// If there is already a RecordStop event, extend it by one unit
+		// event to end the recording after one sync unit.
+		// If there is already a RecordStop event, it would have been
+        // extended during the call to scheduleRecordStop.
 
-        // !! Threshold mode may not be working properly
-        // I think the intent is that if Threshold is enabled and you press
-        // Record twice without playing anything, it should set up a recording
-        // of one sync unit as soon as the threshold is reached, if so, this will
-        // require ThresholdMode to be added to the scheduling logic in
-        // scheduleRecordStop along with SynchronizeMode
-
-        stopEvent = em->findEvent(RecordStopEvent);
-        if (stopEvent != nullptr) {
+        if (prevStopEvent != nullptr) {
             // strange control flow here...
             // Function::invoke will always call scheduleModeStop
             // before calling the Function specific scheduleEvent.  For
             // the second press of Record this means we'll end up here
             // with the stop event already scheduled, but this is NOT
             // an extension case.  This means you have to do the extension
-            // in scheduleRecordStop.  There was old code that thought
-            // you could do it here only if it was AutoRecord, but they
-            // should all be handled the same way
+            // in scheduleRecordStop.  There is too much of a disconnect between
+            // the time scheduleRecordStop is called and scheduleRecordStart and it's
+            // hard to pass state between them.
+            stopEvent = prevStopEvent;
         }
-        else if (action->down || function->sustain) {
+        else if (action->down && function->sustain) {
 
-            // schedule an auto-stop
-            if (function->sustain) {
-                // old comments: should have had one from the up transition of the
-                // last SUS trigger
-                // not sure if this is a problem but watch out for it
-                Trace(l, 1, "Sync: Missing RecordStopEvent for SUSRecord");
-            }
-
-            if (function == AutoRecord) {
-                // An AutoRecord is comming in during the initial synchronization period
-                // or as a Record alternate ending
-                // this is allowed, let scheduleRecordStop pad it out
-                Trace(l, 2, "Sync: AutoRecord during Synchronization period");
-            }
-            
+            // this is either the down of Record/AutoRecord or the up of SUSRecord
+            // make it stop
+            // note we don't use startAction here, that will end up being reclaimed
+            // since we're not starting an AutoRecord
             stopEvent = scheduleRecordStop(action, l);
         }
     }
@@ -182,22 +171,24 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
         // advance, the loop thermometer will freeze in place.  But it
         // is sort of like a pause with possible undo back so maybe that's okay.
 		l->stopPlayback();
-		startEvent = schedulePendingRecord(action, l, SynchronizeMode);
+		startEvent = scheduleSyncRecord(startAction, l, SynchronizeMode);
 	}
-	else if (!action->noSynchronization && mSyncMaster->hasRecordThreshold(number)) {
+	else if (!action->noSynchronization &&
+             mSyncMaster->hasRecordThreshold(number)) {
         // Threshold recording is similar to synchronized recording
         // in that we schedule a pending start and let it be activated later
         // old comments wonder if the noSynchronization option in the action should
         // apply here 
 		l->stopPlayback();
-		startEvent = schedulePendingRecord(action, l, ThresholdMode);
+		startEvent = scheduleSyncRecord(startAction, l, ThresholdMode);
 	}
 	else {
         // Begin recording now
-		// don't need to wait for the event, stop playback now
 		l->stopPlayback();
-		startEvent = f->scheduleEventDefault(action, l);
-			
+		startEvent = f->scheduleEventDefault(startAction, l);
+
+        // old comments, unclear if still relevant
+        //
 		// Ugly: when recording from a script, we often have latency
 		// disabled and want to start right away.  mFrame will
 		// currently be -InputLatency but we'll set it to zero as
@@ -230,28 +221,31 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
     // Historically the event returned was the Stop event, which is
     // more useful for scripts to be waiting on
     Event* returnEvent = startEvent;
-    if (f == AutoRecord && startEvent != nullptr && stopEvent == nullptr) {
-
-        stopEvent = scheduleAutoRecordStop(action, l, startEvent);
-        if (stopEvent != nullptr) {
-            // ugly shenanigans to transfer the relationship between the action and
-            // the startEvent to the stopEvent since that is what scripts will want to wait on
-            // At this point in time both the startEvent and autoStopEvent will be pointing
-            // to the action, you can't have two action owners so synthesize one
-            // for the startEvent
-            Action* startAction = mMobius->cloneAction(action);
-            startEvent->setAction(startAction);
-            startAction->setEvent(startEvent);
-
-            // should have already been set by scheduleRecordStop but make sure
-            if (action->getEvent() != stopEvent) {
-                Trace(l, 1, "Sync: Repairing AutoREcord action for stop event");
-                action->setEvent(stopEvent);
-            }
+    if (f == AutoRecord) {
+        
+        if (startEvent == nullptr) {
+            // decided not to schedule an AR start, reclaim the cloned action
+            mMobius->completeAction(startAction);
+            // stopEvent should be set, it's either a previous stop or one we
+            // just made
+            if (stopEvent != prevStopEvent)
+              returnEvent = stopEvent;
+        }
+        else if (stopEvent != nullptr) {
+            // unpossible to have both a startEvent and a stopEvent at this point
+            Trace(1, "Synchronizer: Logic error in scheduleRecordStart");
+            // this will start behaving strantely, probabloy best not to return
+            // anything that would make it worse
+            returnEvent = nullptr;
+        }
+        else {
+            // schedule the AR stop, associate it with the original Action
+            // and return the event
+            stopEvent = scheduleAutoRecordStop(action, l);
             returnEvent = stopEvent;
         }
     }
-
+    
     // if we deciced to schedule a record start
     // either pulsed, or after latency, let the followers over in MIDI land
     // know.  This should happen immediately rather deferred until the Record
@@ -269,8 +263,8 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
  * Schedule a pending Record event and optionally a RecordStop event
  * if this is an AutoRecord.
  */
-Event* Synchronizer::schedulePendingRecord(Action* action, Loop* l,
-                                           MobiusMode* mode)
+Event* Synchronizer::scheduleSyncRecord(Action* action, Loop* l,
+                                        MobiusMode* mode)
 {
     Event* event = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
@@ -352,11 +346,11 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
         Trace(loop, 2, "Sync: Reusing RecordStopEvent\n");
         event = prev;
 
-        // but if this IS a secondary press of Record or AutoRecord, then this
-        // is where the extensions happen
+        // but if this IS a secondary press a Record family function,
+        // then this is where the extensions happen
             
         if (action->down &&
-            (function == Record || function == AutoRecord)) {
+            (function == Record || function == AutoRecord || function == SUSRecord)) {
             // another trigger, increase the length of the recording
             // but ignore the up transition of SUSRecord
             extendRecordStop(action, loop, prev);
@@ -377,6 +371,9 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
     }
     else if (function == AutoRecord || 
              (function == Record && mode == SynchronizeMode)) {
+
+        // todo: dislike relying on SynchronizeMode here, would be more robust
+        // to search for an existing RecordStartEvent
 
         // Pressing Record a second time during Synchronize mode while waiting
         // for the recording to start is similar to AutoRecord.
@@ -438,26 +435,14 @@ Event* Synchronizer::scheduleNormalRecordStop(Action* action, Loop* loop)
     if (doInputLatency)
       stopFrame += loop->getInputLatency();
 
-    // new: I once thought that SyncMaster could as for minor
-    // rounding adjustments at the end but this is no longer the case
-    // Loop::prepareLoop ignores the adjust argument anyway
-#if 0    
-    int number = loop->getTrack()->getLogicalNumber();
-    int adjust = mSyncMaster->notifyTrackRecordEnding(number);
-    stopFrame += adjust;
-                
-    if (stopFrame < currentFrame) {
-        // SM wants to pull the ending back, but this can't rewind
-        // before it is now, I suppose it could but it's hard
-        stopFrame = currentFrame;
-        Trace(loop, 1, "Sync: SyncMaster wanted a negative adjustment back in time");
-    }
-#endif    
-
     // Must use Record function since the invoking function
     // can be anything that ends Record mode
     EventManager* em = loop->getTrack()->getEventManager();
     Event* event = em->newEvent(Record, RecordStopEvent, stopFrame);
+
+    // arm the StopEvent with the initial goal cycle count which is always
+    // one for a simple stop
+    event->number = 1;
 
     // this was done for what I guess was old test scripts
     // I don't think it applies to pulsed events
@@ -475,7 +460,6 @@ Event* Synchronizer::scheduleNormalRecordStop(Action* action, Loop* loop)
     // allocates the event, once we start reusing previously scheduled
     // stop events, might not want to override this?
 	event->fadeOverride = noFade;
-    
     
     // prepare the loop early so we can beging playing
     // as soon as the play frame reaches the end
@@ -570,6 +554,9 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
     // take ownership of the Action
     action->setEvent(stop);
     em->addEvent(stop);
+
+    // like scheduleNormalRecordStop the goal cycles starts at 1
+    stop->number = 1;
     
     return stop;
 }
@@ -581,14 +568,11 @@ float Synchronizer::getSpeed(Loop* l)
 }
 
 /**
- * Schedule the end of an auto-record.  This is where it diverges completely
- * from normal Record.
+ * Schedule the end of an auto-record.  This is where it diverges from
+ * normal Record in the number of goal cycles.
  */
-Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop, Event* startEvent)
+Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop)
 {
-    // not sure why I thought this would be interesting
-    (void)startEvent;
-    
     Event* event = nullptr;
     Track* track = loop->getTrack();
     EventManager* em = track->getEventManager();
@@ -627,23 +611,25 @@ Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop, Event* s
         event->number = units;
     }
     else {
-        // unsynchronized AR is scheduled
+        // unsynchronized AR is scheduled with a frame
         
         event = em->newEvent(function, RecordStopEvent, 0);
         event->quantized = true;	// makes it visible in the UI
 
         // show number of units like pulsed AR
         int units = mSyncMaster->getAutoRecordUnits(number);
+        if (units == 0) units = 1;
         event->number = units;
 
         // this will use the Transport tempo combined with
         // autoRecordUnit to calculate a length
         int length = mSyncMaster->getAutoRecordUnitLength(number);
 
-        event->frame = length;
+        event->frame = length * units;
 
         // When you schedule stop events on specific frames, we have to set
-        // the loop cycle count since Synchronizer is no longer watching.
+        // the loop cycle count early since we won't be receiving pulses
+        // which is how they are incremented for sync recording
         loop->setRecordCycles(units);
     }
 
@@ -699,39 +685,24 @@ void Synchronizer::extendRecordStop(Action* action, Loop* loop, Event* stop)
     //if (function == AutoRecord)
     //extension = mSyncMaster->getAutoRecordUnits(number);
 
-    int currentGoal = stop->number;
-    if (currentGoal == 0) {
-        // never had an extension, goal starts at whatever the number of
-        // cycles is now, then adds some
-        // hmm, because of the way numbers are displayed this might be confusing
-        // if you let 3 cycles elapse then press Record twice RecordEnd will
-        // show number 5 which is correct, but if you only pressed it once
-        // it would just end and not show any number
-        currentGoal = loop->getRecordCycles();
-
-        // ugh!  not liking how the goal number and the loop cycle count
-        // are disconnected but expected to stay in sync
-    }
-    int newGoal = currentGoal + extension;
-    
-    stop->number = newGoal;
-
-    // for unsynced AutoRecord also increase the length
+    // sync is easy, just bump the number of goal cycles
+    stop->number = stop->number + extension;
+        
     if (!stop->pending) {
-    
+        // scheduled is harder, we won't bet getting pulses so the stop->frame
+        // needs to be long enough
         int unitLength = mSyncMaster->getAutoRecordUnitLength(number);
+        int newEndFrame = stop->number * unitLength;
 
-        int cycles = loop->getRecordCycles();
-        if (cycles != currentGoal) {
-            Trace(1, "Synchronizer: Goal/Cycle mismatch %d/%d",
-                  currentGoal, cycles);
-        }
-        // this will normally be 1 
-        int toAdd = newGoal - cycles;
-        if (toAdd > 0) {
-            stop->frame += (unitLength * toAdd);
-            // scheduled endings need to set their own cycle count
-            loop->setRecordCycles(newGoal);
+        // normally this will be larger than where we are now but if the user
+        // is manually dicking with the unit length it may be less,
+        // in that case, just leave the current stop alone
+        if (newEndFrame < stop->frame)
+          Trace(1, "Synmchronizer: Loop is beyond where the extension wants it");
+        else {
+            stop->frame = newEndFrame;
+            // cycles is normally 1 less than this, unless user is changing
+            // cycle counts manually
         }
     }
 }
@@ -740,9 +711,8 @@ void Synchronizer::extendRecordStop(Action* action, Loop* loop, Event* stop)
  * Called from RecordFunction::undoModeStop.
  *
  * Uses the stop event number as the number of "goal cycles".
- * The number of goal cycles cannot be below 1, if they do Undo
- * after counting down to 1 cycle, it undoes the entire recording.
- * Return true means we took off a cycle, false means to undo the recording.
+ * The number of goal cycles cannot be below 1, if they do Undo below
+ * that the entire recording is canceled.
  */
 bool Synchronizer::undoRecordStop(Loop* loop)
 {
@@ -763,37 +733,22 @@ bool Synchronizer::undoRecordStop(Loop* loop)
             //reduction = mSyncMaster->getAutoRecordUnits(number);
 
             int newGoal = currentGoal - reduction;
-            // not supposed to go negative but could be a fringe case where you
-            // incremented by 1 but decremented by AutoRecordUnits, or did something
-            // in script that didn't make sense
             if (newGoal >= 1) {
-                undone = true;
                 stop->number = newGoal;
+                undone = true;
                 
                 if (!stop->pending) {
-                    // basing this off the cycle count is unreliable if they're also
-                    // manually messing with cycle counts, would be more accurate to look
-                    // at the actual loop length, but they get what they pay for
-                    int cycles = loop->getRecordCycles();
-                    int toRemove = cycles - newGoal;
-                    if (toRemove < 0) {
-                        Trace(1, "Synchronizer: Unexpected cycle count in undoRecordStop");
-                        // return false and cancel the whole thing
-                    }
-                    else if (toRemove == 0) {
-                        // already there
+                    // removing cycles can't rewind past where we are now
+                    int unitLength = mSyncMaster->getAutoRecordUnitLength(number);
+                    int newEndFrame = stop->number * unitLength;
+
+                    loop->setRecordCycles(newGoal);
+                    
+                    if (newEndFrame < stop->frame) {
+                        // leave it alone and finish 0ut this cycle
                     }
                     else {
-                        // the number of frames we want to remove
-                        int unitLength = mSyncMaster->getAutoRecordUnitLength(number);
-                        int removeLength = unitLength * toRemove;
-                        int newStopFrame = stop->frame - removeLength;
-                        if (newStopFrame < loop->getFrame()) {
-                            // we're already beyond where we're supposed to end
-                            // they must have been jacking with parameters during recording
-                            Trace(1, "Synchronizer: Record unit removal went awry");
-                            undone = false;
-                        }
+                        stop->frame = newEndFrame;
                     }
                 }
             }
@@ -984,18 +939,6 @@ void Synchronizer::startRecording(Loop* l)
 
 /**
  * Called on each pulse during Record mode.
- *
- * Note regarding the !stop->pending clause...
- *
- * In the olden days, stops were usually pulsed.  Now with locked unit lengths
- * they can be scheduled normally for an exact sync unit boundary.  SyncMaster will
- * send down a final pulse to activate the RecordStop though.  We don't need both mechanisms
- * but I'm keeping the machinery in place in case pulses work better for some things.
- * ATM, though liking scheduling them normally because it is consistent with how
- * AutoRecord works.
- *
- * What this does provide is a useful place to verify that pulses are being scheduled
- * correctly.  
  */
 bool Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
 {
@@ -1018,12 +961,31 @@ bool Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
             // see notes in extendRecordStop
             // the event number is the number of "goal cycles", if we hit
             // a sync boundary and we're at that goal, can end
-            int cycles = l->getCycles();
-            if (stop->number == 0 || stop->number == cycles) {
-                // we can stop now
-                // Tell mSyncMaster we're ending to it can lock the unit length
-                // for this track.
+            int cycles = l->getRecordCycles();
+
+            bool stopIt = false;
+            if (stop->number == 0) {
+                // not supposed to happen
+                Trace(1, "SyncMaster: Missing goal units on sync pulse");
+                stopIt = true;
+            }
+            else if (stop->number == cycles) {
+                // normal advance to the goal cycles
+                stopIt = true;
+            }
+            else if (stop->number < cycles) {
+                // user must have been dicking with the cycle count
+                // or you suck
+                Trace(1, "SyncMaster: Goal cycle underflow");
+                stopIt = true;
+            }
+
+            if (stopIt) {
+                Trace(l, 2, "Synchronizer: Stopping after %d goal units reached", stop->number);
                 int number = t->getLogicalNumber();
+
+                // change this to notifyRecordFinalizing or something
+                // so SM can adapt to unlocked recordings
                 SyncMaster::RequestResult res = mSyncMaster->requestRecordStop(number);
                 
                 activateRecordStop(l, p, stop);
@@ -1044,26 +1006,20 @@ bool Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
             }
             else {
                 // haven't reached the goal, add another cycle
-                l->setCycles(cycles + 1);
+                int newCycles = cycles + 1;
+                Trace(2, "Synchronizer: Record pulse advance cycles from %d 5o %d",
+                      cycles, newCycles);
+                l->setRecordCycles(newCycles);
             }
         }
     }
     else {
-        // we're still recording and another pulse came in
-        // if we're following Bar or Loop pulses we can use this
-        // as an indication to bump the cycle count since our cycle size
-        // will match the leader.
-        // Do NOT do this if following Beat pulses since the resulting
-        // loop size will be more random.
-        // Formerly had some complex logic here to compare the current size
-        // against the leader size and if the happened to be an exact cycle multiple
-        // it would adjust the count, not messing with this, if you sync with Beats,
-        // you get 1 cycle.
-        // For non-track sources, the bar length can be relatiely short so may want more
-        // control over whether every bar constitutes a cycle.
-        if (p->unit == SyncUnitBar || p->unit == SyncUnitLoop) {
-            l->setRecordCycles(l->getCycles() + 1);
-        }
+        // we're still in the initial recording and another pulse came in
+        // formerly bumped cycle count only if the unit was Bar or Loop
+        // if the unit is Beat, comments suggested this could lead to problemantic
+        // short cycles, but now that we use this to see when we reach the goal
+        // it must be incremented
+        l->setRecordCycles(l->getCycles() + 1);
     }
 
     return ended;
@@ -1090,6 +1046,10 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
     // which is what Loop::getFrames will return.  If we're following raw
     // MIDI pulses have to adjust for latency.
 
+    // !! why the hell not Transport or Host?
+    // this really isn't dependent on the sync source, it's dependent
+    // on where we're getting the audio stream
+    
     bool inputLatency = (pulse->source == SyncSourceMidi);
 
     // since we almost always want even loops for division, round up
@@ -1113,100 +1073,6 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
 	stop->frame = finalFrames;
 
 	Trace(l, 2, "Sync: Activating RecordStop at %d frames", stop->frame);
-    
-    // set the ending cycle count
-    // !! is this even relevant any more?  We can bump the cycle count
-    // as sync pulses are received, don't need to wait till activation
-
-    // For TrackSync, this used to compare our side with the master track size
-    // to determine the number of cycles
-    // "For SYNC_TRACK, recalculate the final cycle count based on our
-    // size relative to the master track.  If we recorded an odd number
-    // of subcycles this may collapse to one cycle.  We may also need to
-    // pull back a cycle if we ended exactly on a cycle boundary
-    // (the usual case?)"
-    //
-    // Since we can be syncing with a MIDI track now, will need to use getTrackProperties
-    // to find this.  If we've been cyncing on Cycles, the cycles accumulated during
-    // recording should be enough, but if we've been syncing on Subcycles then we may be on
-    // an even cycle bound or not, and if not need to collapse to one cycle.
-    // needs more work...
-#if 0    
-    if (pulse->source == SyncSourceTrack) {
-        // get the number of frames recorded
-        // sanity check an old differece we shouldn't have any more
-        long slaveFrames = l->getRecordedFrames();
-        if (slaveFrames != finalFrames)
-          Trace(l, 1, "Error in ending frame calculation!\n");
-
-        if (mTrackSyncMaster == nullptr) {
-            Trace(l, 1, "Sync::stopRecording track sync master gone!\n");
-        }
-        else {
-            Track
-            Loop* masterLoop = mTrackSyncMaster->getLoop();
-
-            // !! TODO: more consistency checks
-
-            long cycleFrames = masterLoop->getCycleFrames();
-            if (cycleFrames > 0) {
-                if ((slaveFrames % cycleFrames) > 0) {
-                    // Not on a cycle boundary, should only have happened
-                    // for TRACK_UNIT_SUBCYCLE.  Collapse to one cycle.
-                    l->setRecordCycles(1);
-                }
-                else {
-                    int cycles = (int)(slaveFrames / cycleFrames);
-                    if (cycles == 0) cycles = 1;
-                    long current = l->getCycles();
-                    if (current != cycles) {
-                        // Is this normal?  I guess we would need this
-                        // to pull it back by one if we end recording exactly
-                        // on the cycle boundary?
-                        Trace(l, 2, "Sync: Adjusting ending cycle count from %ld to %ld\n",
-                              (long)current, (long)cycles);
-                        l->setRecordCycles(cycles);
-                    }
-                }
-            }
-        }
-    }
-    else if (source == SYNC_HOST || source == SYNC_MIDI) {
-        // If the sync unit was Beat we may not have actually
-        // filled the final cycle.  If not treat it similar to an 
-        // unrounded multiply and reorganize as one cycle.
-        int cyclePulses = state->getCyclePulses();
-        int remainder = pulses % cyclePulses;
-        if (remainder > 0) {
-            int missing = cyclePulses - remainder;
-            Trace(l, 2, "Sync: Missing %ld pulses in final cycle, restructuring to one cycle\n",
-                  (long)missing);
-            l->setRecordCycles(1);
-        }
-    }
-    else if (source == SYNC_TRANSPORT) {
-        // todo: should be a cycle per bar?
-        // similar logic to TRACK
-        int slaveFrames = (int)(l->getRecordedFrames());
-        int cycleFrames = mSyncMaster->getMasterBarFrames();
-        if ((slaveFrames % cycleFrames) > 0) {
-            l->setRecordCycles(1);
-        }
-        else {
-            int cycles = (int)(slaveFrames / cycleFrames);
-            if (cycles == 0) cycles = 1;
-            long current = l->getCycles();
-            if (current != cycles) {
-                // Is this normal?  I guess we would need this
-                // to pull it back by one if we end recording exactly
-                // on the cycle boundary?
-                Trace(l, 2, "Sync: Adjusting ending cycle count from %ld to %ld\n",
-                      (long)current, (long)cycles);
-                l->setRecordCycles(cycles);
-            }
-        }
-    }
-#endif    
 }
 
 /****************************************************************************
