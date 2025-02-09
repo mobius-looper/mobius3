@@ -294,6 +294,8 @@ bool SyncMaster::isRecordSynchronized(int number)
  * The recording process may be ended at any time by the track calling
  * requestRecordStop or by the return value of any syncPulse as pulses are
  * sent into the track.
+ *
+ * todo: Rip out pulseUnit, if needed call it cycleUnit
  */
 SyncMaster::RequestResult SyncMaster::requestRecordStart(int number,
                                                          SyncUnit startUnit,
@@ -311,14 +313,15 @@ SyncMaster::RequestResult SyncMaster::requestRecordStart(int number,
             result.synchronized = true;
             result.unitLength = barTender->getRecordUnitLength(lt, src);
 
-            if (startUnit == SyncUnitNone) {
-                startUnit = lt->getSyncUnitNow();
-                if (startUnit == SyncUnitNone) {
-                    Trace(1, "SyncMaster: Someone stored SyncUnitNone in the session");
-                    startUnit = SyncUnitBar;
-                }
+            SyncUnit defaultUnit = lt->getSyncUnitNow();
+            if (defaultUnit == SyncUnitNone) {
+                Trace(1, "SyncMaster: Someone stored SyncUnitNone in the session");
+                defaultUnit = SyncUnitBar;
             }
-                
+
+            if (startUnit == SyncUnitNone)
+              startUnit = defaultUnit;
+
             if (pulseUnit == SyncUnitNone)
               pulseUnit = startUnit;
             
@@ -389,6 +392,107 @@ SyncMaster::RequestResult SyncMaster::requestRecordStop(int number)
     }
     return result;
 }
+
+/**
+ * Variant for AutoRecord
+ * A bounded recording is being requested so SM knows when it is supposed to end.
+ * Not supporting sync unit overrides here yet, that concept needs more thought.
+ */
+SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number)
+{
+    RequestResult result;
+
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+        SyncSource src = getEffectiveSource(lt);
+        if (src == SyncSourceNone || src == SyncSourceMaster) {
+            Trace(1, "SyncMaster::requestRecordStart Should not have been called");
+        }
+        else {
+            result.synchronized = true;
+            result.unitLength = barTender->getRecordUnitLength(lt, src);
+
+            SyncUnit syncUnit = lt->getSyncUnitNow();
+            if (syncUnit == SyncUnitNone) {
+                Trace(1, "SyncMaster: Someone stored SyncUnitNone in the session");
+                syncUnit = SyncUnitBar;
+            }
+            
+            lt->setSyncRecording(true);
+            lt->setSyncStartUnit(syncUnit);
+            lt->setSyncPulseUnit(syncUnit);
+
+            lt->setSyncElapsedUnits(1);
+            lt->setSyncGoalUnits(getAutoRecordUnits(number));
+        }
+    }
+    return result;
+}
+
+int SyncMaster::extendAutoRecord()
+{
+    // the number of units to extend, it will always be at least 1
+    // for AutoRecord it could be the number of configured units, but
+    // I'm thinking just keep it 1 for more fine control
+    int extension = 1;
+
+    // don't like this, maybe another parameter
+    //if (function == AutoRecord)
+    //extension = mSyncMaster->getAutoRecordUnits(number);
+
+    int current = lt->getSyncGoalUnits();
+    int newUnits = current + extension;
+    lt->setSyncGoalUnits(newUnits);
+
+    return newUnits;
+}
+
+/**
+ * While you can always extend, reducing the goal units could
+ * retroactively change the meaning of the last sync pulse if it
+ * has already been processed in this block.  The conditions where this
+ * could happen are very rare but possible:
+ *
+ *   - block contains a sync unit pulse
+ *   - track advances to that pulse and treats it as an extension
+ *   - track continues and resumes a script that causes the reduction (e.g. an Undo)
+ *   - the last pulse should now be treated as a recording ending pulse
+ *     rather than an extension
+ *
+ * This isn't something we can go back in time for, the script did logically happen
+ * AFTER the extension so if you undo at this point the track either needs to ignore
+ * it or undo the entire recording.
+ */
+int SyncMaster::reduceAutoRecord()
+{
+    // for both, the pulse number increases
+    int reduction = 1;
+
+    // don't like this, maybe another parameter
+    //if (function == AutoRecord)
+    //reduction = mSyncMaster->getAutoRecordUnits(number);
+
+    int current = lt->getSyncGoalUnits();
+    int newUnits = current - reduction;
+
+    // can't go back in time
+    int elapsed = lt->getSyncElapsedUnits();
+    if (newUnits < elapsed) {
+        Trace(2, "SyncMaster: Supressing attempt to reduce auto record before elapsed");
+        newUnits = elapsed;
+    }
+    else if (newUnits < 1) {
+        // shouldn't be here unless elapsed is messed up, but this can't
+        // ever go below 1
+        Trace(1, "SyncMaster: Attmept to make auto record units negative");
+        newUnits = 1;
+    }
+
+    lt->setSyncGoalUnits(newUnits);
+    
+    return newUnits;
+}    
+
 
 /**
  * Called by TimeSlicer to return the relevant sync pulse for this track.

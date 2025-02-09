@@ -68,21 +68,34 @@ class LogicalTrack
     class MidiTrack* getMidiTrack();
     class MobiusLooperTrack* getMobiusTrack();
 
-    // Sync recording state
+    //
+    // Synchronized Recording State
+    //
+
+    void resetSyncState();
     bool syncPulse(class Pulse* p);
 
+    int getSyncLength();
     int getUnitLength();
     void setUnitLength(int l);
-    int getSyncLength();
     
     void setSyncRecording(bool b);
     bool isSyncRecording();
+    
     void setSyncRecordStarted(bool b);
     bool isSyncRecordStarted();
+    
     SyncUnit getSyncStartUnit();
     void setSyncStartUnit(SyncUnit unit);
+    
     SyncUnit getSyncPulseUnit();
     void setSyncPulseUnit(SyncUnit unit);
+
+    void setSyncElapsedUnits(int i);
+    int getSyncElapsedUnits();
+
+    void setSyncGoalUnits(int i);
+    int getSyncGoalUnits();
     
     //////////////////////////////////////////////////////////////////////
     // Notifier State
@@ -152,14 +165,16 @@ class LogicalTrack
     TrackSyncUnit trackSyncUnit = TrackUnitLoop;
     int syncLeader = 0;
 
-    // unit length this track was recorded with if synchronizing
-    int unitLength = 0;
-
+    // sync recording state
     bool syncRecording = false;
     bool syncRecordStarted = false;
     SyncUnit syncStartUnit = SyncUnitNone;
     SyncUnit syncPulseUnit = SyncUnitNone;
-    
+    int syncElapsedUnits = 0;
+    int syncGoalUnits = 0;
+    // unit length this track was recorded with after finishing
+    int syncUnitLength = 0;
+
     // sync Pulse for SyncMaster/Pulsator
     Pulse leaderPulse;
 

@@ -25,6 +25,18 @@ class Pulse
 {
   public:
 
+    /**
+     * When sent to the tracks, this is the operation expected to
+     * be performed on this pulse.
+     */
+    typedef enum {
+        CommandNone,
+        CommandStart,
+        CommandStop,
+        CommandExtend,
+        CommandRealign
+    } Command;
+    
     Pulse() {}
     ~Pulse() {}
 
@@ -61,7 +73,9 @@ class Pulse
     // when continue is true, the logical pulse in the external sequence
     // we're continuing from, aka the "song position pointer"
     int continuePulse = 0;
-#endif    
+#endif
+    
+    Command command = CommandNone;
 
     void reset(SyncSource s, int msec) {
         source = s;
@@ -74,6 +88,7 @@ class Pulse
         stop = false;
         //mcontinue = false;
         //continuePulse = 0;
+        command = CommandNone;
     }
 
     void reset() {

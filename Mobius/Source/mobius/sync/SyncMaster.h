@@ -101,6 +101,7 @@ class SyncMaster
     RequestResult requestRecordStart(int number, SyncUnit unit);
     RequestResult requestRecordStart(int number);
     RequestResult requestRecordStop(int number);
+    RequestResult requestAutoRecord(int number);
    
     //
     // Track Notifications

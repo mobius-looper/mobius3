@@ -295,6 +295,24 @@ MidiTrack* LogicalTrack::getMidiTrack()
     return mt;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Synchronized Recording State
+//
+//////////////////////////////////////////////////////////////////////
+
+void LogicalTrack::resetSyncState()
+{
+    syncRecording = false;
+    syncRecordStarted = false;
+    syncStartUnit = SyncUnitNone;
+    syncPulseUnit = SyncUnitNone;
+    syncElapsedUnits = 0;
+    syncGoalUnits = 0;
+    // might want an option for this to be preserved
+    syncUnitLength = 0;
+}
+
 bool LogicalTrack::syncPulse(Pulse* p)
 {
     return track->syncPulse(p);
@@ -302,12 +320,12 @@ bool LogicalTrack::syncPulse(Pulse* p)
 
 void LogicalTrack::setUnitLength(int l)
 {
-    unitLength = l;
+    syncUnitLength = l;
 }
 
 int LogicalTrack::getUnitLength()
 {
-    return unitLength;
+    return syncUnitLength;
 }
 
 int LogicalTrack::getSyncLength()
@@ -360,6 +378,26 @@ void LogicalTrack::setSyncPulseUnit(SyncUnit unit)
     syncPulseUnit = unit;
 }
 
+void LogicalTrack::setSyncElapsedUnits(int i)
+{
+    syncElapsedUnits = i;
+}
+
+int LogicalTrack::getSyncElapsedUnits()
+{
+    return syncElapsedUnits;
+}
+
+void LogicalTrack::setSyncGoalUnits(int i)
+{
+    syncGoalUnits = i;
+}
+
+int LogicalTrack::getSyncGoalUnits()
+{
+    return syncGoalUnits;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Actions
@@ -381,11 +419,7 @@ void LogicalTrack::doAction(UIAction* a)
 
     if (sid == FuncTrackReset || sid == FuncGlobalReset) {
         clearBindings();
-        unitLength = 0;
-        syncRecording = false;
-        syncRecordStarted = false;
-        syncStartUnit = SyncUnitNone;
-        syncPulseUnit = SyncUnitNone;
+        resetSyncState();
     }
     
     track->doAction(a);
