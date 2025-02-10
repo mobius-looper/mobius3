@@ -35,14 +35,15 @@ class SyncMaster
     /**
      * Structure returned by the SyncMaster's requestRecordStart
      * or requestRecordStop methods.
+     *
+     * Originally thought I needed to return the unitLength here but
+     * that's handled in a better way now, don't really need this.
      */
     class RequestResult {
       public:
         // true if the recording is expected to be synchronized based
         // on the track's SyncMode 
         bool synchronized = false;
-        // unit length if known
-        int unitLength = 0;
     };
     
     SyncMaster();
@@ -85,7 +86,6 @@ class SyncMaster
     SyncSource getEffectiveSource(int id);
     SyncSource getEffectiveSource(class LogicalTrack* t);
     SyncUnit getSyncUnit(int id);
-    int getSyncUnitLength(int id);
 
     //
     // Sync Recording
@@ -97,7 +97,7 @@ class SyncMaster
     
     int getRecordThreshold();
 
-    RequestResult requestRecordStart(int number, SyncUnit startUnit, SyncUnit pulseUnit);
+    RequestResult requestRecordStart(int number, SyncUnit pulseUnit, SyncUnit startUnit);
     RequestResult requestRecordStart(int number, SyncUnit unit);
     RequestResult requestRecordStart(int number);
     RequestResult requestRecordStop(int number);
@@ -219,7 +219,6 @@ class SyncMaster
 
     // cached session parameters
     bool manualStart = false;
-    SyncUnit autoRecordUnit = SyncUnitBar;
     int autoRecordUnits = 1;
     int recordThreshold = 0;
     
@@ -244,6 +243,7 @@ class SyncMaster
 
     // new things
     bool isSourceLocked(class LogicalTrack* t);
+    int getAutoRecordBeats(class LogicalTrack* t);
 
 };
 

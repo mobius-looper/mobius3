@@ -88,14 +88,17 @@ class LogicalTrack
     SyncUnit getSyncStartUnit();
     void setSyncStartUnit(SyncUnit unit);
     
-    SyncUnit getSyncPulseUnit();
-    void setSyncPulseUnit(SyncUnit unit);
+    SyncUnit getSyncRecordUnit();
+    void setSyncRecordUnit(SyncUnit unit);
 
     void setSyncElapsedUnits(int i);
     int getSyncElapsedUnits();
 
     void setSyncGoalUnits(int i);
     int getSyncGoalUnits();
+    
+    void setSyncElapsedBeats(int i);
+    int getSyncElapsedBeats();
     
     //////////////////////////////////////////////////////////////////////
     // Notifier State
@@ -169,8 +172,9 @@ class LogicalTrack
     bool syncRecording = false;
     bool syncRecordStarted = false;
     SyncUnit syncStartUnit = SyncUnitNone;
-    SyncUnit syncPulseUnit = SyncUnitNone;
+    SyncUnit syncRecordUnit = SyncUnitNone;
     int syncElapsedUnits = 0;
+    int syncElapsedBeats = 0;
     int syncGoalUnits = 0;
     // unit length this track was recorded with after finishing
     int syncUnitLength = 0;

@@ -686,19 +686,6 @@ int BarTender::getBarsPerLoop(SyncSource src)
     return bpl;
 }
 
-/**
- * Not sure why this is here, but don't need it any more
- */
-SyncSource BarTender::getSyncSource(int trackNumber)
-{
-    Trace(1, "BarTender::getSyncSource Who calls this?");
-    SyncSource source = SyncSourceNone;
-    LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
-    if (lt != nullptr)
-      source = lt->getSyncSourceNow();
-    return source;
-}
-
 void BarTender::getLeaderProperties(LogicalTrack* track, TrackProperties& props)
 {
     if (track == nullptr || track->getSyncSourceNow() != SyncSourceTrack) {
@@ -726,21 +713,57 @@ void BarTender::getLeaderProperties(LogicalTrack* track, TrackProperties& props)
 // are closely related and it makes more sense to have them down here
 // than up in SyncMaster and bounce back and forth.
 //
-// !! this is a mess, there are two sets here made at different times
-// the newer getBaseRecordUnitLength and getRecordUnitLength are what
-// SyncMaster uses for synchronized recordings.  What are the others for?
-//
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Find the fundamental unit length of a sync source.
+ * Find the fundamental unit length for one of the sync sources.
+ * For all practical purposes this is the Beat Length.
+ *
+ * This should not be used for SyncSourceTrack.  I suppose we could
+ * consider the subcycle the fundamental unit length but we don't combine
+ * subcycles with BPB in the same way.
  */
-int BarTender::getUnitLength(int trackNumber)
+int BarTender::getSourceUnitLength(SyncSource src)
 {
-    return getUnitLength(trackManager->getLogicalTrack(trackNumber));
+    int length = 0;
+    switch (src) {
+        case SyncSourceNone: {
+            // for the purposes of auto-record, we need to get
+            // a tempo from somewhere, OG Mobius had autoRecordTempo
+            // until we see a need for something more, let the Transport
+            // define this
+            length = syncMaster->getTransport()->getUnitLength();
+        }
+            break;
+            
+        case SyncSourceTransport:
+            length = syncMaster->getTransport()->getUnitLength();
+            break;
+            
+        case SyncSourceTrack:
+            Trace(1, "BarTender::getSourceUnitLength with SyncSourceTrack");
+            break;
+            
+        case SyncSourceHost:
+            length = syncMaster->getHostAnalyzer()->getUnitLength();
+            break;
+            
+        case SyncSourceMidi:
+            length = syncMaster->getMidiAnalyzer()->getUnitLength();
+            break;
+            
+        case SyncSourceMaster: {
+            // !! need to nail down on what happens if a track wants
+            // to be the Master but another track already is,
+            // it falls back to Transport
+            length = syncMaster->getTransport()->getUnitLength();
+        }
+            break;
+    }
+    return length;
 }
 
-int BarTender::getUnitLength(LogicalTrack* track)
+int BarTender::getSourceUnitLength(LogicalTrack* track)
 {
     int frames = 0;
     if (track != nullptr) {
@@ -750,53 +773,8 @@ int BarTender::getUnitLength(LogicalTrack* track)
             // more here
         }
         else {
-            frames = getUnitLength(src);
+            frames = getSourceUnitLength(src);
         }
-    }
-    return frames;
-}
-
-/**
- * This is different than getBaseRecordUnitLength
- * and I don't remember why.  Merge if possible.
- */
-int BarTender::getUnitLength(SyncSource src)
-{
-    int frames = 0;
-    switch (src) {
-        case SyncSourceNone: {
-            // for the purposes of auto-record, we need to get
-            // a tempo from somewhere, OG Mobius had autoRecordTempo
-            // until we see a need for something more, let the Transport
-            // define this
-            frames = syncMaster->getTransport()->getUnitLength();
-        }
-            break;
-            
-        case SyncSourceTransport:
-            frames = syncMaster->getTransport()->getUnitLength();
-            break;
-            
-        case SyncSourceTrack:
-            Trace(1, "BarTender::getUnitLength(SyncSource) with SyncSourceTrack");
-            break;
-            
-        case SyncSourceHost:
-            frames = syncMaster->getHostAnalyzer()->getUnitLength();
-            break;
-            
-        case SyncSourceMidi:
-            frames = syncMaster->getMidiAnalyzer()->getUnitLength();
-            break;
-            
-        case SyncSourceMaster: {
-            // unclear...
-            // need to nail down what a track follows if it wants to be
-            // the Master but some other track was already the Master
-            // it can either fall back to Transport sync or Track sync
-            frames = syncMaster->getTransport()->getUnitLength();
-        }
-            break;
     }
     return frames;
 }

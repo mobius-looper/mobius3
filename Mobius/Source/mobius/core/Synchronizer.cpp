@@ -380,24 +380,11 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
         // todo: dislike relying on SynchronizeMode here, would be more robust
         // to search for an existing RecordStartEvent
 
-        // Pressing Record a second time during Synchronize mode while waiting
-        // for the recording to start is similar to AutoRecord.
-        // it schedules an ending event that is 1 sync unit long.
-        // Testing function==AutoRecord is from original code, not sure why that
-        // was here, it would mean if you did an AR in Reset,Record,Play modes it
-        // would schedule a 1 unit ending as well.  I guess if you were in Record
-        // and ended it with AutoRecord, it means to round to one unit rather than
-        // ending now.  If you were in Play, that should only happen if we were already
-        // in AR in the latency period at the front.  And WTF is up with Reset mode?
-        // It's old code and not necessarily a problem, but don't understand it
-        if (mode != SynchronizeMode)
-          Trace(loop, 1, "Sync: AutoRecord in mode %s thinks it should add a bar, why?");
-
-        // schedules pulsed or normal ending
-        // if it couldn't determine a good bar length, schedule a normal ending
-        event = scheduleSyncRecordStop(action, loop);
-        if (event == nullptr)
-          scheduleNormalRecordStop(action, loop);
+        SyncMaster::RequestResult result = mSyncMaster->requestRecordStop(number);
+        if (result.synchronized)
+          event = scheduleSyncRecordStop(action, loop);
+        else
+          event = scheduleAutoRecordStop(action, loop);
     }
 	else if (!action->noSynchronization &&
              mSyncMaster->isRecordSynchronized(number)) {
@@ -487,76 +474,21 @@ Event* Synchronizer::scheduleNormalRecordStop(Action* action, Loop* loop)
 
 /**
  * Called by scheduleRecordStop when a RecordStop event needs to be 
- * synchronized to a pulse or pre-scheduled based on tempo.
- *
- * Returns the RecordStop event or nullptr if it was not scheduled for some 
- * reason.
- *         
- * Action ownership is handled by the caller
+ * synchronized to a pulse.
  */
 Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
 {
     (void)action;
     Event* stop = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
-    int number = l->getTrack()->getLogicalNumber();
 
-    // again there is a dependency on SyncMaster::isRecordSynchronized
-    // and requestRecordStop
-
-    SyncMaster::RequestResult result = mSyncMaster->requestRecordStop(number);
-    if (result.synchronized || result.unitLength == 0) {
-        // ending must be pulsed
-        // unitLength == 0 is unusual, it means that we're using MIDI sync and started
-        // on MIDIStart and stopped before the first full beat was received to define the unit
-        // in this case we must wait for a pulse
-        stop = em->newEvent(Record, RecordStopEvent, 0);
-        stop->pending = true;
-        Trace(l, 2, "Sync: Added pulsed RecordStop\n");
-    }
-    else {
-        // round up to the next unit boundary
-        // note well: getFrames returns zero here during the initial recording, to know
-        // where you are, use the record frame
-        // int loopFrames = l->getFrames();
-        int loopFrames = l->getFrame();
-        int units = (int)ceil((double)loopFrames / (double)result.unitLength);
-        int stopFrame = units * result.unitLength;
-
-        // todo: original code factored speed into this
-        // this is interesting, and messes up some of the assumptions
-        // If the goal here is to end up with a loop that is a unit length
-        // multiple, and you are recording in halfspeed, we are throwing away
-        // every other frame so that the loop plays twice as fast at normal speed
-        // so this will stop with the right length, but from the user's perspective
-        // recording will end after the beat/bar.  What needs ot happen is that the
-        // recoring starts and ends as if it was pulsed, this means though that
-        // the loop will be of a random size, it only matches the unit length when playing
-        // at the recording rate
-        // so a loop recorded at halfspeed between two unit pulses will be one half
-        // of a unit in length
-        // Really, I don't think this is worth fucking with.  Recording is something
-        // that should be done without rate adjustments, if you want it to play twice
-        // as fast when you're done, just end it with Doublespeed.
-        // I'm not seeing any reason to add the enormous complication of "recorded at this rate"
-        // into this.  Overdub while playing with rate shift is different.
-        // speed needs to have been canceled as soon as recording started
-        float speed = getSpeed(l);
-        if (speed != 1.0)
-          Trace(l, 1, "Sync: Ending synchronized recording with active rate shift");
-
-        Trace(l, 2, "Sync: Scheduled RecordStop currentFrames %d unitFrames %d units %d stopFrame %ld\n",
-              loopFrames, result.unitLength, units, stopFrame);
-        
-        // todo: think about scheduling a PrepareRecordStop event
-        // so we close off the loop and begin preplay like we do
-        // when the end isn't being synchronized
-        stop = em->newEvent(Record, RecordStopEvent, stopFrame);
-        // so we see it
-        stop->quantized = true;
-
-        l->setRecordCycles(units);
-    }
+    // ending must be pulsed
+    // unitLength == 0 is unusual, it means that we're using MIDI sync and started
+    // on MIDIStart and stopped before the first full beat was received to define the unit
+    // in this case we must wait for a pulse
+    stop = em->newEvent(Record, RecordStopEvent, 0);
+    stop->pending = true;
+    Trace(l, 2, "Sync: Added pulsed RecordStop\n");
 
     // take ownership of the Action
     action->setEvent(stop);
@@ -928,18 +860,6 @@ void Synchronizer::stopRecording(Track* t, SyncEvent* e)
         SyncMaster::RequestResult res = mSyncMaster->requestRecordStop(number);
                 
         activateRecordStop(l, stop);
-
-        // a number of places we could do this validation, this is one
-        if (res.unitLength == 0) {
-            Trace(l, 1, "Sync: Activated pulsed stop without a unit length");
-        }
-        else {
-            int remainder = stop->frame % res.unitLength;
-            if (remainder != 0) {
-                Trace(1, "Sync: Pulsed stop frame %d incompatible with unit length %d",
-                      stop->frame, res.unitLength);
-            }
-        }
 
         // should be the same, but user might have changed it, don't think we
         // need to prserve thouse but maybe?

@@ -306,8 +306,9 @@ void LogicalTrack::resetSyncState()
     syncRecording = false;
     syncRecordStarted = false;
     syncStartUnit = SyncUnitNone;
-    syncPulseUnit = SyncUnitNone;
+    syncRecordUnit = SyncUnitNone;
     syncElapsedUnits = 0;
+    syncElapsedBeats = 0;
     syncGoalUnits = 0;
     // might want an option for this to be preserved
     syncUnitLength = 0;
@@ -368,14 +369,14 @@ void LogicalTrack::setSyncStartUnit(SyncUnit unit)
     syncStartUnit = unit;
 }
 
-SyncUnit LogicalTrack::getSyncPulseUnit()
+SyncUnit LogicalTrack::getSyncRecordUnit()
 {
-    return syncPulseUnit;
+    return syncRecordUnit;
 }
 
-void LogicalTrack::setSyncPulseUnit(SyncUnit unit)
+void LogicalTrack::setSyncRecordUnit(SyncUnit unit)
 {
-    syncPulseUnit = unit;
+    syncRecordUnit = unit;
 }
 
 void LogicalTrack::setSyncElapsedUnits(int i)
@@ -386,6 +387,16 @@ void LogicalTrack::setSyncElapsedUnits(int i)
 int LogicalTrack::getSyncElapsedUnits()
 {
     return syncElapsedUnits;
+}
+
+void LogicalTrack::setSyncElapsedBeats(int i)
+{
+    syncElapsedBeats = i;
+}
+
+int LogicalTrack::getSyncElapsedBeats()
+{
+    return syncElapsedBeats;
 }
 
 void LogicalTrack::setSyncGoalUnits(int i)

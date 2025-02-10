@@ -99,8 +99,7 @@ void SyncMaster::loadSession(Session* s)
     timeSlicer->loadSession(s);
 
     // cached parameters
-    manualStart = sessionHelper.getBool(s, ParamTransportManualStart);
-    autoRecordUnit = sessionHelper.getAutoRecordUnit(s);
+    manualStart = sessionHelper.getBool(s, ParamTransportManualStart);  
     autoRecordUnits = sessionHelper.getInt(s, ParamAutoRecordUnits);
     recordThreshold = sessionHelper.getInt(s, ParamRecordThreshold);
 }
@@ -246,16 +245,6 @@ SyncUnit SyncMaster::getSyncUnit(int id)
     return unit;
 }
 
-int SyncMaster::getSyncUnitLength(int number)
-{
-    int frames = 0;
-    LogicalTrack* track = trackManager->getLogicalTrack(number);
-    if (track != nullptr) {
-        frames = barTender->getUnitLength(track);
-    }
-    return frames;
-}
-
 /**
  * Returns true if the start/stop of a recording is synchronized.
  * If this returns true, it will usually be followed immediately
@@ -286,8 +275,10 @@ bool SyncMaster::isRecordSynchronized(int number)
  *
  * If the result has the synchronized flag set, the track is expected to
  * schedule an internal event that will be activated on the next startUnit pulse.
- *
- * While the track is being recorded, pulseUnit pulses will be sent to the track
+ *  
+ * The ending of the recording will be quantized to the pulseUnit.
+ * xxx
+ * a SyncEvent will be sent on each , pulseUnit pulses will be sent to the track
  * to do things like increment cycle counts or other state related to the increasing
  * length of the loop.
  *
@@ -295,11 +286,11 @@ bool SyncMaster::isRecordSynchronized(int number)
  * requestRecordStop or by the return value of any syncPulse as pulses are
  * sent into the track.
  *
- * todo: Rip out pulseUnit, if needed call it cycleUnit
+ * todo: reconsider the need for an alternate startUnit
  */
 SyncMaster::RequestResult SyncMaster::requestRecordStart(int number,
-                                                         SyncUnit startUnit,
-                                                         SyncUnit pulseUnit)
+                                                         SyncUnit recordUnit,
+                                                         SyncUnit startUnit)
 {
     RequestResult result;
 
@@ -307,11 +298,14 @@ SyncMaster::RequestResult SyncMaster::requestRecordStart(int number,
     if (lt != nullptr) {
         SyncSource src = getEffectiveSource(lt);
         if (src == SyncSourceNone || src == SyncSourceMaster) {
+            // why is this whine important?  This could just be an alternative
+            // to isRecordSynchronized and the caller can test the synchronized flag
+            // I suppose if they passed a non-None recordUnit this could be converted
+            // to an AR?
             Trace(1, "SyncMaster::requestRecordStart Should not have been called");
         }
         else {
             result.synchronized = true;
-            result.unitLength = barTender->getRecordUnitLength(lt, src);
 
             SyncUnit defaultUnit = lt->getSyncUnitNow();
             if (defaultUnit == SyncUnitNone) {
@@ -319,15 +313,16 @@ SyncMaster::RequestResult SyncMaster::requestRecordStart(int number,
                 defaultUnit = SyncUnitBar;
             }
 
-            if (startUnit == SyncUnitNone)
-              startUnit = defaultUnit;
+            if (recordUnit == SyncUnitNone)
+              recordUnit = defaultUnit;
 
-            if (pulseUnit == SyncUnitNone)
-              pulseUnit = startUnit;
+            if (startUnit == SyncUnitNone)
+              startUnit = recordUnit;
             
             lt->setSyncRecording(true);
+            lt->setSyncRecordUnit(recordUnit);
             lt->setSyncStartUnit(startUnit);
-            lt->setSyncPulseUnit(pulseUnit);
+            lt->setUnitLength(barTender->getSourceUnitLength(src));
         }
     }
     return result;
@@ -354,11 +349,13 @@ SyncMaster::RequestResult SyncMaster::requestRecordStart(int number)
  * This is called when a track responds to an action that triggers
  * the ending of the recording.  The recording normally ends
  * on the next sync pulse whose unit was defined in requestRecordStart.
- * But the track is free to ignore this and we'll continue sending
- * record pulses until it calls notifyRecordStop.
  * 
  * It is expected to have called isRecordSynced first, or be able to deal
  * with this returning a Result that says it isn't synchronized.
+ *
+ * The important thing this does is lock the SyncAnalyzer, which in practice
+ * is only important for MidiAnalyzer if we allowed the recording to start
+ * during the warmup period.
  */
 SyncMaster::RequestResult SyncMaster::requestRecordStop(int number)
 {
@@ -387,9 +384,33 @@ SyncMaster::RequestResult SyncMaster::requestRecordStop(int number)
             }
                     
             result.synchronized = true;
-            result.unitLength = barTender->getRecordUnitLength(lt, src);
+
+            // this is what switches us from sending Extend events
+            // to sending the final Stop event
+            if (lt->getSyncGoalUnits() > 0) {
+                // why would this happen?
+                Trace(1, "SyncMaster: Requested RecordStop with existing goal units");
+            }
+            else {
+                int goal = lt->getSyncElapsedUnits();
+                if (goal == 0) {
+                    // we must be in the start synchronization period, requesting
+                    // a stop in there becomes like an AutoRecord of one unit
+                    Trace(2, "SyncMaster: AutoRecord conversion");
+                    goal = 1;
+                }
+                lt->setSyncGoalUnits(goal);
+            }
         }
     }
+
+    // !! more to do here
+    // if you're doing a manual recording ending with MIDI
+    // after locking it will end up with a unit length that may not be compatible
+    // with the length of the recorded loop so far, this is usually the final pulse
+    // so it needs to be adjusted like we do for AR or converted
+    // to a SyncEvent::Finalize
+    
     return result;
 }
 
@@ -406,11 +427,11 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number)
     if (lt != nullptr) {
         SyncSource src = getEffectiveSource(lt);
         if (src == SyncSourceNone || src == SyncSourceMaster) {
-            Trace(1, "SyncMaster::requestRecordStart Should not have been called");
+            // no sync pulses here, track must do calculated AR
+            Trace(2, "SyncMaster::requestAutoRecord No sync for you!");
         }
         else {
             result.synchronized = true;
-            result.unitLength = barTender->getRecordUnitLength(lt, src);
 
             SyncUnit syncUnit = lt->getSyncUnitNow();
             if (syncUnit == SyncUnitNone) {
@@ -420,7 +441,7 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number)
             
             lt->setSyncRecording(true);
             lt->setSyncStartUnit(syncUnit);
-            lt->setSyncPulseUnit(syncUnit);
+            lt->setSyncRecordUnit(syncUnit);
 
             lt->setSyncElapsedUnits(1);
             lt->setSyncGoalUnits(getAutoRecordUnits(number));
@@ -521,11 +542,13 @@ Pulse* SyncMaster::getBlockPulse(LogicalTrack* track)
     
     if (track->isSyncRecording()) {
         SyncSource src = track->getSyncSourceNow();
+        bool starting = !track->isSyncRecordStarted();
+        
         SyncUnit unit = SyncUnitNone;
-        if (track->isSyncRecordStarted())
-          unit = track->getSyncPulseUnit();
-        else
+        if (starting)
           unit = track->getSyncStartUnit();
+        else
+          unit = track->getSyncRecordUnit();
 
         if (unit == SyncUnitNone) {
             // should have stored these when we started all this
@@ -533,35 +556,94 @@ Pulse* SyncMaster::getBlockPulse(LogicalTrack* track)
             unit = track->getSyncUnitNow();
         }
 
-        if (src != SyncSourceMidi || track->getSyncGoalUnits() == 0) {
+        // we could do them all the new complex way, but only make
+        // MIDI go through that till it solidifies
+        if (starting || src != SyncSourceMidi) {
             // either this doesn't have jittery beats, or we have an unbounded
             // record length, let Pulsator do the work
             pulse = pulsator->getBlockPulse(track, unit);
-        }
-        else {
-            // this is where we start rewriting things...
-            pulse = pulsator->getBlockPulse(track, unit);
-#if 0            
-            // annoyances for MIDI AutoRecord during the warmup period
-            Pulse* any = pulsator->getAnyBlockPulse(track);
-            if (any != nullptr) {
-                int totalBeats = getAutoRecordBeats(track);
-                int elapsedeBeats = track->getSyncElapsedBeats();
-                if (elapsedBeats == (totalBeats - 1)) {
+
+            if (pulse != nullptr) {
+                if (starting) {
+                    pulse->event.type = SyncEvent::Start;
+                    // should be clear but make sure
+                    lt->setSyncElapsedUnits(0);
+                }
+                else {
+                    // add an elapsed unit
+                    int elapsed = lt->getSyncElapsedUnits() + 1;
+                    lt->setSyncElapsedUnits(elapsed);
+
+                    int goal = lt->getSyncGoalUnits();
+                    if (lt->getGoalUnits() == 0) {
+                        // doing an unbounded record
+                        pulse->event.type = SyncEvent::Extend;
+                    }
+                    else if (goal == elapsed) {
+                        // we've ached the end
+                        pulse->event.type = SyncEvent::Stop;
+                    }
+                    else {
+                        // interior pulse within a known extension
+                        // don't need to send anything
+                        pulse = nullptr;
+                        Trace(2, "SyncMaster: Suppressing pulse %d within goal %d",
+                              elapsed, goal);
+                    }
                 }
             }
-#endif
         }
-
-        bool tracePulseBlocks = true;
-        if (tracePulseBlocks) {
-            if (pulse != nullptr) {
-                Trace(2, "SyncMaster: Block pulse %d offset %d", blockCount,
-                      pulse->blockFrame);
-            }
+        else {
+            pulse = getAnnoyingMidiPulse(track, unit);
         }
     }
     return pulse;
+}
+
+Pulse* SyncMaster::getAnnoyingMidiPulse(LogicalTrack* t)
+{
+    // see if we can finalize
+    bool finalized = false;
+    int goal = lt->getSyncGoalUnits();
+    if (goal > 0) {
+        Pulse* beat = pulsator->getAnyBlockPulse(track);
+        if (any != nullptr) {
+            int totalBeats = getGoalBeats(track);
+            int elapsedeBeats = track->getSyncElapsedBeats();
+            if (elapsedBeats == (totalBeats - 1)) {
+                midiAnalyzer->lock();
+                int unitLength = midiAnalyzer->getUnitLength();
+                int requiredLength = unitLength * 
+            
+            
+                    }
+        }
+}
+
+
+int SyncMaster::getAutoRecordBeats(LogicalTrack* t)
+{
+    int beats = 1;
+    SyncSource src = t->getSyncSourceNow();
+    switch (autoRecordUnit) {
+        case SyncUnitBeat:
+            beats = autoRecordUnits;
+            break;
+        case SyncUnitNone:
+        case SyncUnitBar: {
+            int bpb = barTender->getBeatsPerBar(src);
+            beats = autoRecordUnits * bpb;
+        }
+            break;
+        case SyncUnitLoop: {
+            int bpb = barTender->getBeatsPerBar(src);
+            int bpl = barTender->getBarsPerLoop(src);
+            beats = (autoRecordUnits * bpb) * bpl;
+        }
+            break;
+    }
+    if (beats == 0) beats = 1;
+    return beats;
 }
 
 /**
@@ -1732,7 +1814,7 @@ void SyncMaster::checkDrifts()
 /**
  * Return the number of frames in one AutoRecord "unit".
  * This is defined by the base(beat) unit length in the track's
- * sync source combined with the autoRecordUnit and autoRecordUnits
+ * sync source combined with the syncUnit and autoRecordUnits
  * parameters.
  *
  * This takes the place of these older parameters:
@@ -1740,19 +1822,10 @@ void SyncMaster::checkDrifts()
  *       autoRecordTempo
  *       autoRecordBars
  *
- * It would be nice to simplify this by saying that when you have a SyncSource
- * the SyncUnit you to synchronize the start of the recording will be the
- * one used for AutoRecord.  For example if syncUnit=bar, then recording will
- * wait for a host bar and if you want to AutoRecord, you will also want that
- * in units of a host bar.
- *
- * They COULD however be independent, but I don't think many will want that.
- * The possible exception is when sync=None.  In that case there syncUnit
- * is usually undefined, but since this will fall back to the Transport tempo
- * to calculate the unit length, we might as well also use whatever syncUnit
- * happens to be for AutoRecord too.  The alternative would be a bunch of flexible
- * but confusing new parameters.
- *
+ * A special case exists when the SyncSource is None.
+ * Here the length of the AR is defined by the Transport tempo and the syncUnit
+ * from the session.  This is the only time where SyncUnit is relevant when
+ * SyncSource is None.  
  */
 int SyncMaster::getAutoRecordUnitLength(int number)
 {
@@ -1761,7 +1834,7 @@ int SyncMaster::getAutoRecordUnitLength(int number)
     LogicalTrack* track = trackManager->getLogicalTrack(number);
     if (track != nullptr) {
         
-        frames = barTender->getUnitLength(track);
+        frames = barTender->getSourceUnitLength(track);
 
         // if the syncUnit is bar or loop then the beat unit length
         // is multipled by whatever the beatsPerBar for that source is
