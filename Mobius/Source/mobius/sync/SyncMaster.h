@@ -102,6 +102,8 @@ class SyncMaster
     RequestResult requestRecordStart(int number);
     RequestResult requestRecordStop(int number);
     RequestResult requestAutoRecord(int number);
+    int extendRecording(int number);
+    int reduceRecording(int number);
    
     //
     // Track Notifications
@@ -200,7 +202,7 @@ class SyncMaster
 
     class SymbolTable* getSymbols();
 
-    void handlePulseResult(class LogicalTrack* track, bool ended);
+    void handleSyncEvent(class LogicalTrack* track, class SyncEvent* event);
     void notifyTransportStarted();
     
   private:
@@ -239,7 +241,10 @@ class SyncMaster
     void connectTransport(int id);
 
     void checkDrifts();
-    
+
+    // new things
+    bool isSourceLocked(class LogicalTrack* t);
+
 };
 
 /****************************************************************************/

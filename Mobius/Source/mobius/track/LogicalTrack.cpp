@@ -313,9 +313,9 @@ void LogicalTrack::resetSyncState()
     syncUnitLength = 0;
 }
 
-bool LogicalTrack::syncPulse(Pulse* p)
+void LogicalTrack::syncEvent(class SyncEvent* e)
 {
-    return track->syncPulse(p);
+    track->syncEvent(e);
 }
 
 void LogicalTrack::setUnitLength(int l)

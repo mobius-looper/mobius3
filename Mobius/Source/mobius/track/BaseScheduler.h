@@ -37,7 +37,7 @@ class BaseScheduler
     void advance(class MobiusAudioStream* stream);
     void scheduleAction(class UIAction* a);
     void trackNotification(NotificationId notification, class TrackProperties& props);
-    bool syncPulse(class Pulse* p);
+    void syncEvent(class SyncEvent* e);
 
     //
     // Things called by the BaseTrack to do leader management

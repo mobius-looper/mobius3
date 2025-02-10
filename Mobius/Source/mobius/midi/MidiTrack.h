@@ -57,7 +57,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     void refreshFocusedState(class FocusedTrackState* state) override;
     void dump(class StructureDumper& d) override;
     class MslTrack* getMslTrack() override;
-    bool syncPulse(class Pulse* p) override;
+    void syncEvent(class SyncEvent* e) override;
     int getSyncLength() override;
     
     //

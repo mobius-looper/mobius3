@@ -96,9 +96,11 @@ void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
                     Trace(2, "TimeSlicer: Track %d pulse %d", track->getNumber(),
                           s.blockOffset);
                 }
-                
-                bool ended = track->syncPulse(s.pulse);
-                syncMaster->handlePulseResult(track, ended);
+
+                // see comments above SyncMaster::getBlockPulse for why this is messy
+                SyncEvent* event = &(s.pulse->event);
+                track->syncEvent(event);
+                syncMaster->handleSyncEvent(track, event);
 
                 if (traceDetails) {
                     Trace(2, "TimeSlicer: Track %d post pulse length %d", track->getNumber(),

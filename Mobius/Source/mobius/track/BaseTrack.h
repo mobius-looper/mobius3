@@ -77,7 +77,7 @@ class BaseTrack
     virtual class MslTrack* getMslTrack() = 0;
 
     // it pays attention well
-    virtual bool syncPulse(class Pulse* p) = 0;
+    virtual void syncEvent(class SyncEvent* e) = 0;
     virtual int getSyncLength() = 0;
     
   protected:

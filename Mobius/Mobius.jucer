@@ -638,6 +638,7 @@
           <FILE id="BzcuUR" name="SyncAnalyzer.h" compile="0" resource="0" file="Source/mobius/sync/SyncAnalyzer.h"/>
           <FILE id="Usp2vk" name="SyncAnalyzerResult.h" compile="0" resource="0"
                 file="Source/mobius/sync/SyncAnalyzerResult.h"/>
+          <FILE id="oXR4bV" name="SyncEvent.h" compile="0" resource="0" file="Source/mobius/sync/SyncEvent.h"/>
           <FILE id="TrPjH8" name="SyncMaster.cpp" compile="1" resource="0" file="Source/mobius/sync/SyncMaster.cpp"/>
           <FILE id="dUy6Dl" name="SyncMaster.h" compile="0" resource="0" file="Source/mobius/sync/SyncMaster.h"/>
           <FILE id="f0p3FR" name="SyncTrace.cpp" compile="1" resource="0" file="Source/mobius/sync/SyncTrace.cpp"/>

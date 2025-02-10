@@ -429,21 +429,24 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number)
     return result;
 }
 
-int SyncMaster::extendAutoRecord()
+int SyncMaster::extendRecording(int number)
 {
-    // the number of units to extend, it will always be at least 1
-    // for AutoRecord it could be the number of configured units, but
-    // I'm thinking just keep it 1 for more fine control
-    int extension = 1;
+    int newUnits = 0;
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+        // the number of units to extend, it will always be at least 1
+        // for AutoRecord it could be the number of configured units, but
+        // I'm thinking just keep it 1 for more fine control
+        int extension = 1;
 
-    // don't like this, maybe another parameter
-    //if (function == AutoRecord)
-    //extension = mSyncMaster->getAutoRecordUnits(number);
+        // don't like this, maybe another parameter
+        //if (function == AutoRecord)
+        //extension = mSyncMaster->getAutoRecordUnits(number);
 
-    int current = lt->getSyncGoalUnits();
-    int newUnits = current + extension;
-    lt->setSyncGoalUnits(newUnits);
-
+        int current = lt->getSyncGoalUnits();
+        newUnits = current + extension;
+        lt->setSyncGoalUnits(newUnits);
+    }
     return newUnits;
 }
 
@@ -463,45 +466,61 @@ int SyncMaster::extendAutoRecord()
  * AFTER the extension so if you undo at this point the track either needs to ignore
  * it or undo the entire recording.
  */
-int SyncMaster::reduceAutoRecord()
+int SyncMaster::reduceRecording(int number)
 {
-    // for both, the pulse number increases
-    int reduction = 1;
-
-    // don't like this, maybe another parameter
-    //if (function == AutoRecord)
-    //reduction = mSyncMaster->getAutoRecordUnits(number);
-
-    int current = lt->getSyncGoalUnits();
-    int newUnits = current - reduction;
-
-    // can't go back in time
-    int elapsed = lt->getSyncElapsedUnits();
-    if (newUnits < elapsed) {
-        Trace(2, "SyncMaster: Supressing attempt to reduce auto record before elapsed");
-        newUnits = elapsed;
-    }
-    else if (newUnits < 1) {
-        // shouldn't be here unless elapsed is messed up, but this can't
-        // ever go below 1
-        Trace(1, "SyncMaster: Attmept to make auto record units negative");
-        newUnits = 1;
-    }
-
-    lt->setSyncGoalUnits(newUnits);
+    int newUnits = 0;
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
     
+        // for both, the pulse number increases
+        int reduction = 1;
+
+        // don't like this, maybe another parameter
+        //if (function == AutoRecord)
+        //reduction = mSyncMaster->getAutoRecordUnits(number);
+
+        int current = lt->getSyncGoalUnits();
+        newUnits = current - reduction;
+
+        // can't go back in time
+        int elapsed = lt->getSyncElapsedUnits();
+        if (newUnits < elapsed) {
+            Trace(2, "SyncMaster: Supressing attempt to reduce auto record before elapsed");
+            newUnits = elapsed;
+        }
+        else if (newUnits < 1) {
+            // shouldn't be here unless elapsed is messed up, but this can't
+            // ever go below 1
+            Trace(1, "SyncMaster: Attmept to make auto record units negative");
+            newUnits = 1;
+        }
+
+        lt->setSyncGoalUnits(newUnits);
+    }
     return newUnits;
 }    
 
 
 /**
  * Called by TimeSlicer to return the relevant sync pulse for this track.
+ *
+ * This evolved in an awkward way.  We used to send Pulses blind down into the
+ * Track and expecting them to do most of the work.  Now SM knows the details about
+ * how the track is recording and can be in more direct control over the states it
+ * needs to be in.  What it needs to do now is send a SyncEvent to the track, but
+ * this is hard with the way TimeSlicer grew around the Pulse model.  Before we give a
+ * Pulse to TimeSlicer we need to analyze the recording state to determine what this pulse
+ * will be used for.  It would be cleaner if TimeSlicer were built around SyncEvents rather than
+ * Pulses but those don't have block offsets and it's too much to change right now.  Instead
+ * put the SyncEvent inside the Pulse and have TS pass it back up when the track finishes
+ * with it.
  */
 Pulse* SyncMaster::getBlockPulse(LogicalTrack* track)
 {
     Pulse* pulse = nullptr;
     
     if (track->isSyncRecording()) {
+        SyncSource src = track->getSyncSourceNow();
         SyncUnit unit = SyncUnitNone;
         if (track->isSyncRecordStarted())
           unit = track->getSyncPulseUnit();
@@ -514,7 +533,25 @@ Pulse* SyncMaster::getBlockPulse(LogicalTrack* track)
             unit = track->getSyncUnitNow();
         }
 
-        pulse = pulsator->getBlockPulse(track, unit);
+        if (src != SyncSourceMidi || track->getSyncGoalUnits() == 0) {
+            // either this doesn't have jittery beats, or we have an unbounded
+            // record length, let Pulsator do the work
+            pulse = pulsator->getBlockPulse(track, unit);
+        }
+        else {
+            // this is where we start rewriting things...
+            pulse = pulsator->getBlockPulse(track, unit);
+#if 0            
+            // annoyances for MIDI AutoRecord during the warmup period
+            Pulse* any = pulsator->getAnyBlockPulse(track);
+            if (any != nullptr) {
+                int totalBeats = getAutoRecordBeats(track);
+                int elapsedeBeats = track->getSyncElapsedBeats();
+                if (elapsedBeats == (totalBeats - 1)) {
+                }
+            }
+#endif
+        }
 
         bool tracePulseBlocks = true;
         if (tracePulseBlocks) {
@@ -528,24 +565,40 @@ Pulse* SyncMaster::getBlockPulse(LogicalTrack* track)
 }
 
 /**
- * Called by TimeSlicer to pass back the PulseRequest sent back on the
- * last syncPulse call sent to the track.
- *
- * !!! Okay, hating this
- * Why was it the pulse's job to do this, since pulses often just activate
- * events and what processes those might be in a different call stack
- * This should be calling back to notifyRecordEnded or requestRecordStop
- * or something, revisit this mess
+ * True if the sync source for this track has a locked unit.
+ * In practice false only for MIDI during the first recording
+ * as we let it warm up.
  */
-void SyncMaster::handlePulseResult(class LogicalTrack* lt, bool ended)
+bool SyncMaster::isSourceLocked(LogicalTrack* t)
+{
+    bool locked = true;
+    SyncSource src = t->getSyncSourceNow();
+    if (src == SyncSourceMidi)
+      locked = midiAnalyzer->isLocked();;
+    return locked;
+}
+
+/**
+ * Called by TimeSlicer to pass back the SyncEvent sent to the track
+ * on the block pulse.
+ *
+ * !! Hating the "ended" flag, it shouldn't be the event's job to convey this
+ * track can just call back to notifyRecordStopped if it stopped.
+ *
+ * If the track set the error flag, we should abandon the recording.
+ */
+void SyncMaster::handleSyncEvent(class LogicalTrack* lt, SyncEvent* event)
 {
     SyncSource src = getEffectiveSource(lt);
     if (src == SyncSourceNone || src == SyncSourceMaster) {
         // not supposed to be here, we won't be sending sync pulses to respond
         // to if this were happening
-        Trace(1, "SyncMaster::handlPulseResult Mystery pulse");
+        Trace(1, "SyncMaster::handleSyncEvent Mystery event");
     }
-    else if (ended) {
+    else if (event->error) {
+        Trace(1, "SyncMaster::handleSyncEvent Track returned an error");
+    }
+    else if (event->ended) {
         // this is an alternative to the track calling notifyRecordStop
         // though it can do that too
         notifyRecordStopped(lt->getNumber());

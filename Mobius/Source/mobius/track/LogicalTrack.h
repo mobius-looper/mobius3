@@ -73,7 +73,7 @@ class LogicalTrack
     //
 
     void resetSyncState();
-    bool syncPulse(class Pulse* p);
+    void syncEvent(class SyncEvent* e);
 
     int getSyncLength();
     int getUnitLength();

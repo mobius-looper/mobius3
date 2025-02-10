@@ -32,8 +32,8 @@
 #include "../Notification.h"
 #include "../Notifier.h"
 
-#include "../sync/Pulse.h"
 #include "../sync/SyncMaster.h"
+#include "../sync/SyncEvent.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -434,6 +434,8 @@ Event* Synchronizer::scheduleNormalRecordStop(Action* action, Loop* loop)
     }
 
     // Nothing to wait for except input latency
+    // !!!!!!!!!!!! look at this shit, we're extending for latency out here
+    // then passing true to prepareLoop which will do it again, won't it?
     long currentFrame = loop->getFrame();
     long stopFrame = currentFrame;
     bool doInputLatency = !action->noLatency;
@@ -688,7 +690,7 @@ void Synchronizer::extendRecordStop(Action* action, Loop* loop, Event* stop)
     (void)action;
     
     int number = loop->getTrack()->getLogicalNumber();
-    int newUnits = mSyncMaster->extendAutoRecord(number);
+    int newUnits = mSyncMaster->extendRecording(number);
 
     stop->number = newUnits;
 
@@ -727,7 +729,7 @@ bool Synchronizer::undoRecordStop(Loop* loop)
     
 	if (stop != nullptr) {
         int number = loop->getTrack()->getLogicalNumber();
-        int newUnits = mSyncMaster->reduceAutoRecord(number);
+        int newUnits = mSyncMaster->reduceRecording(number);
 
         // if these are the same we couldn't undo one, so return false
         // and undo the entire recording
@@ -741,7 +743,7 @@ bool Synchronizer::undoRecordStop(Loop* loop)
                 int unitLength = mSyncMaster->getAutoRecordUnitLength(number);
                 int newEndFrame = stop->number * unitLength;
 
-                loop->setRecordCycles(newGoal);
+                loop->setRecordCycles(newUnits);
                     
                 if (newEndFrame < stop->frame) {
                     // leave it alone and finish 0ut this cycle
@@ -808,60 +810,59 @@ void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
  * I'd rather rely on what SM says and bail if they get out of sync.
  *
  */
-bool Synchronizer::syncPulse(Track* track, Pulse* pulse)
+void Synchronizer::syncEvent(Track* t, SyncEvent* e)
 {
-    bool ended = false;
-    bool traceDetails = false;
-    
-    Loop* l = track->getLoop();
-    MobiusMode* mode = l->getMode();
-
-    if (mode == SynchronizeMode) {
-
-        // temporary till this mechnaism is fleshed out
-        if (pulse->command != Pulse::CommandNone && pulse->command != Pulse::CommandStart) {
-            Trace(l, 1, "Sync: Unexpected pulse command in Synchronize mode %d",
-                  pulse->command);
+    switch (e->type) {
+        case SyncEvent::None: {
+            Trace(t, 1, "Sync: SyncEvent::None");
+            e->error = true;
         }
-
-        if (traceDetails) {
-            Trace(l, 2, "Sync: Start record pulse offset %d loop frame %d",
-                  pulse->blockFrame, l->getFrame());
-            int unitLength = mSyncMaster->getSyncUnitLength(track->getLogicalNumber());
-            Trace(l, 2, "Sync: Unit frames %d", unitLength);
+            break;
+        case SyncEvent::Start:
+            startRecording(t, e);
+            break;
+            
+        case SyncEvent::Stop:
+            stopRecording(t, e);
+            break;
+            
+        case SyncEvent::Finalize:
+            finalizeRecording(t, e);
+            break;
+            
+        case SyncEvent::Extend:
+            extendRecording(t, e);
+            break;
+            
+        case SyncEvent::Realign: {
+            Trace(t, 1, "Sync: SyncEvent::Realign not supported");
         }
-        startRecording(l);
+            break;
     }
-    else if (l->isSyncRecording()) {
-        if (traceDetails) {
-            Trace(l, 2, "Sync: Recording pulse offset %d loop frame %d",
-                  pulse->blockFrame, l->getFrame());
-            int unitLength = mSyncMaster->getSyncUnitLength(track->getLogicalNumber());
-            Trace(l, 2, "Sync: Unit frames %d", unitLength);
-        }
-        ended = syncPulseRecording(l, pulse);
-    }
-    
-    return ended;
 }
 
 /**
  * Called when we're ready to end Synchronize mode and start recording.
  * Activate the pending Record event and prepare for recording.
  */
-void Synchronizer::startRecording(Loop* l)
+void Synchronizer::startRecording(Track* t, SyncEvent* e)
 {
-    Track* t = l->getTrack();
     EventManager* em = t->getEventManager();
 	Event* start = em->findEvent(RecordEvent);
+    Loop* l = t->getLoop();
+    MobiusMode* mode = l->getMode();
 
-	if (start == nullptr) {
-		// I suppose we could make one now but this really shouldn't happen
-		Trace(l, 1, "Sync: Record start pulse without RecordEvent!\n");
+    if (mode != SynchronizeMode) {
+		Trace(l, 1, "Sync: SyncEvent::Start not in Synchronize mode");
+        e->error = true;
+    }
+	else if (start == nullptr) {
+		Trace(l, 1, "Sync: SyncEvent::Start without RecordEvent");
+        e->error = true;
 	}
 	else if (!start->pending) {
-		// already started somehow
-		Trace(l, 1, "Sync: Record start pulse with active RecordEvent!\n");
+		Trace(l, 1, "Sync: SyncEvent::Start RecordEvent already activated");
+        e->error = true;
 	}
 	else {
         // !! this is old but why the fuck would we start wherever the loop
@@ -899,116 +900,78 @@ void Synchronizer::startRecording(Loop* l)
 	}
 }
 
-/**
- * Called on each pulse during Record mode.
- */
-bool Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
+void Synchronizer::stopRecording(Track* t, SyncEvent* e)
 {
-    bool ended = false;
-    
-    Track* t = l->getTrack();
     EventManager* em = t->getEventManager();
     Event* stop = em->findEvent(RecordStopEvent);
+    Loop* l = t->getLoop();
 
-    if (stop != nullptr) {
-
-        if (!stop->pending) {
-            // Already activated the StopEvent, see method header notes
-            // If we were activating this on a pulse the final frame would be calculated
-            // as loopFrames plus latency if this was a MIDI pulse.  There is some noise
-            // around rounding and "extra" frames that was never enabled.
-            Trace(l, 1, "Sync: Extra pulse after record stop activated");
-        }
-        else {
-            // !! this is where we need to start ignoring the loop's cycle count
-            // and paying attention to the Pulse::Command, SM keeps track of
-            // goal units and doesn't need us to do that any more
-            
-            // see notes in extendRecordStop
-            // the event number is the number of "goal cycles", if we hit
-            // a sync boundary and we're at that goal, can end
-            int cycles = l->getRecordCycles();
-
-            bool stopIt = false;
-            if (stop->number == 0) {
-                // not supposed to happen
-                Trace(1, "SyncMaster: Missing goal units on sync pulse");
-                stopIt = true;
-            }
-            else if (stop->number == cycles) {
-                // normal advance to the goal cycles
-                stopIt = true;
-            }
-            else if (stop->number < cycles) {
-                // user must have been dicking with the cycle count
-                // or you suck
-                Trace(1, "SyncMaster: Goal cycle underflow");
-                stopIt = true;
-            }
-
-            if (stopIt) {
-                Trace(l, 2, "Synchronizer: Stopping after %d goal units reached", stop->number);
-
-                // consistency check what the new Command is supposed to be
-                if (pulse->command != Pulse::CommandNone && pulse->command != Pulse::CommandStop) {
-                    Trace(l, 1, "Sync: Unexpected pulse command while recording %d",
-                          pulse->command);
-                }
-
-                
-                int number = t->getLogicalNumber();
-
-                // change this to notifyRecordFinalizing or something
-                // so SM can adapt to unlocked recordings
-                SyncMaster::RequestResult res = mSyncMaster->requestRecordStop(number);
-                
-                activateRecordStop(l, p, stop);
-
-                // a number of places we could do this validation, this is one
-                if (res.unitLength == 0) {
-                    Trace(l, 1, "Sync: Activated pulsed stop without a unit length");
-                }
-                else {
-                    int remainder = stop->frame % res.unitLength;
-                    if (remainder != 0) {
-                        Trace(1, "Sync: Pulsed stop frame %d incompatible with unit length %d",
-                              stop->frame, res.unitLength);
-                    }
-                }
-                
-                ended = true;
-            }
-            else {
-                // consistency check what the new Command is supposed to be
-                if (pulse->command != Pulse::CommandNone && pulse->command != Pulse::CommandExtend) {
-                    Trace(l, 1, "Sync: Unexpected pulse command while recording %d",
-                          pulse->command);
-                }
-                // haven't reached the goal, add another cycle
-                int newCycles = cycles + 1;
-                Trace(2, "Synchronizer: Record pulse advance cycles from %d 5o %d",
-                      cycles, newCycles);
-                l->setRecordCycles(newCycles);
-
-            }
-        }
+    if (!l->isSyncRecording()) {
+        Trace(l, 1, "Sync: SyncEvent::Stop Not recording");
+        e->error = true;
+    }
+    else if (stop == nullptr) {
+        Trace(l, 1, "Sync: SyncEvent::Stop No RecordStopEvent");
+        e->error = true;
+    }
+    else if (!stop->pending) {
+        Trace(l, 1, "Sync: SyncEvent::Stop RecordStopEvent already activated");
+        e->error = true;
     }
     else {
-        // consistency check what the new Command is supposed to be
-        if (pulse->command != Pulse::CommandNone && pulse->command != Pulse::CommandExtend) {
-            Trace(l, 1, "Sync: Unexpected pulse command while recording %d",
-                  pulse->command);
-        }
-        
-        // we're still in the initial recording and another pulse came in
-        // formerly bumped cycle count only if the unit was Bar or Loop
-        // if the unit is Beat, comments suggested this could lead to problemantic
-        // short cycles, but now that we use this to see when we reach the goal
-        // it must be incremented
-        l->setRecordCycles(l->getCycles() + 1);
-    }
+        Trace(l, 2, "Sync: Stopping after %d goal units reached", stop->number);
 
-    return ended;
+        int number = t->getLogicalNumber();
+
+        // change this to notifyRecordFinalizing or something
+        // so SM can adapt to unlocked recordings
+        SyncMaster::RequestResult res = mSyncMaster->requestRecordStop(number);
+                
+        activateRecordStop(l, stop);
+
+        // a number of places we could do this validation, this is one
+        if (res.unitLength == 0) {
+            Trace(l, 1, "Sync: Activated pulsed stop without a unit length");
+        }
+        else {
+            int remainder = stop->frame % res.unitLength;
+            if (remainder != 0) {
+                Trace(1, "Sync: Pulsed stop frame %d incompatible with unit length %d",
+                      stop->frame, res.unitLength);
+            }
+        }
+
+        // should be the same, but user might have changed it, don't think we
+        // need to prserve thouse but maybe?
+        l->setRecordCycles(stop->number);
+        
+        e->ended = true;
+    }
+}
+
+void Synchronizer::extendRecording(Track* t, SyncEvent* e)
+{
+    EventManager* em = t->getEventManager();
+    Event* stop = em->findEvent(RecordStopEvent);
+    Loop* l = t->getLoop();
+    
+    if (stop == nullptr) {
+        Trace(l, 1, "Sync: SyncEvent::Extend No RecordStopEvent");
+        e->error = true;
+    }
+    else if (!stop->pending) {
+        Trace(l, 1, "Sync: SyncEvent::Extend RecordStopEvent not pending");
+        e->error = true;
+    }
+    else {
+        // haven't reached the goal, add another cycle
+        int cycles = stop->number;
+        int newCycles = cycles + 1;
+        Trace(2, "Synchronizer: Record pulse advance cycles from %d 5o %d",
+              cycles, newCycles);
+        stop->number = newCycles;
+        l->setRecordCycles(newCycles);
+    }
 }
 
 /**
@@ -1024,7 +987,7 @@ bool Synchronizer::syncPulseRecording(Loop* l, Pulse* p)
  * purposes of sending clocks, but see comments in loopRecordStop
  * for some history.
  */
-void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
+void Synchronizer::activateRecordStop(Loop* l, Event* stop)
 {
     //Track* track = l->getTrack();
 
@@ -1036,8 +999,9 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
     // this really isn't dependent on the sync source, it's dependent
     // on where we're getting the audio stream
     
-    bool inputLatency = (pulse->source == SyncSourceMidi);
-
+    //bool inputLatency = (pulse->source == SyncSourceMidi);
+    bool inputLatency = true;
+    
     // since we almost always want even loops for division, round up
     // if necessary
     // !! this isn't actually working yet, see Loop::prepareLoop
@@ -1059,6 +1023,26 @@ void Synchronizer::activateRecordStop(Loop* l, Pulse* pulse, Event* stop)
 	stop->frame = finalFrames;
 
 	Trace(l, 2, "Sync: Activating RecordStop at %d frames", stop->frame);
+}
+
+void Synchronizer::finalizeRecording(Track* t, SyncEvent* e)
+{
+    EventManager* em = t->getEventManager();
+    Event* stop = em->findEvent(RecordStopEvent);
+    Loop* l = t->getLoop();
+    
+    if (stop == nullptr) {
+        Trace(l, 1, "Sync: SyncEvent::Finalize No RecordStopEvent");
+        e->error = true;
+    }
+    else if (!stop->pending) {
+        Trace(l, 1, "Sync: SyncEvent::Finalize RecordStopEvent not pending");
+        e->error = true;
+    }
+    else {
+        Trace(l, 1, "Sync: SyncEvent::Finalize Not implemented");
+        e->error = true;
+    }
 }
 
 /****************************************************************************

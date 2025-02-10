@@ -84,7 +84,7 @@ class Synchronizer {
     // Sync Pulses
     //
 
-    bool syncPulse(class Track* t, class Pulse* p);
+    void syncEvent(class Track* t, class SyncEvent* e);
 
     //
     // Record scheduling
@@ -144,12 +144,15 @@ class Synchronizer {
     
     float getSpeed(class Loop* l);
 
-    void startRecording(class Loop* l);
-    bool syncPulseRecording(class Loop* l, class Pulse* p);
-    void activateRecordStop(class Loop* l, class Pulse* pulse, class Event* stop);
-
-    // Realign
+    // SyncEvent handling
+    void startRecording(class Track* t, class SyncEvent* e);
+    void stopRecording(class Track* t, class SyncEvent* e);
+    void extendRecording(class Track* t, class SyncEvent* e);
+    void finalizeRecording(class Track* t, class SyncEvent* e);
+    void activateRecordStop(class Loop* l, class Event* stop);
     
+    // Realign
+
     void doRealign(class Loop* loop, class Event* pulse, class Event* realign);
     void moveLoopFrame(class Loop* l, long newFrame);
     void realignSlave(class Loop* l, class Event* pulse);

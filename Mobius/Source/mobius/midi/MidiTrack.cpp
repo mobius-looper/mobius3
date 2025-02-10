@@ -176,9 +176,9 @@ void MidiTrack::doAction(UIAction* a)
     scheduler.scheduleAction(a);
 }
 
-bool MidiTrack::syncPulse(class Pulse* p)
+void MidiTrack::syncEvent(class SyncEvent* e)
 {
-    return scheduler.syncPulse(p);
+    scheduler.syncEvent(e);
 }
 
 int MidiTrack::getSyncLength()

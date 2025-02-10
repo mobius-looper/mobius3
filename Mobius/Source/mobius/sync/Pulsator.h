@@ -43,6 +43,10 @@ class Pulsator
     // called by SyncMaster to get the relevant pulse for a track
     Pulse* getBlockPulse(class LogicalTrack* t, SyncUnit unit);
 
+    // called by SyncMaster when it needs to be smarter about adjusting
+    // pulse widths
+    Pulse* getAnyBlockPulse(class LogicalTrack* t);
+
   private:
 
     class SyncMaster* syncMaster = nullptr;
@@ -64,7 +68,6 @@ class Pulsator
     void gatherHost();
     void gatherMidi();
 
-    Pulse* getAnyBlockPulse(class LogicalTrack* t);
     Pulse* getBlockPulse(SyncSource source, int leader);
     Pulse* getPulseObject(SyncSource source, int leader);
 
