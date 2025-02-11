@@ -423,6 +423,7 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
           props->displayName = formatDisplayName(name);
         
         props->scope = scope;
+        
         props->type = parseType(el->getStringAttribute("type"));
         // todo: structureClass?
         props->multi = el->getBoolAttribute("multi");
@@ -431,6 +432,12 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
         props->low = el->getIntAttribute("low");
         props->high = el->getIntAttribute("high");
         props->defaultValue = el->getIntAttribute("defaultValue");
+
+        // enums commony won't have type="enum" so they default to TypeInt
+        // enum-ness is implied by value a value list
+        // most things look at the value list, but Parameterizer didn't
+        if (props->values.size() > 0)
+          props->type = TypeEnum;
 
         juce::String options = el->getStringAttribute("options");
         

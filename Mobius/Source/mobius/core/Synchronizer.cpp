@@ -479,6 +479,14 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
 
 /**
  * Schedule a normal unsynchronized RecordStopEvent
+ * 
+ * NOTE WELL: How latency is being handled here is confusing and extremely
+ * subtle.  What prepareLoop() does is finalize the loop's size and this needs
+ * to factor in the latency delay which you ask for by passing true as the first argument.
+ * The RecordStopEvent must then stop on exactly the same frame, so we have to make
+ * a similar adjustment out here.  So capture the final frame for the event
+ * AFTER prepareLoop is called.
+ * as for the goofy action->noLatency flag, that's lost in time, probably an old testing option
  */
 Event* Synchronizer::scheduleNormalRecordStop(Action* action, Loop* loop)
 {
@@ -495,14 +503,17 @@ Event* Synchronizer::scheduleNormalRecordStop(Action* action, Loop* loop)
         loop->setPlayFrame(0);
     }
 
-    // Nothing to wait for except input latency
-    // !!!!!!!!!!!! look at this shit, we're extending for latency out here
-    // then passing true to prepareLoop which will do it again, won't it?
-    long currentFrame = loop->getFrame();
-    long stopFrame = currentFrame;
+    // prepare the loop early so we can beging playing
+    // as soon as the play frame reaches the end
+    // this won't happen for synchronized record endings which may
+    // result in a slight discontunity at the start point
+
+    // since we're not syncing with sync pulses we always do latency adjustments
+    // unless this test script option is on
     bool doInputLatency = !action->noLatency;
-    if (doInputLatency)
-      stopFrame += loop->getInputLatency();
+    
+    loop->prepareLoop(doInputLatency, 0);
+    int stopFrame = loop->getFrames();
 
     // Must use Record function since the invoking function
     // can be anything that ends Record mode
@@ -530,13 +541,6 @@ Event* Synchronizer::scheduleNormalRecordStop(Action* action, Loop* loop)
     // stop events, might not want to override this?
 	event->fadeOverride = noFade;
     
-    // prepare the loop early so we can beging playing
-    // as soon as the play frame reaches the end
-    // this won't happen for synchronized record endings which may
-    // result in a slight discontunity at the start point
-    // todo: should fix that...
-    loop->prepareLoop(doInputLatency, 0);
-
     Trace(loop, 2, "Sync: Scheduled RecordStop at %ld\n",
           event->frame);
 
@@ -857,21 +861,15 @@ void Synchronizer::startRecording(Track* t, SyncEvent* e)
         e->error = true;
 	}
 	else {
-        // !! this is old but why the fuck would we start wherever the loop
-        // says it is then add latency based on SyncSourceMidi??
-        // what it should be doing is testing to see if latency is enabled
-        // and then FORCING the loop to start at -inputLatency or 0
-        // not assuming it is already at -inputLatency
+        // NOTE WELL: How latency is handled is extremely subtle.  What we do here
+        // when activating the pulsed start event must match what we do when
+        // activating the stop event.  For some reason we only added latency
+        // when syncing with MIDI and not host or tracks.  I think that's wrong
+        // but don't have time to explore why.  Need to revisit this but the
+        // important thing is that they be the same.
         long startFrame = l->getFrame();
 
-        // unclear what the syncTrackerEvent flag was all about
-        // basically if this is from TrackSync we can start now, and
-        // if it is from the outside we add latency
-        // HostSync was assumed to have no latency??
-        
-        //if (src == SYNC_MIDI && !e->fields.sync.syncTrackerEvent)
-        //startFrame += l->getInputLatency();
-
+        // todo: could just pass this in the SyncEvent
         SyncSource source = mSyncMaster->getEffectiveSource(t->getLogicalNumber());
         if (source == SyncSourceMidi)
           startFrame += l->getInputLatency();
@@ -960,36 +958,40 @@ void Synchronizer::extendRecording(Track* t, SyncEvent* e)
  * We may be able to avoid this distinction, at least for the 
  * purposes of sending clocks, but see comments in loopRecordStop
  * for some history.
+ *
+ * Like scheduleNormalRecordStop, handling of input latency is subtle.
+ * When you call prepareLoop the first argument being true causes it to
+ * add inputLatency to the length of the loop.  The RecordStopEvent must
+ * match that.  I belive there was a bug in the old code where we passed true
+ * for MIDI but didn't make the adjustment to RecordStopEvent out here.
+ *
+ * For reasons I don't fully rememer, latency was added only if we were syncing
+ * to MIDI clocks and not the host or tracks.  I think the notion was that
+ * host/track sync should start/stop exactly when those sources are on a pulse
+ * since what we are recording may not be "live".  That certainly can apply to the host
+ * but not always, tracks are unclear, maybe when bouncing but the recording is
+ * ususally live in both cases.  This all needs to be redesigned when  you revisit
+ * latency handling for the Mixer.  The important thing is that whether
+ * you do latency compensation here or not, the same thing needs to happen when
+ * the recording started, or else the loop will not end with an even syncUnit
+ * multiple.
  */
 void Synchronizer::activateRecordStop(Loop* l, Event* stop)
 {
-    //Track* track = l->getTrack();
-
-    // prepareLoop will set the final frame count in the Record layer
-    // which is what Loop::getFrames will return.  If we're following raw
-    // MIDI pulses have to adjust for latency.
-
-    // !! why the hell not Transport or Host?
-    // this really isn't dependent on the sync source, it's dependent
-    // on where we're getting the audio stream
+    // this smells, see function header comments
+    int number = l->getTrack()->getLogicalNumber();
+    SyncSource source = mSyncMaster->getEffectiveSource(number);
+    bool doInputLatency = (source == SyncSourceMidi);
     
-    //bool inputLatency = (pulse->source == SyncSourceMidi);
-    bool inputLatency = true;
-    
-    // since we almost always want even loops for division, round up
-    // if necessary
-    // !! this isn't actually working yet, see Loop::prepareLoop
-    int extra = 0;
+    // formerly attempted an evening here, but it never worked and
+    // this should have been dealt with in the SyncAnalyzers
     long currentFrames = l->getFrames();
     if ((currentFrames % 2) > 0) {
         Trace(l, 1, "Sync::activateRecordStop Odd number of frames in new loop\n");
-        // actually no, we don't want to do this if we're following
-        // a SyncTracker or using SYNC_TRACK, we have to be exact 
-        // only do this for HOST/MIDI recording from raw pulses 
-        //extra = 1;
     }
 
-	l->prepareLoop(inputLatency, extra);
+	l->prepareLoop(doInputLatency, 0);
+    // note that by capturing finalFrames after prepareLoop we'll get the latency adjust
 	long finalFrames = l->getFrames();
 
     // activate the event
@@ -1092,11 +1094,8 @@ void Synchronizer::loopRecordStop(Loop* l, Event* stop)
 	Track* track = l->getTrack();
     int number = track->getLogicalNumber();
 
+    // this also implies notifyTrackAvailable
     mSyncMaster->notifyRecordStopped(number);
-
-    // any track with content can become the track sync master
-    // ?? should this just be automatic with notifyTrackRecordEnded?
-    mSyncMaster->notifyTrackAvailable(track->getLogicalNumber());
 
     // if we're here, we've stopped recording, let the MIDI track followers start
     // due to input latency, these will be a little late, so we might

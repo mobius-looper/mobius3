@@ -35,19 +35,24 @@ PluginParameter::PluginParameter(Symbol* s, Binding* binding)
         juce::String parameterName = props->displayName;
         if (parameterName.length() == 0)
           parameterName = parameterId;
+
+        // this was missing for awhile, don't trust it
+        UIParameterType type = props->type;
+        if (props->values.size() > 0)
+          type = TypeEnum;
         
-        if (props->type == TypeInt) {
+        if (type == TypeInt) {
             min = props->low;
             // todo: if p->dynamic will have to calculate high
             max = props->high;
             intParameter = new juce::AudioParameterInt(parameterId, parameterName, min, max, 0);
         }
-        else if (props->type == TypeBool) {
+        else if (type == TypeBool) {
             min = 0;
             max = 1;
             boolParameter = new juce::AudioParameterBool(parameterId, parameterName, false);
         }
-        else if (props->type == TypeEnum) {
+        else if (type == TypeEnum) {
             juce::StringArray values;
             if (props->valueLabels.size() > 0)
               values = props->valueLabels;

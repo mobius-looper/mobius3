@@ -453,8 +453,6 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number, bool noSync)
             lt->setSyncRecording(true);
             lt->setSyncStartUnit(syncUnit);
             lt->setSyncRecordUnit(syncUnit);
-
-            lt->setSyncElapsedUnits(1);
         }
 
         // in both cases, let it know if there is a recording threshold
@@ -706,6 +704,12 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
                 // we've reached the end
                 sendSyncEvent(track, SyncEvent::Stop);
             }
+            else if (elapsed > goalUnits) {
+                // elapsed was not incremented properly, this will be wrong
+                // but at least we can stop
+                Trace(1, "SyncMaster: Missed goal unit, stopping late");
+                sendSyncEvent(track, SyncEvent::Stop);
+            }
             else {
                 // interior unit within a known extension
                 // don't need to send anything
@@ -853,20 +857,23 @@ void SyncMaster::sendSyncEvent(LogicalTrack* t, SyncEvent::Type type)
 /**
  * Called after sending a SyncEvent to a track.
  *
- * !! Hating the "ended" flag, it shouldn't be the event's job to convey this
- * track can just call back to notifyRecordStopped if it stopped.
+ * For some reason I added the "ended" flag if the track decided to stop
+ * recording on this pulse.  But it must also call notifyRecordStopped when
+ * it actually processes the ending event which may be delayed for input latency.
+ * Wait and do verification until then.  I'm not seeing a purpose for the ending
+ * flag other than to verify that it is trying to end.
  *
  * If the track set the error flag, we should abandon the recording.
  */
 void SyncMaster::dealWithSyncEvent(class LogicalTrack* lt, SyncEvent* event)
 {
+    (void)lt;
     if (event->error) {
         Trace(1, "SyncMaster: SyncEvent returned with errors");
     }
     else if (event->ended) {
-        // this is an alternative to the track calling notifyRecordStop
-        // though it can do that too
-        notifyRecordStopped(lt->getNumber());
+        // track must do this
+        //notifyRecordStopped(lt->getNumber());
     }
 }
 
@@ -896,9 +903,13 @@ void SyncMaster::notifyRecordStarted(int number)
 
 /**
  * This is called when a recording has offically ended.
- * It may have been synced or not.
+ * It may have been synced or not.  It will be after inputLatency
+ * and ready to start recording.
  *
  * This also makes the track available for mastership.
+ *
+ * This is the best place to do final verification on obeyance of the
+ * sync unit length.
  */
 void SyncMaster::notifyRecordStopped(int number)
 {
@@ -922,6 +933,10 @@ void SyncMaster::notifyRecordStopped(int number)
                     // the end should have been pulsed and remembered
                     Trace(1, "SyncMaster: Expected MIDI to know what was going on by now");
                 }
+
+                // todo: for MIDI if we end unlocked this is where we should take
+                // the loop's final length and FORCE the midi sync unit to be in compliance with
+                // it if it falls within the BPM drift tolerance
             }
 
             // verify that the unit length was obeyed
@@ -1918,13 +1933,6 @@ void SyncMaster::checkDrifts()
         }
     }
 }
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// Auto Record
-//
-//////////////////////////////////////////////////////////////////////
 
 /****************************************************************************/
 /****************************************************************************/
