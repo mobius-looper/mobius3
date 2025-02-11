@@ -186,6 +186,11 @@ int MidiTrack::getSyncLength()
     return getFrames();
 }
 
+int MidiTrack::getSyncLocation()
+{
+    return recorder.getFrame();
+}
+
 /**
  * Query uses LogicalTrack for most things but doesn't
  * for the controllers and a few important parameters which are

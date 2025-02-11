@@ -165,6 +165,11 @@ int MobiusLooperTrack::getSyncLength()
     return track->getSyncLength();
 }
 
+int MobiusLooperTrack::getSyncLocation()
+{
+    return track->getSyncLocation();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MslTrack Waits

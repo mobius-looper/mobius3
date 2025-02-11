@@ -124,20 +124,17 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
     Event* prevStopEvent = em->findEvent(RecordStopEvent);
 	MobiusMode* mode = l->getMode();
     int number = l->getTrack()->getLogicalNumber();
-    
-	if (mode == SynchronizeMode ||
-        mode == ThresholdMode ||
-        mode == RecordMode) {
 
-        // this means another trigger for Record or SUSRecord came in while
-        // waiting for the RecordStart to happen, or we're Record mode already
-        // and the second trigger ends it
+    if (mode == SynchronizeMode || mode == ThresholdMode) {
 
-		// These cases are almost identical: schedule a RecordStop
-		// event to end the recording after one sync unit.
-		// If there is already a RecordStop event, it would have been
-        // extended during the call to scheduleRecordStop.
-
+        if (prevStopEvent != nullptr) {
+            extendRecordStop(l);
+        }
+        else if (action->down || function->sustain) {
+            (void)schedulePreRecordStop(action, l);
+        }
+    }
+    else if (mode == RecordMode) {
         if (prevStopEvent != nullptr) {
             // strange control flow here...
             // Function::invoke will always call scheduleModeStop
@@ -150,9 +147,13 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
             // hard to pass state between them.
             // really hate how obscure this is...
         }
-        else if (action->down && function->sustain) {
+        else if (action->down || function->sustain) {
             // this is either the down of Record or the up of SUSRecord
             // make it stop
+            
+            // when exactly can you get here?  I'm not seeing it
+            // usually you would end up in scheduleRecordStop
+            Trace(l, 1, "Sync: Ending recording in an unexpected way");
             (void)scheduleRecordStop(action, l);
         }
     }
@@ -264,10 +265,12 @@ Event* Synchronizer::scheduleAutoRecordStart(Action* action,
 	MobiusMode* mode = l->getMode();
     int number = l->getTrack()->getLogicalNumber();
 
-	if (mode == SynchronizeMode ||
-        mode == ThresholdMode ||
-        mode == RecordMode) {
-
+    if (mode == SynchronizeMode || mode == ThresholdMode) {
+        if (prevStopEvent != nullptr) {
+            extendRecordStop(l);
+        }
+    }
+    else if (mode == RecordMode) {
         // Auto record does not expect to be here when in these modes
         // the stop event must always have been scheduled by now
         if (prevStopEvent == nullptr) {
@@ -323,30 +326,41 @@ Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop,
     // then when it is activated you can fall into a normal scheduled stop
     
     if (result.synchronized) {
-
         event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
         event->pending = true;
-        // the number put here on the event is what shows up in the UI
-        // it has historically been the number of "auto record units" which
-        // may be larger than the sync source base unit
-        event->number = result.autoRecordUnits;
     }
     else {
         event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
         event->quantized = true;	// makes it visible in the UI
-        event->frame = result.autoRecordLength;
-        event->number = result.autoRecordUnits;
-        // When you schedule stop events on specific frames, we have to set
-        // the loop cycle count early since we won't be receiving pulses
-        // which is how they are incremented for sync recording
-        // !! why wouldn't we do this for sync too?
-        loop->setRecordCycles(result.autoRecordUnits);
     }
+    
+    event->frame = result.autoRecordLength;
+    event->number = result.autoRecordUnits;
+    loop->setRecordCycles(result.autoRecordUnits);
     
     action->setEvent(event);
     em->addEvent(event);
         
     return event;
+}
+
+/**
+ * Not technically an AutoRecord stop, but one that behaves similarly.
+ * When you are in Threshold or Synchronize mode and do another
+ * record action, this schedules the stop event early before we ever
+ * got to Record mode.
+ *
+ * It differs from scheduleAutoRecordStop only in that we start with
+ * a single record unit, not influenced by autoRecordUnits.
+ */
+Event* Synchronizer::schedulePreRecordStop(Action* action, Loop* loop)
+{
+    int number = loop->getTrack()->getLogicalNumber();
+    
+    SyncMaster::RequestResult result =
+        mSyncMaster->requestPreRecordStop(number);
+
+    return scheduleAutoRecordStop(action, loop, result);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -402,7 +416,24 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
     Function* function = action->getFunction();
     int number = loop->getTrack()->getLogicalNumber();
 
-    if (prev != nullptr) {
+    // after analysis, I don't think you can be here in anything
+    // other than Record mode
+    // assuming so, this simplifies the logic below
+    if (mode != RecordMode) {
+        Trace(loop, 1, "Synchronizer::scheduleRecordStop Not in Record mode");
+    }
+
+    if (function == Undo) {
+        // new: Undo during Record mode takes units away
+        // don't descend into the hell of stopping RecordMode first
+        reduceRecordStop(loop);
+    }
+    else if (function == Redo) {
+        // new: may as well use Redo to go the other way, it won't do anything
+        // anway
+        extendRecordStop(loop);
+    }
+    else if (prev != nullptr) {
         // Since the mode doesn't change until the event is processed, we
         // can get here several times as functions are stacked for
         // evaluation after the stop.  This is common for AutoRecord.
@@ -416,7 +447,7 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
             (function == Record || function == AutoRecord || function == SUSRecord)) {
             // another trigger, increase the length of the recording
             // but ignore the up transition of SUSRecord
-            extendRecordStop(action, loop, prev);
+            extendRecordStop(loop);
         }
     }
     else if (mode != ResetMode &&
@@ -579,76 +610,136 @@ float Synchronizer::getSpeed(Loop* l)
  * displayed if the goal count goes back down to 1 store zero so there is no numeric
  * qualifier in the event.
  */
-void Synchronizer::extendRecordStop(Action* action, Loop* loop, Event* stop)
+void Synchronizer::extendRecordStop(Loop* loop)
 {
-    (void)action;
-    
-    int number = loop->getTrack()->getLogicalNumber();
+    EventManager* em = loop->getTrack()->getEventManager();
+	Event* stop = em->findEvent(RecordStopEvent);
 
-    SyncMaster::RequestResult result =
-        mSyncMaster->requestExtension(number);
-        
-    int newUnits = result.goalUnits;
-
-    if (newUnits == 1) {
-        Trace(1, "Synchronizer: Not expecting extension units of 1");
+    if (stop == nullptr) {
+        // Now that we call this unconditionally for Redo,
+        // just ignore if there is nothing to extend
     }
-    
-    stop->number = newUnits;
+    else {
+        int number = loop->getTrack()->getLogicalNumber();
 
-    // this can all be moved up to SM
-    if (!stop->pending) {
-        int unitLength = result.extensionLength;
-        int newEndFrame = stop->number * unitLength;
+        SyncMaster::RequestResult result =
+            mSyncMaster->requestExtension(number);
+        
+        int newUnits = result.goalUnits;
 
-        // normally this will be larger than where we are now but if the user
-        // is manually dicking with the unit length it may be less,
-        // in that case, just leave the current stop alone
-        if (newEndFrame < stop->frame)
-          Trace(1, "Synchronizer: Loop is beyond where the extension wants it");
+        if (newUnits == 0) {
+            Trace(loop, 1, "Sync: SyncMaster returned zero goal units");
+        }
         else {
-            stop->frame = newEndFrame;
+            // this should be more than 1, if we're still in the initial recording
+            // with goal units of zero a different code path would have been
+            // taken, not the extension path
+            if (newUnits == 1) {
+                Trace(loop, 1, "Synchronizer: Not expecting extension units of 1");
+            }
+            else if (newUnits < stop->number) {
+                Trace(loop, 1, "Synchronizer: Extension units were less than before");
+            }
+    
+            Trace(loop, 2, "Sync: Extending record units from %d to %d", stop->number, newUnits);
+            stop->number = newUnits;
             loop->setRecordCycles(newUnits);
+        
+            // go ahead and maintain the stop frame even on pending stops so we
+            // can see progress in the LoopMeter
+            int unitLength = result.extensionLength;
+            int newEndFrame = stop->number * unitLength;
+
+            // normally this will be larger than where we are now but if the user
+            // is manually dicking with the unit length it may be less,
+            // in that case, just leave the current stop alone?
+            int currentFrame = loop->getFrame();
+            if (newEndFrame < currentFrame) {
+                Trace(1, "Synchronizer: Loop is already beyond where the extension wants it");
+            }
+            else {
+                stop->frame = newEndFrame;
+            }
         }
     }
 }
 
 /**
- * Called from RecordFunction::undoModeStop.
- *
- * Uses the stop event number as the number of "goal cycles".
- * The number of goal cycles cannot be below 1, if they do Undo below
- * that the entire recording is canceled.
+ * For symmetry with Undo to reduce auto record units, Redo will also
+ * call this when in Threshold and Synchronize modes.
  */
-bool Synchronizer::undoRecordStop(Loop* loop)
+void Synchronizer::redoRecordStop(Loop* loop)
+{
+    extendRecordStop(loop);
+}
+
+/**
+ * Called from UndoFunction::scheduleEvent.
+ * Should only be here when in Threshold and Synchronize modes.
+ * When in Record mode it lands in scheduleRecordStop instead.
+ *
+ * Originally called from a scheduled undo event but that would have the side effect
+ * of ending RecordMode which isn't what I want.  Not sure how this used to work, but
+ * we intercept it early before it gets into the scheduleRecordStop mess.
+ *
+ * If we have a RecordStopEvent then take sync units away until it gets down to zero
+ * then reset the loop.
+ *
+ * If there is no stop event, cancel the entire recording.
+ */
+void Synchronizer::undoRecordStop(Loop* loop)
+{
+    reduceRecordStop(loop);
+}
+
+/**
+ * Internal handler for undoRecordStop
+ * Nicer symmetry with extendRecordStop and might want this for things
+ * unrelated to Undo.
+ *
+ * requestReduction might not reduce anything and we're expected to let
+ * the current unit finish.  If it returns zero, reset.
+ */
+void Synchronizer::reduceRecordStop(Loop* loop)
 {
     EventManager* em = loop->getTrack()->getEventManager();
 	Event* stop = em->findEvent(RecordStopEvent);
-	bool undone = false;
-    
-	if (stop != nullptr) {
+
+    if (stop == nullptr) {
+        // we can only be in ThresholdMode or SynchronizeMode
+        // another interpretation of what to do here would be to break
+        // out of Threshold/Synchronize and start recording immediately
+        // but I think it's more obvious for most to just cancel the recording
+        loop->reset(nullptr);
+    }
+    else {
         int number = loop->getTrack()->getLogicalNumber();
         SyncMaster::RequestResult result =
             mSyncMaster->requestReduction(number);
 
         int newUnits = result.goalUnits;
-        
-        // if these are the same we couldn't undo one, so return false
-        // and undo the entire recording
-        if (stop->number != newUnits) {
-
+        if (newUnits == 0) {
+            // no where to go
+            Trace(2, "Synchronizer: Can't undo any more");
+            loop->reset(nullptr);
+        }
+        else if (newUnits != stop->number) {
+            Trace(loop, 2, "Sync: Reducing record units from %d to %d", stop->number, newUnits);
             stop->number = newUnits;
-            undone = true;
-                
-            if (!stop->pending) {
-                // removing cycles can't rewind past where we are now
+            loop->setRecordCycles(newUnits);
+
+            // we now keep stop frame even on pending stops so we can see things
+            // move in the LoopMeter
+            if (stop->frame > 0) {
                 int unitLength = result.extensionLength;
                 int newEndFrame = stop->number * unitLength;
-
-                loop->setRecordCycles(newUnits);
-                    
-                if (newEndFrame < stop->frame) {
-                    // leave it alone and finish 0ut this cycle
+                int currentFrame = loop->getFrame();
+                if (newEndFrame < currentFrame) {
+                    // should have prevented this with checks on the unit numbers
+                    // so if we thought the numbers looked good but the frames don't
+                    // match it's an error
+                    Trace(loop, 1, "Sync: Can't reduce past where we've recorded");
+                    //loop->reset(nullptr);
                 }
                 else {
                     stop->frame = newEndFrame;
@@ -656,7 +747,6 @@ bool Synchronizer::undoRecordStop(Loop* loop)
             }
         }
     }
-    return undone;
 }
 
 //////////////////////////////////////////////////////////////////////

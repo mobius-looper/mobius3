@@ -59,6 +59,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     class MslTrack* getMslTrack() override;
     void syncEvent(class SyncEvent* e) override;
     int getSyncLength() override;
+    int getSyncLocation() override;
     
     //
     // ScheduledTrack

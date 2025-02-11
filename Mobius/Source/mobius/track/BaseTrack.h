@@ -79,6 +79,7 @@ class BaseTrack
     // it pays attention well
     virtual void syncEvent(class SyncEvent* e) = 0;
     virtual int getSyncLength() = 0;
+    virtual int getSyncLocation() = 0;
     
   protected:
 

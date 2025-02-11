@@ -113,6 +113,7 @@ class SyncMaster
     RequestResult requestRecordStart(int number, SyncUnit unit, bool noSync);
     RequestResult requestRecordStart(int number, bool noSync);
     RequestResult requestRecordStop(int number, bool noSync);
+    RequestResult requestPreRecordStop(int number);
     RequestResult requestAutoRecord(int number, bool noSync);
     RequestResult requestExtension(int number);
     RequestResult requestReduction(int number);

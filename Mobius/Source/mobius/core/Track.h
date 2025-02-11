@@ -258,6 +258,7 @@ class Track : public TraceContext
     void processAudioStream(class MobiusAudioStream* stream);
     void syncEvent(class SyncEvent* e);
     int getSyncLength();
+    int getSyncLocation();
     
 	//
     // Unit test interface

@@ -430,24 +430,18 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number, bool noSync)
           Trace(1, "SyncMaster: Request to start AutoRecord while already in a recording");
         lt->resetSyncState();
         
-        SyncSource src = getEffectiveSource(lt);
-        
-        if (src == SyncSourceNone || src == SyncSourceMaster || noSync) {
-            // unsynchronized AR, we help out the track by dealing with AR parameters
-            result.synchronized = false;
-            result.autoRecordUnits = getAutoRecordUnits(lt);
-            int unitLength = getAutoRecordUnitLength(lt);
-            result.autoRecordLength = unitLength * result.autoRecordUnits;
+        result.autoRecordUnits = getAutoRecordUnits(lt);
+        int unitLength = getAutoRecordUnitLength(lt);
+        // supply this even if we're syncing to give the loop some girth during
+        // we can see in the LoopMeter during the initial recording
+        result.autoRecordLength = unitLength * result.autoRecordUnits;
 
-            // store this so when asked to extend it we know where we were
-            // kind of unsightly since we're in a sync recording but using
-            // SyncState on the LogicalTrack
-            // the alternative would be to poke a hole in BaseTrack to ask
-            // for what it thinks the AR units are
-            // would be better if we had an isSyncFreeAutoRecord flag or something
-            lt->setSyncGoalUnits(result.autoRecordUnits);
-        }
-        else {
+        lt->setSyncGoalUnits(result.autoRecordUnits);
+        
+        SyncSource src = getEffectiveSource(lt);
+
+        if (src != SyncSourceNone && src != SyncSourceMaster &&  !noSync) {
+
             result.synchronized = true;
 
             SyncUnit syncUnit = lt->getSyncUnitNow();
@@ -461,7 +455,6 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number, bool noSync)
             lt->setSyncRecordUnit(syncUnit);
 
             lt->setSyncElapsedUnits(1);
-            lt->setSyncGoalUnits(getAutoRecordUnits(lt));
         }
 
         // in both cases, let it know if there is a recording threshold
@@ -471,6 +464,30 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number, bool noSync)
         // I imagine they could be combined but it gets messy and complicates testing
         if (!noSync && !result.synchronized)
           result.threshold = recordThreshold;
+    }
+    return result;
+}
+
+/**
+ * Used when we're stuck in Synchronize or Threshold modes at
+ * the beginning of a recording and they press Record again.
+ * Similar to an AutoRecord of one unit.
+ */
+SyncMaster::RequestResult SyncMaster::requestPreRecordStop(int number)
+{
+    RequestResult result;
+
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+        // whether synced or unsynced return the length
+        result.autoRecordUnits = 1;
+        result.autoRecordLength = getAutoRecordUnitLength(lt);
+        lt->setSyncGoalUnits(1);
+
+        SyncSource src = getEffectiveSource(lt);
+        if (src != SyncSourceNone && src != SyncSourceMaster) {
+            result.synchronized = true;
+        }
     }
     return result;
 }
@@ -567,6 +584,16 @@ SyncMaster::RequestResult SyncMaster::requestExtension(int number)
  * This isn't something we can go back in time for, the script did logically happen
  * AFTER the extension so if you undo at this point the track either needs to ignore
  * it or undo the entire recording.
+ *
+ * If the reduction attempts to go behind the current recording location there are two schools
+ * of though here: return 0 and expect the track to reset the loop.
+ * Clamp it at 1 or elapsedUnits and just let the recording finish.
+ *
+ * Resetting the loop is more consistent with Undo immediately after Record,  but once
+ * you've done AutoRecord and passed one elapsed unit, you're more in the zone of using
+ * Undo/Redo to adjust the ending location and don't want to reset by accident.
+ * Could have a parameter for this, but I'm liking just letting it finish.
+ *
  */
 SyncMaster::RequestResult SyncMaster::requestReduction(int number)
 {
@@ -574,34 +601,35 @@ SyncMaster::RequestResult SyncMaster::requestReduction(int number)
     
     LogicalTrack* lt = trackManager->getLogicalTrack(number);
     if (lt != nullptr) {
-    
-        // for both, the pulse number increases
+
         int reduction = 1;
 
         int current = lt->getSyncGoalUnits();
-        if (current == 0)
-          current = 1;
+        if (current == 0) {
+            // must be in the initial recording before the end frame was set
+            // it is unexpected to call this
+            current = 1;
+        }
         
         int newUnits = current - reduction;
+        int unitLength = getAutoRecordUnitLength(lt);
 
-        // can't go back in time
-        int elapsed = lt->getSyncElapsedUnits();
+        // looking at getSyncElapsedUnits doesn't work for unsynced tracks
+        // so do both synced and unsynced the same way by looking at their
+        // record location
+        int location = lt->getSyncLocation();
+        int elapsed = (int)ceil((float)location / (float)unitLength);
+        
         if (newUnits < elapsed) {
             Trace(2, "SyncMaster: Supressing attempt to reduce auto record before elapsed");
             newUnits = elapsed;
-        }
-        else if (newUnits < 1) {
-            // shouldn't be here unless elapsed is messed up, but this can't
-            // ever go below 1
-            Trace(1, "SyncMaster: Attmept to make auto record units negative");
-            newUnits = 1;
         }
 
         result.goalUnits = newUnits;
         lt->setSyncGoalUnits(newUnits);
 
         // for unsynced recordings, calculate the length to add
-        result.extensionLength = getAutoRecordUnitLength(lt);
+        result.extensionLength = unitLength;
     }
     return result;
 }    
@@ -647,6 +675,7 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
         // should be clear but make sure
         track->setSyncElapsedBeats(0);
         track->setSyncElapsedUnits(0);
+        track->setSyncRecordStarted(true);
     }
     else {
         // always advance a beat

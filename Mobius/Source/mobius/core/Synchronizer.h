@@ -37,7 +37,8 @@ class Synchronizer {
     class Event* scheduleRecordStart(class Action* action, class Function* function, class Loop* l);
     class Event* scheduleRecordStop(class Action* action, class Loop* loop);
     
-    bool undoRecordStop(class Loop* loop);
+    void undoRecordStop(class Loop* loop);
+    void redoRecordStop(class Loop* loop);
 
     // 
     // Loop and Function notifications
@@ -83,14 +84,15 @@ class Synchronizer {
     class Event* scheduleAutoRecordStart(class Action* action, class Function* function, class Loop* l);
     class Event* scheduleAutoRecordStop(class Action* action, class Loop* loop,
                                         SyncMaster::RequestResult& result);
+    class Event* schedulePreRecordStop(class Action* action, class Loop* loop);
     
     class Event* scheduleSyncRecord(class Action* action, class Loop* l, class MobiusMode* mode);
     class Event* scheduleRecordStartNow(class Action* action, class Function* f, class Loop* l);
     class Event* scheduleNormalRecordStop(class Action* action, class Loop* loop);
     class Event* scheduleSyncRecordStop(class Action* action, class Loop* l);
 
-    void extendRecordStop(class Action* action, class Loop* loop, class Event* stop);
-    
+    void reduceRecordStop(class Loop* loop);
+    void extendRecordStop(class Loop* loop);
     float getSpeed(class Loop* l);
 
     // SyncEvent handling

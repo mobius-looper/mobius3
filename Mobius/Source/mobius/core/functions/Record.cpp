@@ -487,7 +487,13 @@ bool RecordFunction::undoModeStop(Loop* loop)
 {
     Synchronizer* sync = loop->getSynchronizer();
 
-    return sync->undoRecordStop(loop);
+    // this no longer returns value, it either reduces the length
+    // or resets
+    // we actually shoudln't even be here any more now that we catch
+    // it immediately in UndoFunction::scheduleEvent
+    Trace(loop, 1, "RecordFunction::undoModeStop Not expecting to be here");
+    sync->undoRecordStop(loop);
+    return true;
 }
 
 /****************************************************************************
@@ -548,7 +554,10 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
         else {
             LayerPool* lp = loop->getMobius()->getLayerPool();
             reclayer = lp->newLayer(loop);
+            // transfer the pre-record cycles if any
+            int initialCycles = loop->getRecordCycles();
             loop->setRecordLayer(reclayer);
+            loop->setCycles(initialCycles);
         }
 
         // Script Kludge: If this flag is set then we're doing audio

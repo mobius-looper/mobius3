@@ -335,6 +335,11 @@ int LogicalTrack::getSyncLength()
     return track->getSyncLength();
 }
 
+int LogicalTrack::getSyncLocation()
+{
+    return track->getSyncLocation();
+}
+
 bool LogicalTrack::isSyncRecording()
 {
     return syncRecording;

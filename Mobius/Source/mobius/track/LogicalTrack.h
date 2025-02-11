@@ -76,6 +76,7 @@ class LogicalTrack
     void syncEvent(class SyncEvent* e);
 
     int getSyncLength();
+    int getSyncLocation();
     int getUnitLength();
     void setUnitLength(int l);
     

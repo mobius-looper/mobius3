@@ -338,8 +338,6 @@ class Loop : public TraceContext {
 
     long reflectFrame(long frame);
 
-	bool undoRecordStop();
-
     Event* copySound(Loop* src, class Function* initial, bool checkMode, long modeFrame);
     Event* copyTiming(Loop* src, long modeFrame);
     void trackCopySound(Loop* src, Loop* dest);
@@ -369,6 +367,10 @@ class Loop : public TraceContext {
 	long mPlayFrame;
     long mModeStartFrame;
 	MobiusMode* mMode;
+
+    // new: to show auto record cycles when still in Synchronize mode
+    // without a record layer
+    int mPreRecordCycles = 0;
 	
 	// The distinction between mMute and mMuteMode is subtle.
 	// mMute is on whenever a mute is active, preventing output.

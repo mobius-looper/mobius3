@@ -823,7 +823,12 @@ long Loop::getRecordedFrames()
  */
 long Loop::getCycles()
 {
-    return (mRecord != NULL) ? mRecord->getCycles() : 1;
+    int cycles = 1;
+    if (mRecord != nullptr)
+      cycles = mRecord->getCycles();
+    else if (mPreRecordCycles > 0)
+      cycles = mPreRecordCycles;
+    return cycles;
 }
 
 /**
@@ -845,8 +850,10 @@ void Loop::setCycles(int cycles)
 {
     // what's a good upper bound?  should we even have one?
     if (cycles > 0 && cycles <= 1000) {
-        if (mRecord != NULL)
-          mRecord->setCycles(cycles);
+        if (mRecord != NULL) {
+            mRecord->setCycles(cycles);
+            mPreRecordCycles = 0;
+        }
     }
 }
 
@@ -1055,6 +1062,8 @@ void Loop::refreshState(TrackState* s)
     // Viewer and View both have it but it is apparently not used for display
 
 	s->cycles = (int)getCycles();
+    if (s->cycles == 0)
+      s->cycles = mPreRecordCycles;
     
     // cycle
     //
@@ -2186,6 +2195,7 @@ void Loop::reset(Action* action)
 	// do this after Stream::loopReset so we get the right latency
 	setFrame(-mInput->latency);
 	mPlayFrame = mOutput->latency;
+    mPreRecordCycles = 0;
 
 	mSynchronizer->loopReset(this);
 }
@@ -4493,8 +4503,10 @@ void Loop::undoEvent(Event* e)
 	// If we're auto-recording and have multipled, remove multiples
     // TODO: Need to encapsulate this in MobiusMode so we don't
     // have Function specific calls like this...
-	if (Record->undoModeStop(this))
-	  return;
+    // new: this is handled a different way now, if we get to the point
+    // where an UndoEvent is actually scheduled, process it normally
+	//if (Record->undoModeStop(this))
+    //return;
 
 	// If we're in a loop entered with SwitchStyle=OnceReturn
 	// and there is a return Transtion to the previous loop, Undo
@@ -6249,13 +6261,18 @@ void Loop::trackCopyTiming(Track* src)
  */
 void Loop::setRecordCycles(int cycles)
 {
-	if (mRecord != nullptr)
-	  mRecord->setCycles((int)cycles);
+	if (mRecord == nullptr) {
+        mPreRecordCycles = cycles;
+    }
+    else {
+        mRecord->setCycles((int)cycles);
+        mPreRecordCycles = 0;
+    }
 }
 
 int Loop::getRecordCycles()
 {
-    return (mRecord != nullptr) ? mRecord->getCycles() : 0;
+    return (mRecord != nullptr) ? mRecord->getCycles() : mPreRecordCycles;
 }
 
 /**

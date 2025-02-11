@@ -171,8 +171,23 @@ Event* UndoFunction::scheduleEvent(Action* action, Loop* l)
 
 	if (mode == ThresholdMode || mode == SynchronizeMode) {
 		// cancel the recording, but leave track controls as is
-		l->reset(NULL);
+		// l->reset(NULL);
+        
+        // new: if we're recording or synchronizing, immediately pass
+        // it over to Synchronizer so it can remove recording units before
+        // we get into the mess that is RecordMode event scheduling.
+        // This will bypass what Loop::undoEvent does which is fine except that
+        // we don't have an easy way to use Undo to pick off events stacked after
+        // a record stop.  Should that become important reorganize parts of Loop::undoEvent
+        // and use it here or in Synchronizer.
+        Synchronizer* s = l->getSynchronizer();
+        s->undoRecordStop(l);
 	}
+    else if (mode == RecordMode) {
+        // this will already have been handled by Function::invoke calling
+        // scheduleModeStop which redirects to undoRecordStop if the
+        // if the action function was Undo, what a mess
+    }
 	else if (!mOnly && mode == MuteMode && isMuteCancel(preset) && 
 			 !em->hasEvents()) {
 
@@ -281,6 +296,7 @@ RedoFunction::RedoFunction() :
     Function("Redo")
 {
 	eventType = RedoEvent;
+	thresholdEnabled = true;
 	mayCancelMute = true;
     mayConfirm = true;
 	instant = true;
@@ -295,7 +311,13 @@ Event* RedoFunction::scheduleEvent(Action* action, Loop* l)
 
 	MobiusMode* mode = l->getMode();
 
-	if (mode != ResetMode) {
+	if (mode == ThresholdMode || mode == SynchronizeMode) {
+        // new: this can be used to extend auto record units for
+        // symmetry with Undo that takes them away
+        Synchronizer* s = l->getSynchronizer();
+        s->redoRecordStop(l);
+	}
+    else if (mode != ResetMode) {
 		event = em->newEvent(this, RedoEvent, l->getFrame());
 		event->savePreset(l->getPreset());
 		em->addEvent(event);

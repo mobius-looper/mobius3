@@ -370,6 +370,11 @@ int Track::getSyncLength()
     return mLoop->getFrames();
 }
 
+int Track::getSyncLocation()
+{
+    return mLoop->getFrame();
+}
+
 /**
  * This is the first notification that requires an argument beyond
  * what is in TrackProperties.
@@ -942,7 +947,7 @@ void Track::refreshState(TrackState* s)
     // will be the eventual length so return that
     if (s->frames == 0 && s->recording) {
         Event* stop = mEventManager->findEvent(RecordStopEvent);
-        if (stop != nullptr && !stop->pending)
+        if (stop != nullptr)
           s->frames = stop->frame;
     }
 }
