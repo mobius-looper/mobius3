@@ -305,6 +305,7 @@ void LogicalTrack::resetSyncState()
 {
     syncRecording = false;
     syncRecordStarted = false;
+    syncFinalized = false;
     syncStartUnit = SyncUnitNone;
     syncRecordUnit = SyncUnitNone;
     syncElapsedUnits = 0;
@@ -357,6 +358,16 @@ bool LogicalTrack::isSyncRecordStarted()
 void LogicalTrack::setSyncRecordStarted(bool b)
 {
     syncRecordStarted = b;
+}
+
+bool LogicalTrack::isSyncFinalized()
+{
+    return syncFinalized;
+}
+
+void LogicalTrack::setSyncFinalized(bool b)
+{
+    syncFinalized = b;
 }
 
 SyncUnit LogicalTrack::getSyncStartUnit()

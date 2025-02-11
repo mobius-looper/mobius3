@@ -18,6 +18,9 @@ class SyncEvent
         Realign
     } Type;
 
+    SyncEvent() {}
+    SyncEvent(Type t) {type = t;}
+
     Type type;
 
     // for Finalize, the length the loop should have

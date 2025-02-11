@@ -84,6 +84,9 @@ class LogicalTrack
     
     void setSyncRecordStarted(bool b);
     bool isSyncRecordStarted();
+
+    void setSyncFinalized(bool b);
+    bool isSyncFinalized();
     
     SyncUnit getSyncStartUnit();
     void setSyncStartUnit(SyncUnit unit);
@@ -171,6 +174,7 @@ class LogicalTrack
     // sync recording state
     bool syncRecording = false;
     bool syncRecordStarted = false;
+    bool syncFinalized = false;
     SyncUnit syncStartUnit = SyncUnitNone;
     SyncUnit syncRecordUnit = SyncUnitNone;
     int syncElapsedUnits = 0;

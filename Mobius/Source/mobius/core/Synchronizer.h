@@ -6,65 +6,9 @@
 
 // necessary for SyncSource
 #include "../../model/ParameterConstants.h"
- 
-//////////////////////////////////////////////////////////////////////
-//
-// SyncUnitInfo
-//
-//////////////////////////////////////////////////////////////////////
 
-/**
- * Little structure used in the calculation of recording "units".
- * Necessary because there are several properties of a unit that
- * are all calculated using similar logic.
- */
-typedef struct {
-
-    /**
-     * Number of frames in the unit. For SYNC_MIDI this will be the
-     * frames in a beat or bar calculated from the MIDI tempo being
-     * monitored.  For SYNC_HOST this will be the number of frames
-     * in a beat or bar measured between host events.  For SYNC_TRACK
-     * this will be the number of frames in a master track subcycle,
-     * cycle, or loop.
-     *
-     * For SYNC_MIDI this will be calculated from the measured tempo
-     * and may be fractional.  It will later be truncated but we keep
-     * it as a fraction now so if we need to multiply it to get a bar
-     * length we avoid roundoff error.
-     */
-    float frames;
-
-    /**
-     * The number of sync pulses in the unit.  For SYNC_MIDI this
-     * will be the number of clocks in the unit, beats times 24.
-     * For SYNC_HOST this will be the number of host beats.  For
-     * SYNC_TRACK this will be the number of master track subcycles.
-     */
-    int pulses;
-
-    /**
-     * The number of cycles in the unit.  For SYNC_TRACK the cycle width
-     * comes from the master track so the result may be fractional.
-     * For SYNC_HOST and SYNC_MIDI, each bar is considered to be one cycle, 
-     * this is determined by the BeatsPerbar sync parameter.
-     */
-    float cycles;
-
-    /**
-     * The rate adjust frames in one unit.
-     * This is unitFrames times the current amount of rate shift, 
-     * with possible rounding to make it a multiple of the sync tracker.
-     */
-    float adjustedFrames;
-
-} SyncUnitInfo;
-
-//////////////////////////////////////////////////////////////////////
-//
-// Synchronizer
-//
-//////////////////////////////////////////////////////////////////////
+// necessary for SyncMaster::RequestResult
+#include "../sync/SyncMaster.h"
 
 class Synchronizer {
 
@@ -92,6 +36,7 @@ class Synchronizer {
 
     class Event* scheduleRecordStart(class Action* action, class Function* function, class Loop* l);
     class Event* scheduleRecordStop(class Action* action, class Loop* loop);
+    
     bool undoRecordStop(class Loop* loop);
 
     // 
@@ -135,10 +80,14 @@ class Synchronizer {
 
     // Recording
     
+    class Event* scheduleAutoRecordStart(class Action* action, class Function* function, class Loop* l);
+    class Event* scheduleAutoRecordStop(class Action* action, class Loop* loop,
+                                        SyncMaster::RequestResult& result);
+    
     class Event* scheduleSyncRecord(class Action* action, class Loop* l, class MobiusMode* mode);
+    class Event* scheduleRecordStartNow(class Action* action, class Function* f, class Loop* l);
     class Event* scheduleNormalRecordStop(class Action* action, class Loop* loop);
     class Event* scheduleSyncRecordStop(class Action* action, class Loop* l);
-    class Event* scheduleAutoRecordStop(class Action* action, class Loop* loop);
 
     void extendRecordStop(class Action* action, class Loop* loop, class Event* stop);
     

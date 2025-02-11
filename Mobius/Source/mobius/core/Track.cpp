@@ -934,6 +934,17 @@ void Track::refreshState(TrackState* s)
     
     // add the stuff commented above
     mLoop->refreshState(s);
+
+    // hack for AutoRecord
+    // during the initial recording the loop's frame count is zero since
+    // we don't know when it will end
+    // once we have a non-pending RecordStopEvent though, we can assume that
+    // will be the eventual length so return that
+    if (s->frames == 0 && s->recording) {
+        Event* stop = mEventManager->findEvent(RecordStopEvent);
+        if (stop != nullptr && !stop->pending)
+          s->frames = stop->frame;
+    }
 }
 
 /****************************************************************************

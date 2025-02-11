@@ -97,13 +97,17 @@ void Synchronizer::globalReset()
  * just Record but enters into this weird alternate mode afterward where I think it
  * just plays once allowing for review then starts recording again.  Better to do all that
  * in a script.
-  */
+ *
+ * The name here is confusing because we don't necessarily schedule a RecordStart
+ * event, if we're already IN Record mode this is called as well because it's
+ * the common handler whenever the Record function is seen.  In that case
+ * we schedule a RecordStop.
+ */
 Event* Synchronizer::scheduleRecordStart(Action* action,
                                          Function* function,
                                          Loop* l)
 {
-	Event* startEvent = nullptr;
-    Event* stopEvent = nullptr;
+    Event* startEvent = nullptr;
     
     // old comments: When we moved this over from RecordFunction we may have lost
     // the original function, make sure
@@ -111,21 +115,23 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
     if (f != function)
       Trace(l, 1, "Sync: Mismatched function in scheduleRecordStart\n");
 
+    // divert this early
+    // some duplication but just easier to understand then mixing them together
+    if (f == AutoRecord)
+      return scheduleAutoRecordStart(action, function, l);
+    
     EventManager* em = l->getTrack()->getEventManager();
     Event* prevStopEvent = em->findEvent(RecordStopEvent);
 	MobiusMode* mode = l->getMode();
     int number = l->getTrack()->getLogicalNumber();
-
-    // AutoRecord needs to associate the Action with the ENDING event
-    // not the starting event.  Each Event we schedule likes to own an Action
-    // for context, so clone it if this is going to be an AutoRecord start
-    Action* startAction = action;
-    if (f == AutoRecord)
-      startAction = mMobius->cloneAction(action);
-
+    
 	if (mode == SynchronizeMode ||
         mode == ThresholdMode ||
         mode == RecordMode) {
+
+        // this means another trigger for Record or SUSRecord came in while
+        // waiting for the RecordStart to happen, or we're Record mode already
+        // and the second trigger ends it
 
 		// These cases are almost identical: schedule a RecordStop
 		// event to end the recording after one sync unit.
@@ -142,125 +148,33 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
             // in scheduleRecordStop.  There is too much of a disconnect between
             // the time scheduleRecordStop is called and scheduleRecordStart and it's
             // hard to pass state between them.
-            stopEvent = prevStopEvent;
+            // really hate how obscure this is...
         }
         else if (action->down && function->sustain) {
-
-            // this is either the down of Record/AutoRecord or the up of SUSRecord
+            // this is either the down of Record or the up of SUSRecord
             // make it stop
-            // note we don't use startAction here, that will end up being reclaimed
-            // since we're not starting an AutoRecord
-            stopEvent = scheduleRecordStop(action, l);
+            (void)scheduleRecordStop(action, l);
         }
     }
-	else if (!action->noSynchronization &&
-             mSyncMaster->isRecordSynchronized(number)) {
-
-        // todo: This is where we could support startUnit and pulseUnit overrides
-        // based on action arguments
-        SyncMaster::RequestResult result;
-        if (f == AutoRecord)
-          result = mSyncMaster->requestAutoRecord(number);
-        else
-          result = mSyncMaster->requestRecordStart(number);
-          
-        if (!result.synchronized)
-          Trace(l, 1, "Sync: SyncMaster said we shouldn't be synchronized and I can't deal");
-
-        // Putting the loop in Threshold or Synchronize mode is treated
-        // as "not advancing" and screws up playing.  Need to rethink this
-        // so we could continue playing the last play layer while waiting.
-        // !! Issues here.  We could consider this to be resetting the loop
-        // and stopping sync clocks if we're the master but that won't happen
-        // until the Record event activates.  If we just mute now and don't
-        // advance, the loop thermometer will freeze in place.  But it
-        // is sort of like a pause with possible undo back so maybe that's okay.
-		l->stopPlayback();
-		startEvent = scheduleSyncRecord(startAction, l, SynchronizeMode);
-	}
-	else if (!action->noSynchronization &&
-             mSyncMaster->hasRecordThreshold(number)) {
-        // Threshold recording is similar to synchronized recording
-        // in that we schedule a pending start and let it be activated later
-        // old comments wonder if the noSynchronization option in the action should
-        // apply here 
-		l->stopPlayback();
-		startEvent = scheduleSyncRecord(startAction, l, ThresholdMode);
-	}
 	else {
-        // Begin recording now
 		l->stopPlayback();
-		startEvent = f->scheduleEventDefault(startAction, l);
 
-        // old comments, unclear if still relevant
-        //
-		// Ugly: when recording from a script, we often have latency
-		// disabled and want to start right away.  mFrame will
-		// currently be -InputLatency but we'll set it to zero as
-		// soon as the event is processed.  Unfortunately if we setup
-		// a script Wait, it will be done relative to -InputLatency.
-		// Try to detect this and preemtively set the frame to zero.
-		// !! does the source matter, do this always?
-		if (action->trigger == TriggerScript) {
-			long frame = l->getFrame();
-			if (frame == startEvent->frame) {
-				l->setFrame(0);
-				l->setPlayFrame(0);
-				startEvent->frame = 0;
-			}
-		}
-
-		// If we're in Reset, we have to pretend we're in Play
-		// in order to get the frame counter started.  Otherwise
-		// leave the current mode in place until RecordEvent.  Note that
-		// this MUST be done after scheduleStop because decisions
-		// are made based on whether we're in Reset mode 
-		// (see Synchronizer::getSyncMode)
-
-		if (mode == ResetMode)
-		  l->setMode(PlayMode);
-    }
-
-    // AutoRecord makes another event to stop it
-    // if the startEvent was scheduled normally
-    // Historically the event returned was the Stop event, which is
-    // more useful for scripts to be waiting on
-    Event* returnEvent = startEvent;
-    if (f == AutoRecord) {
+        SyncMaster::RequestResult result =
+            mSyncMaster->requestRecordStart(number, action->noSynchronization);
         
-        if (startEvent == nullptr) {
-            // decided not to schedule an AR start, reclaim the cloned action
-            mMobius->completeAction(startAction);
-            // stopEvent should be set, it's either a previous stop or one we
-            // just made
-            if (stopEvent != prevStopEvent)
-              returnEvent = stopEvent;
-        }
-        else if (stopEvent != nullptr) {
-            // unpossible to have both a startEvent and a stopEvent at this point
-            Trace(1, "Synchronizer: Logic error in scheduleRecordStart");
-            // this will start behaving strantely, probabloy best not to return
-            // anything that would make it worse
-            returnEvent = nullptr;
-        }
-        else {
-            // schedule the AR stop, associate it with the original Action
-            // and return the event
-            stopEvent = scheduleAutoRecordStop(action, l);
-            returnEvent = stopEvent;
-        }
-    }
-    
-    // if we deciced to schedule a record start
-    // either pulsed, or after latency, let the followers over in MIDI land
-    // know.  This should happen immediately rather deferred until the Record
-    // actually begins so it can mute the backing track if there is one.
-    // might want two notifications for this NotifyRecordStart
-    // and NotifyRecordStartScheduled
-    if (startEvent != nullptr)
-      mMobius->getNotifier()->notify(l, NotificationRecordStart);
+        if (result.synchronized)
+          startEvent = scheduleSyncRecord(action, l, SynchronizeMode);
+        
+        else if (result.threshold > 0)
+          startEvent = scheduleSyncRecord(action, l, ThresholdMode);
+          
+        else 
+          startEvent = scheduleRecordStartNow(action, f, l);
 
-	return returnEvent;
+        mMobius->getNotifier()->notify(l, NotificationRecordStart);
+    }
+
+	return startEvent;
 }
 
 /**
@@ -288,6 +202,153 @@ Event* Synchronizer::scheduleSyncRecord(Action* action, Loop* l,
 	return event;
 }
 
+Event* Synchronizer::scheduleRecordStartNow(Action* action, Function* f, Loop* l)
+{
+    l->stopPlayback();
+    Event* event = f->scheduleEventDefault(action, l);
+
+    // old comments, unclear if still relevant
+    //
+    // Ugly: when recording from a script, we often have latency
+    // disabled and want to start right away.  mFrame will
+    // currently be -InputLatency but we'll set it to zero as
+    // soon as the event is processed.  Unfortunately if we setup
+    // a script Wait, it will be done relative to -InputLatency.
+    // Try to detect this and preemtively set the frame to zero.
+    // !! does the source matter, do this always?
+    if (action->trigger == TriggerScript) {
+        long frame = l->getFrame();
+        if (frame == event->frame) {
+            l->setFrame(0);
+            l->setPlayFrame(0);
+            event->frame = 0;
+        }
+    }
+
+    // If we're in Reset, we have to pretend we're in Play
+    // in order to get the frame counter started.  Otherwise
+    // leave the current mode in place until RecordEvent.  Note that
+    // this MUST be done after scheduleStop because decisions
+    // are made based on whether we're in Reset mode 
+    // (see Synchronizer::getSyncMode)
+
+    if (l->getMode() == ResetMode)
+      l->setMode(PlayMode);
+
+    return event;
+}
+
+/**
+ * Schedule AutoRecord events.
+ *
+ * This is basically the same as scheduleRecordStart but it adds an extra
+ * stop event that is the return event for script waits.  It also has to call
+ * different SyncMaster notifications.
+ *
+ * If we're already in Record mode should have called scheduleModeStop first.
+ */
+Event* Synchronizer::scheduleAutoRecordStart(Action* action,
+                                             Function* function,
+                                             Loop* l)
+{
+    Event* returnEvent = nullptr;
+    
+    // old comments: When we moved this over from RecordFunction we may have lost
+    // the original function, make sure
+    Function* f = action->getFunction();
+    if (f != function)
+      Trace(l, 1, "Sync: Mismatched function in scheduleRecordStart\n");
+
+    EventManager* em = l->getTrack()->getEventManager();
+    Event* prevStopEvent = em->findEvent(RecordStopEvent);
+	MobiusMode* mode = l->getMode();
+    int number = l->getTrack()->getLogicalNumber();
+
+	if (mode == SynchronizeMode ||
+        mode == ThresholdMode ||
+        mode == RecordMode) {
+
+        // Auto record does not expect to be here when in these modes
+        // the stop event must always have been scheduled by now
+        if (prevStopEvent == nullptr) {
+            Trace(1, "Synchronizer: Not expecting to be here");
+        }
+    }
+	else {
+		l->stopPlayback();
+        
+        SyncMaster::RequestResult result = 
+            mSyncMaster->requestAutoRecord(number, action->noSynchronization);
+
+        // AutoRecord needs to associate the Action with the ENDING event
+        // not the starting event.  Each Event we schedule likes to own an Action
+        // for context, so clone it
+        Action* startAction = mMobius->cloneAction(action);
+        Event* startEvent = nullptr;
+        
+        if (result.synchronized)
+          startEvent = scheduleSyncRecord(startAction, l, SynchronizeMode);
+        
+        else if (result.threshold > 0)
+          startEvent = scheduleSyncRecord(startAction, l, ThresholdMode);
+          
+        else 
+          startEvent = scheduleRecordStartNow(startAction, f, l);
+
+        // AutoRecord makes another event to stop it
+        // Historically the event returned was the Stop event, which is
+        // more useful for scripts to be waiting on
+
+        Event* stopEvent = scheduleAutoRecordStop(action, l, result);
+        returnEvent = stopEvent;
+
+        mMobius->getNotifier()->notify(l, NotificationRecordStart);
+    }
+
+	return returnEvent;
+}
+
+/**
+ * Schedule the end of an auto-record.
+ */
+Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop,
+                                            SyncMaster::RequestResult& result)
+{
+    Event* event = nullptr;
+    Track* track = loop->getTrack();
+    EventManager* em = track->getEventManager();
+
+    // note that I'm not scheduling a pending stop event for Threshold
+    // mode, I think it's enough just for the Start to be thresholded and
+    // then when it is activated you can fall into a normal scheduled stop
+    
+    if (result.synchronized) {
+
+        event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
+        event->pending = true;
+        // the number put here on the event is what shows up in the UI
+        // it has historically been the number of "auto record units" which
+        // may be larger than the sync source base unit
+        event->number = result.autoRecordUnits;
+    }
+    else {
+        event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
+        event->quantized = true;	// makes it visible in the UI
+        event->frame = result.autoRecordLength;
+        event->number = result.autoRecordUnits;
+        // When you schedule stop events on specific frames, we have to set
+        // the loop cycle count early since we won't be receiving pulses
+        // which is how they are incremented for sync recording
+        // !! why wouldn't we do this for sync too?
+        loop->setRecordCycles(result.autoRecordUnits);
+    }
+    
+    action->setEvent(event);
+    em->addEvent(event);
+        
+    return event;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Record Stop Scheduling
@@ -295,10 +356,16 @@ Event* Synchronizer::scheduleSyncRecord(Action* action, Loop* l,
 //////////////////////////////////////////////////////////////////////
 
 /**
- * This is what gets called when you are currently IN Record mode
- * and it needs to end so another function or mode can take over.
- * It is only called by Record::scheduleModeStop which is called
- * in a few places.
+ * todo: This still an untenable headscratchy mess due to the way the
+ * old event scheduling control flow works.
+ *
+ * It is important to understand that this is a MODE ENDING HANDLER
+ * It can be called as a side effect of any function that finds itself
+ * in the middle of RecordMode and needs to end it.
+ *
+ * If you send Record while in Record, it will first call this to end
+ * RecordMode and THEN call back to scheduleRecordStart.  But once there
+ * is an end scheduled scheduleRecordStart needs to ignore the action.
  *
  * The event returned will be given a child event by LoopSwitch
  * TrackSelect looks at it to see what frame it is on.
@@ -322,15 +389,6 @@ Event* Synchronizer::scheduleSyncRecord(Action* action, Loop* l,
  *
  * If this is unsycnhronized auto record we have a more complex calculation
  * to determine when it ends.
- *
- * When synchronizing or using AutoRecord, the stop event could be far
- * into the future.  While waiting for it, further presses of Record and
- * Undo can be used to increase or decrease the length of the recording.
- *
- * todo: If we decide to schedule the event far enough in the future, there
- * is opportunity to schedule a JumpPlayEvent to begin playback without
- * an output latency jump.  This is what prepareLoop does for unsynchronized
- * endings.
  *
  * This may return nullptr if an unusual situation happened.  Things can
  * continue but will probably be wrong.
@@ -374,31 +432,17 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
         Trace(loop, 1, "Sync: Attempt to schedule RecordStop in mode %s",
               mode->getName());
     }
-    else if (function == AutoRecord || 
-             (function == Record && mode == SynchronizeMode)) {
+    else {
+        SyncMaster::RequestResult result =
+            mSyncMaster->requestRecordStop(number, action->noSynchronization);
 
-        // todo: dislike relying on SynchronizeMode here, would be more robust
-        // to search for an existing RecordStartEvent
-
-        SyncMaster::RequestResult result = mSyncMaster->requestRecordStop(number);
         if (result.synchronized)
           event = scheduleSyncRecordStop(action, loop);
+          
         else
-          event = scheduleAutoRecordStop(action, loop);
+          event = scheduleNormalRecordStop(action, loop);
     }
-	else if (!action->noSynchronization &&
-             mSyncMaster->isRecordSynchronized(number)) {
-
-        SyncMaster::RequestResult result = mSyncMaster->requestRecordStop(number);
-        if (!result.synchronized)
-          Trace(loop, 1, "Sync: SyncMaster said we shouldn't be synchronized and I can't deal");
-
-        event = scheduleSyncRecordStop(action, loop);
-    }
-    else {
-        event = scheduleNormalRecordStop(action, loop);
-    }
-
+    
     return event;
 }
 
@@ -506,88 +550,6 @@ float Synchronizer::getSpeed(Loop* l)
     return is->getSpeed();
 }
 
-/**
- * Schedule the end of an auto-record.  This is where it diverges from
- * normal Record in the number of goal cycles.
- *
- * !!!! Still hating how intertwined AutoRecord is with unbounded Record
- * even though they share a few similarities, the paths are messy.
- * We could have use the resut of requestAutoRecord here...
- *
- */
-Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop)
-{
-    Event* event = nullptr;
-    Track* track = loop->getTrack();
-    EventManager* em = track->getEventManager();
-    Event* prev = em->findEvent(RecordStopEvent);
-    MobiusMode* mode = loop->getMode();
-    Function* function = action->getFunction();
-    int number = track->getLogicalNumber();
-    
-    if (prev != nullptr) {
-        // Since the mode doesn't change until the event is processed, we
-        // can get here several times as functions are stacked for
-        // evaluation after the stop.  This is common for AutoRecord.
-        Trace(loop, 2, "Sync: Reusing RecordStopEvent\n");
-        event = prev;
-    }
-    else if (mode != ResetMode &&
-             mode != SynchronizeMode &&
-             mode != RecordMode &&
-             mode != PlayMode) {
-
-        Trace(loop, 1, "Sync: Attempt to schedule RecordStop in mode %s",
-              mode->getName());
-    }
-    else if (mSyncMaster->isSyncRecording(number)) {
-        // synchronized AR uses pulses
-        // note that we do NOT call requestRecordStop here which locks the unit
-        // just receive pulses until we're done
-
-        event = em->newEvent(function, RecordStopEvent, 0);
-        event->pending = true;
-
-        // the number put here on the event is what shows up in the UI
-        // it has historically been the number of "auto record units" which
-        // may be larger than the sync source base unit
-        int units = mSyncMaster->getAutoRecordUnits(number);
-        event->number = units;
-    }
-    else {
-        // unsynchronized AR is scheduled with a frame
-        // since AR is now in charge of record start/stop for synchronzed
-        // recording, it sure would be nice if we could factor up
-        // unsynced AutoRecord there too
-        
-        event = em->newEvent(function, RecordStopEvent, 0);
-        event->quantized = true;	// makes it visible in the UI
-
-        // show number of units like pulsed AR
-        int units = mSyncMaster->getAutoRecordUnits(number);
-        if (units == 0) units = 1;
-        event->number = units;
-
-        // this will use the Transport tempo combined with
-        // autoRecordUnit to calculate a length
-        int length = mSyncMaster->getAutoRecordUnitLength(number);
-
-        event->frame = length * units;
-
-        // When you schedule stop events on specific frames, we have to set
-        // the loop cycle count early since we won't be receiving pulses
-        // which is how they are incremented for sync recording
-        loop->setRecordCycles(units);
-    }
-
-    if (event != nullptr && event != prev) {
-        action->setEvent(event);
-        em->addEvent(event);
-    }
-        
-    return event;
-}
-
 ///////////////////////////////////////////////////////////////////////
 //
 // Extend and Undo
@@ -622,26 +584,31 @@ void Synchronizer::extendRecordStop(Action* action, Loop* loop, Event* stop)
     (void)action;
     
     int number = loop->getTrack()->getLogicalNumber();
-    int newUnits = mSyncMaster->extendRecording(number);
 
+    SyncMaster::RequestResult result =
+        mSyncMaster->requestExtension(number);
+        
+    int newUnits = result.goalUnits;
+
+    if (newUnits == 1) {
+        Trace(1, "Synchronizer: Not expecting extension units of 1");
+    }
+    
     stop->number = newUnits;
 
     // this can all be moved up to SM
     if (!stop->pending) {
-        // scheduled is harder, we won't bet getting pulses so the stop->frame
-        // needs to be long enough
-        int unitLength = mSyncMaster->getAutoRecordUnitLength(number);
+        int unitLength = result.extensionLength;
         int newEndFrame = stop->number * unitLength;
 
         // normally this will be larger than where we are now but if the user
         // is manually dicking with the unit length it may be less,
         // in that case, just leave the current stop alone
         if (newEndFrame < stop->frame)
-          Trace(1, "Synmchronizer: Loop is beyond where the extension wants it");
+          Trace(1, "Synchronizer: Loop is beyond where the extension wants it");
         else {
             stop->frame = newEndFrame;
-            // cycles is normally 1 less than this, unless user is changing
-            // cycle counts manually
+            loop->setRecordCycles(newUnits);
         }
     }
 }
@@ -661,8 +628,11 @@ bool Synchronizer::undoRecordStop(Loop* loop)
     
 	if (stop != nullptr) {
         int number = loop->getTrack()->getLogicalNumber();
-        int newUnits = mSyncMaster->reduceRecording(number);
+        SyncMaster::RequestResult result =
+            mSyncMaster->requestReduction(number);
 
+        int newUnits = result.goalUnits;
+        
         // if these are the same we couldn't undo one, so return false
         // and undo the entire recording
         if (stop->number != newUnits) {
@@ -672,7 +642,7 @@ bool Synchronizer::undoRecordStop(Loop* loop)
                 
             if (!stop->pending) {
                 // removing cycles can't rewind past where we are now
-                int unitLength = mSyncMaster->getAutoRecordUnitLength(number);
+                int unitLength = result.extensionLength;
                 int newEndFrame = stop->number * unitLength;
 
                 loop->setRecordCycles(newUnits);
@@ -853,12 +823,6 @@ void Synchronizer::stopRecording(Track* t, SyncEvent* e)
     else {
         Trace(l, 2, "Sync: Stopping after %d goal units reached", stop->number);
 
-        int number = t->getLogicalNumber();
-
-        // change this to notifyRecordFinalizing or something
-        // so SM can adapt to unlocked recordings
-        SyncMaster::RequestResult res = mSyncMaster->requestRecordStop(number);
-                
         activateRecordStop(l, stop);
 
         // should be the same, but user might have changed it, don't think we
@@ -960,8 +924,16 @@ void Synchronizer::finalizeRecording(Track* t, SyncEvent* e)
         e->error = true;
     }
     else {
-        Trace(l, 1, "Sync: SyncEvent::Finalize Not implemented");
-        e->error = true;
+        int endFrame = e->finalLength;
+        if (endFrame <= l->getFrames()) {
+            Trace(1, "Sync: SyncEvent asked to finalize below where we are");
+            e->error = true;
+        }
+        else {
+            stop->frame = endFrame;
+            stop->pending = false;
+            Trace(2, "Sync: SyncEvent::Finalize length %d", stop->frame);
+        }
     }
 }
 

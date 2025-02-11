@@ -97,10 +97,9 @@ void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
                           s.blockOffset);
                 }
 
-                // see comments above SyncMaster::getBlockPulse for why this is messy
-                SyncEvent* event = &(s.pulse->event);
-                track->syncEvent(event);
-                syncMaster->handleSyncEvent(track, event);
+                // this can only be an SM pulse righ tnow
+                syncMaster->handleBlockPulse(track, s.pulse);
+                
 
                 if (traceDetails) {
                     Trace(2, "TimeSlicer: Track %d post pulse length %d", track->getNumber(),
@@ -160,8 +159,8 @@ void TimeSlicer::advanceTrack(LogicalTrack* track, MobiusAudioStream* stream)
  * within this block and add a slice.
  *
  * In current practice, there will only ever be one sync pulse
- * for a given track in a block. It will be Beat, Bar, or Loop
- * depending on what the track wanted to follow.
+ * for a given track in a block, and there are no other pulse types
+ * but script waits will eventually add others.
  */
 void TimeSlicer::gatherSlices(LogicalTrack* track)
 {

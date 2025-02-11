@@ -21,6 +21,7 @@
 
 #include "../../model/SyncConstants.h"
 #include "../../model/SessionHelper.h"
+#include "SyncEvent.h"
 
 class SyncMaster
 {
@@ -44,6 +45,17 @@ class SyncMaster
         // true if the recording is expected to be synchronized based
         // on the track's SyncMode 
         bool synchronized = false;
+
+        // extra details for requestAutoRecord
+        int autoRecordUnits = 0;
+        int autoRecordLength = 0;
+
+        // non-zero if there is a record threshold
+        int threshold = 0;
+
+        // new goal units after an extension or reduction
+        int goalUnits = 0;
+        int extensionLength = 0;
     };
     
     SyncMaster();
@@ -97,13 +109,13 @@ class SyncMaster
     
     int getRecordThreshold();
 
-    RequestResult requestRecordStart(int number, SyncUnit pulseUnit, SyncUnit startUnit);
-    RequestResult requestRecordStart(int number, SyncUnit unit);
-    RequestResult requestRecordStart(int number);
-    RequestResult requestRecordStop(int number);
-    RequestResult requestAutoRecord(int number);
-    int extendRecording(int number);
-    int reduceRecording(int number);
+    RequestResult requestRecordStart(int number, SyncUnit pulseUnit, SyncUnit startUnit, bool noSync);
+    RequestResult requestRecordStart(int number, SyncUnit unit, bool noSync);
+    RequestResult requestRecordStart(int number, bool noSync);
+    RequestResult requestRecordStop(int number, bool noSync);
+    RequestResult requestAutoRecord(int number, bool noSync);
+    RequestResult requestExtension(int number);
+    RequestResult requestReduction(int number);
    
     //
     // Track Notifications
@@ -130,9 +142,6 @@ class SyncMaster
     //
     // AutoRecord Support
     //
-
-    int getAutoRecordUnitLength(int id);
-    int getAutoRecordUnits(int id);
 
     // used by Synchronizer for AutoRecord
     int getBarFrames(SyncSource src);
@@ -202,7 +211,7 @@ class SyncMaster
 
     class SymbolTable* getSymbols();
 
-    void handleSyncEvent(class LogicalTrack* track, class SyncEvent* event);
+    void handleBlockPulse(class LogicalTrack* track, class Pulse* pulse);
     void notifyTransportStarted();
     
   private:
@@ -241,9 +250,14 @@ class SyncMaster
 
     void checkDrifts();
 
-    // new things
+    // new things, organize...
+    int getAutoRecordUnits(class LogicalTrack* t);
+    int getAutoRecordUnitLength(class LogicalTrack* t);
+    bool isRelevant(class Pulse* p, SyncUnit unit);
+    int getGoalBeats(class LogicalTrack* t);
     bool isSourceLocked(class LogicalTrack* t);
-    int getAutoRecordBeats(class LogicalTrack* t);
+    void sendSyncEvent(class LogicalTrack* t, SyncEvent::Type type);
+    void dealWithSyncEvent(class LogicalTrack* lt, class SyncEvent* event);
 
 };
 
