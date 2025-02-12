@@ -687,24 +687,6 @@ int BarTender::getBarsPerLoop(SyncSource src)
     return bpl;
 }
 
-void BarTender::getLeaderProperties(LogicalTrack* track, TrackProperties& props)
-{
-    if (track == nullptr || track->getSyncSourceNow() != SyncSourceTrack) {
-        props.invalid = true;
-    }
-    else {
-        int leader = track->getSyncLeaderNow();
-        if (leader == 0)
-          leader = syncMaster->getTrackSyncMaster();
-        
-        if (leader == 0)
-          props.invalid;
-        else {
-            trackManager->getTrackProperties(leader, props);
-        }
-    }
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Unit Lengths
@@ -779,13 +761,59 @@ int BarTender::getSourceUnitLength(LogicalTrack* track)
 }
 
 /**
- * Determining the unit length for track sync is complicated since
- * we don't have as clearly defined notions of what a "beat" or
- * "time signature" is.
+ * Return the base unit length of one record unit in samples/frames.
+ * Zero is acceptable for MidiAnalyzer if we're before the first beat,
+ * so this can't be used for an "am I synced" test.
+ * This is not relevant for Track sync.
+ */
+int BarTender::getBaseRecordUnitLength(SyncSource src)
+{
+    int length = 0;
+    switch (src) {
+        case SyncSourceNone:
+        case SyncSourceMaster:
+            break;
+        case SyncSourceTrack:
+            Trace(1, "BarTender::getBaseRecordUnitLength(SyncSource) with SyncSourceTrack");
+            break;
+        case SyncSourceMidi:
+            length = syncMaster->getMidiAnalyzer()->getUnitLength();
+            break;
+        case SyncSourceHost:
+            length = syncMaster->getHostAnalyzer()->getUnitLength();
+            break;
+        case SyncSourceTransport:
+            length = syncMaster->getTransport()->getUnitLength();
+            break;
+    }
+    return length;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// TrackSync Units
+//
+// These are less well defined than the external sync sources.
+// Subcycles often correspond to "beats" and cycles to "bars" but
+// it depends on how the loop was recorded and edited.
+//
+// The TracSyncMaster is often recorded against another external sync
+// source in which case you could consider the base unit to be the size
+// of unit the track was recorded with rather than soem arbitrary subdivision
+// of the track itself.
+//
+// For the purposes of AutoRecord which is where this is primarily used,
+// we consider Beat=Subcycle and Bar=Cycle.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Given a track that follows a leader track, return the subcycle,
+ * cycle, or loop size of the leader.  The unit is defined
+ * by the TrackSyncUnit of the follower.
  *
- * A track has a length and may be divided into cycles and subcycles.
- * Cycle is often a "bar" and subcycle is often a "beat", but it's
- * more arbitrary than other sync sources.
+ * There are several implementations of this and they're not all
+ * identical.  Should try to consolidate them.
  */
 int BarTender::getTrackSyncUnitLength(LogicalTrack* track)
 {
@@ -816,32 +844,24 @@ int BarTender::getTrackSyncUnitLength(LogicalTrack* track)
 }
 
 /**
- * Return the base unit length of one record unit in samples/frames.
- * Zero is acceptable for MidiAnalyzer if we're before the first beat,
- * so this can't be used for an "am I synced" test.
- * This is not relevant for Track sync.
+ * Internal use only, but I'm sure we have the same thing in other places...
  */
-int BarTender::getBaseRecordUnitLength(SyncSource src)
+void BarTender::getLeaderProperties(LogicalTrack* track, TrackProperties& props)
 {
-    int length = 0;
-    switch (src) {
-        case SyncSourceNone:
-        case SyncSourceMaster:
-            break;
-        case SyncSourceTrack:
-            Trace(1, "BarTender::getBaseREcordUnitLength(SyncSource) with SyncSourceTrack");
-            break;
-        case SyncSourceMidi:
-            length = syncMaster->getMidiAnalyzer()->getUnitLength();
-            break;
-        case SyncSourceHost:
-            length = syncMaster->getHostAnalyzer()->getUnitLength();
-            break;
-        case SyncSourceTransport:
-            length = syncMaster->getTransport()->getUnitLength();
-            break;
+    if (track == nullptr || track->getSyncSourceNow() != SyncSourceTrack) {
+        props.invalid = true;
     }
-    return length;
+    else {
+        int leader = track->getSyncLeaderNow();
+        if (leader == 0)
+          leader = syncMaster->getTrackSyncMaster();
+        
+        if (leader == 0)
+          props.invalid;
+        else {
+            trackManager->getTrackProperties(leader, props);
+        }
+    }
 }
 
 /**
@@ -856,6 +876,7 @@ int BarTender::getBaseRecordUnitLength(SyncSource src)
  * !! Duplicates some of what is done in getTrackSyncUnitLength
  * merge this shit
  */
+#if 0
 int BarTender::getRecordUnitLength(LogicalTrack* lt, SyncSource src)
 {
     int length = 0;
@@ -864,7 +885,7 @@ int BarTender::getRecordUnitLength(LogicalTrack* lt, SyncSource src)
         // this is quite different than the others
         // should just have LT methods for all this?
         int trackSyncMaster = syncMaster->getTrackSyncMaster();
-        if (trackSyncMaster) {
+        if (trackSyncMaster == 0) {
             Trace(1, "SyncMaster: Asking about TrackSyncMaster and there is none");
         }
         else {
@@ -911,6 +932,7 @@ int BarTender::getRecordUnitLength(LogicalTrack* lt, SyncSource src)
     }
     return length;
 }
+#endif
 
 /****************************************************************************/
 /****************************************************************************/

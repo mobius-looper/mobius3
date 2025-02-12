@@ -69,7 +69,7 @@ class BarTender
     int getSourceUnitLength(class LogicalTrack* track);
 
     int getBaseRecordUnitLength(SyncSource src);
-    int getRecordUnitLength(class LogicalTrack* lt, SyncSource src);
+    //int getRecordUnitLength(class LogicalTrack* lt, SyncSource src);
     int getTrackSyncUnitLength(class LogicalTrack* track);
     void getLeaderProperties(class LogicalTrack* track, class TrackProperties& props);
     
