@@ -1467,6 +1467,9 @@ void SyncMaster::notifyRecordStopped(int number)
  */
 void SyncMaster::verifySyncLength(LogicalTrack* lt)
 {
+    Trace(2, "SyncMaster: Sync recording ended with %d frames",
+          lt->getSyncLength());
+    
     // tehnically we should store the SyncSource that was used when the
     // recording first began, not whatever it is now, unlikely to change
     // DURING recording, but it could change after the track is allowed
@@ -1523,7 +1526,7 @@ void SyncMaster::verifySyncLength(LogicalTrack* lt)
         if (baseUnit > 0) {
             int leftover = trackLength % baseUnit;
             if (leftover != 0)
-              Trace(1, "SyncMaster::verifySyncLength recording leftovers %d", leftover);
+              Trace(1, "SyncMaster: Sync recording verification failed: leftovers %d", leftover);
         }
     }
 }
@@ -2143,7 +2146,9 @@ void SyncMaster::checkDrifts()
         int beat = hostAnalyzer->getElapsedBeats();
         if ((beat % 4) == 0) {
             int drift = hostAnalyzer->getDrift();
-            Trace(2, "SyncMaster: Host drift %d", drift);
+            // wobbling between -1 and 0 is common
+            if (abs(drift) > 1)
+              Trace(2, "SyncMaster: Host drift %d", drift);
         }
     }
 }

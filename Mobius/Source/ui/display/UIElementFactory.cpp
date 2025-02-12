@@ -15,6 +15,7 @@
 #include "UIElement.h"
 #include "TransportElement.h"
 #include "MidiSyncElement.h"
+#include "HostSyncElement.h"
 #include "UIElementLight.h"
 #include "UIElementText.h"
 #include "UIElementFactory.h"
@@ -33,6 +34,9 @@ UIElement* UIElementFactory::create(Provider* p, UIElementDefinition* def)
     }
     else if (def->name == "MidiSync") {
         element = new MidiSyncElement(p, def);
+    }
+    else if (def->name == "HostSync") {
+        element = new HostSyncElement(p, def);
     }
     else {
         // for others, the visualization is part of the definition

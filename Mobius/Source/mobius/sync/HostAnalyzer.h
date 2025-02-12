@@ -106,7 +106,7 @@ class HostAnalyzer : public SyncAnalyzer
     double lastPpq = 0.0f;
     
     // Trace options
-    bool traceppq = true;
+    bool traceppq = false;
     double lastppq = -1.0f;
     bool traceppqFine = false;
     int ppqCount = 0;

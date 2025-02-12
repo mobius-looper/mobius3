@@ -930,7 +930,7 @@ int BarTender::getSingleAutoRecordUnitLength(LogicalTrack* track)
         }
         
         int beatLength = 0;
-        switch (src) {
+        switch (beatSource) {
             case SyncSourceTransport:
                 beatLength = syncMaster->getTransport()->getUnitLength();
                 break;
@@ -1005,7 +1005,7 @@ int BarTender::getLockUnitLength(LogicalTrack* track)
         }
         
         int beatLength = 0;
-        switch (src) {
+        switch (beatSource) {
             case SyncSourceTransport:
                 beatLength = syncMaster->getTransport()->getUnitLength();
                 break;

@@ -881,6 +881,7 @@ void UIConfig::hackDefinitions()
     definitions.add(new UIElementDefinition("LoopWindowElement"));
     definitions.add(new UIElementDefinition("Transport"));
     definitions.add(new UIElementDefinition("MidiSync"));
+    definitions.add(new UIElementDefinition("HostSync"));
 
 
     // these were from old code and not yet implemented

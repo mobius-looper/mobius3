@@ -302,10 +302,15 @@ Event* Synchronizer::scheduleAutoRecordStart(Action* action,
         // Historically the event returned was the Stop event, which is
         // more useful for scripts to be waiting on
 
-        Event* stopEvent = scheduleAutoRecordStop(action, l, result);
-        returnEvent = stopEvent;
-
-        mMobius->getNotifier()->notify(l, NotificationRecordStart);
+        if (startEvent != nullptr) {
+            Event* stopEvent = scheduleAutoRecordStop(action, l, result);
+            returnEvent = stopEvent;
+            mMobius->getNotifier()->notify(l, NotificationRecordStart);
+        }
+        else {
+            // start scheduling failed
+            mMobius->completeAction(startAction);
+        }
     }
 
 	return returnEvent;
@@ -321,26 +326,33 @@ Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop,
     Track* track = loop->getTrack();
     EventManager* em = track->getEventManager();
 
-    // note that I'm not scheduling a pending stop event for Threshold
-    // mode, I think it's enough just for the Start to be thresholded and
-    // then when it is activated you can fall into a normal scheduled stop
-    
-    if (result.synchronized) {
-        event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
-        event->pending = true;
+    if (result.autoRecordLength == 0) {
+        // don't schedule this if it won't go anywhere, will hit
+        // an NPE without a record layer
+        Trace(1, "Synchronizer: No AutoRecord length");
     }
     else {
-        event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
-        event->quantized = true;	// makes it visible in the UI
+        // note that I'm not scheduling a pending stop event for Threshold
+        // mode, I think it's enough just for the Start to be thresholded and
+        // then when it is activated you can fall into a normal scheduled stop
+    
+        if (result.synchronized) {
+            event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
+            event->pending = true;
+        }
+        else {
+            event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
+            event->quantized = true;	// makes it visible in the UI
+        }
+    
+        event->frame = result.autoRecordLength;
+        event->number = result.autoRecordUnits;
+        loop->setRecordCycles(result.autoRecordUnits);
+    
+        action->setEvent(event);
+        em->addEvent(event);
     }
     
-    event->frame = result.autoRecordLength;
-    event->number = result.autoRecordUnits;
-    loop->setRecordCycles(result.autoRecordUnits);
-    
-    action->setEvent(event);
-    em->addEvent(event);
-        
     return event;
 }
 
