@@ -70,7 +70,9 @@ class BarTender
 
     int getBaseRecordUnitLength(SyncSource src);
     int getRecordUnitLength(class LogicalTrack* lt, SyncSource src);
-
+    int getTrackSyncUnitLength(class LogicalTrack* track);
+    void getLeaderProperties(class LogicalTrack* track, class TrackProperties& props);
+    
   private:
 
     class SyncMaster* syncMaster = nullptr;
@@ -100,10 +102,4 @@ class BarTender
     int getHostBarsPerLoop();
     int getMidiBeatsPerBar();
     int getMidiBarsPerLoop();
-    
-    void getLeaderProperties(class LogicalTrack* track, class TrackProperties& props);
-
-    int getTrackSyncUnitLength(class LogicalTrack* track);
-
-    
 };

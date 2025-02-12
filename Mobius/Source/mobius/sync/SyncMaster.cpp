@@ -1056,8 +1056,22 @@ void SyncMaster::notifyRecordStopped(int number)
                 }
             }
             else {
-                // oh we should probably do this too...
-                Trace(2, "SyncMaster: Punting on verification of track sync recording");
+                TrackProperties props;
+                barTender->getLeaderProperties(lt, props);
+                // this one is harder...cycles should divide cleanly but
+                // subcycles won't necessarily if there is an odd number
+                int baseUnit = barTender->getTrackSyncUnitLength(lt);
+                if (baseUnit == 0)
+                  Trace(1, "SyncMaster: Unable to get base unit length for Track Sync");
+                else {
+                    int leftover = trackLength % baseUnit;
+                    if (leftover != 0)
+                      Trace(1, "SyncMaster: TrackSync recording leftovers %d", leftover);
+
+                    leftover = props.frames % baseUnit;
+                    if (leftover != 0)
+                      Trace(1, "SyncMaster: TrackSync master leftovers %d", leftover);
+                }
             }
         }
         

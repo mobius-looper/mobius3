@@ -104,9 +104,7 @@ void MobiusLooperTrack::midiEvent(class MidiEvent* e)
 
 void MobiusLooperTrack::getTrackProperties(TrackProperties& props)
 {
-    props.frames = track->getFrames();
-    props.cycles = track->getCycles();
-    props.currentFrame = (int)(track->getFrame());
+    mobius->getTrackProperties(track->getDisplayNumber(), props);
 }
 
 void MobiusLooperTrack::trackNotification(NotificationId notification, TrackProperties& props)
@@ -237,9 +235,11 @@ int MobiusLooperTrack::getCycles()
 
 int MobiusLooperTrack::getSubcycles()
 {
+    int result = 0;
     // sigh, Variable still uses Preset for this and so shall we
     Preset* p = track->getPreset();
-    int result = p->getSubcycles();
+    if (p != nullptr)
+      result = p->getSubcycles();
     return result;
 }
 

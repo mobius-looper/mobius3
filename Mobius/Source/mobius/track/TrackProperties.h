@@ -18,6 +18,7 @@ class TrackProperties
     int unitLength = 0;
     int frames = 0;
     int cycles = 0;
+    int subcycles = 0;
 
     // where it is
     int currentFrame = 0;

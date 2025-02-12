@@ -583,7 +583,8 @@ int BarTender::getBeatsPerBar(LogicalTrack* track)
     if (track != nullptr) {
         SyncSource src = track->getSyncSourceNow();
         if (src == SyncSourceTrack) {
-            // work to do
+            // another that shuoldn't be used in the UI
+            Trace(1, "BarTender::getBeatsPerBar(LogicalTrack) with SyncSourceTrack)");
         }
         else {
             bpb = getBeatsPerBar(src);
@@ -648,7 +649,7 @@ int BarTender::getBarsPerLoop(LogicalTrack* track)
     if (track != nullptr) {
         SyncSource src = track->getSyncSourceNow();
         if (src == SyncSourceTrack) {
-            // work to do
+            Trace(1, "BarTender::getBarsPerLoop(LogicalTrack) with SyncSourceTrack");
         }
         else {
             bpl = getBarsPerLoop(src);
@@ -692,7 +693,6 @@ void BarTender::getLeaderProperties(LogicalTrack* track, TrackProperties& props)
         props.invalid = true;
     }
     else {
-        // this little dance needs to be encapsulated somewhere, probably Pulsator
         int leader = track->getSyncLeaderNow();
         if (leader == 0)
           leader = syncMaster->getTrackSyncMaster();
@@ -770,7 +770,6 @@ int BarTender::getSourceUnitLength(LogicalTrack* track)
         SyncSource src = track->getSyncSourceNow();
         if (src == SyncSourceTrack) {
             frames = getTrackSyncUnitLength(track);
-            // more here
         }
         else {
             frames = getSourceUnitLength(src);
@@ -792,23 +791,24 @@ int BarTender::getTrackSyncUnitLength(LogicalTrack* track)
 {
     (void)track;
     int frames = 0;
-    
-    // note that the track passed here is the FOLLOWING track,
-    // what we need to find is the LEADING track
 
-    int masterNumber = syncMaster->getTrackSyncMaster();
-    if (masterNumber > 0) {
-        LogicalTrack* master = trackManager->getLogicalTrack(masterNumber);
-        if (master != nullptr) {
+    TrackProperties props;
+    getLeaderProperties(track, props);
 
-            // here we need to consule the TrackSyncUnit of the FOLLOWING track
-            // punt and assume Loop
-
-            TrackProperties props;
-            getLeaderProperties(master, props);
-            
-            if (!props.invalid) {
-                frames = props.frames;
+    if (!props.invalid) {
+        TrackSyncUnit tsu = track->getTrackSyncUnitNow();
+        if (tsu == TrackUnitLoop) {
+            frames = props.frames;
+        }
+        else if (tsu == TrackUnitCycle) {
+            if (props.cycles > 0)
+              frames = (props.frames / props.cycles);
+        }
+        else if (tsu == TrackUnitSubcycle) {
+            if (props.cycles > 0) {
+                int cycleLength = props.frames / props.cycles;
+                if (props.subcycles > 0)
+                  frames = cycleLength / props.subcycles;
             }
         }
     }
@@ -827,7 +827,9 @@ int BarTender::getBaseRecordUnitLength(SyncSource src)
     switch (src) {
         case SyncSourceNone:
         case SyncSourceMaster:
+            break;
         case SyncSourceTrack:
+            Trace(1, "BarTender::getBaseREcordUnitLength(SyncSource) with SyncSourceTrack");
             break;
         case SyncSourceMidi:
             length = syncMaster->getMidiAnalyzer()->getUnitLength();
@@ -850,6 +852,9 @@ int BarTender::getBaseRecordUnitLength(SyncSource src)
  * I'm not certain if track sync should be handled this way.
  * It is probably better if that is always pulsed like it originally was?
  * That makes AutoRecord impossible though...
+ *
+ * !! Duplicates some of what is done in getTrackSyncUnitLength
+ * merge this shit
  */
 int BarTender::getRecordUnitLength(LogicalTrack* lt, SyncSource src)
 {

@@ -34,7 +34,7 @@
       <Value name="pluginOutputPort" value="0" type="int"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
       <Value name="syncUnit" value="beat" type="enum" ordinal="0"/>
-      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
+      <Value name="trackSyncUnit" value="subcycle" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
   <Track id="3" type="audio">

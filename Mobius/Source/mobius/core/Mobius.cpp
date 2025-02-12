@@ -1872,6 +1872,9 @@ void Mobius::getTrackProperties(int number, TrackProperties& props)
     if (track != nullptr) {
         props.frames = track->getFrames();
         props.cycles = track->getCycles();
+        Preset* p = track->getPreset();
+        if (p != nullptr)
+          props.subcycles = p->getSubcycles();
         props.currentFrame = (int)(track->getFrame());
     }
     else {

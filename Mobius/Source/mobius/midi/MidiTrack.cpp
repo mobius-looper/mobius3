@@ -237,6 +237,7 @@ void MidiTrack::getTrackProperties(TrackProperties& props)
 {
     props.frames = recorder.getFrames();
     props.cycles = recorder.getCycles();
+    props.subcycles = subcycles;
     props.currentFrame = recorder.getFrame();
 }
 
