@@ -99,7 +99,9 @@ void SyncMaster::loadSession(Session* s)
     timeSlicer->loadSession(s);
 
     // cached parameters
-    manualStart = sessionHelper.getBool(s, ParamTransportManualStart);  
+    // !! these are not reset on GlobalReset, probably should be
+    // for consistency with everything else
+    
     autoRecordUnits = sessionHelper.getInt(s, ParamAutoRecordUnits);
     recordThreshold = sessionHelper.getInt(s, ParamRecordThreshold);
 }
@@ -127,30 +129,466 @@ void SyncMaster::globalReset()
     // same with MIDI
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Masters
+//
+//////////////////////////////////////////////////////////////////////
+
+// !! Need to think more about the concepts of Connect and Disconnect
+// for the TransportMaster
+
 /**
- * Needed by BarTender, and eventually TimeSlicer if you move it under here.
+ * There can be one TrackSyncMaster.
+ *
+ * This becomes the default leader track when using SyncSourceLeader
+ * and the follower didn't specify a specific leader.
+ * 
+ * It may be changed at any time.
  */
-TrackManager* SyncMaster::getTrackManager()
+void SyncMaster::setTrackSyncMaster(int leaderId)
 {
-    return kernel->getTrackManager();
+    int oldMaster = trackSyncMaster;
+    trackSyncMaster = leaderId;
+
+    // changing this may result in reordering of tracks
+    // during an advance
+    if (oldMaster != trackSyncMaster) {
+        timeSlicer->syncFollowerChanges();
+    }
+}
+
+int SyncMaster::getTrackSyncMaster()
+{
+    return trackSyncMaster;
 }
 
 /**
- * Needed by MidiAnalyzer so it can pull things from the Session
+ * Action handler for FuncSyncMasterTrack
+ * Formerly implemented as a Mobius core function.
+ * This took no arguments and made the active track the master.
+ *
+ * Now this makes the focused track the master which may include MIDI tracks.
+ * To allow more control, the action may have an argument with a track number.
+ * todo: This needs to be expanded to accept any form of trackk identifier.
  */
-SymbolTable* SyncMaster::getSymbols()
+void SyncMaster::setTrackSyncMaster(UIAction* a)
 {
-    return kernel->getContainer()->getSymbols();
+    int number = a->value;
+    if (number == 0) {
+        // todo: not liking how track focus is passed around and where it lives
+        number = container->getFocusedTrackIndex() + 1;
+    }
+
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt == nullptr)
+      Trace(1, "SyncMaster: Invalid track id in SyncMasterTrack action");
+    else
+      setTrackSyncMaster(number);
 }
 
-int SyncMaster::getRecordThreshold()
+/**
+ * There can only be one Transport Master.
+ * Changing this may change the tempo of geneerated MIDI clocks if the transport
+ * has MIDI enabled.
+ */
+void SyncMaster::setTransportMaster(int id)
 {
-    return recordThreshold;
+    if (transport->getMaster() != id) {
+
+        if (id > 0)
+          connectTransport(id);
+        else {
+            // unusual, they are asking to not have a sync master
+            // what else should happen here?  Stop it?
+            transport->disconnect();
+        }
+    }
+}
+
+/**
+ * Connection between a track and the transport is done
+ * by giving Transport the TrackProperties.
+ */
+void SyncMaster::connectTransport(int id)
+{
+    TrackManager* tm = kernel->getTrackManager();
+    TrackProperties props;
+    tm->getTrackProperties(id, props);
+    transport->connect(props);
+}
+
+int SyncMaster::getTransportMaster()
+{
+    return transport->getMaster();
+}
+
+/**
+ * Action handler for FuncSyncMasterMidi
+ * Formerly implemented as a Mobius core function.
+ * This took no arguments and made the active track the "MIDI Master".
+ *
+ * This is now the equivalent of setting the TransportMaster.
+ * The name "SyncMasterMidi" is kept for backward compatibility but it should
+ * be made an alias of TransportMaster.
+ *
+ * Like SyncMasterTrack this now makes the focused track the master which may
+ * include MIDI tracks.
+ */
+void SyncMaster::setTransportMaster(UIAction* a)
+{
+    int number = a->value;
+    if (number == 0) {
+        // todo: not liking how track focus is passed around and where it lives
+        number = container->getFocusedTrackIndex() + 1;
+    }
+
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt == nullptr)
+      Trace(1, "SyncMaster: Invalid track id in TransportMaster action");
+    else {
+        setTransportMaster(number);
+    }
+}
+
+/**
+ * The usual dance to get the track sync leaader.
+ * Put this somewhere to share.
+ * Too much bouncing around between SyncMaster and BarTender with
+ * the same damn things.
+ */
+LogicalTrack* SyncMaster::getLeaderTrack(LogicalTrack* follower)
+{
+    LogicalTrack* leader = nullptr;
+    
+    SyncSource src = follower->getSyncSourceNow();
+    if (src == SyncSourceTrack) {
+        
+        int leaderNumber = follower->getSyncLeaderNow();
+        if (leaderNumber == 0)
+          leaderNumber = getTrackSyncMaster();
+        
+        if (leaderNumber > 0) {
+            leader = trackManager->getLogicalTrack(leaderNumber);
+            if (leader == nullptr) {
+                Trace(1, "SyncMaster::getLeaderTrack Invalid leader number %d",
+                      leaderNumber);
+            }
+        }
+    }
+    return leader;
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// Synchronized Recording
+// Advance
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This must be called very early in the kernel block processing phase.
+ * It initializes the subcomponents for the call to processAudioStream() which
+ * happens after various things in the kernel, in particular after
+ * any action handling which may assign sync sources to tracks.
+ *
+ * It is important that sync pulses be analyzed BEFORE actions are processed
+ * so that the initiation of synchronized recordings has the updated
+ * sync state.
+ */
+void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
+{
+    blockCount++;
+    
+    // monitor changes to the sample rate once the audio device is pumping
+    // and adjust internal calculations
+    // this should come through MobiusAudioStream, that's where it lives
+    int newSampleRate = stream->getSampleRate();
+    if (newSampleRate != sampleRate)
+      refreshSampleRate(newSampleRate);
+
+    // once we start receiving audio blocks, it is okay to start converting
+    // MIDI events into MidiSyncMessages, if you allow event queueing before
+    // blocks come in, the queue can overflow
+    // !! this is old and needs to go away, no longer used by MidiAnalyzer
+    // and MidiRealizer needs to stop
+    enableEventQueue();
+    
+    // tickle the analyzers
+
+    // Detect whether MIDI clocks have stopped comming in
+    //
+    // Supervisor formerly called this on the maintenance thread
+    // interval, since we don't get a performMaintenance ping down here
+    // we can check it on every block, the granularity doesn't really matter
+    // since it is based off millisecond time advance
+    // !! why can't this just be done in analyze() now?
+    midiAnalyzer->checkClocks();
+
+    int frames = stream->getInterruptFrames();
+    hostAnalyzer->analyze(frames);
+    midiAnalyzer->analyze(frames);
+    
+    // Transport should be controlling this but until it does it is important
+    // to get the event queue consumed, Transport can just ask for the Result
+    // when it advances
+    
+    midiRealizer->advance(frames);
+    transport->advance(frames);
+    barTender->advance(frames);
+    pulsator->advance(frames);
+
+    // see commentary about why this is complicated
+    // no longer necessary, Transport does it's own drift checking
+    //transport->checkDrift(frames);
+
+    // temporary diagnostics
+    checkDrifts();
+
+    // make sure this starts zero for any Actions that follow
+    timeSlicer->resetBlockOffset();
+    blockSize = frames;
+}
+
+void SyncMaster::refreshSampleRate(int rate)
+{
+    sampleRate = rate;
+    
+    hostAnalyzer->setSampleRate(rate);
+    transport->setSampleRate(rate);
+    midiRealizer->setSampleRate(rate);
+    midiAnalyzer->setSampleRate(rate);
+}
+
+/**
+ * Here after actions have been performed, events have been scheduled
+ * and we're ready to advance the tracks.
+ *
+ * This process is controlled by TimeSlicer.
+ */
+void SyncMaster::processAudioStream(MobiusAudioStream* stream)
+{
+    timeSlicer->processAudioStream(stream);
+}
+
+int SyncMaster::getBlockCount()
+{
+    return blockCount;
+}
+
+/**
+ * Used by Transport to calculate the unitPlayHead position after
+ * a start() happens due to an action after the initial advance.
+ */
+int SyncMaster::getBlockSize()
+{
+    return blockSize;
+}
+
+/**
+ * Used by Transport to calculate the unitPlayHead position after
+ * a start() happens due to an action after the initial advance.
+ */
+int SyncMaster::getBlockOffset()
+{
+    return timeSlicer->getBlockOffset();
+}
+
+/**
+ * Called by Transport whenever it starts as the result of an action.
+ * Since this happens after Pulsator was advanced in beginAudioBlock, have
+ * to ask it to look again.
+ */
+void SyncMaster::notifyTransportStarted()
+{
+    pulsator->notifyTransportStarted();
+}
+
+/**
+ * The event queue should only be enabled once audio blocks
+ * start comming in.  If blocks stop then the queue can overflow
+ * if there is MIDI being actively received or sent.
+ *
+ * Block stoppage can't be monitored here, it would need to be done
+ * by a higher power, probablky the maintenance thread.
+ */
+void SyncMaster::enableEventQueue()
+{
+    midiRealizer->enableEvents();
+}
+
+void SyncMaster::disableEventQueue()
+{
+    midiRealizer->disableEvents();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Shell Requests
+//
+//////////////////////////////////////////////////////////////////////
+
+bool SyncMaster::doAction(UIAction* a)
+{
+    bool handled = true;
+    
+    switch (a->symbol->id) {
+
+        case FuncSyncMasterTrack:
+            setTrackSyncMaster(a);
+            break;
+
+        case FuncSyncMasterTransport:
+            setTransportMaster(a);
+            break;
+
+        case ParamAutoRecordUnit:
+            // decided not to use this one, it is just defined
+            // by SyncUnit
+            break;
+
+        case ParamAutoRecordUnits:
+            autoRecordUnits = a->value;
+            break;
+
+        case ParamRecordThreshold:
+            recordThreshold = a->value;
+            break;
+            
+        default: {
+            handled = transport->doAction(a);
+            if (!handled)
+              handled = barTender->doAction(a);
+        }
+            break;
+    }
+    
+    return handled;
+}
+
+/**
+ * We don't seem to have had parameters for trackSyncMaster and outSyncMaster,
+ * those were implemented as script variables.  If they were parameters it would
+ * make it more usable for host parameter bindings.
+ */
+bool SyncMaster::doQuery(Query* q)
+{
+    bool handled = true;
+
+    switch (q->symbol->id) {
+
+        case ParamAutoRecordUnits:
+            q->value = autoRecordUnits;
+            break;
+
+        case ParamRecordThreshold:
+            q->value = recordThreshold;
+            break;
+
+        default: {
+            handled = transport->doQuery(q);
+            if (!handled)
+              handled = barTender->doQuery(q);
+        }
+    }
+    
+    return handled;
+}
+
+/**
+ * Add state for each sync source.
+ * Also handling sync state for each Track since we're in a good position to do that
+ * and don't need to bother the BaseTracks with knowing the details.
+ */
+void SyncMaster::refreshState(SystemState* sysstate)
+{
+    SyncState* state = &(sysstate->syncState);
+    
+    state->transportMaster = transport->getMaster();
+    state->trackSyncMaster = trackSyncMaster;
+
+    // the MidiSyncElement wants to display normalized beat/bar/loop numbers
+    // and this is not track specific
+    // !! need to seriously rethink kthe utility of track-specific BPB and BPL
+    // overrides, why can't this just be global?  it only really matters
+    // for the initial recording, then it's just for display
+    
+    // Analyzer fills everything except normalized beats
+    midiAnalyzer->refreshState(state);
+    state->midiBeat = barTender->getBeat(SyncSourceMidi);
+    state->midiBar = barTender->getBar(SyncSourceMidi);
+    state->midiLoop = barTender->getLoop(SyncSourceMidi);
+    state->midiBeatsPerBar = barTender->getBeatsPerBar(SyncSourceMidi);
+    state->midiBarsPerLoop = barTender->getBarsPerLoop(SyncSourceMidi);
+    
+    // the host doesn't have a UI element since you're usually just watching the
+    // host UI, but if you have overrides it should
+    // same issues about global vs. track-specific time signatures as MIDI sync
+    state->hostStarted = hostAnalyzer->isRunning();
+    state->hostTempo = hostAnalyzer->getTempo();
+
+    // transport maintains all this inside itself because the time signaturek
+    // adapts to the connected loop rather than being always controlled from
+    // Session parameters
+    transport->refreshState(state);
+
+    int totalTracks = trackManager->getTrackCount();
+    int maxStates = sysstate->tracks.size();
+
+    if (maxStates < totalTracks) {
+        Trace(1, "SyncMaster: Not enough TrackStates for sync state");
+        totalTracks = maxStates;
+    }
+    
+    for (int i = 0 ; i < totalTracks ; i++) {
+        TrackState* tstate = sysstate->tracks[i];
+        int trackNumber = i+1;
+
+        // we have so far been the one to put sync state in SystemState
+        // but since this is all on the LogicalTrack now TM could do it
+
+        LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
+        if (lt != nullptr) {
+            tstate->syncSource = lt->getSyncSourceNow();
+            tstate->syncUnit = lt->getSyncUnitNow();
+
+            // old convention was to suppress beat/bar display
+            // if the source was not in a started state
+            bool running = true;
+            if (tstate->syncSource == SyncSourceMidi)
+              running = midiAnalyzer->isRunning();
+            else if (tstate->syncSource == SyncSourceHost)
+              running = hostAnalyzer->isRunning();
+
+            // the convention has been that if beat or bar are
+            // zero they are undefined and not shown, TempoElement assumes this
+            if (running) {
+                tstate->syncBeat = barTender->getBeat(lt) + 1;
+                tstate->syncBar = barTender->getBar(lt) + 1;
+            }
+            else {
+                tstate->syncBeat = 0;
+                tstate->syncBar = 0;
+            }
+        }
+    }
+}
+
+void SyncMaster::refreshPriorityState(PriorityState* pstate)
+{
+    transport->refreshPriorityState(pstate);
+
+    pstate->midiBeat = barTender->getBeat(SyncSourceMidi);
+    pstate->midiBar = barTender->getBar(SyncSourceMidi);
+    pstate->midiLoop = barTender->getLoop(SyncSourceMidi);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Synchronized Recording Requests
+//
+// This collection is called by the BaseTrack when it wants to
+// begin or end a new recording.  The recording may be synced or unsynced
+// and characteristics it should follow are returned in the RequestResult.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -235,16 +673,6 @@ SyncSource SyncMaster::getEffectiveSource(LogicalTrack* lt)
     return source;
 }
 
-SyncUnit SyncMaster::getSyncUnit(int id)
-{
-    SyncUnit unit = SyncUnitBeat;
-    LogicalTrack* t = trackManager->getLogicalTrack(id);
-    if (t != nullptr) {
-        unit = t->getSyncUnitNow();
-    }
-    return unit;
-}
-
 /**
  * Returns true if the start/stop of a recording is synchronized.
  * If this returns true, it will usually be followed immediately
@@ -308,8 +736,8 @@ SyncMaster::RequestResult SyncMaster::requestRecordStart(int number,
             gatherSyncUnits(lt, src, recordUnit, startUnit);
             
             lt->setSyncRecording(true);
-            lt->setUnitLength(barTender->getSourceUnitLength(src));
-            // do NOT set Goal units here, we don't know what it will be yet
+
+            lockUnitLength(lt);
         }
     }
     return result;
@@ -440,7 +868,7 @@ SyncMaster::RequestResult SyncMaster::requestRecordStop(int number, bool noSync)
 
                 // pass these so the record cursor can be shown right away
                 result.goalUnits = goal;
-                result.extensionLength = getAutoRecordUnitLength(lt);
+                result.extensionLength = barTender->getSingleAutoRecordUnitLength(lt);
             }
         }
     }
@@ -472,9 +900,7 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number, bool noSync)
         lt->resetSyncState();
         
         result.autoRecordUnits = getAutoRecordUnits(lt);
-        int unitLength = getAutoRecordUnitLength(lt);
-        // supply this even if we're syncing to give the loop some girth during
-        // we can see in the LoopMeter during the initial recording
+        int unitLength = barTender->getSingleAutoRecordUnitLength(lt);
         result.autoRecordLength = unitLength * result.autoRecordUnits;
 
         Trace(2, "SyncMaster::requestAutoRecord Goal Units %d", result.autoRecordUnits);
@@ -482,13 +908,15 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number, bool noSync)
         
         SyncSource src = getEffectiveSource(lt);
 
-        if (src != SyncSourceNone && src != SyncSourceMaster &&  !noSync) {
+        if (src != SyncSourceNone && src != SyncSourceMaster && !noSync) {
 
             result.synchronized = true;
 
             gatherSyncUnits(lt, src, SyncUnitNone, SyncUnitNone);
             
             lt->setSyncRecording(true);
+
+            lockUnitLength(lt);
         }
 
         // in both cases, let it know if there is a recording threshold
@@ -515,7 +943,7 @@ SyncMaster::RequestResult SyncMaster::requestPreRecordStop(int number)
     if (lt != nullptr) {
         // whether synced or unsynced return the length
         result.autoRecordUnits = 1;
-        result.autoRecordLength = getAutoRecordUnitLength(lt);
+        result.autoRecordLength = barTender->getSingleAutoRecordUnitLength(lt);
         Trace(2, "SyncMaster:requestPreRecordStop: Goal Units 1");
         lt->setSyncGoalUnits(1);
 
@@ -528,51 +956,45 @@ SyncMaster::RequestResult SyncMaster::requestPreRecordStop(int number)
 }
 
 /**
- * Return the number of units as returned by getAutoRecordUnitLength
- * are to be included in an AutoRecord.
+ * Return the number of units to include in an AutoRecord.
+ * The length of each unit is defined by getAutoRecordUnitLength
  *
- * This is defined by another parameter.  The two are normally multiplied
- * to gether to get the total length with the recordUnits number becomming
- * the number of cycles in the loop.
+ * The two are normally multiplied together to get the total length
+ * with the autoRecordUnits number becomming the number of cycles in the loop.
+ *
+ * The value comes from the session.
  */
 int SyncMaster::getAutoRecordUnits(LogicalTrack* track)
 {
     // this one is not senstiive to the syncSource
     (void)track;
-    int units = autoRecordUnits;
-    if (units <= 0) units = 1;
-    return units;
+    
+    if (autoRecordUnits <= 0) {
+         Trace(1, "SyncMaster: Misconfigured autoRecordUnits");
+        autoRecordUnits = 1;
+    }
+
+    return autoRecordUnits;
 }
 
 /**
- * Return the number of frames in one AutoRecord "unit".
- * This is defined by the base(beat) unit length in the track's
- * sync source combined with the syncUnit parameter which multiplies
- * the number of beats.
+ * When a recording starts or ends, save the most fundamental unit length
+ * of the sync source on the LogicalTrack.  This is used for a few things,
+ * particularly with SyncSourceMidi.
  *
- * A special case exists when the SyncSource is None.
- * Here the length of the AR is defined by the Transport tempo and the syncUnit
- * from the session.  This is the only time where SyncUnit is relevant when
- * SyncSource is None.  
+ * When a MIDI recording starts we compare the unit length when it started
+ * to when it ended to see if any adjustments in the final beat pulse need
+ * to be made to keep it aligned.
+ *
+ * After recording ends, this is used to determine whether the track has
+ * a length that is still compatible with the source and should do
+ * drift correction.
+ *
+ * todo: still need some thought here
  */
-int SyncMaster::getAutoRecordUnitLength(LogicalTrack* track)
+void SyncMaster::lockUnitLength(LogicalTrack* track)
 {
-    int length = barTender->getSourceUnitLength(track);
-
-    // if the syncUnit is bar or loop then the beat unit length
-    // is multipled by whatever the beatsPerBar for that source is
-    SyncUnit unit = track->getSyncUnitNow();
-    if (unit == SyncUnitBar || unit == SyncUnitLoop) {
-        int barMultiplier = barTender->getBeatsPerBar(track);
-        length *= barMultiplier;
-    }
-
-    // if the syncUnit is Loop, then one more multiple
-    if (unit == SyncUnitLoop) {
-        int loopMultiplier = barTender->getBarsPerLoop(track);
-        length *= loopMultiplier;
-    }
-    return length;
+    track->setUnitLength(barTender->getLockUnitLength(track));
 }
 
 SyncMaster::RequestResult SyncMaster::requestExtension(int number)
@@ -603,10 +1025,11 @@ SyncMaster::RequestResult SyncMaster::requestExtension(int number)
         lt->setSyncGoalUnits(result.goalUnits);
 
         // for unsynced recordings, calculate the length to add
-        result.extensionLength = getAutoRecordUnitLength(lt);
+        result.extensionLength = barTender->getSingleAutoRecordUnitLength(lt);
     }
     return result;
 }
+
 
 /**
  * While you can always extend, reducing the goal units could
@@ -651,7 +1074,7 @@ SyncMaster::RequestResult SyncMaster::requestReduction(int number)
         }
         
         int newUnits = current - reduction;
-        int unitLength = getAutoRecordUnitLength(lt);
+        int unitLength = barTender->getSingleAutoRecordUnitLength(lt);
 
         // looking at getSyncElapsedUnits doesn't work for unsynced tracks
         // so do both synced and unsynced the same way by looking at their
@@ -671,8 +1094,13 @@ SyncMaster::RequestResult SyncMaster::requestReduction(int number)
         result.extensionLength = unitLength;
     }
     return result;
-}    
+}
 
+//////////////////////////////////////////////////////////////////////
+//
+// Block Pulse Injection
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Called by TimeSlicer to return a sync pulse for this track if one is
@@ -1018,65 +1446,85 @@ void SyncMaster::notifyRecordStopped(int number)
     LogicalTrack* lt = trackManager->getLogicalTrack(number);
     if (lt != nullptr) {
 
-        // this stops sending pulses to the track
         if (lt->isSyncRecording()) {
             
+            // this stops sending pulses to the track
             lt->setSyncRecording(false);
 
-            SyncSource src = lt->getSyncSourceNow();
-            if (src == SyncSourceMidi) {
-                // this one is complicated, verify some things
-                if (!midiAnalyzer->isLocked())
-                  Trace(1, "SyncMaster: MidiAnalyzer was not locked after recording ended");
-                
-                int unit = midiAnalyzer->getUnitLength();
-                if (unit == 0) {
-                    // this is the "first beat recording" fringe case
-                    // the end should have been pulsed and remembered
-                    Trace(1, "SyncMaster: Expected MIDI to know what was going on by now");
-                }
-
-                // todo: for MIDI if we end unlocked this is where we should take
-                // the loop's final length and FORCE the midi sync unit to be in compliance with
-                // it if it falls within the BPM drift tolerance
-            }
-
-            // verify that the unit length was obeyed
-            int trackLength = lt->getSyncLength();
-            if (src != SyncSourceTrack) {
-                int baseUnit = barTender->getBaseRecordUnitLength(src);
-                if (baseUnit == 0) {
-                    Trace(1, "SyncMaster: Unable to verify unit length compliance");
-                }
-                else {
-                    int leftover = trackLength % baseUnit;
-                    if (leftover != 0) {
-                        Trace(1, "SyncMaster: Synchronzied recording leftovers %d", leftover);
-                    }
-                }
-            }
-            else {
-                TrackProperties props;
-                barTender->getLeaderProperties(lt, props);
-                // this one is harder...cycles should divide cleanly but
-                // subcycles won't necessarily if there is an odd number
-                int baseUnit = barTender->getTrackSyncUnitLength(lt);
-                if (baseUnit == 0)
-                  Trace(1, "SyncMaster: Unable to get base unit length for Track Sync");
-                else {
-                    int leftover = trackLength % baseUnit;
-                    if (leftover != 0)
-                      Trace(1, "SyncMaster: TrackSync recording leftovers %d", leftover);
-
-                    leftover = props.frames % baseUnit;
-                    if (leftover != 0)
-                      Trace(1, "SyncMaster: TrackSync master leftovers %d", leftover);
-                }
-            }
+            // final verification on sync unit obeyance
+            verifySyncLength(lt);
         }
-        
+        // else it's a free record
+         
         notifyTrackAvailable(number);
         lt->resetSyncState();
+    }
+}
+
+/**
+ * Immediately after recording, verify that the track has a length that
+ * is compatible with it's sync source.
+ */
+void SyncMaster::verifySyncLength(LogicalTrack* lt)
+{
+    // tehnically we should store the SyncSource that was used when the
+    // recording first began, not whatever it is now, unlikely to change
+    // DURING recording, but it could change after the track is allowed
+    // to live for awhile
+    SyncSource src = getEffectiveSource(lt);
+    int trackLength = lt->getSyncLength();
+
+    if (src == SyncSourceTrack) {
+        // this one is harder...cycles should divide cleanly but
+        // subcycles won't necessarily if there was an odd number
+
+        LogicalTrack* leader = getLeaderTrack(lt);
+        if (leader == nullptr) {
+            Trace(1, "SyncMaster::verifySyncLength No leader track");
+        }
+        else {
+            SyncUnit unit = lt->getSyncUnitNow();
+            // live dangerously
+            TrackSyncUnit tsu = (TrackSyncUnit)unit;
+            int leaderUnit = barTender->getTrackUnitLength(leader, tsu);
+
+            if (leaderUnit == 0)
+              Trace(1, "SyncMaster: Unable to get base unit length for Track Sync");
+            else {
+                int leftover = trackLength % leaderUnit;
+                if (leftover != 0)
+                  Trace(1, "SyncMaster: TrackSync recording leftovers %d", leftover);
+
+                leftover = leader->getSyncLength() % leaderUnit;
+                if (leftover != 0)
+                  Trace(1, "SyncMaster: TrackSync master leftovers %d", leftover);
+            }
+        }
+    }
+    else if (src == SyncSourceMidi) {
+        // this one is complicated, verify some things
+        if (!midiAnalyzer->isLocked())
+          Trace(1, "SyncMaster: MidiAnalyzer was not locked after recording ended");
+                
+        int unit = midiAnalyzer->getUnitLength();
+        if (unit == 0) {
+            // this is the "first beat recording" fringe case
+            // the end should have been pulsed and remembered
+            Trace(1, "SyncMaster: Expected MIDI to know what was going on by now");
+        }
+
+        // todo: for MIDI if we end unlocked this is where we should take
+        // the loop's final length and FORCE the midi sync unit to be in compliance with
+        // it if it falls within the BPM drift tolerance
+    }
+    else {
+        // these don't jitter and should always swork
+        int baseUnit = barTender->getUnitLength(src);
+        if (baseUnit > 0) {
+            int leftover = trackLength % baseUnit;
+            if (leftover != 0)
+              Trace(1, "SyncMaster::verifySyncLength recording leftovers %d", leftover);
+        }
     }
 }
 
@@ -1225,7 +1673,7 @@ void SyncMaster::notifyTrackRestructure(int number)
 void SyncMaster::notifyTrackRestart(int number)
 {
     if (number == transport->getMaster()) {
-        if (!manualStart) 
+        if (!transport->isManualStart())
           transport->start();
     }
 }
@@ -1494,415 +1942,41 @@ void SyncMaster::notifyTrackMute(int number)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Masters
-//
-//////////////////////////////////////////////////////////////////////
-
-// !! Need to think more about the concepts of Connect and Disconnect
-// for the TransportMaster
-
-/**
- * There can be one TrackSyncMaster.
- *
- * This becomes the default leader track when using SyncSourceLeader
- * and the follower didn't specify a specific leader.
- * 
- * It may be changed at any time.
- */
-void SyncMaster::setTrackSyncMaster(int leaderId)
-{
-    int oldMaster = trackSyncMaster;
-    trackSyncMaster = leaderId;
-
-    // changing this may result in reordering of tracks
-    // during an advance
-    if (oldMaster != trackSyncMaster) {
-        timeSlicer->syncFollowerChanges();
-    }
-}
-
-int SyncMaster::getTrackSyncMaster()
-{
-    return trackSyncMaster;
-}
-
-/**
- * Action handler for FuncSyncMasterTrack
- * Formerly implemented as a Mobius core function.
- * This took no arguments and made the active track the master.
- *
- * Now this makes the focused track the master which may include MIDI tracks.
- * To allow more control, the action may have an argument with a track number.
- * todo: This needs to be expanded to accept any form of trackk identifier.
- */
-void SyncMaster::setTrackSyncMaster(UIAction* a)
-{
-    int number = a->value;
-    if (number == 0) {
-        // todo: not liking how track focus is passed around and where it lives
-        number = container->getFocusedTrackIndex() + 1;
-    }
-
-    LogicalTrack* lt = trackManager->getLogicalTrack(number);
-    if (lt == nullptr)
-      Trace(1, "SyncMaster: Invalid track id in SyncMasterTrack action");
-    else
-      setTrackSyncMaster(number);
-}
-
-/**
- * There can only be one Transport Master.
- * Changing this may change the tempo of geneerated MIDI clocks if the transport
- * has MIDI enabled.
- */
-void SyncMaster::setTransportMaster(int id)
-{
-    if (transport->getMaster() != id) {
-
-        if (id > 0)
-          connectTransport(id);
-        else {
-            // unusual, they are asking to not have a sync master
-            // what else should happen here?  Stop it?
-            transport->disconnect();
-        }
-    }
-}
-
-/**
- * Connection between a track and the transport is done
- * by giving Transport the TrackProperties.
- */
-void SyncMaster::connectTransport(int id)
-{
-    TrackManager* tm = kernel->getTrackManager();
-    TrackProperties props;
-    tm->getTrackProperties(id, props);
-    transport->connect(props);
-}
-
-int SyncMaster::getTransportMaster()
-{
-    return transport->getMaster();
-}
-
-/**
- * Action handler for FuncSyncMasterMidi
- * Formerly implemented as a Mobius core function.
- * This took no arguments and made the active track the "MIDI Master".
- *
- * This is now the equivalent of setting the TransportMaster.
- * The name "SyncMasterMidi" is kept for backward compatibility but it should
- * be made an alias of TransportMaster.
- *
- * Like SyncMasterTrack this now makes the focused track the master which may
- * include MIDI tracks.
- */
-void SyncMaster::setTransportMaster(UIAction* a)
-{
-    int number = a->value;
-    if (number == 0) {
-        // todo: not liking how track focus is passed around and where it lives
-        number = container->getFocusedTrackIndex() + 1;
-    }
-
-    LogicalTrack* lt = trackManager->getLogicalTrack(number);
-    if (lt == nullptr)
-      Trace(1, "SyncMaster: Invalid track id in TransportMaster action");
-    else {
-        setTransportMaster(number);
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Advance
-//
-//////////////////////////////////////////////////////////////////////
-
-int SyncMaster::getBlockCount()
-{
-    return blockCount;
-}
-
-/**
- * This must be called very early in the kernel block processing phase.
- * It initializes the subcomponents for the call to processAudioStream() which
- * happens after various things in the kernel, in particular after
- * any action handling which may assign sync sources to tracks.
- *
- * It is important that sync pulses be analyzed BEFORE actions are processed
- * so that the initiation of synchronized recordings has the updated
- * sync state.
- */
-void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
-{
-    blockCount++;
-    
-    // monitor changes to the sample rate once the audio device is pumping
-    // and adjust internal calculations
-    // this should come through MobiusAudioStream, that's where it lives
-    int newSampleRate = stream->getSampleRate();
-    if (newSampleRate != sampleRate)
-      refreshSampleRate(newSampleRate);
-
-    // once we start receiving audio blocks, it is okay to start converting
-    // MIDI events into MidiSyncMessages, if you allow event queueing before
-    // blocks come in, the queue can overflow
-    // !! this is old and needs to go away, no longer used by MidiAnalyzer
-    // and MidiRealizer needs to stop
-    enableEventQueue();
-    
-    // tickle the analyzers
-
-    // Detect whether MIDI clocks have stopped comming in
-    //
-    // Supervisor formerly called this on the maintenance thread
-    // interval, since we don't get a performMaintenance ping down here
-    // we can check it on every block, the granularity doesn't really matter
-    // since it is based off millisecond time advance
-    // !! why can't this just be done in analyze() now?
-    midiAnalyzer->checkClocks();
-
-    int frames = stream->getInterruptFrames();
-    hostAnalyzer->analyze(frames);
-    midiAnalyzer->analyze(frames);
-    
-    // Transport should be controlling this but until it does it is important
-    // to get the event queue consumed, Transport can just ask for the Result
-    // when it advances
-    
-    midiRealizer->advance(frames);
-    transport->advance(frames);
-    barTender->advance(frames);
-    pulsator->advance(frames);
-
-    // see commentary about why this is complicated
-    // no longer necessary, Transport does it's own drift checking
-    //transport->checkDrift(frames);
-
-    // temporary diagnostics
-    checkDrifts();
-
-    // make sure this starts zero for any Actions that follow
-    timeSlicer->resetBlockOffset();
-    blockSize = frames;
-}
-
-void SyncMaster::refreshSampleRate(int rate)
-{
-    sampleRate = rate;
-    
-    hostAnalyzer->setSampleRate(rate);
-    transport->setSampleRate(rate);
-    midiRealizer->setSampleRate(rate);
-    midiAnalyzer->setSampleRate(rate);
-}
-
-/**
- * Here after actions have been performed, events have been scheduled
- * and we're ready to advance the tracks.
- *
- * This process is controlled by TimeSlicer.
- */
-void SyncMaster::processAudioStream(MobiusAudioStream* stream)
-{
-    timeSlicer->processAudioStream(stream);
-}
-
-/**
- * Used by Transport to calculate the unitPlayHead position after
- * a start() happens due to an action after the initial advance.
- */
-int SyncMaster::getBlockSize()
-{
-    return blockSize;
-}
-
-/**
- * Used by Transport to calculate the unitPlayHead position after
- * a start() happens due to an action after the initial advance.
- */
-int SyncMaster::getBlockOffset()
-{
-    return timeSlicer->getBlockOffset();
-}
-
-/**
- * Called by Transport whenever it starts as the result of an action.
- * Since this happens after Pulsator was advanced in beginAudioBlock, have
- * to ask it to look again.
- */
-void SyncMaster::notifyTransportStarted()
-{
-    pulsator->notifyTransportStarted();
-}
-
-/**
- * The event queue should only be enabled once audio blocks
- * start comming in.  If blocks stop then the queue can overflow
- * if there is MIDI being actively received or sent.
- *
- * Block stoppage can't be monitored here, it would need to be done
- * by a higher power, probablky the maintenance thread.
- */
-void SyncMaster::enableEventQueue()
-{
-    midiRealizer->enableEvents();
-}
-
-void SyncMaster::disableEventQueue()
-{
-    midiRealizer->disableEvents();
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Shell Requests
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * The only action receiver right now is Transport.
- * There isn't anything about host/midi sync that is under the user's
- * control.
- */
-bool SyncMaster::doAction(UIAction* a)
-{
-    bool handled = true;
-    
-    switch (a->symbol->id) {
-
-        case FuncSyncMasterTrack:
-            setTrackSyncMaster(a);
-            break;
-
-        case FuncSyncMasterTransport:
-            setTransportMaster(a);
-            break;
-            
-        default: {
-            handled = transport->doAction(a);
-            if (!handled)
-              handled = barTender->doAction(a);
-        }
-            break;
-    }
-    
-    return handled;
-}
-
-/**
- * We don't seem to have had parameters for trackSyncMaster and outSyncMaster,
- * those were implemented as script variables.  If they were parameters it would
- * make it more usable for host parameter bindings.
- */
-bool SyncMaster::doQuery(Query* q)
-{
-    bool handled = false;
-
-    // todo: the masters, host and midi settings
-
-    handled = transport->doQuery(q);
-    if (!handled)
-      handled = barTender->doQuery(q);
-    
-    return handled;
-}
-
-/**
- * Add state for each sync source.
- * Also handling sync state for each Track since we're in a good position to do that
- * and don't need to bother the BaseTracks with knowing the details.
- */
-void SyncMaster::refreshState(SystemState* sysstate)
-{
-    SyncState* state = &(sysstate->syncState);
-    
-    state->transportMaster = transport->getMaster();
-    state->trackSyncMaster = trackSyncMaster;
-
-    // the MidiSyncElement wants to display normalized beat/bar/loop numbers
-    // and this is not track specific
-    // !! need to seriously rethink kthe utility of track-specific BPB and BPL
-    // overrides, why can't this just be global?  it only really matters
-    // for the initial recording, then it's just for display
-    
-    // Analyzer fills everything except normalized beats
-    midiAnalyzer->refreshState(state);
-    state->midiBeat = barTender->getBeat(SyncSourceMidi);
-    state->midiBar = barTender->getBar(SyncSourceMidi);
-    state->midiLoop = barTender->getLoop(SyncSourceMidi);
-    state->midiBeatsPerBar = barTender->getBeatsPerBar(SyncSourceMidi);
-    state->midiBarsPerLoop = barTender->getBarsPerLoop(SyncSourceMidi);
-    
-    // the host doesn't have a UI element since you're usually just watching the
-    // host UI, but if you have overrides it should
-    // same issues about global vs. track-specific time signatures as MIDI sync
-    state->hostStarted = hostAnalyzer->isRunning();
-    state->hostTempo = hostAnalyzer->getTempo();
-
-    // transport maintains all this inside itself because the time signaturek
-    // adapts to the connected loop rather than being always controlled from
-    // Session parameters
-    transport->refreshState(state);
-
-    int totalTracks = trackManager->getTrackCount();
-    int maxStates = sysstate->tracks.size();
-
-    if (maxStates < totalTracks) {
-        Trace(1, "SyncMaster: Not enough TrackStates for sync state");
-        totalTracks = maxStates;
-    }
-    
-    for (int i = 0 ; i < totalTracks ; i++) {
-        TrackState* tstate = sysstate->tracks[i];
-        int trackNumber = i+1;
-
-        // we have so far been the one to put sync state in SystemState
-        // but since this is all on the LogicalTrack now TM could do it
-
-        LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
-        if (lt != nullptr) {
-            tstate->syncSource = lt->getSyncSourceNow();
-            tstate->syncUnit = lt->getSyncUnitNow();
-
-            // old convention was to suppress beat/bar display
-            // if the source was not in a started state
-            bool running = true;
-            if (tstate->syncSource == SyncSourceMidi)
-              running = midiAnalyzer->isRunning();
-            else if (tstate->syncSource == SyncSourceHost)
-              running = hostAnalyzer->isRunning();
-
-            // the convention has been that if beat or bar are
-            // zero they are undefined and not shown, TempoElement assumes this
-            if (running) {
-                tstate->syncBeat = barTender->getBeat(lt) + 1;
-                tstate->syncBar = barTender->getBar(lt) + 1;
-            }
-            else {
-                tstate->syncBeat = 0;
-                tstate->syncBar = 0;
-            }
-        }
-    }
-}
-
-void SyncMaster::refreshPriorityState(PriorityState* pstate)
-{
-    transport->refreshPriorityState(pstate);
-
-    pstate->midiBeat = barTender->getBeat(SyncSourceMidi);
-    pstate->midiBar = barTender->getBar(SyncSourceMidi);
-    pstate->midiLoop = barTender->getLoop(SyncSourceMidi);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
 // Internal Component Services
 //
 //////////////////////////////////////////////////////////////////////
+
+// who uses this?
+SyncUnit SyncMaster::getSyncUnit(int id)
+{
+    SyncUnit unit = SyncUnitBeat;
+    LogicalTrack* t = trackManager->getLogicalTrack(id);
+    if (t != nullptr) {
+        unit = t->getSyncUnitNow();
+    }
+    return unit;
+}
+
+/**
+ * Needed by BarTender, and eventually TimeSlicer if you move it under here.
+ */
+TrackManager* SyncMaster::getTrackManager()
+{
+    return kernel->getTrackManager();
+}
+
+/**
+ * Needed by MidiAnalyzer so it can pull things from the Session
+ */
+SymbolTable* SyncMaster::getSymbols()
+{
+    return kernel->getContainer()->getSymbols();
+}
+
+int SyncMaster::getRecordThreshold()
+{
+    return recordThreshold;
+}
 
 /**
  * MidiRealizer does this for MIDI device issues.

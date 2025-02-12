@@ -1,6 +1,5 @@
 /**
- * Utility class that organizes the notion of "bars" within a track and
- * synchronization beats from a synchronization source.
+ * Utility class that organizes the notion of "bars" within a track.
  *
  * What a "bar" is is surpsignly complicated among the sync sources, and
  * the various configuration options desired to let the user decide where
@@ -24,6 +23,9 @@ class BarTender
      * Each track may override the system default time signature
      * and/or any time signature advertised by the sync source.
      * This will be loaded from the Session.
+     *
+     * note: track overrides not currently expected, but it's there
+     * if you need it
      */
     class Track {
       public:
@@ -64,14 +66,18 @@ class BarTender
     int getBarsPerLoop(int trackNumber);
     int getBarsPerLoop(class LogicalTrack* t);
     int getBarsPerLoop(SyncSource src);
-    
-    int getSourceUnitLength(SyncSource src);
-    int getSourceUnitLength(class LogicalTrack* track);
 
-    int getBaseRecordUnitLength(SyncSource src);
-    //int getRecordUnitLength(class LogicalTrack* lt, SyncSource src);
-    int getTrackSyncUnitLength(class LogicalTrack* track);
-    void getLeaderProperties(class LogicalTrack* track, class TrackProperties& props);
+    //
+    // Units
+    //
+    
+    int getUnitLength(SyncSource src);
+    int getTrackUnitLength(class LogicalTrack* t, TrackSyncUnit unit);
+    int getTrackUnitLength2(class LogicalTrack* t, TrackSyncUnit unit);
+    int getLeaderUnitLength(class LogicalTrack* follower, TrackSyncUnit unit);
+
+    int getSingleAutoRecordUnitLength(class LogicalTrack* track);
+    int getLockUnitLength(class LogicalTrack* track);
     
   private:
 

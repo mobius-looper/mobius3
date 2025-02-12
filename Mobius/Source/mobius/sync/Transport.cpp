@@ -266,6 +266,11 @@ int Transport::getPlayHead()
     return unitPlayHead;
 }
 
+bool Transport::isManualStart()
+{
+    return manualStart;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // State

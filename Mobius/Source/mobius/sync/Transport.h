@@ -31,7 +31,8 @@ class Transport : public SyncAnalyzer
 
     void globalReset();
     int getMaster();
-
+    bool isManualStart();
+    
     bool doAction(UIAction* a);
     bool doQuery(Query* q);
     

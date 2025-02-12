@@ -99,8 +99,10 @@ class SyncMaster
     SyncSource getEffectiveSource(class LogicalTrack* t);
     SyncUnit getSyncUnit(int id);
 
+    class LogicalTrack* getLeaderTrack(class LogicalTrack* follower);
+    
     //
-    // Sync Recording
+    // Sync Recording Requests
     //
 
     bool isRecordSynchronized(int number);
@@ -140,13 +142,6 @@ class SyncMaster
     void notifyMidiStart(int id);
     void notifyMidiStop(int id);
 
-    //
-    // AutoRecord Support
-    //
-
-    // used by Synchronizer for AutoRecord
-    int getBarFrames(SyncSource src);
-    
     //
     // Internal Component Services
     //
@@ -233,7 +228,6 @@ class SyncMaster
     SessionHelper sessionHelper;
 
     // cached session parameters
-    bool manualStart = false;
     int autoRecordUnits = 1;
     int recordThreshold = 0;
     
@@ -256,11 +250,17 @@ class SyncMaster
 
     void checkDrifts();
 
-    // new things, organize...
+    // sync recording internals
+    
     void gatherSyncUnits(class LogicalTrack* lt, SyncSource src,
                          SyncUnit recordUnit, SyncUnit startUnit);
+
     int getAutoRecordUnits(class LogicalTrack* t);
-    int getAutoRecordUnitLength(class LogicalTrack* t);
+    void lockUnitLength(class LogicalTrack* lt);
+    void verifySyncLength(class LogicalTrack* lt);
+
+    // pulse injection internals
+
     bool isRelevant(class Pulse* p, SyncUnit unit);
     int getGoalBeats(class LogicalTrack* t);
     bool isSourceLocked(class LogicalTrack* t);

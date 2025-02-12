@@ -76,6 +76,15 @@ typedef enum {
     
 } SyncUnit;
 
+/**
+ * Similar units for track sync.  This needs to be different enumeration
+ * because they have a different session parameter and display differently
+ * in the UI.  And they are not always semantically the same.
+ * 
+ * There are a few conversions between them though so to prevent some code
+ * mess it is REQUIRED that the order of these match SyncUnit so
+ * we can do simple integer conversion.
+ */
 typedef enum {
 
     TrackUnitSubcycle,
