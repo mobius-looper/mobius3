@@ -23,6 +23,11 @@ class SyncEvent
 
     Type type;
 
+    // for Extend, Stop, Finalize the number of
+    // record units that have elapsed, this should
+    // become the loop's cycle count
+    int elapsedUnits = 0;
+
     // for Finalize, the length the loop should have
     int finalLength = 0;
 
@@ -39,8 +44,22 @@ class SyncEvent
 
     void reset() {
         type = None;
+        elapsedUnits = 0;
         finalLength = 0;
         error = false;
         ended = false;
+    }
+
+    const char* getName() {
+        const char* name = "???";
+        switch (type) {
+            case None: name = "None"; break;
+            case Start: name = "Start"; break;
+            case Stop: name = "Stop"; break;
+            case Finalize: name = "Finalize"; break;
+            case Extend: name = "Extend"; break;
+            case Realign: name = "Realign"; break;
+        }
+        return name;
     }
 };

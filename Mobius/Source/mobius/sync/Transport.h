@@ -87,6 +87,7 @@ class Transport : public SyncAnalyzer
 
     void advance(int frames);
     void checkDrift(int frames);
+    int getPlayHead();
     
   private:
 

@@ -392,13 +392,32 @@ SyncMaster::RequestResult SyncMaster::requestRecordStop(int number, bool noSync)
                 Trace(1, "SyncMaster: Requested RecordStop with existing goal units");
             }
             else {
-                int goal = lt->getSyncElapsedUnits();
-                if (goal == 0) {
+                int goal = 0;
+                int elapsed = lt->getSyncElapsedUnits();
+                if (elapsed == 0) {
                     // we must be in the start synchronization period, requesting
                     // a stop in there becomes like an AutoRecord of one unit
                     Trace(2, "SyncMaster: AutoRecord conversion");
+                    Trace(2, "SM:requestRecordStop assuming goal unit 1");
                     goal = 1;
                 }
+                else {
+                    // the goal unit is 1 above where we are now since
+                    // we are already "in" the unit that hasn't finished yet
+                    // what about scripts running at the extension point?
+                    //
+                    // example: Extension boundary is reached elapsed moves from 1 to 2
+                    // Script resumes immediately after this and requests a stop
+                    // goal unit will be set to 3
+                    // !! yes, this can happen once you start interleaving script
+                    // waits with pulses, it's the "before or after" boundary problem
+                    // can't happen yet, but when MSL waits get in here will need
+                    // to deal with it, the SyncEvent may be before or after the wait
+                    // and the Wait could be waiting for a SyncEvent...issues here
+                    goal = elapsed + 1;
+                }
+                    
+                Trace(2, "SM:requestRecordStop setting goal units %d", goal);
                 lt->setSyncGoalUnits(goal);
             }
         }
@@ -436,6 +455,7 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number, bool noSync)
         // we can see in the LoopMeter during the initial recording
         result.autoRecordLength = unitLength * result.autoRecordUnits;
 
+        Trace(2, "SM:requestAutoRecord Goal Units %d", result.autoRecordUnits);
         lt->setSyncGoalUnits(result.autoRecordUnits);
         
         SyncSource src = getEffectiveSource(lt);
@@ -480,6 +500,7 @@ SyncMaster::RequestResult SyncMaster::requestPreRecordStop(int number)
         // whether synced or unsynced return the length
         result.autoRecordUnits = 1;
         result.autoRecordLength = getAutoRecordUnitLength(lt);
+        Trace(2, "SM:requestPreRecordStop: Goal Units 1");
         lt->setSyncGoalUnits(1);
 
         SyncSource src = getEffectiveSource(lt);
@@ -556,9 +577,13 @@ SyncMaster::RequestResult SyncMaster::requestExtension(int number)
         if (current == 0) {
             // this must be the first extension after ending a recording
             current = 1;
+            Trace(2, "SM: First extension, bumping Goal Unit to 1");
         }
 
         result.goalUnits = current + extension;
+
+        Trace(2, "SM:requestExtension Goal Units %d", result.goalUnits);
+        
         lt->setSyncGoalUnits(result.goalUnits);
 
         // for unsynced recordings, calculate the length to add
@@ -668,7 +693,10 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
             startUnit = track->getSyncUnitNow();
         }
         if (isRelevant(annotated, startUnit)) {
-            sendSyncEvent(track, SyncEvent::Start);
+            sendSyncEvent(track, pulse, SyncEvent::Start);
+        }
+        else {
+            tracePulse(track, pulse);
         }
         // should be clear but make sure
         track->setSyncElapsedBeats(0);
@@ -689,6 +717,7 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
             Trace(1, "SyncMaster: Someone forgot to store their units");
             recordUnit = track->getSyncUnitNow();
         }
+        
         if (isRelevant(annotated, recordUnit)) {
             // we don't need both elapsed beats and units since you can
             // derive units from beats, but it's clearer to think in terms
@@ -698,25 +727,31 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
 
             if (goalUnits == 0) {
                 // doing an unbounded record
-                sendSyncEvent(track, SyncEvent::Extend);
+                Trace(2, "SM: Unbounded extension");
+                sendSyncEvent(track, pulse, SyncEvent::Extend);
             }
             else if (goalUnits == elapsed) {
                 // we've reached the end
-                sendSyncEvent(track, SyncEvent::Stop);
+                sendSyncEvent(track, pulse, SyncEvent::Stop);
             }
             else if (elapsed > goalUnits) {
                 // elapsed was not incremented properly, this will be wrong
                 // but at least we can stop
-                Trace(1, "SyncMaster: Missed goal unit, stopping late");
-                sendSyncEvent(track, SyncEvent::Stop);
+                Trace(1, "SyncMaster: Missed goal unit %d %d, stopping late",
+                      elapsed, goalUnits);
+                sendSyncEvent(track, pulse, SyncEvent::Stop);
             }
             else {
                 // interior unit within a known extension
                 // don't need to send anything
+                tracePulse(track, pulse);
                 pulse = nullptr;
                 Trace(2, "SyncMaster: Suppressing pulse %d within goal %d",
                       elapsed, goalUnits);
             }
+        }
+        else {
+            tracePulse(track, pulse);
         }
 
         // MIDI rounding noise, could do this for all of them
@@ -759,6 +794,7 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
                         SyncEvent event(SyncEvent::Finalize);
                         event.finalLength = idealLength;
                         track->syncEvent(&event);
+                        traceEvent(track, pulse, event);
                         dealWithSyncEvent(track, &event);
 
                         // from this point forward we won't send SyncEvents to the track
@@ -845,13 +881,41 @@ bool SyncMaster::isSourceLocked(LogicalTrack* t)
 /**
  * Send one of the sync events to the track.
  */
-void SyncMaster::sendSyncEvent(LogicalTrack* t, SyncEvent::Type type)
+void SyncMaster::sendSyncEvent(LogicalTrack* t, Pulse* p, SyncEvent::Type type)
 {
     SyncEvent event (type);
+    
+    event.elapsedUnits = t->getSyncElapsedUnits();
+    
+    traceEvent(t, p, event);
     
     t->syncEvent(&event);
     
     dealWithSyncEvent(t, &event);
+}
+
+void SyncMaster::traceEvent(LogicalTrack* t, Pulse* p, SyncEvent& e)
+{
+    (void)t;
+    if (extremeTrace) {
+        // should be getting the source from the track
+        int head = transport->getPlayHead();
+        
+        Trace(2, "SM: Event %s block %d offset %d head %d",
+              e.getName(), blockCount, p->blockFrame, head);
+    }
+}
+            
+void SyncMaster::tracePulse(LogicalTrack* t, Pulse* p)
+{
+    (void)t;
+    if (extremeTrace) {
+        // should be getting the source from the track
+        int head = transport->getPlayHead();
+        
+        Trace(2, "SM: Pulse block %d offset %d head %d",
+              blockCount, p->blockFrame, head);
+    }
 }
 
 /**
@@ -1551,9 +1615,11 @@ void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
     int frames = stream->getInterruptFrames();
     hostAnalyzer->analyze(frames);
     midiAnalyzer->analyze(frames);
+    
     // Transport should be controlling this but until it does it is important
     // to get the event queue consumed, Transport can just ask for the Result
     // when it advances
+    
     midiRealizer->advance(frames);
     transport->advance(frames);
     barTender->advance(frames);
@@ -1585,6 +1651,14 @@ void SyncMaster::refreshSampleRate(int rate)
  */
 void SyncMaster::processAudioStream(MobiusAudioStream* stream)
 {
+    /*
+    int frames = stream->getInterruptFrames();
+    midiRealizer->advance(frames);
+    transport->advance(frames);
+    barTender->advance(frames);
+    pulsator->advance(frames);
+    */
+    
     timeSlicer->processAudioStream(stream);
 }
 

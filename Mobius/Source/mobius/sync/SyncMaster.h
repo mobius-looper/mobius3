@@ -257,8 +257,12 @@ class SyncMaster
     bool isRelevant(class Pulse* p, SyncUnit unit);
     int getGoalBeats(class LogicalTrack* t);
     bool isSourceLocked(class LogicalTrack* t);
-    void sendSyncEvent(class LogicalTrack* t, SyncEvent::Type type);
     void dealWithSyncEvent(class LogicalTrack* lt, class SyncEvent* event);
+
+    bool extremeTrace = true;
+    void sendSyncEvent(class LogicalTrack* t, Pulse* p, SyncEvent::Type type);
+    void traceEvent(class LogicalTrack* t, Pulse* p, SyncEvent& e);
+    void tracePulse(class LogicalTrack* t, class Pulse* p);
 
 };
 

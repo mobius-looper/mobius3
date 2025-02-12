@@ -471,7 +471,7 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
           event = scheduleSyncRecordStop(action, loop);
           
         else
-          event = scheduleNormalRecordStop(action, loop);
+          event = scheduleRecordStopNow(action, loop);
     }
     
     return event;
@@ -488,7 +488,7 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
  * AFTER prepareLoop is called.
  * as for the goofy action->noLatency flag, that's lost in time, probably an old testing option
  */
-Event* Synchronizer::scheduleNormalRecordStop(Action* action, Loop* loop)
+Event* Synchronizer::scheduleRecordStopNow(Action* action, Loop* loop)
 {
     // new: legacy comment from stopInitialRecording, not sure
     // if we really need this?
@@ -511,6 +511,12 @@ Event* Synchronizer::scheduleNormalRecordStop(Action* action, Loop* loop)
     // since we're not syncing with sync pulses we always do latency adjustments
     // unless this test script option is on
     bool doInputLatency = !action->noLatency;
+
+    long currentFrames = loop->getRecordedFrames();
+    if ((currentFrames % 2) > 0) {
+        Trace(loop, 1, "Sync: Scheduling RecordStop with number of frames");
+        // if this can happen, need to be fixing that "extra" argument to prepareLoop
+    }
     
     loop->prepareLoop(doInputLatency, 0);
     int stopFrame = loop->getFrames();
@@ -573,7 +579,7 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
     action->setEvent(stop);
     em->addEvent(stop);
 
-    // like scheduleNormalRecordStop the goal cycles starts at 1
+    // like scheduleRecordStopNow, the goal cycles starts at 1
     stop->number = 1;
     
     return stop;
@@ -867,22 +873,43 @@ void Synchronizer::startRecording(Track* t, SyncEvent* e)
         // when syncing with MIDI and not host or tracks.  I think that's wrong
         // but don't have time to explore why.  Need to revisit this but the
         // important thing is that they be the same.
-        long startFrame = l->getFrame();
 
-        // todo: could just pass this in the SyncEvent
+        // before you schedule anything, you need to check the loop's reset frame
+        // which is usually -inputLatency.  The event should be scheduled at frame 0
+        // always, but whether not latency compensation is done dependings on this
+        // negative buffer zone.  If you do NOT want latency then the loop frame
+        // needs to be pushed forward to zero
+        
         SyncSource source = mSyncMaster->getEffectiveSource(t->getLogicalNumber());
-        if (source == SyncSourceMidi)
-          startFrame += l->getInputLatency();
-
+        bool doLatency = (source == SyncSourceMidi);
+        
+        long startFrame = l->getFrame();
+        if (startFrame < 0) {
+            if (!doLatency) {
+                l->setFrame(0);
+                l->setPlayFrame(0);
+            }
+        }
+        else {
+            // when in Reset this should always be rewound to the latency buffer zone
+            // try to catch conditions where it might not be
+            Trace(l, 1, "Sync: Loop did not have the latency buffer");
+            // I suppose we could rewind it, but really should not happen
+            // this will make it inconsistent with what activateRecordStop
+            // does but at least we traced something
+        }
+        
         start->pending = false;
-        start->frame = startFrame;
+        start->frame = 0;
 
-        // have to pretend we're in play to start counting frames if
-        // we're doing latency compensation at the beginning
-        l->setMode(PlayMode);
-
-		Trace(l, 2, "Sync: RecordEvent scheduled for frame %ld\n",
-              startFrame);
+        if (l->getFrame() < 0) {
+            // have to pretend we're in play to start counting frames if
+            // we're doing latency compensation at the beginning
+            l->setMode(PlayMode);
+        }
+        
+		Trace(l, 2, "Sync: RecordEvent scheduled for frame %d starting from %d",
+              start->frame, l->getFrame());
 
 		// Obscurity: in a script we might want to wait for the Synchronize
 		// mode to end but we may have a latency delay on the Record event.
@@ -913,9 +940,7 @@ void Synchronizer::stopRecording(Track* t, SyncEvent* e)
 
         activateRecordStop(l, stop);
 
-        // should be the same, but user might have changed it, don't think we
-        // need to prserve thouse but maybe?
-        l->setRecordCycles(stop->number);
+        l->setRecordCycles(e->elapsedUnits);
         
         e->ended = true;
     }
@@ -926,23 +951,31 @@ void Synchronizer::extendRecording(Track* t, SyncEvent* e)
     EventManager* em = t->getEventManager();
     Event* stop = em->findEvent(RecordStopEvent);
     Loop* l = t->getLoop();
+
+    // supposed to be sending this now
+    if (e->elapsedUnits == 0)
+      Trace(t, 1, "Sync: SM Forgot to include elapsedUnits");
+
+    // important to understand what "elapsed" means
+    // this is the number of units that have passed, we are now at the boundary
+    // between the last one and the next one we will be entering
+    // so when this is 1 it means we've recorded 1 cycle and are about
+    // to add another one, the loop's cycle count then needs to be 1+ the elapsed units
+    int newCycles = e->elapsedUnits + 1;
+    l->setRecordCycles(newCycles);
     
     if (stop == nullptr) {
-        Trace(l, 1, "Sync: SyncEvent::Extend No RecordStopEvent");
-        e->error = true;
+        // this is an unclosed recording and we've passed a unit boundary
+        // bump the cycle count so the user sees something happening
     }
     else if (!stop->pending) {
+        // recording is either unsynced, or has already been closed
+        // shouldn't be sending extension events at this point
         Trace(l, 1, "Sync: SyncEvent::Extend RecordStopEvent not pending");
         e->error = true;
     }
     else {
-        // haven't reached the goal, add another cycle
-        int cycles = stop->number;
-        int newCycles = cycles + 1;
-        Trace(2, "Synchronizer: Record pulse advance cycles from %d 5o %d",
-              cycles, newCycles);
         stop->number = newCycles;
-        l->setRecordCycles(newCycles);
     }
 }
 
@@ -959,7 +992,7 @@ void Synchronizer::extendRecording(Track* t, SyncEvent* e)
  * purposes of sending clocks, but see comments in loopRecordStop
  * for some history.
  *
- * Like scheduleNormalRecordStop, handling of input latency is subtle.
+ * Like scheduleRecordStopNow, handling of input latency is subtle.
  * When you call prepareLoop the first argument being true causes it to
  * add inputLatency to the length of the loop.  The RecordStopEvent must
  * match that.  I belive there was a bug in the old code where we passed true
@@ -985,7 +1018,7 @@ void Synchronizer::activateRecordStop(Loop* l, Event* stop)
     
     // formerly attempted an evening here, but it never worked and
     // this should have been dealt with in the SyncAnalyzers
-    long currentFrames = l->getFrames();
+    long currentFrames = l->getRecordedFrames();
     if ((currentFrames % 2) > 0) {
         Trace(l, 1, "Sync::activateRecordStop Odd number of frames in new loop\n");
     }
@@ -1027,6 +1060,8 @@ void Synchronizer::finalizeRecording(Track* t, SyncEvent* e)
             Trace(2, "Sync: SyncEvent::Finalize length %d", stop->frame);
         }
     }
+
+    // !! slam in the new cycle count too?
 }
 
 /****************************************************************************

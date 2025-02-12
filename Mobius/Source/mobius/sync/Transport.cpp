@@ -261,6 +261,11 @@ void Transport::lock()
 {
 }
 
+int Transport::getPlayHead()
+{
+    return unitPlayHead;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // State
@@ -1118,7 +1123,8 @@ void Transport::start()
 {
     if (!started) {
         started = true;
-        Trace(2, "Transport: Starting unitPlayHead %d", unitPlayHead);
+        Trace(2, "Transport: Starting unitPlayHead %d unitLength %d",
+              unitPlayHead, unitLength);
 
         // this may be considered a beat pulse in case a track is stuck in Synchronize
         // waiting for the transport to start back up
