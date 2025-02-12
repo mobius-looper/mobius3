@@ -89,7 +89,8 @@ class Synchronizer {
     class Event* scheduleSyncRecord(class Action* action, class Loop* l, class MobiusMode* mode);
     class Event* scheduleRecordStartNow(class Action* action, class Function* f, class Loop* l);
     class Event* scheduleRecordStopNow(class Action* action, class Loop* loop);
-    class Event* scheduleSyncRecordStop(class Action* action, class Loop* l);
+    class Event* scheduleSyncRecordStop(class Action* action, class Loop* l,
+                                        SyncMaster::RequestResult &result);
 
     void reduceRecordStop(class Loop* loop);
     void extendRecordStop(class Loop* loop);

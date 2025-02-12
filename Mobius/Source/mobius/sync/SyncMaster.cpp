@@ -305,26 +305,56 @@ SyncMaster::RequestResult SyncMaster::requestRecordStart(int number,
         else {
             result.synchronized = true;
 
-            SyncUnit defaultUnit = lt->getSyncUnitNow();
-            if (defaultUnit == SyncUnitNone) {
-                Trace(1, "SyncMaster: Someone stored SyncUnitNone in the session");
-                defaultUnit = SyncUnitBar;
-            }
-
-            if (recordUnit == SyncUnitNone)
-              recordUnit = defaultUnit;
-
-            if (startUnit == SyncUnitNone)
-              startUnit = recordUnit;
+            gatherSyncUnits(lt, src, recordUnit, startUnit);
             
             lt->setSyncRecording(true);
-            lt->setSyncRecordUnit(recordUnit);
-            lt->setSyncStartUnit(startUnit);
             lt->setUnitLength(barTender->getSourceUnitLength(src));
             // do NOT set Goal units here, we don't know what it will be yet
         }
     }
     return result;
+}
+
+/**
+ * Gather the units a synchronized recording is going to wait on.
+ * These normally come from the session parameters, but I'm adding the eventual
+ * ability for these to be overridden in the action to accomplish something like this:
+ *
+ *     Record(4) - record 4 default units
+ *     Record(4 beat) - record 4 beats
+ *     Record(4 beat loop) - record 4 beats starting on a loop
+ */
+void SyncMaster::gatherSyncUnits(LogicalTrack* lt, SyncSource src,
+                                 SyncUnit recordUnit, SyncUnit startUnit)
+{
+    SyncUnit defaultUnit = SyncUnitBar;
+    
+    if (src == SyncSourceTrack) {
+        TrackSyncUnit tsu = lt->getTrackSyncUnitNow();
+        if (tsu == TrackUnitNone) {
+            Trace(1, "SyncMaster: Someone stored TrackUnitNone in the session");
+            tsu = TrackUnitLoop;
+        }
+
+        // really hating this conversion, assumes enumerations have the same orrder
+        defaultUnit = (SyncUnit)tsu;
+    }
+    else {
+        defaultUnit = lt->getSyncUnitNow();
+        if (defaultUnit == SyncUnitNone) {
+            Trace(1, "SyncMaster: Someone stored SyncUnitNone in the session");
+            defaultUnit = SyncUnitBar;
+        }
+    }
+            
+    if (recordUnit == SyncUnitNone)
+      recordUnit = defaultUnit;
+
+    if (startUnit == SyncUnitNone)
+      startUnit = recordUnit;
+
+    lt->setSyncRecordUnit(recordUnit);
+    lt->setSyncStartUnit(startUnit);
 }
 
 /**
@@ -392,33 +422,25 @@ SyncMaster::RequestResult SyncMaster::requestRecordStop(int number, bool noSync)
                 Trace(1, "SyncMaster: Requested RecordStop with existing goal units");
             }
             else {
-                int goal = 0;
-                int elapsed = lt->getSyncElapsedUnits();
-                if (elapsed == 0) {
-                    // we must be in the start synchronization period, requesting
-                    // a stop in there becomes like an AutoRecord of one unit
-                    Trace(2, "SyncMaster: AutoRecord conversion");
-                    Trace(2, "SM:requestRecordStop assuming goal unit 1");
-                    goal = 1;
-                }
-                else {
-                    // the goal unit is 1 above where we are now since
-                    // we are already "in" the unit that hasn't finished yet
-                    // what about scripts running at the extension point?
-                    //
-                    // example: Extension boundary is reached elapsed moves from 1 to 2
-                    // Script resumes immediately after this and requests a stop
-                    // goal unit will be set to 3
-                    // !! yes, this can happen once you start interleaving script
-                    // waits with pulses, it's the "before or after" boundary problem
-                    // can't happen yet, but when MSL waits get in here will need
-                    // to deal with it, the SyncEvent may be before or after the wait
-                    // and the Wait could be waiting for a SyncEvent...issues here
-                    goal = elapsed + 1;
-                }
-                    
-                Trace(2, "SM:requestRecordStop setting goal units %d", goal);
+                // the goal unit is 1 above where we are now since
+                // we are already "in" the unit that hasn't finished yet
+                // what about scripts running at the extension point?
+                //
+                // example: Extension boundary is reached elapsed moves from 1 to 2
+                // Script resumes immediately after this and requests a stop
+                // goal unit will be set to 3
+                // !! yes, this can happen once you start interleaving script
+                // waits with pulses, it's the "before or after" boundary problem
+                // can't happen yet, but when MSL waits get in here will need
+                // to deal with it, the SyncEvent may be before or after the wait
+                // and the Wait could be waiting for a SyncEvent...issues here
+                int goal = lt->getSyncElapsedUnits() + 1;
+                Trace(2, "SyncMaster::requestRecordStop setting goal units %d", goal);
                 lt->setSyncGoalUnits(goal);
+
+                // pass these so the record cursor can be shown right away
+                result.goalUnits = goal;
+                result.extensionLength = getAutoRecordUnitLength(lt);
             }
         }
     }
@@ -455,7 +477,7 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number, bool noSync)
         // we can see in the LoopMeter during the initial recording
         result.autoRecordLength = unitLength * result.autoRecordUnits;
 
-        Trace(2, "SM:requestAutoRecord Goal Units %d", result.autoRecordUnits);
+        Trace(2, "SyncMaster::requestAutoRecord Goal Units %d", result.autoRecordUnits);
         lt->setSyncGoalUnits(result.autoRecordUnits);
         
         SyncSource src = getEffectiveSource(lt);
@@ -464,15 +486,9 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number, bool noSync)
 
             result.synchronized = true;
 
-            SyncUnit syncUnit = lt->getSyncUnitNow();
-            if (syncUnit == SyncUnitNone) {
-                Trace(1, "SyncMaster: Someone stored SyncUnitNone in the session");
-                syncUnit = SyncUnitBar;
-            }
+            gatherSyncUnits(lt, src, SyncUnitNone, SyncUnitNone);
             
             lt->setSyncRecording(true);
-            lt->setSyncStartUnit(syncUnit);
-            lt->setSyncRecordUnit(syncUnit);
         }
 
         // in both cases, let it know if there is a recording threshold
@@ -500,7 +516,7 @@ SyncMaster::RequestResult SyncMaster::requestPreRecordStop(int number)
         // whether synced or unsynced return the length
         result.autoRecordUnits = 1;
         result.autoRecordLength = getAutoRecordUnitLength(lt);
-        Trace(2, "SM:requestPreRecordStop: Goal Units 1");
+        Trace(2, "SyncMaster:requestPreRecordStop: Goal Units 1");
         lt->setSyncGoalUnits(1);
 
         SyncSource src = getEffectiveSource(lt);
@@ -577,12 +593,12 @@ SyncMaster::RequestResult SyncMaster::requestExtension(int number)
         if (current == 0) {
             // this must be the first extension after ending a recording
             current = 1;
-            Trace(2, "SM: First extension, bumping Goal Unit to 1");
+            //Trace(2, "SM: First extension, bumping Goal Unit to 1");
         }
 
         result.goalUnits = current + extension;
 
-        Trace(2, "SM:requestExtension Goal Units %d", result.goalUnits);
+        Trace(2, "SyncMaster::requestExtension Goal Units %d", result.goalUnits);
         
         lt->setSyncGoalUnits(result.goalUnits);
 
@@ -671,8 +687,13 @@ SyncMaster::RequestResult SyncMaster::requestReduction(int number)
 Pulse* SyncMaster::getBlockPulse(LogicalTrack* track)
 {
     Pulse* pulse = nullptr;
-    if (track->isSyncRecording())
-      pulse = pulsator->getAnyBlockPulse(track);
+    if (track->isSyncRecording()) {
+        pulse = pulsator->getAnyBlockPulse(track);
+        if (pulse != nullptr) {
+            int x = 0; // break here
+            (void)x;
+        }
+    }
     return pulse;
 }
 
@@ -694,14 +715,14 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
         }
         if (isRelevant(annotated, startUnit)) {
             sendSyncEvent(track, pulse, SyncEvent::Start);
+            // should be clear but make sure
+            track->setSyncElapsedBeats(0);
+            track->setSyncElapsedUnits(0);
+            track->setSyncRecordStarted(true);
         }
         else {
             tracePulse(track, pulse);
         }
-        // should be clear but make sure
-        track->setSyncElapsedBeats(0);
-        track->setSyncElapsedUnits(0);
-        track->setSyncRecordStarted(true);
     }
     else {
         // always advance a beat
@@ -727,7 +748,7 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
 
             if (goalUnits == 0) {
                 // doing an unbounded record
-                Trace(2, "SM: Unbounded extension");
+                //Trace(2, "SM: Unbounded extension");
                 sendSyncEvent(track, pulse, SyncEvent::Extend);
             }
             else if (goalUnits == elapsed) {
@@ -858,7 +879,7 @@ int SyncMaster::getGoalBeats(LogicalTrack* t)
             break;
     }
     if (beats == 0) {
-        Trace(1, "SyncMaster: Anomolous goal beats calculaation");
+        Trace(1, "SyncMaster: Anomolous goal beats calculation");
         beats = 1;
     }
     return beats;
@@ -898,21 +919,38 @@ void SyncMaster::traceEvent(LogicalTrack* t, Pulse* p, SyncEvent& e)
 {
     (void)t;
     if (extremeTrace) {
-        // should be getting the source from the track
-        int head = transport->getPlayHead();
-        
+        int head = getSyncPlayHead(t);
         Trace(2, "SM: Event %s block %d offset %d head %d",
               e.getName(), blockCount, p->blockFrame, head);
     }
+}
+
+int SyncMaster::getSyncPlayHead(LogicalTrack* t)
+{
+    int head = 0;
+    SyncSource src = getEffectiveSource(t);
+    switch (src) {
+        case SyncSourceNone: break;
+        case SyncSourceMaster: break;
+        case SyncSourceTransport: head = transport->getPlayHead(); break;
+        case SyncSourceHost: head = hostAnalyzer->getPlayHead(); break;
+        case SyncSourceMidi: head = midiAnalyzer->getPlayHead(); break;
+        case SyncSourceTrack: {
+            if (trackSyncMaster > 0) {
+                LogicalTrack* tsm = trackManager->getLogicalTrack(trackSyncMaster);
+                head = tsm->getSyncLocation();
+            }
+        }
+            break;
+    }
+    return head;
 }
             
 void SyncMaster::tracePulse(LogicalTrack* t, Pulse* p)
 {
     (void)t;
     if (extremeTrace) {
-        // should be getting the source from the track
-        int head = transport->getPlayHead();
-        
+        int head = getSyncPlayHead(t);
         Trace(2, "SM: Pulse block %d offset %d head %d",
               blockCount, p->blockFrame, head);
     }
@@ -1631,6 +1669,10 @@ void SyncMaster::beginAudioBlock(MobiusAudioStream* stream)
 
     // temporary diagnostics
     checkDrifts();
+
+    // make sure this starts zero for any Actions that follow
+    timeSlicer->resetBlockOffset();
+    blockSize = frames;
 }
 
 void SyncMaster::refreshSampleRate(int rate)
@@ -1651,15 +1693,25 @@ void SyncMaster::refreshSampleRate(int rate)
  */
 void SyncMaster::processAudioStream(MobiusAudioStream* stream)
 {
-    /*
-    int frames = stream->getInterruptFrames();
-    midiRealizer->advance(frames);
-    transport->advance(frames);
-    barTender->advance(frames);
-    pulsator->advance(frames);
-    */
-    
     timeSlicer->processAudioStream(stream);
+}
+
+/**
+ * Used by Transport to calculate the unitPlayHead position after
+ * a start() happens due to an action after the initial advance.
+ */
+int SyncMaster::getBlockSize()
+{
+    return blockSize;
+}
+
+/**
+ * Used by Transport to calculate the unitPlayHead position after
+ * a start() happens due to an action after the initial advance.
+ */
+int SyncMaster::getBlockOffset()
+{
+    return timeSlicer->getBlockOffset();
 }
 
 /**

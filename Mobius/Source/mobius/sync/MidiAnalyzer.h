@@ -50,7 +50,7 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     int getUnitLength() override;
     void lock() override;
     int getDrift() override;
-
+    int getPlayHead();
 
     //
     // Extended interface for MIDI

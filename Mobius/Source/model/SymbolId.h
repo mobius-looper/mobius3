@@ -66,6 +66,7 @@ typedef enum {
     //
     
     ParamSyncSource,
+    ParamSyncSourceAlternate,
     ParamSyncUnit,
     ParamTrackSyncUnit,
     ParamTrackGroup,

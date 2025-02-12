@@ -117,6 +117,7 @@ class LogicalTrack
     //////////////////////////////////////////////////////////////////////
 
     SyncSource getSyncSourceNow();
+    SyncSourceAlternate getSyncSourceAlternateNow();
     SyncUnit getSyncUnitNow();
     TrackSyncUnit getTrackSyncUnitNow();
     int getSyncLeaderNow();
@@ -142,6 +143,7 @@ class LogicalTrack
 
     // weed these and just call the cached accessors
     SyncSource getSyncSourceFromSession();
+    SyncSourceAlternate getSyncSourceAlternateFromSession();
     SyncUnit getSyncUnitFromSession();
     TrackSyncUnit getTrackSyncUnitFromSession();
     int getLoopCountFromSession();
@@ -168,7 +170,8 @@ class LogicalTrack
 
     // parameter cache
     SyncSource syncSource = SyncSourceNone;
-    SyncUnit syncUnit = SyncUnitBeat;
+    SyncSourceAlternate syncSourceAlternate = SyncAlternateTrack;
+    SyncUnit syncUnit = SyncUnitBar;
     TrackSyncUnit trackSyncUnit = TrackUnitLoop;
     int syncLeader = 0;
 

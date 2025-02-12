@@ -482,6 +482,9 @@ Once those models are fully converted, these symbols can be removed.
     <!-- the replacement for oldSyncSource defined SyncSource in SyncConstants.h -->
     <Parameter name='syncSource' values='none,transport,track,host,midi,master'/>
 
+    <!-- the SyncSource to use when syncSource is Master and there is already a master -->
+    <Parameter name='syncSourceAlternate' values='track,transport'/>
+    
     <!-- the replacements for slaveSyncUnit, used for all except track -->
     <Parameter name='syncUnit' values='beat,bar,loop'/>
     

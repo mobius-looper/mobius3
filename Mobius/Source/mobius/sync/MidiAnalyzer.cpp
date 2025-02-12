@@ -222,6 +222,11 @@ int MidiAnalyzer::getDrift()
     return 0;
 }
 
+int MidiAnalyzer::getPlayHead()
+{
+    return unitPlayHead;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Extended Public Interface

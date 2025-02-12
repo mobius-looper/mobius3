@@ -213,6 +213,10 @@ class SyncMaster
     class SymbolTable* getSymbols();
 
     void handleBlockPulse(class LogicalTrack* track, class Pulse* pulse);
+
+    // Special support for Transport pulses that come in after the first advance
+    int getBlockOffset();
+    int getBlockSize();
     void notifyTransportStarted();
     
   private:
@@ -223,6 +227,7 @@ class SyncMaster
 
     int sampleRate = 44100;
     int blockCount = 0;
+    int blockSize = 0;
     int trackSyncMaster = 0;
 
     SessionHelper sessionHelper;
@@ -252,12 +257,15 @@ class SyncMaster
     void checkDrifts();
 
     // new things, organize...
+    void gatherSyncUnits(class LogicalTrack* lt, SyncSource src,
+                         SyncUnit recordUnit, SyncUnit startUnit);
     int getAutoRecordUnits(class LogicalTrack* t);
     int getAutoRecordUnitLength(class LogicalTrack* t);
     bool isRelevant(class Pulse* p, SyncUnit unit);
     int getGoalBeats(class LogicalTrack* t);
     bool isSourceLocked(class LogicalTrack* t);
     void dealWithSyncEvent(class LogicalTrack* lt, class SyncEvent* event);
+    int getSyncPlayHead(class LogicalTrack* t);
 
     bool extremeTrace = true;
     void sendSyncEvent(class LogicalTrack* t, Pulse* p, SyncEvent::Type type);

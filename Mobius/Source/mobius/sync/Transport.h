@@ -151,6 +151,8 @@ class Transport : public SyncAnalyzer
     void doConnectionActions();
 
     void consumeMidiBeats();
+    void detectPostStartBeat();
+    void softAdvance(int frames, bool doMidi);
     void checkDrift();
 
     // internal action handlers

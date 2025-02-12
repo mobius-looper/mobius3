@@ -51,6 +51,20 @@ TimeSlicer::~TimeSlicer()
 }
 
 /**
+ * Return the block offset the TimeSlicer is at when a notification
+ * is being sent.
+ */
+int TimeSlicer::getBlockOffset()
+{
+    return blockOffset;
+}
+
+void TimeSlicer::resetBlockOffset()
+{
+    blockOffset = 0;
+}
+
+/**
  * Where the rubber meets the road and/or the shit hits the fan.
  */
 void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
@@ -61,6 +75,7 @@ void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
     LogicalTrack* track = nextTrack();
     while (track != nullptr) {
 
+        blockOffset = 0;
         gatherSlices(track);
         
         if (slices.size() == 0) {
@@ -69,7 +84,6 @@ void TimeSlicer::processAudioStream(MobiusAudioStream* stream)
         }
         else {
             AudioStreamSlicer ass(stream);
-            int blockOffset = 0;
         
             for (int i = 0 ; i < slices.size() ; i++) {
                 Slice& s = slices.getReference(i);

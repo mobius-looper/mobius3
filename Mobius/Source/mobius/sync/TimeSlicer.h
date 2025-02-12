@@ -39,6 +39,9 @@ class TimeSlicer
     void processAudioStream(class MobiusAudioStream* stream);
     void syncFollowerChanges();
 
+    int getBlockOffset();
+    void resetBlockOffset();
+
   private:
 
     class SyncMaster* syncMaster = nullptr;
@@ -49,7 +52,8 @@ class TimeSlicer
     // leader pulses are added as tracks advance
     juce::Array<Slice> slices;
     int sliceCount = 0;
-
+    int blockOffset = 0;
+    
     juce::Array<class LogicalTrack*> orderedTracks;
     int orderedIndex = 0;
     bool ordered = false;

@@ -164,6 +164,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameActivePreset, ParamActivePreset},
 
     {"syncSource", ParamSyncSource},
+    {"syncSourceAlternate", ParamSyncSourceAlternate},
     {"syncUnit", ParamSyncUnit},
     {"trackSyncUnit", ParamTrackSyncUnit},
     {"trackGroup", ParamTrackGroup},

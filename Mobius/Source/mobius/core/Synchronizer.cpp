@@ -468,7 +468,7 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
             mSyncMaster->requestRecordStop(number, action->noSynchronization);
 
         if (result.synchronized)
-          event = scheduleSyncRecordStop(action, loop);
+          event = scheduleSyncRecordStop(action, loop, result);
           
         else
           event = scheduleRecordStopNow(action, loop);
@@ -561,26 +561,30 @@ Event* Synchronizer::scheduleRecordStopNow(Action* action, Loop* loop)
  * Called by scheduleRecordStop when a RecordStop event needs to be 
  * synchronized to a pulse.
  */
-Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
+Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l,
+                                            SyncMaster::RequestResult &result)
 {
     (void)action;
     Event* stop = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
 
-    // ending must be pulsed
-    // unitLength == 0 is unusual, it means that we're using MIDI sync and started
-    // on MIDIStart and stopped before the first full beat was received to define the unit
-    // in this case we must wait for a pulse
     stop = em->newEvent(Record, RecordStopEvent, 0);
     stop->pending = true;
+
+    stop->number = result.goalUnits;
+    l->setRecordCycles(result.goalUnits);
+        
+    // go ahead and maintain the stop frame even on pending stops so we
+    // can see progress in the LoopMeter
+    int unitLength = result.extensionLength;
+    int newEndFrame = result.goalUnits * unitLength;
+    stop->frame = newEndFrame;
+    
     Trace(l, 2, "Sync: Added pulsed RecordStop\n");
 
     // take ownership of the Action
     action->setEvent(stop);
     em->addEvent(stop);
-
-    // like scheduleRecordStopNow, the goal cycles starts at 1
-    stop->number = 1;
     
     return stop;
 }

@@ -153,6 +153,7 @@ MobiusLooperTrack* LogicalTrack::getMobiusTrack()
 void LogicalTrack::cacheSyncParameters()
 {
     syncSource = getSyncSourceFromSession();
+    syncSourceAlternate = getSyncSourceAlternateFromSession();
     syncUnit = getSyncUnitFromSession();
     trackSyncUnit = getTrackSyncUnitFromSession();
     syncLeader = sessionTrack->getInt("leaderTrack");
@@ -551,12 +552,20 @@ SyncSource LogicalTrack::getSyncSourceFromSession()
                                               SyncSourceNone);
 }
 
+SyncSourceAlternate LogicalTrack::getSyncSourceAlternateFromSession()
+{
+    return (SyncSourceAlternate)Enumerator::getOrdinal(manager->getSymbols(),
+                                                       ParamSyncSourceAlternate,
+                                                       sessionTrack->getParameters(),
+                                                       SyncAlternateTrack);
+}
+
 SyncUnit LogicalTrack::getSyncUnitFromSession()
 {
     return (SyncUnit)Enumerator::getOrdinal(manager->getSymbols(),
                                             ParamSyncUnit,
                                             sessionTrack->getParameters(),
-                                            SyncUnitBeat);
+                                            SyncUnitBar);
 }
 
 TrackSyncUnit LogicalTrack::getTrackSyncUnitFromSession()

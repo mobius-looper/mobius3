@@ -160,6 +160,11 @@ int HostAnalyzer::getDrift()
     return drifter.getDrift();
 }
 
+int HostAnalyzer::getPlayHead()
+{
+    return unitPlayHead;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Analysis

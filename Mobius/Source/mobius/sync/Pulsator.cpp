@@ -84,7 +84,10 @@ void Pulsator::reset()
     juce::OwnedArray<LogicalTrack>& tracks = trackManager->getTracks();
     for (auto t : tracks) {
         Pulse* p = t->getLeaderPulse();
-        p->reset();
+        if (p->pending)
+          p->pending = false;
+        else
+          p->reset();
     }
 }
 
@@ -272,9 +275,13 @@ Pulse* Pulsator::getBlockPulse(SyncSource source, int leader)
 {
     Pulse* pulse = getPulseObject(source, leader);
     if (pulse != nullptr) {
-        if (pulse->source == SyncSourceNone || pulse->pending) {
-            // pulse either not detected, or spilled into the next block
-            pulse = nullptr;
+        if (pulse->source == SyncSourceNone)
+          pulse = nullptr;
+        else if (pulse->pending)
+          pulse = nullptr;
+        else {
+            int x = 0; // break here
+            (void)x;
         }
     }
     return pulse;

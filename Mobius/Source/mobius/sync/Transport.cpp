@@ -1119,6 +1119,57 @@ void Transport::resetLocation()
     loop = 0;
 }
 
+/**
+ * Complex issues here related to sync pulses.
+ * Block processing proceeds in three phases:
+ *
+ *     1) SyncMaster::beginAudioBlock
+ *        - this is where sync sources are advanced and Pulsator gathers pulses
+ *
+ *     2) MobiusKernel processes queued actions
+ *        - this is where the Transport can be started, stopped, or moved
+ *
+ *     3) SyncMaster::processAudioStream
+ *        - this is where TimeSlicer looks at Pulses and sends them to the tracks
+ *
+ * Most sync sources are external and can't be under the control of a script or user action.
+ * Those can be fully analyzed in phase 1.
+ *
+ * Transport is different because it can be changed after phase 1, and this could result in
+ * pulse events being detected after the initial advance.  In particular this happens
+ * when an action calls Transport::start, in theory there could be other actions though
+ * none are as important.
+ *
+ * Whenever the Transport is touched in such a way that the pulse analysis changes, it must
+ * notify SyncMaster so the block Pulse held by Pulsator is refreshed.
+ *
+ * Eventually scripts may introduce even more complications to this.  Example:
+ *
+ *     track 1 enters Synchronize mode waiting for a Transport pulse
+ *     track 2 resumes a script that calls TransportStart
+ *
+ * Even if the Transport notifies SyncMaster abhout the new pulse, track 1 may already
+ * have been advanced for this block and will miss the pulse.  There is no carryover
+ * of pulses from one block to the next and TimeSlicer does not order tracks based on
+ * potential dependencies that come from scripts.
+ *
+ * Pulse carryover is possible, but not accurate since the dependent track will receive
+ * the pulse on the next block which could lead to minor timing errors.
+ *
+ * Punting on this for the time being since script usage is relatively simple and does not
+ * often control the Transport.
+ *
+ * Complication 2: Play head advance after start
+ *
+ * A more serious complication that must be dealt with is where the unitPlayHead goes
+ * after the start.  Since start() happens in the Action phase, Transport::advance() has
+ * already been called and the unitPlayHead was advanced for this block.   start() sets the
+ * head back to zero, but the playHead position is actually the number of frames that
+ * remain in "block time" after the start() happened.  Failure to do this will result
+ * in up to one extra block being added to the width of the first sync unit after the start().
+ * SyncMaster provides a "block time" call to get the offset within the block where
+ * the start() action is happening.  
+ */
 void Transport::start()
 {
     if (!started) {
@@ -1128,24 +1179,29 @@ void Transport::start()
 
         // this may be considered a beat pulse in case a track is stuck in Synchronize
         // waiting for the transport to start back up
+        // !! testing for unitPlayHead zero catches the most common case, but in theory
+        // the playHead could be over any location that would result in a beat within
+        // this block after the transport is resumed
         if (unitPlayHead == 0) {
-            // if this was an external action queued for MobiusKernel, then we'll be
-            // in the action processing phase after beginAudioBlock which called advance()
-            // and Pulsator has already converted sync source beats into Pulses
-            // to get this into Pulsator have to call up to a special SyncMaster method
-            // that tells Pulsator to look again
-            //
-            // what this doesn't handle is actions that come in the middle of a block
-            // after a script wait, that's harder since we don't know the TimeSlicer
-            // block offset at this point, but this isn't the usual case
+            // set flags in the SyncAnalyzerResult indiciating this is a beat and ask
+            // SyncMaster to regenerate the Pulse
             result.started = true;
             result.beatDetected = true;
             result.barDetected = true;
             result.loopDetected = true;
-            result.blockOffset = 0;
+
+            result.blockOffset = syncMaster->getBlockOffset();
+
+            int blockSize = syncMaster->getBlockSize();
+            unitPlayHead = blockSize - result.blockOffset;
+            
             syncMaster->notifyTransportStarted();
         }
-
+        else {
+            // advance from where we are now which may detect a beat
+            detectPostStartBeat();
+        }
+        
         // going to need a lot more state here
         if (midiEnabled) {
             // We're normally in a UIAction handler at this point before
@@ -1160,6 +1216,25 @@ void Transport::start()
         }
     }
 }
+
+/**
+ * To detect beats after a delayed start, it is enough just to advance the transport.
+ * The remainder of the block.
+ */
+void Transport::detectPostStartBeat()
+{
+    int offset = syncMaster->getBlockOffset();
+    int remaining = syncMaster->getBlockSize() - offset;
+
+    softAdvance(remaining, false);
+    syncMaster->notifyTransportStarted();
+
+    // todo: I think there is more to do here with MidiRealizer since we
+    // bypassed consumeMidiBeats in softAdvance, needs thought..
+    // also a host of issues related to deferring MIDI continue until the transport
+    // is exactly on a SongPosition
+}
+
 void Transport::startClocks()
 {
     // in theory could be watching drift now too, but
@@ -1216,7 +1291,15 @@ bool Transport::isPaused()
 void Transport::advance(int frames)
 {
     result.reset();
+    softAdvance(frames, true);
+}
 
+/**
+ * Core advance logic that doees not reset the result so
+ * we can set initial beat flags after start()
+ */
+void Transport::softAdvance(int frames, bool doMidi)
+{
     if (started) {
 
         unitPlayHead = unitPlayHead + frames;
@@ -1259,7 +1342,9 @@ void Transport::advance(int frames)
         }
 
         // also advance the drift monitor
-        if (midiEnabled) {
+        // doMidi set only on the initial advance, not a soft advance
+        // after inner block start()
+        if (doMidi && midiEnabled) {
             // HostAnalyzer did PPQ first but I don't think order matters
             consumeMidiBeats();
             drifter.advanceStreamTime(frames);
@@ -1267,7 +1352,7 @@ void Transport::advance(int frames)
         }
     }
 
-    if (result.loopDetected && midiEnabled)
+    if (doMidi && result.loopDetected && midiEnabled)
       checkDrift();
 }
 

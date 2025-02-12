@@ -48,6 +48,17 @@ typedef enum {
 } SyncSource;
 
 /**
+ * Alternate sync source when primary is SyncSourceMaster and there
+ * is already a master.
+ */
+typedef enum {
+
+    SyncAlternateTrack,
+    SyncAlternateTransport
+
+} SyncSourceAlternate;
+
+/**
  * The sync unit defines the granularity of a pulse from a sync source.
  * The smallest unit is Beat.  Bars are made up of multiiple beats, and
  * loops are made up of multiple bars.
@@ -69,7 +80,8 @@ typedef enum {
 
     TrackUnitSubcycle,
     TrackUnitCycle,
-    TrackUnitLoop
+    TrackUnitLoop,
+    TrackUnitNone
 
 } TrackSyncUnit;
     

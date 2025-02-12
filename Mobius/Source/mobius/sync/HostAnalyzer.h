@@ -41,6 +41,7 @@ class HostAnalyzer : public SyncAnalyzer
     int getUnitLength() override;
     void lock() override;
     int getDrift() override;
+    int getPlayHead();
     
   private:
 
