@@ -106,6 +106,9 @@ void SyncMaster::loadSession(Session* s)
     
     autoRecordUnits = sessionHelper.getInt(s, ParamAutoRecordUnits);
     recordThreshold = sessionHelper.getInt(s, ParamRecordThreshold);
+    
+    // trackSyncMaster and transportMaster could also be session parameters
+    // but they'r really more transient performance-oriented parameters
 }
 
 /**
@@ -173,20 +176,30 @@ int SyncMaster::getTrackSyncMaster()
  * Now this makes the focused track the master which may include MIDI tracks.
  * To allow more control, the action may have an argument with a track number.
  * todo: This needs to be expanded to accept any form of trackk identifier.
+ *
+ * The action may specify FuncSyncMasterTrack or ParamTrackSyncMaster
+ * The parameter action does not allow jumping to the focused track to it
+ * is predictable as a sweepable host parameter.
+ *
+ * See also setTransportMaster
+ *
+ * !! actually should allow zero for the parameter to deselect the masters?
  */
 void SyncMaster::setTrackSyncMaster(UIAction* a)
 {
     int number = a->value;
-    if (number == 0) {
+    if (number == 0 && a->symbol->functionProperties != nullptr) {
         // todo: not liking how track focus is passed around and where it lives
         number = container->getFocusedTrackIndex() + 1;
     }
 
-    LogicalTrack* lt = trackManager->getLogicalTrack(number);
-    if (lt == nullptr)
-      Trace(1, "SyncMaster: Invalid track id in SyncMasterTrack action");
-    else
-      setTrackSyncMaster(number);
+    if (number > 0) {
+        LogicalTrack* lt = trackManager->getLogicalTrack(number);
+        if (lt == nullptr)
+          Trace(1, "SyncMaster: Invalid track id in SyncMasterTrack action");
+        else
+          setTrackSyncMaster(number);
+    }
 }
 
 /**
@@ -226,30 +239,36 @@ int SyncMaster::getTransportMaster()
 }
 
 /**
- * Action handler for FuncSyncMasterMidi
- * Formerly implemented as a Mobius core function.
- * This took no arguments and made the active track the "MIDI Master".
+ * Action handler for FuncSyncMasterTransport and ParamTransportMaster.
+ *  
+ * Formerly implemented as a Mobius core function OutSyncMaster
+ * took no arguments and made the active track the "MIDI Master".
  *
- * This is now the equivalent of setting the TransportMaster.
- * The name "SyncMasterMidi" is kept for backward compatibility but it should
- * be made an alias of TransportMaster.
+ * todo: SyncMasterMidi was the old name, need a better aliasing mechanism
  *
- * Like SyncMasterTrack this now makes the focused track the master which may
- * include MIDI tracks.
+ * For the function, the track number is specified as the action argument and
+ * if it is zero it means to make the focused track the master.
+ *
+ * For the parameter, the track number is also passed in the action value.
+ * The parameter has low='1' and is not expecting zero here so it can have a natural
+ * sweep as a plugin parameter with no special meaning for zero.
  */
 void SyncMaster::setTransportMaster(UIAction* a)
 {
     int number = a->value;
-    if (number == 0) {
+    if (number == 0 && a->symbol->functionProperties != nullptr) {
+        // function allows focus selection
         // todo: not liking how track focus is passed around and where it lives
         number = container->getFocusedTrackIndex() + 1;
     }
 
-    LogicalTrack* lt = trackManager->getLogicalTrack(number);
-    if (lt == nullptr)
-      Trace(1, "SyncMaster: Invalid track id in TransportMaster action");
-    else {
-        setTransportMaster(number);
+    if (number > 0) {
+        LogicalTrack* lt = trackManager->getLogicalTrack(number);
+        if (lt == nullptr)
+          Trace(1, "SyncMaster: Invalid track id in TransportMaster action");
+        else {
+            setTransportMaster(number);
+        }
     }
 }
 
@@ -448,6 +467,14 @@ bool SyncMaster::doAction(UIAction* a)
             // by SyncUnit
             break;
 
+        case ParamTrackSyncMaster:
+            setTrackSyncMaster(a);
+            break;
+
+        case ParamTransportMaster:
+            setTransportMaster(a);
+            break;
+
         case ParamAutoRecordUnits:
             autoRecordUnits = a->value;
             break;
@@ -484,6 +511,14 @@ bool SyncMaster::doQuery(Query* q)
 
         case ParamRecordThreshold:
             q->value = recordThreshold;
+            break;
+
+        case ParamTrackSyncMaster:
+            q->value = trackSyncMaster;
+            break;
+            
+        case ParamTransportMaster:
+            q->value = transport->getMaster();
             break;
 
         default: {

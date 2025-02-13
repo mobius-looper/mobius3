@@ -228,6 +228,8 @@ SymbolDefinition SymbolDefinitions[] = {
     {"autoRecordUnit", ParamAutoRecordUnit},
     {"autoRecordUnits", ParamAutoRecordUnits},
     {"recordThreshold", ParamRecordThreshold},
+    {"trackSyncMaster", ParamTrackSyncMaster},
+    {"transportMaster", ParamTransportMaster},
 
     {"trackNoReset", ParamNoReset},
     {"trackNoEdit", ParamNoEdit},
@@ -448,7 +450,8 @@ SymbolDefinition SymbolDefinitions[] = {
     // these are old names, i'd like to change them but then
     // we would need aliases or duplicate SymbolIds
     {"SyncMasterTrack", FuncSyncMasterTrack},
-    {"SyncMasterMidi", FuncSyncMasterTransport},
+    // was SyncMasterMidi for awhile, should upgrade or add an alias
+    {"SyncMasterTransport", FuncSyncMasterTransport},
 
     //////////////////////////////////////////////////////////////////////
     // Deprecated

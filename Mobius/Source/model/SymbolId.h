@@ -140,6 +140,8 @@ typedef enum {
     ParamAutoRecordUnit,
     ParamAutoRecordUnits,
     ParamRecordThreshold,
+    ParamTrackSyncMaster,
+    ParamTransportMaster,
 
     // Random new things
     ParamNoReset,
