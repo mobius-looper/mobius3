@@ -326,25 +326,27 @@ Event* Synchronizer::scheduleAutoRecordStop(Action* action, Loop* loop,
     Track* track = loop->getTrack();
     EventManager* em = track->getEventManager();
 
-    if (result.autoRecordLength == 0) {
+    // note that I'm not scheduling a pending stop event for Threshold
+    // mode, I think it's enough just for the Start to be thresholded and
+    // then when it is activated you can fall into a normal scheduled stop
+    
+    if (result.synchronized) {
+        event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
+        event->pending = true;
+    }
+    else if (result.autoRecordLength == 0) {
         // don't schedule this if it won't go anywhere, will hit
         // an NPE without a record layer
+        // not uncommon for result.synchronized to have a zero length with MIDI
+        // in the warmup period, but must have one for unsynced
         Trace(1, "Synchronizer: No AutoRecord length");
     }
     else {
-        // note that I'm not scheduling a pending stop event for Threshold
-        // mode, I think it's enough just for the Start to be thresholded and
-        // then when it is activated you can fall into a normal scheduled stop
-    
-        if (result.synchronized) {
-            event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
-            event->pending = true;
-        }
-        else {
-            event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
-            event->quantized = true;	// makes it visible in the UI
-        }
-    
+        event = em->newEvent(action->getFunction(), RecordStopEvent, 0);
+        event->quantized = true;	// makes it visible in the UI
+    }
+
+    if (event != nullptr) {
         event->frame = result.autoRecordLength;
         event->number = result.autoRecordUnits;
         loop->setRecordCycles(result.autoRecordUnits);
@@ -1066,11 +1068,19 @@ void Synchronizer::finalizeRecording(Track* t, SyncEvent* e)
     }
     else {
         int endFrame = e->finalLength;
-        if (endFrame <= l->getFrames()) {
-            Trace(1, "Sync: SyncEvent asked to finalize below where we are");
+        int currentFrame = l->getRecordedFrames();
+        if (endFrame < currentFrame) {
+            Trace(1, "Sync: Finalize overflow, current %d end %d",
+                  currentFrame, endFrame);
             e->error = true;
+            // this will leave the event dangling, better to remove it
         }
         else {
+            // if we are exactly on endFrame, make sure we're before the event processing
+            // lifecycle and will immediately process the event rather than recording
+            // past it and missing it on the next block
+            if (endFrame == currentFrame)
+              Trace(t, 2, "Sync: Current frame and end frame are the same, thsi worries me");
             stop->frame = endFrame;
             stop->pending = false;
             Trace(2, "Sync: SyncEvent::Finalize length %d", stop->frame);

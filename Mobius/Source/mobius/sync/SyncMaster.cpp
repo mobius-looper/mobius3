@@ -1162,7 +1162,7 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
             tracePulse(track, pulse);
         }
     }
-    else {
+    else if (!track->isSyncFinalized()) {
         // always advance a beat
         int beat = track->getSyncElapsedBeats() + 1;
         track->setSyncElapsedBeats(beat);
@@ -1205,8 +1205,8 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
                 // don't need to send anything
                 tracePulse(track, pulse);
                 pulse = nullptr;
-                Trace(2, "SyncMaster: Suppressing pulse %d within goal %d",
-                      elapsed, goalUnits);
+                //Trace(2, "SyncMaster: Suppressing pulse %d within goal %d",
+                //elapsed, goalUnits);
             }
         }
         else {
@@ -1227,7 +1227,7 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
                     Trace(2, "SyncMaster: Adjusting final beat for unit change %d to %d",
                           startingUnit, endingUnit);
 
-                    int idealLength = endingUnit * goalUnits;
+                    int idealLength = endingUnit * totalBeats;
                     int currentLength = track->getSyncLength();
                     int unalteredLength = currentLength + endingUnit;
                     if (idealLength == unalteredLength) {
@@ -1237,7 +1237,8 @@ void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
                     }
                     else if (currentLength > idealLength) {
                         // you messed something up counting beats
-                        Trace(1, "SyncMaster: Ideal length less than where we are now");
+                        Trace(1, "SyncMaster: Ideal length %d less than where we are now %d",
+                              idealLength, currentLength);
                     }
                     else {
                         // this should never be more than a beat, and really a small fraction
