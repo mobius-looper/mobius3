@@ -61,6 +61,8 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     bool isReceiving();
     int getSongPosition();
     void checkClocks();
+
+    bool forceUnitLength(int length);
     
   private:
     

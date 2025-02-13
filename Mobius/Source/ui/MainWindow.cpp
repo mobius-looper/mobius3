@@ -38,13 +38,18 @@ MainWindow::MainWindow(Supervisor* super) : supervisor(super), display(this), al
     
     addAndMakeVisible(display);
     addChildComponent(alertPanel);
-    
-#ifdef USE_FFMETERS
-    addAndMakeVisible(levelMeter);
-    levelMeter.setMeterSource(supervisor->getLevelMeterSource());
-#endif
-    
 }
+
+// test hack
+#if 0
+void MainWindow::enableBigMeter()
+{
+    if (levelMeter.getParentComponent() == nullptr) {
+        addAndMakeVisible(levelMeter);
+        levelMeter.setMeterSource(supervisor->getLevelMeterSource());
+    }
+}
+#endif
 
 MainWindow::~MainWindow()
 {
@@ -100,10 +105,8 @@ void MainWindow::resized()
     juce::Rectangle<int> area = getLocalBounds();
     menu.setBounds(area.removeFromTop(menu.getPreferredHeight()));
     display.setBounds(area);
-
-#ifdef USE_FFMETERS
-    levelMeter.setBounds(20, 20, 200, 600);
-#endif
+    
+    //levelMeter.setBounds(20, 20, 200, 600);
 }
 
 /**

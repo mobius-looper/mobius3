@@ -654,6 +654,8 @@
           <FILE id="AVNwTh" name="TimeSlicer.h" compile="0" resource="0" file="Source/mobius/sync/TimeSlicer.h"/>
           <FILE id="DKstkR" name="Transport.cpp" compile="1" resource="0" file="Source/mobius/sync/Transport.cpp"/>
           <FILE id="XM77tx" name="Transport.h" compile="0" resource="0" file="Source/mobius/sync/Transport.h"/>
+          <FILE id="aaWiIn" name="Unitarian.cpp" compile="1" resource="0" file="Source/mobius/sync/Unitarian.cpp"/>
+          <FILE id="GbmIXk" name="Unitarian.h" compile="0" resource="0" file="Source/mobius/sync/Unitarian.h"/>
         </GROUP>
         <GROUP id="{D9CEF926-5070-AF3E-4E9F-1323713390DF}" name="track">
           <FILE id="feGMpx" name="BaseScheduler.cpp" compile="1" resource="0"

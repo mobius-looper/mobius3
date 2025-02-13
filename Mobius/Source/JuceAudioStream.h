@@ -12,10 +12,6 @@
 #include "mobius/MobiusInterface.h"
 #include "PortAuthority.h"
 
-#ifdef USE_FFMETERS
-#include "ff_meters/ff_meters.h"
-#endif
-
 class JuceAudioStream : public MobiusAudioStream
 {
   public:
@@ -54,11 +50,7 @@ class JuceAudioStream : public MobiusAudioStream
     double getStreamTime() override;
     double getLastInterruptStreamTime() override;
     
-#ifdef USE_FFMETERS
-    foleys::LevelMeterSource* getLevelMeterSource() {
-        return &meterSource;
-    }
-#endif
+    //class foleys::LevelMeterSource* getLevelMeterSource();
     
   private:
 
@@ -78,9 +70,7 @@ class JuceAudioStream : public MobiusAudioStream
     int nextBlockSamples = 0;
     juce::MidiBuffer* nextMidiMessages = nullptr;
     
-#ifdef USE_FFMETERS
-    foleys::LevelMeterSource meterSource;
-#endif
+    //std::unique_ptr<class foleys::LevelMeterSource> meterSource;
     
     //
     // Methods

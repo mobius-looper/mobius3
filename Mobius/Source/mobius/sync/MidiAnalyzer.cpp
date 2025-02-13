@@ -137,6 +137,7 @@ void MidiAnalyzer::checkClocks()
  */
 void MidiAnalyzer::globalReset()
 {
+    Trace(2, "MidiAnalyzer: Unlocking on globalReset");
     elapsedBeats = tempoMonitor.getElapsedClocks() / 24;
     locked = false;
 }
@@ -591,6 +592,49 @@ void MidiAnalyzer::lock()
 
         locked =  true;
     }
+}
+
+/**
+ * Used after an anomolous track recording has been made to force the unit
+ * length to match the track rather than the other way around.  If it is
+ * within the same BPM tolerance that is used for jitter, it is allowed.
+ */
+bool MidiAnalyzer::forceUnitLength(int proposed)
+{
+    bool allowed = false;
+    
+    float effectiveTempo = tempoMonitor.unitLengthToTempo(proposed);
+    int clippedTempo = (int)effectiveTempo;
+
+    if (clippedTempo < MidiMinTempo || clippedTempo > MidiMaxTempo) {
+        Trace(1, "MidiAnalyzer: Ignoring force of unusual unit length %d", proposed);
+    }
+    else if (unitLength == 0) {
+        // apparently never been used or locked, surprising
+        Trace(1, "MidiAnalyzer: Forceing unit length where there was none before, really?");
+        allowed = true;
+    }
+    else {
+        // do we care if it was unlocked?
+        int bpmDelta = abs((int)(tempo - effectiveTempo));
+        if (bpmDelta >= 1) {
+            Trace(2, "MidiAnalyzer::forceUnitLength Proposal was out of range %d",
+                  proposed);
+        }
+        else {
+            allowed = true;
+        }
+    }
+
+    if (allowed) {
+        unitLength = proposed;
+        tempo = effectiveTempo;
+        if (unitPlayHead >= unitLength)
+          unitPlayHead = unitPlayHead % unitLength;
+        locked = true;
+    }
+    
+    return allowed;
 }
 
 /****************************************************************************/

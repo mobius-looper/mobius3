@@ -50,11 +50,15 @@
 
 #include "Supervisor.h"
 
+//#include "ff_meters/ff_meters.h"
+
 #include "JuceAudioStream.h"
 
 JuceAudioStream::JuceAudioStream(Supervisor* s)
 {
     supervisor = s;
+
+    //levelMeterSource.reset(new foleys::LevelMeterSource());
 }
 
 JuceAudioStream::~JuceAudioStream()
@@ -84,6 +88,10 @@ void JuceAudioStream::setAudioListener(MobiusAudioListener* l)
 {
     audioListener = l;
 }
+
+//foleys::LevelMeterSource* JuceAudioStream::getLevelMeterSource()
+//    return meterSource.get();
+//}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -372,9 +380,7 @@ void JuceAudioStream::getNextAudioBlock (const juce::AudioSourceChannelInfo& buf
  */
 void JuceAudioStream::getNextAudioBlockForReal (const juce::AudioSourceChannelInfo& bufferToFill)
 {
-#ifdef USE_FFMETERS    
-    meterSource.measureBlock(*(bufferToFill.buffer));
-#endif
+    //meterSource.measureBlock(*(bufferToFill.buffer));
 
     // number of samples we're expected to consume and fill
     // save this for the handler callback

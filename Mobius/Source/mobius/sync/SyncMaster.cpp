@@ -27,6 +27,7 @@
 #include "MidiAnalyzer.h"
 #include "HostAnalyzer.h"
 #include "Transport.h"
+#include "Unitarian.h"
 #include "TimeSlicer.h"
 
 #include "SyncMaster.h"
@@ -71,6 +72,7 @@ void SyncMaster::initialize(MobiusKernel* k, TrackManager* tm)
     transport.reset(new Transport(this));
 
     barTender.reset(new BarTender(this, trackManager));
+    unitarian.reset(new Unitarian(this));
     pulsator.reset(new Pulsator(this, trackManager, barTender.get()));
 
     // reach out and touch the face of god
@@ -876,7 +878,7 @@ SyncMaster::RequestResult SyncMaster::requestRecordStop(int number, bool noSync)
 
                 // pass these so the record cursor can be shown right away
                 result.goalUnits = goal;
-                result.extensionLength = barTender->getSingleAutoRecordUnitLength(lt);
+                result.extensionLength = unitarian->getSingleAutoRecordUnitLength(lt);
             }
         }
     }
@@ -908,7 +910,7 @@ SyncMaster::RequestResult SyncMaster::requestAutoRecord(int number, bool noSync)
         lt->resetSyncState();
         
         result.autoRecordUnits = getAutoRecordUnits(lt);
-        int unitLength = barTender->getSingleAutoRecordUnitLength(lt);
+        int unitLength = unitarian->getSingleAutoRecordUnitLength(lt);
         result.autoRecordLength = unitLength * result.autoRecordUnits;
 
         Trace(2, "SyncMaster::requestAutoRecord Goal Units %d", result.autoRecordUnits);
@@ -951,7 +953,7 @@ SyncMaster::RequestResult SyncMaster::requestPreRecordStop(int number)
     if (lt != nullptr) {
         // whether synced or unsynced return the length
         result.autoRecordUnits = 1;
-        result.autoRecordLength = barTender->getSingleAutoRecordUnitLength(lt);
+        result.autoRecordLength = unitarian->getSingleAutoRecordUnitLength(lt);
         Trace(2, "SyncMaster:requestPreRecordStop: Goal Units 1");
         lt->setSyncGoalUnits(1);
 
@@ -1002,7 +1004,7 @@ int SyncMaster::getAutoRecordUnits(LogicalTrack* track)
  */
 void SyncMaster::lockUnitLength(LogicalTrack* track)
 {
-    track->setUnitLength(barTender->getLockUnitLength(track));
+    track->setUnitLength(unitarian->getLockUnitLength(track));
 }
 
 SyncMaster::RequestResult SyncMaster::requestExtension(int number)
@@ -1033,7 +1035,7 @@ SyncMaster::RequestResult SyncMaster::requestExtension(int number)
         lt->setSyncGoalUnits(result.goalUnits);
 
         // for unsynced recordings, calculate the length to add
-        result.extensionLength = barTender->getSingleAutoRecordUnitLength(lt);
+        result.extensionLength = unitarian->getSingleAutoRecordUnitLength(lt);
     }
     return result;
 }
@@ -1082,7 +1084,7 @@ SyncMaster::RequestResult SyncMaster::requestReduction(int number)
         }
         
         int newUnits = current - reduction;
-        int unitLength = barTender->getSingleAutoRecordUnitLength(lt);
+        int unitLength = unitarian->getSingleAutoRecordUnitLength(lt);
 
         // looking at getSyncElapsedUnits doesn't work for unsynced tracks
         // so do both synced and unsynced the same way by looking at their
@@ -1460,82 +1462,12 @@ void SyncMaster::notifyRecordStopped(int number)
             lt->setSyncRecording(false);
 
             // final verification on sync unit obeyance
-            verifySyncLength(lt);
+            unitarian->verifySyncLength(lt);
         }
         // else it's a free record
          
         notifyTrackAvailable(number);
         lt->resetSyncState();
-    }
-}
-
-/**
- * Immediately after recording, verify that the track has a length that
- * is compatible with it's sync source.
- */
-void SyncMaster::verifySyncLength(LogicalTrack* lt)
-{
-    Trace(2, "SyncMaster: Sync recording ended with %d frames",
-          lt->getSyncLength());
-    
-    // tehnically we should store the SyncSource that was used when the
-    // recording first began, not whatever it is now, unlikely to change
-    // DURING recording, but it could change after the track is allowed
-    // to live for awhile
-    SyncSource src = getEffectiveSource(lt);
-    int trackLength = lt->getSyncLength();
-
-    if (src == SyncSourceTrack) {
-        // this one is harder...cycles should divide cleanly but
-        // subcycles won't necessarily if there was an odd number
-
-        LogicalTrack* leader = getLeaderTrack(lt);
-        if (leader == nullptr) {
-            Trace(1, "SyncMaster::verifySyncLength No leader track");
-        }
-        else {
-            SyncUnit unit = lt->getSyncUnitNow();
-            // live dangerously
-            TrackSyncUnit tsu = (TrackSyncUnit)unit;
-            int leaderUnit = barTender->getTrackUnitLength(leader, tsu);
-
-            if (leaderUnit == 0)
-              Trace(1, "SyncMaster: Unable to get base unit length for Track Sync");
-            else {
-                int leftover = trackLength % leaderUnit;
-                if (leftover != 0)
-                  Trace(1, "SyncMaster: TrackSync recording leftovers %d", leftover);
-
-                leftover = leader->getSyncLength() % leaderUnit;
-                if (leftover != 0)
-                  Trace(1, "SyncMaster: TrackSync master leftovers %d", leftover);
-            }
-        }
-    }
-    else if (src == SyncSourceMidi) {
-        // this one is complicated, verify some things
-        if (!midiAnalyzer->isLocked())
-          Trace(1, "SyncMaster: MidiAnalyzer was not locked after recording ended");
-                
-        int unit = midiAnalyzer->getUnitLength();
-        if (unit == 0) {
-            // this is the "first beat recording" fringe case
-            // the end should have been pulsed and remembered
-            Trace(1, "SyncMaster: Expected MIDI to know what was going on by now");
-        }
-
-        // todo: for MIDI if we end unlocked this is where we should take
-        // the loop's final length and FORCE the midi sync unit to be in compliance with
-        // it if it falls within the BPM drift tolerance
-    }
-    else {
-        // these don't jitter and should always swork
-        int baseUnit = barTender->getUnitLength(src);
-        if (baseUnit > 0) {
-            int leftover = trackLength % baseUnit;
-            if (leftover != 0)
-              Trace(1, "SyncMaster: Sync recording verification failed: leftovers %d", leftover);
-        }
     }
 }
 
@@ -2006,45 +1938,6 @@ void SyncMaster::sendAlert(juce::String msg)
 void SyncMaster::addLeaderPulse(int leader, SyncUnit unit, int frameOffset)
 {
     pulsator->addLeaderPulse(leader, unit, frameOffset);
-}
-
-/**
- * A follower is "active" it it uses this sync source and it is not empty (in reset).
- * This is called only by MidiAnalyzer ATM to know whether it is safe to make continuous
- * adjustments to the locked unit length or whether it needs to retain the current unit
- * length and do drift notifications.
- *
- * Once fully recorded, a follower is only active if it was recorded with the same unit
- * length that is active now.  This allows the following to be broken after the user deliberately
- * changes the device tempo, forcing a unit recalculation which is then used for new recordings.
- */
-int SyncMaster::getActiveFollowers(SyncSource src, int unitLength)
-{
-    int followers = 0;
-    
-    for (int i = 0 ; i < trackManager->getTrackCount() ; i++) {
-        LogicalTrack* lt = trackManager->getLogicalTrack(i+1);
-        if (lt->getSyncSourceNow() == src) {
-            // todo: still some lingering issues if the track has multiple loops
-            // and they were recorded with different unit lenghts, that would be unusual
-            // but is possible
-
-            int trackUnitLength = lt->getUnitLength();
-            // not saving this on every loop, see if a disconnect happened
-            int syncLength = lt->getSyncLength();
-            if (syncLength > 0) {
-                int leftover = syncLength % unitLength;
-                if (leftover > 0) {
-                    Trace(1, "SyncMaster: Track length doesn't match unit length %d %d",
-                          syncLength, unitLength);
-                }
-            }
-            
-            if (trackUnitLength == unitLength)
-              followers++;
-        }
-    }
-    return followers;
 }
 
 //////////////////////////////////////////////////////////////////////

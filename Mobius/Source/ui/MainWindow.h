@@ -25,9 +25,7 @@
 #include "PanelFactory.h"
 #include "WindowFactory.h"
 
-#ifdef USE_FFMETERS
-#include "../ff_meters/ff_meters.h"
-#endif
+//#include "../ff_meters/ff_meters.h"
 
 class MainWindow : public juce::Component, public MainMenu::Listener, public juce::FileDragAndDropTarget
 {
@@ -38,6 +36,8 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
 
     class Supervisor* getSupervisor();
     class Provider* getProvider();
+
+    void enableBigMeter();
         
     int getPreferredWidth();
     int getPreferredHeight();
@@ -89,9 +89,7 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
     PanelFactory panelFactory {this};
     WindowFactory windowFactory {supervisor};
     
-#ifdef USE_FFMETERS
-    foleys::LevelMeter levelMeter;
-#endif
+    //foleys::LevelMeter levelMeter;
     
 };    
 

@@ -346,11 +346,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     void reloadMobiusScripts();
     
-#ifdef USE_FFMETERS
-    class foleys::LevelMeterSource* getLevelMeterSource() {
-        return audioStream.getLevelMeterSource();
-    }
-#endif
+    //class foleys::LevelMeterSource* getLevelMeterSource() {
+    //return audioStream.getLevelMeterSource();
+    //}
 
     juce::StringArray& getCommandLine() {
         return commandLine;

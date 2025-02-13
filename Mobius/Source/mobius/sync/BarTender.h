@@ -67,18 +67,6 @@ class BarTender
     int getBarsPerLoop(class LogicalTrack* t);
     int getBarsPerLoop(SyncSource src);
 
-    //
-    // Units
-    //
-    
-    int getUnitLength(SyncSource src);
-    int getTrackUnitLength(class LogicalTrack* t, TrackSyncUnit unit);
-    int getTrackUnitLength2(class LogicalTrack* t, TrackSyncUnit unit);
-    int getLeaderUnitLength(class LogicalTrack* follower, TrackSyncUnit unit);
-
-    int getSingleAutoRecordUnitLength(class LogicalTrack* track);
-    int getLockUnitLength(class LogicalTrack* track);
-    
   private:
 
     class SyncMaster* syncMaster = nullptr;

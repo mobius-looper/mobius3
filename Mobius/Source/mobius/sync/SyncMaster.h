@@ -28,6 +28,7 @@ class SyncMaster
     friend class Transport;
     friend class Pulsator;
     friend class BarTender;
+    friend class Unitarian;
     friend class MidiAnalyzer;
     friend class TimeSlicer;
     
@@ -151,8 +152,6 @@ class SyncMaster
     // notify that a leader pulse has been reached
     void addLeaderPulse(int leader, SyncUnit unit, int frameOffset);
 
-    int getActiveFollowers(SyncSource src, int unitLength);
-
     //////////////////////////////////////////////////////////////////////
     //
     // Old Variable Support
@@ -236,6 +235,7 @@ class SyncMaster
     std::unique_ptr<class HostAnalyzer> hostAnalyzer;
     std::unique_ptr<class Transport> transport;
     std::unique_ptr<class BarTender> barTender;
+    std::unique_ptr<class Unitarian> unitarian;
     std::unique_ptr<class Pulsator> pulsator;
     std::unique_ptr<class TimeSlicer> timeSlicer;
     
@@ -257,7 +257,6 @@ class SyncMaster
 
     int getAutoRecordUnits(class LogicalTrack* t);
     void lockUnitLength(class LogicalTrack* lt);
-    void verifySyncLength(class LogicalTrack* lt);
 
     // pulse injection internals
 
