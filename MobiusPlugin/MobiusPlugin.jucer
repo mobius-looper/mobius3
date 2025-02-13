@@ -12,17 +12,11 @@
               pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
-      <FILE id="RBjRF7" name="SessionClerk.cpp" compile="1" resource="0"
-            file="../Mobius/Source/SessionClerk.cpp"/>
-      <FILE id="ENkfK9" name="SessionClerk.h" compile="0" resource="0" file="../Mobius/Source/SessionClerk.h"/>
-      <FILE id="r2JK3T" name="Grouper.cpp" compile="1" resource="0" file="../Mobius/Source/Grouper.cpp"/>
-      <FILE id="fnNJUm" name="Grouper.h" compile="0" resource="0" file="../Mobius/Source/Grouper.h"/>
-      <FILE id="wxpDFC" name="ModelTransformer.cpp" compile="1" resource="0"
-            file="../Mobius/Source/ModelTransformer.cpp"/>
-      <FILE id="M1A5vy" name="ModelTransformer.h" compile="0" resource="0"
-            file="../Mobius/Source/ModelTransformer.h"/>
-      <GROUP id="{7E4F6DE8-BEDA-A57D-B5AA-F850B2E3CC96}" name="sync"/>
-      <FILE id="BNxMVK" name="Upgrader.h" compile="0" resource="0" file="../Mobius/Source/Upgrader.h"/>
+      <FILE id="KBDzgh" name="BusBoy.cpp" compile="1" resource="0" file="Source/BusBoy.cpp"/>
+      <FILE id="Q3TtUF" name="BusBoy.h" compile="0" resource="0" file="Source/BusBoy.h"/>
+      <FILE id="vH9ipF" name="PortAuthority.cpp" compile="1" resource="0"
+            file="../Mobius/Source/PortAuthority.cpp"/>
+      <FILE id="OcWY51" name="PortAuthority.h" compile="0" resource="0" file="../Mobius/Source/PortAuthority.h"/>
       <GROUP id="{488A10F9-CEDB-CDD4-A066-7B71391B0EFE}" name="script">
         <FILE id="SEvMQT" name="ActionAdapter.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/ActionAdapter.cpp"/>
@@ -102,16 +96,6 @@
         <FILE id="ZDO0iT" name="ScriptUtil.cpp" compile="1" resource="0" file="../Mobius/Source/script/ScriptUtil.cpp"/>
         <FILE id="ezP1Wt" name="ScriptUtil.h" compile="0" resource="0" file="../Mobius/Source/script/ScriptUtil.h"/>
       </GROUP>
-      <FILE id="Gck82d" name="ProjectFiler.cpp" compile="1" resource="0"
-            file="../Mobius/Source/ProjectFiler.cpp"/>
-      <FILE id="vYQogu" name="ProjectFiler.h" compile="0" resource="0" file="../Mobius/Source/ProjectFiler.h"/>
-      <FILE id="KBDzgh" name="BusBoy.cpp" compile="1" resource="0" file="Source/BusBoy.cpp"/>
-      <FILE id="Q3TtUF" name="BusBoy.h" compile="0" resource="0" file="Source/BusBoy.h"/>
-      <FILE id="vH9ipF" name="PortAuthority.cpp" compile="1" resource="0"
-            file="../Mobius/Source/PortAuthority.cpp"/>
-      <FILE id="OcWY51" name="PortAuthority.h" compile="0" resource="0" file="../Mobius/Source/PortAuthority.h"/>
-      <FILE id="vk5hIg" name="Symbolizer.cpp" compile="1" resource="0" file="../Mobius/Source/Symbolizer.cpp"/>
-      <FILE id="ONKjCt" name="Symbolizer.h" compile="0" resource="0" file="../Mobius/Source/Symbolizer.h"/>
       <GROUP id="{3B7BFE95-950A-511A-F815-8A2E6614CEB5}" name="util">
         <FILE id="cGaj8S" name="DataModel.cpp" compile="1" resource="0" file="../Mobius/Source/util/DataModel.cpp"/>
         <FILE id="aFSpXC" name="DataModel.h" compile="0" resource="0" file="../Mobius/Source/util/DataModel.h"/>
@@ -723,6 +707,8 @@
           <FILE id="K2JF8S" name="TimeSlicer.h" compile="0" resource="0" file="../Mobius/Source/mobius/sync/TimeSlicer.h"/>
           <FILE id="bNBBa5" name="Transport.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/sync/Transport.cpp"/>
           <FILE id="W3R9xd" name="Transport.h" compile="0" resource="0" file="../Mobius/Source/mobius/sync/Transport.h"/>
+          <FILE id="MoYY1o" name="Unitarian.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/sync/Unitarian.cpp"/>
+          <FILE id="fZdREj" name="Unitarian.h" compile="0" resource="0" file="../Mobius/Source/mobius/sync/Unitarian.h"/>
         </GROUP>
         <GROUP id="{1F797BCC-2589-4084-878C-ED9A7FE75E71}" name="track">
           <FILE id="JMxD9h" name="BaseScheduler.cpp" compile="1" resource="0"
@@ -1022,6 +1008,8 @@
             file="../Mobius/Source/DiagnosticWindow.h"/>
       <FILE id="PmhEch" name="FileManager.cpp" compile="1" resource="0" file="../Mobius/Source/FileManager.cpp"/>
       <FILE id="KYoNB2" name="FileManager.h" compile="0" resource="0" file="../Mobius/Source/FileManager.h"/>
+      <FILE id="r2JK3T" name="Grouper.cpp" compile="1" resource="0" file="../Mobius/Source/Grouper.cpp"/>
+      <FILE id="fnNJUm" name="Grouper.h" compile="0" resource="0" file="../Mobius/Source/Grouper.h"/>
       <FILE id="OXPWIi" name="JuceAudioStream.cpp" compile="1" resource="0"
             file="../Mobius/Source/JuceAudioStream.cpp"/>
       <FILE id="W6Xhso" name="JuceAudioStream.h" compile="0" resource="0"
@@ -1034,6 +1022,10 @@
       <FILE id="FLCsVv" name="MidiClerk.h" compile="0" resource="0" file="../Mobius/Source/MidiClerk.h"/>
       <FILE id="aHK0SY" name="MidiManager.cpp" compile="1" resource="0" file="../Mobius/Source/MidiManager.cpp"/>
       <FILE id="tSpApT" name="MidiManager.h" compile="0" resource="0" file="../Mobius/Source/MidiManager.h"/>
+      <FILE id="wxpDFC" name="ModelTransformer.cpp" compile="1" resource="0"
+            file="../Mobius/Source/ModelTransformer.cpp"/>
+      <FILE id="M1A5vy" name="ModelTransformer.h" compile="0" resource="0"
+            file="../Mobius/Source/ModelTransformer.h"/>
       <FILE id="OPrbTI" name="Parametizer.cpp" compile="1" resource="0" file="../Mobius/Source/Parametizer.cpp"/>
       <FILE id="OxC1Fw" name="Parametizer.h" compile="0" resource="0" file="../Mobius/Source/Parametizer.h"/>
       <FILE id="YFYj6n" name="Pathfinder.cpp" compile="1" resource="0" file="../Mobius/Source/Pathfinder.cpp"/>
@@ -1051,16 +1043,25 @@
             file="Source/PluginProcessor.h"/>
       <FILE id="xeZJBx" name="Producer.cpp" compile="1" resource="0" file="../Mobius/Source/Producer.cpp"/>
       <FILE id="IjMxn0" name="Producer.h" compile="0" resource="0" file="../Mobius/Source/Producer.h"/>
+      <FILE id="Gck82d" name="ProjectFiler.cpp" compile="1" resource="0"
+            file="../Mobius/Source/ProjectFiler.cpp"/>
+      <FILE id="vYQogu" name="ProjectFiler.h" compile="0" resource="0" file="../Mobius/Source/ProjectFiler.h"/>
       <FILE id="uaw8KK" name="Prompter.cpp" compile="1" resource="0" file="../Mobius/Source/Prompter.cpp"/>
       <FILE id="EAziZK" name="Prompter.h" compile="0" resource="0" file="../Mobius/Source/Prompter.h"/>
       <FILE id="ZyvhBY" name="Provider.h" compile="0" resource="0" file="../Mobius/Source/Provider.h"/>
       <FILE id="pmTWKk" name="RootLocator.cpp" compile="1" resource="0" file="../Mobius/Source/RootLocator.cpp"/>
       <FILE id="Ux1g7C" name="RootLocator.h" compile="0" resource="0" file="../Mobius/Source/RootLocator.h"/>
+      <FILE id="RBjRF7" name="SessionClerk.cpp" compile="1" resource="0"
+            file="../Mobius/Source/SessionClerk.cpp"/>
+      <FILE id="ENkfK9" name="SessionClerk.h" compile="0" resource="0" file="../Mobius/Source/SessionClerk.h"/>
       <FILE id="f4sbcP" name="SuperDumper.cpp" compile="1" resource="0" file="../Mobius/Source/SuperDumper.cpp"/>
       <FILE id="plmiBN" name="SuperDumper.h" compile="0" resource="0" file="../Mobius/Source/SuperDumper.h"/>
       <FILE id="hwee0I" name="Supervisor.cpp" compile="1" resource="0" file="../Mobius/Source/Supervisor.cpp"/>
       <FILE id="Z1Vsvp" name="Supervisor.h" compile="0" resource="0" file="../Mobius/Source/Supervisor.h"/>
+      <FILE id="vk5hIg" name="Symbolizer.cpp" compile="1" resource="0" file="../Mobius/Source/Symbolizer.cpp"/>
+      <FILE id="ONKjCt" name="Symbolizer.h" compile="0" resource="0" file="../Mobius/Source/Symbolizer.h"/>
       <FILE id="ThJsYd" name="Upgrader.cpp" compile="1" resource="0" file="../Mobius/Source/Upgrader.cpp"/>
+      <FILE id="BNxMVK" name="Upgrader.h" compile="0" resource="0" file="../Mobius/Source/Upgrader.h"/>
       <FILE id="z91kiw" name="VariableManager.cpp" compile="1" resource="0"
             file="../Mobius/Source/VariableManager.cpp"/>
       <FILE id="JMMQkt" name="VariableManager.h" compile="0" resource="0"
