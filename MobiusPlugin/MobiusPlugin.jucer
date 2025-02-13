@@ -480,6 +480,10 @@
                 file="../Mobius/Source/ui/display/FloatingStripElement.cpp"/>
           <FILE id="zuvuzv" name="FloatingStripElement.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/display/FloatingStripElement.h"/>
+          <FILE id="Q01nqC" name="HostSyncElement.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/display/HostSyncElement.cpp"/>
+          <FILE id="pD9vYc" name="HostSyncElement.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/display/HostSyncElement.h"/>
           <FILE id="qaK3Ap" name="LayerElement.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/display/LayerElement.cpp"/>
           <FILE id="nHTby9" name="LayerElement.h" compile="0" resource="0" file="../Mobius/Source/ui/display/LayerElement.h"/>

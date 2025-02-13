@@ -34,6 +34,7 @@ class MidiSyncElement : public UIElement, public Provider::HighRefreshListener
     
   private:
 
+    UIAtomText label;
     UIAtomRadar radar;
     UIAtomFlash light;
     UIAtomFloat tempoAtom;

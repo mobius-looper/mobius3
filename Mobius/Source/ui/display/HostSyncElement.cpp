@@ -103,9 +103,9 @@ int HostSyncElement::getPreferredHeight()
 void HostSyncElement::highRefresh(PriorityState* s)
 {
     // state numbers are all base zero, we display base 1
-    int newBeat = s->midiBeat + 1;
-    int newBar = s->midiBar + 1;
-    int newLoop = s->midiLoop + 1;
+    int newBeat = s->hostBeat + 1;
+    int newBar = s->hostBar + 1;
+    int newLoop = s->hostLoop + 1;
 
     // lol, on the initial display we want all the "last" numbers
     // to start at zero so we can trigger the initial display
@@ -148,7 +148,7 @@ void HostSyncElement::update(MobiusView* v)
     // todo: SourceHost has the notion of the raw and "smooth" tempo
     // figure out which one to show
     
-    float ftempo = v->syncState.midiTempo;
+    float ftempo = v->syncState.hostTempo;
     
     // trunicate to one decimal places to prevent excessive
     // fluctuations
@@ -161,19 +161,19 @@ void HostSyncElement::update(MobiusView* v)
     // this is necessary to flash beats
     light.advance();
 
-    int newBpb = v->syncState.midiBeatsPerBar;
+    int newBpb = v->syncState.hostBeatsPerBar;
     if (lastBpb != newBpb) {
         bpb.setValue(newBpb);
         lastBpb = newBpb;
     }
     
-    int newBars = v->syncState.midiBarsPerLoop;
+    int newBars = v->syncState.hostBarsPerLoop;
     if (lastBars != newBars) {
         bars.setValue(newBars);
         lastBars = newBars;
     }
 
-    bool newStarted = v->syncState.midiStarted;
+    bool newStarted = v->syncState.hostStarted;
     if (newStarted != lastStarted) {
         tempoAtom.setOn(newStarted);
         lastStarted = newStarted;
@@ -188,7 +188,7 @@ void HostSyncElement::update(MobiusView* v)
  */
 void HostSyncElement::updateRadar(MobiusView* v)
 {
-    if (!v->syncState.midiStarted) {
+    if (!v->syncState.hostStarted) {
         // leave range zero to keep it off
         radar.setRange(0);
     }
@@ -197,9 +197,9 @@ void HostSyncElement::updateRadar(MobiusView* v)
         // could have this configurable
         int option = 2;
 
-        int unit = v->syncState.midiUnitLength;
-        int head = v->syncState.midiPlayHead;
-        int barLength = unit * v->syncState.midiBeatsPerBar;
+        int unit = v->syncState.hostUnitLength;
+        int head = v->syncState.hostPlayHead;
+        int barLength = unit * v->syncState.hostBeatsPerBar;
     
         int range = unit;
         int location = head;
@@ -207,14 +207,14 @@ void HostSyncElement::updateRadar(MobiusView* v)
         if (option == 1) {
             // bars
             range = barLength;
-            location = head + (v->syncState.midiBeat * unit);
+            location = head + (v->syncState.hostBeat * unit);
         }
         else if (option == 2) {
             // loop
-            int bpl = v->syncState.midiBarsPerLoop;
+            int bpl = v->syncState.hostBarsPerLoop;
             range = barLength * bpl;
-            location = head + (v->syncState.midiBeat * unit) +
-                (v->syncState.midiBar * barLength);
+            location = head + (v->syncState.hostBeat * unit) +
+                (v->syncState.hostBar * barLength);
         }
 
         radar.setRange(range);

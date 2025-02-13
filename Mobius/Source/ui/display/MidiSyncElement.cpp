@@ -34,6 +34,9 @@ MidiSyncElement::MidiSyncElement(Provider* p, UIElementDefinition* d) :
     column.add(&topRow);
     column.add(&bottomRow);
     
+    label.setText("MIDI");
+    topRow.add(&label);
+    
     radar.setColor(juce::Colours::red);
     topRow.add(&radar);
     

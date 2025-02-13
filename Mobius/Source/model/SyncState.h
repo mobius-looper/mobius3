@@ -59,5 +59,18 @@ class SyncState
     // as transport and midi but we can pull this from the session
     // or SyncMaster at runtime too, unlike MIDI there is no
     // HostSyncElement for the UI since they can already see the host transport
+
+    // update: there is now, allow them to look the same
+    int hostBeat = 0;
+    int hostBar = 0;
+    int hostLoop = 0;
+    int hostBeatsPerBar = 4;
+    int hostBarsPerLoop = 1;
+    int hostUnitLength = 0;
+    int hostPlayHead = 0;
+    
+
+
+    
 };
 

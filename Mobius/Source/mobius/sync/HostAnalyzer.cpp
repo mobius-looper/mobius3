@@ -54,6 +54,7 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
+#include "../../model/SyncState.h"
 
 #include "HostAnalyzer.h"
 
@@ -95,6 +96,21 @@ void HostAnalyzer::setSampleRate(int rate)
  */
 void HostAnalyzer::lock()
 {
+}
+
+/**
+ * This fills in everything except the normalized
+ * beat/bar/loop counts which SyncMaster/BarTender will add
+ */
+void HostAnalyzer::refreshState(SyncState* state)
+{
+    state->hostStarted = isRunning();
+    state->hostTempo = getTempo();
+
+    // todo: should have nativeBeat and nativeTime signature
+    // in here so we can show both native and overrides
+    state->hostUnitLength = unitLength;
+    state->hostPlayHead = unitPlayHead;
 }
 
 //////////////////////////////////////////////////////////////////////

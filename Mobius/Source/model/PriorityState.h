@@ -30,6 +30,10 @@ class PriorityState
     int midiBeat = 0;
     int midiBar = 0;
     int midiLoop = 0;
+
+    int hostBeat = 0;
+    int hostBar = 0;
+    int hostLoop = 0;
     
     // todo: other thigns that could go here
     // the focused track loopFrame, the focused track outputLevel

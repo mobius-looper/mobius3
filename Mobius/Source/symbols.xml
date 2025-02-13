@@ -618,7 +618,7 @@ Once those models are fully converted, these symbols can be removed.
     <!-- Plugin Host -->
     <Parameter name='hostBeatsPerBar' type='int' level='kernel' defaultValue='4'/>
     <Parameter name='hostBarsPerLoop' type='int' level='kernel' defaultValue='1'/>
-    <Parameter name='hostOverride' type='bool' level='kernel'/>
+    <Parameter name='hostOverride' type='bool' level='kernel' displayName='Host Bar Override'/>
 
     <!-- Midi In -->
     <Parameter name='midiBeatsPerBar' type='int' level='kernel' defaultValue='4'/>

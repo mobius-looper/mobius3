@@ -199,120 +199,83 @@
         <FILE id="lTQjDK" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
-        <GROUP id="{DF1301BF-7977-3AF9-2F74-88DD7CDC5689}" name="session">
-          <FILE id="y3QGus" name="ParameterForm.cpp" compile="1" resource="0"
-                file="Source/ui/session/ParameterForm.cpp"/>
-          <FILE id="D2sieP" name="ParameterForm.h" compile="0" resource="0" file="Source/ui/session/ParameterForm.h"/>
-          <FILE id="h5SWoP" name="SessionEditor.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionEditor.cpp"/>
-          <FILE id="YLdxmd" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/session/SessionEditor.h"/>
-          <FILE id="QRDZ18" name="SessionEditorTree.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionEditorTree.cpp"/>
-          <FILE id="Tu3Rui" name="SessionEditorTree.h" compile="0" resource="0"
-                file="Source/ui/session/SessionEditorTree.h"/>
-          <FILE id="goG27g" name="SessionFormCollection.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionFormCollection.cpp"/>
-          <FILE id="y3emuo" name="SessionFormCollection.h" compile="0" resource="0"
-                file="Source/ui/session/SessionFormCollection.h"/>
-          <FILE id="KOaAEr" name="SessionGlobalEditor.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionGlobalEditor.cpp"/>
-          <FILE id="CqSPrU" name="SessionGlobalEditor.h" compile="0" resource="0"
-                file="Source/ui/session/SessionGlobalEditor.h"/>
-          <FILE id="cRQyeY" name="SessionManager.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionManager.cpp"/>
-          <FILE id="kiLF6D" name="SessionManager.h" compile="0" resource="0"
-                file="Source/ui/session/SessionManager.h"/>
-          <FILE id="rUF5Av" name="SessionManagerPanel.h" compile="0" resource="0"
-                file="Source/ui/session/SessionManagerPanel.h"/>
-          <FILE id="v0KGjq" name="SessionManagerTable.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionManagerTable.cpp"/>
-          <FILE id="dEmxtK" name="SessionManagerTable.h" compile="0" resource="0"
-                file="Source/ui/session/SessionManagerTable.h"/>
-          <FILE id="za4YnZ" name="SessionTrackEditor.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionTrackEditor.cpp"/>
-          <FILE id="bxa5u6" name="SessionTrackEditor.h" compile="0" resource="0"
-                file="Source/ui/session/SessionTrackEditor.h"/>
-          <FILE id="yWWva8" name="SessionTrackTable.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionTrackTable.cpp"/>
-          <FILE id="jADQbN" name="SessionTrackTable.h" compile="0" resource="0"
-                file="Source/ui/session/SessionTrackTable.h"/>
-          <FILE id="TFYMwC" name="SessionTreeForms.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionTreeForms.cpp"/>
-          <FILE id="EQhLym" name="SessionTreeForms.h" compile="0" resource="0"
-                file="Source/ui/session/SessionTreeForms.h"/>
-          <FILE id="uzUdnw" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/session/SymbolTree.cpp"/>
-          <FILE id="rYvScn" name="SymbolTree.h" compile="0" resource="0" file="Source/ui/session/SymbolTree.h"/>
+        <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
+          <FILE id="lXWr1d" name="BasicButtonRow.cpp" compile="1" resource="0"
+                file="Source/ui/common/BasicButtonRow.cpp"/>
+          <FILE id="eRmfPe" name="BasicButtonRow.h" compile="0" resource="0"
+                file="Source/ui/common/BasicButtonRow.h"/>
+          <FILE id="vk7Xvn" name="BasicForm.cpp" compile="1" resource="0" file="Source/ui/common/BasicForm.cpp"/>
+          <FILE id="xwO8bF" name="BasicForm.h" compile="0" resource="0" file="Source/ui/common/BasicForm.h"/>
+          <FILE id="ny8ZPI" name="BasicInput.cpp" compile="1" resource="0" file="Source/ui/common/BasicInput.cpp"/>
+          <FILE id="MT14lz" name="BasicInput.h" compile="0" resource="0" file="Source/ui/common/BasicInput.h"/>
+          <FILE id="oO9q1o" name="BasicLog.cpp" compile="1" resource="0" file="Source/ui/common/BasicLog.cpp"/>
+          <FILE id="iD2q8n" name="BasicLog.h" compile="0" resource="0" file="Source/ui/common/BasicLog.h"/>
+          <FILE id="akjBJh" name="BasicTable.cpp" compile="1" resource="0" file="Source/ui/common/BasicTable.cpp"/>
+          <FILE id="X43ibi" name="BasicTable.h" compile="0" resource="0" file="Source/ui/common/BasicTable.h"/>
+          <FILE id="IaXFZL" name="BasicTabs.cpp" compile="1" resource="0" file="Source/ui/common/BasicTabs.cpp"/>
+          <FILE id="jWbMsE" name="BasicTabs.h" compile="0" resource="0" file="Source/ui/common/BasicTabs.h"/>
+          <FILE id="UkLauY" name="ButtonBar.cpp" compile="1" resource="0" file="Source/ui/common/ButtonBar.cpp"/>
+          <FILE id="lDGPJq" name="ButtonBar.h" compile="0" resource="0" file="Source/ui/common/ButtonBar.h"/>
+          <FILE id="KQFfxo" name="ColorPopup.cpp" compile="1" resource="0" file="Source/ui/common/ColorPopup.cpp"/>
+          <FILE id="c7U7R1" name="ColorPopup.h" compile="0" resource="0" file="Source/ui/common/ColorPopup.h"/>
+          <FILE id="qEnT6l" name="ColorSelector.cpp" compile="1" resource="0"
+                file="Source/ui/common/ColorSelector.cpp"/>
+          <FILE id="ZbSGBN" name="ColorSelector.h" compile="0" resource="0" file="Source/ui/common/ColorSelector.h"/>
+          <FILE id="w11puN" name="CustomRotary.cpp" compile="1" resource="0"
+                file="Source/ui/common/CustomRotary.cpp"/>
+          <FILE id="VRPeJA" name="CustomRotary.h" compile="0" resource="0" file="Source/ui/common/CustomRotary.h"/>
+          <FILE id="vyeo6h" name="Field.cpp" compile="1" resource="0" file="Source/ui/common/Field.cpp"/>
+          <FILE id="RjFLPv" name="Field.h" compile="0" resource="0" file="Source/ui/common/Field.h"/>
+          <FILE id="tceRTv" name="FieldGrid.cpp" compile="1" resource="0" file="Source/ui/common/FieldGrid.cpp"/>
+          <FILE id="wXEPam" name="FieldGrid.h" compile="0" resource="0" file="Source/ui/common/FieldGrid.h"/>
+          <FILE id="ayhV48" name="Form.cpp" compile="1" resource="0" file="Source/ui/common/Form.cpp"/>
+          <FILE id="S7Xbq6" name="Form.h" compile="0" resource="0" file="Source/ui/common/Form.h"/>
+          <FILE id="qFRIjz" name="FormPanel.cpp" compile="1" resource="0" file="Source/ui/common/FormPanel.cpp"/>
+          <FILE id="JWBS2l" name="FormPanel.h" compile="0" resource="0" file="Source/ui/common/FormPanel.h"/>
+          <FILE id="qcxCOI" name="HelpArea.cpp" compile="1" resource="0" file="Source/ui/common/HelpArea.cpp"/>
+          <FILE id="UpmMlt" name="HelpArea.h" compile="0" resource="0" file="Source/ui/common/HelpArea.h"/>
+          <FILE id="z0zBNd" name="JLabel.cpp" compile="1" resource="0" file="Source/ui/common/JLabel.cpp"/>
+          <FILE id="n1jih9" name="JLabel.h" compile="0" resource="0" file="Source/ui/common/JLabel.h"/>
+          <FILE id="XyHMMp" name="LogPanel.cpp" compile="1" resource="0" file="Source/ui/common/LogPanel.cpp"/>
+          <FILE id="T9t9hM" name="LogPanel.h" compile="0" resource="0" file="Source/ui/common/LogPanel.h"/>
+          <FILE id="yVC7nU" name="Panel.cpp" compile="1" resource="0" file="Source/ui/common/Panel.cpp"/>
+          <FILE id="TLuhnZ" name="Panel.h" compile="0" resource="0" file="Source/ui/common/Panel.h"/>
+          <FILE id="OjuAfI" name="SimpleButton.cpp" compile="1" resource="0"
+                file="Source/ui/common/SimpleButton.cpp"/>
+          <FILE id="pGSyi0" name="SimpleButton.h" compile="0" resource="0" file="Source/ui/common/SimpleButton.h"/>
+          <FILE id="JeWRRg" name="SimpleListBox.cpp" compile="1" resource="0"
+                file="Source/ui/common/SimpleListBox.cpp"/>
+          <FILE id="SOk6NY" name="SimpleListBox.h" compile="0" resource="0" file="Source/ui/common/SimpleListBox.h"/>
+          <FILE id="IxU0jZ" name="SimpleRadio.cpp" compile="1" resource="0" file="Source/ui/common/SimpleRadio.cpp"/>
+          <FILE id="WL6Zy9" name="SimpleRadio.h" compile="0" resource="0" file="Source/ui/common/SimpleRadio.h"/>
+          <FILE id="SCCaw4" name="SimpleTable.cpp" compile="1" resource="0" file="Source/ui/common/SimpleTable.cpp"/>
+          <FILE id="yNdibm" name="SimpleTable.h" compile="0" resource="0" file="Source/ui/common/SimpleTable.h"/>
+          <FILE id="ttfh9P" name="SimpleTabPanel.cpp" compile="1" resource="0"
+                file="Source/ui/common/SimpleTabPanel.cpp"/>
+          <FILE id="ywZEOE" name="SimpleTabPanel.h" compile="0" resource="0"
+                file="Source/ui/common/SimpleTabPanel.h"/>
+          <FILE id="WA7Qza" name="YanAlert.cpp" compile="1" resource="0" file="Source/ui/common/YanAlert.cpp"/>
+          <FILE id="u0ZIvP" name="YanAlert.h" compile="0" resource="0" file="Source/ui/common/YanAlert.h"/>
+          <FILE id="SrDTKr" name="YanDialog.cpp" compile="1" resource="0" file="Source/ui/common/YanDialog.cpp"/>
+          <FILE id="cHOVTJ" name="YanDialog.h" compile="0" resource="0" file="Source/ui/common/YanDialog.h"/>
+          <FILE id="qZv8U0" name="YanField.cpp" compile="1" resource="0" file="Source/ui/common/YanField.cpp"/>
+          <FILE id="xYsipx" name="YanField.h" compile="0" resource="0" file="Source/ui/common/YanField.h"/>
+          <FILE id="QfGCab" name="YanFieldHelpers.cpp" compile="1" resource="0"
+                file="Source/ui/common/YanFieldHelpers.cpp"/>
+          <FILE id="ZRYWCB" name="YanFieldHelpers.h" compile="0" resource="0"
+                file="Source/ui/common/YanFieldHelpers.h"/>
+          <FILE id="f2zY9Q" name="YanForm.cpp" compile="1" resource="0" file="Source/ui/common/YanForm.cpp"/>
+          <FILE id="QtLbZf" name="YanForm.h" compile="0" resource="0" file="Source/ui/common/YanForm.h"/>
+          <FILE id="bZ5HFu" name="YanParameter.cpp" compile="1" resource="0"
+                file="Source/ui/common/YanParameter.cpp"/>
+          <FILE id="M0KOLA" name="YanParameter.h" compile="0" resource="0" file="Source/ui/common/YanParameter.h"/>
+          <FILE id="YH3ixI" name="YanParameterForm.cpp" compile="1" resource="0"
+                file="Source/ui/common/YanParameterForm.cpp"/>
+          <FILE id="erADRG" name="YanParameterForm.h" compile="0" resource="0"
+                file="Source/ui/common/YanParameterForm.h"/>
+          <FILE id="dwke1e" name="YanPopup.cpp" compile="1" resource="0" file="Source/ui/common/YanPopup.cpp"/>
+          <FILE id="B6k2jT" name="YanPopup.h" compile="0" resource="0" file="Source/ui/common/YanPopup.h"/>
         </GROUP>
-        <FILE id="hLBOHa" name="MobiusView.cpp" compile="1" resource="0" file="Source/ui/MobiusView.cpp"/>
-        <FILE id="GkrLrx" name="MobiusViewer.cpp" compile="1" resource="0"
-              file="Source/ui/MobiusViewer.cpp"/>
-        <FILE id="SsOTEl" name="MobiusViewer.h" compile="0" resource="0" file="Source/ui/MobiusViewer.h"/>
-        <FILE id="ZPbdmr" name="MobiusView.h" compile="0" resource="0" file="Source/ui/MobiusView.h"/>
-        <FILE id="lrrI1w" name="WindowFactory.cpp" compile="1" resource="0"
-              file="Source/ui/WindowFactory.cpp"/>
-        <FILE id="LfilVy" name="WindowFactory.h" compile="0" resource="0" file="Source/ui/WindowFactory.h"/>
-        <GROUP id="{3D4045DD-1EF7-3B89-EAEB-D6AA0E637AB7}" name="script">
-          <FILE id="Uw69mu" name="Console.cpp" compile="1" resource="0" file="Source/ui/script/Console.cpp"/>
-          <FILE id="UNDOue" name="Console.h" compile="0" resource="0" file="Source/ui/script/Console.h"/>
-          <FILE id="AoyXtG" name="ConsolePanel.h" compile="0" resource="0" file="Source/ui/script/ConsolePanel.h"/>
-          <FILE id="kozMp5" name="CustomEditor.cpp" compile="1" resource="0"
-                file="Source/ui/script/CustomEditor.cpp"/>
-          <FILE id="WOsMf3" name="CustomEditor.h" compile="0" resource="0" file="Source/ui/script/CustomEditor.h"/>
-          <FILE id="XSkDB4" name="MobiusConsole.cpp" compile="1" resource="0"
-                file="Source/ui/script/MobiusConsole.cpp"/>
-          <FILE id="HdN4eD" name="MobiusConsole.h" compile="0" resource="0" file="Source/ui/script/MobiusConsole.h"/>
-          <FILE id="SuPEKT" name="MonitorPanel.h" compile="0" resource="0" file="Source/ui/script/MonitorPanel.h"/>
-          <FILE id="zBRWmp" name="ScriptDetails.cpp" compile="1" resource="0"
-                file="Source/ui/script/ScriptDetails.cpp"/>
-          <FILE id="cad45K" name="ScriptDetails.h" compile="0" resource="0" file="Source/ui/script/ScriptDetails.h"/>
-          <FILE id="DEj2yw" name="ScriptEditor.cpp" compile="1" resource="0"
-                file="Source/ui/script/ScriptEditor.cpp"/>
-          <FILE id="rTX48Z" name="ScriptEditor.h" compile="0" resource="0" file="Source/ui/script/ScriptEditor.h"/>
-          <FILE id="iy2tV5" name="ScriptLog.cpp" compile="1" resource="0" file="Source/ui/script/ScriptLog.cpp"/>
-          <FILE id="XBvv4o" name="ScriptLog.h" compile="0" resource="0" file="Source/ui/script/ScriptLog.h"/>
-          <FILE id="qFoKXE" name="ScriptMonitor.cpp" compile="1" resource="0"
-                file="Source/ui/script/ScriptMonitor.cpp"/>
-          <FILE id="Djd5U1" name="ScriptMonitor.h" compile="0" resource="0" file="Source/ui/script/ScriptMonitor.h"/>
-          <FILE id="Ys6xeO" name="ScriptProcessTable.cpp" compile="1" resource="0"
-                file="Source/ui/script/ScriptProcessTable.cpp"/>
-          <FILE id="MoEVOR" name="ScriptProcessTable.h" compile="0" resource="0"
-                file="Source/ui/script/ScriptProcessTable.h"/>
-          <FILE id="uHM0Ks" name="ScriptResultTable.cpp" compile="1" resource="0"
-                file="Source/ui/script/ScriptResultTable.cpp"/>
-          <FILE id="rNPUWN" name="ScriptResultTable.h" compile="0" resource="0"
-                file="Source/ui/script/ScriptResultTable.h"/>
-          <FILE id="TfqMp0" name="ScriptStatisticsTable.cpp" compile="1" resource="0"
-                file="Source/ui/script/ScriptStatisticsTable.cpp"/>
-          <FILE id="Y6csbJ" name="ScriptStatisticsTable.h" compile="0" resource="0"
-                file="Source/ui/script/ScriptStatisticsTable.h"/>
-          <FILE id="IKINDe" name="ScriptWindow.cpp" compile="1" resource="0"
-                file="Source/ui/script/ScriptWindow.cpp"/>
-          <FILE id="GJAwEH" name="ScriptWindow.h" compile="0" resource="0" file="Source/ui/script/ScriptWindow.h"/>
-          <FILE id="YMtqVy" name="TypicalTable.cpp" compile="1" resource="0"
-                file="Source/ui/script/TypicalTable.cpp"/>
-          <FILE id="NyM8Ef" name="TypicalTable.h" compile="0" resource="0" file="Source/ui/script/TypicalTable.h"/>
-        </GROUP>
-        <FILE id="LOuXbq" name="BindingSummaryPanel.cpp" compile="1" resource="0"
-              file="Source/ui/BindingSummaryPanel.cpp"/>
-        <FILE id="giC76s" name="BindingSummaryPanel.h" compile="0" resource="0"
-              file="Source/ui/BindingSummaryPanel.h"/>
-        <FILE id="Wwdbrh" name="PanelFactory.cpp" compile="1" resource="0"
-              file="Source/ui/PanelFactory.cpp"/>
-        <FILE id="Hn7kG3" name="PanelFactory.h" compile="0" resource="0" file="Source/ui/PanelFactory.h"/>
-        <FILE id="fomy04" name="EnvironmentPanel.cpp" compile="1" resource="0"
-              file="Source/ui/EnvironmentPanel.cpp"/>
-        <FILE id="mGPafm" name="EnvironmentPanel.h" compile="0" resource="0"
-              file="Source/ui/EnvironmentPanel.h"/>
-        <FILE id="n0rzUS" name="MidiLog.cpp" compile="1" resource="0" file="Source/ui/MidiLog.cpp"/>
-        <FILE id="yWQtm2" name="MidiLog.h" compile="0" resource="0" file="Source/ui/MidiLog.h"/>
-        <FILE id="lmIMa3" name="MidiMonitorPanel.cpp" compile="1" resource="0"
-              file="Source/ui/MidiMonitorPanel.cpp"/>
-        <FILE id="ErLWR1" name="MidiMonitorPanel.h" compile="0" resource="0"
-              file="Source/ui/MidiMonitorPanel.h"/>
-        <FILE id="aTpN2M" name="AlertPanel.cpp" compile="1" resource="0" file="Source/ui/AlertPanel.cpp"/>
-        <FILE id="wUOt37" name="AlertPanel.h" compile="0" resource="0" file="Source/ui/AlertPanel.h"/>
-        <FILE id="keXdso" name="BasePanel.cpp" compile="1" resource="0" file="Source/ui/BasePanel.cpp"/>
-        <FILE id="oBlSlj" name="BasePanel.h" compile="0" resource="0" file="Source/ui/BasePanel.h"/>
         <GROUP id="{C154E97D-0CEE-20FA-DFB7-9667274BF918}" name="config">
           <FILE id="Rx6MAi" name="AudioEditor.cpp" compile="1" resource="0" file="Source/ui/config/AudioEditor.cpp"/>
           <FILE id="ByMaOa" name="AudioEditor.h" compile="0" resource="0" file="Source/ui/config/AudioEditor.h"/>
@@ -434,6 +397,10 @@
                 file="Source/ui/display/FloatingStripElement.cpp"/>
           <FILE id="hry81p" name="FloatingStripElement.h" compile="0" resource="0"
                 file="Source/ui/display/FloatingStripElement.h"/>
+          <FILE id="ayY0Pi" name="HostSyncElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/HostSyncElement.cpp"/>
+          <FILE id="uXrbnv" name="HostSyncElement.h" compile="0" resource="0"
+                file="Source/ui/display/HostSyncElement.h"/>
           <FILE id="ST90gc" name="LayerElement.cpp" compile="1" resource="0"
                 file="Source/ui/display/LayerElement.cpp"/>
           <FILE id="g1JAU3" name="LayerElement.h" compile="0" resource="0" file="Source/ui/display/LayerElement.h"/>
@@ -515,91 +482,128 @@
                 file="Source/ui/display/UIElementText.cpp"/>
           <FILE id="yG9vE4" name="UIElementText.h" compile="0" resource="0" file="Source/ui/display/UIElementText.h"/>
         </GROUP>
-        <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
-          <FILE id="lXWr1d" name="BasicButtonRow.cpp" compile="1" resource="0"
-                file="Source/ui/common/BasicButtonRow.cpp"/>
-          <FILE id="eRmfPe" name="BasicButtonRow.h" compile="0" resource="0"
-                file="Source/ui/common/BasicButtonRow.h"/>
-          <FILE id="vk7Xvn" name="BasicForm.cpp" compile="1" resource="0" file="Source/ui/common/BasicForm.cpp"/>
-          <FILE id="xwO8bF" name="BasicForm.h" compile="0" resource="0" file="Source/ui/common/BasicForm.h"/>
-          <FILE id="ny8ZPI" name="BasicInput.cpp" compile="1" resource="0" file="Source/ui/common/BasicInput.cpp"/>
-          <FILE id="MT14lz" name="BasicInput.h" compile="0" resource="0" file="Source/ui/common/BasicInput.h"/>
-          <FILE id="oO9q1o" name="BasicLog.cpp" compile="1" resource="0" file="Source/ui/common/BasicLog.cpp"/>
-          <FILE id="iD2q8n" name="BasicLog.h" compile="0" resource="0" file="Source/ui/common/BasicLog.h"/>
-          <FILE id="akjBJh" name="BasicTable.cpp" compile="1" resource="0" file="Source/ui/common/BasicTable.cpp"/>
-          <FILE id="X43ibi" name="BasicTable.h" compile="0" resource="0" file="Source/ui/common/BasicTable.h"/>
-          <FILE id="IaXFZL" name="BasicTabs.cpp" compile="1" resource="0" file="Source/ui/common/BasicTabs.cpp"/>
-          <FILE id="jWbMsE" name="BasicTabs.h" compile="0" resource="0" file="Source/ui/common/BasicTabs.h"/>
-          <FILE id="UkLauY" name="ButtonBar.cpp" compile="1" resource="0" file="Source/ui/common/ButtonBar.cpp"/>
-          <FILE id="lDGPJq" name="ButtonBar.h" compile="0" resource="0" file="Source/ui/common/ButtonBar.h"/>
-          <FILE id="KQFfxo" name="ColorPopup.cpp" compile="1" resource="0" file="Source/ui/common/ColorPopup.cpp"/>
-          <FILE id="c7U7R1" name="ColorPopup.h" compile="0" resource="0" file="Source/ui/common/ColorPopup.h"/>
-          <FILE id="qEnT6l" name="ColorSelector.cpp" compile="1" resource="0"
-                file="Source/ui/common/ColorSelector.cpp"/>
-          <FILE id="ZbSGBN" name="ColorSelector.h" compile="0" resource="0" file="Source/ui/common/ColorSelector.h"/>
-          <FILE id="w11puN" name="CustomRotary.cpp" compile="1" resource="0"
-                file="Source/ui/common/CustomRotary.cpp"/>
-          <FILE id="VRPeJA" name="CustomRotary.h" compile="0" resource="0" file="Source/ui/common/CustomRotary.h"/>
-          <FILE id="vyeo6h" name="Field.cpp" compile="1" resource="0" file="Source/ui/common/Field.cpp"/>
-          <FILE id="RjFLPv" name="Field.h" compile="0" resource="0" file="Source/ui/common/Field.h"/>
-          <FILE id="tceRTv" name="FieldGrid.cpp" compile="1" resource="0" file="Source/ui/common/FieldGrid.cpp"/>
-          <FILE id="wXEPam" name="FieldGrid.h" compile="0" resource="0" file="Source/ui/common/FieldGrid.h"/>
-          <FILE id="ayhV48" name="Form.cpp" compile="1" resource="0" file="Source/ui/common/Form.cpp"/>
-          <FILE id="S7Xbq6" name="Form.h" compile="0" resource="0" file="Source/ui/common/Form.h"/>
-          <FILE id="qFRIjz" name="FormPanel.cpp" compile="1" resource="0" file="Source/ui/common/FormPanel.cpp"/>
-          <FILE id="JWBS2l" name="FormPanel.h" compile="0" resource="0" file="Source/ui/common/FormPanel.h"/>
-          <FILE id="qcxCOI" name="HelpArea.cpp" compile="1" resource="0" file="Source/ui/common/HelpArea.cpp"/>
-          <FILE id="UpmMlt" name="HelpArea.h" compile="0" resource="0" file="Source/ui/common/HelpArea.h"/>
-          <FILE id="z0zBNd" name="JLabel.cpp" compile="1" resource="0" file="Source/ui/common/JLabel.cpp"/>
-          <FILE id="n1jih9" name="JLabel.h" compile="0" resource="0" file="Source/ui/common/JLabel.h"/>
-          <FILE id="XyHMMp" name="LogPanel.cpp" compile="1" resource="0" file="Source/ui/common/LogPanel.cpp"/>
-          <FILE id="T9t9hM" name="LogPanel.h" compile="0" resource="0" file="Source/ui/common/LogPanel.h"/>
-          <FILE id="yVC7nU" name="Panel.cpp" compile="1" resource="0" file="Source/ui/common/Panel.cpp"/>
-          <FILE id="TLuhnZ" name="Panel.h" compile="0" resource="0" file="Source/ui/common/Panel.h"/>
-          <FILE id="OjuAfI" name="SimpleButton.cpp" compile="1" resource="0"
-                file="Source/ui/common/SimpleButton.cpp"/>
-          <FILE id="pGSyi0" name="SimpleButton.h" compile="0" resource="0" file="Source/ui/common/SimpleButton.h"/>
-          <FILE id="JeWRRg" name="SimpleListBox.cpp" compile="1" resource="0"
-                file="Source/ui/common/SimpleListBox.cpp"/>
-          <FILE id="SOk6NY" name="SimpleListBox.h" compile="0" resource="0" file="Source/ui/common/SimpleListBox.h"/>
-          <FILE id="IxU0jZ" name="SimpleRadio.cpp" compile="1" resource="0" file="Source/ui/common/SimpleRadio.cpp"/>
-          <FILE id="WL6Zy9" name="SimpleRadio.h" compile="0" resource="0" file="Source/ui/common/SimpleRadio.h"/>
-          <FILE id="SCCaw4" name="SimpleTable.cpp" compile="1" resource="0" file="Source/ui/common/SimpleTable.cpp"/>
-          <FILE id="yNdibm" name="SimpleTable.h" compile="0" resource="0" file="Source/ui/common/SimpleTable.h"/>
-          <FILE id="ttfh9P" name="SimpleTabPanel.cpp" compile="1" resource="0"
-                file="Source/ui/common/SimpleTabPanel.cpp"/>
-          <FILE id="ywZEOE" name="SimpleTabPanel.h" compile="0" resource="0"
-                file="Source/ui/common/SimpleTabPanel.h"/>
-          <FILE id="WA7Qza" name="YanAlert.cpp" compile="1" resource="0" file="Source/ui/common/YanAlert.cpp"/>
-          <FILE id="u0ZIvP" name="YanAlert.h" compile="0" resource="0" file="Source/ui/common/YanAlert.h"/>
-          <FILE id="SrDTKr" name="YanDialog.cpp" compile="1" resource="0" file="Source/ui/common/YanDialog.cpp"/>
-          <FILE id="cHOVTJ" name="YanDialog.h" compile="0" resource="0" file="Source/ui/common/YanDialog.h"/>
-          <FILE id="qZv8U0" name="YanField.cpp" compile="1" resource="0" file="Source/ui/common/YanField.cpp"/>
-          <FILE id="xYsipx" name="YanField.h" compile="0" resource="0" file="Source/ui/common/YanField.h"/>
-          <FILE id="QfGCab" name="YanFieldHelpers.cpp" compile="1" resource="0"
-                file="Source/ui/common/YanFieldHelpers.cpp"/>
-          <FILE id="ZRYWCB" name="YanFieldHelpers.h" compile="0" resource="0"
-                file="Source/ui/common/YanFieldHelpers.h"/>
-          <FILE id="f2zY9Q" name="YanForm.cpp" compile="1" resource="0" file="Source/ui/common/YanForm.cpp"/>
-          <FILE id="QtLbZf" name="YanForm.h" compile="0" resource="0" file="Source/ui/common/YanForm.h"/>
-          <FILE id="bZ5HFu" name="YanParameter.cpp" compile="1" resource="0"
-                file="Source/ui/common/YanParameter.cpp"/>
-          <FILE id="M0KOLA" name="YanParameter.h" compile="0" resource="0" file="Source/ui/common/YanParameter.h"/>
-          <FILE id="YH3ixI" name="YanParameterForm.cpp" compile="1" resource="0"
-                file="Source/ui/common/YanParameterForm.cpp"/>
-          <FILE id="erADRG" name="YanParameterForm.h" compile="0" resource="0"
-                file="Source/ui/common/YanParameterForm.h"/>
-          <FILE id="dwke1e" name="YanPopup.cpp" compile="1" resource="0" file="Source/ui/common/YanPopup.cpp"/>
-          <FILE id="B6k2jT" name="YanPopup.h" compile="0" resource="0" file="Source/ui/common/YanPopup.h"/>
+        <GROUP id="{3D4045DD-1EF7-3B89-EAEB-D6AA0E637AB7}" name="script">
+          <FILE id="Uw69mu" name="Console.cpp" compile="1" resource="0" file="Source/ui/script/Console.cpp"/>
+          <FILE id="UNDOue" name="Console.h" compile="0" resource="0" file="Source/ui/script/Console.h"/>
+          <FILE id="AoyXtG" name="ConsolePanel.h" compile="0" resource="0" file="Source/ui/script/ConsolePanel.h"/>
+          <FILE id="kozMp5" name="CustomEditor.cpp" compile="1" resource="0"
+                file="Source/ui/script/CustomEditor.cpp"/>
+          <FILE id="WOsMf3" name="CustomEditor.h" compile="0" resource="0" file="Source/ui/script/CustomEditor.h"/>
+          <FILE id="XSkDB4" name="MobiusConsole.cpp" compile="1" resource="0"
+                file="Source/ui/script/MobiusConsole.cpp"/>
+          <FILE id="HdN4eD" name="MobiusConsole.h" compile="0" resource="0" file="Source/ui/script/MobiusConsole.h"/>
+          <FILE id="SuPEKT" name="MonitorPanel.h" compile="0" resource="0" file="Source/ui/script/MonitorPanel.h"/>
+          <FILE id="zBRWmp" name="ScriptDetails.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptDetails.cpp"/>
+          <FILE id="cad45K" name="ScriptDetails.h" compile="0" resource="0" file="Source/ui/script/ScriptDetails.h"/>
+          <FILE id="DEj2yw" name="ScriptEditor.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptEditor.cpp"/>
+          <FILE id="rTX48Z" name="ScriptEditor.h" compile="0" resource="0" file="Source/ui/script/ScriptEditor.h"/>
+          <FILE id="iy2tV5" name="ScriptLog.cpp" compile="1" resource="0" file="Source/ui/script/ScriptLog.cpp"/>
+          <FILE id="XBvv4o" name="ScriptLog.h" compile="0" resource="0" file="Source/ui/script/ScriptLog.h"/>
+          <FILE id="qFoKXE" name="ScriptMonitor.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptMonitor.cpp"/>
+          <FILE id="Djd5U1" name="ScriptMonitor.h" compile="0" resource="0" file="Source/ui/script/ScriptMonitor.h"/>
+          <FILE id="Ys6xeO" name="ScriptProcessTable.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptProcessTable.cpp"/>
+          <FILE id="MoEVOR" name="ScriptProcessTable.h" compile="0" resource="0"
+                file="Source/ui/script/ScriptProcessTable.h"/>
+          <FILE id="uHM0Ks" name="ScriptResultTable.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptResultTable.cpp"/>
+          <FILE id="rNPUWN" name="ScriptResultTable.h" compile="0" resource="0"
+                file="Source/ui/script/ScriptResultTable.h"/>
+          <FILE id="TfqMp0" name="ScriptStatisticsTable.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptStatisticsTable.cpp"/>
+          <FILE id="Y6csbJ" name="ScriptStatisticsTable.h" compile="0" resource="0"
+                file="Source/ui/script/ScriptStatisticsTable.h"/>
+          <FILE id="IKINDe" name="ScriptWindow.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptWindow.cpp"/>
+          <FILE id="GJAwEH" name="ScriptWindow.h" compile="0" resource="0" file="Source/ui/script/ScriptWindow.h"/>
+          <FILE id="YMtqVy" name="TypicalTable.cpp" compile="1" resource="0"
+                file="Source/ui/script/TypicalTable.cpp"/>
+          <FILE id="NyM8Ef" name="TypicalTable.h" compile="0" resource="0" file="Source/ui/script/TypicalTable.h"/>
+        </GROUP>
+        <GROUP id="{DF1301BF-7977-3AF9-2F74-88DD7CDC5689}" name="session">
+          <FILE id="y3QGus" name="ParameterForm.cpp" compile="1" resource="0"
+                file="Source/ui/session/ParameterForm.cpp"/>
+          <FILE id="D2sieP" name="ParameterForm.h" compile="0" resource="0" file="Source/ui/session/ParameterForm.h"/>
+          <FILE id="h5SWoP" name="SessionEditor.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionEditor.cpp"/>
+          <FILE id="YLdxmd" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/session/SessionEditor.h"/>
+          <FILE id="QRDZ18" name="SessionEditorTree.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionEditorTree.cpp"/>
+          <FILE id="Tu3Rui" name="SessionEditorTree.h" compile="0" resource="0"
+                file="Source/ui/session/SessionEditorTree.h"/>
+          <FILE id="goG27g" name="SessionFormCollection.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionFormCollection.cpp"/>
+          <FILE id="y3emuo" name="SessionFormCollection.h" compile="0" resource="0"
+                file="Source/ui/session/SessionFormCollection.h"/>
+          <FILE id="KOaAEr" name="SessionGlobalEditor.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionGlobalEditor.cpp"/>
+          <FILE id="CqSPrU" name="SessionGlobalEditor.h" compile="0" resource="0"
+                file="Source/ui/session/SessionGlobalEditor.h"/>
+          <FILE id="cRQyeY" name="SessionManager.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionManager.cpp"/>
+          <FILE id="kiLF6D" name="SessionManager.h" compile="0" resource="0"
+                file="Source/ui/session/SessionManager.h"/>
+          <FILE id="rUF5Av" name="SessionManagerPanel.h" compile="0" resource="0"
+                file="Source/ui/session/SessionManagerPanel.h"/>
+          <FILE id="v0KGjq" name="SessionManagerTable.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionManagerTable.cpp"/>
+          <FILE id="dEmxtK" name="SessionManagerTable.h" compile="0" resource="0"
+                file="Source/ui/session/SessionManagerTable.h"/>
+          <FILE id="za4YnZ" name="SessionTrackEditor.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionTrackEditor.cpp"/>
+          <FILE id="bxa5u6" name="SessionTrackEditor.h" compile="0" resource="0"
+                file="Source/ui/session/SessionTrackEditor.h"/>
+          <FILE id="yWWva8" name="SessionTrackTable.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionTrackTable.cpp"/>
+          <FILE id="jADQbN" name="SessionTrackTable.h" compile="0" resource="0"
+                file="Source/ui/session/SessionTrackTable.h"/>
+          <FILE id="TFYMwC" name="SessionTreeForms.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionTreeForms.cpp"/>
+          <FILE id="EQhLym" name="SessionTreeForms.h" compile="0" resource="0"
+                file="Source/ui/session/SessionTreeForms.h"/>
+          <FILE id="uzUdnw" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/session/SymbolTree.cpp"/>
+          <FILE id="rYvScn" name="SymbolTree.h" compile="0" resource="0" file="Source/ui/session/SymbolTree.h"/>
         </GROUP>
         <FILE id="i40dnE" name="AboutPanel.cpp" compile="1" resource="0" file="Source/ui/AboutPanel.cpp"/>
         <FILE id="Cgk0He" name="AboutPanel.h" compile="0" resource="0" file="Source/ui/AboutPanel.h"/>
+        <FILE id="aTpN2M" name="AlertPanel.cpp" compile="1" resource="0" file="Source/ui/AlertPanel.cpp"/>
+        <FILE id="wUOt37" name="AlertPanel.h" compile="0" resource="0" file="Source/ui/AlertPanel.h"/>
+        <FILE id="keXdso" name="BasePanel.cpp" compile="1" resource="0" file="Source/ui/BasePanel.cpp"/>
+        <FILE id="oBlSlj" name="BasePanel.h" compile="0" resource="0" file="Source/ui/BasePanel.h"/>
+        <FILE id="LOuXbq" name="BindingSummaryPanel.cpp" compile="1" resource="0"
+              file="Source/ui/BindingSummaryPanel.cpp"/>
+        <FILE id="giC76s" name="BindingSummaryPanel.h" compile="0" resource="0"
+              file="Source/ui/BindingSummaryPanel.h"/>
+        <FILE id="fomy04" name="EnvironmentPanel.cpp" compile="1" resource="0"
+              file="Source/ui/EnvironmentPanel.cpp"/>
+        <FILE id="mGPafm" name="EnvironmentPanel.h" compile="0" resource="0"
+              file="Source/ui/EnvironmentPanel.h"/>
         <FILE id="BDnCv2" name="JuceUtil.cpp" compile="1" resource="0" file="Source/ui/JuceUtil.cpp"/>
         <FILE id="XzPX2v" name="JuceUtil.h" compile="0" resource="0" file="Source/ui/JuceUtil.h"/>
         <FILE id="pup9jz" name="MainMenu.cpp" compile="1" resource="0" file="Source/ui/MainMenu.cpp"/>
         <FILE id="Fo9xTD" name="MainMenu.h" compile="0" resource="0" file="Source/ui/MainMenu.h"/>
         <FILE id="FsMNcl" name="MainWindow.cpp" compile="1" resource="0" file="Source/ui/MainWindow.cpp"/>
         <FILE id="einvVL" name="MainWindow.h" compile="0" resource="0" file="Source/ui/MainWindow.h"/>
+        <FILE id="n0rzUS" name="MidiLog.cpp" compile="1" resource="0" file="Source/ui/MidiLog.cpp"/>
+        <FILE id="yWQtm2" name="MidiLog.h" compile="0" resource="0" file="Source/ui/MidiLog.h"/>
+        <FILE id="lmIMa3" name="MidiMonitorPanel.cpp" compile="1" resource="0"
+              file="Source/ui/MidiMonitorPanel.cpp"/>
+        <FILE id="ErLWR1" name="MidiMonitorPanel.h" compile="0" resource="0"
+              file="Source/ui/MidiMonitorPanel.h"/>
+        <FILE id="hLBOHa" name="MobiusView.cpp" compile="1" resource="0" file="Source/ui/MobiusView.cpp"/>
+        <FILE id="ZPbdmr" name="MobiusView.h" compile="0" resource="0" file="Source/ui/MobiusView.h"/>
+        <FILE id="GkrLrx" name="MobiusViewer.cpp" compile="1" resource="0"
+              file="Source/ui/MobiusViewer.cpp"/>
+        <FILE id="SsOTEl" name="MobiusViewer.h" compile="0" resource="0" file="Source/ui/MobiusViewer.h"/>
+        <FILE id="Wwdbrh" name="PanelFactory.cpp" compile="1" resource="0"
+              file="Source/ui/PanelFactory.cpp"/>
+        <FILE id="Hn7kG3" name="PanelFactory.h" compile="0" resource="0" file="Source/ui/PanelFactory.h"/>
+        <FILE id="lrrI1w" name="WindowFactory.cpp" compile="1" resource="0"
+              file="Source/ui/WindowFactory.cpp"/>
+        <FILE id="LfilVy" name="WindowFactory.h" compile="0" resource="0" file="Source/ui/WindowFactory.h"/>
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
         <GROUP id="{A627AF61-F720-1E88-4B5F-20F61B64F721}" name="sync">

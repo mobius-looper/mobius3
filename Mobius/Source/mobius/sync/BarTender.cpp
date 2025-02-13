@@ -491,6 +491,13 @@ int BarTender::getBar(SyncSource src)
             int raw = anal->getElapsedBeats();
             int bpb = getHostBeatsPerBar();
             bar = (raw / bpb);
+
+            // this is "elapsed bars"
+            // so this can be used with a spinning Radar like MidiSyncElement
+            // need to convert this to be within barsPerLoop
+            // if you want to show elapsed bars, add something else to the UI
+            // and the SyncState
+            bar = bar % hostBarsPerLoop;
         }
             break;
 

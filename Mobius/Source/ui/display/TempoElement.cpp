@@ -1,5 +1,13 @@
 /**
  * Old code called this the "sync status" component.
+ *
+ * Now that we have detailed elements MidiSyncElement and HostSyncElement
+ * for this a lot of it was lobotomized and it only shows what the sync source
+ * of the track is.
+ *
+ * todo: should rename this SyncSourceElement or merge it with MinorModes
+ * I suppose it could be sensitive to whether the two detailed elements
+ * are being shown and fall back to the old behavior if not
  */
 
 #include <JuceHeader.h>
@@ -104,8 +112,10 @@ void TempoElement::paint(juce::Graphics& g)
         // same can be said for Midi.  Host is more useful since we don't have
         // a host sync display element
 
-        bool showTempo = (mSyncSource == SyncSourceHost);
-
+        // don't need to show this at all now that we have HostSyncElement
+        //bool showTempo = (mSyncSource == SyncSourceHost);
+        bool showTempo = false;
+        
         if (showTempo && tempo > 0) {
 
             // we've used a Beat of zero to mean it should not be displayed

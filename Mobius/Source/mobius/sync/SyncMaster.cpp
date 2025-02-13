@@ -519,13 +519,16 @@ void SyncMaster::refreshState(SystemState* sysstate)
     state->midiLoop = barTender->getLoop(SyncSourceMidi);
     state->midiBeatsPerBar = barTender->getBeatsPerBar(SyncSourceMidi);
     state->midiBarsPerLoop = barTender->getBarsPerLoop(SyncSourceMidi);
-    
-    // the host doesn't have a UI element since you're usually just watching the
-    // host UI, but if you have overrides it should
-    // same issues about global vs. track-specific time signatures as MIDI sync
-    state->hostStarted = hostAnalyzer->isRunning();
-    state->hostTempo = hostAnalyzer->getTempo();
 
+    hostAnalyzer->refreshState(state);
+    // !! we've got two sets of these now, should have a generic struct
+    // of analyzer results and have BarTender fill all of it in
+    state->hostBeat = barTender->getBeat(SyncSourceHost);
+    state->hostBar = barTender->getBar(SyncSourceHost);
+    state->hostLoop = barTender->getLoop(SyncSourceHost);
+    state->hostBeatsPerBar = barTender->getBeatsPerBar(SyncSourceHost);
+    state->hostBarsPerLoop = barTender->getBarsPerLoop(SyncSourceHost);
+    
     // transport maintains all this inside itself because the time signaturek
     // adapts to the connected loop rather than being always controlled from
     // Session parameters
@@ -580,6 +583,11 @@ void SyncMaster::refreshPriorityState(PriorityState* pstate)
     pstate->midiBeat = barTender->getBeat(SyncSourceMidi);
     pstate->midiBar = barTender->getBar(SyncSourceMidi);
     pstate->midiLoop = barTender->getLoop(SyncSourceMidi);
+
+    pstate->hostBeat = barTender->getBeat(SyncSourceHost);
+    pstate->hostBar = barTender->getBar(SyncSourceHost);
+    pstate->hostLoop = barTender->getLoop(SyncSourceHost);
+    
 }
 
 //////////////////////////////////////////////////////////////////////

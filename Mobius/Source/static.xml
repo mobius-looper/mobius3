@@ -32,7 +32,7 @@
         symbols='pluginInputs,pluginOutputs,inputLatency,outputLatency'/>
   
   <Form name='sessionGlobalSync' title='Synchronization Parameters'
-        symbols='transportTempo,transportBeatsPerBar,transportBarsPerLoop,transportMidi,transportClocks,transportManualStart,transportMinTempo,transportMaxTempo,transportMetronome,*spacer*,hostBeatsPerBar,hostBarsPerLoop,hostOverride,*spacer*,midiBeatsPerBar,midiBarsPerLoop,*spacer*,autoRecordUnit,autoRecordUnits,recordThreshold'/>
+        symbols='transportTempo,transportBeatsPerBar,transportBarsPerLoop,transportMidi,transportClocks,transportManualStart,transportMinTempo,transportMaxTempo,transportMetronome,*spacer*,hostOverride,hostBeatsPerBar,hostBarsPerLoop,*spacer*,midiBeatsPerBar,midiBarsPerLoop,*spacer*,autoRecordUnit,autoRecordUnits,recordThreshold'/>
   
   <Form name='sessionAudioTrackGeneral' title='General Parameters'
         symbols='trackName,trackGroup,trackPreset,focus'/>
