@@ -12,6 +12,7 @@
 #include "../../model/Query.h"
 #include "../../model/Scope.h"
 #include "../../model/SystemState.h"
+#include "../../model/PriorityState.h"
 
 #include "../../script/MslExternal.h"
 #include "../../script/MslWait.h"
@@ -1335,9 +1336,11 @@ void TrackManager::refreshState(SystemState* state)
 
 void TrackManager::refreshPriorityState(PriorityState* state)
 {
-    // tracks don't have anything to contribute yet
-    for (auto track : tracks) {
-        track->refreshPriorityState(state);
+    // only the focused track contributes
+    if (state->focusedTrackNumber > 0) {
+        LogicalTrack* lt = getLogicalTrack(state->focusedTrackNumber);
+        if (lt != nullptr)
+          lt->refreshPriorityState(state);
     }
 }
 

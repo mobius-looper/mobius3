@@ -821,9 +821,7 @@ void Track::refreshFocusedState(FocusedTrackState* s)
 
 void Track::refreshPriorityState(PriorityState* s)
 {
-    // this has transportBeat and transportBar
-    // it was intended for the three track beaters too
-    (void)s;
+    mLoop->refreshPriorityState(s);
 }
 
 /**

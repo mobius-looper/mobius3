@@ -23,6 +23,11 @@ class PriorityState
 {
   public:
 
+    int focusedTrackNumber = 0;
+    bool trackSubcycle = false;
+    bool trackCycle = false;
+    bool trackLoop = false;
+
     int transportBeat = 0;
     int transportBar = 0;
     int transportLoop = 0;

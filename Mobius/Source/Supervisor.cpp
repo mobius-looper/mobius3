@@ -1037,7 +1037,11 @@ void Supervisor::mobiusStateRefreshed(class SystemState* state)
 void Supervisor::advanceHigh()
 {
     if (highListeners.size() > 0) {
+
+        priorityState.focusedTrackNumber = mobiusView.focusedTrack + 1;
+        
         mobius->refreshPriorityState(&priorityState);
+        
         for (auto l : highListeners)
           l->highRefresh(&priorityState);
     }

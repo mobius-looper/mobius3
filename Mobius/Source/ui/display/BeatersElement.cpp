@@ -13,7 +13,7 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../MobiusView.h"
+#include "../../model/PriorityState.h"
 
 #include "Colors.h"
 #include "StatusArea.h"
@@ -53,10 +53,15 @@ BeatersElement::BeatersElement(StatusArea* area) :
     loopBeater.decayMsec = BeaterDecayLong;
 
     resizes = true;
+
+    // !! there needs to be showing() and hiding() simiilar to how the
+    // ConfigPanels work so we can remove the listener if the element is disabled
+    area->getProvider()->addHighListener(this);
 }
 
 BeatersElement::~BeatersElement()
 {
+    statusArea->getProvider()->removeHighListener(this);
 }
 
 /**
@@ -105,41 +110,27 @@ void BeatersElement::paint(juce::Graphics& g)
     }
 }
 
-/**
- * Maintenance thread refresh.
- * Notify the beaters that time has passed and repaint if
- * they've grown tired of life.
- *
- * For a time the three beat flags were "latching" meaning they
- * stayed on until the UI (us) turned them off.  This was from when we
- * tried to set them directly in the audio thread which caused probelms so
- * they should be able to be cleared by MobiusViewer like all the other
- * refresh flags.
- */
-void BeatersElement::update(MobiusView* view)
+void BeatersElement::highRefresh(PriorityState* s)
 {
-    MobiusViewTrack* track = view->track;
     bool anyChanged = false;
-
-    if (track->beatSubcycle) {
+    
+    if (s->trackSubcycle) {
         if (subcycleBeater.start())
           anyChanged = true;
-        track->beatSubcycle = false;
+        s->trackSubcycle = false;
     }
     else if (subcycleBeater.tick())
       anyChanged = true;
 
-    // beatCycle doesn't seem to be turning on for shorter loops?
-    // weird...
-    if (track->beatCycle) {
+    if (s->trackCycle) {
         if (cycleBeater.start())
           anyChanged = true;
-        track->beatCycle = false;
+        s->trackCycle = false;
     }
     else if (cycleBeater.tick())
       anyChanged = true;
     
-    if (track->beatLoop) {
+    if (s->trackLoop) {
         if (loopBeater.start())
           anyChanged = true;
 
@@ -148,11 +139,10 @@ void BeatersElement::update(MobiusView* view)
         if (cycleBeater.start())
           anyChanged = true;
         
-        track->beatLoop = false;
+        s->trackLoop = false;
     }
     else if (loopBeater.tick())
       anyChanged = true;
-        
         
     if (anyChanged)
       repaint();

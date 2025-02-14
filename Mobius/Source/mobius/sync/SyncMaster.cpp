@@ -175,15 +175,14 @@ int SyncMaster::getTrackSyncMaster()
  *
  * Now this makes the focused track the master which may include MIDI tracks.
  * To allow more control, the action may have an argument with a track number.
- * todo: This needs to be expanded to accept any form of trackk identifier.
+ * todo: This needs to be expanded to accept any form of track identifier.
  *
  * The action may specify FuncSyncMasterTrack or ParamTrackSyncMaster
- * The parameter action does not allow jumping to the focused track to it
- * is predictable as a sweepable host parameter.
+ * The parameter action does not allow jumping to the focused track with
+ * a zero value so it is predictable as a sweepable host parameter. Value
+ * zero means "no master".  There isn't a way to cause a "no master" situation
+ * with the function, but it isn't that useful.
  *
- * See also setTransportMaster
- *
- * !! actually should allow zero for the parameter to deselect the masters?
  */
 void SyncMaster::setTrackSyncMaster(UIAction* a)
 {
@@ -193,12 +192,15 @@ void SyncMaster::setTrackSyncMaster(UIAction* a)
         number = container->getFocusedTrackIndex() + 1;
     }
 
-    if (number > 0) {
+    if (number == 0)
+      setTrackSyncMaster(0);
+    else {
         LogicalTrack* lt = trackManager->getLogicalTrack(number);
         if (lt == nullptr)
-          Trace(1, "SyncMaster: Invalid track id in SyncMasterTrack action");
-        else
-          setTrackSyncMaster(number);
+          Trace(1, "SyncMaster: Invalid track id in TransportMaster action");
+        else {
+            setTrackSyncMaster(number);
+        }
     }
 }
 
@@ -250,8 +252,7 @@ int SyncMaster::getTransportMaster()
  * if it is zero it means to make the focused track the master.
  *
  * For the parameter, the track number is also passed in the action value.
- * The parameter has low='1' and is not expecting zero here so it can have a natural
- * sweep as a plugin parameter with no special meaning for zero.
+ * The parammeter may have the value zero which means "no master".
  */
 void SyncMaster::setTransportMaster(UIAction* a)
 {
@@ -262,7 +263,9 @@ void SyncMaster::setTransportMaster(UIAction* a)
         number = container->getFocusedTrackIndex() + 1;
     }
 
-    if (number > 0) {
+    if (number == 0)
+      setTransportMaster(number);
+    else {
         LogicalTrack* lt = trackManager->getLogicalTrack(number);
         if (lt == nullptr)
           Trace(1, "SyncMaster: Invalid track id in TransportMaster action");

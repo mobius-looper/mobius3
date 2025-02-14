@@ -155,6 +155,7 @@ class Loop : public TraceContext {
     // Status
     //
 
+    void refreshPriorityState(class PriorityState* s);
     void refreshState(class TrackState* s);
     void refreshFocusedState(class FocusedTrackState* state);
     

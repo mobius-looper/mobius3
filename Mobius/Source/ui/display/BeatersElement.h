@@ -6,6 +6,8 @@
 
 #include <JuceHeader.h>
 
+#include "../../Provider.h"
+
 #include "StatusElement.h"
 
 #define BEAT_DECAY 150
@@ -16,6 +18,7 @@
  * This really doesn't even need to be a Component and would
  * make mouse handling easier if it wasn't.
  */
+
 class Beater : public juce::Component
 {
   public:
@@ -47,14 +50,15 @@ class Beater : public juce::Component
     void mouseUp(const juce::MouseEvent& e) override;
 };
 
-class BeatersElement : public StatusElement
+
+class BeatersElement : public StatusElement, public Provider::HighRefreshListener
 {
   public:
     
     BeatersElement(class StatusArea* area);
     ~BeatersElement();
 
-    void update(class MobiusView* view) override;
+    void highRefresh(class PriorityState* s);
     
     int getPreferredWidth() override;
     int getPreferredHeight() override;

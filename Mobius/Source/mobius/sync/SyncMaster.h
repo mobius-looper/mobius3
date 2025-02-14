@@ -266,7 +266,7 @@ class SyncMaster
     void dealWithSyncEvent(class LogicalTrack* lt, class SyncEvent* event);
     int getSyncPlayHead(class LogicalTrack* t);
 
-    bool extremeTrace = true;
+    bool extremeTrace = false;
     void sendSyncEvent(class LogicalTrack* t, Pulse* p, SyncEvent::Type type);
     void traceEvent(class LogicalTrack* t, Pulse* p, SyncEvent& e);
     void tracePulse(class LogicalTrack* t, class Pulse* p);

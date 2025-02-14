@@ -242,7 +242,7 @@ class TrackState
     // latching flags set when the loop crosses boundaries
     bool beatLoop = false;
     bool beatCycle = false;
-    bool beatSubCycle = false;
+    bool beatSubcycle = false;
 
     // loop window position
     int windowOffset = 0;

@@ -826,6 +826,23 @@ void MobiusViewer::refreshSync(SystemState* state, TrackState* tstate, MobiusVie
         default:
             break;
     }
+
+    // these are latching and cleared by the Beaters element when it displays
+
+    // todo: we've got three levels of latching around this
+    // Loop transferring to TrackState, here transferring to MobiusViewTrack
+    // and another in BeatersElement, don't need all of these, do we?
+    if (!tview->beatLoop)
+      tview->beatLoop = tstate->beatLoop;
+    tstate->beatLoop = false;
+    
+    if (!tview->beatCycle)
+      tview->beatCycle = tstate->beatCycle;
+    tstate->beatCycle = false;
+    
+    if (!tview->beatSubcycle)
+      tview->beatSubcycle = tstate->beatSubcycle;
+    tstate->beatSubcycle = false;
 }    
 
 /**

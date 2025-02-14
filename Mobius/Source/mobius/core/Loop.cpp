@@ -55,6 +55,7 @@
 #include "../../model/ParameterConstants.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Trigger.h"
+#include "../../model/PriorityState.h"
 
 #include "../Audio.h"
 #include "../Notification.h"
@@ -1025,6 +1026,21 @@ long Loop::reflectFrame(long frame)
 	return (getFrames() - frame - 1);
 }
 
+void Loop::refreshPriorityState(PriorityState* s)
+{
+    if (!s->trackLoop)
+      s->trackLoop = mBeatLoop;
+    mBeatLoop = false;
+
+    if (!s->trackCycle)
+      s->trackCycle = mBeatCycle;
+    mBeatCycle = false;
+
+    if (!s->trackSubcycle)
+      s->trackSubcycle = mBeatSubCycle;
+    mBeatSubCycle = false;
+}
+
 /**
  * New state model, this is called for the active loop.
  */
@@ -1129,13 +1145,16 @@ void Loop::refreshState(TrackState* s)
     // advanced past the boundary or else the UI might miss it
     // todo: does TrackState work that way?
     // isn't this now done by PriorityState??
+    
+    // handled by PriorityState now for only the active track
+#if 0    
     bool oldWay = false;
     if (oldWay) {
         s->beatLoop = mBeatLoop;
         mBeatLoop = false;
         s->beatCycle = mBeatCycle;
         mBeatCycle = false;
-        s->beatSubCycle = mBeatSubCycle;
+        s->beatSubcycle = mBeatSubCycle;
         mBeatSubCycle = false;
     }
     else {
@@ -1145,11 +1164,12 @@ void Loop::refreshState(TrackState* s)
         if (!s->beatCycle)
           s->beatCycle = mBeatCycle;
         mBeatCycle = false;
-        if (!s->beatSubCycle)
-          s->beatSubCycle = mBeatSubCycle;
+        if (!s->beatSubcycle)
+          s->beatSubcycle = mBeatSubCycle;
         mBeatSubCycle = false;
     }
-
+#endif
+    
     // layers minus checkpoints look like this...
     // the layer being recorded is hidden, the UI makes it look like
     // the play layer is being actively recorded

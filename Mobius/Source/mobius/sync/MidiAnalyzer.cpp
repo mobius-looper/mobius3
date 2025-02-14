@@ -390,9 +390,10 @@ void MidiAnalyzer::ponderUnitLength()
         Trace(1, "MidiAnalyzer: Ignoring unusual unit length %d", newUnitLength);
     }
     else if (tempoMonitor.isFilling() && unitLength != 0) {
+        // common after a cold start
         // common after emergency resync after debugging, continue with the
         // old length until the buffer fills
-        Trace(2, "MidiAnalyzer: Waiting for tempo smoother to fill");
+        //Trace(2, "MidiAnalyzer: Waiting for tempo smoother to fill");
     }
     else if (newUnitLength == unitLength) {
         //Trace(2, "MidiAnalyzer: Unit length remains %d", unitLength);
