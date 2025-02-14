@@ -58,11 +58,10 @@ bring up Mobius for the first time.
 
 The *Beats Per Bar* parameter defines the length of a bar in units of beats, and *Bars Per Loop* defines the length of a loop in units of bars.  The most common value for *Beats Per Bar* is 4.  The value of *Bars Per Loop* is often just 1 in which case a bar and a loop will be the same size.
 
+#### Why "Bars Per Loop"?
+
+
 ### Transport Control
-
-
-
-
 
 
 ### Recording Synchronized Tracks

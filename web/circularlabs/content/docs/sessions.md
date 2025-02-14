@@ -1,7 +1,7 @@
 +++
 title = 'Using Sessions'
 draft = false
-summary = 'Instructions for using defining and using sessions to manage Mobius configuration'
+summary = 'Instructions for defining and using sessions to manage Mobius configuration'
 +++
 
 A **Session** is a collection of configuration settings and pre-defined audio and MIDI content that is saved on the file system.  When you start Mobius, a session is *loaded* into memory and when you shutdown Mobius the current contents of the session may be *saved*.  You can save any number of sessions but when you use Mobius, you are always using one *active* session.
@@ -12,7 +12,7 @@ If you are familar with Mobius 2.5, the Session is essentially a replacement for
 
 ## Session Management
 
-Sessions are accessed from the main menu item named unsprisingly "Sessions".   There are two sub-items "Edit Session" and "Manage Sessions".  *Edit Session* is where you make changes to the currently loaded session.  *Manage Sessions* is where you can view and organize your collection of sessions.
+Sessions are accessed from the main menu item named unsurprisingly "Sessions".   There are two sub-items "Edit Session" and "Manage Sessions".  *Edit Session* is where you make changes to the currently loaded session.  *Manage Sessions* is where you can view and organize your collection of sessions.
 
 These are both very new features and the user interface is not entirely to my liking, so I'm avoiding screen shots here since I expect this to evolve.  Feel free to offer suggestions on the forum.  As usual, I go for functionality first, and worry about making it pretty later.
 
@@ -120,7 +120,7 @@ For Mac users this is:
 Within the sessions directory will be subdirectories whose names are the same as the session name.
 For this reason, sessions must have names that are allowed as file system directory names.  Special characters such as / \ $ or .  are not allowed.
 
-Within each session directory there will always be a single file named "sessions.xml".
+Within each session directory there will always be a single file named "session.xml".
 
 In future relases, when sessions are allowed to contain audio and Midi content, the .wav or .mid
 files with that content will also be found here.
