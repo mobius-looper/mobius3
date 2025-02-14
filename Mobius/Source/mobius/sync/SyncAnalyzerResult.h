@@ -50,7 +50,6 @@ class SyncAnalyzerResult
      * This is supported only by sources that also support a native beat count
      * and a native time signature, e.g. Host and Transport.  Pulsator may choose
      * to ignore this.
-     * todo: decide if this is necessary
      */
     bool barDetected = false;
 

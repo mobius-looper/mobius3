@@ -14,7 +14,7 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="midi" type="enum" ordinal="4"/>
+      <Value name="syncSource" value="master" type="enum" ordinal="5"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="trackSyncUnit" value="subcycle" type="enum" ordinal="0"/>
     </ValueSet>
@@ -169,11 +169,11 @@
     <Value name="spreadRange" value="48" type="int"/>
     <Value name="transportBarsPerLoop" value="1" type="int"/>
     <Value name="transportBeatsPerBar" value="4" type="int"/>
-    <Value name="transportClocks" value="false" type="bool"/>
+    <Value name="transportClocks" value="true" type="bool"/>
     <Value name="transportManualStart" value="false" type="bool"/>
     <Value name="transportMaxTempo" value="300" type="int"/>
     <Value name="transportMetronome" value="false" type="bool"/>
-    <Value name="transportMidi" value="false" type="bool"/>
+    <Value name="transportMidi" value="true" type="bool"/>
     <Value name="transportMinTempo" value="30" type="int"/>
     <Value name="transportTempo" value="90" type="int"/>
   </ValueSet>

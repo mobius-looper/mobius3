@@ -37,9 +37,8 @@ class Beater : public juce::Component
     // are we on now?
     bool on = false;
 
-    bool start();
-    bool tick();
-    bool reset();
+    bool start(int now);
+    bool tick(int now);
 
     void paintBeater(juce::Graphics& g);
 

@@ -828,10 +828,12 @@ void MobiusViewer::refreshSync(SystemState* state, TrackState* tstate, MobiusVie
     }
 
     // these are latching and cleared by the Beaters element when it displays
-
     // todo: we've got three levels of latching around this
     // Loop transferring to TrackState, here transferring to MobiusViewTrack
     // and another in BeatersElement, don't need all of these, do we?
+    // update: This is now handled by PriorityState for the focused track only
+    // Loop.cpp no longer sets these flags in the TrackState and BeatersElement
+    // only looks at PriorityState
     if (!tview->beatLoop)
       tview->beatLoop = tstate->beatLoop;
     tstate->beatLoop = false;

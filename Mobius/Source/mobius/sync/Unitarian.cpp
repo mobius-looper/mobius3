@@ -227,8 +227,6 @@ int Unitarian::getLeaderUnitLength(LogicalTrack* follower, TrackSyncUnit unit)
  * this since it overlaps with the syncUnit parameter used for synchronized
  * recording and they're almost always the same.  Take it out unless you
  * find a need.
- *
- * todo: Move this to BarTender
  */
 int Unitarian::getSingleAutoRecordUnitLength(LogicalTrack* track)
 {

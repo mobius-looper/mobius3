@@ -1,3 +1,6 @@
+// NOTE: Obsolete, remove when MidiRealizer handles events and drift
+// in the new way
+
 /**
  * Object representing one significant event in the realtime
  * MIDI message stream.

@@ -1147,6 +1147,7 @@ void Loop::refreshState(TrackState* s)
     // isn't this now done by PriorityState??
     
     // handled by PriorityState now for only the active track
+    // don't reset the mBeat flags or else refreshPriorityState will miss them
 #if 0    
     bool oldWay = false;
     if (oldWay) {

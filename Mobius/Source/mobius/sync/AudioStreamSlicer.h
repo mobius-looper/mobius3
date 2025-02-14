@@ -1,4 +1,3 @@
-
 /**
  * Helper class for TimeSlicer that wraps the MobiusAudioStream provided
  * by the container and gives the tracks subsections of the full stream block.

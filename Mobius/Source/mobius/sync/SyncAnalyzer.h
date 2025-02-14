@@ -111,21 +111,13 @@ class SyncAnalyzer
      */
     virtual void lock() = 0;
     
-    // todo: Consider we need sub-beet units
-
     /**
      * All sources will monitor drift once the unitLength has been calculated.
      * This is the amount of the drift.
      *
-     * When the drift exceeds a threshold the unitLength will be recalculated
-     * and the tempoChanged flag will be set in SyncAnalyzerResult.
-     *
-     * todo: needs work, it may be best to not allow sources to jump tempos
-     * by themselves.  They report drift and the application may then decide
-     * to act on it, and once it does call back to correctDrift()
-     * Host needs thought because tempo can change dramatically at any time.
-     *
-     * There is a difference between drift correction and tempo changes.
+     * update: This is not as useful as envisioned because differnt sources
+     * may track drift in different ways and the meaning of the drift number
+     * may have different thresholds.
      */
     virtual int getDrift() = 0;
 

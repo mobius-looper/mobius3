@@ -41,7 +41,7 @@ class Pulsator
     void notifyTransportStarted();
 
     // called by SyncMaster to get the relevant pulse for a track
-    Pulse* getBlockPulse(class LogicalTrack* t, SyncUnit unit);
+    //Pulse* getBlockPulse(class LogicalTrack* t, SyncUnit unit);
 
     // called by SyncMaster when it needs to be smarter about adjusting
     // pulse widths

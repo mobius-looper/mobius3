@@ -140,9 +140,6 @@ void SyncMaster::globalReset()
 //
 //////////////////////////////////////////////////////////////////////
 
-// !! Need to think more about the concepts of Connect and Disconnect
-// for the TransportMaster
-
 /**
  * There can be one TrackSyncMaster.
  *
@@ -548,7 +545,7 @@ void SyncMaster::refreshState(SystemState* sysstate)
 
     // the MidiSyncElement wants to display normalized beat/bar/loop numbers
     // and this is not track specific
-    // !! need to seriously rethink kthe utility of track-specific BPB and BPL
+    // !! need to seriously rethink the utility of track-specific BPB and BPL
     // overrides, why can't this just be global?  it only really matters
     // for the initial recording, then it's just for display
     
@@ -921,13 +918,6 @@ SyncMaster::RequestResult SyncMaster::requestRecordStop(int number, bool noSync)
         }
     }
 
-    // !! more to do here
-    // if you're doing a manual recording ending with MIDI
-    // after locking it will end up with a unit length that may not be compatible
-    // with the length of the recorded loop so far, this is usually the final pulse
-    // so it needs to be adjusted like we do for AR or converted
-    // to a SyncEvent::Finalize
-    
     return result;
 }
 
@@ -1716,7 +1706,7 @@ void SyncMaster::notifyTrackPause(int number)
 void SyncMaster::notifyTrackResume(int number)
 {
     if (number == transport->getMaster()) {
-        // !! probably wrong
+        // !! probably wrong, need to address song position
         transport->start();
     }
 }

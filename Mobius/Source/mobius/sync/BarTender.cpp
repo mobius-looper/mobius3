@@ -101,8 +101,8 @@ void BarTender::advance(int frames)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * !! todo: Don't have the notion of temporary overrides with GlobalReset
- * revisit
+ * todo: Don't have the notion of temporary overrides with GlobalReset
+ * Once you set these they stick until the session is edited or you restart.
  */
 bool BarTender::doAction(UIAction* a)
 {
@@ -134,8 +134,6 @@ bool BarTender::doAction(UIAction* a)
     }
     return handled;
 }
-
-// todo: better range limits
 
 void BarTender::setHostBeatsPerBar(int bpb)
 {
@@ -558,6 +556,9 @@ int BarTender::getLoop(SyncSource src)
         case SyncSourceHost: {
             HostAnalyzer* anal = syncMaster->getHostAnalyzer();
             // todo: this has the host bar number vs. elapsed origin issue?
+            // !! yes, need some options around this, should be able to display
+            // the native beat/bar numbers if desired and then use a few different
+            // bar detection methods
             int raw = anal->getElapsedBeats();
             int bpb = getHostBeatsPerBar();
             int bpl = getHostBarsPerLoop();

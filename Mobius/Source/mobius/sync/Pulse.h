@@ -9,12 +9,6 @@
  * The other fields have additional information that followers may
  * wish to respond to but are not required.
  *
- * todo: reconsider whether to even bother with these, intelligent
- * following of external song position or transport location is enormously
- * complex.  For all practical purposes the followers shouldn't really
- * care about whether the transport starts and stops, but Pulsator does
- * so it can decide whether it is worth monitoring drift.
- *
  */
 
 #pragma once
@@ -30,6 +24,7 @@ class Pulse
     ~Pulse() {}
 
     // where the pulse came from
+    // this being None is used to indiciate that there was no pulse
     SyncSource source = SyncSourceNone;
 
     // the pulse granularity
@@ -53,31 +48,13 @@ class Pulse
     // not really a pulse but conveyed as one
     bool stop = false;
 
-    // !! much more work to do here for MIDI Continue and song position
-#if 0
-    // this pulse also represents the movement of the external transport
-    // to a random location
-    bool mcontinue = false;
-
-    // when continue is true, the logical pulse in the external sequence
-    // we're continuing from, aka the "song position pointer"
-    int continuePulse = 0;
-#endif
-
-    SyncEvent event;
-
     void reset(SyncSource s, int msec) {
         source = s;
         millisecond = msec;
         blockFrame = 0;
         pending = false;
-        //beat = 0;
-        //bar = 0;
         start = false;
         stop = false;
-        //mcontinue = false;
-        //continuePulse = 0;
-        event.reset();
     }
 
     void reset() {

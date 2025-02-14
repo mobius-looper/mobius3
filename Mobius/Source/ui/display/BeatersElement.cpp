@@ -112,38 +112,51 @@ void BeatersElement::paint(juce::Graphics& g)
 
 void BeatersElement::highRefresh(PriorityState* s)
 {
+    int startMsec = juce::Time::getMillisecondCounter();
     bool anyChanged = false;
     
-    if (s->trackSubcycle) {
-        if (subcycleBeater.start())
-          anyChanged = true;
-        s->trackSubcycle = false;
-    }
-    else if (subcycleBeater.tick())
-      anyChanged = true;
-
-    if (s->trackCycle) {
-        if (cycleBeater.start())
-          anyChanged = true;
-        s->trackCycle = false;
-    }
-    else if (cycleBeater.tick())
-      anyChanged = true;
-    
     if (s->trackLoop) {
-        if (loopBeater.start())
+        if (loopBeater.start(startMsec))
           anyChanged = true;
 
-        // until we can figure out why beatCycle isn't always on
-        // on loop boundaries, force it on
-        if (cycleBeater.start())
+        if (cycleBeater.start(startMsec))
+          anyChanged = true;
+        
+        if (subcycleBeater.start(startMsec))
           anyChanged = true;
         
         s->trackLoop = false;
+        s->trackCycle = false;
+        s->trackSubcycle = false;
     }
-    else if (loopBeater.tick())
-      anyChanged = true;
-        
+    else {
+        if (loopBeater.tick(startMsec))
+          anyChanged = true;
+
+        if (s->trackCycle) {
+            if (cycleBeater.start(startMsec))
+              anyChanged = true;
+
+            if (subcycleBeater.start(startMsec))
+              anyChanged = true;
+            
+            s->trackCycle = false;
+            s->trackSubcycle = false;
+        }
+        else {
+            if (cycleBeater.tick(startMsec))
+              anyChanged = true;
+    
+            if (s->trackSubcycle) {
+                if (subcycleBeater.start(startMsec))
+                  anyChanged = true;
+                s->trackSubcycle = false;
+            }
+            else if (subcycleBeater.tick(startMsec))
+              anyChanged = true;
+        }
+    }
+    
     if (anyChanged)
       repaint();
 }
@@ -158,7 +171,7 @@ void BeatersElement::highRefresh(PriorityState* s)
  * Called by Beaters to turn us on.
  * Returns true if the graphics state changed.
  */
-bool Beater::start()
+bool Beater::start(int now)
 {
     bool changed = false;
     if (on) {
@@ -170,7 +183,7 @@ bool Beater::start()
     } 
     else {
         // we're currently off
-        startMsec = juce::Time::getMillisecondCounter();
+        startMsec = now;
         on = true;
         changed = true;
     }
@@ -181,27 +194,16 @@ bool Beater::start()
  * Called by Beaters every maintenance thread interval.
  * Return true if the light inside us dies.
  */
-bool Beater::tick()
+bool Beater::tick(int now)
 {
     bool changed = false;
     
     if (on) {
-        int now = juce::Time::getMillisecondCounter();
         int delta = now - startMsec;
         if (delta > decayMsec) {
             on = false;
             changed = true;
         }
-    }
-    return changed;
-}
-
-bool Beater::reset()
-{
-    bool changed = false;
-    if (on) {
-        on = false;
-        changed = true;
     }
     return changed;
 }

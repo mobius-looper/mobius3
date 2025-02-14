@@ -1,3 +1,7 @@
+// NOTE: This is old and soon to be abandoned as soon as
+// MidiRealizer can be redesigned to do drift correction
+// a different way
+
 /**
  * Utility class used to accumulate MIDI realtime messages,
  * and convert them to a simplified model closer to what the

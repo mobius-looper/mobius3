@@ -1,3 +1,6 @@
+// NOTE: This is obsolete and should be removed once
+// MidiRealizer has some redesign
+
 /**
  * Old utility class to monitor the time differences beteween MIDI
  * clock messages to derive the tempo.

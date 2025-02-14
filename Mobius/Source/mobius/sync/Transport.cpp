@@ -1059,10 +1059,6 @@ void Transport::connect(TrackProperties& props)
  * The most obvioius is to send MS_START clocks.  Old Mobius had some options
  * here around "manual start" that need to be restored.
  *
- * transportManualStart
- *
- * 
- *
  * SyncMaster is also doing things around this that need to be moved down here,
  * Transport should be the only thing decididing the fate of MidiRealizer.
  */

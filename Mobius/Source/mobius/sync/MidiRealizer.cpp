@@ -1,5 +1,4 @@
 /**
- *
  * Maintenance of the MidiQueue and the generation of sync pulses is no longer necessary
  * now that clock generation is within the Transport.  Transport will generate pulses
  * not the clock generator.

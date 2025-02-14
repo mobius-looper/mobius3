@@ -183,7 +183,7 @@ void Pulsator::convertPulse(SyncSource source, SyncAnalyzerResult* result, Pulse
         else if (result->started) {
             // start without a beat, this can be okay, it just
             // means we're starting in the middle of a beat
-            // !! don't have a Pulse for start that isn't also
+            // todo: don't have a Pulse for start that isn't also
             // a UnitBeat, may need one
             pulse.reset(source, millisecond);
             pulse.unit = SyncUnitBeat;
@@ -328,6 +328,8 @@ Pulse* Pulsator::getPulseObject(SyncSource source, int leader)
     return pulse;
 }
 
+// old, SyncMaster now does this
+#if 0
 /**
  * This is where it all comes together...
  *
@@ -390,6 +392,7 @@ Pulse* Pulsator::getBlockPulse(LogicalTrack* t, SyncUnit unit)
     }
     return pulse;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
