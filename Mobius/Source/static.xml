@@ -7,8 +7,10 @@
 
   <Tree name='sessionGlobal'>
     <Tree name='Ports'/>
-    <Tree name='Sync'/>
-    <Tree name='Miscellany'/>
+    <Tree name='Sync'>
+      <Tree name='Transport'/>
+    </Tree>
+     <Tree name='Miscellany'/>
   </Tree>
   
   <Tree name='sessionAudioTrack'>
@@ -33,7 +35,10 @@
   
   <Form name='sessionGlobalSync' title='Synchronization Parameters'
         symbols='transportTempo,transportBeatsPerBar,transportBarsPerLoop,transportMidi,transportClocks,transportManualStart,transportMinTempo,transportMaxTempo,transportMetronome,*spacer*,hostOverride,hostBeatsPerBar,hostBarsPerLoop,*spacer*,midiBeatsPerBar,midiBarsPerLoop,*spacer*,autoRecordUnit,autoRecordUnits,recordThreshold'/>
-  
+
+  <Form name='sessionGlobalTransport' title='Transport Parameters'
+        symbols='transportTempo,transportBeatsPerBar,transportBarsPerLoop,transportMidi,transportClocks,transportManualStart,transportMinTempo,transportMaxTempo,transportMetronome'/>
+
   <Form name='sessionAudioTrackGeneral' title='General Parameters'
         symbols='trackName,trackGroup,trackPreset,focus'/>
     

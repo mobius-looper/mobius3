@@ -36,5 +36,8 @@ class SessionTreeForms : public juce::Component, public SymbolTree::Listener
     juce::String treeName;
     SessionEditorTree tree;
     SessionFormCollection forms;
+
+    juce::StretchableLayoutManager verticalLayout;
+    std::unique_ptr<juce::StretchableLayoutResizerBar> verticalDividerBar;
     
 };
