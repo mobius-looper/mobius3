@@ -21,6 +21,13 @@ class SymbolTreeItem : public juce::TreeViewItem
         return annotation;
     }
 
+    void setSymbolName(juce::String s) {
+        symbolName = s;
+    }
+    juce::String getSymbolName() {
+        return symbolName;
+    }
+
     void addSymbol(class Symbol* s);
     juce::Array<class Symbol*>& getSymbols() {
         return symbols;
@@ -51,6 +58,7 @@ class SymbolTreeItem : public juce::TreeViewItem
     
     juce::String name;
     juce::String annotation;
+    juce::String symbolName;
     bool hidden = false;
     bool noSelect = false;
     juce::Colour color;

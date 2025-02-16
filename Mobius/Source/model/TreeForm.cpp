@@ -60,7 +60,8 @@ void TreeForm::parseXml(juce::XmlElement* root, juce::StringArray& errors)
     
     name = root->getStringAttribute("name");
     title = root->getStringAttribute("title");
-
+    suppressPrefix = root->getStringAttribute("suppressPrefix");
+    
     juce::String csv = root->getStringAttribute("symbols");
     if (csv.length() > 0)
       symbols = juce::StringArray::fromTokens(csv, ",", "");

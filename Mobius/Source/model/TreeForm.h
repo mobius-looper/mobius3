@@ -61,6 +61,7 @@ class TreeForm
     juce::String name;
     juce::String title;
     juce::StringArray symbols;
+    juce::String suppressPrefix;
     
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);
 };
