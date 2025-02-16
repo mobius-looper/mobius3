@@ -27,7 +27,7 @@ class SessionEditorTree : public SymbolTree
     class Provider* provider = nullptr;
 
     void intern(class SymbolTreeItem* parent, juce::String treepath, class TreeNode* node);
-    void addSymbol(class SymbolTreeItem* parent, juce::String name);
+    void addSymbol(class SymbolTreeItem* parent, juce::String name, juce::String suppressPrefix);
     
     
 };

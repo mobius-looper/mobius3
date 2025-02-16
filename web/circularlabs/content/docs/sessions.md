@@ -20,6 +20,8 @@ These are both very new features and the user interface is not entirely to my li
 
 The *Edit Session* window is organized into two tabs: *Globals* and *Tracks*.
 
+![Edit Session Window](/docs/images/session-global-sync.png)
+
 The *Globals* tab is where you will find configuration parameters that apply to the entire application rather than individual tracks.  It takes the place of what used to be called the *Global Parameters* window and contains new options for the [Transport](transport).
 
 The parameters are organized into "forms" or "pages", which are listed in a column on the left side.  There are three pages: *Sync*, *Ports*, and *Miscellany*.  When you click on the name of a page, it is displayed on the right side and contains editing fields for each of the parameters.  Note that in general, changes you make in any of the popup windows do not actually take effect until you click the *Save* button at the bottom.  If you click *Cancel* the changes are discarded and nothing happens.

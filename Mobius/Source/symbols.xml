@@ -603,17 +603,17 @@ Once those models are fully converted, these symbols can be removed.
     <!-- accessible transport parameters -->
     <Parameter name='transportBeatsPerBar' type='int' level='kernel' defaultValue='4'/>
     <Parameter name='transportBarsPerLoop' type='int' level='kernel' defaultValue='1'/>
-    <Parameter name='transportMidi' type='bool' level='kernel'/>
+    <Parameter name='transportMidi' type='bool' level='kernel' displayName='Transport Send Midi'/>
 
     <!-- !! this should actually be an enumeration with default TransportClocksAlways
          and an optional TransportClocksWhenStarted if you want to support the
          old conditional clock sending options -->
-    <Parameter name='transportClocks' type='bool' level='kernel'/>
+    <Parameter name='transportClocks' type='bool' level='kernel' displayName='Transport Send Clocks when Stopped'/>
     
     <Parameter name='transportManualStart' type='bool' level='kernel'/>
     <Parameter name='transportMinTempo' type='int' level='kernel' defaultValue='30'/>
     <Parameter name='transportMaxTempo' type='int' level='kernel' defaultValue='300'/>
-    <Parameter name='transportMetronome' type='bool' level='kernel'/>
+    <Parameter name='transportMetronome' type='bool' level='kernel' displayName='Transport Metronome Enable'/>
 
     <!-- Plugin Host -->
     <Parameter name='hostBeatsPerBar' type='int' level='kernel' defaultValue='4'/>

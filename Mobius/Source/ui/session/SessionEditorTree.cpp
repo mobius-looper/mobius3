@@ -80,7 +80,7 @@ void SessionEditorTree::intern(SymbolTreeItem* parent, juce::String treePath, Tr
     // this is unusual and used only if you want to limit the included
     // symbols that would otherwise be defined in the form
     for (auto sname : node->symbols) {
-        addSymbol(item, sname);
+        addSymbol(item, sname, "");
     }
     
     // usually the symbol list comes from the form
@@ -92,14 +92,15 @@ void SessionEditorTree::intern(SymbolTreeItem* parent, juce::String treePath, Tr
             TreeForm* formdef = scon->getForm(formName);
             if (formdef != nullptr) {
                 for (auto sname : formdef->symbols) {
-                    addSymbol(item, sname);
+                    addSymbol(item, sname, formdef->suppressPrefix);
                 }
             }
         }
     }
 }
 
-void SessionEditorTree::addSymbol(SymbolTreeItem* parent, juce::String name)
+void SessionEditorTree::addSymbol(SymbolTreeItem* parent, juce::String name,
+                                  juce::String suppressPrefix)
 {
     SymbolTreeComparator comparator;
     
@@ -107,8 +108,20 @@ void SessionEditorTree::addSymbol(SymbolTreeItem* parent, juce::String name)
     if (s == nullptr)
       Trace(1, "SessionEditorTree: Invalid symbol name %s", name.toUTF8());
     else {
+        // don't think this part is necessary
         parent->addSymbol(s);
-        SymbolTreeItem* chitem = new SymbolTreeItem(name);
+
+        // it doesn't really matter what the name of this is, the important
+        // part is the annotation of the parent node, which is the form reference
+        juce::String nodename = name;
+        if (s->parameterProperties != nullptr) {
+            nodename = s->parameterProperties->displayName;
+            if (suppressPrefix.length() > 0 && nodename.indexOf(suppressPrefix) == 0) {
+                nodename = nodename.fromFirstOccurrenceOf(suppressPrefix + " ", false, false);
+            }
+        }
+        
+        SymbolTreeItem* chitem = new SymbolTreeItem(nodename);
         parent->addSubItemSorted(comparator, chitem);
     }
 }

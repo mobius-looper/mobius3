@@ -3,6 +3,7 @@
 
 #include "../../util/Trace.h"
 #include "../../model/Symbol.h"
+#include "../../model/ParameterProperties.h"
 #include "../../model/ValueSet.h"
 #include "../../model/TreeForm.h"
 #include "../../Provider.h"
@@ -109,6 +110,7 @@ void ParameterForm::addSpacer()
  */
 void ParameterForm::add(Provider* p, TreeForm* formdef)
 {
+    juce::String suppressPrefix = formdef->suppressPrefix;
     for (auto name : formdef->symbols) {
         if (name == TreeForm::Spacer) {
             addSpacer();
@@ -130,7 +132,15 @@ void ParameterForm::add(Provider* p, TreeForm* formdef)
                 Trace(1, "ParameterForm: Symbol is not a parameter %s", name.toUTF8());
             }
             else {
-                YanParameter* field = new YanParameter(s->getDisplayName());
+                juce::String label = s->displayName;
+                if (s->parameterProperties != nullptr) {
+                    label = s->parameterProperties->displayName;
+                    if (suppressPrefix.length() > 0 && label.indexOf(suppressPrefix) == 0) {
+                        label = label.fromFirstOccurrenceOf(suppressPrefix + " ", false, false);
+                    }
+                }
+                
+                YanParameter* field = new YanParameter(label);
                 parameters.add(field);
                 field->init(s);
                 form.add(field);

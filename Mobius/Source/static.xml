@@ -36,18 +36,15 @@
   <Form name='sessionGlobalPorts' title='IO Ports'
         symbols='pluginInputs,pluginOutputs,inputLatency,outputLatency'/>
 
-  <Form name='sessionGlobalSyncTransport' title='Transport Parameters'
+  <Form name='sessionGlobalSyncTransport' title='Transport Parameters' suppressPrefix='Transport'
         symbols='transportTempo,transportBeatsPerBar,transportBarsPerLoop,transportMidi,transportClocks,transportManualStart,transportMinTempo,transportMaxTempo,transportMetronome'/>
 
-  <Form name='sessionGlobalSyncMIDI' title='MIDI Sync Parameters'
-        symbols='midiBeatsPerBar,midiBarsPerLoop'/>
+  <Form name='sessionGlobalSyncMIDI' title='MIDI Sync Parameters' suppressPrefix='Midi'
+        symbols='midiBeatsPerBar,midiBarsPerLoop'/> 
 
-  <Form name='sessionGlobalSyncHost' title='Host Sync Parameters'
+  <Form name='sessionGlobalSyncHost' title='Host Sync Parameters' suppressPrefix='Host'
         symbols='hostOverride,hostBeatsPerBar,hostBarsPerLoop'/>
 
-  <Form name='sessionGlobalSyncMIDI' title='MIDI Sync Parameters'
-        symbols='midiBeatsPerBar,midiBarsPerLoop,*spacer*,autoRecordUnit,autoRecordUnits,recordThreshold'/>
-  
   <Form name='sessionGlobalSyncAutoRecord' title='Auto Record Parameters'
         symbols='autoRecordUnit,autoRecordUnits,recordThreshold'/>
   
