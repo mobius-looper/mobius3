@@ -7,12 +7,6 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
-      <FILE id="Bgk3zj" name="Grouper.cpp" compile="1" resource="0" file="Source/Grouper.cpp"/>
-      <FILE id="xD2KN1" name="Grouper.h" compile="0" resource="0" file="Source/Grouper.h"/>
-      <FILE id="qi4XPR" name="ModelTransformer.cpp" compile="1" resource="0"
-            file="Source/ModelTransformer.cpp"/>
-      <FILE id="MOkp2k" name="ModelTransformer.h" compile="0" resource="0"
-            file="Source/ModelTransformer.h"/>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
@@ -1032,6 +1026,8 @@
       <FILE id="Gc0Vst" name="BlueSphere-10.png" compile="0" resource="1"
             file="Source/BlueSphere-10.png"/>
       <FILE id="oyuBTW" name="Conditionals.h" compile="0" resource="0" file="Source/Conditionals.h"/>
+      <FILE id="zcdWKl" name="CustomLookAndFeel.cpp" compile="1" resource="0"
+            file="Source/CustomLookAndFeel.cpp"/>
       <FILE id="tM1zxN" name="CustomLookAndFeel.h" compile="0" resource="0"
             file="Source/CustomLookAndFeel.h"/>
       <FILE id="NNPAXk" name="DiagnosticWindow.cpp" compile="1" resource="0"
@@ -1040,6 +1036,8 @@
             file="Source/DiagnosticWindow.h"/>
       <FILE id="rjWkvK" name="FileManager.cpp" compile="1" resource="0" file="Source/FileManager.cpp"/>
       <FILE id="IggUul" name="FileManager.h" compile="0" resource="0" file="Source/FileManager.h"/>
+      <FILE id="Bgk3zj" name="Grouper.cpp" compile="1" resource="0" file="Source/Grouper.cpp"/>
+      <FILE id="xD2KN1" name="Grouper.h" compile="0" resource="0" file="Source/Grouper.h"/>
       <FILE id="vM6WFT" name="JuceAudioStream.cpp" compile="1" resource="0"
             file="Source/JuceAudioStream.cpp"/>
       <FILE id="biIlCl" name="JuceAudioStream.h" compile="0" resource="0"
@@ -1056,6 +1054,10 @@
       <FILE id="QSHCY4" name="MidiClerk.h" compile="0" resource="0" file="Source/MidiClerk.h"/>
       <FILE id="gYasMO" name="MidiManager.cpp" compile="1" resource="0" file="Source/MidiManager.cpp"/>
       <FILE id="hGkh3H" name="MidiManager.h" compile="0" resource="0" file="Source/MidiManager.h"/>
+      <FILE id="qi4XPR" name="ModelTransformer.cpp" compile="1" resource="0"
+            file="Source/ModelTransformer.cpp"/>
+      <FILE id="MOkp2k" name="ModelTransformer.h" compile="0" resource="0"
+            file="Source/ModelTransformer.h"/>
       <FILE id="qj6h9Q" name="Parametizer.cpp" compile="1" resource="0" file="Source/Parametizer.cpp"/>
       <FILE id="vP0uxA" name="Parametizer.h" compile="0" resource="0" file="Source/Parametizer.h"/>
       <FILE id="vS0bOi" name="Pathfinder.cpp" compile="1" resource="0" file="Source/Pathfinder.cpp"/>

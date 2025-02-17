@@ -21,6 +21,8 @@
 
 SymbolTree::SymbolTree()
 {
+    setLookAndFeel(&laf);
+    
     addAndMakeVisible(tree);
     tree.setRootItem(&root);
     tree.setRootItemVisible(false);
@@ -31,6 +33,27 @@ SymbolTree::SymbolTree()
 
 SymbolTree::~SymbolTree()
 {
+    setLookAndFeel(nullptr);
+}
+
+SymbolTree::LookAndFeel::LookAndFeel(SymbolTree* st)
+{
+    symbolTree = st;
+}
+
+void SymbolTree::LookAndFeel::drawTreeviewPlusMinusBox (juce::Graphics& g,
+                                                        const juce::Rectangle<float>& area,
+                                                        juce::Colour backgroundColour,
+                                                        bool isOpen, bool isMouseOver)
+{
+    (void)backgroundColour;
+    (void)isMouseOver;
+    juce::Path p;
+    p.addTriangle (0.0f, 0.0f, 1.0f, isOpen ? 0.0f : 0.5f, isOpen ? 0.5f : 0.0f, 1.0f);
+
+    // g.setColour (backgroundColour.contrasting().withAlpha (isMouseOver ? 0.5f : 0.3f));
+    g.setColour (juce::Colours::white);
+    g.fillPath (p, p.getTransformToScaleToFit (area.reduced (2, area.getHeight() / 4), true));
 }
 
 void SymbolTree::disableSearch()
@@ -48,7 +71,7 @@ void SymbolTree::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     if (!searchDisabled)
-      search.setBounds(area.removeFromTop(20));
+      search.setBounds(area.removeFromTop(22));
     tree.setBounds(area);
 }
 
@@ -211,7 +234,7 @@ int SymbolTree::searchTree(juce::String text, SymbolTreeItem* node)
               item->setSelected(false, false, juce::NotificationType::sendNotification);
             item->setHidden(false);
         }
-        else if (item->getName().contains(text)) {
+        else if (item->getName().containsIgnoreCase(text)) {
             hits++;
             // no, do not select them, they have to click to select
             //if (!item->isSelected())

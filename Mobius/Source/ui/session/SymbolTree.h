@@ -84,6 +84,18 @@ class SymbolTree : public juce::Component, public YanInput::Listener
     SymbolTree();
     ~SymbolTree();
 
+    class LookAndFeel : public juce::LookAndFeel_V4 {
+      public:
+        LookAndFeel(SymbolTree* st);
+
+        void drawTreeviewPlusMinusBox (juce::Graphics& g,
+                                       const juce::Rectangle<float>& area,
+                                       juce::Colour backgroundColour,
+                                       bool isOpen, bool isMouseOver) override;
+      private:
+        SymbolTree* symbolTree = nullptr;
+    };
+
     class Listener {
       public:
         virtual ~Listener() {}
@@ -115,6 +127,7 @@ class SymbolTree : public juce::Component, public YanInput::Listener
     
   protected:
 
+    LookAndFeel laf {this};
     Listener* listener = nullptr;
     bool searchDisabled = false;
     

@@ -15,7 +15,7 @@
 
 SessionEditorTree::SessionEditorTree()
 {
-    disableSearch();
+    //disableSearch();
 }
 
 SessionEditorTree::~SessionEditorTree()
@@ -102,7 +102,7 @@ void SessionEditorTree::intern(SymbolTreeItem* parent, juce::String treePath, Tr
 void SessionEditorTree::addSymbol(SymbolTreeItem* parent, juce::String name,
                                   juce::String suppressPrefix)
 {
-    SymbolTreeComparator comparator;
+//    SymbolTreeComparator comparator;
     
     Symbol* s = provider->getSymbols()->find(name);
     if (s == nullptr)
@@ -122,7 +122,8 @@ void SessionEditorTree::addSymbol(SymbolTreeItem* parent, juce::String name,
         }
         
         SymbolTreeItem* chitem = new SymbolTreeItem(nodename);
-        parent->addSubItemSorted(comparator, chitem);
+        //parent->addSubItemSorted(comparator, chitem);
+        parent->addSubItem(chitem);
     }
 }
 
