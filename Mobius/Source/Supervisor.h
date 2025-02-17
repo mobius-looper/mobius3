@@ -182,8 +182,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     class MidiClerk* getMidiClerk();
 
-    class SystemConfig* getSystemConfig();
-    void updateSystemConfig();
+    class SystemConfig* getSystemConfig() override;
+    void updateSystemConfig() override;
     class DeviceConfig* getDeviceConfig();
     void updateDeviceConfig();
     class UIConfig* getUIConfig() override;
@@ -215,7 +215,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void sessionEditorSave();
     void loadSession(class Session* neu);
     
-    class StaticConfig* getStaticConfig();
+    class StaticConfig* getStaticConfig() override;
     class HelpCatalog* getHelpCatalog();
     void decacheForms();
     
@@ -231,7 +231,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     // special accessors for things deep within the engine
     int getActiveSetup();
-    int getActivePreset();
+    int getActivePreset() override;
 
     // entry point for the "maintenance thread" only to be called by MainThread
     void advance();
@@ -337,7 +337,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // kludge for "identify mode" which is transient state held by StatusArea
     // and needed by MainMenu which is too isolated to have options that
     // aren't in one of the config objects
-    bool isIdentifyMode();
+    bool isIdentifyMode() override;
     void setIdentifyMode(bool b);
 
     class MslEnvironment* getScriptEnvironment() {

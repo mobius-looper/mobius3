@@ -48,8 +48,8 @@ class Transport : public SyncAnalyzer
     bool hasNativeBar() override {return true;}
     int getNativeBar() override;
     int getElapsedBeats() override;
-    bool hasNativeTimeSignature() {return true;}
-    int getNativeBeatsPerBar();
+    bool hasNativeTimeSignature() override {return true;}
+    int getNativeBeatsPerBar() override;
     float getTempo() override;
     int getUnitLength() override;
     void lock() override;

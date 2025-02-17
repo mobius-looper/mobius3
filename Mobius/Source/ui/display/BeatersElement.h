@@ -57,7 +57,7 @@ class BeatersElement : public StatusElement, public Provider::HighRefreshListene
     BeatersElement(class StatusArea* area);
     ~BeatersElement();
 
-    void highRefresh(class PriorityState* s);
+    void highRefresh(class PriorityState* s) override;
     
     int getPreferredWidth() override;
     int getPreferredHeight() override;

@@ -180,7 +180,7 @@ void MidiTempoMonitor::checkStop()
             int unit = getAverageUnitLength();
             if (unit > 0) {
                 char buf[64];
-                sprintf(buf, "MidiTempoMonitor: Average seconds %f unit %d",
+                snprintf(buf, sizeof(buf), "MidiTempoMonitor: Average seconds %f unit %d",
                         runningAverage, unit);
                 Trace(2, buf);
             }

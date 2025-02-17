@@ -44,8 +44,8 @@ class MidiAnalyzer : public SyncAnalyzer, public MidiManager::RealtimeListener
     bool hasNativeBar() override {return false;}
     int getNativeBar() override {return 0;}
     int getElapsedBeats() override;
-    bool hasNativeTimeSignature() {return false;}
-    int getNativeBeatsPerBar() {return 0;}
+    bool hasNativeTimeSignature() override {return false;}
+    int getNativeBeatsPerBar() override {return 0;}
     float getTempo() override;
     int getUnitLength() override;
     void lock() override;

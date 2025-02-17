@@ -374,15 +374,15 @@ void Track::syncEvent(class SyncEvent* e)
  */
 int Track::getSyncLength()
 {
-    int frames = mLoop->getFrames();
+    int frames = (int)(mLoop->getFrames());
     if (frames == 0)
-      frames = mLoop->getRecordedFrames();
+      frames = (int)(mLoop->getRecordedFrames());
     return frames;
 }
 
 int Track::getSyncLocation()
 {
-    return mLoop->getFrame();
+    return (int)(mLoop->getFrame());
 }
 
 /**
@@ -902,7 +902,7 @@ void Track::refreshState(TrackState* s)
         // why the hell do we have both of these
         lstate.index = l->getNumber() - 1;
         lstate.number = l->getNumber();
-        lstate.frames = l->getFrames();
+        lstate.frames = (int)(l->getFrames());
     }
 
     if (mLoopCount > s->loops.size())
@@ -956,7 +956,7 @@ void Track::refreshState(TrackState* s)
     if (s->frames == 0 && s->recording) {
         Event* stop = mEventManager->findEvent(RecordStopEvent);
         if (stop != nullptr)
-          s->frames = stop->frame;
+          s->frames = (int)(stop->frame);
     }
 }
 

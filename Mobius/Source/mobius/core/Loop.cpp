@@ -1058,7 +1058,7 @@ void Loop::refreshState(TrackState* s)
 
 	//s->frame = mFrame + mInput->latency;
 	// adding latency may have caused us to loop
-    s->frame = mFrame;
+    s->frame = (int)mFrame;
     // since we didn't add latency, don't need this, but this is what happened for awhile
 #if 0    
     long loopFrames = getFrames();
@@ -1068,7 +1068,7 @@ void Loop::refreshState(TrackState* s)
 	// warp this so the GUI doesn't have to deal with reverse
     long loopFrames = getFrames();
 	if (isReverse() && loopFrames > 0)
-		s->frame = reflectFrame(s->frame);
+      s->frame = (int)reflectFrame(s->frame);
     
     // subcycles
     // this is a new field, it wasn't in OldMobiusState
@@ -1115,7 +1115,7 @@ void Loop::refreshState(TrackState* s)
     // this is actually higher in TrackState
     s->windowOffset = -1;
     if (mPlay != NULL) {
-        s->windowOffset = mPlay->getWindowOffset();
+        s->windowOffset = (int)(mPlay->getWindowOffset());
         if (s->windowOffset >= 0) {
             // this is a window layer, but if the window exactly covers
             // the last real layer, pretend like we're not windowing so the
@@ -1134,7 +1134,7 @@ void Loop::refreshState(TrackState* s)
     }
     // don't bother calculating this unless there is a window
     if (s->windowOffset >= 0)
-      s->historyFrames = getHistoryFrames();
+      s->historyFrames = (int)getHistoryFrames();
     else
       s->historyFrames = 0;
     

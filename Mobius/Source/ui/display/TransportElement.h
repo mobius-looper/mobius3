@@ -46,7 +46,7 @@ class TransportElement : public UIElement, public UIAtomButton::Listener,
     void mouseDown(const juce::MouseEvent& e) override;
     
     void atomButtonPressed(UIAtomButton* b) override;
-    void yanPopupSelected(class YanPopup* src, int id);
+    void yanPopupSelected(class YanPopup* src, int id) override;
 
     void highRefresh(class PriorityState* state) override;
     

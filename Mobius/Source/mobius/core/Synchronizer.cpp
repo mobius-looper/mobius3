@@ -533,7 +533,7 @@ Event* Synchronizer::scheduleRecordStopNow(Action* action, Loop* loop)
     }
     
     loop->prepareLoop(doInputLatency, 0);
-    int stopFrame = loop->getFrames();
+    int stopFrame = (int)(loop->getFrames());
 
     // Must use Record function since the invoking function
     // can be anything that ends Record mode
@@ -676,12 +676,12 @@ void Synchronizer::extendRecordStop(Loop* loop)
             // go ahead and maintain the stop frame even on pending stops so we
             // can see progress in the LoopMeter
             int unitLength = result.extensionLength;
-            int newEndFrame = stop->number * unitLength;
+            int newEndFrame = (int)(stop->number * unitLength);
 
             // normally this will be larger than where we are now but if the user
             // is manually dicking with the unit length it may be less,
             // in that case, just leave the current stop alone?
-            int currentFrame = loop->getFrame();
+            int currentFrame = (int)(loop->getFrame());
             if (newEndFrame < currentFrame) {
                 Trace(1, "Synchronizer: Loop is already beyond where the extension wants it");
             }
@@ -760,8 +760,8 @@ void Synchronizer::reduceRecordStop(Loop* loop)
             // move in the LoopMeter
             if (stop->frame > 0) {
                 int unitLength = result.extensionLength;
-                int newEndFrame = stop->number * unitLength;
-                int currentFrame = loop->getFrame();
+                int newEndFrame = (int)(stop->number * unitLength);
+                int currentFrame = (int)(loop->getFrame());
                 if (newEndFrame < currentFrame) {
                     // should have prevented this with checks on the unit numbers
                     // so if we thought the numbers looked good but the frames don't
@@ -1068,7 +1068,7 @@ void Synchronizer::finalizeRecording(Track* t, SyncEvent* e)
     }
     else {
         int endFrame = e->finalLength;
-        int currentFrame = l->getRecordedFrames();
+        int currentFrame = (int)(l->getRecordedFrames());
         if (endFrame < currentFrame) {
             Trace(1, "Sync: Finalize overflow, current %d end %d",
                   currentFrame, endFrame);

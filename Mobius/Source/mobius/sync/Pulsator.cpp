@@ -451,6 +451,7 @@ const char* Pulsator::getUnitName(SyncUnit unit)
         case SyncUnitBeat: name = "Beat"; break;
         case SyncUnitBar: name = "Bar"; break;
         case SyncUnitLoop: name = "Loop"; break;
+        case SyncUnitNone: name = "None"; break;
     }
     return name;
 }    

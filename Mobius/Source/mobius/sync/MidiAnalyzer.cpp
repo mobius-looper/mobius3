@@ -421,7 +421,7 @@ void MidiAnalyzer::ponderUnitLength()
                     if (locked)
                       Trace(2, "MidiAnalyzer: Breaking lock");
                     char buf[256];
-                    sprintf(buf, "MidiAnalyzer: Jumping to new tempo from %f to %f",
+                    snprintf(buf, sizeof(buf), "MidiAnalyzer: Jumping to new tempo from %f to %f",
                             tempo, newTempo);
                     Trace(2, buf);
                 }
@@ -432,12 +432,12 @@ void MidiAnalyzer::ponderUnitLength()
             if (!locked || unitLength == 0) {
                 char buf[256];
                 if (unitLength > 0) {
-                    sprintf(buf, "MidiAnalyzer: Adjusting unit length from %d to %d tempo %f",
+                    snprintf(buf, sizeof(buf), "MidiAnalyzer: Adjusting unit length from %d to %d tempo %f",
                             unitLength, newUnitLength, newTempo);
                 }
                 else {
                     // include a little extra trace the first time we identify a unit
-                    sprintf(buf, "MidiAnalyzer: Starting unit length %d clock length %f running average %f tempo %f",
+                    snprintf(buf, sizeof(buf), "MidiAnalyzer: Starting unit length %d clock length %f running average %f tempo %f",
                             newUnitLength,
                             tempoMonitor.getAverageClockLength(), tempoMonitor.getAverageClock(),
                             newTempo);

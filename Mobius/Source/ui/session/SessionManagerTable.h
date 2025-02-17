@@ -49,12 +49,12 @@ class SessionManagerTable : public TypicalTable, public YanPopup::Listener,
     // TypicalTable overrides
     int getRowCount() override;
     juce::String getCellText(int rowNumber, int columnId) override;
-    void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event);
+    void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
-    void mouseDown(const juce::MouseEvent& event);
+    void mouseDown(const juce::MouseEvent& event) override;
     
-    void yanPopupSelected(YanPopup* src, int id);
-    void yanDialogClosed(YanDialog* d, int button);
+    void yanPopupSelected(YanPopup* src, int id) override;
+    void yanDialogClosed(YanDialog* d, int button) override;
     
   private:
     

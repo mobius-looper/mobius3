@@ -46,7 +46,7 @@ class YanSpacer : public YanField
     YanSpacer();
     ~YanSpacer();
 
-    int getPreferredComponentWidth();
+    int getPreferredComponentWidth() override;
 };
 
 /**
@@ -60,7 +60,7 @@ class YanSection : public YanField
     YanSection(juce::String label);
     ~YanSection();
 
-    int getPreferredComponentWidth();
+    int getPreferredComponentWidth() override;
     bool isSection() override {return true;}
 };
 

@@ -178,6 +178,9 @@ int Unitarian::getTrackUnitLength2(LogicalTrack* lt, TrackSyncUnit unit)
             case TrackUnitSubcycle:
                 length = innerTrack->getSubcycleFrames();
                 break;
+            case TrackUnitNone:
+                Trace(1, "Unitarian::getTrackUnitLength with TrackUnitNone");
+                break;
         }
     }
     return length;

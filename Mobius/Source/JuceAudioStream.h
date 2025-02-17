@@ -37,7 +37,7 @@ class JuceAudioStream : public MobiusAudioStream
     void processBlockPlugin(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi);
 
     // Stream properties derived from prepareToPlay
-    int getSampleRate();
+    int getSampleRate() override;
     int getBlockSize();
     
     // MobiusAudioStream interface

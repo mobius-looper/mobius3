@@ -30,6 +30,7 @@ const char* TrackState::getModeName(TrackState::Mode amode)
 
         case TrackState::ModeGlobalReset: name = "GlobalReset"; break;
         case TrackState::ModeGlobalPause: name = "GlobalPause"; break;
+        case TrackState::ModeGlobalMute: name = "GlobalMute"; break;
     }
     return name;
 }

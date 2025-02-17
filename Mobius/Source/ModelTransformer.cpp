@@ -500,6 +500,7 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
         case SYNC_HOST: newEnum = "host"; break;
         case SYNC_OUT: newEnum = "master"; break;
         case SYNC_TRANSPORT: newEnum = "transport"; break;
+        case SYNC_DEFAULT: break;
     }
     if (newEnum != nullptr)
       values->setString(juce::String("syncSource"), newEnum);
@@ -515,6 +516,7 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
         case TRACK_UNIT_SUBCYCLE: newEnum = "subcycle"; break;
         case TRACK_UNIT_CYCLE: newEnum = "cycle"; break;
         case TRACK_UNIT_LOOP: newEnum = "loop"; break;
+        case TRACK_UNIT_DEFAULT: break;
     }
     if (newEnum != nullptr)
       values->setString(juce::String("trackSyncUnit"), newEnum);
