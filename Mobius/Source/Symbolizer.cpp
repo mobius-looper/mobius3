@@ -26,6 +26,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+// update: Don't like having these, you can just define everything with symbols.xml
+
 /**
  * Functions
  * format: id, public, signature

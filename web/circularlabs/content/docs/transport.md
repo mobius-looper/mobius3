@@ -142,15 +142,15 @@ This is different than old Mobius behavior where if a track used SyncMode=Out an
 #### Changing the Transport Master Track
 
 The track that is considered the transport master may be changed at any time by
-sending the *TransportMaster* function to the desired track.  When that happens, the
-length of the new connected track determines the transport tempo.  Even tracks that did not use *Sync Source Master* can request to become the transport master.
+sending the *SyncMasterTransport* function to the desired track.  When that happens, the
+length of the new track determines the transport tempo.  Even tracks that did not use *Sync Source Master* can request to become the transport master.
 
-The track may also be *disconnected* from the transport.  Disconnection may be requested by sending the *TransportMaster* function to a track that is already the transport master.  In other words, the *TransportMaster* function toggles the state of being the transport master.
+The master track may also be *disconnected* from the transport.  Disconnection may be requested by sending the *SyncMasterTransport* function to a track that is already the transport master.  In other words, the *SyncMasterTransport* function toggles the state of being the transport master.
 
 A track may also be disconnected from the transport if the active loop is reset, or if the track switches to a loop that is empty.  
 
 Once a the transport master track is disconnected, another master will be automatically
-selected if that track is configured with a *Sync Source* of *Master* and it is changed to have an active loop that is not empty.  This may be done by re-recording an empty loop, or switching from an empty loop to a loop that is not empty.  This is called making the track "available".  Only tracks that have *Sync Source* *Master* can be made available.  A track that does not use *Master* can only become the master by sending it the *TransportMaster* function manually.  
+selected if that track is configured with a *Sync Source* of *Master* and it is changed to have an active loop that is not empty.  This may be done by re-recording an empty loop, or switching from an empty loop to a loop that is not empty.  This is called making the track "available".  Only tracks that have *Sync Source* *Master* will be automatically selected as the master.  A track that does not use *Master* can only become the master by sending it the *SyncMasterTransport* function manually.  
 
 #### Editing the Transport Master Track
 
@@ -161,7 +161,7 @@ a track will result in a transport tempo change.  If you enlarge the
 track using "rounding" functions like Multiply, InstantMultiply, or
 Insert, or use forms of quantization, the fundamental beat length of the track
 will remain the same and the transport tempo will not change.
-Examples of changes that do change the fundamental beat length are Unrounded Multiply
+Examples of changes that will change the fundamental beat length are Unrounded Multiply
 and Unrounded Insert without any quantization.
 
 If you reset the loop in the master track, or switch to a loop that is empty, this
@@ -172,7 +172,12 @@ tempo.  The track enters a state of being disconnected from the transport and th
 
 Tracks that are not the transport master track can synchronize with the transport
 by setting their *Sync Source* to *Transport*.  New recordings in those tracks will begin
-and end when the transport reaches the location specified by the *Sync Unit* parameter which may be either *Beat*, *Bar*, or *Loop*.  
+and end when the transport reaches the location specified by the *Sync Unit* parameter which may be either *Beat*, *Bar*, or *Loop*.  To synchronize with the transport it must be started, either manually with the *Start* button in the transport UI or automatically when a master track is connected.
+
+Synchronizing with the Mobius transport is very much like synchronizing with a plugin host's transport.
+
+For more on other forms of synchronization see the [Synchronization](../synchronization) chapter.
+
 
 
 
