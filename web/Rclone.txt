@@ -34,6 +34,17 @@ rclone copy public mobiuslooper:public_html/
 Note that YOU MUST USE "copy" and not "clone".  Clone will wipe out anything that does
 not exist in the source folder.
 
+To copy a recent Hugo build of the documentation
+
+
+cd to c:/dev/mobius3/web/circularlabs/public
+rclone copy docs mobiuslooper:public_html/docs
+
+To get the table of contents on the main documentation page
+rclone copy documentation mobiuslooper:public_html/
+
+
+
 
 
 

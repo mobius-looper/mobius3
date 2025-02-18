@@ -145,6 +145,16 @@
       <Value name="trackSyncUnit" value="subcycle" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
+  <Track id="9" type="midi">
+    <ValueSet>
+      <Value name="loopCount" value="0" type="int"/>
+      <Value name="midiChannelOverride" value="off" type="enum" ordinal="0"/>
+      <Value name="midiOutput" value="Bome MIDI Translator 1"/>
+      <Value name="midiThru" value="false" type="bool"/>
+      <Value name="quantize" value="off" type="enum" ordinal="0"/>
+      <Value name="subcycles" value="0" type="int"/>
+    </ValueSet>
+  </Track>
   <ValueSet>
     <Value name="autoRecordUnit" value="bar" type="enum" ordinal="1"/>
     <Value name="autoRecordUnits" value="2" type="int"/>

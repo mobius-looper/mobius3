@@ -13,6 +13,7 @@ New documentation will be focused on new features and things that have changed s
 
 - [Sessions](../docs/sessions)
 - [Transport](../docs/transport)
+- [Using MIDI Tracks](../docs/using-midi)
 - [Upgrading from 2.5](../docs/upgrading)
 
 ## Feature Notes

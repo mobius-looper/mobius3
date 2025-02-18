@@ -6,28 +6,39 @@ draft = false
 
 Use the following links to download installers for Mac or Windows.  Note that these are not signed and I have not gone though the registration process with Apple or Microsoft so you will get the usual scary warnings about it being from an unknown or untrusted source.  See the security comments below for how to deal with this.
 
-[Download for Windows](https://www.mobiuslooper.com/MobiusSetup.exe)
-
-[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius.pkg)
-
-[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel.pkg)
-
 The MacOS version is distributed in two different installation packages, one for modern M1+ or "Silicon" processors, and one for older Intel processors.  It is important that you download the right installer for your machine.  If the application does not run or the plugins fail to appear in the host, you most likely installed the wrong package.
 
 Also be careful if you are running Intel host applications on a Silicon Mac using "Rosetta".  This has its own set of compatibility problems and is not recommended.
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
-## Build 25
-- Track select functions now work with MIDI sent through the host
-- Remember the last edited binding set when returning to Edit MIDI Bindings panel
-- MIDI Binding editor supports an "Active" checkbox to pass MIDI events through to the engine for testing
-- Preset selectors in the Setup editor refresh to show newly added Preset names
-- Fix Delete in the Preset editor not working
-- Release bindings: Different bindings for press and release of the same note or cc
-- MIDI Channel Override when playing MIDI tracks
-- Early support for "Event Scripts" that run automatically in response to track state
-- MSL support for MidiOut and GetMidiDeviceId built-in functions
+Build 30 included **very** significant changes from the previous build
+28.  If you have been using build 28 or earlier for some
+time, I recommend you proceed with caution about upgrading to build
+30.  While I do run through tests on every build, the chance that behavior
+you have been relying on changed in build 30 is much higher than it has been in the past.
+If you are a new user that doesn't have any complex configuration, then build 30 should be fine.
+
+For this reason I'm keeping download links for both builds.  If you decide to try 30
+and run into a problem, you can go back to 28 until the issue is resolved.
+
+Please read through the new documentation pages for more on the new features that have been added.
+
+## Build 28
+
+[Download for Windows](https://www.mobiuslooper.com/MobiusSetup-28.exe)
+
+[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius-28.pkg)
+
+[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-28.pkg)
+
+## Build 30
+
+[Download for Windows](https://www.mobiuslooper.com/MobiusSetup.exe)
+
+[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius.pkg)
+
+[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel.pkg)
 
 ## Windows Security
 
@@ -49,6 +60,17 @@ On MacOS, the standalone application will be installed in `/Applications`, VST3 
 The mobius.xml and other supping files are installed in `/Users/<yourname>/Library/Application Support/Circular Labs/Mobius`.  This folder will be created only when you run the application or plugin for the first time.  As with Windows, I prefer to keep the configuration XML files under the `Users` folder so that they may be more easily edited manually without file permission problems.
 
 ## Older Releases
+
+## Build 25
+- Track select functions now work with MIDI sent through the host
+- Remember the last edited binding set when returning to Edit MIDI Bindings panel
+- MIDI Binding editor supports an "Active" checkbox to pass MIDI events through to the engine for testing
+- Preset selectors in the Setup editor refresh to show newly added Preset names
+- Fix Delete in the Preset editor not working
+- Release bindings: Different bindings for press and release of the same note or cc
+- MIDI Channel Override when playing MIDI tracks
+- Early support for "Event Scripts" that run automatically in response to track state
+- MSL support for MidiOut and GetMidiDeviceId built-in functions
 
 ## Build 24
 - Merge multi-track MIDI files when loading
