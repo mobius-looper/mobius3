@@ -4,7 +4,7 @@ draft = false
 summary = 'Instructions for using the Transport to synchronize tracks and send MIDI clocks.'
 +++
 
-The *Transport* is a new feature in build 30.   It is responsible for the generation of MIDI clocks that can be used to synchronize with external hardware devices, or other software applications.  It is also the primary mechanism for recording multiple tracks that play in synchronization with each other without drifting apart.
+The *Transport* is a new feature in build 30.   It is responsible for the generation of MIDI clocks that can be used to synchronize with external hardware devices or other applications, and is the primary mechanism for recording multiple tracks that play in synchronization with each other without drifting apart.
 
 What the Transport does can be difficult to talk about, depending on
 your history with Mobius.  For those that are relatively new, the
@@ -46,7 +46,11 @@ that the transport lives inside Mobius and that gives us more control over how i
 
 The transport supports a number of parameters to define how it generates synchronization pulses.
 These are currently set in the [Session](session) but other more convenient ways will be provided
-in the future.  The most important transport parameters are:
+in the future.
+
+![Transport Parameters](/docs/images/transport-parameters.png)
+
+The most important transport parameters are:
 
 * Default Tempo
 * Beats Per Bar
@@ -54,64 +58,52 @@ in the future.  The most important transport parameters are:
 
 The transport always generates beat pulses at a defined tempo.  There are several ways to define this
 tempo, the session just defines the default or *starting* tempo the transport will have when you
-bring up Mobius for the first time.
+bring up Mobius for the first time.  You may also define the tempo during performance by using **Tap Tempo** in the UI, or by recording a **Transport Master** track.  
 
 The *Beats Per Bar* parameter defines the length of a bar in units of beats, and *Bars Per Loop* defines the length of a loop in units of bars.  The most common value for *Beats Per Bar* is 4.  The value of *Bars Per Loop* is often just 1 in which case a bar and a loop will be the same size.
 
 #### Why "Bars Per Loop"?
 
+For the same reason that multiple beats are almost always organized into measures or bars, multiple bars are often thought of as a larger unit of time: a 12-bar blues for example.  While the beats per bar will often stay the same from one performance to another, larger collections of bars will vary depending on the structure of the song you have in mine, or the backing track you are using.  It is not necessary to use Bars Per Loop, but you may find it convenient when recording long tracks.  If you record a track that is 2 minutes long at 4/4 time, it might conceptually be 12, 16, 24, or 32 bars long.  If you know that is what you are going to create ahead of time, you can set Bars Per Loop accordingly which can then assist in selecting synchronization points, rather than having to count bars as they play.   
+
+#### Sending MIDI Clocks
+
+The Transport now controls the way in which Mobius generates MIDI clocks, replacing the
+older concept of *Out Sync Mode*.  Once the transport tempo is defined, and the transport is *started* MIDI clocks may or may not be generated.  If you want to generate MIDI clocks while the transport is running you must check the *Send Midi* parameter.  When this parameter is checked, a MIDI *Start* or *Continue* message is sent whenever the transport is started along with clocks at the transport's tempo.  When you stop the transport a MIDI *Stop* message is sent.
+
+When the transport is stopped, you can choose whether or not to continue sending MIDI clocks.  It is usually benneficial to keep clocks going even while stopped so that you give external devices time to adapt to tempo changes before they are started.  Some older devices may be confused by that, in which case you can control this with the *Send Clocks When Stopped* parameter.
+
+The *Manual Start* option is a more advanced topic that will be discussed in detail later.  If this option is checked, a MIDI *Start* message is not sent immediately when the transport is started, instead it waits for you to send it with the *MidiStart* action that may be bound to a footswitch or other trigger.
+
+The *Min Tempo* and *Max Tempo* parameters are used when defining the transport tempo from a *Master Track*.  This is discussed later.
+
+#### Metronome
+
+While not available yet, the transport will support an optional metronome.  Like most metronomes it will play a short sample on each beat, bar, or loop point that the transport reaches once it has been started.  Also planned are "count in beats" which are common in other applications.  This is still under development so suggestions are welcome.
 
 ### Transport Control
 
+While the Session contains the starting parameters for the transport,
+to use it you will need to add the **Transport Element** to the user
+interface.  Since this is a new feature it is not visible by default.
+To add it, go to the *Display* menu and select *Edit Layouts*. Then
+under the *Main Elements* tab, drag the element named "Transport" from
+the right side to the left.  Click Save.  Like other UI elements, the
+Transport can be moved around by clicking on it and dragging it, and
+it can be resized by clicking and dragging on the border.
 
-### Recording Synchronized Tracks
+![Transport Element](/docs/images/transport-overview.png)
 
+The Transport Element contains several subcomponents that, being a science nerd, I'll call "atoms".  The atoms are arranged in two rows.  The top row contains the *Loop Radar*, *Beat Flasher*, *Stop Button*, *Tap Tempo Button*, and *Tempo Display*.  The buttom row contains information about the *Beats Per Bar*, *Bars Per Loop*, the current beat within the bar, and the current bar within the loop.
 
+You start the transport playing by pressing the **Start** button.  While playing the text inside the button changes to **Stop** and clicking on it again will stop the transport.  The **Tap** button can be used to enter a tempo by clicking on it twice.  The current transport tempo is displayed to the right of the Tap button.  The range of tempos you can enter is constrained by the **Min Tempo** and **Max Tempo** session parameters.  If you tap a tempo outside this range it will be doubled or halved until it fits within this range.
 
+While the transport is playing the *Loop Radar* will fill with color, similar to the loop radar in a track.  As the transport crosses beat, bar, or loop boundaries, the *Beat Flasher* will flash: green on each beat, yellow on each bar, and red on each loop.
 
+### The Transport for Old Mobius Users
 
-
-
-
-
-
-
-
-
-
-The Transport is not visible in the UI by default.  To see the Transport, you will need to add it
-to the *Main Elements* list in the display layout.  From the *Display* menu, select *Edit Layouts*,
-then under the *Main Elements* tab, drag the element named "Transport" from the right side to the left.
-Click Save.  Like other UI elements, the Transport can be moved around by clicking on it and dragging it,
-and it can be resized by clicking and dragging on the border.
-
-The Transport UI consists of two rows.  The top row contains these elements:
-
-* Location Meter (aka the "radar")
-* Beat flasher
-* Start/Stop button
-* Tap Tempo button
-* Current tempo display
-
-The bottom row shows information about the configuration of the Transport including:
-
-* The number of beats in one bar
-* The number of bars in one loop
-* The current elapsed beat
-* The current elspaed bar
-
-Pressing the *Start* button will start the transport running at the current tempo.  The location meter
-will spin and the beat light will flash.  The light flashes green when it is on a beat, yellow when it on
-a bar, and red when it is on a loop.  After pressing the *Start* button, the name changes to *Stop* and pressing it again stops the transport and rewinds it to the start.
-
-If the Transport is configured to generate MIDI clocks they will be sent out to the MIDI device
-configured as the "App Sync" or "Plugin Sync" device in the *Midi Devices* window.
-
-So far, this is a common concept.  Just about every audio application has something similar.  What makes
-the Transport different from the transport controls in most DAWs, is the way in which the tempo can be set and the ways in which starting and stopping it can be automated.
-
-Talking about what the transport does and how it is used is difficult for older Mobius users.  Mobius grew up without a transport and it evolved ways to accomplish the same things using different terminology.  
-For older Mobius users, the simplest way to think of the transport is as a short empty track that you
+Talking about what the transport does and how it is used may be difficult for older Mobius users.  Mobius grew up without a transport and it evolved ways to accomplish the same things using different terminology.  
+For older users, the simplest way to think of the transport is as a short empty track that you
 record simply for the purposes of synchronizing other tracks.  This was a common technique in the past.
 This empty track would be the Out Sync Master, it would generate MIDI clocks, and the other tracks
 could synchronize with it using Track Sync.
@@ -125,9 +117,49 @@ be more freely controlled.
 Old-school loopers have come to think of a transport as a *bad thing*.  It is something that locks you into
 a tempo and forces you to make loops that are of a pre-defined size.  They much prefer "first loop capability" where you can define the length of loops on the fly using any tempo or length they choose at the time.  It is important to understand that while the Mobius transport can be used to record loops of a pre-defined tempo and size, that is only one way to use it.  When you think about it, selecting a tempo using "tap tempo" is really no different than recording a "first loop".  You are defining a span of time with two presses of a button, and once that span of time is locked in, you can choose to synchronize with it.
 
-What makes the Mobius transport different than synching with the plugin host transport, is that the tempo of the transport can be defined by recording a live audio track.  To do that, the track is configured to be the *Transport Master*.   Once the track has finished recording, a tempo that matches the length of the track is calculated and given to the transport.  The transport will now send MIDI clocks at that tempo.  This is almost exactly the same as the old Mobius parameter *Sync Mode* to *Out*.
+What makes the Mobius transport different than synching with the plugin host transport, is that the tempo of the transport can be defined by recording a live audio track.  To do that, the track is configured to be the *Transport Master*.
 
-Once that first audio or MIDI track is recorded and becomes the transport master, you can synchronize other tracks with it using *track sync* as you did before.  As an alternative though you can choose to make the track follow the Transport for synchronization rather than another track.  The result is much the same as if you were following the transport in a host application.
+### Transport Master Tracks
+
+To control the tempo of the transport from a track, the track must be made the *Transport Master*.  There are two ways to accomplish this, the first is by configuring the track's *Sync Source* parameter in the session.
+
+![Transport Master Configuration](/docs/images/transport-master.png)
+
+Most of the names in the *Sync Source* menu represent things that generate sync pulses.  The name *Master* is a special case that means that this track would like to sync with the Transport, but it wants to **control** the transport tempo rather than following it.
+
+For old Mobius users, this is similar to the old *Sync Mode* parameter value named *Out*.
+
+When a track using *Sync Source Master* is finished recording, the length of the track is analyzed and converted into a tempo to give to the transport.  The formula for calculating the tempo is somewhat complex, but is obvious in most cases for shorter loops where it behaves much like *tap tempo*.  For long loops of many seconds, it is influenced by the *Bars Per Loop* parameter which will divide long loops into smaller sections before deriving the tempo.  The resulting tempo will then be constrained by the *Min Tempo* and *Max Tempo* parameters in the same way as using the *Tap* button in the transport element.
+
+When a track is the Transport Master, the transport will be started automatically as soon as the track finishes recording.  If the *Send Midi* transport parameter is also checked, this will begin generating MIDI clocks.
+
+#### Multiple Tracks with Sync Source Master
+
+There can only be one Transport Master track at a time.  If you have several tracks configured with *Sync Source Master*, the first one recorded will become the transport master, and the others will revert to synchronizing with the Transport itself.
+
+This is different than old Mobius behavior where if a track used SyncMode=Out and there was already an OutSyncMaster, it would switch to using *Track Sync* instead.
+
+#### Changing the Transport Master
+
+When a track becomes the Transport Master it is called being
+"connected" to the transport.  While a track is connected to the
+transport, changes made to the track that alter it's size may result
+in a corresponding change to the transport's tempo.  Not every change to
+a track will result in a transport tempo change.  If you enlarge the
+track using "rounding" functions like Multiply, InstantMultiply, or
+Insert, or use forms of quantization, the fundamental beat length of the track
+will remain the same and the transport tempo will not change.
+Examples of changes that do change the fundamental beat length are Unrounded Multiply
+and Unrounded Insert without any quantization.
+
+The track connected to the transport may also be changed at any time.  When that happens, the length of the new connected track determines the transport tempo.  Even tracks that did not use *Sync Source Master* can request to become the transport master.  This is done by sending the *TransportMaster* function to the focused track, or using a binding that identifies a specific track by name or number.
+
+The track may also be *disconnected* from the transport.  Disconnection may be requested by sending the *TransportMaster* function to a track that is already the transport master.  In other words, the *TransportMaster* function toggles the state of being the transport master.
+
+After disconnection, changes to the track size will not change the transport tempo.  When the transport master track is disconnected, a new master track will not be selected automatically.  The transport will continue running at it's previous tempo.  A new transport master track may be selected using the *TransportMaster* function, or by recording a new track that uses the *Sync Source Master* option.
+
+### Synchronizing With The Transport
+
 
 
 
