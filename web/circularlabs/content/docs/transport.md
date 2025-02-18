@@ -139,12 +139,24 @@ There can only be one Transport Master track at a time.  If you have several tra
 
 This is different than old Mobius behavior where if a track used SyncMode=Out and there was already an OutSyncMaster, it would switch to using *Track Sync* instead.
 
-#### Changing the Transport Master
+#### Changing the Transport Master Track
 
-When a track becomes the Transport Master it is called being
-"connected" to the transport.  While a track is connected to the
-transport, changes made to the track that alter it's size may result
-in a corresponding change to the transport's tempo.  Not every change to
+The track that is considered the transport master may be changed at any time by
+sending the *TransportMaster* function to the desired track.  When that happens, the
+length of the new connected track determines the transport tempo.  Even tracks that did not use *Sync Source Master* can request to become the transport master.
+
+The track may also be *disconnected* from the transport.  Disconnection may be requested by sending the *TransportMaster* function to a track that is already the transport master.  In other words, the *TransportMaster* function toggles the state of being the transport master.
+
+A track may also be disconnected from the transport if the active loop is reset, or if the track switches to a loop that is empty.  
+
+Once a the transport master track is disconnected, another master will be automatically
+selected if that track is configured with a *Sync Source* of *Master* and it is changed to have an active loop that is not empty.  This may be done by re-recording an empty loop, or switching from an empty loop to a loop that is not empty.  This is called making the track "available".  Only tracks that have *Sync Source* *Master* can be made available.  A track that does not use *Master* can only become the master by sending it the *TransportMaster* function manually.  
+
+#### Editing the Transport Master Track
+
+While a track is connected to the transport, changes made to the track that
+alter it's size may result in a corresponding change to the transport's tempo.
+Not every change to
 a track will result in a transport tempo change.  If you enlarge the
 track using "rounding" functions like Multiply, InstantMultiply, or
 Insert, or use forms of quantization, the fundamental beat length of the track
@@ -152,14 +164,15 @@ will remain the same and the transport tempo will not change.
 Examples of changes that do change the fundamental beat length are Unrounded Multiply
 and Unrounded Insert without any quantization.
 
-The track connected to the transport may also be changed at any time.  When that happens, the length of the new connected track determines the transport tempo.  Even tracks that did not use *Sync Source Master* can request to become the transport master.  This is done by sending the *TransportMaster* function to the focused track, or using a binding that identifies a specific track by name or number.
-
-The track may also be *disconnected* from the transport.  Disconnection may be requested by sending the *TransportMaster* function to a track that is already the transport master.  In other words, the *TransportMaster* function toggles the state of being the transport master.
-
-After disconnection, changes to the track size will not change the transport tempo.  When the transport master track is disconnected, a new master track will not be selected automatically.  The transport will continue running at it's previous tempo.  A new transport master track may be selected using the *TransportMaster* function, or by recording a new track that uses the *Sync Source Master* option.
+If you reset the loop in the master track, or switch to a loop that is empty, this
+does not automatically reassign the master track and will not alter the transport
+tempo.  The track enters a state of being disconnected from the transport and the transport is allowed to run at it's current tempo.  If you then switch to a non-empty loop or re-record a new loop in the master track, it will reconnect to the transport and possibly change it's tempo.
 
 ### Synchronizing With The Transport
 
+Tracks that are not the transport master track can synchronize with the transport
+by setting their *Sync Source* to *Transport*.  New recordings in those tracks will begin
+and end when the transport reaches the location specified by the *Sync Unit* parameter which may be either *Beat*, *Bar*, or *Loop*.  
 
 
 
