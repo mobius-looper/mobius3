@@ -181,6 +181,9 @@
               file="../Mobius/Source/model/ParameterProperties.cpp"/>
         <FILE id="fMicwR" name="ParameterProperties.h" compile="0" resource="0"
               file="../Mobius/Source/model/ParameterProperties.h"/>
+        <FILE id="eUqOF4" name="ParameterSets.cpp" compile="1" resource="0"
+              file="../Mobius/Source/model/ParameterSets.cpp"/>
+        <FILE id="vgiMas" name="ParameterSets.h" compile="0" resource="0" file="../Mobius/Source/model/ParameterSets.h"/>
         <FILE id="gLFmjn" name="Preset.cpp" compile="1" resource="0" file="../Mobius/Source/model/Preset.cpp"/>
         <FILE id="bFBKiP" name="Preset.h" compile="0" resource="0" file="../Mobius/Source/model/Preset.h"/>
         <FILE id="qpJJbo" name="PriorityState.h" compile="0" resource="0" file="../Mobius/Source/model/PriorityState.h"/>
