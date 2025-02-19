@@ -306,7 +306,7 @@ void StripFocusLock::mouseDown(const class juce::MouseEvent& event)
 //
 //////////////////////////////////////////////////////////////////////
 
-const int LoopRadarDiameter = 30;
+const int LoopRadarDefaultDiameter = 30;
 const int LoopRadarPadding = 4;
 
 StripLoopRadar::StripLoopRadar(class TrackStrip* parent) :
@@ -318,15 +318,23 @@ StripLoopRadar::~StripLoopRadar()
 {
 }
 
+void StripLoopRadar::configure()
+{
+    UIConfig* config = strip->getProvider()->getUIConfig();
+    diameter = config->getInt("radarDiameter");
+    if (diameter == 0)
+      diameter = LoopRadarDefaultDiameter;
+}
+
 int StripLoopRadar::getPreferredWidth()
 {
     
-    return LoopRadarDiameter + (LoopRadarPadding * 2);
+    return diameter + (LoopRadarPadding * 2);
 }
 
 int StripLoopRadar::getPreferredHeight()
 {
-    return LoopRadarDiameter + (LoopRadarPadding * 2);
+    return diameter + (LoopRadarPadding * 2);
 }
 
 void StripLoopRadar::update(MobiusView* view)
@@ -387,7 +395,7 @@ void StripLoopRadar::paint(juce::Graphics& g)
 
         // start radians, end radians, inner circle 
         path.addPieSegment((float)LoopRadarPadding, (float)LoopRadarPadding,
-                           (float)LoopRadarDiameter, (float)LoopRadarDiameter,
+                           (float)diameter, (float)diameter,
                            startrad, endrad, (float)innerCircle);
 
         g.setColour(loopColor);
@@ -397,7 +405,7 @@ void StripLoopRadar::paint(juce::Graphics& g)
         // color shold have been left red if recording
         g.setColour(loopColor);
         g.fillEllipse((float)LoopRadarPadding, (float)LoopRadarPadding,
-                      (float)LoopRadarDiameter, (float)LoopRadarDiameter);
+                      (float)diameter, (float)diameter);
     }
 }
 

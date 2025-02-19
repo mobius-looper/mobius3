@@ -64,7 +64,7 @@ The *Beats Per Bar* parameter defines the length of a bar in units of beats, and
 
 #### Why "Bars Per Loop"?
 
-For the same reason that multiple beats are almost always organized into measures or bars, multiple bars are often thought of as a larger unit of time: a 12-bar blues for example.  While the beats per bar will often stay the same from one performance to another, larger collections of bars will vary depending on the structure of the song you have in mine, or the backing track you are using.  It is not necessary to use Bars Per Loop, but you may find it convenient when recording long tracks.  If you record a track that is 2 minutes long at 4/4 time, it might conceptually be 12, 16, 24, or 32 bars long.  If you know that is what you are going to create ahead of time, you can set Bars Per Loop accordingly which can then assist in selecting synchronization points, rather than having to count bars as they play.   
+For the same reason that multiple beats are almost always organized into measures or bars, multiple bars are often thought of as a larger unit of time: a 12-bar blues for example.  While the beats per bar will often stay the same from one performance to another, larger collections of bars will vary depending on the structure of the song you have in mind, or the backing track you are using.  It is not necessary to use Bars Per Loop, but you may find it convenient when recording long tracks.  If you record a track that is 2 minutes long at 4/4 time, it might conceptually be 12, 16, 24, or 32 bars long.  If you know that is what you are going to create ahead of time, you can set Bars Per Loop accordingly which can then assist in selecting synchronization points, rather than having to count bars as they play.   
 
 #### Sending MIDI Clocks
 
@@ -94,7 +94,7 @@ it can be resized by clicking and dragging on the border.
 
 ![Transport Element](/docs/images/transport-overview.png)
 
-The Transport Element contains several subcomponents that, being a science nerd, I'll call "atoms".  The atoms are arranged in two rows.  The top row contains the *Loop Radar*, *Beat Flasher*, *Stop Button*, *Tap Tempo Button*, and *Tempo Display*.  The buttom row contains information about the *Beats Per Bar*, *Bars Per Loop*, the current beat within the bar, and the current bar within the loop.
+The Transport Element contains several subcomponents that, being a science nerd, I'll call "atoms".  The atoms are arranged in two rows.  The top row contains the *Loop Radar*, *Beat Flasher*, *Stop Button*, *Tap Tempo Button*, and *Tempo Display*.  The bottom row contains information about the *Beats Per Bar*, *Bars Per Loop*, the current beat within the bar, and the current bar within the loop.
 
 You start the transport playing by pressing the **Start** button.  While playing the text inside the button changes to **Stop** and clicking on it again will stop the transport.  The **Tap** button can be used to enter a tempo by clicking on it twice.  The current transport tempo is displayed to the right of the Tap button.  The range of tempos you can enter is constrained by the **Min Tempo** and **Max Tempo** session parameters.  If you tap a tempo outside this range it will be doubled or halved until it fits within this range.
 
