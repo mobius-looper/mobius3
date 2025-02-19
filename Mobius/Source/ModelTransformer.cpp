@@ -5,6 +5,7 @@
 
 #include "model/MobiusConfig.h"
 #include "model/Setup.h"
+#include "model/Preset.h"
 #include "model/ParameterConstants.h"
 
 #include "model/Symbol.h"
@@ -201,6 +202,67 @@ void ModelTransformer::transformEnum(SymbolId id, int value, ValueSet* dest)
             }
         }
     }
+}
+
+/**
+ * Transform the ValueSet representation of an enum back to a range
+ * checked ordinal that can be safely cast.
+ */
+int ModelTransformer::getEnum(SymbolId id, ValueSet* src)
+{
+    int ordinal = 0;
+    
+    Symbol* s = symbols->getSymbol(id);
+    if (s != nullptr) {
+        ParameterProperties* props = s->parameterProperties.get();
+
+        if (props == nullptr) {
+            Trace(1, "ModelTransformer: Symbol not a parameter %s", s->getName());
+        }
+        else if (props->type != TypeEnum) {
+            Trace(1, "ModelTransformer: Symbol not a enumeration %s", s->getName());
+        }
+        else {
+            MslValue* mv = src->get(s->name);
+            if (mv == nullptr) {
+                // leave it zero
+            }
+            else if (mv->type != MslValue::Enum && mv->type != MslValue::Int) {
+                Trace(1, "ModelTransformer: Value for symbol %s not an enum or int",
+                      s->getName());
+            }
+            else if (props->values.size() == 0) {
+                Trace(1, "ModelTransformer: Unable to validate enumeration for symbol %s",
+                      s->getName());
+                // risky to assume it's within range, should leave zero?
+                ordinal = mv->getInt();
+            }
+            else {
+                int ival = mv->getInt();
+                if (ival >= props->values.size()) {
+                    Trace(1, "ModelTransformer: Parameter %s value %d out of range",
+                          s->getName(), ival);
+                    // could look it up by name I suppose...
+                }
+                else {
+                    // if we have an enum symbol, do some sanity checks on it and warn
+                    // but use the numeric value
+                    if (mv->type == MslValue::Enum) {
+                        const char* eval = mv->getString();
+                        int index = props->values.indexOf(juce::String(eval));
+                        if (index < 0)
+                          Trace(1, "ModelTransformer: Parameter %s enumeration %s not found",
+                                s->getName(), eval);
+                        else if (index != ival)
+                          Trace(1, "ModelTransformer: Parameter %s enumeration %s index mismatch",
+                                s->getName(), eval);
+                    }
+                    ordinal = ival;
+                }
+            }
+        }
+    }
+    return ordinal;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -599,79 +661,126 @@ void ModelTransformer::transform(Session::Track* src, SetupTrack* dest)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Pending
-//
-// Some old prototype code for transforming Presets that will be
-// needed someday
+// Presets and ParameterSets
 //
 //////////////////////////////////////////////////////////////////////
-
-#if 0
 
 /**
  * These are the rare cases where parameter name constants are necessary.
  * Use GetParameterName
  */
-void Upgrader::convertPreset(Preset* preset, MainConfig* main)
+void ModelTransformer::transform(Preset* preset, ValueSet* set)
 {
-    SymbolTable* symbols = supervisor->getSymbols();
+    transform(ParamSubcycles, preset->getSubcycles(), set);
+    transformEnum(ParamMultiplyMode, preset->getMultiplyMode(), set);
+    transformEnum(ParamShuffleMode, preset->getShuffleMode(), set);
+    transformBool(ParamAltFeedbackEnable, preset->isAltFeedbackEnable(), set);
+    transformEnum(ParamEmptyLoopAction, preset->getEmptyLoopAction(), set);
+    transformEnum(ParamEmptyTrackAction, preset->getEmptyTrackAction(), set);
+    transformEnum(ParamTrackLeaveAction, preset->getTrackLeaveAction(), set);
+    transform(ParamLoopCount, preset->getLoops(), set);
+    transformEnum(ParamMuteMode, preset->getMuteMode(), set);
+    transformEnum(ParamMuteCancel, preset->getMuteCancel(), set);
+    transformBool(ParamOverdubQuantized, preset->isOverdubQuantized(), set);
+    transformEnum(ParamQuantize, preset->getQuantize(), set);
+    transformEnum(ParamBounceQuantize, preset->getBounceQuantize(), set);
+
+    transformBool(ParamRecordResetsFeedback, preset->isRecordResetsFeedback(), set);
+    transformBool(ParamSpeedRecord, preset->isSpeedRecord(), set);
+    transformBool(ParamRoundingOverdub, preset->isRoundingOverdub(), set);
+    transformEnum(ParamSwitchLocation, preset->getSwitchLocation(), set);
+    transformEnum(ParamReturnLocation, preset->getReturnLocation(), set);
+    transformEnum(ParamSwitchDuration, preset->getSwitchDuration(), set);
+    transformEnum(ParamSwitchQuantize, preset->getSwitchQuantize(), set);
+    transformEnum(ParamTimeCopyMode, preset->getTimeCopyMode(), set);
+    transformEnum(ParamSoundCopyMode, preset->getSoundCopyMode(), set);
+    transformBool(ParamSwitchVelocity, preset->isSwitchVelocity(), set);
     
-    juce::String objname = juce::String("Preset:") + preset->getName();
+    transform(ParamMaxUndo, preset->getMaxUndo(), set);
+    transform(ParamMaxRedo, preset->getMaxRedo(), set);
+    transformBool(ParamNoFeedbackUndo, preset->isNoFeedbackUndo(), set);
+    transformBool(ParamNoLayerFlattening, preset->isNoLayerFlattening(), set);
+    transformBool(ParamSpeedShiftRestart, preset->isSpeedShiftRestart(), set);
+    transformBool(ParamPitchShiftRestart, preset->isPitchShiftRestart(), set);
+    transform(ParamSpeedStepRange, preset->getSpeedStepRange(), set);
+    transform(ParamSpeedBendRange, preset->getSpeedBendRange(), set);
+    transform(ParamPitchStepRange, preset->getPitchStepRange(), set);
+    transform(ParamPitchBendRange, preset->getPitchBendRange(), set);
+    transform(ParamTimeStretchRange, preset->getTimeStretchRange(), set);
+    
+    transformEnum(ParamSlipMode, preset->getSlipMode(), set);
+    transform(ParamSlipTime, preset->getSlipTime(), set);
+    transformEnum(ParamRecordTransfer, preset->getRecordTransfer(), set);
+    transformEnum(ParamOverdubTransfer, preset->getOverdubTransfer(), set);
+    transformEnum(ParamReverseTransfer, preset->getReverseTransfer(), set);
+    transformEnum(ParamSpeedTransfer, preset->getSpeedTransfer(), set);
+    transformEnum(ParamPitchTransfer, preset->getPitchTransfer(), set);
+    transformEnum(ParamWindowSlideUnit, preset->getWindowSlideUnit(), set);
+    transformEnum(ParamWindowEdgeUnit, preset->getWindowEdgeUnit(), set);
+    transform(ParamWindowSlideAmount, preset->getWindowSlideAmount(), set);
+    transform(ParamWindowEdgeAmount, preset->getWindowEdgeAmount(), set);
 
-    ValueSet* neu = main->find(objname);
-    if (neu == nullptr) {
-        neu = new ValueSet();
-        neu->name = objname;
-        main->add(neu);
-    }
-
-    neu->setInt(symbols->getName(ParamSubcycles), preset->getSubcycles());
-    convertEnum(symbols->getName(ParamMultiplyMode), preset->getMultiplyMode(), neu);
-    convertEnum(symbols->getName(ParamShuffleMode), preset->getShuffleMode(), neu);
-    neu->setBool(symbols->getName(ParamAltFeedbackEnable), preset->isAltFeedbackEnable());
-    convertEnum(symbols->getName(ParamEmptyLoopAction), preset->getEmptyLoopAction(), neu);
-    convertEnum(symbols->getName(ParamEmptyTrackAction), preset->getEmptyTrackAction(), neu);
-    convertEnum(symbols->getName(ParamTrackLeaveAction), preset->getTrackLeaveAction(), neu);
-    neu->setInt(symbols->getName(ParamLoopCount), preset->getLoops());
-    convertEnum(symbols->getName(ParamMuteMode), preset->getMuteMode(), neu);
-    convertEnum(symbols->getName(ParamMuteCancel), preset->getMuteCancel(), neu);
-    neu->setBool(symbols->getName(ParamOverdubQuantized), preset->isOverdubQuantized());
-    convertEnum(symbols->getName(ParamQuantize), preset->getQuantize(), neu);
-    convertEnum(symbols->getName(ParamBounceQuantize), preset->getBounceQuantize(), neu);
-    neu->setBool(symbols->getName(ParamRecordResetsFeedback), preset->isRecordResetsFeedback());
-    neu->setBool(symbols->getName(ParamSpeedRecord), preset->isSpeedRecord());
-    neu->setBool(symbols->getName(ParamRoundingOverdub), preset->isRoundingOverdub());
-    convertEnum(symbols->getName(ParamSwitchLocation), preset->getSwitchLocation(), neu);
-    convertEnum(symbols->getName(ParamReturnLocation), preset->getReturnLocation(), neu);
-    convertEnum(symbols->getName(ParamSwitchDuration), preset->getSwitchDuration(), neu);
-    convertEnum(symbols->getName(ParamSwitchQuantize), preset->getSwitchQuantize(), neu);
-    convertEnum(symbols->getName(ParamTimeCopyMode), preset->getTimeCopyMode(), neu);
-    convertEnum(symbols->getName(ParamSoundCopyMode), preset->getSoundCopyMode(), neu);
-    neu->setBool(symbols->getName(ParamSwitchVelocity), preset->isSwitchVelocity());
-    neu->setInt(symbols->getName(ParamMaxUndo), preset->getMaxUndo());
-    neu->setInt(symbols->getName(ParamMaxRedo), preset->getMaxRedo());
-    neu->setBool(symbols->getName(ParamNoFeedbackUndo), preset->isNoFeedbackUndo());
-    neu->setBool(symbols->getName(ParamNoLayerFlattening), preset->isNoLayerFlattening());
-    neu->setBool(symbols->getName(ParamSpeedShiftRestart), preset->isSpeedShiftRestart());
-    neu->setBool(symbols->getName(ParamPitchShiftRestart), preset->isPitchShiftRestart());
-    neu->setInt(symbols->getName(ParamSpeedStepRange), preset->getSpeedStepRange());
-    neu->setInt(symbols->getName(ParamSpeedBendRange), preset->getSpeedBendRange());
-    neu->setInt(symbols->getName(ParamPitchStepRange), preset->getPitchStepRange());
-    neu->setInt(symbols->getName(ParamPitchBendRange), preset->getPitchBendRange());
-    neu->setInt(symbols->getName(ParamTimeStretchRange), preset->getTimeStretchRange());
-    convertEnum(symbols->getName(ParamSlipMode), preset->getSlipMode(), neu);
-    neu->setInt(symbols->getName(ParamSlipTime), preset->getSlipTime());
-    convertEnum(symbols->getName(ParamRecordTransfer), preset->getRecordTransfer(), neu);
-    convertEnum(symbols->getName(ParamOverdubTransfer), preset->getOverdubTransfer(), neu);
-    convertEnum(symbols->getName(ParamReverseTransfer), preset->getReverseTransfer(), neu);
-    convertEnum(symbols->getName(ParamSpeedTransfer), preset->getSpeedTransfer(), neu);
-    convertEnum(symbols->getName(ParamPitchTransfer), preset->getPitchTransfer(), neu);
-    convertEnum(symbols->getName(ParamWindowSlideUnit), preset->getWindowSlideUnit(), neu);
-    convertEnum(symbols->getName(ParamWindowEdgeUnit), preset->getWindowEdgeUnit(), neu);
-    neu->setInt(symbols->getName(ParamWindowSlideAmount), preset->getWindowSlideAmount());
-    neu->setInt(symbols->getName(ParamWindowEdgeAmount), preset->getWindowEdgeAmount());
+    // SpeedSequence, PitchSequence
+    // These are stored in the XML as strings but get parsed into
+    // a StepSequence during Preset construction
+    transform(ParamSpeedSequence, preset->getSpeedSequence()->getSource(), set);
+    transform(ParamPitchSequence, preset->getSpeedSequence()->getSource(), set);
 }
-#endif
+
+void ModelTransformer::transform(ValueSet* set, Preset* preset)
+{
+    preset->setSubcycles(getInt(ParamSubcycles, set));
+    preset->setMultiplyMode((ParameterMultiplyMode)getEnum(ParamMultiplyMode, set));
+    preset->setShuffleMode((ShuffleMode)getEnum(ParamShuffleMode, set));
+    preset->setAltFeedbackEnable(getBool(ParamAltFeedbackEnable, set));
+    preset->setEmptyLoopAction((EmptyLoopAction)getEnum(ParamEmptyLoopAction, set));
+    preset->setEmptyTrackAction((EmptyLoopAction)getEnum(ParamEmptyTrackAction, set));
+    preset->setTrackLeaveAction((TrackLeaveAction)getEnum(ParamTrackLeaveAction, set));
+    preset->setLoops(getInt(ParamLoopCount, set));
+    preset->setMuteMode((ParameterMuteMode)getEnum(ParamMuteMode, set));
+    preset->setMuteCancel((MuteCancel)getEnum(ParamMuteCancel, set));
+    preset->setOverdubQuantized(getBool(ParamOverdubQuantized, set));
+    preset->setQuantize((QuantizeMode)getEnum(ParamQuantize, set));
+    preset->setBounceQuantize((QuantizeMode)getEnum(ParamBounceQuantize, set));
+
+    preset->setRecordResetsFeedback(getBool(ParamRecordResetsFeedback, set));
+    preset->setSpeedRecord(getBool(ParamSpeedRecord, set));
+    preset->setRoundingOverdub(getBool(ParamRoundingOverdub, set));
+    preset->setSwitchLocation((SwitchLocation)getEnum(ParamSwitchLocation, set));
+    preset->setReturnLocation((SwitchLocation)getEnum(ParamReturnLocation, set));
+    preset->setSwitchDuration((SwitchDuration)getEnum(ParamSwitchDuration, set));
+    preset->setSwitchQuantize((SwitchQuantize)getEnum(ParamSwitchQuantize, set));
+    preset->setTimeCopyMode((CopyMode)getEnum(ParamTimeCopyMode, set));
+    preset->setSoundCopyMode((CopyMode)getEnum(ParamSoundCopyMode, set));
+    preset->setSwitchVelocity(getBool(ParamSwitchVelocity, set));
+    
+    preset->setMaxUndo(getInt(ParamMaxUndo, set));
+    preset->setMaxRedo(getInt(ParamMaxRedo, set));
+    preset->setNoFeedbackUndo(getBool(ParamNoFeedbackUndo, set));
+    preset->setNoLayerFlattening(getBool(ParamNoLayerFlattening, set));
+    preset->setSpeedShiftRestart(getBool(ParamSpeedShiftRestart, set));
+    preset->setPitchShiftRestart(getBool(ParamPitchShiftRestart, set));
+    preset->setSpeedStepRange(getInt(ParamSpeedStepRange, set));
+    preset->setSpeedBendRange(getInt(ParamSpeedBendRange, set));
+    preset->setPitchStepRange(getInt(ParamPitchStepRange, set));
+    preset->setPitchBendRange(getInt(ParamPitchBendRange, set));
+    preset->setTimeStretchRange(getInt(ParamTimeStretchRange, set));
+    
+    preset->setSlipMode((SlipMode)getEnum(ParamSlipMode, set));
+    preset->setSlipTime(getInt(ParamSlipTime, set));
+    preset->setRecordTransfer((TransferMode)getEnum(ParamRecordTransfer, set));
+    preset->setOverdubTransfer((TransferMode)getEnum(ParamOverdubTransfer, set));
+    preset->setReverseTransfer((TransferMode)getEnum(ParamReverseTransfer, set));
+    preset->setSpeedTransfer((TransferMode)getEnum(ParamSpeedTransfer, set));
+    preset->setPitchTransfer((TransferMode)getEnum(ParamPitchTransfer, set));
+    preset->setWindowSlideUnit((WindowUnit)getEnum(ParamWindowSlideUnit, set));
+    preset->setWindowEdgeUnit((WindowUnit)getEnum(ParamWindowEdgeUnit, set));
+    preset->setWindowSlideAmount(getInt(ParamWindowSlideAmount, set));
+    preset->setWindowEdgeAmount(getInt(ParamWindowEdgeAmount, set));
+
+    preset->setSpeedSequence(getString(ParamSpeedSequence, set));
+    preset->setPitchSequence(getString(ParamPitchSequence, set));
+}
 
 /****************************************************************************/
 /****************************************************************************/

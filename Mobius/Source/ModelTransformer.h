@@ -23,6 +23,9 @@ class ModelTransformer
 
     void sessionToConfig(Session* src, MobiusConfig* dest);
     
+    void transform(class Preset* preset, class ValueSet* set);
+    void transform(class ValueSet* set, class Preset* preset);
+    
   private:
 
     class Provider* provider = nullptr;
@@ -45,4 +48,6 @@ class ModelTransformer
     void transform(Session* src, Setup* dest);
     void transform(Session::Track* src, SetupTrack* dest);
     
+    int getEnum(SymbolId id, ValueSet* src);
+
 };

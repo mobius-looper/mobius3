@@ -283,6 +283,8 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameWindowEdgeUnit, ParamWindowEdgeUnit},
     {ParamNameWindowSlideAmount, ParamWindowSlideAmount},
     {ParamNameWindowEdgeAmount, ParamWindowEdgeAmount},
+    {"speedSequence", ParamSpeedSequence},
+    {"pitchSequence", ParamPitchSequence},
     
     //////////////////////////////////////////////////////////////////////
     // Functions

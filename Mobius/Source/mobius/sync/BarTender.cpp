@@ -139,12 +139,16 @@ void BarTender::setHostBeatsPerBar(int bpb)
 {
     if (bpb > 0)
       hostBeatsPerBar = bpb;
+    else
+      hostBeatsPerBar = 4;
 }
 
 void BarTender::setHostBarsPerLoop(int bpl)
 {
     if (bpl > 0)
       hostBarsPerLoop = bpl;
+    else
+      hostBarsPerLoop = 1;
 }
 
 void BarTender::setHostOverride(bool b)
@@ -156,12 +160,16 @@ void BarTender::setMidiBeatsPerBar(int bpb)
 {
     if (bpb > 0)
       midiBeatsPerBar = bpb;
+    else
+      midiBeatsPerBar = 4;
 }
 
 void BarTender::setMidiBarsPerLoop(int bpl)
 {
     if (bpl > 0)
       midiBarsPerLoop = bpl;
+    else
+      midiBarsPerLoop = 1;
 }
 
 bool BarTender::doQuery(Query* q)
@@ -171,11 +179,11 @@ bool BarTender::doQuery(Query* q)
     switch (q->symbol->id) {
 
         case ParamHostBeatsPerBar:
-            q->value = hostBeatsPerBar;
+            q->value = getHostBeatsPerBar();
             break;
             
         case ParamHostBarsPerLoop:
-            q->value = hostBarsPerLoop;
+            q->value = getHostBarsPerLoop();
             break;
             
         case ParamHostOverride:
@@ -183,11 +191,11 @@ bool BarTender::doQuery(Query* q)
             break;
             
         case ParamMidiBeatsPerBar:
-            q->value = midiBeatsPerBar;
+            q->value = getMidiBeatsPerBar();
             break;
             
         case ParamMidiBarsPerLoop:
-            q->value = midiBarsPerLoop;
+            q->value = getMidiBarsPerLoop();
             break;
 
         default: handled = false;
@@ -470,7 +478,7 @@ int BarTender::getBar(SyncSource src)
                 // two schools of thought here...this could just increase
                 // without end like host does, or it could wrap on barsPerLoop like transport does
                 // to show a spinning radar in MidiSyncElement, it needs to wrap
-                bar = bar % midiBarsPerLoop;
+                bar = bar % getMidiBarsPerLoop();
             }
         }
             break;
@@ -493,7 +501,7 @@ int BarTender::getBar(SyncSource src)
             // need to convert this to be within barsPerLoop
             // if you want to show elapsed bars, add something else to the UI
             // and the SyncState
-            bar = bar % hostBarsPerLoop;
+            bar = bar % getHostBarsPerLoop();
         }
             break;
 

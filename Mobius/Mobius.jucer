@@ -118,6 +118,9 @@
               file="Source/model/ParameterProperties.cpp"/>
         <FILE id="wHWkb1" name="ParameterProperties.h" compile="0" resource="0"
               file="Source/model/ParameterProperties.h"/>
+        <FILE id="NxLmY1" name="ParameterSets.cpp" compile="1" resource="0"
+              file="Source/model/ParameterSets.cpp"/>
+        <FILE id="sJCUv7" name="ParameterSets.h" compile="0" resource="0" file="Source/model/ParameterSets.h"/>
         <FILE id="pVDAsq" name="Preset.cpp" compile="1" resource="0" file="Source/model/Preset.cpp"/>
         <FILE id="godsX2" name="Preset.h" compile="0" resource="0" file="Source/model/Preset.h"/>
         <FILE id="PKfY2J" name="PriorityState.h" compile="0" resource="0" file="Source/model/PriorityState.h"/>

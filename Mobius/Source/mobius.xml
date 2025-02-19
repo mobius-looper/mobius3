@@ -1,27 +1,25 @@
 <MobiusConfig
   version='1'
   quickSave='mobiusloop'
-  noiseFloor='50'
+  noiseFloor='13'
   maxSyncDrift='2048'
   trackCount='8'
   groupCount='2'
-  maxLoops='2'
-  longPress='500'
+  maxLoops='4'
+  longPress='250'
   spreadRange='48'
   driftCheckPoint='loop'
-  midiRecordMode='average'
-  setup='Default'
-  controllerActionThreshold='64'>
+  setup='20090814_1-4Sync_5-8Unsync'
+  controllerActionThreshold='127'>
   <Preset
     name='Default'
     altFeedbackEnable='true'
-    autoRecordBars='1'
-    autoRecordTempo='60'
     bounceQuantize='off'
     emptyLoopAction='none'
-    emptyTrackAction='none'
-    loopCount='4'
-    maxRedo='3'
+    emptyTrackAction='copyTime'
+    loopCount='1'
+    maxRedo='4'
+    maxUndo='8'
     multiplyMode='normal'
     muteCancel='never'
     muteMode='continue'
@@ -29,7 +27,7 @@
     pitchBendRange='12'
     pitchStepRange='24'
     pitchTransfer='off'
-    quantize='subCycle'
+    quantize='off'
     speedBendRange='12'
     speedStepRange='24'
     speedTransfer='off'
@@ -41,10 +39,10 @@
     shuffleMode='reverse'
     slipMode='subCycle'
     soundCopyMode='play'
-    subcycles='4'
+    subcycles='16'
     switchDuration='permanent'
     switchLocation='follow'
-    switchQuantize='loop'
+    switchQuantize='off'
     timeCopyMode='play'
     trackLeaveAction='none'
     windowEdgeAmount='1'
@@ -52,36 +50,33 @@
     windowSlideAmount='1'
     windowSlideUnit='loop'/>
   <Preset
-    name='asdf'
-    autoRecordBars='1'
-    autoRecordTempo='120'
-    bounceQuantize='loop'
+    name='Basic Looping'
+    bounceQuantize='off'
     emptyLoopAction='none'
     emptyTrackAction='none'
-    loopCount='4'
-    maxRedo='1'
-    multiplyMode='normal'
-    muteCancel='edit'
-    muteMode='continue'
-    overdubTransfer='follow'
+    loopCount='2'
+    multiplyMode='simple'
+    muteCancel='never'
+    muteMode='start'
+    overdubTransfer='off'
     pitchBendRange='12'
     pitchStepRange='24'
-    pitchTransfer='follow'
+    pitchTransfer='off'
     quantize='off'
     speedBendRange='12'
     speedStepRange='24'
-    speedTransfer='follow'
+    speedTransfer='off'
     timeStretchRange='12'
     recordTransfer='off'
     returnLocation='restore'
-    reverseTransfer='follow'
+    reverseTransfer='off'
     roundingOverdub='true'
     shuffleMode='reverse'
     slipMode='subCycle'
-    soundCopyMode='play'
-    subcycles='4'
+    soundCopyMode='multiply'
+    subcycles='8'
     switchDuration='permanent'
-    switchLocation='restore'
+    switchLocation='start'
     switchQuantize='off'
     timeCopyMode='play'
     trackLeaveAction='cancel'
@@ -90,36 +85,191 @@
     windowSlideAmount='1'
     windowSlideUnit='loop'/>
   <Preset
-    name='rrrrr'
-    autoRecordBars='1'
-    autoRecordTempo='120'
-    bounceQuantize='loop'
+    name='2007_novation_live'
+    bounceQuantize='off'
     emptyLoopAction='none'
     emptyTrackAction='none'
-    loopCount='4'
-    maxRedo='1'
+    loopCount='2'
+    maxRedo='5'
+    maxUndo='5'
     multiplyMode='normal'
-    muteCancel='edit'
-    muteMode='continue'
-    overdubTransfer='follow'
+    muteCancel='always'
+    muteMode='start'
+    overdubTransfer='off'
     pitchBendRange='12'
     pitchStepRange='24'
-    pitchTransfer='follow'
+    pitchTransfer='off'
     quantize='off'
     speedBendRange='12'
+    speedShiftRestart='true'
     speedStepRange='24'
-    speedTransfer='follow'
+    speedTransfer='off'
     timeStretchRange='12'
     recordTransfer='off'
     returnLocation='restore'
-    reverseTransfer='follow'
+    reverseTransfer='off'
     roundingOverdub='true'
     shuffleMode='reverse'
-    slipMode='subCycle'
-    soundCopyMode='play'
+    slipMode='time'
+    slipTime='30'
+    soundCopyMode='multiply'
+    subcycles='16'
+    switchDuration='permanent'
+    switchLocation='start'
+    switchQuantize='loop'
+    timeCopyMode='play'
+    trackLeaveAction='cancel'
+    windowEdgeAmount='1'
+    windowEdgeUnit='subcycle'
+    windowSlideAmount='1'
+    windowSlideUnit='loop'/>
+  <Preset
+    name='Preset_2008_Live no sync'
+    bounceQuantize='off'
+    emptyLoopAction='none'
+    emptyTrackAction='none'
+    loopCount='2'
+    maxRedo='5'
+    maxUndo='5'
+    multiplyMode='normal'
+    muteCancel='always'
+    muteMode='start'
+    overdubTransfer='off'
+    pitchBendRange='12'
+    pitchStepRange='24'
+    pitchTransfer='off'
+    quantize='off'
+    speedBendRange='12'
+    speedStepRange='24'
+    speedTransfer='off'
+    timeStretchRange='12'
+    recordTransfer='off'
+    returnLocation='restore'
+    reverseTransfer='off'
+    roundingOverdub='true'
+    shuffleMode='reverse'
+    slipMode='time'
+    slipTime='30'
+    soundCopyMode='multiply'
     subcycles='4'
     switchDuration='permanent'
-    switchLocation='restore'
+    switchLocation='start'
+    switchQuantize='loop'
+    timeCopyMode='play'
+    trackLeaveAction='cancel'
+    windowEdgeAmount='1'
+    windowEdgeUnit='subcycle'
+    windowSlideAmount='1'
+    windowSlideUnit='loop'/>
+  <Preset
+    name='Preset_2010_sync'
+    bounceQuantize='off'
+    emptyLoopAction='none'
+    emptyTrackAction='none'
+    loopCount='2'
+    maxRedo='5'
+    maxUndo='5'
+    multiplyMode='normal'
+    muteCancel='always'
+    muteMode='start'
+    overdubTransfer='off'
+    pitchBendRange='12'
+    pitchStepRange='24'
+    pitchTransfer='off'
+    quantize='off'
+    speedBendRange='12'
+    speedStepRange='24'
+    speedTransfer='off'
+    timeStretchRange='12'
+    recordTransfer='off'
+    returnLocation='restore'
+    reverseTransfer='off'
+    roundingOverdub='true'
+    shuffleMode='reverse'
+    slipMode='time'
+    slipTime='30'
+    soundCopyMode='multiply'
+    subcycles='4'
+    switchDuration='permanent'
+    switchLocation='start'
+    switchQuantize='loop'
+    timeCopyMode='play'
+    trackLeaveAction='cancel'
+    windowEdgeAmount='1'
+    windowEdgeUnit='subcycle'
+    windowSlideAmount='1'
+    windowSlideUnit='loop'/>
+  <Preset
+    name='no sync'
+    bounceQuantize='off'
+    emptyLoopAction='none'
+    emptyTrackAction='none'
+    loopCount='2'
+    maxRedo='5'
+    maxUndo='5'
+    multiplyMode='normal'
+    muteCancel='always'
+    muteMode='start'
+    overdubTransfer='off'
+    pitchBendRange='12'
+    pitchStepRange='24'
+    pitchTransfer='off'
+    quantize='off'
+    speedBendRange='12'
+    speedShiftRestart='true'
+    speedStepRange='24'
+    speedTransfer='off'
+    timeStretchRange='12'
+    recordTransfer='off'
+    returnLocation='restore'
+    reverseTransfer='off'
+    roundingOverdub='true'
+    shuffleMode='reverse'
+    slipMode='time'
+    slipTime='30'
+    soundCopyMode='multiply'
+    subcycles='16'
+    switchDuration='permanent'
+    switchLocation='start'
+    switchQuantize='loop'
+    timeCopyMode='play'
+    trackLeaveAction='cancel'
+    windowEdgeAmount='1'
+    windowEdgeUnit='subcycle'
+    windowSlideAmount='1'
+    windowSlideUnit='loop'/>
+  <Preset
+    name='sync to previous track'
+    bounceQuantize='off'
+    emptyLoopAction='none'
+    emptyTrackAction='copyTime'
+    loopCount='2'
+    maxRedo='5'
+    maxUndo='5'
+    multiplyMode='normal'
+    muteCancel='always'
+    muteMode='start'
+    overdubTransfer='off'
+    pitchBendRange='12'
+    pitchStepRange='24'
+    pitchTransfer='off'
+    quantize='off'
+    speedBendRange='12'
+    speedShiftRestart='true'
+    speedStepRange='24'
+    speedTransfer='off'
+    timeStretchRange='12'
+    recordTransfer='off'
+    returnLocation='restore'
+    reverseTransfer='off'
+    roundingOverdub='true'
+    shuffleMode='reverse'
+    slipMode='time'
+    slipTime='30'
+    soundCopyMode='multiply'
+    subcycles='16'
+    switchDuration='permanent'
+    switchLocation='start'
     switchQuantize='off'
     timeCopyMode='play'
     trackLeaveAction='cancel'
@@ -130,44 +280,20 @@
   <Setup
     name='Default'
     active='0'
-    defaultSyncSource='none'
+    defaultSyncSource='track'
     defaultTrackSyncUnit='loop'
-    maxTempo='300'
-    minTempo='20'
-    muteSyncMode='transport'
-    outRealign='midiStart'
     realignTime='start'
     resizeSyncAdjust='none'
-    slaveSyncUnit='bar'
+    slaveSyncUnit='beat'
     speedSyncAdjust='none'>
     <SetupTrack
-      name='sadf'
-      groupName='Groupuu'
       input='127'
       output='127'
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='3'
-      syncSource='out'
+      syncSource='track'
       trackSyncUnit='loop'/>
-    <SetupTrack
-      name='xxxx'
-      input='127'
-      output='127'
-      feedback='127'
-      altFeedback='127'
-      pan='64'
-      syncSource='out'
-      trackSyncUnit='loop'/>
-    <SetupTrack
-      input='127'
-      output='127'
-      feedback='127'
-      altFeedback='127'
-      pan='64'
-      syncSource='default'
-      trackSyncUnit='default'/>
     <SetupTrack
       input='127'
       output='127'
@@ -226,21 +352,17 @@
       trackSyncUnit='default'/>
   </Setup>
   <Setup
-    name='asdf'
+    name='Default Setup'
     active='0'
     defaultSyncSource='track'
-    defaultTrackSyncUnit='subcycle'
-    maxTempo='300'
-    minTempo='20'
-    muteSyncMode='transport'
-    outRealign='midiStart'
+    defaultTrackSyncUnit='loop'
     realignTime='start'
     resizeSyncAdjust='none'
     slaveSyncUnit='beat'
     speedSyncAdjust='none'>
     <SetupTrack
-      name='whe555e'
       input='127'
+      output='110'
       feedback='127'
       altFeedback='127'
       pan='64'
@@ -248,7 +370,7 @@
       trackSyncUnit='default'/>
     <SetupTrack
       input='127'
-      output='127'
+      output='110'
       feedback='127'
       altFeedback='127'
       pan='64'
@@ -256,7 +378,7 @@
       trackSyncUnit='default'/>
     <SetupTrack
       input='127'
-      output='127'
+      output='110'
       feedback='127'
       altFeedback='127'
       pan='64'
@@ -264,7 +386,7 @@
       trackSyncUnit='default'/>
     <SetupTrack
       input='127'
-      output='127'
+      output='110'
       feedback='127'
       altFeedback='127'
       pan='64'
@@ -272,7 +394,7 @@
       trackSyncUnit='default'/>
     <SetupTrack
       input='127'
-      output='127'
+      output='110'
       feedback='127'
       altFeedback='127'
       pan='64'
@@ -280,7 +402,7 @@
       trackSyncUnit='default'/>
     <SetupTrack
       input='127'
-      output='127'
+      output='110'
       feedback='127'
       altFeedback='127'
       pan='64'
@@ -288,12 +410,435 @@
       trackSyncUnit='default'/>
     <SetupTrack
       input='127'
-      output='127'
+      output='110'
       feedback='127'
       altFeedback='127'
       pan='64'
       syncSource='default'
       trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+  </Setup>
+  <Setup
+    name='2007_novation'
+    active='0'
+    defaultSyncSource='track'
+    defaultTrackSyncUnit='loop'
+    realignTime='start'
+    resizeSyncAdjust='none'
+    slaveSyncUnit='beat'
+    speedSyncAdjust='none'>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+  </Setup>
+  <Setup
+    name='20090814_1-4Sync_5-8Unsync'
+    active='0'
+    defaultSyncSource='track'
+    defaultTrackSyncUnit='loop'
+    realignTime='start'
+    resizeSyncAdjust='none'
+    slaveSyncUnit='beat'
+    speedSyncAdjust='none'>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='none'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      trackPreset='sync to previous track'
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+  </Setup>
+  <Setup
+    name='Setup_2010_Sync'
+    active='0'
+    defaultSyncSource='track'
+    defaultTrackSyncUnit='loop'
+    realignTime='start'
+    resizeSyncAdjust='none'
+    slaveSyncUnit='beat'
+    speedSyncAdjust='none'>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+  </Setup>
+  <Setup
+    name='No sync'
+    active='0'
+    defaultSyncSource='none'
+    defaultTrackSyncUnit='loop'
+    realignTime='start'
+    resizeSyncAdjust='none'
+    slaveSyncUnit='beat'
+    speedSyncAdjust='none'>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+  </Setup>
+  <Setup
+    name='Sync to previous track'
+    active='0'
+    defaultSyncSource='track'
+    defaultTrackSyncUnit='loop'
+    realignTime='start'
+    resizeSyncAdjust='none'
+    slaveSyncUnit='beat'
+    speedSyncAdjust='none'>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      pluginInputPort='1'
+      pluginOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='110'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='3'
+      audioOutputPort='2'
+      syncSource='default'
+      trackSyncUnit='default'/>
+  </Setup>
+  <Setup
+    name='[New]'
+    active='0'
+    defaultSyncSource='track'
+    defaultTrackSyncUnit='subcycle'
+    realignTime='start'
+    resizeSyncAdjust='none'
+    slaveSyncUnit='beat'
+    speedSyncAdjust='none'>
     <SetupTrack
       input='127'
       output='127'
@@ -315,32 +860,238 @@
     <Binding name='UIParameterInc' trigger='key' value='327719'/>
     <Binding name='UIParameterDec' trigger='key' value='327717'/>
     <Binding name='Play' trigger='key' value='32'/>
+    <Binding name='Pause' trigger='key' value='80'/>
     <Binding name='Overdub' trigger='key' value='79'/>
-    <Binding name='ShowPanel' trigger='key' value='262211' args='console'/>
-    <Binding name='GlobalReset' trigger='key' value='71'/>
-    <Binding name='ShowPanel' trigger='key' value='262227' args='scriptEditor'/>
+    <Binding name='NextTrack' trigger='key' value='39'/>
+    <Binding name='PrevTrack' trigger='key' value='37'/>
+    <Binding name='Reset' trigger='key' value='112'/>
+    <Binding name='TrackReset' trigger='key' value='32'/>
     <Binding name='Multiply' trigger='key' value='77'/>
     <Binding name='Insert' trigger='key' value='73'/>
-    <Binding name='Message' trigger='key' value='80' args='p down'/>
-    <Binding name='Message' trigger='key' release='true' value='80' args='p up'/>
-    <Binding name='NextTrack' trigger='note' value='41' channel='1'/>
-    <Binding name='PrevTrack' trigger='note' value='43' channel='1'/>
-    <Binding name='Record' trigger='note' value='36' channel='3'/>
+    <Binding name='Replace' trigger='key' value='80'/>
+    <Binding name='Substitute' trigger='key' value='83'/>
+    <Binding name='Mute' trigger='key' value='85'/>
+    <Binding name='Undo' trigger='key' value='8'/>
+    <Binding name='NextLoop' trigger='key' value='40'/>
+    <Binding name='PrevLoop' trigger='key' value='38'/>
+    <Binding name='SpeedToggle' trigger='key' value='72'/>
+    <Binding name='Reverse' trigger='key' value='86'/>
+    <Binding name='StartPoint' trigger='key' value='1107'/>
+    <Binding name='Loop1' trigger='key' value='49'/>
+    <Binding name='Loop2' trigger='key' value='50'/>
+    <Binding name='Loop3' trigger='key' value='51'/>
+    <Binding name='Loop4' trigger='key' value='52'/>
+    <Binding name='Loop5' trigger='key' value='53'/>
+    <Binding name='Loop6' trigger='key' value='54'/>
+    <Binding name='Loop7' trigger='key' value='55'/>
+    <Binding name='Loop8' trigger='key' value='56'/>
+    <Binding name='nextParameter' trigger='key' value='98'/>
+    <Binding name='prevParameter' trigger='key' value='104'/>
+    <Binding name='incParameter' trigger='key' value='102'/>
+    <Binding name='decParameter' trigger='key' value='100'/>
+    <Binding name='SelectLoop' trigger='key' value='49' args='1'/>
+    <Binding name='SelectLoop' trigger='key' value='50' args='2'/>
+    <Binding name='SelectLoop' trigger='key' value='51' args='3'/>
+    <Binding name='SelectLoop' trigger='key' value='52' args='4'/>
+    <Binding name='SelectLoop' trigger='key' value='53' args='5'/>
+    <Binding name='SelectLoop' trigger='key' value='54' args='6'/>
+    <Binding name='SelectLoop' trigger='key' value='55' args='7'/>
+    <Binding name='SelectLoop' trigger='key' value='56' args='8'/>
+    <Binding name='output' trigger='host'/>
+    <Binding name='feedback' trigger='host'/>
+    <Binding name='input' trigger='host' value='8'/>
+    <Binding name='output' trigger='host' value='9'/>
+    <Binding name='feedback' trigger='host' value='10'/>
+    <Binding name='altFeedback' trigger='host' value='11'/>
+    <Binding name='pan' trigger='host' value='12'/>
+    <Binding name='selectedTrack' trigger='host' value='5'/>
+    <Binding name='quantize' trigger='host' value='6'/>
+    <Binding name='switchQuantize' trigger='host' value='13'/>
   </BindingSet>
-  <BindingSet name='midi1'>
-    <Binding name='Overdub' trigger='note' value='50' channel='1'/>
+  <BindingSet name='Configuration 1'>
+    <Binding name='Record' trigger='program' value='4' channel='16'/>
+    <Binding name='Overdub' trigger='program' value='5' channel='16'/>
+    <Binding name='Multiply' trigger='program' value='6' channel='16'/>
+    <Binding name='Mute' trigger='program' value='8' channel='16'/>
+    <Binding name='Undo' trigger='program' value='3' channel='16'/>
+    <Binding name='Loop1' trigger='note' value='48' channel='1'/>
+    <Binding name='Loop2' trigger='note' value='50' channel='1'/>
+    <Binding name='Loop3' trigger='note' value='52' channel='1'/>
+    <Binding name='Loop4' trigger='note' value='53' channel='1'/>
+    <Binding name='Loop5' trigger='note' value='55' channel='1'/>
+    <Binding name='Loop6' trigger='note' value='57' channel='1'/>
+    <Binding name='Loop7' trigger='note' value='59' channel='1'/>
+    <Binding name='Loop8' trigger='note' value='60' channel='1'/>
+    <Binding name='Replace' trigger='note' value='4' channel='1'/>
+    <Binding name='SpeedToggle' trigger='program' value='7' channel='16'/>
+    <Binding name='Reverse' trigger='program' value='1' channel='16'/>
+    <Binding name='NextLoop' trigger='note' value='9' channel='1'/>
+    <Binding name='Substitute' trigger='program' value='2' channel='16'/>
+    <Binding name='SUSUnroundedInsert' trigger='program' channel='16'/>
+    <Binding name='SelectLoop' trigger='note' value='48' channel='1' args='1'/>
+    <Binding name='SelectLoop' trigger='note' value='50' channel='1' args='2'/>
+    <Binding name='SelectLoop' trigger='note' value='52' channel='1' args='3'/>
+    <Binding name='SelectLoop' trigger='note' value='53' channel='1' args='4'/>
+    <Binding name='SelectLoop' trigger='note' value='55' channel='1' args='5'/>
+    <Binding name='SelectLoop' trigger='note' value='57' channel='1' args='6'/>
+    <Binding name='SelectLoop' trigger='note' value='59' channel='1' args='7'/>
+    <Binding name='SelectLoop' trigger='note' value='60' channel='1' args='8'/>
   </BindingSet>
-  <BindingSet name='midi2'>
+  <BindingSet name='Configuration 2 pmc'>
+    <Binding name='Overdub' trigger='program' value='5' channel='1'/>
+    <Binding name='Multiply' trigger='program' value='6' channel='1'/>
+    <Binding name='Mute' trigger='program' value='8' channel='1'/>
+    <Binding name='Undo' trigger='program' value='3' channel='1'/>
+    <Binding name='Loop1' trigger='note' value='48' channel='1'/>
+    <Binding name='Loop2' trigger='note' value='50' channel='1'/>
+    <Binding name='Loop3' trigger='note' value='52' channel='1'/>
+    <Binding name='Loop4' trigger='note' value='53' channel='1'/>
+    <Binding name='Loop5' trigger='note' value='55' channel='1'/>
+    <Binding name='Loop6' trigger='note' value='57' channel='1'/>
+    <Binding name='Loop7' trigger='note' value='59' channel='1'/>
+    <Binding name='Loop8' trigger='note' value='60' channel='1'/>
+    <Binding name='SpeedToggle' trigger='program' value='7' channel='1'/>
+    <Binding name='Reverse' trigger='program' channel='1'/>
+    <Binding name='NextLoop' trigger='note' value='9' channel='1'/>
+    <Binding name='Record' trigger='program' value='4' channel='1'/>
+    <Binding name='Shuffle' trigger='program' value='9' channel='1'/>
+    <Binding name='Fade Out 110' trigger='program' value='10' channel='1'/>
+    <Binding name='Fade In 110' trigger='program' value='11' channel='1'/>
+    <Binding name='NextTrack' trigger='program' value='2' channel='1'/>
+    <Binding name='PrevTrack' trigger='program' value='1' channel='1'/>
+    <Binding name='Substitute' trigger='control' value='2' channel='1'/>
+    <Binding name='SUSUnroundedInsert' trigger='control' value='1' channel='1'/>
+    <Binding name='Ambient General Reset' trigger='note' channel='1'/>
+    <Binding name='output' scope='1' trigger='control' value='11' channel='1'/>
+    <Binding name='output' scope='2' trigger='control' value='12' channel='1'/>
+    <Binding name='output' scope='3' trigger='control' value='13' channel='1'/>
+    <Binding name='output' scope='4' trigger='control' value='14' channel='1'/>
+    <Binding name='output' scope='5' trigger='control' value='15' channel='1'/>
+    <Binding name='output' scope='6' trigger='control' value='16' channel='1'/>
+    <Binding name='output' scope='7' trigger='control' value='17' channel='1'/>
+    <Binding name='output' scope='8' trigger='control' value='18' channel='1'/>
+    <Binding name='pan' scope='1' trigger='control' value='19' channel='1'/>
+    <Binding name='pan' scope='2' trigger='control' value='20' channel='1'/>
+    <Binding name='pan' scope='3' trigger='control' value='21' channel='1'/>
+    <Binding name='pan' scope='4' trigger='control' value='22' channel='1'/>
+    <Binding name='pan' scope='5' trigger='control' value='23' channel='1'/>
+    <Binding name='pan' scope='6' trigger='control' value='24' channel='1'/>
+    <Binding name='pan' scope='7' trigger='control' value='25' channel='1'/>
+    <Binding name='pan' scope='8' trigger='control' value='26' channel='1'/>
+    <Binding name='SelectLoop' trigger='note' value='48' channel='1' args='1'/>
+    <Binding name='SelectLoop' trigger='note' value='50' channel='1' args='2'/>
+    <Binding name='SelectLoop' trigger='note' value='52' channel='1' args='3'/>
+    <Binding name='SelectLoop' trigger='note' value='53' channel='1' args='4'/>
+    <Binding name='SelectLoop' trigger='note' value='55' channel='1' args='5'/>
+    <Binding name='SelectLoop' trigger='note' value='57' channel='1' args='6'/>
+    <Binding name='SelectLoop' trigger='note' value='59' channel='1' args='7'/>
+    <Binding name='SelectLoop' trigger='note' value='60' channel='1' args='8'/>
   </BindingSet>
-  <BindingSet name='midi3' overlay='true'>
-    <Binding name='Reset' trigger='note' value='52' channel='1'/>
+  <BindingSet name='Configuration 3 per midiwizard'>
+    <Binding name='Overdub' trigger='program' value='5' channel='1'/>
+    <Binding name='Multiply' trigger='program' value='6' channel='1'/>
+    <Binding name='Mute' trigger='program' value='8' channel='1'/>
+    <Binding name='Undo' trigger='program' value='3' channel='1'/>
+    <Binding name='Loop1' trigger='note' value='48' channel='1'/>
+    <Binding name='Loop2' trigger='note' value='50' channel='1'/>
+    <Binding name='Loop3' trigger='note' value='52' channel='1'/>
+    <Binding name='Loop4' trigger='note' value='53' channel='1'/>
+    <Binding name='Loop5' trigger='note' value='55' channel='1'/>
+    <Binding name='Loop6' trigger='note' value='57' channel='1'/>
+    <Binding name='Loop7' trigger='note' value='59' channel='1'/>
+    <Binding name='Loop8' trigger='note' value='60' channel='1'/>
+    <Binding name='SpeedToggle' trigger='program' value='7' channel='1'/>
+    <Binding name='Reverse' trigger='program' channel='1'/>
+    <Binding name='NextLoop' trigger='note' value='9' channel='1'/>
+    <Binding name='Record' trigger='program' value='4' channel='1'/>
+    <Binding name='Shuffle' trigger='program' value='9' channel='1'/>
+    <Binding name='Fade Out 110' trigger='program' value='10' channel='1'/>
+    <Binding name='Fade In 110' trigger='program' value='11' channel='1'/>
+    <Binding name='NextTrack' trigger='program' value='2' channel='1'/>
+    <Binding name='PrevTrack' trigger='program' value='1' channel='1'/>
+    <Binding name='output' scope='1' trigger='control' value='11' channel='1'/>
+    <Binding name='output' scope='2' trigger='control' value='12' channel='1'/>
+    <Binding name='output' scope='4' trigger='control' value='14' channel='1'/>
+    <Binding name='output' scope='5' trigger='control' value='15' channel='1'/>
+    <Binding name='output' scope='6' trigger='control' value='16' channel='1'/>
+    <Binding name='output' scope='7' trigger='control' value='17' channel='1'/>
+    <Binding name='output' scope='8' trigger='control' value='18' channel='1'/>
+    <Binding name='output' scope='3' trigger='control' value='13' channel='1'/>
+    <Binding name='SelectLoop' trigger='note' value='48' channel='1' args='1'/>
+    <Binding name='SelectLoop' trigger='note' value='50' channel='1' args='2'/>
+    <Binding name='SelectLoop' trigger='note' value='52' channel='1' args='3'/>
+    <Binding name='SelectLoop' trigger='note' value='53' channel='1' args='4'/>
+    <Binding name='SelectLoop' trigger='note' value='55' channel='1' args='5'/>
+    <Binding name='SelectLoop' trigger='note' value='57' channel='1' args='6'/>
+    <Binding name='SelectLoop' trigger='note' value='59' channel='1' args='7'/>
+    <Binding name='SelectLoop' trigger='note' value='60' channel='1' args='8'/>
   </BindingSet>
-  <BindingSet name='midi4' overlay='true'>
-    <Binding name='Restart' trigger='note' value='53' channel='1'/>
+  <BindingSet name='2007_novation'>
+    <Binding name='Overdub' trigger='control' value='5' channel='1'/>
+    <Binding name='Multiply' trigger='control' value='6' channel='1'/>
+    <Binding name='Mute' trigger='control' value='8' channel='1'/>
+    <Binding name='Undo' trigger='control' value='3' channel='1'/>
+    <Binding name='SpeedToggle' trigger='control' value='7' channel='1'/>
+    <Binding name='Reverse' trigger='control' channel='1'/>
+    <Binding name='NextTrack' trigger='control' value='27' channel='1'/>
+    <Binding name='SUSSubstitute' trigger='control' value='2' channel='1'/>
+    <Binding name='SUSUnroundedInsert' trigger='control' value='1' channel='1'/>
+    <Binding name='output' scope='1' trigger='control' value='11' channel='1'/>
+    <Binding name='output' scope='2' trigger='control' value='12' channel='1'/>
+    <Binding name='output' scope='3' trigger='control' value='13' channel='1'/>
+    <Binding name='output' scope='4' trigger='control' value='14' channel='1'/>
+    <Binding name='output' scope='5' trigger='control' value='15' channel='1'/>
+    <Binding name='output' scope='6' trigger='control' value='16' channel='1'/>
+    <Binding name='output' scope='7' trigger='control' value='17' channel='1'/>
+    <Binding name='output' scope='8' trigger='control' value='18' channel='1'/>
+    <Binding name='pan' scope='1' trigger='control' value='19' channel='1'/>
+    <Binding name='pan' scope='2' trigger='control' value='20' channel='1'/>
+    <Binding name='pan' scope='3' trigger='control' value='21' channel='1'/>
+    <Binding name='pan' scope='4' trigger='control' value='22' channel='1'/>
+    <Binding name='pan' scope='5' trigger='control' value='23' channel='1'/>
+    <Binding name='pan' scope='6' trigger='control' value='24' channel='1'/>
+    <Binding name='pan' scope='7' trigger='control' value='25' channel='1'/>
+    <Binding name='pan' scope='8' trigger='control' value='26' channel='1'/>
+    <Binding name='Track1' trigger='program' value='31' channel='1'/>
+    <Binding name='Track2' trigger='program' value='32' channel='1'/>
+    <Binding name='Track3' trigger='program' value='33' channel='1'/>
+    <Binding name='Track4' trigger='program' value='34' channel='1'/>
+    <Binding name='Track5' trigger='program' value='35' channel='1'/>
+    <Binding name='Track6' trigger='program' value='36' channel='1'/>
+    <Binding name='Track7' trigger='program' value='37' channel='1'/>
+    <Binding name='Track8' trigger='program' value='38' channel='1'/>
+    <Binding name='Cont Fade Out 110' scope='1' trigger='note' value='1' channel='1'/>
+    <Binding name='Cont Fade Out 110' scope='2' trigger='note' value='2' channel='1'/>
+    <Binding name='Cont Fade Out 110' scope='3' trigger='note' value='3' channel='1'/>
+    <Binding name='Cont Fade Out 110' scope='4' trigger='note' value='4' channel='1'/>
+    <Binding name='Cont Fade Out 110' scope='5' trigger='note' value='5' channel='1'/>
+    <Binding name='Cont Fade Out 110' scope='6' trigger='note' value='6' channel='1'/>
+    <Binding name='Cont Fade Out 110' scope='7' trigger='note' value='7' channel='1'/>
+    <Binding name='Cont Fade Out 110' scope='8' trigger='note' value='8' channel='1'/>
+    <Binding name='Record' trigger='note' value='126' channel='1'/>
+    <Binding name='GlobalMute' trigger='control' value='29' channel='1'/>
+    <Binding name='InstantMultiply' trigger='control' value='30' channel='1'/>
+    <Binding name='PrevTrack' trigger='control' value='28' channel='1'/>
+    <Binding name='Rate12' trigger='program' value='52' channel='1'/>
+    <Binding name='down a 5th' trigger='program' value='53' channel='1'/>
+    <Binding name='SUSOverdub' trigger='note' value='40' channel='1'/>
+    <Binding name='PitchCancel' trigger='program' value='40' channel='1'/>
+    <Binding name='GlobalReset' trigger='control' value='9' channel='1'/>
+    <Binding name='SelectTrack' trigger='program' value='31' channel='1' args='1'/>
+    <Binding name='SelectTrack' trigger='program' value='32' channel='1' args='2'/>
+    <Binding name='SelectTrack' trigger='program' value='33' channel='1' args='3'/>
+    <Binding name='SelectTrack' trigger='program' value='34' channel='1' args='4'/>
+    <Binding name='SelectTrack' trigger='program' value='35' channel='1' args='5'/>
+    <Binding name='SelectTrack' trigger='program' value='36' channel='1' args='6'/>
+    <Binding name='SelectTrack' trigger='program' value='37' channel='1' args='7'/>
+    <Binding name='SelectTrack' trigger='program' value='38' channel='1' args='8'/>
+    <Binding name='output' trigger='control' value='106' channel='5'/>
+  </BindingSet>
+  <BindingSet name='[New]'>
   </BindingSet>
   <SampleConfig>
-    <Sample path='$INSTALL/test/samples/gcloop.wav'/>
+    <Sample path='$INSTALL/test/samples/gcloop.wav' button='true'/>
   </SampleConfig>
-  <GroupDefinition name='Groupuu' color='-6608599' replication='true' replicatedFunctions='WindowBackward,Mute,Record,Reset' replicatedParameters='output'/>
-  <GroupDefinition name='Group2' color='-6220468' replicatedFunctions='Confirm'/>
+  <GroupDefinition name='A' color='0'/>
+  <GroupDefinition name='B' color='0'/>
 </MobiusConfig>

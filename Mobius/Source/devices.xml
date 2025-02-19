@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <DeviceConfig inputPorts="0" outputPorts="0">
-  <Machine hostName="Loki" inputPorts="1" outputPorts="1" audioDeviceType="Windows Audio (Low Latency Mode)"
-           audioInput="Microphone Array (Intel&#174; Smart Sound Technology for Digital Microphones)"
-           inputChannels="11" audioOutput="Speakers (Realtek(R) Audio)"
-           outputChannels="11" sampleRate="48000" blockSize="480" midiInput="MC-101"
+  <Machine hostName="Loki" inputPorts="1" outputPorts="1" audioDeviceType="ASIO"
+           audioInput="Focusrite USB ASIO" inputChannels="11" audioOutput="Focusrite USB ASIO"
+           outputChannels="11" sampleRate="44100" blockSize="512" midiInput="MC-101"
            midiInputSync="MC-101" midiOutput="Bome MIDI Translator 1,MC-101"
            midiOutputSync="MC-101" pluginMidiOutput="Focusrite USB MIDI"
            pluginMidiOutputSync="Focusrite USB MIDI"/>

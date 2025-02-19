@@ -73,12 +73,12 @@ class BarTender
     class TrackManager* trackManager = nullptr;
     class Session* session = nullptr;
     
-    int hostBeatsPerBar = 0;
-    int hostBarsPerLoop = 0;
+    int hostBeatsPerBar = 4;
+    int hostBarsPerLoop = 1;
     bool hostOverride = false;
     
-    int midiBeatsPerBar = 0;
-    int midiBarsPerLoop = 0;
+    int midiBeatsPerBar = 4;
+    int midiBarsPerLoop = 1;
 
     // the annotated Pulse passed back to TimeSlicer
     Pulse annotated;

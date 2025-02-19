@@ -203,6 +203,8 @@ typedef enum {
     ParamWindowEdgeUnit,
     ParamWindowSlideAmount,
     ParamWindowEdgeAmount,
+    ParamSpeedSequence,
+    ParamPitchSequence,
 
     //////////////////////////////////////////////////////////////////////
     //

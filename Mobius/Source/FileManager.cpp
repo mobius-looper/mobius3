@@ -11,6 +11,8 @@
 #include "model/SystemConfig.h"
 #include "model/StaticConfig.h"
 #include "model/HelpCatalog.h"
+#include "model/ParameterSets.h"
+#include "model/ValueSet.h"
 
 #include "Provider.h"
 
@@ -21,6 +23,7 @@ const char* StaticConfigFile = "static.xml";
 const char* DeviceConfigFile = "devices.xml";
 const char* MobiusConfigFile = "mobius.xml";
 const char* UIConfigFile = "uiconfig.xml";
+const char* ParametersFile = "parameters.xml";
 const char* HelpFile = "help.xml";
 
 FileManager::FileManager(Provider* p)
@@ -292,6 +295,33 @@ StaticConfig* FileManager::readStaticConfig()
         delete root;
     }
     return scon;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// ParameterSets
+//
+//////////////////////////////////////////////////////////////////////
+
+ParameterSets* FileManager::readParameterSets()
+{
+    ParameterSets* sets = new ParameterSets();
+    juce::XmlElement* root = readConfigFileRoot(ParametersFile, ParameterSets::XmlElementName);
+    if (root != nullptr) {
+        juce::StringArray errors;
+        sets->parseXml(root, errors);
+        logErrors(ParametersFile, errors);
+        delete root;
+    }
+    return sets;
+}
+
+void FileManager::writeParameterSets(ParameterSets* sets)
+{
+    if (sets != nullptr) {
+        juce::String xml = sets->toXml();
+        writeConfigFile(ParametersFile, xml.toUTF8());
+    }
 }
 
 /****************************************************************************/

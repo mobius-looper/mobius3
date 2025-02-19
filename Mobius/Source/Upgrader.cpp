@@ -19,8 +19,11 @@
 #include "model/SymbolId.h"
 #include "model/FunctionProperties.h"
 #include "model/ParameterProperties.h"
+#include "model/ParameterSets.h"
+#include "model/XmlRenderer.h"
 
 #include "Symbolizer.h"
+#include "ModelTransformer.h"
 #include "Supervisor.h"
 
 /**
@@ -52,6 +55,13 @@ bool Upgrader::upgrade(MobiusConfig* config)
     
     if (upgradeGroups(config))
       updated = true;
+
+    // testing only
+    bool doPresets = false;
+    if (doPresets) {
+        if (upgradePresets(config))
+          updated = true;
+    }
 
     return updated;
 }
@@ -196,7 +206,55 @@ bool Upgrader::upgradeGroups(MobiusConfig* config)
 
     return updated;
 }
+
+/**
+ * Still experimental testing, not active
+ */
+bool Upgrader::upgradePresets(MobiusConfig* config)
+{
+    ModelTransformer transformer(supervisor);
+    bool updated = false;
+
+    FileManager* fm = supervisor->getFileManager();
+    ParameterSets* sets = fm->readParameterSets();
+
+    for (Preset* p = config->getPresets() ; p != nullptr ; p = p->getNextPreset()) {
+        ValueSet* set = sets->find(juce::String(p->getName()));
+        if (set == nullptr) {
+            set = new ValueSet();
+            set->name = juce::String(p->getName());
+            sets->sets.add(set);
+            transformer.transform(p, set);
+            updated = true;
+        }
+    }
+
+    if (updated)
+      fm->writeParameterSets(sets);
+
+    // go the other direction for testing
+#if 0    
+    MobiusConfig* stubconfig = new MobiusConfig();
+    for (auto set : sets->sets) {
+        Preset* p = new Preset();
+        p->setName(set->name.toUTF8());
+        stubconfig->addPreset(p);
+        transformer.transform(set, p);
+    }
+    XmlRenderer xr;
+    char* xml = xr.render(stubconfig);
+    juce::File root = supervisor->getRoot();
+    juce::File file = root.getChildFile("converted.xml");
+    file.replaceWithText(juce::String(xml));
+    delete xml;
+    delete stubconfig;
+#endif
     
+    delete sets;
+    
+    return updated;
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -24,6 +24,9 @@ class FileManager
     class UIConfig* readUIConfig();
     void writeUIConfig(class UIConfig* config);
     
+    class ParameterSets* readParameterSets();
+    void writeParameterSets(class ParameterSets* sets);
+    
     class StaticConfig* readStaticConfig();
     class HelpCatalog* readHelpCatalog();
     

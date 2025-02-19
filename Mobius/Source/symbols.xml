@@ -269,13 +269,9 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='noFeedbackUndo' type='bool' options='noBinding'/>
     <Parameter name='noLayerFlattening' type='bool' options='noBinding'/>
     
-    <!-- StepSequence*
-         <Parameter name='speedSequence' type='string' options='noBinding'/>
-    -->
+    <Parameter name='speedSequence' type='string' options='noBinding'/>
     <Parameter name='speedShiftRestart' type='bool' options='noBinding'/>
-    <!-- StepSequence*
-         <Parameter name='pitchSequence' type='string' options='noBinding'/>
-    -->
+    <Parameter name='pitchSequence' type='string' options='noBinding'/>
     <Parameter name='pitchShiftRestart' type='bool' options='noBinding'/>
     
     <Parameter name='speedStepRange' low='1' high='48' options='noBinding'/>
