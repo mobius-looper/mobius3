@@ -62,14 +62,14 @@ class Setup : public Structure {
 	void setDefaultPresetName(const char* preset);
 	const char* getDefaultPresetName();
     
-	void setBindings(const char* name);
-	const char* getBindings();
+	//void setBindings(const char* name);
+	//const char* getBindings();
 
 	void setActiveTrack(int i);
 	int getActiveTrack();
 
-	void setResetRetains(const char* csv);
-	const char* getResetRetains();
+	//void setResetRetains(const char* csv);
+	//const char* getResetRetains();
 	//bool isResetRetain(const char* parameterName);
 
 	class SetupTrack* getTracks();
@@ -88,6 +88,7 @@ class Setup : public Structure {
     SyncTrackUnit getSyncTrackUnit();
     void setSyncTrackUnit(SyncTrackUnit unit);
 
+#if 0
     bool isManualStart();
     void setManualStart(bool b);
 
@@ -97,7 +98,8 @@ class Setup : public Structure {
 	int getMaxTempo();
 	void setBeatsPerBar(int t);
 	int getBeatsPerBar();
-
+#endif
+    
 	void setMuteSyncMode(MuteSyncMode m);
 	void setMuteSyncMode(int m);
 	MuteSyncMode getMuteSyncMode();
@@ -137,7 +139,7 @@ class Setup : public Structure {
 	 * List of track parameter names that will NOT be restored from the
 	 * setup after an individual (non-global) reset.
 	 */
-	char* mResetRetains;
+	//char* mResetRetains;
 
 	/**
 	 * A list of track configurations.
@@ -147,7 +149,7 @@ class Setup : public Structure {
 	/**
 	 * Currently overlay BindingSet
 	 */
-	char* mBindings;
+	//char* mBindings;
 
     //
     // Synchronization
@@ -174,17 +176,17 @@ class Setup : public Structure {
      * than automatically when the loop closes during SYNC_OUT.
      * Formerly SyncMode=OutUserStart
      */
-    bool mManualStart;
+    //bool mManualStart;
 
 	/**
 	 * The minimum tempo we will try to use in SYNC_OUT.
 	 */
-	int mMinTempo;
+	//int mMinTempo;
 
 	/**
 	 * The maximum tempo we will try to use in SYNC_OUT.
 	 */
-	int mMaxTempo;
+	//int mMaxTempo;
 
     /**
      * The number of beats in a bar.
@@ -195,7 +197,7 @@ class Setup : public Structure {
      * This is used in SYNC_MIDI to define the bar widths for
      * quantization.
      */
-    int mBeatsPerBar;
+    //int mBeatsPerBar;
 
     /**
      * During SYNC_OUT, determines how MIDI transport and clocks 

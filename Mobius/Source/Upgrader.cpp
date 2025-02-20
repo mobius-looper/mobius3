@@ -104,11 +104,6 @@ bool Upgrader::upgradeFunctionProperties(MobiusConfig* config)
         updated = true;
     }
 
-    // todo: there is one name list parameter property: resetRetains
-    // could handle that here too, but these were less common and it's actually
-    // a Setup parameter so there could be more than one, make the user think about
-    // and set the new properties manually
-
     return updated;
 }
 

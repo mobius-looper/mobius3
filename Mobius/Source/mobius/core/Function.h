@@ -205,7 +205,7 @@ class Function : public SystemConstant {
 	 * a SUS function.  maySustain will be on, but sustain may not.
 	 * Overloaded by the Function to add preset tests.
 	 */
-	virtual bool isSustain(class Preset* p);
+	virtual bool isSustain();
 
 	/**
 	 * True if this may be invoked during recording.

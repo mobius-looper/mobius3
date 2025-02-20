@@ -95,8 +95,8 @@ Setup::Setup()
 	mTracks = nullptr;
 	mActiveTrack = 0;
     mDefaultPresetName = nullptr;
-	mResetRetains = nullptr;
-	mBindings = nullptr;
+	//mResetRetains = nullptr;
+	//mBindings = nullptr;
 
     initParameters();
 }
@@ -104,8 +104,8 @@ Setup::Setup()
 Setup::~Setup()
 {
 	delete mTracks;
-	delete mBindings;
-    delete mResetRetains;
+	//delete mBindings;
+    //delete mResetRetains;
     delete mDefaultPresetName;
 }
 
@@ -123,10 +123,10 @@ void Setup::initParameters()
     mSyncSource         = SYNC_TRACK;
     mSyncUnit           = SYNC_UNIT_BEAT;
     mSyncTrackUnit      = TRACK_UNIT_LOOP;
-    mManualStart        = false;
-	mMinTempo			= DEFAULT_MIN_TEMPO;
-	mMaxTempo			= DEFAULT_MAX_TEMPO;
-	mBeatsPerBar		= DEFAULT_BAR_BEATS;
+    //mManualStart        = false;
+	//mMinTempo			= DEFAULT_MIN_TEMPO;
+	//mMaxTempo			= DEFAULT_MAX_TEMPO;
+	//mBeatsPerBar		= DEFAULT_BAR_BEATS;
 	mMuteSyncMode   	= MUTE_SYNC_TRANSPORT;
     mResizeSyncAdjust   = SYNC_ADJUST_NONE;
 	mSpeedSyncAdjust	= SYNC_ADJUST_NONE;
@@ -136,23 +136,23 @@ void Setup::initParameters()
 Setup::Setup(Setup* src)
 {
 	mTracks = nullptr;
-	mBindings = nullptr;
-   	mResetRetains = nullptr;
+	//mBindings = nullptr;
+   	//mResetRetains = nullptr;
     mDefaultPresetName = nullptr;
 
     setName(src->getName());
     setDefaultPresetName(src->getDefaultPresetName());
-    setResetRetains(src->getResetRetains());
+    //setResetRetains(src->getResetRetains());
 
     mActiveTrack = src->getActiveTrack();
-    setBindings(src->getBindings());
+    //setBindings(src->getBindings());
     mSyncSource = src->getSyncSource();
     mSyncUnit = src->getSyncUnit();
     mSyncTrackUnit = src->getSyncTrackUnit();
-    mManualStart = src->isManualStart();
-    mMinTempo = src->getMinTempo();
-    mMaxTempo = src->getMaxTempo();
-    mBeatsPerBar = src->getBeatsPerBar();
+    //mManualStart = src->isManualStart();
+    //mMinTempo = src->getMinTempo();
+    //mMaxTempo = src->getMaxTempo();
+    //mBeatsPerBar = src->getBeatsPerBar();
     mMuteSyncMode = src->getMuteSyncMode();
     mResizeSyncAdjust = src->getResizeSyncAdjust();
     mSpeedSyncAdjust = src->getSpeedSyncAdjust();
@@ -182,10 +182,10 @@ void Setup::reset(Preset* p)
 	setDefaultPresetName(nullptr);
     
     // need a default list of these?
-    setResetRetains(nullptr);
+    //setResetRetains(nullptr);
 
     // don't really care what the binding configs are
-	setBindings(nullptr);
+	//setBindings(nullptr);
 
     // start over with a new SetupTrack list
     setTracks(nullptr);
@@ -261,6 +261,7 @@ const char* Setup::getDefaultPresetName()
 	return mDefaultPresetName;
 }
 
+#if 0
 void Setup::setBindings(const char* name)
 {
 	delete mBindings;
@@ -271,6 +272,7 @@ const char* Setup::getBindings()
 {
 	return mBindings;
 }
+#endif
 
 int Setup::getActiveTrack()
 {
@@ -282,6 +284,7 @@ void Setup::setActiveTrack(int i)
 	mActiveTrack = i;
 }
 
+#if 0
 void Setup::setResetRetains(const char* csv)
 {
     delete mResetRetains;
@@ -292,6 +295,7 @@ const char* Setup::getResetRetains()
 {
 	return mResetRetains;
 }
+#endif
 
 /**
  * This used to be a StringList, now it's just a CSV.
@@ -342,6 +346,7 @@ void Setup::setSyncTrackUnit(SyncTrackUnit unit)
     mSyncTrackUnit = unit;
 }
 
+#if 0
 bool Setup::isManualStart()
 {
     return mManualStart;
@@ -383,6 +388,7 @@ void Setup::setBeatsPerBar(int i)
 {
 	mBeatsPerBar = i;
 }
+#endif
 
 void Setup::setMuteSyncMode(MuteSyncMode i) {
 	mMuteSyncMode = i;

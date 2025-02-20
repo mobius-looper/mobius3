@@ -107,7 +107,7 @@ EventType* OverdubEvent = &OverdubEventObj;
 class OverdubFunction : public Function {
   public:
 	OverdubFunction(bool sus, bool toggle, bool off);
-	bool isSustain(Preset* p);
+	bool isSustain();
 	Event* scheduleEvent(Action* action, Loop* l);
 	void doEvent(Loop* l, Event* e);
     void invokeLong(Action* action, Loop* l);
@@ -173,23 +173,15 @@ OverdubFunction::OverdubFunction(bool sus, bool tog, bool turnOff)
 	else {
 		setName("Overdub");
 		longFunction = SUSOverdub;
-        // sustain controlled by the SustainFunctions parameter
+        // formerly sustain controlled by the SustainFunctions parameter
         maySustain = true;
         symbol = FuncOverdub;
 	}
 }
 
-bool OverdubFunction::isSustain(Preset* p)
+bool OverdubFunction::isSustain()
 {
-    bool isSustain = sustain;
-    if (!isSustain) {
-        // formerly had an OverdubMode to turn SUS on and off
-        //return sustain || (p->getOverdubMode() == OVERDUB_SUSTAIN);
-        const char* susfuncs = p->getSustainFunctions();
-        if (susfuncs != NULL)
-          isSustain = (IndexOf(susfuncs, "Overdub") >= 0);
-    }
-    return isSustain;
+    return sustain;
 }
 
 /**

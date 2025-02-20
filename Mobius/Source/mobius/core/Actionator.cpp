@@ -1235,8 +1235,7 @@ void Actionator::doFunction(Action* action, Function* f, Track* t)
             // is sustainable (e.g. Record becomes SUSRecord) then this
             // disables long-press behavoir.
 
-            Preset* p = t->getPreset();
-            if (f->isSustain(p)) {
+            if (f->isSustain()) {
                 // In this track, function is sustainable
                 Trace(t, 2, "Ignoring long-press action for function that has become sustainable\n");
             }

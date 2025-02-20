@@ -121,13 +121,13 @@ EventType* MultiplyEndEvent = &MultiplyEndEventObj;
 class MultiplyFunction : public Function {
   public:
 	MultiplyFunction(bool sus, bool unrounded);
-	bool isSustain(Preset* p);
+	bool isSustain();
     Event* invoke(Action* action, Loop* l);
 	Event* scheduleEvent(Action* action, Loop* l);
     void invokeLong(Action* action, Loop* l);
     void doEvent(Loop* loop, Event* event);
   private:
-	bool isUnroundedEnding(Preset* p, Function* f);
+	bool isUnroundedEnding(Function* f);
     void pruneCycles(Loop* l, int cycles, bool unrounded, bool remultiply);
 	bool unrounded;
 };
@@ -172,25 +172,17 @@ MultiplyFunction::MultiplyFunction(bool sus, bool unr)
 	}
 }
 
-bool MultiplyFunction::isSustain(Preset* p)
+bool MultiplyFunction::isSustain()
 {
-    bool isSustain = sustain;
-    if (!isSustain) {
-        // formerly sensntive to InsertMode=Sustain
-        const char* susfuncs = p->getSustainFunctions();
-        if (susfuncs != NULL)
-          isSustain = (IndexOf(susfuncs, "Multiply") >= 0);
-    }
-    return isSustain;
+    return sustain;
 }
 
 /**
  * Return true if the function being used to end the multiply
  * will result in an unrounded multiply.
  */
-bool MultiplyFunction::isUnroundedEnding(Preset* p, Function* f)
+bool MultiplyFunction::isUnroundedEnding(Function* f)
 {
-    (void)p;
     return (f == Record || 
             f == SUSUnroundedMultiply);
 }

@@ -277,7 +277,7 @@ MobiusMode* RunMode = &RunModeObj;
 class RecordFunction : public Function {
   public:
 	RecordFunction(bool sus, bool aut);
-	bool isSustain(Preset* p);
+	bool isSustain();
 
 	Event* scheduleEvent(Action* action, Loop* l);
     Event* scheduleModeStop(Action* action, Loop* l);
@@ -333,17 +333,10 @@ RecordFunction::RecordFunction(bool sus, bool aut)
 	}
 }
 
-bool RecordFunction::isSustain(Preset* p)
+bool RecordFunction::isSustain()
 {
-    bool isSustain = sustain;
-    if (!isSustain) {
-        // formerly sensitive to RecordMode
-        // || (!mAuto && p->getRecordMode() == RECORD_SUSTAIN);
-        const char* susfuncs = p->getSustainFunctions();
-        if (susfuncs != NULL)
-          isSustain = (IndexOf(susfuncs, "Record") >= 0);
-    }
-    return isSustain;
+    return sustain;
+    // formerly tested Preset::getSustainFunctions
 }
 
 /**

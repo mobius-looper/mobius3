@@ -785,16 +785,6 @@ Once those models are fully converted, these symbols can be removed.
       externally they are always numbered from 1.  Need to work this out.
     </Parameter>
     
-    <!-- StringList
-         Renamed this "resetRetains" at some point, still not visible in the UI
-         update: now a ParameterProperties flag
-    <Parameter name='resetables' type='string' multi='true' options='noBinding,juceValues'>
-         This was not defined formally in core, though it is a member of the Setup class.
-         The SetupDialog handled it as a special case.  Since it wasn't a parameter
-         it could not be used in bindings or scripts.
-       </Parameter>
-    -->
-
   </ParameterScope>
 
   <!-- =======================================================================

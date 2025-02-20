@@ -88,7 +88,7 @@ EventType* StutterEvent = &StutterEventObj;
 class StutterFunction : public Function {
   public:
 	StutterFunction(bool sus);
-	bool isSustain(Preset* p);
+	bool isSustain();
 	Event* scheduleEvent(Action* action, Loop* l);
     void doEvent(Loop* loop, Event* event);
 };
@@ -117,7 +117,7 @@ StutterFunction::StutterFunction(bool sus)
 	if (!sus) {
 		setName("Stutter");
 		longFunction = SUSStutter;
-        // check SustainFunctions
+        // formerly used SustainFunctions
         maySustain = true;
         symbol = FuncStutter;
 	}
@@ -127,17 +127,9 @@ StutterFunction::StutterFunction(bool sus)
 	}
 }
 
-bool StutterFunction::isSustain(Preset* p)
+bool StutterFunction::isSustain()
 {
-    bool isSustain = sustain;
-    if (!isSustain) {
-        // formerly sensitive to RecordMode
-        // || (!mAuto && p->getRecordMode() == RECORD_SUSTAIN);
-        const char* susfuncs = p->getSustainFunctions();
-        if (susfuncs != NULL)
-          isSustain = (IndexOf(susfuncs, "Stutter") >= 0);
-    }
-    return isSustain;
+    return sustain;
 }
 
 Event* StutterFunction::scheduleEvent(Action* action, Loop* l)

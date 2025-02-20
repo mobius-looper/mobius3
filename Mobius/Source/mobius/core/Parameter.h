@@ -307,12 +307,12 @@ extern Parameter* SyncSourceParameter;
 
 // Setup Parameters
 
-extern Parameter* BeatsPerBarParameter;
+//extern Parameter* BeatsPerBarParameter;
 extern Parameter* DefaultSyncSourceParameter;
 extern Parameter* DefaultTrackSyncUnitParameter;
-extern Parameter* ManualStartParameter;
-extern Parameter* MaxTempoParameter;
-extern Parameter* MinTempoParameter;
+//extern Parameter* ManualStartParameter;
+//extern Parameter* MaxTempoParameter;
+//extern Parameter* MinTempoParameter;
 extern Parameter* MuteSyncModeParameter;
 extern Parameter* RealignTimeParameter;
 extern Parameter* ResizeSyncAdjustParameter;

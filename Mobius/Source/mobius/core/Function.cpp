@@ -449,9 +449,8 @@ bool Function::isSustainable()
  * new: This doesn't look like it uses the Preset, but some Functions
  * overload this and use it.
  */
-bool Function::isSustain(Preset* p)
+bool Function::isSustain()
 {
-    (void)p;
 	return sustain;
 }
 
@@ -582,9 +581,8 @@ Event* Function::invoke(Action* action, Loop* loop)
 	Event* event = NULL;
     Track* track = loop->getTrack();
     EventManager* em = track->getEventManager();
-	Preset* preset = track->getPreset();
 	MobiusMode* mode = loop->getMode();
-	bool sus = isSustain(preset);
+	bool sus = isSustain();
 
 	// it is ok to call global functions on loops, but only if they have
 	// an event that can be scheduled, necessary for FullMute

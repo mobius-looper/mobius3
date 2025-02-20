@@ -124,14 +124,14 @@ EventType* InsertEndEvent = &InsertEndEventObj;
 class InsertFunction : public Function {
   public:
 	InsertFunction(bool sus, bool unrounded);
-	bool isSustain(Preset* p);
+	bool isSustain();
 	Event* invoke(Action* action, Loop* l);
     void invokeLong(Action* action, Loop* l);
 	Event* scheduleEvent(Action* action, Loop* l);
 	void prepareJump(Loop* l, Event* e, JumpContext* jump);
 	void doEvent(Loop* l, Event* e);
   private:
-	bool isUnroundedEnding(Preset* p, Function* f);
+	bool isUnroundedEnding(Function* f);
 	bool only;
 	bool unrounded;
 };
@@ -163,7 +163,7 @@ InsertFunction::InsertFunction(bool sus, bool unrounded)
 
 	if (!sus) {
 		setName("Insert");
-        // controlled by SustainFunctions parameter
+        // formerly controlled by SustainFunctions parameter
         maySustain = true;
         symbol = FuncInsert;
 	}
@@ -178,25 +178,17 @@ InsertFunction::InsertFunction(bool sus, bool unrounded)
 
 }
 
-bool InsertFunction::isSustain(Preset* p)
+bool InsertFunction::isSustain()
 {
-    bool isSustain = sustain;
-    if (!isSustain) {
-        // formerly sensntive to InsertMode=Sustain
-        const char* susfuncs = p->getSustainFunctions();
-        if (susfuncs != NULL)
-          isSustain = (IndexOf(susfuncs, "Insert") >= 0);
-    }
-    return isSustain;
+    return sustain;
 }
 
 /**
  * Return true if the function being used to end the multiply
  * will result in an unrounded multiply.
  */
-bool InsertFunction::isUnroundedEnding(Preset* p, Function* f)
+bool InsertFunction::isUnroundedEnding(Function* f)
 {
-    (void)p;
     return (f == Record || f == SUSUnroundedInsert);
 }
 
@@ -218,7 +210,8 @@ Event* InsertFunction::invoke(Action* action, Loop* l)
     if (config->isEdpisms() && l->isReset() && action->down) {
         // EDPism
         // Insert in Reset selects the next preset
-        changePreset(action, l, true);
+        Trace(1, "InsertFunction: Edpisms to change presets no longer supported");
+        //changePreset(action, l, true);
     }
     else {
         MobiusMode* mode = l->getMode();
@@ -238,7 +231,7 @@ Event* InsertFunction::invoke(Action* action, Loop* l)
                 event = RestartOnce->invoke(action, l);
             }
         }
-        else if (!isSustain(l->getPreset()) ||
+        else if (!isSustain() ||
                  (mode == InsertMode && !action->down) ||
                  (mode != InsertMode && action->down)) {
 

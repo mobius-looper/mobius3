@@ -779,13 +779,13 @@ void XmlRenderer::render(XmlBuffer* b, Setup* setup)
     // these haven't been defined as Parameters, now that we're
     // doing that for the sync options could do these...
     b->addAttribute(ATT_ACTIVE, setup->getActiveTrack());
-    b->addAttribute(ATT_BINDINGS, setup->getBindings());
+    //b->addAttribute(ATT_BINDINGS, setup->getBindings());
 
     render(b, UIParameterDefaultPreset, setup->getDefaultPresetName());
     
     // these are a csv while the function lists in MobiusConfig
     // are String lists, should be consistent, I'm liking csv for brevity
-    b->addAttribute(ATT_RESET_RETAINS, setup->getResetRetains());
+    //b->addAttribute(ATT_RESET_RETAINS, setup->getResetRetains());
 
     //render(b, UIParameterBeatsPerBar, setup->getBeatsPerBar());
     // why is the name pattern not followed here?
@@ -816,11 +816,11 @@ void XmlRenderer::parse(XmlElement* e, Setup* setup)
 	parseStructure(e, setup);
 
 	setup->setActiveTrack(e->getIntAttribute(ATT_ACTIVE));
-	setup->setBindings(e->getAttribute(ATT_BINDINGS));
+	//setup->setBindings(e->getAttribute(ATT_BINDINGS));
 
     setup->setDefaultPresetName(parseString(e, UIParameterDefaultPreset));
     
-    setup->setResetRetains(e->getAttribute(ATT_RESET_RETAINS));
+    //setup->setResetRetains(e->getAttribute(ATT_RESET_RETAINS));
 
     //setup->setBeatsPerBar(parse(e, UIParameterBeatsPerBar));
     setup->setSyncSource((OldSyncSource)parse(e, UIParameterDefaultSyncSource));

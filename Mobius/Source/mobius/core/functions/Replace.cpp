@@ -107,7 +107,7 @@ EventType* ReplaceEvent = &ReplaceEventObj;
 class ReplaceFunction : public Function {
   public:
 	ReplaceFunction(bool sus);
-	bool isSustain(Preset* p);
+	bool isSustain();
 	Event* scheduleEvent(Action* action, Loop* l);
 	void doEvent(Loop* l, Event* e);
 	void prepareJump(Loop* l, Event* e, JumpContext* jump);
@@ -139,7 +139,7 @@ ReplaceFunction::ReplaceFunction(bool sus)
 		setName("Replace");
 		// this was not defined in the EDP manual but seems logical
 		longFunction = SUSReplace;
-        // can also force this with SustainFunctions parameter
+        // formerly could also force this with SustainFunctions parameter
         maySustain = true;
         mayConfirm = true;
         symbol = FuncReplace;
@@ -150,17 +150,9 @@ ReplaceFunction::ReplaceFunction(bool sus)
 	}
 }
 
-bool ReplaceFunction::isSustain(Preset* p)
+bool ReplaceFunction::isSustain()
 {
-    bool isSustain = sustain;
-    if (!isSustain) {
-        // formerly sensitive to RecordMode
-        // || (!mAuto && p->getRecordMode() == RECORD_SUSTAIN);
-        const char* susfuncs = p->getSustainFunctions();
-        if (susfuncs != NULL)
-          isSustain = (IndexOf(susfuncs, "Replace") >= 0);
-    }
-    return isSustain;
+    return sustain;
 }
 
 Event* ReplaceFunction::scheduleEvent(Action* action, Loop* l)

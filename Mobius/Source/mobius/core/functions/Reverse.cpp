@@ -220,7 +220,7 @@ ReverseFunction::ReverseFunction(bool sus, bool tog, bool fwd)
 	else {
 		setName("Reverse");
 		longFunction = SUSReverse;
-        // can also force this with SustainFunctions preset parameter
+        // formerly could also force this with SustainFunctions preset parameter
         maySustain = true;
         mayConfirm = true;
         symbol = FuncReverse;

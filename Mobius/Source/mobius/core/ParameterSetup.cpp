@@ -310,7 +310,7 @@ Parameter* SlaveSyncUnitParameter = &SlaveSyncUnitParameterTypeObj;
 // ManualStart
 //
 //////////////////////////////////////////////////////////////////////
-
+#if 0
 class ManualStartParameterType : public SetupParameter
 {
   public:
@@ -344,13 +344,14 @@ void ManualStartParameterType::setValue(Setup* s, ExValue* value)
 
 ManualStartParameterType ManualStartParameterTypeObj;
 Parameter* ManualStartParameter = &ManualStartParameterTypeObj;
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
 // MinTempo
 //
 //////////////////////////////////////////////////////////////////////
-
+#if 0
 class MinTempoParameterType : public SetupParameter
 {
   public:
@@ -385,13 +386,14 @@ void MinTempoParameterType::setValue(Setup* s, ExValue* value)
 
 MinTempoParameterType MinTempoParameterTypeObj;
 Parameter* MinTempoParameter = &MinTempoParameterTypeObj;
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
 // MaxTempo
 //
 //////////////////////////////////////////////////////////////////////
-
+#if 0
 class MaxTempoParameterType : public SetupParameter
 {
   public:
@@ -426,13 +428,14 @@ void MaxTempoParameterType::setValue(Setup* s, ExValue* value)
 
 MaxTempoParameterType MaxTempoParameterTypeObj;
 Parameter* MaxTempoParameter = &MaxTempoParameterTypeObj;
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
 // BeatsPerBar
 //
 //////////////////////////////////////////////////////////////////////
-
+#if 0
 class BeatsPerBarParameterType : public SetupParameter
 {
   public:
@@ -467,6 +470,7 @@ void BeatsPerBarParameterType::setValue(Setup* s, ExValue* value)
 
 BeatsPerBarParameterType BeatsPerBarParameterTypeObj;
 Parameter* BeatsPerBarParameter = &BeatsPerBarParameterTypeObj;
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //

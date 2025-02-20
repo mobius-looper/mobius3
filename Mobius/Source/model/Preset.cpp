@@ -63,7 +63,7 @@ void Preset::reset()
 	mNoFeedbackUndo		= false;
 	mNoLayerFlattening	= false;
 	mAltFeedbackEnable	= false;
-    strcpy(mSustainFunctions, "");
+    //strcpy(mSustainFunctions, "");
 
     // Quantization
 	mOverdubQuantized   = false;
@@ -152,7 +152,7 @@ void Preset::copyNoAlloc(Preset* src)
 	mNoFeedbackUndo = src->mNoFeedbackUndo;
 	mNoLayerFlattening = src->mNoLayerFlattening;
 	mAltFeedbackEnable = src->mAltFeedbackEnable;
-    strcpy(mSustainFunctions, src->mSustainFunctions);
+    //strcpy(mSustainFunctions, src->mSustainFunctions);
 
     // Quantization
     mOverdubQuantized = src->mOverdubQuantized;
@@ -223,6 +223,7 @@ int Preset::getSubcycles() {
 	return mSubcycles;
 }
 
+#if 0
 void Preset::setSustainFunctions(const char* s) 
 {
     CopyString(s, mSustainFunctions, sizeof(mSustainFunctions));
@@ -248,6 +249,7 @@ void Preset::addSustainFunction(const char* name)
         }
     }
 }
+#endif
 
 /**
  * Return true if the given function is on the sustained function list.

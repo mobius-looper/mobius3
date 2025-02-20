@@ -117,9 +117,9 @@ class Preset : public Structure {
 	void setAltFeedbackEnable(bool b);
 	bool isAltFeedbackEnable();
 
-    void setSustainFunctions(const char* s);
-    const char* getSustainFunctions();
-    void addSustainFunction(const char* name);
+    //void setSustainFunctions(const char* s);
+    //const char* getSustainFunctions();
+    //void addSustainFunction(const char* name);
 
     // reomved to avoid dependency
     //    bool isSustainFunction(Function* f);
@@ -363,7 +363,7 @@ class Preset : public Structure {
      * and OverdubMode=Sustain parameters.
      * !! Think about how big this needs to be.  
      */
-    char mSustainFunctions[256];
+    //char mSustainFunctions[256];
 
     //
     // Quantization

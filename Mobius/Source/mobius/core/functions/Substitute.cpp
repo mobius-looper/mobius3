@@ -76,7 +76,7 @@ EventType* SubstituteEvent = &SubstituteEventObj;
 class SubstituteFunction : public Function {
   public:
 	SubstituteFunction(bool sus);
-	bool isSustain(Preset* p);
+	bool isSustain();
 	void doEvent(Loop* l, Event* e);
 };
 
@@ -104,7 +104,7 @@ SubstituteFunction::SubstituteFunction(bool sus)
 	if (!sus) {
 		setName("Substitute");
 		longFunction = SUSSubstitute;
-        // can also force this with SustainFunctions parameter
+        // formarly could also force this with SustainFunctions parameter
         maySustain = true;
         mayConfirm = true;
         symbol = FuncSubstitute;
@@ -115,17 +115,9 @@ SubstituteFunction::SubstituteFunction(bool sus)
 	}
 }
 
-bool SubstituteFunction::isSustain(Preset* p)
+bool SubstituteFunction::isSustain()
 {
-    bool isSustain = sustain;
-    if (!isSustain) {
-        // formerly sensitive to RecordMode
-        // || (!mAuto && p->getRecordMode() == RECORD_SUSTAIN);
-        const char* susfuncs = p->getSustainFunctions();
-        if (susfuncs != NULL)
-          isSustain = (IndexOf(susfuncs, "Substitute") >= 0);
-    }
-    return isSustain;
+    return sustain;
 }
 
 /**
