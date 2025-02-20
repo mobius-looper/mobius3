@@ -17,7 +17,7 @@
     bounceQuantize='off'
     emptyLoopAction='none'
     emptyTrackAction='copyTime'
-    loopCount='1'
+    loopCount='4'
     maxRedo='4'
     maxUndo='8'
     multiplyMode='normal'

@@ -122,6 +122,12 @@ SwitchDuration ParameterSource::getSwitchDuration(Loop* l)
     return p->getSwitchDuration();
 }
 
+SwitchLocation ParameterSource::getSwitchLocation(Loop* l)
+{
+    Preset* p = l->getPreset();
+    return p->getSwitchLocation();
+}
+
 TrackLeaveAction ParameterSource::getTrackLeaveAction(Loop* l)
 {
     Preset* p = l->getPreset();

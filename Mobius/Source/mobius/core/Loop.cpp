@@ -74,6 +74,7 @@
 #include "Stream.h"
 #include "Synchronizer.h"
 #include "Track.h"
+#include "ParameterSource.h"
 
 #include "Loop.h"
 #include "Mem.h"
@@ -4681,8 +4682,10 @@ void Loop::undoEvent(Event* e)
  */
 void Loop::addRedo(Event* e, Layer* undone)
 {
-	Preset* eventPreset = e->getEventPreset();
-	int max = eventPreset->getMaxRedo();
+    (void)e;
+	//Preset* eventPreset = e->getEventPreset();
+	//int max = eventPreset->getMaxRedo();
+    int max = mPreset->getMaxRedo();
 
 	if (max == 0)
 	  undone->freeAll();
@@ -5565,7 +5568,7 @@ void Loop::switchEvent(Event* event)
 	// Let the Synchronizer know.  The new loop size and possible restart.
     // The rules for EDP SamplerStyle and SamplePlay are strange and I
 	// don't like them.  Before 1.43 the logic was:
-	// 	
+	//
 	//   syncRestart = (event->function == Restart ||
 	//                    samplerStyle == SAMPLERONCE ||
 	//                    (event->function != SamplePlay &&
@@ -5576,8 +5579,10 @@ void Loop::switchEvent(Event* event)
 	// manual.  Now, Restart and RestartOnce will always send START as
 	// will switchLocation=Start
 
-	Preset* eventPreset = event->getEventPreset();
-    SwitchLocation location = eventPreset->getSwitchLocation();
+    //Preset* eventPreset = event->getEventPreset();
+    //SwitchLocation location = eventPreset->getSwitchLocation();
+    SwitchLocation location = ParameterSource::getSwitchLocation(this);
+    
 	bool syncRestart = (event->function == Restart || 
                           event->function == RestartOnce ||
 						  location == SWITCH_START);

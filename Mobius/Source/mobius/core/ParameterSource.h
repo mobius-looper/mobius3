@@ -50,6 +50,7 @@ class ParameterSource
     static ParameterMultiplyMode getMultiplyMode(class Loop* l);
     
     static SwitchDuration getSwitchDuration(class Loop* l);
+    static SwitchLocation getSwitchLocation(class Loop* l);
     static SwitchQuantize getSwitchQuantize(class Loop* l);
     static bool isSwitchVelocity(class Loop* l);
     
