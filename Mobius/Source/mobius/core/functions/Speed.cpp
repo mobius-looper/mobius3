@@ -35,6 +35,7 @@
 #include "../Stream.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
+#include "../ParameterSource.h"
 
 #include "FunctionUtil.h"
 
@@ -282,7 +283,7 @@ typedef struct {
 class SpeedFunction : public Function {
   public:
 	SpeedFunction(SpeedFunctionType type);
-	bool isRecordable(Preset* p);
+	bool isRecordable(Loop* l);
     Event* invoke(Action* action, Loop* l);
 	Event* scheduleEvent(Action* action, Loop* l);
 	Event* scheduleSwitchStack(Action* action, Loop* l);
@@ -473,9 +474,9 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
  * This is true if the function is can be used during recording.
  * Since we didn't do this originally, it is controlled by a preset parameter.
  */
-bool SpeedFunction::isRecordable(Preset* p)
+bool SpeedFunction::isRecordable(Loop* l)
 {
-	return p->isSpeedRecord();
+	return ParameterSource::isSpeedRecord(l);
 }
 
 /**
@@ -566,8 +567,7 @@ void SpeedFunction::convertAction(Action* action, Loop* l, SpeedChange* change)
         change->value = action->arg.getInt();
 
         // support rescaling for some triggers
-        Preset* p = l->getPreset();
-        int scaledRange = p->getSpeedStepRange();
+        int scaledRange = ParameterSource::getSpeedStepRange(l);
 
         if (RescaleActionValue(action, l, scaledRange, false, &change->value))
           checkSpreadRange = false;
@@ -576,16 +576,14 @@ void SpeedFunction::convertAction(Action* action, Loop* l, SpeedChange* change)
 
         change->value = action->arg.getInt();
 
-        Preset* p = l->getPreset();
         int scaledRange;
-
         if (mType == SPEED_BEND) {
             change->unit = SPEED_UNIT_BEND;
-            scaledRange = p->getSpeedBendRange();
+            scaledRange = ParameterSource::getSpeedBendRange(l);
         }
         else {
             change->unit = SPEED_UNIT_STRETCH;
-            scaledRange = p->getTimeStretchRange();
+            scaledRange = ParameterSource::getTimeStretchRange(l);
         }
 
         RescaleActionValue(action, l, scaledRange, true, &change->value);
@@ -614,8 +612,7 @@ void SpeedFunction::convertAction(Action* action, Loop* l, SpeedChange* change)
 
         Track* t = l->getTrack();
         int step = t->getSpeedSequenceIndex();
-        Preset* p = l->getPreset();
-        StepSequence* seq = p->getSpeedSequence();
+        StepSequence* seq = ParameterSource::getSpeedSequence(l);
         bool next = (mType == SPEED_NEXT);
 
         // stay here if we have no sequence
@@ -862,7 +859,7 @@ bool SpeedFunction::isIneffective(Action* a, Loop* l, SpeedChange* change)
 
     if (change->unit != SPEED_UNIT_TOGGLE && 
         mType != SPEED_CANCEL &&
-        (!mCanRestart || !l->getPreset()->isSpeedShiftRestart())) {
+        (!mCanRestart || !ParameterSource::isSpeedShiftRestart(l))) {
 
         Stream* istream = l->getInputStream();
 
@@ -953,8 +950,7 @@ Event* SpeedFunction::scheduleSwitchStack(Action* action, Loop* l)
 Event* SpeedFunction::scheduleTransfer(Loop* l)
 {
     Event* event = NULL;
-    Preset* p = l->getPreset();
-    TransferMode tm = p->getSpeedTransfer();
+    TransferMode tm = ParameterSource::getSpeedTransfer(l);
 
     if (tm == XFER_OFF || tm == XFER_RESTORE) {
 
@@ -1042,7 +1038,7 @@ void SpeedFunction::doEvent(Loop* l, Event* e)
         Synchronizer* sync = l->getSynchronizer();
         sync->loopSpeedShift(l);
 
-        if (mCanRestart && l->getPreset()->isSpeedShiftRestart()) {
+        if (mCanRestart && ParameterSource::isSpeedShiftRestart(l)) {
 
             // any other start frame options ?
             l->setFrame(0);

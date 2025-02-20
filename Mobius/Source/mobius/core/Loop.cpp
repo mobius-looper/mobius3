@@ -2650,7 +2650,7 @@ bool Loop::checkMuteCancel(Event* e)
 		if (func == NULL)
 		  Trace(this, 1, "Loop: checkMuteCancel called with NULL function!\n");
 
-		else if (mMuteMode && func->isMuteCancel(mPreset)) {
+		else if (mMuteMode && func->isMuteCancel(this)) {
 		
 			mMuteMode = false;
 			mMute = false;
@@ -3520,7 +3520,7 @@ void Loop::jumpPlayEvent(Event* e)
 	// be the alternate ending, not the "family" function.
 	// Insert/Record, Multiply/Record, others?
 	// Might be a problem if Insert is not on the custom list??
-	if (mMuteMode && func->isMuteCancel(mPreset))
+	if (mMuteMode && func->isMuteCancel(this))
 	  next.unmute = true;
 
 	// Determine the new playback parameters	

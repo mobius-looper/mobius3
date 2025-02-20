@@ -23,7 +23,6 @@
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
-#include "../../../model/Preset.h"
 #include "../../../model/SymbolId.h"
 
 #include "../Action.h"
@@ -39,6 +38,7 @@
 #include "../Synchronizer.h"
 #include "../Track.h"
 #include "../Parameter.h"
+#include "../ParameterSource.h"
 
 // only for CD_SAMPLE_RATE which is used by MSEC_TO_FRAMES
 #include "../AudioConstants.h"
@@ -345,11 +345,10 @@ void WindowFunction::moveWindow(Event* event)
         }
     }
 
-    Preset* p = mLoop->getPreset();
-    WindowUnit unit = p->getWindowSlideUnit();
+    WindowUnit unit = ParameterSource::getWindowSlideUnit(mLoop);
 
     if (amount <= 0) {
-        amount = p->getWindowSlideAmount();
+        amount = ParameterSource::getWindowSlideAmount(mLoop);
         if (amount <= 0)
           amount = 1;
     }
@@ -414,11 +413,10 @@ void WindowFunction::resizeWindow(Event* event)
         }
     }
 
-    Preset* p = mLoop->getPreset();
-    WindowUnit unit = p->getWindowEdgeUnit();
+    WindowUnit unit = ParameterSource::getWindowEdgeUnit(mLoop);
 
     if (amount <= 0) {
-        amount = p->getWindowEdgeAmount();
+        amount = ParameterSource::getWindowEdgeAmount(mLoop);
         if (amount <= 0)
           amount = 1;
     }

@@ -74,6 +74,7 @@
 #include "../Mode.h"
 #include "../Stream.h"
 #include "../Track.h"
+#include "../ParameterSource.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -333,8 +334,7 @@ Event* ReverseFunction::scheduleSwitchStack(Action* action, Loop* l)
 Event* ReverseFunction::scheduleTransfer(Loop* l)
 {
     Event* event = NULL;
-    Preset* p = l->getPreset();
-    TransferMode tm = p->getReverseTransfer();
+    TransferMode tm = ParameterSource::getReverseTransfer(l);
 
     if (tm == XFER_OFF || tm == XFER_RESTORE) {
 

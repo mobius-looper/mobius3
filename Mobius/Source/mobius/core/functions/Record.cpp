@@ -131,6 +131,7 @@
 #include "../Mode.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
+#include "../ParameterSource.h"
 
 /****************************************************************************
  *                                                                          *
@@ -671,12 +672,11 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
 
             // EDP had something called RecordMode=Safe that would
             // push feedback back to 127 whenever recording started.
-            // We no longer have RecordMode but we do have  
-            // RecordResetsFeedback.  
+            // We no longer have RecordMode but we do have
+            // RecordResetsFeedback.
             // !! Why is this done here, can't we do it when the recording
             // is started?
-            Preset* preset = loop->getPreset();
-            if (preset->isRecordResetsFeedback()) {
+            if (ParameterSource::isRecordResetsFeedback(loop)) {
                 // note that we don't just put it to 127 like the EDP
                 // it goes back to what is defined in the Setup
                 int feedback = 127;

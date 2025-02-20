@@ -43,6 +43,7 @@
 #include "Stream.h"
 #include "Synchronizer.h"
 #include "Track.h"
+#include "ParameterSource.h"
 
 #include "Function.h"
 
@@ -459,9 +460,9 @@ bool Function::isSustain()
  * new: This doesn't look like it uses the Preset, but some Functions
  * overload this and use it.
  */
-bool Function::isRecordable(Preset* p)
+bool Function::isRecordable(Loop* l)
 {
-    (void)p;
+    (void)l;
 	return false;
 }
 
@@ -470,11 +471,13 @@ bool Function::isRecordable(Preset* p)
  * Note that we'll treat MuteOn as an "edit" function even though
  * it can never cancel.  jumpPlayEvent will figure it out.
  */
-bool Function::isMuteCancel(Preset* p)
+bool Function::isMuteCancel(Loop* l)
 {
 	bool isCancel = false;
 
-	switch (p->getMuteCancel()) {
+    MuteCancel muteCancel = ParameterSource::getMuteCancel(l);
+
+	switch (muteCancel) {
 
 		case MUTE_CANCEL_NEVER:
 			break;
@@ -697,7 +700,7 @@ Event* Function::invoke(Action* action, Loop* loop)
                     // A few functions like rate shift are allowed to
                     // happen during recording, most end the recording.
                     // Currently only Midi, Rate, Speed.
-					if (!isRecordable(loop->getPreset())) {
+					if (!isRecordable(loop)) {
                         // an internal event, need to clone the action
                         // unless this is Record itself, see mess above
                         Mobius* m = loop->getMobius();

@@ -42,6 +42,7 @@
 #include "../Segment.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
+#include "../ParameterSource.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -225,7 +226,7 @@ Event* MultiplyFunction::invoke(Action* action, Loop* l)
           em->freeEvent(realign);
 	}
     else if (config->isEdpisms() && 
-             l->getMode() == MuteMode && isMuteCancel(l->getPreset())) {
+             l->getMode() == MuteMode && isMuteCancel(l)) {
         // EDPism: Multiply in Mute becomes MuteRealign
         // !! Hey what about MuteMidiStart not supporting that
 
@@ -321,8 +322,7 @@ void MultiplyFunction::doEvent(Loop* l, Event* e)
 
         bool pruned = false;
         bool resized = false;
-        Preset* p = l->getPreset();
-        ParameterMultiplyMode mmode = p->getMultiplyMode();
+        ParameterMultiplyMode mmode = ParameterSource::getMultiplyMode(l);
         Layer* play = l->getPlayLayer();
 
         // I'm not liking the uncontrollable nature of unrounded multiply,

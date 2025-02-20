@@ -167,7 +167,6 @@ Event* UndoFunction::scheduleEvent(Action* action, Loop* l)
 	Event* event = NULL;
     EventManager* em = l->getTrack()->getEventManager();
 	MobiusMode* mode = l->getMode();
-	Preset* preset = l->getPreset();
 
 	if (mode == ThresholdMode || mode == SynchronizeMode) {
 		// cancel the recording, but leave track controls as is
@@ -188,7 +187,7 @@ Event* UndoFunction::scheduleEvent(Action* action, Loop* l)
         // scheduleModeStop which redirects to undoRecordStop if the
         // if the action function was Undo, what a mess
     }
-	else if (!mOnly && mode == MuteMode && isMuteCancel(preset) && 
+	else if (!mOnly && mode == MuteMode && isMuteCancel(l) && 
 			 !em->hasEvents()) {
 
 		// Mute alternate ending, reverses the MuteMode
@@ -211,7 +210,7 @@ Event* UndoFunction::scheduleEvent(Action* action, Loop* l)
  		// NOTE: not doing a play jump though I supposed we could.
 
 		event = em->newEvent(this, UndoEvent, l->getFrame());
-		event->savePreset(l->getPreset());
+		//event->savePreset(l->getPreset());
 		em->addEvent(event);
         // don't need to keep the Action
     }
@@ -319,7 +318,7 @@ Event* RedoFunction::scheduleEvent(Action* action, Loop* l)
 	}
     else if (mode != ResetMode) {
 		event = em->newEvent(this, RedoEvent, l->getFrame());
-		event->savePreset(l->getPreset());
+		//event->savePreset(l->getPreset());
 		em->addEvent(event);
         // any need to save the action?
     }

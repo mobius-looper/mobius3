@@ -39,6 +39,7 @@
 #include "../Stream.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
+#include "../ParameterSource.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -389,8 +390,7 @@ void PitchFunction::convertAction(Action* action, Loop* l,
         change->value = action->arg.getInt();
 
         // support rescaling for some triggers
-        Preset* p = l->getPreset();
-        int scaledRange = p->getPitchStepRange();
+        int scaledRange = ParameterSource::getPitchStepRange(l);
 
         if (RescaleActionValue(action, l, scaledRange, false, &change->value))
           checkSpreadRange = false;
@@ -400,8 +400,7 @@ void PitchFunction::convertAction(Action* action, Loop* l,
         change->unit = PITCH_UNIT_BEND;
 
         // support rescaling for some triggers
-        Preset* p = l->getPreset();
-        int scaledRange = p->getPitchBendRange();
+        int scaledRange = ParameterSource::getPitchBendRange(l);
 
         RescaleActionValue(action, l, scaledRange, true, &change->value);
     }
@@ -426,8 +425,7 @@ void PitchFunction::convertAction(Action* action, Loop* l,
 
         Track* t = l->getTrack();
         int step = t->getPitchSequenceIndex();
-        Preset* p = l->getPreset();
-        StepSequence* seq = p->getPitchSequence();
+        StepSequence* seq = ParameterSource::getPitchSequence(l);
         bool next = (mType == PITCH_NEXT);
 
         // stay here if we have no sequence
@@ -600,10 +598,8 @@ bool PitchFunction::isIneffective(Action* a, Loop* l,
     // STEP is always effective if restart is enabled
     // CANCEL does more than just the step so always do it
 
-    //Preset* p = l->getPreset();
-
     if (mType != PITCH_CANCEL &&
-        (!mCanRestart || !l->getPreset()->isPitchShiftRestart())) {
+        (!mCanRestart || !ParameterSource::isPitchShiftRestart(l))) {
 
         OutputStream* ostream = l->getOutputStream();
 
@@ -682,8 +678,7 @@ Event* PitchFunction::scheduleSwitchStack(Action* action, Loop* l)
 Event* PitchFunction::scheduleTransfer(Loop* l)
 {
     Event* event = NULL;
-    Preset* p = l->getPreset();
-    TransferMode tm = p->getPitchTransfer();
+    TransferMode tm = ParameterSource::getPitchTransfer(l);
 
     if (tm == XFER_OFF || tm == XFER_RESTORE) {
 
@@ -762,7 +757,7 @@ void PitchFunction::doEvent(Loop* l, Event* e)
         
         applyPitchChange(l, &change, true);
 
-        if (mCanRestart && l->getPreset()->isPitchShiftRestart()) {
+        if (mCanRestart && ParameterSource::isPitchShiftRestart(l)) {
             // any other start frame options?
             l->setFrame(0);
             l->recalculatePlayFrame();

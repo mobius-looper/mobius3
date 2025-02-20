@@ -36,6 +36,7 @@
 #include "../Loop.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
+#include "../ParameterSource.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -170,9 +171,7 @@ void SlipFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 		long unitFrames = 0;
 		long relativeFrames = 0;
 		QuantizeMode absoluteQ = QUANTIZE_OFF;
-		Preset* preset = l->getPreset();
-
-		SlipMode smode = preset->getSlipMode();
+		SlipMode smode = ParameterSource::getSlipMode(l);
 		switch (smode) {
 			case SLIP_SUBCYCLE: {
 				absoluteQ = QUANTIZE_SUBCYCLE;
@@ -198,7 +197,7 @@ void SlipFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 				break;
 			case SLIP_MSEC: {
 				// this is complicated by variable speeds!
-				int msecs = preset->getSlipTime();
+				int msecs = ParameterSource::getSlipTime(l);
 				float speed = l->getTrack()->getEffectiveSpeed();
 				// should we ceil()?
 				unitFrames = (long)(MSEC_TO_FRAMES(msecs) * speed);

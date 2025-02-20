@@ -222,7 +222,7 @@ Event* InsertFunction::invoke(Action* action, Loop* l)
         // If isMuteCancel is false, then just insert silently
 
         if (config->isEdpisms() && 
-            mode == MuteMode && isMuteCancel(l->getPreset())) {
+            mode == MuteMode && isMuteCancel(l)) {
             
             // ignore up transitions of a SUSInsert
             if (action->down) {

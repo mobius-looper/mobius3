@@ -198,7 +198,7 @@ class Function : public SystemConstant {
     /**
      * True if this function will cancel Mute mode.
      */
-	virtual bool isMuteCancel(class Preset* p);
+	virtual bool isMuteCancel(class Loop* l);
 
 	/**
 	 * True if the function in the context of this Preset is
@@ -210,7 +210,7 @@ class Function : public SystemConstant {
 	/**
 	 * True if this may be invoked during recording.
 	 */
-	virtual bool isRecordable(class Preset* p);
+	virtual bool isRecordable(class Loop* l);
 
 	/**
 	 * Return an alternate function to invoke after a long press.

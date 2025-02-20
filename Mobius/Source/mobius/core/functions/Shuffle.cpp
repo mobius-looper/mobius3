@@ -33,6 +33,7 @@
 #include "../Segment.h"
 #include "../Synchronizer.h"
 #include "../Mem.h"
+#include "../ParameterSource.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -183,8 +184,7 @@ void ShuffleFunction::doEvent(Loop* loop, Event* event)
         // old style let a single arg override the granule
         // but use shuffle mode from the preset
         // loop size doesn't change so we don't have to mess with sync
-        Preset* preset = loop->getPreset();
-        int granules = preset->getSubcycles();
+        int granules = ParameterSource::getSubcycles(loop);
 
         if (list != NULL && list->size() > 0) { 
             ExValue* arg = list->getValue(0);
@@ -193,7 +193,7 @@ void ShuffleFunction::doEvent(Loop* loop, Event* event)
               granules = alt;
         }
 
-        ShuffleMode mode = preset->getShuffleMode();
+        ShuffleMode mode = ParameterSource::getShuffleMode(loop);
 
         shuffle(loop, layer, mode, granules);
         shuffled = true;
