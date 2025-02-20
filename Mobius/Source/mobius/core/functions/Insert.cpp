@@ -204,7 +204,7 @@ bool InsertFunction::isUnroundedEnding(Function* f)
  */
 Event* InsertFunction::invoke(Action* action, Loop* l) 
 {
-    Event* event = NULL;
+    Event* event = nullptr;
     MobiusConfig* config = l->getMobius()->getConfiguration();
 
     if (config->isEdpisms() && l->isReset() && action->down) {
@@ -247,7 +247,7 @@ Event* InsertFunction::invoke(Action* action, Loop* l)
  */
 Event* InsertFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
 	MobiusMode* mode = l->getMode();
 
@@ -279,7 +279,7 @@ Event* InsertFunction::scheduleEvent(Action* action, Loop* l)
 	else {
         event = Function::scheduleEvent(action, l);
 
-        if (event != NULL) {
+        if (event != nullptr) {
 
             // formerly set event->afterLoop here, I guess to be
             // like Multiply, but this causes the insert to happen
@@ -332,7 +332,7 @@ void InsertFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 {
 	Event* parent = e->getParent();
 
-	if (parent == NULL) {
+	if (parent == nullptr) {
 		Trace(l, 1, "InsertFunction: jump event with no parent!");
 	}
 	else if (parent->type == InsertEndEvent) {

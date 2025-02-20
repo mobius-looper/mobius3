@@ -36,7 +36,7 @@
 ScriptRuntime::ScriptRuntime(class Mobius* m)
 {
     mMobius = m;
-    mScripts = NULL;
+    mScripts = nullptr;
     mScriptThreadCounter = 0;
 }
 
@@ -56,7 +56,7 @@ ScriptRuntime::ScriptRuntime(class Mobius* m)
  */
 ScriptRuntime::~ScriptRuntime()
 {
-    if (mScripts != NULL)
+    if (mScripts != nullptr)
       Trace(1, "ScriptRuntime: Leaking lingering script interpreters!");
 
     while (mScripts != nullptr) {
@@ -72,20 +72,20 @@ ScriptRuntime::~ScriptRuntime()
  */
 void ScriptRuntime::runScript(Action* action)
 {
-    Function* function = NULL;
-    Script* script = NULL;
+    Function* function = nullptr;
+    Script* script = nullptr;
 
 	// shoudln't happen but be careful
-	if (action == NULL) {
+	if (action == nullptr) {
         Trace(1, "Mobius::runScript without an Action!\n");
     }
     else {
         function = action->getFunction();
-        if (function != NULL)
+        if (function != nullptr)
           script = (Script*)function->object;
     }
 
-    if (script == NULL) {
+    if (script == nullptr) {
         Trace(1, "Mobius::runScript without a script!\n");
     }
     else if (script->isContinuous()) {
@@ -115,7 +115,7 @@ void ScriptRuntime::runScript(Action* action)
             // doFunction(Action,Function,Track)
 
             Track* track = mMobius->resolveTrack(action);
-            if (track != NULL) {
+            if (track != nullptr) {
                 action->setResolvedTrack(track);
                 function->invoke(action, track->getLoop());
             }
@@ -162,7 +162,7 @@ void ScriptRuntime::startScript(Action* action, Script* script)
 {
 	Track* track = mMobius->resolveTrack(action);
 
-	if (track != NULL) {
+	if (track != nullptr) {
         // a track specific binding
 		startScript(action, script, track);
 	}
@@ -241,7 +241,7 @@ void ScriptRuntime::startScript(Action* action, Script* s, Track* t)
 	else if (!action->down) {
 		// an up transition, should be an existing interpreter
 		ScriptInterpreter* si = findScript(action, s, t);
-		if (si == NULL) {
+		if (si == nullptr) {
             if (s->isSustainAllowed()) {
                 // shouldn't have removed this
                 Trace(1, "Mobius: SUS script not found!\n");
@@ -253,7 +253,7 @@ void ScriptRuntime::startScript(Action* action, Script* s, Track* t)
 		}
 		else {
 			ScriptLabelStatement* l = s->getEndSustainLabel();
-			if (l != NULL) {
+			if (l != nullptr) {
                 Trace(2, "Mobius: Script thread %s: notify end sustain\n", 
                       si->getTraceName());
                 si->notify(l);
@@ -267,7 +267,7 @@ void ScriptRuntime::startScript(Action* action, Script* s, Track* t)
 		// can only be here on down transitions
 		ScriptInterpreter* si = findScript(action, s, t);
 
-		if (si != NULL) {
+		if (si != nullptr) {
 
 			// Look for a label to handle the additional trigger
 			// !! potential ambiguity between the click and reentry labels
@@ -276,32 +276,32 @@ void ScriptRuntime::startScript(Action* action, Script* s, Track* t)
 			// the script is in a wait state?
 
 			ScriptLabelStatement* l = s->getClickLabel();
-			if (l != NULL) {
+			if (l != nullptr) {
 				si->setClickCount(si->getClickCount() + 1);
 				si->setClickedMsecs(0);
-                if (l != NULL)
+                if (l != nullptr)
                   Trace(2, "Mobius: Script thread %s: notify multiclick\n",
                         si->getTraceName());
 			}
 			else {
 				l = s->getReentryLabel();
-                if (l != NULL)
+                if (l != nullptr)
                   Trace(2, "Mobius: Script thread %s: notify reentry\n",
                         si->getTraceName());
 			}
 
-			if (l != NULL) {
+			if (l != nullptr) {
 				// notify the previous interpreter
 				// TODO: might want some context here to make decisions?
 				si->notify(l);
 			}
 			else {
 				// no interested label, just launch another copy
-				si = NULL;
+				si = nullptr;
 			}
 		}
 
-		if (si == NULL) {
+		if (si == nullptr) {
 			// !! need to pool these
 			si = NEW2(ScriptInterpreter, mMobius, t);
             si->setNumber(++mScriptThreadCounter);
@@ -316,7 +316,7 @@ void ScriptRuntime::startScript(Action* action, Script* s, Track* t)
 			// to be elibible for sustaining, we must be in a context
 			// that supports it *and* we have to have a non zero trigger id
 			if (s->isSustainAllowed() &&
-				action != NULL && 
+				action != nullptr && 
                 action->isSustainable() && 
 				action->triggerId > 0) {
 
@@ -326,7 +326,7 @@ void ScriptRuntime::startScript(Action* action, Script* s, Track* t)
 			// to be elibible for multi-clicking, we don't need anything
 			// special from the action context
 			if (s->isClickAllowed() && 
-				action != NULL && action->triggerId > 0) {
+				action != nullptr && action->triggerId > 0) {
 
 				si->setClicking(true);
 			}
@@ -353,11 +353,11 @@ void ScriptRuntime::startScript(Action* action, Script* s, Track* t)
  */
 void ScriptRuntime::addScript(ScriptInterpreter* si)
 {
-	ScriptInterpreter* last = NULL;
-	for (ScriptInterpreter* s = mScripts ; s != NULL ; s = s->getNext())
+	ScriptInterpreter* last = nullptr;
+	for (ScriptInterpreter* s = mScripts ; s != nullptr ; s = s->getNext())
 	  last = s;
 
-	if (last == NULL)
+	if (last == nullptr)
 	  mScripts = si;
 	else
 	  last->setNext(si);
@@ -379,7 +379,7 @@ bool ScriptRuntime::isInUse(Script* s)
 {
 	bool inuse = false;
 
-	for (ScriptInterpreter* running = mScripts ; running != NULL ; 
+	for (ScriptInterpreter* running = mScripts ; running != nullptr ; 
 		 running = running->getNext()) {
 		if (running->getScript() == s) {
 			inuse = true;
@@ -402,9 +402,9 @@ bool ScriptRuntime::isInUse(Script* s)
 ScriptInterpreter* ScriptRuntime::findScript(Action* action, Script* s,
                                                      Track* t)
 {
-	ScriptInterpreter* found = NULL;
+	ScriptInterpreter* found = nullptr;
 
-	for (ScriptInterpreter* si = mScripts ; si != NULL ; si = si->getNext()) {
+	for (ScriptInterpreter* si = mScripts ; si != nullptr ; si = si->getNext()) {
 
 		// Note that we use getTrack here rather than getTargetTrack since
 		// the script may have changed focus.
@@ -436,7 +436,7 @@ ScriptInterpreter* ScriptRuntime::findScript(Action* action, Script* s,
  */
 void ScriptRuntime::resumeScript(Track* t, Function* f)
 {
-	for (ScriptInterpreter* si = mScripts ; si != NULL ; si = si->getNext()) {
+	for (ScriptInterpreter* si = mScripts ; si != nullptr ; si = si->getNext()) {
 		if (si->getTargetTrack() == t) {
 
             // Don't trace this, we see them after every function and this
@@ -457,7 +457,7 @@ void ScriptRuntime::resumeScript(Track* t, Function* f)
  * The exception is when the action is being performed BY a script which
  * is important for the unit tests.  Old logic in trackReset was:
  *
- *   	if (action != NULL && action->trigger != TriggerScript)
+ *   	if (action != nullptr && action->trigger != TriggerScript)
  *   	  mMobius->cancelScripts(action, this);
  *
  * I'm not sure under what conditions action can be null, but I'm worried
@@ -482,11 +482,11 @@ void ScriptRuntime::resumeScript(Track* t, Function* f)
  */
 void ScriptRuntime::cancelScripts(Action* action, Track* t)
 {
-    if (action == NULL) {
+    if (action == nullptr) {
         // we had been ignoring these, when can this happen?
         // not sure why, but the unit tests do this, right
         // after UnitTestSetup while resetting all the tracks
-        //Trace(2, "Mobius::cancelScripts NULL action\n");
+        //Trace(2, "Mobius::cancelScripts nullptr action\n");
 
         // update, this can happen on a track count reconfiguration
         // that wants to reset live tracks without an action
@@ -499,7 +499,7 @@ void ScriptRuntime::cancelScripts(Action* action, Track* t)
         ScriptInterpreter* src = (ScriptInterpreter*)(action->triggerOwner);
         bool global = (action->getFunction() == GlobalReset);
 
-        for (ScriptInterpreter* si = mScripts ; si != NULL ; si = si->getNext()) {
+        for (ScriptInterpreter* si = mScripts ; si != nullptr ; si = si->getNext()) {
 
             if (si != src && (global || si->getTargetTrack() == t)) {
                 Trace(2, "Mobius: Script thread %s: canceling\n",
@@ -525,7 +525,7 @@ void ScriptRuntime::doScriptMaintenance()
 	// just in case we're having rounding errors, make sure this advances
 	if (msecsInBuffer == 0) msecsInBuffer = 1;
 
-	for (ScriptInterpreter* si = mScripts ; si != NULL ; si = si->getNext()) {
+	for (ScriptInterpreter* si = mScripts ; si != nullptr ; si = si->getNext()) {
 
 		// run any pending statements
 		si->run();
@@ -534,7 +534,7 @@ void ScriptRuntime::doScriptMaintenance()
 			// still holding down the trigger, check sustain events
 			Script* script = si->getScript();
 			ScriptLabelStatement* label = script->getSustainLabel();
-			if (label != NULL) {
+			if (label != nullptr) {
 			
 				// total we've waited so far
 				int msecs = si->getSustainedMsecs() + msecsInBuffer;
@@ -582,7 +582,7 @@ void ScriptRuntime::doScriptMaintenance()
 				int clicks = si->getClickCount();
                 
                 // don't have to have one of these
-                if (label != NULL) {
+                if (label != nullptr) {
                     Trace(2, "Mobius: Script thread %s: ending multiclick after %d with notify\n",
                           si->getTraceName(), clicks);
                     si->notify(label);
@@ -613,15 +613,15 @@ void ScriptRuntime::doScriptMaintenance()
  */
 void ScriptRuntime::freeScripts()
 {
-	ScriptInterpreter* next = NULL;
-	ScriptInterpreter* prev = NULL;
+	ScriptInterpreter* next = nullptr;
+	ScriptInterpreter* prev = nullptr;
 
-	for (ScriptInterpreter* si = mScripts ; si != NULL ; si = next) {
+	for (ScriptInterpreter* si = mScripts ; si != nullptr ; si = next) {
 		next = si->getNext();
 		if (!si->isFinished())
 		  prev = si;
 		else {
-			if (prev == NULL)
+			if (prev == nullptr)
 			  mScripts = next;
 			else
 			  prev->setNext(next);
@@ -677,10 +677,10 @@ void ScriptRuntime::doScriptNotification(Action* a)
     // unusual way of passing this in, but target object didn't seem
     // to make sense
     KernelEvent* te = a->getKernelEvent();
-    if (te == NULL)
+    if (te == nullptr)
       Trace(1, "Script notification action without KernelEvent!\n");
     else {
-        for (ScriptInterpreter* si = mScripts ; si != NULL ; 
+        for (ScriptInterpreter* si = mScripts ; si != nullptr ; 
              si = si->getNext()) {
 
             // this won't advance the script, it just prunes the reference
@@ -688,7 +688,7 @@ void ScriptRuntime::doScriptNotification(Action* a)
         }
 
         // The KernelEvent is officially over, we get to reclaim it
-        a->setKernelEvent(NULL);
+        a->setKernelEvent(nullptr);
         delete te;
     }
 }
@@ -700,7 +700,7 @@ void ScriptRuntime::doScriptNotification(Action* a)
  */
 void ScriptRuntime::finishEvent(KernelEvent* e)
 {
-    for (ScriptInterpreter* si = mScripts ; si != NULL ; 
+    for (ScriptInterpreter* si = mScripts ; si != nullptr ; 
          si = si->getNext()) {
 
         si->finishEvent(e);

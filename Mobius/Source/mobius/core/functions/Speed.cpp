@@ -680,7 +680,7 @@ void SpeedFunction::convertAction(Action* action, Loop* l, SpeedChange* change)
  */
 Event* SpeedFunction::invoke(Action* action, Loop* loop)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     bool standard = true;
 
     // Octave, bend and stretch always unquantized controls
@@ -694,9 +694,9 @@ Event* SpeedFunction::invoke(Action* action, Loop* loop)
         // since we have subtypes
         EventManager* em = loop->getTrack()->getEventManager();
         Event* prev = em->findEvent(this);
-        if (prev != NULL && !prev->quantized) {
+        if (prev != nullptr && !prev->quantized) {
             Event* jump = prev->findEvent(JumpPlayEvent);
-            if (jump == NULL || !jump->processed) {
+            if (jump == nullptr || !jump->processed) {
                 
                 SpeedChange change;
                 convertAction(action, loop, &change);
@@ -731,7 +731,7 @@ Event* SpeedFunction::invoke(Action* action, Loop* loop)
  */
 Event* SpeedFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     MobiusMode* mode = l->getMode();
     SpeedChange change;
 
@@ -782,9 +782,9 @@ Event* SpeedFunction::scheduleEvent(Action* action, Loop* l)
             mType != SPEED_SUS_TOGGLE) {
             
             Event* prev = em->findEvent(this);
-            if (prev != NULL) {
+            if (prev != nullptr) {
                 Event* jump = prev->findEvent(JumpPlayEvent);
-                if (jump == NULL || !jump->processed) {
+                if (jump == nullptr || !jump->processed) {
                     // they must both be of the same toggle type
                     if (prev->fields.speed.unit == change.unit) {
                         prev->number = change.value;
@@ -796,7 +796,7 @@ Event* SpeedFunction::scheduleEvent(Action* action, Loop* l)
 
         if (!prevModified) {
             event = Function::scheduleEvent(action, l);
-            if (event != NULL) {
+            if (event != nullptr) {
                 annotateEvent(event, &change);
 
                 if (!event->reschedule)
@@ -892,19 +892,19 @@ bool SpeedFunction::isIneffective(Action* a, Loop* l, SpeedChange* change)
  */
 Event* SpeedFunction::scheduleSwitchStack(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
 
 	if (action->down && switchStack) {
 		Event* switche = em->getUncomittedSwitch();
-		if (switche != NULL) {
+		if (switche != nullptr) {
 
             bool schedule = true;
             SpeedChange change;
             convertAction(action, l, &change);
 
-            Event* next = NULL;
-            for (Event* e = switche->getChildren() ; e != NULL ; e = next) {
+            Event* next = nullptr;
+            for (Event* e = switche->getChildren() ; e != nullptr ; e = next) {
                 next = e->getSibling();
 
                 if (e->type == eventType &&
@@ -949,13 +949,13 @@ Event* SpeedFunction::scheduleSwitchStack(Action* action, Loop* l)
  */
 Event* SpeedFunction::scheduleTransfer(Loop* l)
 {
-    Event* event = NULL;
+    Event* event = nullptr;
     TransferMode tm = ParameterSource::getSpeedTransfer(l);
 
     if (tm == XFER_OFF || tm == XFER_RESTORE) {
 
         // !!! another inner definition that would hide the return value
-        //Event* event = NULL;
+        //Event* event = nullptr;
         
         EventManager* em = l->getTrack()->getEventManager();
 
@@ -964,7 +964,7 @@ Event* SpeedFunction::scheduleTransfer(Loop* l)
         // but not bend.
 
         Event* prev = em->findEvent(eventType);
-        if (prev == NULL) {
+        if (prev == nullptr) {
             if (tm == XFER_OFF) {
                 event = em->newEvent(SpeedCancel, l->getFrame());
             }
@@ -978,7 +978,7 @@ Event* SpeedFunction::scheduleTransfer(Loop* l)
                 event->fields.speedRestore.stretch = state->timeStretch;
             }
 
-            if (event != NULL) {
+            if (event != nullptr) {
                 event->automatic = true;
                 em->addEvent(event);
             }
@@ -1075,7 +1075,7 @@ void SpeedFunction::convertEvent(Event* e, SpeedChange* change)
  */
 void SpeedFunction::prepareJump(Loop* l, Event* e, JumpContext* next)
 {
-    Event* speedEvent = NULL;
+    Event* speedEvent = nullptr;
 
     // like some others, "switchStack" means "can do this" while
     // this means "will do this", but we never actuall used it below

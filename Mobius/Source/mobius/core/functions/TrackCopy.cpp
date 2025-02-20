@@ -78,7 +78,7 @@ Event* TrackCopyFunction::invoke(Action* action, Loop* l)
         }
     }
 
-	return NULL;
+	return nullptr;
 }
 
 /****************************************************************************/

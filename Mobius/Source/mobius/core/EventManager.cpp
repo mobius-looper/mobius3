@@ -158,7 +158,7 @@ EventManager::EventManager(Track* track)
 {
     mTrack = track;
 	mEvents = NEW(EventList);
-    mSwitch = NULL;
+    mSwitch = nullptr;
 
     // special event we can inject at sync boundaries
 	mSyncEvent = NEW1(Event, nullptr);
@@ -216,7 +216,7 @@ Event* EventManager::getEvents()
 
 bool EventManager::hasEvents()
 {
-    return (mEvents->getEvents() != NULL);
+    return (mEvents->getEvents() != nullptr);
 }
 
 Event* EventManager::getSwitchEvent()
@@ -231,12 +231,12 @@ void EventManager::setSwitchEvent(Event* e)
 
 bool EventManager::isSwitching()
 {
-	return (mSwitch != NULL);
+	return (mSwitch != nullptr);
 }
 
 bool EventManager::isSwitchConfirmed()
 {
-	return (mSwitch != NULL && !mSwitch->pending);
+	return (mSwitch != nullptr && !mSwitch->pending);
 }
 
 Event* EventManager::findEvent(long frame)
@@ -256,7 +256,7 @@ Event* EventManager::findEvent(Function* func)
 
 /**
  * Helper to determine if validation should be suppressed.
- * Passed the event we just finished processing, or NULL if we're
+ * Passed the event we just finished processing, or nullptr if we're
  * not finishing up a particular function.
  */
 bool EventManager::isValidationSuppressed(Event* finished)
@@ -264,10 +264,10 @@ bool EventManager::isValidationSuppressed(Event* finished)
 	bool ignore = false;
 
 	// !! the insane flag predates ValidateEvent, try to merge!!
-	if (finished != NULL && finished->insane)
+	if (finished != nullptr && finished->insane)
 	  ignore = true;
 	else {
-		for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
+		for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
 			if (e != finished && 
 				(e->type == ValidateEvent || e->inProgress())) {
 				ignore = true;	
@@ -311,7 +311,7 @@ Event* EventManager::newEvent(EventType* type, long frame)
 Event* EventManager::newEvent(Function* f, long frame)
 {
     // this is more important now, catch early
-    if (f->eventType == NULL)
+    if (f->eventType == nullptr)
       Trace(mTrack, 1, "EventManager::newEvent Function without event type: %s!\n",
             f->getName());
 
@@ -367,12 +367,12 @@ void EventManager::addEvent(Event* event)
  */
 void EventManager::removeScriptReferences(ScriptInterpreter* si)
 {
-	for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
+	for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
 		if (e->getScriptInterpreter() == si)
-		  e->setScriptInterpreter(NULL);
-		for (Event* c = e->getChildren() ; c != NULL ; c = c->getSibling()) {
+		  e->setScriptInterpreter(nullptr);
+		for (Event* c = e->getChildren() ; c != nullptr ; c = c->getSibling()) {
 			if (c->getScriptInterpreter() == si)
-			  c->setScriptInterpreter(NULL);
+			  c->setScriptInterpreter(nullptr);
 		}
 	}
 }
@@ -382,10 +382,10 @@ void EventManager::removeScriptReferences(ScriptInterpreter* si)
  */
 void EventManager::removeScriptReferences(class MslWait* wait)
 {
-	for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
+	for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
 		if (e->getMslWait() == wait)
 		  e->setMslWait(nullptr);
-		for (Event* c = e->getChildren() ; c != NULL ; c = c->getSibling()) {
+		for (Event* c = e->getChildren() ; c != nullptr ; c = c->getSibling()) {
 			if (c->getMslWait() == wait)
 			  c->setMslWait(nullptr);
 		}
@@ -404,7 +404,7 @@ Event* EventManager::getFunctionEvent(Action* action,
                                       Loop* loop, 
                                       Function* func)
 {
-    if (func == NULL)
+    if (func == nullptr)
       func = action->getFunction();
     else {
         // can this happen?
@@ -465,7 +465,7 @@ Event* EventManager::getFunctionEvent(Action* action,
 
     // calculate the frame
 
-    if (action->rescheduling != NULL) {
+    if (action->rescheduling != nullptr) {
         // We're resceduling a previously scheduled event.
         // Usually we just keep the same frame.  There are some previous
         // events however that require us to recalculate the frame if   
@@ -492,7 +492,7 @@ Event* EventManager::getFunctionEvent(Action* action,
             // on a quantization boundary and the logic below would
             // have pushed us to the next one.
             bool nextQuant = false;
-            if (action->reschedulingReason != NULL) {
+            if (action->reschedulingReason != nullptr) {
                 Event* prevEvent = action->reschedulingReason;
                 Function* prevfunc = prevEvent->function;
                 
@@ -530,7 +530,7 @@ Event* EventManager::getFunctionEvent(Action* action,
 		}
 		else {
 			Event* end = findEvent(RecordStopEvent);
-			if (end == NULL) {
+			if (end == nullptr) {
 				// speed shift during recording
 				frame = loop->getFrame() + latency;
 			}
@@ -575,7 +575,7 @@ Event* EventManager::getFunctionEvent(Action* action,
 
 	Event* prev = mEvents->find(frame);
 	// !! how to pending events interact here?
-	if (!event->pending && prev != NULL && !prev->pending) {
+	if (!event->pending && prev != nullptr && !prev->pending) {
 		if (!event->quantized) {
 			if (prev->type == event->type) {
 				// An extremely short "tap" of a SUS function.  It is important
@@ -624,7 +624,7 @@ Event* EventManager::getFunctionEvent(Action* action,
             // May also want a flag on the previous function that forces
             // a push even if the new function has quantizeStack?
 
-			while (prev != NULL) {
+			while (prev != nullptr) {
 				long nextFrame = getQuantizedFrame(loop, frame, q, true);
 				if (nextFrame != frame) {
 					frame = nextFrame;
@@ -649,7 +649,7 @@ Event* EventManager::getFunctionEvent(Action* action,
 			// needs to happen on the second quantized Mute, not the first.
 
 			Event* highest = prev;
-			for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
+			for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
 				// they can be reschedule'd but not pending
 				// also ignore script waits just in case
 				if (e->frame > highest->frame && !e->pending &&
@@ -669,7 +669,7 @@ Event* EventManager::getFunctionEvent(Action* action,
 	// mark this event as reschedulable.  This will prevent a JumpPlayEvent
 	// from being sceduled because we're not sure where it will go yet.
 
-	for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
+	for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
 		if (e->frame <= event->frame && e->type->reschedules) {
 			event->reschedule = true;
 			break;
@@ -679,7 +679,7 @@ Event* EventManager::getFunctionEvent(Action* action,
 	// save a copy of the current parameter values so we can override
 	// them in scripts then restore them before the function actually
 	// runs, do we always want this?
-	event->savePreset(preset);
+	//event->savePreset(preset);
 
     // ownership of the action transfers to the event
     action->setEvent(event);
@@ -704,7 +704,7 @@ void EventManager::shiftEvents(long frames)
 {
 	if (frames > 0) {
 		Event* events = mEvents->getEvents();
-		for (Event* e = events ; e != NULL ; e = e->getNext()) {
+		for (Event* e = events ; e != nullptr ; e = e->getNext()) {
 			if (!e->pending && e->frame >= frames)
               e->frame -= frames;
 		}
@@ -719,7 +719,7 @@ void EventManager::shiftEvents(long frames)
  */
 void EventManager::reorderEvent(Event* e)
 {
-	for (Event* child = e->getChildren() ; child != NULL ; 
+	for (Event* child = e->getChildren() ; child != nullptr ; 
          child = child->getSibling())
 	  reorderEvent(child);
 
@@ -738,7 +738,7 @@ void EventManager::advanceScriptWaits(long frames)
     Loop* loop = mTrack->getLoop();
 
     // We allow waits to be scheduled in ResetMode and Pause mode
-    for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
+    for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
         if (!e->pending && 
             (e->type == ScriptEvent || e->type == RunScriptEvent) &&
             (loop->getMode() == ResetMode || 
@@ -766,7 +766,7 @@ void EventManager::advanceScriptWaits(long frames)
 void EventManager::loopSwitchScriptWaits(Loop* current, long nextFrame)
 {
 	Event* e = findEvent(ScriptEvent);
-	if (e != NULL && !e->pending) {
+	if (e != nullptr && !e->pending) {
 
         long currentFrame = current->getFrame();
         if (e->frame >= currentFrame) {
@@ -801,7 +801,7 @@ void EventManager::moveEventHierarchy(Loop* loop, Event* e, long newFrame)
 	// do this top down so the children are undone in reverse order
 	moveEvent(loop, e, newFrame);
 
-	for (Event* child = e->getChildren() ; child != NULL ; 
+	for (Event* child = e->getChildren() ; child != nullptr ; 
          child = child->getSibling()) {
 		// if child has a latencyLoss, then restore the ideal frame 
 		long childFrame = (child->frame - child->latencyLoss) + delta;
@@ -849,7 +849,7 @@ void EventManager::moveEvent(Loop* loop, Event* e, long newFrame)
 		// on the event list which is unusual but should be ok
 		// as long as it's frame is less
         Event* p = e->getParent();
-		if (p != NULL && e->frame >= p->frame)
+		if (p != nullptr && e->frame >= p->frame)
 		  Trace(mTrack, 1, "EventManager: Rescheduling event after parent!\n");
 		addEvent(e);
 	}
@@ -870,7 +870,7 @@ void EventManager::moveEvent(Loop* loop, Event* e, long newFrame)
  */
 void EventManager::reverseEvents(long originalFrame, long newFrame)
 {
-    for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
+    for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
         if (!e->pending)
           e->frame = reverseFrame(originalFrame, newFrame, e->frame);
     }
@@ -914,7 +914,7 @@ void EventManager::removeEvent(Event* e)
     mTrack->enterCriticalSection("removeEvent");
 
 	mEvents->remove(e);
-    e->setTrack(NULL);
+    e->setTrack(nullptr);
 
     mTrack->leaveCriticalSection();
 }
@@ -929,7 +929,7 @@ void EventManager::removeEvent(Event* e)
  */
 EventList* EventManager::stealEvents()
 {
-    EventList* copy = NULL;
+    EventList* copy = nullptr;
 
 	mTrack->enterCriticalSection("stealEvents");
 
@@ -957,7 +957,7 @@ void EventManager::flushAllEvents()
 
         // Release state for all events or else EventPool will
         // complain
-		for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
+		for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
             releaseAll(e);
         }
 
@@ -972,11 +972,11 @@ void EventManager::flushAllEvents()
     else {
         // freeEvent will unwind relationships but since this can also
         // remove things from the list we won't have a stable iterator.
-        while (mEvents->getEvents() != NULL)
+        while (mEvents->getEvents() != nullptr)
           free(mEvents->getEvents(), true);
     }
 
-	mSwitch = NULL;
+	mSwitch = nullptr;
 }
 
 /**
@@ -989,7 +989,7 @@ void EventManager::flushEventsExceptScripts()
 	mTrack->enterCriticalSection("flushEventsExceptScripts");
 
 	mEvents->flush(false, false);
-	mSwitch = NULL;
+	mSwitch = nullptr;
 
 	mTrack->leaveCriticalSection();
 }
@@ -1008,7 +1008,7 @@ void EventManager::flushEventsExceptScripts()
  */
 void EventManager::freeEvent(Event* event)
 {
-    if (event != NULL) {
+    if (event != nullptr) {
 		// remove the event and all of its children
 		mTrack->enterCriticalSection("freeEvent event");
 		removeAll(event);
@@ -1019,7 +1019,7 @@ void EventManager::freeEvent(Event* event)
 
         // Reclaim the action
         Action* action = event->getAction();
-        if (action != NULL) {
+        if (action != nullptr) {
             action->detachEvent(event);
             mTrack->getMobius()->completeAction(action);
         }
@@ -1047,17 +1047,17 @@ void EventManager::freeEvent(Event* event)
  */
 void EventManager::free(Event* event, bool flush)
 {
-    if (event != NULL) {
+    if (event != nullptr) {
 
         // remove it from the event list if it isn't already
         removeEvent(event);
 
         // remove children from the event list
-        Event* next = NULL;
-        for (Event* child = event->getChildren() ; child != NULL ; child = next) {
+        Event* next = nullptr;
+        for (Event* child = event->getChildren() ; child != nullptr ; child = next) {
             next = child->getSibling();
 
-            if (child->getList() != NULL) {
+            if (child->getList() != nullptr) {
                 // child is also on the event list
                 if (child->processed || flush) {
                     removeEvent(child);
@@ -1080,7 +1080,7 @@ void EventManager::free(Event* event, bool flush)
         // free the children one by one.  This would be easier if we
         // had direct access to setSibling but I want to keep the
         // interfaces tight to makes sure no one else does list surgery
-        for (Event* child = event->getChildren() ; child != NULL ; 
+        for (Event* child = event->getChildren() ; child != nullptr ; 
              child = event->getChildren()) {
 
             event->removeChild(child);
@@ -1106,7 +1106,7 @@ void EventManager::release(Event* event)
 
     // Reclaim the action
     Action* action = event->getAction();
-    if (action != NULL) {
+    if (action != nullptr) {
         action->detachEvent(event);
         mTrack->getMobius()->completeAction(action);
     }
@@ -1115,7 +1115,7 @@ void EventManager::release(Event* event)
 void EventManager::releaseAll(Event* event)
 {
     release(event);
-    for (Event* child = event->getChildren() ; child != NULL ; 
+    for (Event* child = event->getChildren() ; child != nullptr ; 
          child = event->getSibling())
       release(child);
 }
@@ -1134,16 +1134,16 @@ void EventManager::releaseAll(Event* event)
  */ 
 bool EventManager::undoLastEvent()
 {
-	Event* undo = NULL;
+	Event* undo = nullptr;
 
 	mTrack->enterCriticalSection("undoScheduledEvent");
 	undo = removeUndoEvent();
 	mTrack->leaveCriticalSection();
 
-	if (undo != NULL)
+	if (undo != nullptr)
       undoAndFree(undo);
 
-    return (undo != NULL);
+    return (undo != nullptr);
 }
 
 /**
@@ -1165,11 +1165,11 @@ bool EventManager::undoLastEvent()
  */
 Event* EventManager::removeUndoEvent()
 {
-	Event* last = NULL;
+	Event* last = nullptr;
 	
     // locate the last quantized parent event
-    for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
-        if (e->quantized && e->getParent() == NULL && !e->type->noUndo)
+    for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
+        if (e->quantized && e->getParent() == nullptr && !e->type->noUndo)
           last = e;
     }
 
@@ -1178,19 +1178,19 @@ Event* EventManager::removeUndoEvent()
     // !! This is identical to undo::(Event) below except for the
     // !child->processed test, is this really necessary?
 
-    if (last != NULL) {
+    if (last != nullptr) {
 
         mEvents->remove(last);
-        last->setTrack(NULL);
+        last->setTrack(nullptr);
 
-		for (Event* child = last->getChildren() ; child != NULL ; 
+		for (Event* child = last->getChildren() ; child != nullptr ; 
 			 child = child->getSibling()) {
 
 			if (child->getParent() == last) {
                 
                 if (!child->processed) {
                     mEvents->remove(child);
-                    child->setTrack(NULL);
+                    child->setTrack(nullptr);
                 }
                 else {
                     // I'm curious if this can ever happen so it can be 
@@ -1199,7 +1199,7 @@ Event* EventManager::removeUndoEvent()
                 }
 
                 // if this can happen, we'll need to recurse?
-                if (child->getChildren() != NULL)
+                if (child->getChildren() != nullptr)
                   Trace(1, "EventManager: Found multi-level children!\n");
             }
 		}
@@ -1214,7 +1214,7 @@ Event* EventManager::removeUndoEvent()
  */
 void EventManager::undoEvent(Event* event)
 {
-	if (event != NULL) {
+	if (event != nullptr) {
 
 		// remove the event and all of its children
 		mTrack->enterCriticalSection("undoScheduledEvent event");
@@ -1242,14 +1242,14 @@ void EventManager::undoEvent(Event* event)
  */
 void EventManager::removeAll(Event* e)
 {
-	if (e != NULL) {
+	if (e != nullptr) {
 		Trace(2, "Remove event %s(%s) %ld\n", 
 			  e->getName(), e->getFunctionName(), e->frame);
 
 		mEvents->remove(e);
-        e->setTrack(NULL);
+        e->setTrack(nullptr);
 
-		for (Event* child = e->getChildren() ; child != NULL ; 
+		for (Event* child = e->getChildren() ; child != nullptr ; 
 			 child = child->getSibling()) {
 
 			if (child->getParent() == e) {
@@ -1288,7 +1288,7 @@ void EventManager::undoAndFree(Event* event)
 
         // Reclaim the action
         Action* action = event->getAction();
-        if (action != NULL) {
+        if (action != nullptr) {
             action->detachEvent(event);
             mTrack->getMobius()->completeAction(action);
         }
@@ -1307,7 +1307,7 @@ void EventManager::undoAndFree(Event* event)
 void EventManager::undoProcessedEvents(Event* event)
 {
 	// assume depth first processing?
-	for (Event* child = event->getChildren() ; child != NULL ; 
+	for (Event* child = event->getChildren() ; child != nullptr ; 
 		 child = child->getSibling()) {
 
 		undoProcessedEvents(child);
@@ -1330,21 +1330,21 @@ void EventManager::scheduleSwitchStack(Event* event)
 {
 	Event* switche = getUncomittedSwitch();
 
-	if (switche != NULL) {
+	if (switche != nullptr) {
 
 		// do we really need to do this?  
 		// should the preset affect all stacked events
-		event->savePreset(mTrack->getPreset());
+		//event->savePreset(mTrack->getPreset());
 		event->pending = true;
 
 		mTrack->enterCriticalSection("scheduleSwitchStack");
 
 		if (event->function->switchStackMutex) {
 			// remove all other mutex events
-			Event* next = NULL;
-			for (Event* e = switche->getChildren() ; e != NULL ; e = next) {
+			Event* next = nullptr;
+			for (Event* e = switche->getChildren() ; e != nullptr ; e = next) {
 				next = e->getSibling();
-				if (e->function != NULL && e->function->switchStackMutex) {
+				if (e->function != nullptr && e->function->switchStackMutex) {
 
                     // cancel the previous one before adding the new one
                     // !! what about Action transfer?
@@ -1384,13 +1384,13 @@ void EventManager::scheduleSwitchStack(Event* event)
  */
 Event* EventManager::getUncomittedSwitch()
 {
-	Event* e = NULL;
+	Event* e = nullptr;
 
 	// also return false if we're not in a switch mode
-	if (mSwitch != NULL) {
+	if (mSwitch != nullptr) {
 		// jump may be null if we're using a "confirm" mode
 		Event* jump = mSwitch->findEvent(JumpPlayEvent);
-		if (jump != NULL && jump->processed)
+		if (jump != nullptr && jump->processed)
 		  Trace(mTrack, 1, "EventManager: Ignoring function after switch commit!\n");
 		else 
 		  e = mSwitch;
@@ -1411,7 +1411,7 @@ bool EventManager::undoSwitchStack()
 {
     bool undone = false;
 
-	if (getUncomittedSwitch() != NULL) {
+	if (getUncomittedSwitch() != nullptr) {
 
 		mTrack->enterCriticalSection("undoSwitchStack");
 		// !! add an option to preserve "automatic" events that were
@@ -1419,7 +1419,7 @@ bool EventManager::undoSwitchStack()
 		Event* undo = mSwitch->removeUndoChild();
 		mTrack->leaveCriticalSection();
 
-		if (undo != NULL) {
+		if (undo != nullptr) {
 			Trace(mTrack, 2, "EventManager: Undo switch stack event %s(%s)\n", 
 				  undo->getName(), undo->getFunctionName());
             undoAndFree(undo);
@@ -1431,14 +1431,14 @@ bool EventManager::undoSwitchStack()
 
 void EventManager::cancelSwitchStack(Event* e)
 {
-	if (e != NULL) {
+	if (e != nullptr) {
 		Event* switche = getUncomittedSwitch();
-		if (switche != NULL) {
+		if (switche != nullptr) {
 			Trace(mTrack, 2, "EventManager: Canceling switch stack event %s\n", e->type->name);
 			mTrack->enterCriticalSection("cancelSwitchStack");
 			switche->removeChild(e);
 			mEvents->remove(e);
-            e->setTrack(NULL);
+            e->setTrack(nullptr);
 			mTrack->leaveCriticalSection();
 
             // should we call undoEvent here?
@@ -1452,7 +1452,7 @@ void EventManager::cancelSwitchStack(Event* e)
  */
 void EventManager::cancelSwitch()
 {
-	if (mSwitch != NULL) {
+	if (mSwitch != nullptr) {
 
 		mTrack->enterCriticalSection("cancelSwitch");
 		removeAll(mSwitch);
@@ -1461,7 +1461,7 @@ void EventManager::cancelSwitch()
 		// undo handler has the logic we need
         // but have to null mSwitch first!
 		Event* e = mSwitch;
-        mSwitch = NULL;
+        mSwitch = nullptr;
 		switchEventUndo(e);
 
 		Trace(mTrack, 2, "EventManager: switch canceled\n");
@@ -1524,7 +1524,7 @@ void EventManager::getEffectiveLatencies(Loop* loop,
     // !! This feels wrong, what if we have several events scheduled?
     // Need to be looking at the last one within the range
 
-	for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
+	for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
 		// ignore the primary event we've already scheduled
 		if (e != parent) {
 			if (e->type == SpeedEvent) {
@@ -1543,8 +1543,8 @@ void EventManager::getEffectiveLatencies(Loop* loop,
 		outputLatency = ostream->getAdjustedLatency(octave, step, bend, stretch);
 	}
 
-	if (retInput != NULL) *retInput = inputLatency;
-	if (retOutput != NULL) *retOutput = outputLatency;
+	if (retInput != nullptr) *retInput = inputLatency;
+	if (retOutput != nullptr) *retOutput = outputLatency;
 }
 
 /**
@@ -1599,7 +1599,7 @@ void EventManager::getEffectiveLatencies(Loop* loop,
  */
 Event* EventManager::schedulePlayJump(Loop* loop, Event* parent)
 {
-	Event* jump = NULL;
+	Event* jump = nullptr;
 	int inputLatency, outputLatency;
 
 	getEffectiveLatencies(loop, parent, parent->frame, 
@@ -1621,7 +1621,7 @@ Event* EventManager::schedulePlayJump(Loop* loop, Event* parent)
 	else {
 		// still recording, there are two cases here
 		Event* end = findEvent(RecordStopEvent);
-		if (end == NULL) {
+		if (end == nullptr) {
 			// recording not closed, should only be here for the few functions
 			// that are allowed during recording, right now only SpeedStep
 			// there is no play jump for these
@@ -1652,7 +1652,7 @@ Event* EventManager::schedulePlayJump(Loop* loop, Event* parent)
 	if (!ignore) {
 
 		jump = newEvent(JumpPlayEvent, transitionFrame);
-		jump->savePreset(mTrack->getPreset());
+		//jump->savePreset(mTrack->getPreset());
 		jump->latencyLoss = latencyLoss;
 
         // if the parent doesn't trace, neither do we
@@ -1678,7 +1678,7 @@ Event* EventManager::schedulePlayJump(Loop* loop, Event* parent)
               Trace(mTrack, 2, "EventManager: Jump frame %ld latency loss %ld\n", 
                     parent->frame, jump->latencyLoss);
 
-            if (prev != NULL && prev->type == JumpPlayEvent)
+            if (prev != nullptr && prev->type == JumpPlayEvent)
               Trace(mTrack, 2, "EventManager: Overlapping play jumps %s/%s\n",
                     prev->getName(), jump->getName());
         }
@@ -1697,7 +1697,7 @@ Event* EventManager::schedulePlayJump(Loop* loop, Event* parent)
 Event* EventManager::schedulePlayJumpType(Loop* loop, Event* parent, EventType* type)
 {
 	Event* jump = schedulePlayJump(loop, parent);
-	if (jump != NULL)
+	if (jump != nullptr)
 	  jump->type = type;
 	return jump;
 }
@@ -1711,7 +1711,7 @@ Event* EventManager::schedulePlayJumpType(Loop* loop, Event* parent, EventType* 
 Event* EventManager::schedulePlayJumpAt(Loop* loop, Event* parent, long frame)
 {
 	Event* jump = schedulePlayJump(loop, parent);
-	if (jump != NULL) {
+	if (jump != nullptr) {
 		jump->fields.jump.nextLayer = loop->getPlayLayer();
 		jump->fields.jump.nextFrame = frame;
 	}
@@ -1759,7 +1759,7 @@ Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger,
 	Event* re = findEvent(ReturnEvent);
     Preset* preset = mTrack->getPreset();
 
-	if (re != NULL)
+	if (re != nullptr)
 	  Trace(mTrack, 1, "EventManager: Already have a return event!\n");
 
 	else {
@@ -1803,7 +1803,7 @@ Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger,
         }
 
         re = newEvent(trigger->function, ReturnEvent, returnFrame);
-        re->savePreset(preset);
+        //re->savePreset(preset);
         re->fields.loopSwitch.nextLoop = prev;
         re->quantized = true;	// so it can be undone
 
@@ -1862,7 +1862,7 @@ Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger,
 void EventManager::finishReturnEvent(Loop* loop)
 {
 	Event* re = findEvent(ReturnEvent);
-	if (re != NULL)
+	if (re != nullptr)
 	  finishReturnEvent(loop, re);
 }
 
@@ -1873,7 +1873,7 @@ void EventManager::finishReturnEvent(Loop* loop)
  */
 void EventManager::finishReturnEvent(Loop* loop, Event* re)
 {
-	if (re != NULL) {
+	if (re != nullptr) {
 
         // it will be pending if we had to wait for the initial recording
         // to finish, otherwise the frame has been set
@@ -1898,7 +1898,7 @@ void EventManager::finishReturnEvent(Loop* loop, Event* re)
 
 		Event* jump = schedulePlayJump(loop, re);
 		Layer* nextLayer = nextLoop->getPlayLayer();
-		if (nextLayer == NULL)
+		if (nextLayer == nullptr)
 		  nextLayer = loop->getMuteLayer();
 		jump->fields.jump.nextLayer = nextLayer;
 		jump->fields.jump.nextFrame = re->fields.loopSwitch.nextFrame;
@@ -1919,21 +1919,21 @@ void EventManager::returnEventUndo(Event* e)
  */
 bool EventManager::cancelReturn()
 {
-	Event* ret = NULL;
+	Event* ret = nullptr;
 
 	// remove the event and all of its children
 	mTrack->enterCriticalSection("cancelReturn");
 	ret = findEvent(ReturnEvent);
-	if (ret != NULL)
+	if (ret != nullptr)
 	  removeAll(ret);
 	mTrack->leaveCriticalSection();
 
-	if (ret != NULL) {
+	if (ret != nullptr) {
 		returnEventUndo(ret);
 		Trace(mTrack, 2, "EventManager: Return canceled\n");
 	}
 
-	return (ret != NULL);
+	return (ret != nullptr);
 }
 
 /**
@@ -1946,7 +1946,7 @@ bool EventManager::cancelReturn()
 void EventManager::cleanReturnEvents()
 {
 	Event* nexte;
-	for (Event* e = mEvents->getEvents() ; e != NULL ; e = nexte) {
+	for (Event* e = mEvents->getEvents() ; e != nullptr ; e = nexte) {
 		nexte = e->getNext();
 
 		bool transfer = false;
@@ -2022,7 +2022,7 @@ void EventManager::refreshFocusedState(FocusedTrackState* state)
         if (e->type == SwitchEvent) {
             // and the events stacked after the switch
             for (Event* se = e->getChildren() ; 
-                 se != NULL && count < maxEvents ; 
+                 se != nullptr && count < maxEvents ; 
                  se = se->getSibling()) {
 
                 if (isEventVisible(se, true)) {
@@ -2224,7 +2224,7 @@ long EventManager::reflectFrame(Loop* loop, long frame)
  */
 Event* EventManager::getNextEvent()
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     //Synchronizer* synchronizer = mTrack->getSynchronizer();
 
     // adjust the input stream for speed shifts performed
@@ -2249,7 +2249,7 @@ Event* EventManager::getNextEvent()
 
 		// Recalculate the frame relative to the loop.  This is the only
         // modification we're allowed to do to the event.
-		if (sync != NULL) {
+		if (sync != nullptr) {
 
 			long newFrame = loop->getFrame();
 
@@ -2316,7 +2316,7 @@ Event* EventManager::getNextEvent()
         // look for scheduled events that may preceed the sync event
 		event = getNextScheduledEvent(remaining, sync);
 
-		if (sync != NULL) {
+		if (sync != nullptr) {
 			// advance if we decided to use it, otheriwise keep it till
             // next time
 			if (event == sync) {
@@ -2369,7 +2369,7 @@ Event* EventManager::getNextEvent()
 Event* EventManager::getNextScheduledEvent(long availFrames, 
                                                    Event* syncEvent)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
 	bool pseudo = false;
 
     Loop* loop = mTrack->getLoop();
@@ -2387,18 +2387,18 @@ Event* EventManager::getNextScheduledEvent(long availFrames,
 	long lastFrame = startFrame + availFrames;
 
 	// look for pending script events that happen at the loop boundary
-	Event* pendingScript = NULL;
+	Event* pendingScript = nullptr;
 
 	// Locate the event nearest to the startFrame, or the first
 	// event marked "immediate"
 
-    for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
+    for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
         if ((!loop->isPaused() || e->pauseEnabled) &&
             !e->pending && 
 			(e->immediate ||
 			 (e->frame >= startFrame && e->frame <= lastFrame))) {
 			// within range
-			if (event == NULL || e->immediate || e->frame < event->frame) {
+			if (event == nullptr || e->immediate || e->frame < event->frame) {
 				event = e;
 				// stop on the first immediate event
 				if (e->immediate)
@@ -2433,8 +2433,8 @@ Event* EventManager::getNextScheduledEvent(long availFrames,
 	// Assuming immediate event wins.  
 	// NOTE: If the syncEvent and the scheduled event are on the same frame,
 	// we prefer the scheduled event.
-	if (syncEvent != NULL && 
-		(event == NULL || 
+	if (syncEvent != nullptr && 
+		(event == nullptr || 
 		 (!event->immediate && syncEvent->frame < event->frame))) {
 		event = syncEvent;
 		pseudo = true;
@@ -2452,13 +2452,13 @@ Event* EventManager::getNextScheduledEvent(long availFrames,
 	// also if we have an immediate event, it always runs before the
 	// pseudo events, correct??
 
-	if (loopFrames > 0 && (event == NULL || !event->immediate)) {
+	if (loopFrames > 0 && (event == nullptr || !event->immediate)) {
         bool found = false;
 
 		if (loopFrames >= startFrame && loopFrames <= lastFrame &&
 			loopFrames != mLastSyncEventFrame) {
 			// the loop end is within range of the buffer
-			if (event == NULL || 
+			if (event == nullptr || 
 				loopFrames < event->frame ||
 				(loopFrames == event->frame && event->afterLoop)) {
 				// the loop event is before any real events
@@ -2467,8 +2467,8 @@ Event* EventManager::getNextScheduledEvent(long availFrames,
 				// There are two types one for "Wait start" and another
 				// for "Wait end".  Wait end will be processed immediately,
 				// Wait start will be processed after we loop back to zero.
-				event = NULL;
-				if (pendingScript != NULL) {
+				event = nullptr;
+				if (pendingScript != nullptr) {
 					Trace(mTrack, 2, "EventManager: Activating pending script event\n");
 					pendingScript->pending = false;
 					if (pendingScript->fields.script.waitType == WAIT_START) {
@@ -2482,7 +2482,7 @@ Event* EventManager::getNextScheduledEvent(long availFrames,
 					}
 				}
 
-				if (event == NULL) {
+				if (event == nullptr) {
 					event = mSyncEvent;
 					event->type = LoopEvent;
 					event->frame = loopFrames;
@@ -2504,7 +2504,7 @@ Event* EventManager::getNextScheduledEvent(long availFrames,
             long next = getQuantizedFrame(loop, startFrame, QUANTIZE_CYCLE, false);
             if (next >= startFrame && next <= lastFrame && 
 				next != mLastSyncEventFrame) {
-                if (event == NULL || 
+                if (event == nullptr || 
 					next < event->frame ||
 					(next == event->frame && event->afterLoop)) {
                     event = mSyncEvent;
@@ -2522,7 +2522,7 @@ Event* EventManager::getNextScheduledEvent(long availFrames,
             long next = getQuantizedFrame(loop, startFrame, QUANTIZE_SUBCYCLE, false);
             if (next >= startFrame && next <= lastFrame &&
 				next != mLastSyncEventFrame) {
-                if (event == NULL || 
+                if (event == nullptr || 
 					next < event->frame ||
 					(next == event->frame && event->afterLoop)) {
                     event = mSyncEvent;
@@ -2536,7 +2536,7 @@ Event* EventManager::getNextScheduledEvent(long availFrames,
         }
 	}
 
-    if (event != NULL) {
+    if (event != nullptr) {
 
 		if (!pseudo) {
 			// this was a real event, splice it out of the list
@@ -2572,8 +2572,8 @@ void EventManager::processEvent(Event* e)
     Event* parent = e->getParent();
 
     if (loop->getMode() == ResetMode && 
-		((e->function != NULL && !e->function->resetEnabled) ||
-		 (parent != NULL && parent->function != NULL && 
+		((e->function != nullptr && !e->function->resetEnabled) ||
+		 (parent != nullptr && parent->function != nullptr && 
 		  !parent->function->resetEnabled))) {
 
 		// If we hit the "play frame anomoly" condition, the play() method
@@ -2612,7 +2612,7 @@ void EventManager::processEvent(Event* e)
     
     // return the action to the pool
     Action* action = e->getAction();
-    if (action != NULL) {
+    if (action != nullptr) {
         //Trace(mTrack, 2, "Completing action\n");
         // detach them to avoid warnings
         action->detachEvent(e);
@@ -2630,7 +2630,7 @@ void EventManager::rescheduleEvents(Loop* loop, Event* previous)
 	if (previous->type->reschedules) {
 
 		Event* resched = getRescheduleEvents(loop, previous);
-		if (resched != NULL) {
+		if (resched != nullptr) {
 
 			// formerly pick the closest one, can this ever not be the
 			// first one?
@@ -2638,15 +2638,15 @@ void EventManager::rescheduleEvents(Loop* loop, Event* previous)
 			// insertion order, if we never see any of the reschedule
 			// warnings below can simplify this...
 
-			Event* closest = NULL;
+			Event* closest = nullptr;
 			Event* e;
-			for (e = resched ; e != NULL ; e = e->getNext()) {
-				if (e->function != NULL && 
-					(closest == NULL || e->frame < closest->frame))
+			for (e = resched ; e != nullptr ; e = e->getNext()) {
+				if (e->function != nullptr && 
+					(closest == nullptr || e->frame < closest->frame))
 				  closest = e;
 			}
 
-			if (closest == NULL) {
+			if (closest == nullptr) {
 				// something is horribly wrong, pick the first
 				Trace(mTrack, 1, "EventManager: Reschedulable event went back in time!\n");
 				closest = resched;
@@ -2657,28 +2657,28 @@ void EventManager::rescheduleEvents(Loop* loop, Event* previous)
 			}
 
 			// prune it out of the list
-			Event* prev = NULL;
+			Event* prev = nullptr;
 			for (e = resched ; e != closest ; e = e->getNext())
 			  prev = e;
 
-			if (prev == NULL)
+			if (prev == nullptr)
 			  resched = closest->getNext();
 			else
 			  prev->setNext(closest->getNext());
-			closest->setNext(NULL);
+			closest->setNext(nullptr);
 
-			if (closest->function != NULL)
+			if (closest->function != nullptr)
 			  closest->function->rescheduleEvent(loop, previous, closest);
 
             // will the Action have been transfered?  
 			closest->free();
 
 			// then do the remainder in insertion order
-			Event* next = NULL;
-			for (e = resched ; e != NULL ; e = next) {
+			Event* next = nullptr;
+			for (e = resched ; e != nullptr ; e = next) {
 				next = e->getNext();
-				e->setNext(NULL);
-				if (e->function != NULL)
+				e->setNext(nullptr);
+				if (e->function != nullptr)
 				  e->function->rescheduleEvent(loop, previous, e);
 				e->free();
 			}
@@ -2693,8 +2693,8 @@ void EventManager::rescheduleEvents(Loop* loop, Event* previous)
  */
 Event* EventManager::getRescheduleEvents(Loop* loop, Event* previous) 
 {
-	Event* events = NULL;
-    Event* last = NULL;
+	Event* events = nullptr;
+    Event* last = nullptr;
 
 	// if the previous event was scheduled at the loop end, consider it
 	// at zero since the event frames should have been shifted by now
@@ -2705,8 +2705,8 @@ Event* EventManager::getRescheduleEvents(Loop* loop, Event* previous)
 
 	// prune out the reschedulable events
 	mTrack->enterCriticalSection("getRescheduleEvents");
-	Event* next = NULL;
-    for (Event* e = mEvents->getEvents() ; e != NULL ; e = next) {
+	Event* next = nullptr;
+    for (Event* e = mEvents->getEvents() ; e != nullptr ; e = next) {
 		next = e->getNext();
         if (!e->processed && !e->pending) {
 			if (e->frame < frame) {
@@ -2719,11 +2719,11 @@ Event* EventManager::getRescheduleEvents(Loop* loop, Event* previous)
 			else if (e->reschedule) {
 
 				// shouldn't happen, will be ignored above
-				if (e->function == NULL)
+				if (e->function == nullptr)
 				  Trace(mTrack, 1, "EventManager: Rescheduleable event with no function!\n");	
 				mEvents->remove(e);
-                e->setTrack(NULL);
-				if (last != NULL)
+                e->setTrack(nullptr);
+				if (last != nullptr)
 				  last->setNext(e);
 				else
 				  events = e;

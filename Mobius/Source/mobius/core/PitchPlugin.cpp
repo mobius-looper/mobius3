@@ -45,7 +45,7 @@
 #include "FadeWindow.h"
 #include "Mem.h"
 
-Audio* Kludge = NULL;
+Audio* Kludge = nullptr;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -334,7 +334,7 @@ void SoundTouchPlugin::reset()
 
 void SoundTouchPlugin::debug()
 {
-	if (Kludge != NULL) {
+	if (Kludge != nullptr) {
 		Kludge->write("touch.wav");
 		Kludge->reset();
 	}
@@ -488,9 +488,9 @@ long SoundTouchPlugin::process(float* input, float* output,
     if (frames > 0) {
 
         // always feed in
-		if (input != NULL) {
+		if (input != nullptr) {
 
-			if (Kludge != NULL)
+			if (Kludge != nullptr)
 			  Kludge->append(input, frames);
 
 			mSoundTouch->putSamples(input, frames);

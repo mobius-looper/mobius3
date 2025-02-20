@@ -109,10 +109,10 @@ DivideFunction::DivideFunction(int n)
 
 Event* DivideFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
 
 	event = Function::scheduleEvent(action, l);
-	if (event != NULL) {
+	if (event != nullptr) {
 		// NOTE: Not scheduling a play jump here, though if we are in mute
 		// and Divide is a mute cancel function, we technically
 		// should so we can cancel mute in advance.  As it is we'll have
@@ -132,7 +132,7 @@ void DivideFunction::doEvent(Loop* loop, Event* event)
 	// Always accept an argument, for the numbered multiples, this is
 	// another level of multiplication.
     Action* action = event->getAction();
-    if (action != NULL) {
+    if (action != nullptr) {
         int ival = action->arg.getInt();
         if (ival > 0) {
             if (mMultiple == 0)
@@ -214,10 +214,10 @@ long DivideFunction::divide(LayerContext* con, Layer* layer,
 							int minFrames)
 {
 	Segment* segments = layer->getSegments();
-	if (segments == NULL) {
+	if (segments == nullptr) {
 		Trace(layer, 1, "DivideFunction: no backing layer!\n");
 	}
-	else if (segments->getNext() != NULL) {
+	else if (segments->getNext() != nullptr) {
 		Trace(layer, 1, "DivideFunction: more than one segment!\n");
 	}
 	else if (multiples < 1) {

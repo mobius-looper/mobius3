@@ -12,14 +12,14 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
-Build 30 included **very** significant changes from the previous build
+Build 31 included **very** significant changes from the previous build
 28.  If you have been using build 28 or earlier for some
 time, I recommend you proceed with caution about upgrading to build
-30.  While I do run through tests on every build, the chance that behavior
-you have been relying on changed in build 30 is much higher than it has been in the past.
-If you are a new user that doesn't have any complex configuration, then build 30 should be fine.
+31.  While I do run through tests on every build, the chance that behavior
+you have been relying on changed in build 31 is much higher than it has been in the past.
+If you are a new user that doesn't have any complex configuration, then build 31 should be fine.
 
-For this reason I'm keeping download links for both builds.  If you decide to try 30
+For this reason I'm keeping download links for both builds.  If you decide to try 31
 and run into a problem, you can go back to 28 until the issue is resolved.
 
 Please read through the new documentation pages for more on the new features that have been added.
@@ -32,7 +32,7 @@ Please read through the new documentation pages for more on the new features tha
 
 [Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-28.pkg)
 
-## Build 30
+## Build 31
 
 [Download for Windows](https://www.mobiuslooper.com/MobiusSetup.exe)
 

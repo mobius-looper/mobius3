@@ -55,6 +55,7 @@
 //#include "SyncState.h"
 //#include "SyncTracker.h"
 #include "Track.h"
+#include "ParameterSource.h"
 
 #include "Variable.h"
 #include "Mem.h"
@@ -67,8 +68,8 @@
 
 ScriptInternalVariable::ScriptInternalVariable()
 {
-    mName = NULL;
-	mAlias = NULL;
+    mName = nullptr;
+	mAlias = nullptr;
 	mType = TYPE_INT;
 }
 
@@ -222,7 +223,7 @@ TriggerSourceValueVariableType::TriggerSourceValueVariableType()
 void TriggerSourceValueVariableType::getValue(ScriptInterpreter* si, ExValue* value)
 {
 	Trigger* t = si->getTrigger();
-    if (t != NULL)
+    if (t != nullptr)
       value->setString(t->getName());
     else
       value->setNull();
@@ -911,8 +912,7 @@ SubCycleCountVariableType::SubCycleCountVariableType()
 
 void SubCycleCountVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	Preset* p = t->getPreset();
-	value->setLong(p->getSubcycles());
+	value->setLong(ParameterSource::getSubcycles(t));
 }
 
 SubCycleCountVariableType SubCycleCountVariableObj;
@@ -942,7 +942,6 @@ SubCycleNumberVariableType::SubCycleNumberVariableType()
 void SubCycleNumberVariableType::getTrackValue(Track* t, ExValue* value)
 {
     Loop* l = t->getLoop();
-    Preset* p = l->getPreset();
     long frame = l->getFrame();
     long subCycleFrames = l->getSubCycleFrames();
 
@@ -950,7 +949,7 @@ void SubCycleNumberVariableType::getTrackValue(Track* t, ExValue* value)
     long subCycle = frame / subCycleFrames;
 
     // adjust to be relative to start of cycle
-    subCycle %= p->getSubcycles();
+    subCycle %= ParameterSource::getSubcycles(t);
 
 	value->setLong(subCycle);
 }
@@ -1050,7 +1049,7 @@ void LayerCountVariableType::getTrackValue(Track* t, ExValue* value)
 	// ?? might want a variable to display the number of *visible*
 	// layers if checkpoints are being used
 
-	for (Layer* l = loop->getPlayLayer() ; l != NULL ; l = l->getPrev())
+	for (Layer* l = loop->getPlayLayer() ; l != nullptr ; l = l->getPrev())
 	  count++;
 
 	value->setInt(count);
@@ -1089,10 +1088,10 @@ void RedoCountVariableType::getTrackValue(Track* t, ExValue* value)
 	// Since layerCount returns all layers, not just the visible ones
 	// we probably need to do the same here.
 
-	for (Layer* redo = loop->getRedoLayer(); redo != NULL ; 
+	for (Layer* redo = loop->getRedoLayer(); redo != nullptr ; 
 		 redo = redo->getRedo()) {
 
-		for (Layer* l = redo ; l != NULL ; l = l->getPrev())
+		for (Layer* l = redo ; l != nullptr ; l = l->getPrev())
 		  count++;
 	}
 
@@ -1166,7 +1165,7 @@ NextEventVariableType::NextEventVariableType()
 
 void NextEventVariableType::getTrackValue(Track* t, ExValue* value)
 {
-	Event* found = NULL;
+	Event* found = nullptr;
     EventManager* em = t->getEventManager();
 
 	// Return the next parent event.  Assuming that these will
@@ -1174,14 +1173,14 @@ void NextEventVariableType::getTrackValue(Track* t, ExValue* value)
 	// Since we're "in the interrupt" and not modifying the list, we
 	// don't have to worry about csects
 
-	for (Event* e = em->getEvents() ; e != NULL ; e = e->getNext()) {
-		if (e->getParent() == NULL) {
+	for (Event* e = em->getEvents() ; e != nullptr ; e = e->getNext()) {
+		if (e->getParent() == nullptr) {
 			found = e;
 			break;
 		}
 	}
 
-	if (found == NULL)
+	if (found == nullptr)
 	  value->setNull();
 	else 
 	  value->setString(getReturnValue(found));
@@ -1221,9 +1220,9 @@ NextEventFunctionVariableType::NextEventFunctionVariableType()
  */
 const char* NextEventFunctionVariableType::getReturnValue(Event* e)
 {
-	const char* value = NULL;
+	const char* value = nullptr;
 	Function* f = e->function;
-	if (f != NULL)
+	if (f != nullptr)
 	  value = f->getName();
 	return value;
 }
@@ -1294,7 +1293,7 @@ void EventSummaryVariableType::getTrackValue(Track* t, ExValue* value)
 
     Event* eventList = em->getEvents();
     int ecount = 0;
-	for (Event* e = eventList ; e != NULL ; e = e->getNext()) {
+	for (Event* e = eventList ; e != nullptr ; e = e->getNext()) {
 
         if (ecount > 0)
           buf->add(",");
@@ -1309,16 +1308,16 @@ void EventSummaryVariableType::getTrackValue(Track* t, ExValue* value)
             buf->add((int)(e->frame));
         }
 
-        if (e->getChildren() != NULL) {
+        if (e->getChildren() != nullptr) {
             int ccount = 0;
             buf->add(",c=");
-            for (Event* c = e->getChildren() ; c != NULL ; c = c->getSibling()) {
+            for (Event* c = e->getChildren() ; c != nullptr ; c = c->getSibling()) {
                 if (ccount > 0)
                   buf->add(",");
                 ccount++;
                 // prefix scheduled events with a number so we can
                 // see sharing
-                if (c->getList() != NULL) {
+                if (c->getList() != nullptr) {
                     buf->add(getEventIndex(eventList, c));
                     buf->add(":");
                 }
@@ -1341,9 +1340,9 @@ int EventSummaryVariableType::getEventIndex(Event* list, Event* event)
 {
     int index = 0;
 
-    if (list != NULL && event != NULL) {
+    if (list != nullptr && event != nullptr) {
         int i = 1;
-        for (Event* e = list ; e != NULL ; e = e->getNext()) {
+        for (Event* e = list ; e != nullptr ; e = e->getNext()) {
             if (e != event)
               i++;
             else {
@@ -1606,7 +1605,7 @@ void InRealignVariableType::getTrackValue(Track* t, ExValue* value)
 {
     EventManager* em = t->getEventManager();
 	Event* e = em->findEvent(RealignEvent);
-	value->setBool(e != NULL);
+	value->setBool(e != nullptr);
 }
 
 InRealignVariableType InRealignVariableObj;
@@ -1639,7 +1638,7 @@ void InReturnVariableType::getTrackValue(Track* t, ExValue* value)
 {
     EventManager* em = t->getEventManager();
 	Event* e = em->findEvent(ReturnEvent);
-	value->setBool(e != NULL);
+	value->setBool(e != nullptr);
 }
 
 InReturnVariableType InReturnVariableObj;
@@ -2070,7 +2069,7 @@ void TrackSyncMasterVariableType::getTrackValue(Track* t, ExValue* value)
 	Synchronizer* s = t->getSynchronizer();
     /*
 	Track* master = s->getTrackSyncMaster();
-	if (master != NULL)
+	if (master != nullptr)
 	  number = master->getDisplayNumber();
     */
     SyncMaster* sm = s->getSyncMaster();
@@ -2278,7 +2277,7 @@ void SyncPulsesVariableType::getTrackValue(Track* t, ExValue* value)
 {
     Synchronizer* s = t->getSynchronizer();
     SyncTracker* tracker = s->getSyncTracker(t);
-    if (tracker == NULL)
+    if (tracker == nullptr)
       value->setInt(0);
     else {
         // since resizes are deferred until the next pulse, look there first
@@ -2315,7 +2314,7 @@ void SyncPulseVariableType::getTrackValue(Track* t, ExValue* value)
 {
     Synchronizer* s = t->getSynchronizer();
     SyncTracker* tracker = s->getSyncTracker(t);
-    if (tracker != NULL)
+    if (tracker != nullptr)
       value->setLong(tracker->getPulse());
     else
       value->setNull();
@@ -2348,7 +2347,7 @@ void SyncPulseFramesVariableType::getTrackValue(Track* t, ExValue* value)
 {
     Synchronizer* s = t->getSynchronizer();
     SyncTracker* tracker = s->getSyncTracker(t);
-    if (tracker != NULL)
+    if (tracker != nullptr)
       value->setFloat(tracker->getPulseFrames());
     else
       value->setNull();
@@ -2381,7 +2380,7 @@ void SyncLoopFramesVariableType::getTrackValue(Track* t, ExValue* value)
 {
     Synchronizer* s = t->getSynchronizer();
     SyncTracker* tracker = s->getSyncTracker(t);
-    if (tracker != NULL)
+    if (tracker != nullptr)
       value->setLong(tracker->getFutureLoopFrames());
     else
       value->setNull();
@@ -2415,7 +2414,7 @@ void SyncAudioFrameVariableType::getTrackValue(Track* t, ExValue* value)
 {
     Synchronizer* s = t->getSynchronizer();
     SyncTracker* tracker = s->getSyncTracker(t);
-    if (tracker != NULL)
+    if (tracker != nullptr)
       value->setLong(tracker->getAudioFrame());
     else
       value->setNull();
@@ -2449,7 +2448,7 @@ void SyncDriftVariableType::getTrackValue(Track* t, ExValue* value)
 {
     Synchronizer* s = t->getSynchronizer();
     SyncTracker* tracker = s->getSyncTracker(t);
-    if (tracker != NULL)
+    if (tracker != nullptr)
       value->setLong((long)(tracker->getDrift()));
     else
       value->setNull();
@@ -2484,7 +2483,7 @@ void SyncAverageDriftVariableType::getTrackValue(Track* t, ExValue* value)
 {
     Synchronizer* s = t->getSynchronizer();
     SyncTracker* tracker = s->getSyncTracker(t);
-    if (tracker != NULL)
+    if (tracker != nullptr)
       value->setLong((long)(tracker->getAverageDrift()));
     else
       value->setNull();
@@ -2518,7 +2517,7 @@ void SyncDriftChecksVariableType::getTrackValue(Track* t, ExValue* value)
 {
     Synchronizer* s = t->getSynchronizer();
     SyncTracker* tracker = s->getSyncTracker(t);
-    if (tracker != NULL)
+    if (tracker != nullptr)
       value->setInt(tracker->getDriftChecks());
     else
       value->setNull();
@@ -2553,7 +2552,7 @@ void SyncCorrectionsVariableType::getTrackValue(Track* t, ExValue* value)
 {
     Synchronizer* s = t->getSynchronizer();
     SyncTracker* tracker = s->getSyncTracker(t);
-    if (tracker != NULL)
+    if (tracker != nullptr)
       value->setInt(tracker->getDriftCorrections());
     else
       value->setNull();
@@ -2570,7 +2569,7 @@ void SyncCorrectionsVariableType::setValue(ScriptInterpreter* si,
     Track* t = si->getTargetTrack();
     Synchronizer* s = t->getSynchronizer();
     SyncTracker* tracker = s->getSyncTracker(t);
-    if (tracker != NULL)
+    if (tracker != nullptr)
       tracker->setDriftCorrections(value->getInt());
 }
 
@@ -2602,7 +2601,7 @@ void SyncDealignVariableType::getTrackValue(Track* t, ExValue* value)
 {
     Synchronizer* s = t->getSynchronizer();
     SyncTracker* tracker = s->getSyncTracker(t);
-    if (tracker == NULL)
+    if (tracker == nullptr)
       value->setInt(0);
     else
       value->setLong(tracker->getDealign(t));
@@ -3401,7 +3400,7 @@ ScriptInternalVariable* InternalVariables[] = {
     InstallationDirectoryVariable,
     ConfigurationDirectoryVariable,
 
-    NULL
+    nullptr
 };
 
 /**
@@ -3410,8 +3409,8 @@ ScriptInternalVariable* InternalVariables[] = {
 ScriptInternalVariable* 
 ScriptInternalVariable::getVariable(const char* name)
 {
-    ScriptInternalVariable* found = NULL;
-    for (int i = 0 ; InternalVariables[i] != NULL ; i++) {
+    ScriptInternalVariable* found = nullptr;
+    for (int i = 0 ; InternalVariables[i] != nullptr ; i++) {
 		ScriptInternalVariable* v = InternalVariables[i];
 		if (v->isMatch(name)) {
 			found = v;

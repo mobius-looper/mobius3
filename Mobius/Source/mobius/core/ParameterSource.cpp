@@ -11,6 +11,7 @@
 #include "../../model/Preset.h"
 
 #include "Loop.h"
+#include "Track.h"
 #include "Event.h"
 #include "ParameterSource.h"
 
@@ -20,9 +21,10 @@
  */
 ParameterMuteMode ParameterSource::getMuteMode(class Loop* l, class Event* e)
 {
-    Preset* p = e->getEventPreset();
-    if (p == nullptr)
-      p = l->getPreset();
+    (void)e;
+    //Preset* p = e->getEventPreset();
+    //if (p == nullptr)
+    Preset* p = l->getPreset();
     return p->getMuteMode();
 }
 
@@ -193,3 +195,8 @@ int ParameterSource::getLoops(class Loop* l)
     return p->getLoops();
 }
 
+int ParameterSource::getSubcycles(Track* t)
+{
+    Preset* p = t->getPreset();
+    return p->getSubcycles();
+}

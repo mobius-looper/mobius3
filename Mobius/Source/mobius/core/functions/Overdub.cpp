@@ -193,7 +193,7 @@ bool OverdubFunction::isSustain()
  */
 Event* OverdubFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     // never referenced
     //MobiusMode* mode = l->getMode();
 

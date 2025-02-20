@@ -103,9 +103,9 @@ void Track::init(Mobius* m, Synchronizer* sync, int number)
 	mInput = NEW2(InputStream, sync, m->getSampleRate());
 	mOutput = NEW2(OutputStream, mInput, m->getAudioPool());
 	mVariables = NEW(UserVariables);
-	mPreset = NULL;
+	mPreset = nullptr;
 
-	mLoop = NULL;
+	mLoop = nullptr;
 	mLoopCount = 0;
 	mGroup = 0;
 	mFocusLock = false;
@@ -126,7 +126,7 @@ void Track::init(Mobius* m, Synchronizer* sync, int number)
 	mPitchSequenceIndex = 0;
 	mGroupOutputBasis = -1;
 
-    mTrackSyncEvent = NULL;
+    mTrackSyncEvent = nullptr;
 	mInterruptBreakpoint = false;
     mMidi = false;
 
@@ -265,7 +265,7 @@ UserVariables* Track::getVariables()
  */
 void Track::setBounceRecording(Audio* a, int cycles) 
 {
-	if (mLoop != NULL)
+	if (mLoop != nullptr)
 	  mLoop->setBounceRecording(a, cycles);
 }
 
@@ -275,7 +275,7 @@ void Track::setBounceRecording(Audio* a, int cycles)
  */
 void Track::setMuteKludge(Function* f, bool mute) 
 {
-	if (mLoop != NULL)
+	if (mLoop != nullptr)
 	  mLoop->setMuteKludge(f, mute);
 }
 
@@ -650,7 +650,7 @@ Loop* Track::getLoop()
 
 Loop* Track::getLoop(int index)
 {
-	Loop* loop = NULL;
+	Loop* loop = nullptr;
 	if (index >= 0 && index < mLoopCount)
 	  loop = mLoops[index];
 	return loop;
@@ -773,7 +773,7 @@ void Track::leaveCriticalSection()
 void Track::doFunction(Action* action)
 {
     Function* f = (Function*)action->getTargetObject();
-    if (f != NULL) {
+    if (f != nullptr) {
         if (mMidi) {
             //doMidiFunction(a);
         }
@@ -786,7 +786,7 @@ void Track::doFunction(Action* action)
                 // !! kludge for up transition after a long press
                 // clean this up
                 Function* alt = action->getLongFunction();
-                if (alt != NULL)
+                if (alt != nullptr)
                   f = alt;
                 // note that this isn't invokeLong
                 f->invoke(action, getLoop());
@@ -911,7 +911,7 @@ void Track::refreshState(TrackState* s)
     // Mode was complicated
 #if 0    
         Event* switche = mEventManager->getSwitchEvent();
-        if (switche != NULL) {
+        if (switche != nullptr) {
             // MobiusState has a new model for modes
             if (switche->pending)
               lstate->mode = MapMode(ConfirmMode);
@@ -1016,7 +1016,7 @@ Audio* Track::getPlaybackAudio()
 void Track::prepareForInterrupt()
 {
     // reset sync status from last time
-    mTrackSyncEvent = NULL;
+    mTrackSyncEvent = nullptr;
 
 	advanceControllers();
 
@@ -1127,13 +1127,13 @@ void Track::processBuffers(MobiusAudioStream* stream,
 	// Expect there to be both buffers, there's too much logic build
 	// around this.  Also, when we're debugging PortAudio feeds them
 	// to us out of sync.
-	if (inbuf == NULL || outbuf == NULL) {	
-		if (inbuf == NULL && outbuf == NULL)
+	if (inbuf == nullptr || outbuf == nullptr) {	
+		if (inbuf == nullptr && outbuf == nullptr)
 		  Trace(this, 1, "Audio buffers both null, dropping interrupt\n");
-		else if (inbuf == NULL)
-		  Trace(this, 1, "Input buffer NULL, dropping interrupt\n");
-		else if (outbuf == NULL)
-		  Trace(this, 1, "Output buffer NULL, dropping interrupt\n");
+		else if (inbuf == nullptr)
+		  Trace(this, 1, "Input buffer nullptr, dropping interrupt\n");
+		else if (outbuf == nullptr)
+		  Trace(this, 1, "Output buffer nullptr, dropping interrupt\n");
 
 		return;
 	}
@@ -1141,7 +1141,7 @@ void Track::processBuffers(MobiusAudioStream* stream,
 	// if this is the selected track and we're monitoring, immediately
 	// copy the level adjusted input to the output
     // todo: monitoring should be a per-track setting rather than global
-	float* echo = NULL;
+	float* echo = nullptr;
     if (mMobius->getTrack() == this && mThroughMonitor) {
         echo = outbuf;
     }
@@ -1166,18 +1166,18 @@ void Track::processBuffers(MobiusAudioStream* stream,
     }
 
 	// loop for any events within range of this interrupt
-	for (Event* event = mEventManager->getNextEvent() ; event != NULL ; 
+	for (Event* event = mEventManager->getNextEvent() ; event != nullptr ; 
 		 event = mEventManager->getNextEvent()) {
 
         // handle track sync events out here
         bool notrace = checkSyncEvent(event);
         if (!notrace) {
-            if (event->function != NULL)
+            if (event->function != nullptr)
               Trace(this, 2, "E: %s(%s) %ld\n", event->type->name, 
                     event->function->getName(), event->frame);
             else {
                 const char* name = event->type->name;
-                if (name == NULL)
+                if (name == nullptr)
                   name = "???";
                 Trace(this, 2, "E: %s %ld\n", name, event->frame);
             }
@@ -1198,10 +1198,10 @@ void Track::processBuffers(MobiusAudioStream* stream,
 		// If there was a track sync event, remember the number of frames
 		// consumed to reach it so that slave tracks process it at the
 		// same relative location.
-		if (mTrackSyncEvent != NULL) {
+		if (mTrackSyncEvent != nullptr) {
             mSynchronizer->trackSyncEvent(this, mTrackSyncEvent->type,
                                           (int)(mInput->getProcessedFrames()));
-            mTrackSyncEvent = NULL;
+            mTrackSyncEvent = nullptr;
         }
 
         // advance the sample counter of the sync loop based on the
@@ -1231,7 +1231,7 @@ void Track::processBuffers(MobiusAudioStream* stream,
 		mMobius->resumeScript(this, func);
 	}
 
-	long remaining = mInput->record(mLoop, NULL);
+	long remaining = mInput->record(mLoop, nullptr);
 	mOutput->play(mLoop, remaining, true);
 
 	if (mInput->getRemainingFrames() > 0)
@@ -1448,7 +1448,7 @@ void Track::changePreset(int number)
         MobiusConfig* config = mMobius->getConfiguration();
         Preset* preset = config->getPreset(number);
     
-        if (preset == NULL) {
+        if (preset == nullptr) {
             Trace(this, 1, "ERROR: Unable to locate preset %ld\n", (long)number);
             // shouldn't happen, just leave the last one in place
         }
@@ -1491,7 +1491,7 @@ void Track::propagateSetup(MobiusConfig* config, Setup* setup,
     // on updateConfiguration with different object pointers
     mSetupCache = setup->getTrack(mRawNumber);
     
-    Preset* newPreset = NULL;
+    Preset* newPreset = nullptr;
     // determine whether we need to refresh the preset
     if (presetsEdited) {
         // we're getting here after preset editing
@@ -1520,7 +1520,7 @@ void Track::propagateSetup(MobiusConfig* config, Setup* setup,
     // be deferred until reset?
     // for the most part, this just contains operating parameters
     // for the functions so it doesn't really matter
-    if (newPreset != NULL)
+    if (newPreset != nullptr)
       refreshPreset(newPreset);
 
     // now do things in the Setup itself
@@ -1541,7 +1541,7 @@ void Track::propagateSetup(MobiusConfig* config, Setup* setup,
             // new: no shit, parameters need to broken out and be independent
             // of their containers
 
-            if (mSetupCache != NULL) {
+            if (mSetupCache != nullptr) {
 
                 resetPorts(mSetupCache);
 
@@ -1585,26 +1585,26 @@ int Track::getGroupNumber(MobiusConfig* config, SetupTrack* st)
  */
 Preset* Track::getStartingPreset(MobiusConfig* config, Setup* setup, bool globalReset)
 {
-    Preset* preset = NULL;
+    Preset* preset = nullptr;
 
     // first look for a track-specific preset override
     SetupTrack* st = setup->getTrack(mRawNumber);
-    if (st != NULL) {
+    if (st != nullptr) {
         const char* pname = st->getTrackPresetName();
-        if (pname != NULL) {
+        if (pname != nullptr) {
             preset = config->getPreset(pname);
-            if (preset == NULL)
+            if (preset == nullptr)
               Trace(this, 1, "ERROR: Unable to resolve track preset: %s\n",
                     pname);
         }
     }
 
-    if (preset == NULL) {
+    if (preset == nullptr) {
         // no track-specific preset, use the default in the Setup
         const char* pname = setup->getDefaultPresetName();
-        if (pname != NULL) {
+        if (pname != nullptr) {
             preset = config->getPreset(pname);
-            if (preset == NULL)
+            if (preset == nullptr)
               Trace(this, 1, "ERROR: Unable to resolve default preset: %s\n",
                     pname);
         }
@@ -1631,7 +1631,7 @@ Preset* Track::getStartingPreset(MobiusConfig* config, Setup* setup, bool global
         }
     }
     
-    if (preset == NULL) {
+    if (preset == nullptr) {
         // this will happen if we deleted or renamed it
         // formerly had a persistent notion of a global default preset
         // name but now it just picks the first one, since this
@@ -1655,7 +1655,7 @@ Preset* Track::getStartingPreset(MobiusConfig* config, Setup* setup, bool global
  */
 void Track::refreshPreset(Preset* src)
 {
-    if (src != NULL && mPreset != src) {
+    if (src != nullptr && mPreset != src) {
         mPreset->copyNoAlloc(src);
 
         // sigh...Preset::copy does not copy the name, but we need
@@ -1704,7 +1704,7 @@ void Track::refreshPreset(Preset* src)
  */
 void Track::setupLoops()
 {
-	int newLoops = (mPreset != NULL) ? mPreset->getLoops() : mLoopCount;
+	int newLoops = (mPreset != nullptr) ? mPreset->getLoops() : mLoopCount;
 
     // hard constraint
     if (newLoops > MAX_LOOPS)
@@ -1729,7 +1729,7 @@ void Track::setupLoops()
                     // drop it back to the highest one we have
                     mLoop = mLoops[newLoops - 1];
                 }
-                l->reset(NULL);
+                l->reset(nullptr);
             }
         }
 
@@ -1858,7 +1858,7 @@ void Track::checkFrames(float* buffer, long frames)
 void Track::loadProject(ProjectTrack* pt)
 {
 	List* loops = pt->getLoops();
-	int newLoops = ((loops != NULL) ? loops->size() : 0);
+	int newLoops = ((loops != nullptr) ? loops->size() : 0);
 
     // !! feels like there should be more here, if the project doesn't
     // have a preset for this track then we should be falling back to
@@ -1866,9 +1866,9 @@ void Track::loadProject(ProjectTrack* pt)
 
     MobiusConfig* config = mMobius->getConfiguration();
 	const char* preset = pt->getPreset();
-	if (preset != NULL) {
+	if (preset != nullptr) {
 		Preset* p = config->getPreset(preset);
-		if (p != NULL)
+		if (p != nullptr)
 		  refreshPreset(p);
 	}
 
@@ -1904,7 +1904,7 @@ void Track::loadProject(ProjectTrack* pt)
 	// select the first loop if there isn't one already selected
 	// Loop needs this to initialize the mode
 	if (newLoops > 0) {
-		ProjectLoop* active = NULL;
+		ProjectLoop* active = nullptr;
 		for (int i = 0 ; i < newLoops ; i++) {
 			ProjectLoop* pl = (ProjectLoop*)loops->get(i);
 			if (pl->isActive()) {
@@ -1912,7 +1912,7 @@ void Track::loadProject(ProjectTrack* pt)
 				break;
 			}
 		}
-		if (active == NULL && loops != NULL) {
+		if (active == nullptr && loops != nullptr) {
 			ProjectLoop* pl = (ProjectLoop*)loops->get(0);
 			pl->setActive(true);
 		}
@@ -1920,7 +1920,7 @@ void Track::loadProject(ProjectTrack* pt)
 
 	for (int i = 0 ; i < newLoops ; i++) {
 		ProjectLoop* pl = (ProjectLoop*)loops->get(i);
-		mLoops[i]->reset(NULL);
+		mLoops[i]->reset(nullptr);
 		mLoops[i]->loadProject(pl);
 		if (pl->isActive())
 		  mLoop = mLoops[i];
@@ -2005,7 +2005,7 @@ void Track::trackReset(Action* action)
 	// Second arg says whether this is a global reset, in which case we
 	// unconditionally return to the Setup parameters.  If this is an
 	// individual track reset, then have to check the resetables list.
-	bool global = (action == NULL || action->getFunction() == GlobalReset);
+	bool global = (action == nullptr || action->getFunction() == GlobalReset);
 
 	resetParameters(setup, global, true);
 
@@ -2053,49 +2053,49 @@ void Track::resetParameters(Setup* setup, bool global, bool doPreset)
     // objects, but here we have the old ones
 
 	if (global || !InputLevelParameter->resetRetain) {
-		if (st == NULL)
+		if (st == nullptr)
 		  mInputLevel = 127;
 		else
 		  mInputLevel = st->getInputLevel();
 	}
 
 	if (global || !OutputLevelParameter->resetRetain) {
-		if (st == NULL) 
+		if (st == nullptr) 
 		  mOutputLevel = 127;
 		else
 		  mOutputLevel = st->getOutputLevel();
 	}
 
 	if (global || !FeedbackLevelParameter->resetRetain) {
-		if (st == NULL) 
+		if (st == nullptr) 
 		  mFeedbackLevel = 127;
 		else
 		  mFeedbackLevel = st->getFeedback();
 	}
 
 	if (global || !AltFeedbackLevelParameter->resetRetain) {
-		if (st == NULL) 
+		if (st == nullptr) 
 		  mAltFeedbackLevel = 127;
 		else
 		  mAltFeedbackLevel = st->getAltFeedback();
 	}
 
 	if (global || !PanParameter->resetRetain) {
-		if (st == NULL) 
+		if (st == nullptr) 
 		  mPan = 64;
 		else
 		  mPan = st->getPan();
 	}
 
 	if (global || !FocusParameter->resetRetain) {
-		if (st == NULL) 
+		if (st == nullptr) 
 		  mFocusLock = false;
 		else
 		  mFocusLock = st->isFocusLock();
 	}
 
 	if (global || !GroupParameter->resetRetain) {
-		if (st == NULL) 
+		if (st == nullptr) 
 		  mGroup = 0;
 		else {
             MobiusConfig* config = mMobius->getConfiguration();
@@ -2114,7 +2114,7 @@ void Track::resetParameters(Setup* setup, bool global, bool doPreset)
 
     // Things that can always be reset
 
-    if (st != NULL) {
+    if (st != nullptr) {
 
         // track port changes for effects
         resetPorts(st);
@@ -2150,7 +2150,7 @@ void Track::resetParameters(Setup* setup, bool global, bool doPreset)
  */
 void Track::resetPorts(SetupTrack* st)
 {
-    if (st != NULL) {
+    if (st != nullptr) {
 
         // does it make any sense to defer these till a reset?
         // we could have clicks if we do it immediately

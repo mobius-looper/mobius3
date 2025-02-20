@@ -134,11 +134,11 @@ bool StutterFunction::isSustain()
 
 Event* StutterFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
 	MobiusMode* mode = l->getMode();
 
 	event = Function::scheduleEvent(action, l);
-	if (event != NULL && !event->pending) {
+	if (event != nullptr && !event->pending) {
 		if (mode == StutterMode) {
 			// when we leave StutterMode need to resume playing
 			// at the cycle after the cycle
@@ -148,7 +148,7 @@ Event* StutterFunction::scheduleEvent(Action* action, Loop* l)
 			// stutter mode they do.  Now that we're ending the stutter and
 			// the jump has a proper parent, remove the function to avoid
 			// a warning trace messages.
-			jump->function = NULL;
+			jump->function = nullptr;
 
 		}
 		else {
@@ -193,7 +193,7 @@ void StutterFunction::doEvent(Loop* l, Event* e)
             // and mark it processed to avoid a warning when we free the
             // parent event.  
             Event* jump = e->findEvent(JumpPlayEvent);
-            if (jump != NULL) {
+            if (jump != nullptr) {
                 EventManager* em = l->getTrack()->getEventManager();
                 em->removeEvent(jump);
                 jump->processed = true;

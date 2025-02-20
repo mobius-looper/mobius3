@@ -172,10 +172,10 @@ void Loop::init(Mobius* m, Track* track,
 	mInput = input;
 	mOutput = output;
 	mSynchronizer = mMobius->getSynchronizer();
-    mRecord = NULL;
-    mPlay = NULL;
-    mPrePlay = NULL;
-	mRedo = NULL;
+    mRecord = nullptr;
+    mPlay = nullptr;
+    mPrePlay = nullptr;
+	mRedo = nullptr;
 
 	mNumber = 0;
     mFrame = 0;
@@ -209,7 +209,7 @@ void Loop::init(Mobius* m, Track* track,
 Loop::~Loop()
 {
     // everything chained from here
-    if (mRecord != NULL)
+    if (mRecord != nullptr)
       mRecord->freeAll();
 
     // TODO: delete event and transition pools
@@ -326,7 +326,7 @@ void Loop::getTraceContext(int* context, long* time)
 
 bool Loop::isInteresting()
 {
-    return (mPlay != NULL || mRedo != NULL);
+    return (mPlay != nullptr || mRedo != nullptr);
 }
       
 // see comments in Track::dump
@@ -337,19 +337,19 @@ void Loop::dump(TraceBuffer* b)
     b->add("Loop %d\n", mNumber);
     b->incIndent();
 
-    if (mPlay != NULL) {
-      for (Layer* l = mPlay ; l != NULL ; l = l->getPrev())
+    if (mPlay != nullptr) {
+      for (Layer* l = mPlay ; l != nullptr ; l = l->getPrev())
         l->dump(b);
     }
 
-    if (mRedo != NULL) {
+    if (mRedo != nullptr) {
         b->add("Redo layers:\n");
         b->incIndent();
-        for (Layer* r = mRedo ; r != NULL ; r = r->getRedo()) {
+        for (Layer* r = mRedo ; r != nullptr ; r = r->getRedo()) {
             // redo layer can be the head of a chain if we're using
             // checkpoints
             int count = 0;
-            for (Layer* l = r ; l != NULL ; l = l->getPrev()) {
+            for (Layer* l = r ; l != nullptr ; l = l->getPrev()) {
                 count++;
                 if (count == 2)
                   b->incIndent();
@@ -385,21 +385,21 @@ void Loop::loadProject(ProjectLoop* ploop)
 	// layers are stored in reverse order (most recent first)
 	// but they have to be prepared from oldest first
 	List* layers = ploop->getLayers();
-	if (layers != NULL) {
+	if (layers != nullptr) {
         int max = layers->size();
 		for (int i = max - 1 ; i >= 0 ; i--) {
             ProjectLayer* player = (ProjectLayer*)layers->get(i);
 			// layers will already have been allocated
 			// reference count is already assuming that a loop owns it
             Layer* l = player->getLayer();
-			if (l != NULL) {
+			if (l != nullptr) {
 				l->setLoop(this);
 				l->setPrev(mPlay);
 				mPlay = l;
 			}
 		}
 
-		if (mPlay != NULL) {
+		if (mPlay != nullptr) {
 			mRecord = mPlay->copy();
 			mRecord->setPrev(mPlay);
 		}
@@ -499,9 +499,9 @@ int Loop::getNextLoop()
 
     EventManager* em = mTrack->getEventManager();
     Event* switche = em->getSwitchEvent();
-	if (switche != NULL) {
+	if (switche != nullptr) {
 		Loop* l = switche->fields.loopSwitch.nextLoop;
-		if (l != NULL)
+		if (l != nullptr)
 		  next = l->getNumber();
 	}
 	return next;
@@ -512,7 +512,7 @@ void Loop::setMode(MobiusMode* m)
 	if (mMode != m) {
 		Trace(this, 2, "Loop: Set mode %s\n", m->getName());
 		
-		if (m == PlayMode && mPlay == NULL && 
+		if (m == PlayMode && mPlay == nullptr && 
 			mMode != ResetMode && mMode != SynchronizeMode)
 		  Trace(this, 1, "Loop: Entering Play mode without a layer!\n");
 
@@ -581,7 +581,7 @@ bool Loop::isEmpty()
  */
 Function* Loop::isSyncWaiting()
 {
-	Function* waitFunction = NULL;
+	Function* waitFunction = nullptr;
 
     if (mMode == SynchronizeMode) {
         // waiting for the start
@@ -591,13 +591,13 @@ Function* Loop::isSyncWaiting()
         // or waiting for the end
         EventManager* em = mTrack->getEventManager();
         Event* end = em->findEvent(RecordStopEvent);
-		if (end != NULL && end->pending) {
+		if (end != nullptr && end->pending) {
 			// waiting for the end
 			waitFunction = Record;
 		}
 		else {
 			Event* realign = em->findEvent(RealignEvent);
-			if (realign != NULL && realign->pending)
+			if (realign != nullptr && realign->pending)
 			  waitFunction = Realign;
 		}
 	}
@@ -635,7 +635,7 @@ bool Loop::isRecording()
 
 bool Loop::isPlaying()
 {
-    return (mPlay != NULL || mPrePlay != NULL);
+    return (mPlay != nullptr || mPrePlay != nullptr);
 }
 
 /**
@@ -705,7 +705,7 @@ bool Loop::isAdvancingNormally()
     EventManager* em = mTrack->getEventManager();
 
 	return (isAdvancing() && mMode != RunMode && !mMode->extends &&
-			!em->isValidationSuppressed(NULL));
+			!em->isValidationSuppressed(nullptr));
 }
 
 /**
@@ -716,8 +716,8 @@ bool Loop::isAdvancingNormally()
  */
 bool Loop::isSyncRecording()
 {
-	return ((mMode == RecordMode && mPrePlay == NULL) ||
-			(mMode == PlayMode && mPlay == NULL));
+	return ((mMode == RecordMode && mPrePlay == nullptr) ||
+			(mMode == PlayMode && mPlay == nullptr));
 }
 
 /**
@@ -728,7 +728,7 @@ bool Loop::isSyncRecording()
  */
 bool Loop::isSyncPlaying()
 {
-	return (mPlay != NULL || (mMode == RecordMode && mPrePlay != NULL));
+	return (mPlay != nullptr || (mMode == RecordMode && mPrePlay != nullptr));
 }
 
 /**
@@ -778,7 +778,7 @@ void Loop::setPlayFrame(long l)
  */
 long Loop::getFrames()
 {
-	return (mRecord != NULL) ? mRecord->getFrames() : 0;
+	return (mRecord != nullptr) ? mRecord->getFrames() : 0;
 }
 
 /**
@@ -787,12 +787,12 @@ long Loop::getFrames()
 long Loop::getHistoryFrames()
 {
     long frames = 0;
-    if (mPlay != NULL) {
+    if (mPlay != nullptr) {
         Layer* last = mPlay;
         // the window layer is not included in the history
         if (last->getWindowOffset() >= 0)
           last = last->getPrev();
-        if (last != NULL)
+        if (last != nullptr)
           frames = last->getHistoryOffset() + last->getFrames();
     }
     return frames;
@@ -804,7 +804,7 @@ long Loop::getHistoryFrames()
 long Loop::getWindowOffset()
 {
     long offset = -1;
-    if (mPlay != NULL)
+    if (mPlay != nullptr)
       offset = mPlay->getWindowOffset();
     return offset;
 }
@@ -815,7 +815,7 @@ long Loop::getWindowOffset()
  */
 long Loop::getRecordedFrames()
 {
-	return (mRecord != NULL) ? mRecord->getRecordedFrames() : 0;
+	return (mRecord != nullptr) ? mRecord->getRecordedFrames() : 0;
 }
 
 /**
@@ -840,7 +840,7 @@ long Loop::getCycles()
  */
 long Loop::getCycleFrames()
 {
-	return (mRecord != NULL) ? mRecord->getCycleFrames() : 0;
+	return (mRecord != nullptr) ? mRecord->getCycleFrames() : 0;
 }
 
 /**
@@ -852,7 +852,7 @@ void Loop::setCycles(int cycles)
 {
     // what's a good upper bound?  should we even have one?
     if (cycles > 0 && cycles <= 1000) {
-        if (mRecord != NULL) {
+        if (mRecord != nullptr) {
             mRecord->setCycles(cycles);
             mPreRecordCycles = 0;
         }
@@ -962,8 +962,8 @@ Audio* Loop::getPlaybackAudio()
       Trace(2, "Loop: play layers are the same\n");
 #endif
     
-	Audio* playing = NULL;
-	if (mPlay != NULL) {
+	Audio* playing = nullptr;
+	if (mPlay != nullptr) {
 		playing = mPlay->flatten();
 	}
 
@@ -1115,7 +1115,7 @@ void Loop::refreshState(TrackState* s)
     
     // this is actually higher in TrackState
     s->windowOffset = -1;
-    if (mPlay != NULL) {
+    if (mPlay != nullptr) {
         s->windowOffset = (int)(mPlay->getWindowOffset());
         if (s->windowOffset >= 0) {
             // this is a window layer, but if the window exactly covers
@@ -1125,7 +1125,7 @@ void Loop::refreshState(TrackState* s)
             // implications about being in window mode
             /*
             Layer* prev = mPlay->getPrev();
-            if (prev != NULL && 
+            if (prev != nullptr && 
                 prev->getHistoryOffset() == s->windowOffset &&
                 prev->getFrames() == mPlay->getFrames()) {
                 s->windowOffset = -1;
@@ -1304,7 +1304,7 @@ long Loop::recalculateFrame(bool calcplay)
         // don't think this can happen
         if (otherFrame < 0) {
             Trace(this, 1, "Loop: Unable to recalculate play frame!\n");
-            reset(NULL);
+            reset(nullptr);
         }
 	}
 
@@ -1324,7 +1324,7 @@ void Loop::movePlayFrame(long frame)
 {
     mPlayFrame = frame;
     mFrame = recalculateFrame(false);
-    setPrePlayLayer(NULL);
+    setPrePlayLayer(nullptr);
 }
 
 /****************************************************************************
@@ -1375,14 +1375,14 @@ void Loop::validateEvent(Event* e)
  */
 void Loop::validate(Event* event)
 {
-	Layer * layer = (mPrePlay != NULL) ? mPrePlay : mPlay;
+	Layer * layer = (mPrePlay != nullptr) ? mPrePlay : mPlay;
 
 	// ignore validation under certain conditions
     EventManager* em = mTrack->getEventManager();
 	bool ignore = em->isValidationSuppressed(event);
 
 	// ignore if we haven't begun playing yet
-	if (layer != NULL && !ignore) {
+	if (layer != nullptr && !ignore) {
 
 		// also make sure this isn't lingering
 		if (layer == getMuteLayer())
@@ -1391,7 +1391,7 @@ void Loop::validate(Event* event)
 		long virtualPlayFrame = mFrame + mInput->latency + mOutput->latency;
 		long loopFrames = getFrames();
 
-		if (DeferInsertShift && mPlay != NULL) {
+		if (DeferInsertShift && mPlay != nullptr) {
 			// in this mode we allow the frame counts to diverge
 			// but only so much as the inserts
 			long inserted = mRecord->getFrames() - mPlay->getFrames();
@@ -1489,9 +1489,9 @@ void Loop::play()
 void Loop::playLocal()
 {
     // determine which layer we're playing
-    Layer* layer = (mPrePlay != NULL) ? mPrePlay : mPlay;
+    Layer* layer = (mPrePlay != nullptr) ? mPrePlay : mPlay;
 
-	if (layer == NULL)
+	if (layer == nullptr)
 	  mOutput->captureTail();
 	else {
         //const char* tracePrefix = (mMute) ? "M" : "P";
@@ -1559,7 +1559,7 @@ void Loop::playLocal()
 				// unlike Insert, this should never cause a fade right?
 				mOutput->setLayerShift(true);
 			}
-			else if (mPrePlay != NULL) {
+			else if (mPrePlay != nullptr) {
 				// This sometimes means that we processed a JumpPlayEvent
 				// that moved us to a different loop, and that loop may
 				// be shorter than the current loop.  Continue looping
@@ -1627,7 +1627,7 @@ void Loop::playLocal()
             // Remaining is negative which means mPlayFrame got beyond the
 			// end of the play layer.
             Trace(this, 1, "Loop: Playback frame anomoly: mPlayFrame=%ld transitionFrame=%ld remaining=%ld\n", mPlayFrame, transitionFrame, remaining);
-            reset(NULL);
+            reset(nullptr);
         }
         else {
             // remaining is zero, this happens in cases where the loop length
@@ -1776,7 +1776,7 @@ void Loop::record()
 		if (checkThreshold()) {
 
 			Event* start = em->findEvent(RecordEvent);
-			if (start == NULL) {
+			if (start == nullptr) {
 				Trace(this, 1, "Sync: Record start pulse without Record event!\n");
 				// well we can at least try, this is the old code we had before
 				// scheduling a pending event, might be something missing?
@@ -1823,10 +1823,10 @@ void Loop::record()
         // We must be in that limbo area after we stop recording
         // an insert, but before the end.  The area must be padded
         // with slience.
-		mInput->buffer = NULL;
+		mInput->buffer = nullptr;
 		mRecord->insert(mInput, mFrame, feedback);
 	}
-	else if (mRecord != NULL) {
+	else if (mRecord != nullptr) {
 		// still have to tell the layer to copying the previous layer
 		// ?? could tell it to fade now rather than waiting till the finalize
 		mRecord->advance(mInput, mFrame, feedback);
@@ -1840,7 +1840,7 @@ void Loop::record()
 
 		mFrame += frames;
 		// sanity check
-		if (mRecord != NULL) {
+		if (mRecord != nullptr) {
 			long recorded = mRecord->getRecordedFrames();
 			if (mFrame > recorded) {
                 // if we get into this state it will tend not to fix itself
@@ -1977,7 +1977,7 @@ void Loop::shift(bool checkAutoUndo)
         (void)x;
 	}
 
-	if (mRecord == NULL) {
+	if (mRecord == nullptr) {
 		Trace(this, 1, "Loop: shift: no record layer\n");
 	}
     else if (mMode == RehearseMode) {
@@ -1993,7 +1993,7 @@ void Loop::shift(bool checkAutoUndo)
           mRecord->freeUndo();
         
 		mPlay = mRecord;
-        mPrePlay = NULL;
+        mPrePlay = nullptr;
 
         LayerPool* lp = mMobius->getLayerPool();
         mRecord = lp->newLayer(this);
@@ -2007,11 +2007,11 @@ void Loop::shift(bool checkAutoUndo)
 	else {
 		// If we're preplaying in a different Loop, do the record/play
 		// shift, but leave mPrePlay alone
-		bool switching = (mPrePlay != NULL) && (mPrePlay->getLoop() != this);
+		bool switching = (mPrePlay != nullptr) && (mPrePlay->getLoop() != this);
         bool audioChanged = isLayerChanged(mRecord, checkAutoUndo);
         bool feedbackChanged = mRecord->isFeedbackApplied();
 
-		if (!audioChanged && !feedbackChanged && mPlay != NULL) {
+		if (!audioChanged && !feedbackChanged && mPlay != nullptr) {
 			// squelch the record layer
             // Trace(2, "Squelching record layer\n");
 			// Have to be careful with Mute fades placed in the 
@@ -2030,7 +2030,7 @@ void Loop::shift(bool checkAutoUndo)
 				// This only applies though if the last layer was the
 				// current record layer, so pass that in to check.
 				mOutput->squelchLastLayer(mRecord, mPlay, mPlayFrame);
-				mPrePlay = NULL;
+				mPrePlay = nullptr;
 			}
 			
 			// transfer checkpoint state if explicitly changed
@@ -2068,7 +2068,7 @@ void Loop::shift(bool checkAutoUndo)
             mRecord = mPlay->copy();
 			mRecord->setPrev(mPlay);
 			if (!switching)
-			  mPrePlay = NULL;
+			  mPrePlay = nullptr;
 
 			Trace(this, 2, "Loop: shift: playing %ld, new record layer %ld\n",
 				  mPlay->getNumber(), mRecord->getNumber());
@@ -2091,7 +2091,7 @@ bool Loop::isLayerChanged(Layer* layer, bool checkAutoUndo)
 	bool changed = mRecord->isStructureChanged();
 	if (!changed) {
 		changed = mRecord->isAudioChanged();
-		if (changed && checkAutoUndo &&  layer->getPrev() != NULL) {
+		if (changed && checkAutoUndo &&  layer->getPrev() != nullptr) {
 			short max = SampleFloatToInt16(layer->getMaxSample());
 			if (max < 0)
 			  max = -max;
@@ -2236,23 +2236,23 @@ void Loop::clear()
     mOutput->resetHistory(this);
 	mInput->resetHistory(this);
 
-	if (mRecord != NULL) {
+	if (mRecord != nullptr) {
 		mRecord->freeAll();
-		mRecord = NULL;
+		mRecord = nullptr;
 	}
 
 	// this is always from the mRecord chain
-	mPlay = NULL;
-	mPrePlay = NULL;
+	mPlay = nullptr;
+	mPrePlay = nullptr;
 
     // remember these are linked with the Redo pointer and
     // each element can be a list linked by Prev
-    Layer* nextRedo = NULL;
-    for (Layer* redo = mRedo ; redo != NULL ; redo = nextRedo) {
+    Layer* nextRedo = nullptr;
+    for (Layer* redo = mRedo ; redo != nullptr ; redo = nextRedo) {
         nextRedo = redo->getRedo();
         redo->freeAll();
     }
-    mRedo = NULL;
+    mRedo = nullptr;
 }
 
 /****************************************************************************
@@ -2273,10 +2273,10 @@ void Loop::loopEvent(Event* e)
 
 	// !! is this true?  why are we entering the mode before shifting
 	// if not, simplify this
-	if (mPlay == NULL && mMode->rounding)
+	if (mPlay == nullptr && mMode->rounding)
 	  Trace(this, 1, "Loop: Missing play layer in insert/multiply mode\n");
 
-	if (mMode == MultiplyMode && mPlay != NULL) {
+	if (mMode == MultiplyMode && mPlay != nullptr) {
 
 		mRecord->multiplyCycle(mInput, mPlay, mModeStartFrame);
 
@@ -2285,7 +2285,7 @@ void Loop::loopEvent(Event* e)
 
 		// unlike below we do not reset mFrame here, run free!
 	}
-	else if (mMode == InsertMode && mPlay != NULL) {
+	else if (mMode == InsertMode && mPlay != nullptr) {
 
 		// Should be here only if the insert cycle boundary is
 		// exactly on the loop boundary.  Otherwise, we'll extend
@@ -2322,7 +2322,7 @@ void Loop::loopEvent(Event* e)
 
             Trace(this, 2, "Loop: Entering rehearse mode record phase\n");
 
-            mPrePlay = NULL;
+            mPrePlay = nullptr;
             setFrame(0);
 			mMute = true;
 			mRecording = true;
@@ -2339,7 +2339,7 @@ void Loop::loopEvent(Event* e)
                 
 		Layer* prev = mRecord->getPrev();
 		bool checkAutoUndo = 
-			(prev != NULL && prev->getFrames() == mRecord->getFrames());
+			(prev != nullptr && prev->getFrames() == mRecord->getFrames());
 
         // !! if we're going into Rehearse mode, there's no need
         // to copy the play buffer into the new record buffer, it just
@@ -2644,12 +2644,12 @@ bool Loop::checkMuteCancel(Event* e)
 {
 	bool canceled = false;
 
-	if (e == NULL)
-	  Trace(this, 1, "Loop: checkMuteCancel called with NULL event!\n");
+	if (e == nullptr)
+	  Trace(this, 1, "Loop: checkMuteCancel called with nullptr event!\n");
 	else {
 		Function* func = e->function;
-		if (func == NULL)
-		  Trace(this, 1, "Loop: checkMuteCancel called with NULL function!\n");
+		if (func == nullptr)
+		  Trace(this, 1, "Loop: checkMuteCancel called with nullptr function!\n");
 
 		else if (mMuteMode && func->isMuteCancel(this)) {
 		
@@ -2708,7 +2708,7 @@ void Loop::setMuteKludge(Function* f, bool mute)
             Function* muteFunction = (mute) ? MuteOn : MuteOff;
 			Event* e = em->newEvent(muteFunction, MuteEvent, mFrame);
             e->setInvokingFunction(f);
-			e->savePreset(mPreset);
+			//e->savePreset(mPreset);
 		
 			// this was added for things like Bounce where the event may 
 			// not be happening at the "right" latency adusted time, so
@@ -2766,7 +2766,7 @@ void Loop::setMuteKludge(Function* f, bool mute)
  */
 Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
 {
-    Event* endEvent = NULL;
+    Event* endEvent = nullptr;
 	bool ignoreTrigger = false;
 	Function* function = event->function;
 	Function* primaryFunction;
@@ -2786,7 +2786,7 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
     EventManager* em = mTrack->getEventManager();
 	Event* prev = em->findEvent(endType);
 
-    if (prev != NULL) {
+    if (prev != nullptr) {
 		if (isUnroundedEnding(function)) {
 			if (prev->quantized) {
 				// escape quantization and perform an unrounded operation
@@ -2855,7 +2855,7 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
 
         endEvent = em->newEvent(primaryFunction, endType, event->frame);
 		endEvent->setInvokingFunction(function);
-		endEvent->savePreset(mPreset);
+		//endEvent->savePreset(mPreset);
 		endEvent->quantized = event->quantized;
         em->addEvent(endEvent);
 
@@ -2875,7 +2875,7 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
 		// A rounded insert always rounds up to a cycle boundary.
 		// (should support other quantizations someday?)
 
-		Event *recordStop = NULL;
+		Event *recordStop = nullptr;
         long endFrame = 0;
 		// !! don't really need to schedule this if event is quantized
 		if (!mPreset->isRoundingOverdub()) {
@@ -2895,7 +2895,7 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
             // it matters anyway because alternate endings only apply
             // if we're in Record mode.
 			recordStop->setInvokingFunction(primaryFunction);;
-			recordStop->savePreset(mPreset);
+			//recordStop->savePreset(mPreset);
 			em->addEvent(recordStop);
 		}
 
@@ -2903,7 +2903,7 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
 		// goes in front of the alternate ending event
 		endFrame = getModeEndFrame(event);
 
-		if (recordStop != NULL && endFrame < recordStop->frame) {
+		if (recordStop != nullptr && endFrame < recordStop->frame) {
 			// must be a calculation error
 			Trace(this, 1, "Loop: %s end frame less than record stop frame: %ld %ld\n",
 				  mMode->getDisplayName(), endFrame, recordStop->frame);
@@ -2915,7 +2915,7 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
 		// Can this happen in other modes?  
 
 		if (mMode == MultiplyMode && 
-			recordStop != NULL && endFrame < recordStop->frame) {
+			recordStop != nullptr && endFrame < recordStop->frame) {
 			if (mPreset->getMultiplyMode() == MULTIPLY_SIMPLE) {
 				// quantize the end of the multiply
 				endFrame = recordStop->frame;
@@ -2930,12 +2930,12 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
 
 		endEvent = em->newEvent(primaryFunction, endType, endFrame);
 		endEvent->setInvokingFunction(function);
-		endEvent->savePreset(mPreset);
+		//endEvent->savePreset(mPreset);
 		endEvent->addChild(recordStop);
 		endEvent->quantized = true;
 		em->addEvent(endEvent);
 
-		if (recordStop != NULL)
+		if (recordStop != nullptr)
 		  Trace(this, 2, "Loop: Scheduled %s record stop at %ld\n",
 				mMode->getDisplayName(), recordStop->frame);
 
@@ -2972,7 +2972,7 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
 	// (like a SUSReturn)
 	bool triggerScheduled = em->isEventScheduled(event);
 	if (ignoreTrigger) {
-        if (endEvent != NULL) {
+        if (endEvent != nullptr) {
             // undoScheduledEvent will also reclaim the action so have
             // to reattach it first
             action->changeEvent(endEvent);
@@ -3248,7 +3248,7 @@ void Loop::moveModeEnd(Event* endEvent, long newFrame)
 
 	// if we have an end event, move the hierarchy from there
 	Event* parent = endEvent->getParent();
-	if (parent == NULL)
+	if (parent == nullptr)
 	  em->moveEventHierarchy(this, endEvent, newFrame);
 	else {
 		// this should always be on the same frame, but handle it
@@ -3302,7 +3302,7 @@ Event* Loop::scheduleModeEndPlayJump(Event* endEvent, bool unrounded)
 
 		if (unrounded || 
 			(mPreset->getMultiplyMode() == MULTIPLY_NORMAL &&
-			 mPlay != NULL && mPlay->getCycles() > 1)) {
+			 mPlay != nullptr && mPlay->getCycles() > 1)) {
 			// For both unrounded multiply and remultiply (more than one cycle)
 			// we will trim off the content before and after the mode edges.
 			// Return to the mode start frame.  If we're in Simple mode
@@ -3425,13 +3425,13 @@ long Loop::getModeInsertedFrames(Event* endEvent)
  */
 void Loop::jumpPlayEvent(Event* e)
 {
-	Layer* currentLayer = ((mPrePlay != NULL) ? mPrePlay : mPlay);
+	Layer* currentLayer = ((mPrePlay != nullptr) ? mPrePlay : mPlay);
 	Event* parent = e->getParent();
 	Function* func = e->function;
 
 	// calculate the amount of latency loss
 	long latencyLoss = 0;
-	if (parent == NULL) {
+	if (parent == nullptr) {
 		// Stutter may schedule events with a pre determined
 		// latency loss, would be nice if we could avoid the extra field
 		// in the event!
@@ -3447,7 +3447,7 @@ void Loop::jumpPlayEvent(Event* e)
 		  Trace(1, "Loop: JumpPlayEvent latencyLoss mismatch %ld %ld\n",
 				e->latencyLoss, latencyLoss);
 
-		if (func == NULL)
+		if (func == nullptr)
 		  func = parent->function;
 		else {
 			// Not supposed to have functions assigned to a JumpPlayEvent
@@ -3505,12 +3505,12 @@ void Loop::jumpPlayEvent(Event* e)
 	next.outputLatency = mOutput->latency;
 
 	// Next layer is sometimes in the event, but for jumps within
-	// same loop it may be NULL meaning to stay in the current layer.
+	// same loop it may be nullptr meaning to stay in the current layer.
 	// If this is a switch jump, the next layer will usually be changed
 	// when we get around to adjusting the jump.
 	// currentLayer may be null for events processing during recording.
 	
-	if (next.layer == NULL) 
+	if (next.layer == nullptr) 
 	  next.layer = currentLayer;
 
 	// master function may force us out of mute
@@ -3577,7 +3577,7 @@ void Loop::jumpPlayEvent(Event* e)
     //mTrack->setSpeedToggle(next.speedToggle);
 
 	// From here on we need a a layer
-	if (next.layer == NULL) {
+	if (next.layer == nullptr) {
 		// this is allowed during recoding, otherwise it's an error
 		if (getFrames() > 0)
 		  Trace(this, 1, "Loop: Ignoring jumpPlayEvent with no layer!\n");
@@ -3661,7 +3661,7 @@ void Loop::jumpPlayEvent(Event* e)
 
 		if (nextFrame >= layerFrames) {
 
-			if (parent != NULL && 
+			if (parent != nullptr && 
 				(parent->frame > layerFrames ||
 				 (parent->frame == layerFrames && parent->afterLoop))) {
 
@@ -3723,7 +3723,7 @@ void Loop::jumpPlayEvent(Event* e)
 	if (next.layer != mPlay)
 	  mPrePlay = next.layer;
 	else
-	  mPrePlay = NULL;
+	  mPrePlay = nullptr;
 
 	// update mute
 	if (next.mute) {
@@ -3745,7 +3745,7 @@ void Loop::jumpPlayEvent(Event* e)
 		mPause = false;
 	}
 
-	Layer* traceLayer = ((mPrePlay != NULL) ? mPrePlay : mPlay);
+	Layer* traceLayer = ((mPrePlay != nullptr) ? mPrePlay : mPlay);
 
     if (!e->silent) {
         if (traceLayer == getMuteLayer())
@@ -3779,7 +3779,7 @@ void Loop::adjustJump(Event* event, JumpContext* next)
 
 	// Find the primary event
 	if (event->type == JumpPlayEvent) {
-		if (parent != NULL)
+		if (parent != nullptr)
 		  primary = parent;
 	}
 	else {
@@ -3788,12 +3788,12 @@ void Loop::adjustJump(Event* event, JumpContext* next)
 		// allow this anywhere, not just on a switch.  Quantize could
 		// be handled this way, right now we're scheduling multiple jumps.
 		switchStack = true;
-		if (parent == NULL || parent->type != SwitchEvent)
+		if (parent == nullptr || parent->type != SwitchEvent)
 		  Trace(this, 1, "Loop: Odd jump event parentage!\n");
 	}
 	
 	Function* function = primary->function;
-	if (function == NULL) {
+	if (function == nullptr) {
 		Trace(this, 1, "Loop: Event with no function!\n");
 		return;
 	}
@@ -3893,7 +3893,7 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
 	SwitchContext actions;
 	memset(&actions, 0, sizeof(actions));
 
-	if (nextLoop == NULL) {
+	if (nextLoop == nullptr) {
 		Trace(1, "Loop: Invalid switch play jump!\n");
 		return;
 	}
@@ -3970,7 +3970,7 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
 	// careful here about mutexing the copy/record flags just in case.
 	// !! We need some encapsulation of the switch logic in the Function.
 
-	for (Event* te = switche->getChildren() ; te != NULL ; te = te->getSibling()) {
+	for (Event* te = switche->getChildren() ; te != nullptr ; te = te->getSibling()) {
 		EventType* type = te->type;
 
 		if (te == jump) {
@@ -3980,7 +3980,7 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
 			// this is the new way I'd like to start handling all switch
 			// adjustments
 			Function* f = te->function;
-			if (f == NULL)
+			if (f == nullptr)
 			  Trace(this, 1, "Loop: stack switch event with no function!\n");
 			else 
 			  f->prepareSwitch(this, te, &actions, next);
@@ -4077,7 +4077,7 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
 	// Determine the target layer, this will have been initialized to the
 	// current play layer if left null, so make sure it starts null here
 
-	next->layer = NULL;
+	next->layer = nullptr;
 	next->mute = actions.mute;
 
 	if (actions.record || actions.timeCopy) {
@@ -4090,7 +4090,7 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
 	  next->layer = nextLoop->getPlayLayer();
 
 	// if next loop is empty, still need a non-null layer to stay in mute
-	if (next->layer == NULL)
+	if (next->layer == nullptr)
 	  next->layer = getMuteLayer();
 
 	// determine the target frame
@@ -4231,7 +4231,7 @@ void Loop::jumpPlayEventUndo(Event* e)
 	Layer* undoLayer = e->fields.jump.undoLayer;
 	mPrePlay = undoLayer;
 	if (mPrePlay == mPlay)
-	  mPrePlay = NULL;
+	  mPrePlay = nullptr;
 
 	// restore playback options, but not rate yet
 	mMute = e->fields.jump.undoMute;
@@ -4249,7 +4249,7 @@ void Loop::jumpPlayEventUndo(Event* e)
 	//long undoFrame = e->fields.jump.undoFrame;
 	long advance = 0;
 
-	if (prevLayer == NULL)
+	if (prevLayer == nullptr)
 	  Trace(this, 1, "Loop: Attempt to undo a jump without a layer!\n");
 	else {
 		// if we jumped into MuteLayer or a smaller layer (can that happen?)
@@ -4291,8 +4291,8 @@ void Loop::jumpPlayEventUndo(Event* e)
 		advance = (long)(advance * mOutput->getSpeed());
 	}
 
-	// undoLayer will be NULL if comming from a Reset loop
-	if (undoLayer == NULL)
+	// undoLayer will be nullptr if comming from a Reset loop
+	if (undoLayer == nullptr)
 	  mPlayFrame = 0;
 	else {
 		mPlayFrame = e->fields.jump.undoFrame + advance;
@@ -4319,12 +4319,12 @@ void Loop::jumpPlayEventUndo(Event* e)
  */
 void Loop::cancelPrePlay()
 {
-	if (mPrePlay != NULL) {
+	if (mPrePlay != nullptr) {
 		// must also set this to avoid a fade
         // !! figure out how to push this into Stream?
 		if (mOutput->getLastLayer() == mPrePlay)
 		  mOutput->setLayerShift(true);
-		mPrePlay = NULL;
+		mPrePlay = nullptr;
 	}
 }
 
@@ -4435,14 +4435,14 @@ void Loop::cancelRehearse(Event* event)
  */
 Event* Loop::scheduleStutterTransition(bool ending)
 {
-	Event* trans = NULL;
+	Event* trans = nullptr;
 	int inputLatency, outputLatency;
 
     // the jump is processed near the end of the current record cycle
     long cycleFrames = mPlay->getCycleFrames();
 
 	// this really can't happen but avoid divide by zero at all costs
-	if (cycleFrames == 0) return NULL;
+	if (cycleFrames == 0) return nullptr;
 
     long recCycleStart = (mFrame / cycleFrames) * cycleFrames;
     long recCycleEnd = recCycleStart + cycleFrames;
@@ -4454,7 +4454,7 @@ Event* Loop::scheduleStutterTransition(bool ending)
 	  recCycleEnd = mFrame;
 
     EventManager* em = mTrack->getEventManager();
-	em->getEffectiveLatencies(this, NULL, recCycleEnd, 
+	em->getEffectiveLatencies(this, nullptr, recCycleEnd, 
                               &inputLatency, &outputLatency);
 
 	long transitionFrame = recCycleEnd - inputLatency - outputLatency;
@@ -4518,8 +4518,8 @@ void Loop::stutterCycle()
  */
 void Loop::undoEvent(Event* e)
 {
-	Layer* restore = NULL;
-	Layer* undo = NULL;
+	Layer* restore = nullptr;
+	Layer* undo = nullptr;
 	bool initialRecording = false;
 
 	// If we're auto-recording and have multipled, remove multiples
@@ -4546,7 +4546,7 @@ void Loop::undoEvent(Event* e)
 	// but not when undoing events, ok?
 	checkMuteCancel(e);
 
-	if (mPlay == NULL) {
+	if (mPlay == nullptr) {
 		// must be an initial recording
 		restore = mRecord->getPrev();
 		initialRecording = true;
@@ -4577,7 +4577,7 @@ void Loop::undoEvent(Event* e)
 			  undoTail = undo->getCheckpointTail();
 			
 			restore = undoTail->getPrev();
-			undoTail->setPrev(NULL);
+			undoTail->setPrev(nullptr);
 		}
 	}
 
@@ -4587,9 +4587,9 @@ void Loop::undoEvent(Event* e)
 	em->flushEventsExceptScripts();
 	resumePlay();
 
-	if (restore != NULL) {
+	if (restore != nullptr) {
 
-		if (undo != NULL)
+		if (undo != nullptr)
 		  Trace(this, 3, "Loop: Restoring play layer %ld, freeing layer %ld, resetting record layer %ld\n",
 				(long)restore->getNumber(), (long)undo->getNumber(), (long)mRecord->getNumber());
 		else
@@ -4597,7 +4597,7 @@ void Loop::undoEvent(Event* e)
 				(long)restore->getNumber(), (long)mRecord->getNumber());
 
 		mPlay = restore;
-        mPrePlay = NULL;
+        mPrePlay = nullptr;
 
 		// may have deferred the fade if there was a recording that
 		// crossed the loop boundary, this method will fix it
@@ -4639,7 +4639,7 @@ void Loop::undoEvent(Event* e)
 		// treat like a resize for out sync
         mSynchronizer->loopResize(this, false);
 
-		if (undo != NULL)
+		if (undo != nullptr)
 		  addRedo(e, undo);
 
 		Trace(this, 2, "Loop: Undo resuming at frame %ld play frame %ld\n", 
@@ -4651,7 +4651,7 @@ void Loop::undoEvent(Event* e)
 		// Just ignore it.
 		// NOTE: If we do decide to reset here, then need to decide whether
 		// to return to the Setup settings
-		//reset(NULL); 
+		//reset(nullptr); 
 	}
 }
 
@@ -4697,14 +4697,14 @@ void Loop::addRedo(Event* e, Layer* undone)
 
 	// locate the last allowed redo layer, free the rest
 	Layer* lastRedo = mRedo;
-	for (int i = 0 ; i < max - 1 && lastRedo != NULL ; i++)
+	for (int i = 0 ; i < max - 1 && lastRedo != nullptr ; i++)
 	  lastRedo = lastRedo->getRedo();
 
-	if (lastRedo != NULL) {
+	if (lastRedo != nullptr) {
 		// we're keeping this one, but free the rest
 		Layer* extras = lastRedo->getRedo();
-		lastRedo->setRedo(NULL);
-		while (extras != NULL) {
+		lastRedo->setRedo(nullptr);
+		while (extras != nullptr) {
 			Layer* next = extras->getRedo();
 			extras->freeAll();
 			extras = next;
@@ -4772,7 +4772,7 @@ void Loop::warpFrame()
 void Loop::reversePlayEvent(Event* e) 
 {
 	// save previous state for undo
-	e->fields.jump.undoLayer = (mPrePlay != NULL) ? mPrePlay : mPlay;
+	e->fields.jump.undoLayer = (mPrePlay != nullptr) ? mPrePlay : mPlay;
 	e->fields.jump.undoFrame = mPlayFrame;
 	e->fields.jump.undoMute = mMute;
 	e->fields.jump.undoReverse = isReverse();
@@ -4894,7 +4894,7 @@ void Loop::setBounceRecording(Audio* a, int cycles)
     // !! What about Synchronizer?  The bounce track should be able
     // to become the OutSyncMaster
 
-	reset(NULL);
+	reset(nullptr);
 
     LayerPool* lp = mMobius->getLayerPool();
 	mPlay = lp->newLayer(this);
@@ -5089,15 +5089,15 @@ void Loop::switchEvent(Event* event)
 
 	// maintain a list of events we decide to process early so we
 	// can inform the script interpreter in case it is waiting on them
-	Event* toFree = NULL;
+	Event* toFree = nullptr;
 
-	Event* e = NULL;
-	Event* nexte = NULL;
+	Event* e = nullptr;
+	Event* nexte = nullptr;
 
-	for (e = event->getChildren() ; e != NULL ; e = nexte) {
+	for (e = event->getChildren() ; e != nullptr ; e = nexte) {
 		nexte = e->getSibling();
 
-		Event* reschedule = NULL;
+		Event* reschedule = nullptr;
 		bool remove = false;
 
 		if (e->type == RecordEvent) {
@@ -5177,7 +5177,7 @@ void Loop::switchEvent(Event* event)
 		// If we promoted the control event to an ordinary event
 		// in the next loop, have to tell the script interpreter
 		// in case we're waiting on the the control event.
-		if (reschedule != NULL)
+		if (reschedule != nullptr)
 		  e->rescheduleScriptWait(mMobius, reschedule);
 
 		if (remove) {
@@ -5196,7 +5196,7 @@ void Loop::switchEvent(Event* event)
     if (!recording && wasRecording && 
         mPreset->getRecordTransfer() == XFER_FOLLOW) {
 
-        switchRecord(next, event, NULL);
+        switchRecord(next, event, nullptr);
         recording = true;
     }
 
@@ -5221,7 +5221,7 @@ void Loop::switchEvent(Event* event)
                 Trace(this, 3, "Loop: Automatic recording of empty loop %ld\n",
                       (long)next->getNumber());
                 // note that threshold mode is not supported here
-                switchRecord(next, event, NULL);
+                switchRecord(next, event, nullptr);
                 recording = true;
 
                 // TODO: If SwitchDuration=OnceReturn and we AutoRecord,
@@ -5275,7 +5275,7 @@ void Loop::switchEvent(Event* event)
 
 	// If we switch toward the end, we may have been preplaying
 	// the record layer, return to the play layer
-	next->mPrePlay = NULL;
+	next->mPrePlay = nullptr;
 
 	if (!recording) {
 		if (empty) {
@@ -5305,8 +5305,8 @@ void Loop::switchEvent(Event* event)
     // !! if the next loop is in reset, should we take anything over?
     // if these can result in changes to the loop then some
     // of the empty loop optimizations we make below might be wrong
-	nexte = NULL;
-	for (e = event->getChildren() ; e != NULL ; e = nexte) {
+	nexte = nullptr;
+	for (e = event->getChildren() ; e != nullptr ; e = nexte) {
 		nexte = e->getSibling();
 
 		if (e->type != JumpPlayEvent) {
@@ -5350,7 +5350,7 @@ void Loop::switchEvent(Event* event)
 	// Originally this is how we transfered "stacked" events, but now
 	// we should only find pending events and script waits.
 	
-	for (e = current->getEvents() ; e != NULL ; e = nexte) {
+	for (e = current->getEvents() ; e != nullptr ; e = nexte) {
 		nexte = e->getNext();
 
 		bool transfer = false;
@@ -5413,7 +5413,7 @@ void Loop::switchEvent(Event* event)
         }
         else {
             Event* mute = em->newEvent(MuteOn, next->getFrames());
-            mute->savePreset(mPreset);
+            //mute->savePreset(mPreset);
             mute->quantized = true;	// to make it visible and undoable
             em->addEvent(mute);
             em->schedulePlayJump(next, mute);
@@ -5437,14 +5437,14 @@ void Loop::switchEvent(Event* event)
 	}
 
 	// cancel switch mode
-    em->setSwitchEvent(NULL);
+    em->setSwitchEvent(nullptr);
 
 	// We were using our own mPlayFrame and mOutput stream to pre-play
 	// the next loop.  We will have saved the necessary state above
 	// for return to this loop, be safe and reset the play position.
 	if (next != this) {
 		mPlayFrame = 0;
-		mPrePlay = NULL;
+		mPrePlay = nullptr;
 	}
 
     // Schedule a Return event or a pending SUSReturn
@@ -5454,7 +5454,7 @@ void Loop::switchEvent(Event* event)
     // not all triggers are sustainable
     bool sustainable = false;
     Action* action = event->getAction();
-    if (action != NULL)
+    if (action != nullptr)
       sustainable = action->isSustainable();
 
     if (event->function->sustain ||
@@ -5494,7 +5494,7 @@ void Loop::switchEvent(Event* event)
             // UPDATE: We should have that now with event->action
             if (!recording) {
                 Event* sus = em->newEvent(event->function, SUSReturnEvent, 0);
-                sus->savePreset(mPreset);
+                //sus->savePreset(mPreset);
                 sus->fields.loopSwitch.nextLoop = this;
                 sus->pending = true;
                 em->addEvent(sus);
@@ -5532,7 +5532,7 @@ void Loop::switchEvent(Event* event)
             // should do an immediate mute
             if (!empty) {
                 Event* mute = em->newEvent(MuteOn, next->getFrame());
-                mute->savePreset(mPreset);
+                //mute->savePreset(mPreset);
                 em->addEvent(mute);
                 em->schedulePlayJump(next, mute);
             }
@@ -5546,7 +5546,7 @@ void Loop::switchEvent(Event* event)
         else if (!empty) {
             // TODO: Use invokingFunction here??
             Event* sus = em->newEvent(event->function, SUSReturnEvent, 0);
-            sus->savePreset(mPreset);
+            //sus->savePreset(mPreset);
             sus->fields.loopSwitch.nextLoop = this;
             sus->pending = true;
             em->addEvent(sus);
@@ -5604,10 +5604,10 @@ void Loop::switchEvent(Event* event)
 	event->finishScriptWait(mMobius);
 
 	// release the control events we processed
-	nexte = NULL;
-	for (e = toFree ; e != NULL ; e = nexte) {
+	nexte = nullptr;
+	for (e = toFree ; e != nullptr ; e = nexte) {
 		nexte = e->getNext();
-		e->setNext(NULL);
+		e->setNext(nullptr);
 
         // can there be script waits on these?
         e->finishScriptWait(mMobius);
@@ -5617,7 +5617,7 @@ void Loop::switchEvent(Event* event)
 
 	// it shouldn't happen, but if we had waits on any of the
 	// residual events, finish them too
-	for (e = current->getEvents() ; e != NULL ; e = e->getNext())
+	for (e = current->getEvents() ; e != nullptr ; e = e->getNext())
 	  e->finishScriptWait(mMobius);
 
 	// this will return the contained events to the free list
@@ -5672,7 +5672,7 @@ void Loop::switchRecord(Loop* next, Event* switchEvent,
 Event* Loop::copySound(Loop* src, Function* initial,
 							   bool checkCopyMode, long modeFrame)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
 
 	// release layers and Audio but leave location intact
 	clear();
@@ -5681,10 +5681,10 @@ Event* Loop::copySound(Loop* src, Function* initial,
 	// to copy only the current cycle, not the entire loop
 
 	Layer* play = src->mPlay;
-    if (play == NULL) {
+    if (play == nullptr) {
         // the source is either empty or still in its initial recording
         Trace(2, "Loop::copySound source loop is empty\n");
-        reset(NULL);
+        reset(nullptr);
 
         // ignore the initial event, that is just for SoundCopyMode
         // and since we didn't copy it doesn't apply
@@ -5707,7 +5707,7 @@ Event* Loop::copySound(Loop* src, Function* initial,
             CopyMode copyMode = mPreset->getSoundCopyMode();
             switch (copyMode) {
                 case COPY_PLAY:
-                    initial = NULL;
+                    initial = nullptr;
                     break;
                 case COPY_OVERDUB:
                     initial = OverdubOn;
@@ -5721,7 +5721,7 @@ Event* Loop::copySound(Loop* src, Function* initial,
             }
         }
 
-        if (initial != NULL) {
+        if (initial != nullptr) {
             // !! save preset?
             EventManager* em = mTrack->getEventManager();
             event = em->newEvent(initial, modeFrame);
@@ -5748,11 +5748,11 @@ Event* Loop::copySound(Loop* src, Function* initial,
  * and start inserting because you'll end up with an extra cycle
  * of silence after the insert.  Instead, Layer needs to detect when
  * we're beginnign an insert in an "empty" layer.  It does this
- * by checking for a NULL segment list.
+ * by checking for a nullptr segment list.
  */
 Event* Loop::copyTiming(Loop* src, long modeFrame)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = mTrack->getEventManager();
 	CopyMode copyMode = mPreset->getTimeCopyMode();
 
@@ -5761,10 +5761,10 @@ Event* Loop::copyTiming(Loop* src, long modeFrame)
 	clear();
 
     Layer* srcPlay = src->getPlayLayer();
-    if (srcPlay == NULL) {
+    if (srcPlay == nullptr) {
         // it is empty or still recording, ignore
         Trace(2, "Loop::copyTiming Empty source loop\n");
-        reset(NULL);
+        reset(nullptr);
     }
     else {
 
@@ -5862,7 +5862,7 @@ void Loop::returnEvent(Event* event)
 
 		// If we switch toward the end, we may have been preplaying
 		// the record layer, return to the play layer
-		next->mPrePlay = NULL;
+		next->mPrePlay = nullptr;
 
 		// if we've been preplaying the MuteLayer, this must have been
 		// EmptyLoopAction=copyTiming, the play frame may be way off since MuteLayer
@@ -5875,7 +5875,7 @@ void Loop::returnEvent(Event* event)
 		next->validate(event);
 	}
 
-	mPrePlay = NULL;
+	mPrePlay = nullptr;
 
 	// transfer pending script events for the unit tests,
 	// any other interesting events?
@@ -5885,7 +5885,7 @@ void Loop::returnEvent(Event* event)
 
 	// Activate any "Wait return" event
 	Event* wait = em->findEvent(ScriptEvent);
-	if (wait != NULL && 
+	if (wait != nullptr && 
         wait->pending && 
 		wait->fields.script.waitType == WAIT_RETURN) {
 		wait->pending = false;
@@ -5927,7 +5927,7 @@ void Loop::returnEvent(Event* event)
 void Loop::trackEvent(Event* e)
 {
     Track* next = e->fields.trackSwitch.nextTrack;
-	if (next != NULL) {
+	if (next != nullptr) {
 		EmptyLoopAction action = mPreset->getEmptyTrackAction();
 		Loop* dest = next->getLoop();
 
@@ -6004,7 +6004,7 @@ void Loop::trackCopySound(Loop* src, Loop* dest)
 
     // Third arg was originaly false to ignore SoundCopyMode,
     // but that's expected here too right?
-	dest->copySound(src, NULL, true, modeFrame);
+	dest->copySound(src, nullptr, true, modeFrame);
 
     // have to do this after the size is known
 	dest->recalculatePlayFrame();
@@ -6227,12 +6227,12 @@ void Loop::getTrackCopyFrame(Loop* src, Loop* dest,
  */
 void Loop::trackCopySound(Track* src)
 {
-    if (src != NULL) {
+    if (src != nullptr) {
 		// ignore tail capture?
         // !! if we're currently the track sync master, this will reassign
         // it, it is hard to tell the difference between internal reset
         // and user initiated reset
-        reset(NULL);
+        reset(nullptr);
 
         trackCopySound(src->getLoop(), this);
 
@@ -6266,8 +6266,8 @@ void Loop::trackCopySound(Track* src)
  */
 void Loop::trackCopyTiming(Track* src)
 {
-    if (src != NULL) {
-        reset(NULL);
+    if (src != nullptr) {
+        reset(nullptr);
 
         trackCopyTiming(src->getLoop(), this);
 
@@ -6321,7 +6321,7 @@ void Loop::cancelSyncMute(Event* e)
 {
     EventManager* em = mTrack->getEventManager();
 	Event* mute = em->findEvent(MuteEvent);
-	if (mute != NULL) {
+	if (mute != nullptr) {
 		Trace(this, 2, "Loop: Removing obsolete mute event after %s\n",
 			  e->type->name);
         em->undoEvent(mute);

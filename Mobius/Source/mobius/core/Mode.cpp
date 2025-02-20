@@ -84,7 +84,7 @@ int ModeIndex = 0;
 
 void add(MobiusMode* mode)
 {
-    if (mode == NULL) {
+    if (mode == nullptr) {
         // must be a link problem
         printf("Static mode object not initialized!\n");
         fflush(stdout);
@@ -95,8 +95,8 @@ void add(MobiusMode* mode)
 	}
 	else {
 		Modes[ModeIndex++] = mode;
-		// keep it NULL terminated
-		Modes[ModeIndex] = NULL;
+		// keep it nullptr terminated
+		Modes[ModeIndex] = nullptr;
 	}
 }
 
@@ -155,9 +155,9 @@ MobiusMode** MobiusMode::getModes()
  */
 MobiusMode* MobiusMode::getMode(const char* name) 
 {
-	MobiusMode* found = NULL;
-	if (name != NULL) {
-		for (int i = 0 ; Modes[i] != NULL ; i++) {
+	MobiusMode* found = nullptr;
+	if (name != nullptr) {
+		for (int i = 0 ; Modes[i] != nullptr ; i++) {
 			MobiusMode* m = Modes[i];
 			if (StringEqualNoCase(name, m->getName()) ||
 				StringEqualNoCase(name, m->getDisplayName())) {
@@ -175,7 +175,7 @@ MobiusMode* MobiusMode::getMode(const char* name)
 #if 0
 void MobiusMode::localizeAll(MessageCatalog* cat)
 {
-	for (int i = 0 ; Modes[i] != NULL ; i++) {
+	for (int i = 0 ; Modes[i] != nullptr ; i++) {
 		MobiusMode* mode = Modes[i];
         mode->localize(cat);
 	}
@@ -190,11 +190,11 @@ void MobiusMode::updateConfiguration(MobiusConfig* config)
 	StringList* names = config->getAltFeedbackDisables();
 	
 	// initialize
-	for (int i = 0 ; Modes[i] != NULL ; i++)
+	for (int i = 0 ; Modes[i] != nullptr ; i++)
 	  Modes[i]->altFeedbackDisabled = false;
 
-	if (names != NULL) {
-		for (int i = 0 ; Modes[i] != NULL ; i++) {
+	if (names != nullptr) {
+		for (int i = 0 ; Modes[i] != nullptr ; i++) {
 			MobiusMode* m = Modes[i];
 			if (m->altFeedbackSensitive)
 			  m->altFeedbackDisabled = names->contains(m->getName());

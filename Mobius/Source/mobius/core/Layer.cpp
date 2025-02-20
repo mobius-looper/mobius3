@@ -500,13 +500,13 @@ Layer::Layer(LayerPool* lpool, AudioPool* apool)
     mLayerPool = lpool;
     mAudioPool = apool;
 	mPooled = false;
-	mPrev = NULL;
-	mRedo = NULL;
+	mPrev = nullptr;
+	mRedo = nullptr;
     mNumber = 0;
     mAllocation = 0;
     mReferences = 0;
-    mLoop = NULL;
-    mSegments = NULL;
+    mLoop = nullptr;
+    mSegments = nullptr;
     mAudio = apool->newAudio();
     mOverdub = apool->newAudio();
 	mFrames = 0;
@@ -576,9 +576,9 @@ Layer::~Layer()
 	delete mRecordCursor;
 	delete mOverdubCursor;
 
-	for (l = mPrev, prev = NULL ; l != NULL ; l = prev) {
+	for (l = mPrev, prev = nullptr ; l != nullptr ; l = prev) {
 		prev = l->mPrev;
-		l->mPrev = NULL;
+		l->mPrev = nullptr;
 		delete l;
 	}
 }
@@ -624,7 +624,7 @@ void Layer::reset()
     mWindowOffset = -1;
     mWindowSubcycleFrames = 0;
 	mCheckpoint = CHECKPOINT_UNSPECIFIED;
-	mRedo = NULL;
+	mRedo = nullptr;
 	mFade.init();
 }
 
@@ -666,7 +666,7 @@ void Layer::dump(StructureDumper& d)
  */
 void Layer::getTraceContext(int* context, long* time)
 {
-	if (mLoop != NULL)
+	if (mLoop != nullptr)
 	  mLoop->getTraceContext(context, time);
 }
 
@@ -675,7 +675,7 @@ void Layer::getTraceContext(int* context, long* time)
  */
 void Layer::free()
 {
-    if (mLayerPool != NULL)
+    if (mLayerPool != nullptr)
       mLayerPool->freeLayer(this);
     else {
         Trace(1, "Layer::free layer without pool!\n");
@@ -688,7 +688,7 @@ void Layer::free()
  */
 void Layer::freeAll()
 {
-    if (mLayerPool != NULL)
+    if (mLayerPool != nullptr)
       mLayerPool->freeLayerList(this);
     else {
         Trace(1, "Layer::freeAll layer without pool!\n");
@@ -701,11 +701,11 @@ void Layer::freeAll()
  */
 void Layer::freeUndo()
 {
-    if (mLayerPool != NULL)
+    if (mLayerPool != nullptr)
       mLayerPool->freeLayerList(mPrev);
     else
       Trace(1, "Layer::freeUndo layer without pool!\n");
-	mPrev = NULL;
+	mPrev = nullptr;
 }
 
 /**
@@ -738,7 +738,7 @@ Layer* Layer::spawn()
     delete neu->mTailWindow;
     neu->mTailWindow = mTailWindow;
 
-	mSegments = NULL;
+	mSegments = nullptr;
     mHeadWindow = NEW(FadeWindow);
     mTailWindow = NEW(FadeWindow);
 	mAudio = mAudioPool->newAudio();
@@ -1032,7 +1032,7 @@ int Layer::getFeedback()
  *
  * !! I don't like the "zero during initial record" convention, it is
  * confusing.  Loop is in a better position to keep a flag for this.
- * Can't look for a NULL previous layer since we can start new recordings
+ * Can't look for a nullptr previous layer since we can start new recordings
  * after building up a few layers.
  */
 long Layer::getFrames()
@@ -1069,8 +1069,8 @@ long Layer::calcFrames()
 long Layer::getSegmentFrames()
 {
 	long frames = 0;
-    if (mSegments != NULL) {
-        for (Segment* seg = mSegments ; seg != NULL ; seg = seg->getNext()) {
+    if (mSegments != nullptr) {
+        for (Segment* seg = mSegments ; seg != nullptr ; seg = seg->getNext()) {
             long end = seg->getOffset() + seg->getFrames();
             if (end > frames)
 			  frames = end;
@@ -1094,7 +1094,7 @@ long Layer::getSegmentFrames()
  */
 void Layer::setFrames(LayerContext* con, long frames)
 {
-	if (con == NULL || !con->isReverse()) {
+	if (con == nullptr || !con->isReverse()) {
 		mAudio->setFrames(frames);
 		mOverdub->setFrames(frames);
 	}
@@ -1272,7 +1272,7 @@ void Layer::setOverdub(Audio* a)
 bool Layer::isFeedbackApplied()
 {
     bool applied = mFeedbackApplied;
-    if (mNoFlattening && mSegments != NULL && mSegments->getNext() == NULL) {
+    if (mNoFlattening && mSegments != nullptr && mSegments->getNext() == nullptr) {
 		int segFeedback = mSegments->getFeedback();
 		// segment feedback may not match current feedback, but only 
 		// if there was a structure change, like a replace in the middle
@@ -1337,7 +1337,7 @@ void Layer::setHistoryOffset(long offset)
 long Layer::getHistoryOffset()
 {
     if (mHistoryOffset == 0) {
-        if (mPrev != NULL)
+        if (mPrev != nullptr)
           mHistoryOffset = mPrev->getHistoryOffset() + mPrev->getFrames();
     }
     return mHistoryOffset;
@@ -1351,7 +1351,7 @@ long Layer::getHistoryOffset()
 Layer* Layer::getPrevCheckpoint()
 {
 	Layer* check = mPrev;
-	while (check != NULL && !check->isCheckpoint())
+	while (check != nullptr && !check->isCheckpoint())
 	  check = check->getPrev();
 	return check;
 }
@@ -1366,7 +1366,7 @@ Layer* Layer::getCheckpointTail()
 	Layer* tail = this;
 	Layer* prev = mPrev;
 
-	while (prev != NULL && !prev->isCheckpoint()) {
+	while (prev != nullptr && !prev->isCheckpoint()) {
 		tail = prev;
 		prev = prev->getPrev();
 	}
@@ -1380,7 +1380,7 @@ Layer* Layer::getCheckpointTail()
 Layer* Layer::getTail()
 {
 	Layer* tail = this;
-	while (tail->getPrev() != NULL)
+	while (tail->getPrev() != nullptr)
 	  tail = tail->getPrev();
 	return tail;
 }
@@ -1396,14 +1396,14 @@ Layer* Layer::getTail()
  */
 void Layer::resetSegments()
 {
-    Segment* next = NULL;
+    Segment* next = nullptr;
 
-    for (Segment* seg = mSegments ; seg != NULL ; seg = next) {
+    for (Segment* seg = mSegments ; seg != nullptr ; seg = next) {
         next = seg->getNext();
         delete seg;
     }
 
-    mSegments = NULL;
+    mSegments = nullptr;
 }
 
 /**
@@ -1421,8 +1421,8 @@ Segment* Layer::getSegments()
  */
 Segment* Layer::addSegment(Layer* src)
 {
-    Segment* seg = NULL;
-    if (src != NULL) {
+    Segment* seg = nullptr;
+    if (src != nullptr) {
         seg = NEW1(Segment, src);
 		addSegment(seg);
 	}
@@ -1443,12 +1443,12 @@ Segment* Layer::addSegment(Layer* src)
  */
 void Layer::addSegment(Segment* seg)
 {
-    if (seg != NULL) {
-        Segment* last = NULL;
-        for (last = mSegments ; last != NULL && last->getNext() != NULL ; 
+    if (seg != nullptr) {
+        Segment* last = nullptr;
+        for (last = mSegments ; last != nullptr && last->getNext() != nullptr ; 
              last = last->getNext());
 
-        if (last == NULL)
+        if (last == nullptr)
 		  mSegments = seg;
         else 
 		  last->setNext(seg);
@@ -1464,18 +1464,18 @@ void Layer::addSegment(Segment* seg)
  */
 void Layer::removeSegment(Segment* seg)
 {
-    if (seg != NULL) {
-        Segment* prev = NULL;
-		Segment* s = NULL;
-        for (s = mSegments ; s != NULL && s != seg ; s = s->getNext())
+    if (seg != nullptr) {
+        Segment* prev = nullptr;
+		Segment* s = nullptr;
+        for (s = mSegments ; s != nullptr && s != seg ; s = s->getNext())
 		  prev = s;
 
 		if (s == seg) {
-			if (prev == NULL)
+			if (prev == nullptr)
 			  mSegments = seg->getNext();
 			else
 			  prev->setNext(seg->getNext());
-			seg->setNext(NULL);
+			seg->setNext(nullptr);
 		}
 	}
 }
@@ -1848,7 +1848,7 @@ void Layer::checkRecording(LayerContext* con, long startFrame)
 
     if (startFrame == 0) {
         bool deferHeadFade = false;
-        if (mPrev != NULL) {
+        if (mPrev != nullptr) {
 			if (mPaused || mPrev->isReverseRecord() != con->isReverse()) {
 				// If paused have to force the deferred fades since we can't
 				// continue seamlessly.
@@ -1914,7 +1914,7 @@ void Layer::checkRecording(LayerContext* con, long startFrame)
         // we're picking up in the middle
 		// TODO: mFadeOverride might be meaningful here, but for now
 		// it only applies to the edges
-        if (firstTime && mPrev != NULL) {
+        if (firstTime && mPrev != nullptr) {
             // detect incorrect deferred fades in the previous layer,
             // these should already have been performed by finalize() 
             if (mPrev->isReverseRecord()) {
@@ -1935,7 +1935,7 @@ void Layer::checkRecording(LayerContext* con, long startFrame)
 		// force a fade of the previous recording.
 		// also if we're resuming from a pause have to fade edges eve nthough
 		// the last frame will be equal to the start frame
-        if ((con->buffer == NULL && !mMuted) ||
+        if ((con->buffer == nullptr && !mMuted) ||
 			mPaused ||
 			mTailWindow->getLastExternalFrame() != startFrame) {
             // a record gap
@@ -1943,7 +1943,7 @@ void Layer::checkRecording(LayerContext* con, long startFrame)
             startRecordFade(con);
 		}
 
-		mMuted = (con->buffer == NULL);
+		mMuted = (con->buffer == nullptr);
 
 		if (con->isReverse() != mReverseRecord) {
 			// Changed direction!  I guess we can allow this
@@ -1964,12 +1964,12 @@ void Layer::checkRecording(LayerContext* con, long startFrame)
 
             if (mReverseRecord) {
 				applyDeferredFadeRight();
-				if (mPrev != NULL)
+				if (mPrev != nullptr)
 				  mPrev->applyDeferredFadeLeft();
 			}
 			else {
 				applyDeferredFadeLeft();
-				if (mPrev != NULL)
+				if (mPrev != nullptr)
 				  mPrev->applyDeferredFadeRight();
 			}
 
@@ -2077,7 +2077,7 @@ void Layer::fadeOut(LayerContext* con)
 		}
 
 		if (fadeOffset > 0) {
-			if (mPrev == NULL) {
+			if (mPrev == nullptr) {
 				Trace(this, 1, "Layer: Split fade with no previous layer!\n");
 				// This may be ok, just a really short recording?
 				// In practice we won't let it be this short though.
@@ -2205,7 +2205,7 @@ void Layer::compileSegmentFades(bool checkConsistency)
     bool leftOcclusion = true;
     bool rightOcclusion = true;
 
-    for (s = mSegments ; s != NULL ; s = s->getNext()) {
+    for (s = mSegments ; s != nullptr ; s = s->getNext()) {
         s->saveFades();
 		s->setFadeLeft(true);
 		s->setFadeRight(true);
@@ -2262,7 +2262,7 @@ void Layer::compileSegmentFades(bool checkConsistency)
     // trailing edge of the previous layer is no longer adjacent to trailing
     // edge of the current layer.
 
-    for (s = mSegments ; s != NULL ; s = s->getNext()) {
+    for (s = mSegments ; s != nullptr ; s = s->getNext()) {
 
         Layer* refLayer = s->getLayer();
         long segFrames = s->getFrames();
@@ -2333,7 +2333,7 @@ void Layer::compileSegmentFades(bool checkConsistency)
             }
         }
 
-        for (Segment* s2 = mSegments ; s2 != NULL ; s2 = s2->getNext()) {
+        for (Segment* s2 = mSegments ; s2 != nullptr ; s2 = s2->getNext()) {
             if ((s != s2) && (s2->getLayer() == refLayer)) {
 
                 long segFrames2 = s2->getFrames();
@@ -2383,7 +2383,7 @@ void Layer::compileSegmentFades(bool checkConsistency)
     // containment in the previous loop so don't trash the values 
     // if already set.
 
-    for (s = mSegments ; s != NULL ; s = s->getNext()) {
+    for (s = mSegments ; s != nullptr ; s = s->getNext()) {
         Layer* refLayer = s->getLayer();
         long segFrames = s->getFrames();
         long localStart = s->getOffset();
@@ -2467,7 +2467,7 @@ void Layer::compileSegmentFades(bool checkConsistency)
 	// don't warn.
 
 	if (!mNoFlattening && checkConsistency) {
-		for (s = mSegments ; s != NULL ; s = s->getNext()) {
+		for (s = mSegments ; s != nullptr ; s = s->getNext()) {
 			if ((s->isFadeLeft() != s->isSaveFadeLeft()) ||
 				(s->isFadeRight() != s->isSaveFadeRight())) {
 				Trace(this, 1, "Layer: Inconsistent segment fade detected during compilation!\n");
@@ -2499,7 +2499,7 @@ void Layer::prepare(LayerContext* con)
 		// must do this when bootstrapping layers read from a Project file
 		if (mFrames == 0) {
 			mFrames = calcFrames();
-			setFrames(NULL, mFrames);	// resize Audios
+			setFrames(nullptr, mFrames);	// resize Audios
 		}
 
         // Note that if we're pre-playing the record layer, and we're not
@@ -2555,7 +2555,7 @@ void Layer::restore(bool undo)
             // Ugh, this is the same crap we do in compileSegmentFades,
             // try to move it in there?
             bool trailingEdgeReference = false;
-            for (Segment* s = mSegments ; s != NULL ; s = s->getNext()) {
+            for (Segment* s = mSegments ; s != nullptr ; s = s->getNext()) {
                 Layer* refLayer = s->getLayer();
                 if (refLayer == mPrev) {
                     long segFrames = s->getFrames();
@@ -2629,7 +2629,7 @@ int Layer::lockStartingFeedback()
 		// we'll assume only one for now.  Note that if the layer was recorded
 		// in reverse, we look for the segment covering the end of the layer.
 
-		for (Segment* s = mSegments ; s != NULL ; s = s->getNext()) {
+		for (Segment* s = mSegments ; s != nullptr ; s = s->getNext()) {
 			if ((!mReverseRecord && s->isAtStart(this)) ||
 				(mReverseRecord && s->isAtEnd(this))) {
 				level = s->getFeedback();
@@ -2664,14 +2664,14 @@ Layer* Layer::copy()
 void Layer::copy(Layer* src)
 {
 	reset();
-	if (src != NULL) {
+	if (src != nullptr) {
         // yuno use return value?
 		// Segment* seg = addSegment(src);
 		(void)addSegment(src);
 		mCycles = src->getCycles();
 		mFrames = calcFrames();
 		// resize the local Audio
-		setFrames(NULL, mFrames);
+		setFrames(nullptr, mFrames);
 
         // roll these forward
         mContainsDeferredFadeLeft = src->hasDeferredFadeLeft();
@@ -2699,7 +2699,7 @@ void Layer::save(const char* file)
     (void)file;
     Trace(1, "Layer::save you can't do files from here!\n");
 #if 0    
-	if (mAudio != NULL)
+	if (mAudio != nullptr)
 	  mAudio->write(file);
 #endif    
 }
@@ -2800,7 +2800,7 @@ void Layer::get(LayerContext* con, long startFrame, bool play)
 
 	// root flag is true only for the topmost layer
 	// once we descend into Segments, they will call getNoReflect
-	getNoReflect(con, reflectedStart, NULL, true, play);
+	getNoReflect(con, reflectedStart, nullptr, true, play);
 
 	// After flattening the content, process the transient play fade.
 	// Play fades are ONLY done if we're using the play cursor, there
@@ -2847,16 +2847,16 @@ void Layer::getNoReflect(LayerContext* con, long startFrame,
 		// do not trash the argument so we don't send a local
 		// cursor down into the segments
 		AudioCursor* localCursor = cursor;
-		if (localCursor == NULL)
+		if (localCursor == nullptr)
 		  localCursor = ((play) ? mPlayCursor : mCopyCursor);
 
 		localCursor->setReverse(con->isReverse());
 		localCursor->get(con, mAudio, audioFrame, con->getLevel());
 	}
 
-    if (mSegments != NULL) {
+    if (mSegments != nullptr) {
         long endFrame = startFrame + frames - 1;
-        for (Segment* seg = mSegments ; seg != NULL ; seg = seg->getNext()) {
+        for (Segment* seg = mSegments ; seg != nullptr ; seg = seg->getNext()) {
             long segFrames = seg->getFrames();
             long relFirst = seg->getOffset();
             long relLast = relFirst + segFrames - 1;
@@ -2961,7 +2961,7 @@ void Layer::getNoReflect(LayerContext* con, long startFrame,
 Audio* Layer::flatten()
 {
 	Audio* flat = mAudioPool->newAudio();
-	AudioCursor* cursor = NEW2(AudioCursor, "flatten", NULL);
+	AudioCursor* cursor = NEW2(AudioCursor, "flatten", nullptr);
 	float buffer[AUDIO_MAX_FRAMES_PER_BUFFER * AUDIO_MAX_CHANNELS];
 
     // in case we decide to save this in a project, set the
@@ -3097,7 +3097,7 @@ void Layer::watchMax(LayerContext* con)
 {
 	float* src = con->buffer;
 	long frames = con->frames;
-	if (src != NULL) {
+	if (src != nullptr) {
 		long samples = frames * 2;
 		for (int i = 0 ; i < samples ; i++) {
 			float sample = src[i];
@@ -3250,7 +3250,7 @@ void Layer::advanceInternal(LayerContext* con, long startFrame, int feedback)
 		// set the starting feedback on all segments, this may change
 		// as we progress
 		if (mNoFlattening) {
-			for (Segment* s = mSegments ; s != NULL ; s = s->getNext())
+			for (Segment* s = mSegments ; s != nullptr ; s = s->getNext())
 			  s->setFeedback(mFeedback);
 		}
 	}
@@ -3276,7 +3276,7 @@ void Layer::advanceInternal(LayerContext* con, long startFrame, int feedback)
 		else {
 			// for each segment we are passing over, adjust the feedback
 			long occludeLast = occludeStart + con->frames - 1;
-			for (Segment* s = mSegments ; s != NULL ; s = s->getNext()) {
+			for (Segment* s = mSegments ; s != nullptr ; s = s->getNext()) {
 				long segFirst = s->getOffset();
 				long segFrames = s->getFrames();
 				long segLast = segFirst + segFrames - 1;
@@ -3288,7 +3288,7 @@ void Layer::advanceInternal(LayerContext* con, long startFrame, int feedback)
 			}
 		}
 	}
-	else if (mSegments == NULL) {
+	else if (mSegments == nullptr) {
 		// nothing to flatten, just keep track of the feedback for finalize
 		forceFeedback(feedback);
 	}
@@ -3429,9 +3429,9 @@ void Layer::advanceInternal(LayerContext* con, long startFrame, int feedback)
  */
 void Layer::occlude(long startFrame, long frames, bool seamless)
 {
-	Segment* next = NULL;
+	Segment* next = nullptr;
 	long lastFrame = startFrame + frames - 1;
-	for (Segment* s = mSegments ; s != NULL ; s = next) {
+	for (Segment* s = mSegments ; s != nullptr ; s = next) {
 		next = s->getNext();
 		long segFirst = s->getOffset();
 		long segFrames = s->getFrames();
@@ -3516,7 +3516,7 @@ void Layer::coalesce()
 
 	do {
 		coalesced = 0;
-		for (Segment* s = mSegments ; s != NULL ; s = s->getNext()) {
+		for (Segment* s = mSegments ; s != nullptr ; s = s->getNext()) {
 
 			Layer* refLayer = s->getLayer();
 			long segFrames = s->getFrames();
@@ -3525,7 +3525,7 @@ void Layer::coalesce()
 			long refStart = s->getStartFrame();
 			long refEnd = refStart + segFrames;
 
-			for (Segment* s2 = mSegments ; s2 != NULL ; s2 = next) {
+			for (Segment* s2 = mSegments ; s2 != nullptr ; s2 = next) {
 				next = s2->getNext();
 				if (s != s2 && refLayer == s2->getLayer()) {
 
@@ -3709,10 +3709,10 @@ void Layer::splice(LayerContext* con, long startFrame, long frames,
 	}
 
 	// restructure the segments
-	if (mSegments != NULL) {
+	if (mSegments != nullptr) {
 		// this is the actual last frame number within the region
         long lastFrame = endFrame - 1;
-        for (Segment* seg = mSegments ; seg != NULL ; seg = seg->getNext()) {
+        for (Segment* seg = mSegments ; seg != nullptr ; seg = seg->getNext()) {
             long segFrames = seg->getFrames();
             long relFirst = seg->getOffset();
             long relLast = relFirst + segFrames - 1;
@@ -3939,21 +3939,21 @@ void Layer::splice(LayerContext* con, long startFrame, long frames,
  */
 void Layer::pruneSegments()
 {
-	if (mSegments != NULL) {
+	if (mSegments != nullptr) {
 
-		Segment* prev = NULL;
-		Segment* next = NULL;
+		Segment* prev = nullptr;
+		Segment* next = nullptr;
 
-		for (Segment* s = mSegments ; s != NULL ; s = next) {
+		for (Segment* s = mSegments ; s != nullptr ; s = next) {
 			next = s->getNext();
 			if (!s->isUnused()) 
 			  prev = s;
 			else {
-				if (prev == NULL)
+				if (prev == nullptr)
 				  mSegments = next;
 				else
 				  prev->setNext(next);
-				s->setNext(NULL);
+				s->setNext(nullptr);
 				delete s;
 			}
 		}
@@ -4025,7 +4025,7 @@ void Layer::startInsert(LayerContext* con, long startFrame)
 	}
 
 	// special case for LoopCopy=Timing
-	if (mSegments != NULL || startFrame > 0)
+	if (mSegments != nullptr || startFrame > 0)
 	  insertCycle(con, startFrame);
 
 	// If we're flattening, then we need to fade the background we just copied
@@ -4035,7 +4035,7 @@ void Layer::startInsert(LayerContext* con, long startFrame)
 	// segments which makes the unit tests fail.
 	if (!mNoFlattening) {
 		if ((startFrame % getCycleFrames() != 0) ||
-			(mPrev != NULL && 
+			(mPrev != nullptr && 
 			 ((mReverseRecord && mPrev->hasDeferredFadeLeft()) ||
 			  (!mReverseRecord && mPrev->hasDeferredFadeRight())))) {
 
@@ -4121,14 +4121,14 @@ void Layer::insertSegmentGap(long startFrame, long frames)
 	// we need to iterate over the current segments while inserting new
 	// ones into the list, so be careful not to process the new ones
 	Segment* segments = mSegments;
-	Segment* next = NULL;
+	Segment* next = nullptr;
 	int fadeRange = AudioFade::getRange();
 
-	mSegments = NULL;
+	mSegments = nullptr;
 
-	for (Segment* seg = segments ; seg != NULL ; seg = next) {
+	for (Segment* seg = segments ; seg != nullptr ; seg = next) {
 		next = seg->getNext();
-		seg->setNext(NULL);
+		seg->setNext(nullptr);
 
 		Layer* refLayer = seg->getLayer();
 		long offset = seg->getOffset();
@@ -4308,7 +4308,7 @@ void Layer::endInsert(LayerContext* con, long endFrame, bool unrounded)
             // and we no longer need edge fades on them.  In practice,
             // this can't happen, but it will be corrected in 
             // compileSegmentFades if we're not flattening.
-			for (Segment* s = mSegments ; s != NULL ; s = s->getNext()) {
+			for (Segment* s = mSegments ; s != nullptr ; s = s->getNext()) {
 				long offset = s->getOffset();
 				if (offset >= insertCycleEnd)
 				  s->setOffset(offset - mInsertRemaining);
@@ -4379,7 +4379,7 @@ void Layer::stutterCycle(LayerContext* con, Layer* src, long srcFrame,
 	// a deferred fade.
 	if (!mNoFlattening) {
 		if ((destFrame !=  previousFrames) ||
-			(mPrev != NULL && 
+			(mPrev != nullptr && 
 			 ((mReverseRecord && mPrev->hasDeferredFadeLeft()) ||
 			  (!mReverseRecord && mPrev->hasDeferredFadeRight())))) {
 
@@ -4484,7 +4484,7 @@ void Layer::finalize(LayerContext* con, Layer* next)
 	// it can happen with retriggering?
 	if (!mNoFlattening) {
 		bool needed = false;
-		for (Segment* s = mSegments ; s != NULL ; s = s->getNext()) {
+		for (Segment* s = mSegments ; s != nullptr ; s = s->getNext()) {
 			if (s->getOffset() >= mLastFeedbackFrame) {
 				// ?? if it already has feedback should these accumulate
 				// hmm, if we haven't finished a smoothing ramp we won't
@@ -4528,7 +4528,7 @@ void Layer::finalize(LayerContext* con, Layer* next)
 		mFadeOverride = false;
 	}
 	else if (mTailWindow->getLastExternalFrame() != getFrames() ||
-             next == NULL || 
+             next == nullptr || 
              next->getPrev() != this || 
 			 mLoop->getFrame() != 0 ||
              mLoop->isPaused() ||
@@ -4565,7 +4565,7 @@ void Layer::finalize(LayerContext* con, Layer* next)
 		// When not flattening, ending feedback is supposed to have
 		// been set by lockStartingFeedback called when OutputStream
 		// starts preplaying this layer.  Make sure.
-		for (Segment* s = mSegments ; s != NULL ; s = s->getNext()) {
+		for (Segment* s = mSegments ; s != nullptr ; s = s->getNext()) {
 			if ((mReverseRecord && s->isAtStart(this)) ||
 				(!mReverseRecord && s->isAtEnd(this))) {
 				// this segment covers the tail of the previous layer
@@ -4622,7 +4622,7 @@ void Layer::finalize(LayerContext* con, Layer* next)
 		if ((mContainsDeferredFadeLeft || mContainsDeferredFadeRight) &&
 			mStartingFeedback != mFeedback &&
 			!(mStartingFeedback == 0 &&
-			  mPrev != NULL && mPrev->mFeedback == 0)) {
+			  mPrev != nullptr && mPrev->mFeedback == 0)) {
 
 			if (mStartingFeedback < mFeedback) {
 
@@ -4686,7 +4686,7 @@ void Layer::finalize(LayerContext* con, Layer* next)
 
 	// Fade compilation may have changed the deferred fade flags
 	// which were copied into the next layer by copy(), update them
-	if (next != NULL && next->getPrev() == this) {
+	if (next != nullptr && next->getPrev() == this) {
 		next->mContainsDeferredFadeLeft = hasDeferredFadeLeft();
 		next->mContainsDeferredFadeRight = hasDeferredFadeRight();
 	}
@@ -4723,11 +4723,11 @@ void Layer::raiseBackgroundHead(LayerContext* con)
 	long samples = AudioFade::getRange() * con->channels;
 	memset(tail, 0, sizeof(float) * samples);
 
-    if (mPrev != NULL)
+    if (mPrev != nullptr)
       mPrev->captureTail(&fc, 0, adjust);
     else {
         // saw this before we deferred checking MaxUndo until finalize
-        Trace(this, 1, "Layer::raiseBackgroundHead mPrev is NULL!\n");
+        Trace(this, 1, "Layer::raiseBackgroundHead mPrev is nullptr!\n");
     }
 
 	long startFrame = reflectFrame(con, 0);
@@ -4792,25 +4792,25 @@ void Layer::lowerBackgroundHead(LayerContext* con)
  */
 void Layer::checkMaxUndo()
 {
-    Layer* oldest = NULL;
+    Layer* oldest = nullptr;
     Preset* p = mLoop->getPreset();
 	int max = p->getMaxUndo();
 
     if (max > 0) {
         oldest = this;
-        for (int i = 0 ; i < max - 1 && oldest != NULL ; i++)
+        for (int i = 0 ; i < max - 1 && oldest != nullptr ; i++)
           oldest = oldest->getPrev();
     }
 
-    if (oldest != NULL) {
+    if (oldest != nullptr) {
         Layer* extras = oldest->getPrev();
-        if (extras != NULL) {
-            oldest->setPrev(NULL);
+        if (extras != nullptr) {
+            oldest->setPrev(nullptr);
             
             // should be only one, but there could be more if
             // the parameter changed after building a list
             int count = 0;
-            for (Layer* l = extras ; l != NULL ; l = l->getPrev())
+            for (Layer* l = extras ; l != nullptr ; l = l->getPrev())
               count++;
             Trace(this, 2, "Freeing %ld excess layers\n", (long)count);
 
@@ -4834,11 +4834,11 @@ void Layer::checkMaxUndo()
 LayerPool::LayerPool(AudioPool* aupool)
 {
     mAudioPool = aupool;
-    mLayers = NULL;
+    mLayers = nullptr;
     mCounter = 0;
     mAllocated = 0;
-    mMuteLayer = NULL;
-    mCopyContext = NULL;
+    mMuteLayer = nullptr;
+    mCopyContext = nullptr;
     mCopyBuffer = nullptr;
 }
 
@@ -4852,7 +4852,7 @@ LayerPool::~LayerPool()
     delete mCopyBuffer;
     
     // return to the pool first for statistics
-    if (mMuteLayer != NULL) 
+    if (mMuteLayer != nullptr) 
       freeLayer(mMuteLayer);
 
     // this will delete the prev pointer chain
@@ -4866,7 +4866,7 @@ LayerPool::~LayerPool()
  */
 LayerContext* LayerPool::getCopyContext()
 {
-	if (mCopyContext == NULL) {
+	if (mCopyContext == nullptr) {
         int samples = AUDIO_MAX_FRAMES_PER_BUFFER * AUDIO_MAX_CHANNELS;
         mCopyBuffer = MemNewFloat("LayerPool:CopyContext", samples);
 		mCopyContext = NEW(LayerContext);
@@ -4882,9 +4882,9 @@ LayerContext* LayerPool::getCopyContext()
  */
 Layer* LayerPool::getMuteLayer()
 {
-    if (mMuteLayer == NULL) {
+    if (mMuteLayer == nullptr) {
 
-        mMuteLayer = newLayer(NULL);
+        mMuteLayer = newLayer(nullptr);
             
         // kludge: make MuteLayer look like it has some content
         // so jumpPlayEventUndo calculations work, this has to be 
@@ -4892,20 +4892,20 @@ Layer* LayerPool::getMuteLayer()
         // should be enough.  Note that though we use CD_SAMPLE_RATE
         // the buffer size isn't that important.  It just needs to be suitably
         // large.
-        mMuteLayer->setFrames(NULL, CD_SAMPLE_RATE);
+        mMuteLayer->setFrames(nullptr, CD_SAMPLE_RATE);
     }
     return mMuteLayer;
 }
 
 /**
  * Allocate a new layer, use the pool if available.
- * Loop may be NULL here for special layer constants like MuteLayer.
+ * Loop may be nullptr here for special layer constants like MuteLayer.
  */
 Layer* LayerPool::newLayer(Loop* loop)
 {
 	Layer* layer = mLayers;
 
-	if (layer == NULL) {
+	if (layer == nullptr) {
         layer = NEW2(Layer, this, mAudioPool);
         layer->setAllocation(mAllocated++);
     }
@@ -4916,7 +4916,7 @@ Layer* LayerPool::newLayer(Loop* loop)
 		  Trace(1, "Layer:  Layer in pool not marked as pooled\n");
 		layer->mPooled = false;
 		layer->reset();
-		layer->setPrev(NULL);
+		layer->setPrev(nullptr);
 	}
 
     // tag with a unique number for debugging, unlike
@@ -4927,7 +4927,7 @@ Layer* LayerPool::newLayer(Loop* loop)
 
 	// cache some global options now, might want to move this
 	// into the Preset?
-	if (loop != NULL) {
+	if (loop != nullptr) {
         layer->setLoop(loop);
 
 		Mobius* m = loop->getMobius();
@@ -4949,7 +4949,7 @@ Layer* LayerPool::newLayer(Loop* loop)
  */
 void LayerPool::freeLayer(Layer* layer)
 {
-	if (layer != NULL) {
+	if (layer != nullptr) {
 		if (layer->mPooled)
 		  Trace(1, "Layer: Attempt to free layer already in the pool!\n");
 		else {
@@ -4963,12 +4963,12 @@ void LayerPool::freeLayer(Layer* layer)
 				if (!checkpool)
 				  mLayers = layer;
 				else {
-					Layer* found = NULL;
-					for (found = mLayers ; found != NULL ; found = found->getPrev()) {
+					Layer* found = nullptr;
+					for (found = mLayers ; found != nullptr ; found = found->getPrev()) {
 						if (found == layer)
 						  break;
 					}
-					if (found != NULL) 
+					if (found != nullptr) 
 					  Trace(1, "Layer: Attempt to free layer already in the pool!\n");
 					else
 					  mLayers = layer;
@@ -4989,9 +4989,9 @@ void LayerPool::freeLayer(Layer* layer)
  */
 void LayerPool::freeLayerList(Layer* list)
 {
-	if (list != NULL) {
-        Layer* next = NULL;
-        for (Layer* l = list ; l != NULL ; l = next) {
+	if (list != nullptr) {
+        Layer* next = nullptr;
+        for (Layer* l = list ; l != nullptr ; l = next) {
             next = l->getPrev();
             freeLayer(l);
         }
@@ -5007,7 +5007,7 @@ void LayerPool::dump()
 {
     int count = 0;
 
-    for (Layer* l = mLayers ; l != NULL ; l = l->getPrev())
+    for (Layer* l = mLayers ; l != nullptr ; l = l->getPrev())
       count++;
 
     printf("LayerPool: %d allocated, %d in the pool, %d in use\n", 
@@ -5030,10 +5030,10 @@ void Layer::dump(TraceBuffer* b)
 
 	b->incIndent();
 
-	if (mAudio != NULL)
+	if (mAudio != nullptr)
 	  mAudio->dump(b);
 
-	for (Segment* s = mSegments ; s != NULL ; s = s->getNext())
+	for (Segment* s = mSegments ; s != nullptr ; s = s->getNext())
 	  s->dump(b);
 
 	b->decIndent();

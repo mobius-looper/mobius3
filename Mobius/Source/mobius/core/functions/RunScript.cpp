@@ -57,9 +57,9 @@ void RunScriptEventType::invoke(Loop* l, Event* e)
 {
     // Original Action must be left on the event, steal it
     Action* action = e->getAction();
-    e->setAction(NULL);
+    e->setAction(nullptr);
 
-    if (action == NULL)
+    if (action == nullptr)
       Trace(l, 1, "RunScriptEventType: event with no action!\n");
     else {
         action->detachEvent(e);
@@ -238,7 +238,7 @@ Event* ResumeScriptFunction::invoke(Action* action, Loop* l)
 	if (action->down) {
 		trace(action, l);
 	}
-	return NULL;
+	return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////

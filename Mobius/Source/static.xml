@@ -31,7 +31,7 @@
   </Tree>
 
   <Form name='sessionGlobalMiscellany' title='Obscure Things for Advanced Users'
-        symbols='longPress,noiseFloor,monitorAudio,quickSave,spreadRange,fadeFrames,maxSyncDrift,defaultPreset,eventScript,userFileFolder'/>
+        symbols='longDisable,longPress,noiseFloor,monitorAudio,quickSave,spreadRange,fadeFrames,maxSyncDrift,defaultPreset,eventScript,userFileFolder'/>
 
   <Form name='sessionGlobalPorts' title='IO Ports'
         symbols='pluginInputs,pluginOutputs,inputLatency,outputLatency'/>

@@ -287,7 +287,7 @@ void WindowFunction::doEvent(Loop* loop, Event* event)
     // on the play layer since that's what we're hearing now.
     Layer* layer = loop->getPlayLayer();
 
-    if (layer != NULL) {
+    if (layer != nullptr) {
 
         // We need to pass a bunch of state around, use transient
         // fields since we're never reentrant.
@@ -337,7 +337,7 @@ void WindowFunction::moveWindow(Event* event)
 
     // optional argument can specify units to shift
     Action* action = event->getAction();
-    if (action != NULL) {
+    if (action != nullptr) {
         if (action->arg.getType() == EX_INT) {
             int ival = action->arg.getInt();
             // !! need a configurable sanity check on the upper range here?
@@ -356,7 +356,7 @@ void WindowFunction::moveWindow(Event* event)
     if (mDirection == 0) {
         // WindowMove, unit and amount specified with arguments
         ExValueList* args = action->scriptArgs;
-        if (args == NULL || args->size() == 0)
+        if (args == nullptr || args->size() == 0)
           Trace(mLoop, 1, "WindowMove called without arguments\n");
         else {
             ExValue* arg = args->getValue(0);
@@ -406,7 +406,7 @@ void WindowFunction::resizeWindow(Event* event)
     int amount = 0;
 
     Action* action = event->getAction();
-    if (action != NULL) {
+    if (action != nullptr) {
         if (action->arg.getType() == EX_INT) {
             int ival = action->arg.getInt();
             amount = ival;
@@ -425,7 +425,7 @@ void WindowFunction::resizeWindow(Event* event)
     if (mDirection == 0) {
         // WindowResize: edge, unit and amount specified with args
         ExValueList* args = action->scriptArgs;
-        if (args == NULL || args->size() == 0)
+        if (args == nullptr || args->size() == 0)
           Trace(mLoop, 1, "WindowResize with no arguments\n");
         else {
             ExValue* arg = args->getValue(0);
@@ -610,7 +610,7 @@ void WindowFunction::constrainWindow()
         mLastLayer = mLayer->getPrev();
     }
 
-    if (mLastLayer == NULL) {
+    if (mLastLayer == nullptr) {
         // can't happen
         Trace(mLoop, 1, "Window: Missing layer history!\n");
         mIgnore = true;
@@ -702,14 +702,14 @@ Segment* WindowFunction::buildSegments()
 {
     // find the layer containing the offset
     Layer* startLayer = mLastLayer;
-    while (startLayer != NULL) {
+    while (startLayer != nullptr) {
         if (startLayer->getHistoryOffset() > mOffset)
           startLayer = startLayer->getPrev();
         else
           break;
     }
 
-    if (startLayer == NULL) {
+    if (startLayer == nullptr) {
         // ran off the end on the left, some calculation above was wrong
         Trace(mLoop, 1, "Window: Unable to find layer with offset %ld\n",
               (long)mOffset);
@@ -717,15 +717,15 @@ Segment* WindowFunction::buildSegments()
     }
 
     // build segments
-    Segment* segments = NULL;
+    Segment* segments = nullptr;
     if (!mIgnore) {
-        Segment* lastSegment = NULL;
+        Segment* lastSegment = nullptr;
         Layer* curLayer = startLayer;
         long refOffset = mOffset - startLayer->getHistoryOffset();
         long need = mFrames;
         long layerFrame = 0;
 
-        while (need > 0 && curLayer != NULL) {
+        while (need > 0 && curLayer != nullptr) {
 
             long avail = curLayer->getFrames() - refOffset;
             long take = (avail > need) ? need : avail;
@@ -735,7 +735,7 @@ Segment* WindowFunction::buildSegments()
                 // must be a calculation error somewhere
                 Trace(mLoop, 1, "Window: Invalid layer take %ld\n",
                       (long)take);
-                curLayer = NULL;
+                curLayer = nullptr;
             }
             else {
                 Trace(mLoop, 2, "Window: Segment for layer %ld ref offset %ld start frame %ld frames %ld\n",
@@ -743,7 +743,7 @@ Segment* WindowFunction::buildSegments()
 
                 Segment* seg = NEW1(Segment, curLayer);
                 // keep them ordered first to last
-                if (lastSegment == NULL)
+                if (lastSegment == nullptr)
                   segments = seg;
                 else
                   lastSegment->setNext(seg);
@@ -770,12 +770,12 @@ Segment* WindowFunction::buildSegments()
         if (need > 0) {
             // ran off the end, calculation error somewhere
             Trace(mLoop, 1, "Window: Unable to fill segments!\n");
-            while (segments != NULL) {
+            while (segments != nullptr) {
                 Segment* next = segments->getNext();
                 delete segments;
                 segments = next;
             }
-            segments = NULL;
+            segments = nullptr;
             mIgnore = true;
         }
     }
@@ -793,11 +793,11 @@ Segment* WindowFunction::buildSegments()
  */
 Layer* WindowFunction::getNextLayer(Layer* src) 
 {
-    Layer* found = NULL;
+    Layer* found = nullptr;
 
     Layer* layer = mLoop->getPlayLayer();
 
-    while (layer != NULL) {
+    while (layer != nullptr) {
         Layer* prev = layer->getPrev();
         if (prev != src)
           layer = prev;

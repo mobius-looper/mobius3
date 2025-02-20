@@ -118,16 +118,16 @@ ShuffleFunction::ShuffleFunction() :
 
 Event* ShuffleFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
 	
 	event = Function::scheduleEvent(action, l);
-	if (event != NULL) {
+	if (event != nullptr) {
 
         // if there were script args, transfer them to the event
-        if (action->scriptArgs != NULL) {
+        if (action->scriptArgs != nullptr) {
             event->setArguments(action->scriptArgs);
-            // note that we have to NULL this or the interpreter will free it!
-            action->scriptArgs = NULL;
+            // note that we have to nullptr this or the interpreter will free it!
+            action->scriptArgs = nullptr;
         }
 	}
 
@@ -149,7 +149,7 @@ void ShuffleFunction::doEvent(Loop* loop, Event* event)
 	// TODO: get script argument values through the even to control
 	// the number of granules
     ExValueList* list = event->getArguments();
-    if (list != NULL && list->size() > 1) {
+    if (list != nullptr && list->size() > 1) {
         // new style, first arg has granules and the rest has the pattern
         // have to have at least one pattern value
         long originalFrames = layer->getFrames();
@@ -186,7 +186,7 @@ void ShuffleFunction::doEvent(Loop* loop, Event* event)
         // loop size doesn't change so we don't have to mess with sync
         int granules = ParameterSource::getSubcycles(loop);
 
-        if (list != NULL && list->size() > 0) { 
+        if (list != nullptr && list->size() > 0) { 
             ExValue* arg = list->getValue(0);
             int alt = arg->getInt();
             if (alt > 0)
@@ -247,10 +247,10 @@ void ShuffleFunction::shuffle(Loop* loop, Layer* layer,
 {
 	Segment* original = layer->getSegments();
 
-	if (original == NULL) {
+	if (original == nullptr) {
 		Trace(loop, 1, "Shuffle: shuffle with no backing layer!\n");
 	}
-	else if (original->getNext() != NULL) {
+	else if (original->getNext() != nullptr) {
 		Trace(loop, 1, "Shuffle: shuffle with more than one segment!\n");
 	}
 	else if (granules > MAX_SHUFFLE_GRANULES) {
@@ -386,7 +386,7 @@ void ShuffleFunction::segmentize(Loop* loop, Layer* layer,
 
     // Step 2: create the segments
     Segment* segments[MAX_SHUFFLE_GRANULES];
-    Segment* prev = NULL;
+    Segment* prev = nullptr;
     long offset = 0;
     for (i = 0 ; i < resultGranules ; i++) {
 
@@ -397,7 +397,7 @@ void ShuffleFunction::segmentize(Loop* loop, Layer* layer,
         int granule = absp - 1;
 		if (granule < 0 || granule >= sourceGranules)  {
 			// empty or out of range
-            segments[i] = NULL;
+            segments[i] = nullptr;
 		}
 		else {
             // start by cloning the origianl layer segment
@@ -411,7 +411,7 @@ void ShuffleFunction::segmentize(Loop* loop, Layer* layer,
             s->setFadeRight(true);
             segments[i] = s;
 
-            if (prev != NULL) {
+            if (prev != nullptr) {
                 int prevEnd = (int)(prev->getStartFrame() + prev->getFrames());
                 if (prevEnd == start) {
                     // adjacent on the left
@@ -441,7 +441,7 @@ void ShuffleFunction::segmentize(Loop* loop, Layer* layer,
 			// since we can more easily adjust both it's offset and size.
 			// Extend on the right if we can, then left.
 			Segment* last = segments[resultGranules-1];
-			if (last == NULL) {
+			if (last == nullptr) {
 				// loop ends with empty space, just extend the emptiness
 			}
 			else {
@@ -484,10 +484,10 @@ void ShuffleFunction::segmentize(Loop* loop, Layer* layer,
 
 	// adjust edge fades for adjacent segments
 	// ?? just let compileSegmentFades handle this?
-	prev = NULL;
+	prev = nullptr;
 	for (i = 0 ; i < resultGranules ; i++) {
 		Segment* s = segments[i];
-		if (prev != NULL && s != NULL) {
+		if (prev != nullptr && s != nullptr) {
 			int prevEnd = (int)(prev->getStartFrame() + prev->getFrames());
 			// need to be smarter with reverse!
 			if (prevEnd == s->getStartFrame() && 
@@ -503,8 +503,8 @@ void ShuffleFunction::segmentize(Loop* loop, Layer* layer,
 
     // fade adjustment on the edges
     Segment* first = segments[0];
-	Segment* last = NULL;
-    if (first != NULL && last != NULL) {
+	Segment* last = nullptr;
+    if (first != nullptr && last != nullptr) {
         long lastFrame = last->getStartFrame() + last->getFrames();
         // sigh, not smart enough with reverse
         if (lastFrame == first->getStartFrame() &&
@@ -518,7 +518,7 @@ void ShuffleFunction::segmentize(Loop* loop, Layer* layer,
     layer->resetSegments();
     for (i = 0 ; i < resultGranules ; i++) {
         Segment* s = segments[i];
-        if (s != NULL)
+        if (s != nullptr)
           layer->addSegment(segments[i]);
     }
 	
@@ -626,13 +626,13 @@ void ShuffleFunction::shuffle(Loop* loop, Layer* layer, ExValueList* pattern)
     int sourceGranules = 0;
 
     ExValue* el = pattern->getValue(0);
-    if (el != NULL)
+    if (el != nullptr)
       sourceGranules = el->getInt();
 
-	if (original == NULL) {
+	if (original == nullptr) {
 		Trace(loop, 1, "Shuffle: shuffle with no backing layer!\n");
 	}
-	else if (original->getNext() != NULL) {
+	else if (original->getNext() != nullptr) {
 		Trace(loop, 1, "Shuffle: shuffle with more than one segment!\n");
 	}
     else if (sourceGranules == 0) {
@@ -673,7 +673,7 @@ void ShuffleFunction::shuffle(Loop* loop, Layer* layer, ExValueList* pattern)
             // defined but not used warning
 			// bool end = false;
             el = pattern->getValue(patternPsn);
-            if (el != NULL) {
+            if (el != nullptr) {
                 ExType type = el->getType();
                 if (type == EX_LIST) {
                     // complex probability pattern
@@ -784,7 +784,7 @@ int ShuffleFunction::resolveSegment(ExValue* value,
     }
     else if (type == EX_STRING) {
         const char* str = value->getString();
-        if (str != NULL) {
+        if (str != nullptr) {
             bool negative = false;
             const char* ptr = str;
             char ch = *ptr;
@@ -834,9 +834,9 @@ int ShuffleFunction::resolveSegment(ExValue* value,
         // if we see sublists again, it is one element of the
         // probability pattern, return the first value
         ExValueList* list = value->getList();
-        if (list != NULL) {
+        if (list != nullptr) {
             ExValue* el = list->getValue(0);
-            if (el != NULL)
+            if (el != nullptr)
               segment = resolveSegment(el, sourceGranules, resultGranule);
         }
     }
@@ -917,7 +917,7 @@ int ShuffleFunction::processProbabilityPattern(ExValueList* list,
 {
     int segment = 0;
 
-    if (list != NULL) {
+    if (list != nullptr) {
         int units = list->size();
         if (units == 1) {
             segment = resolveSegment(list->getValue(0), sourceGranules, resultGranule);
@@ -932,12 +932,12 @@ int ShuffleFunction::processProbabilityPattern(ExValueList* list,
             for (int i = 0 ; i < units ; i++) {
                 float probability = -1.0f;
                 ExValue* v = list->getValue(i);
-                if (v != NULL) {
+                if (v != nullptr) {
                     if (v->getType() == EX_LIST) {
                         ExValueList* sub = v->getList();
-                        if (sub != NULL && sub->size() > 1) {
+                        if (sub != nullptr && sub->size() > 1) {
                             ExValue* pv = sub->getValue(1);
-                            if (pv != NULL)
+                            if (pv != nullptr)
                               probability = pv->getFloat();
                         }
                     }
@@ -972,7 +972,7 @@ int ShuffleFunction::processProbabilityPattern(ExValueList* list,
                 cumulativeProbability += probabilities[i];
                 if (threshold < cumulativeProbability) {
                     ExValue* v = list->getValue(i);
-                    if (v != NULL) {
+                    if (v != nullptr) {
                         segment = resolveSegment(v, sourceGranules, resultGranule);
                         found = true;
                     }
@@ -994,7 +994,7 @@ int ShuffleFunction::processProbabilityPattern(ExValueList* list,
                 // last one.
 
                 ExValue* v = list->getValue(units - 1);
-                if (v != NULL)
+                if (v != nullptr)
                   segment = resolveSegment(v, sourceGranules, resultGranule);
             }
         }

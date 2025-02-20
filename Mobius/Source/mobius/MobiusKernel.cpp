@@ -598,7 +598,7 @@ void MobiusKernel::clearExternalInput()
         long samples = frames * 2;
         float* input;
         // has always been just port zero which is fine for the tests
-        stream->getInterruptBuffers(0, &input, 0, NULL);
+        stream->getInterruptBuffers(0, &input, 0, nullptr);
         memset(input, 0, sizeof(float) * samples);
     }
 }

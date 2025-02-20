@@ -122,7 +122,7 @@ void TrimFunction::doEvent(Loop* loop, Event* event)
 
 		Layer* play = loop->getPlayLayer();
 
-		if (play == NULL) {
+		if (play == nullptr) {
 			Trace(loop, 1, "Loop: TrimStartEvent without play layer");
 		}
 		else if (frame == 0) {

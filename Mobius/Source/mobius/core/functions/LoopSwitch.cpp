@@ -376,7 +376,7 @@ LoopTriggerFunction::LoopTriggerFunction(bool once)
  */
 Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
     Function* function = action->getFunction();
 
@@ -399,7 +399,7 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
             // even though it will mute rather than return, should
             // have a special event for these
 
-            if (susret != NULL) {
+            if (susret != nullptr) {
                 // we made it to the other side, promote it
                 if (susret->function != function) {
                     // We either missed an up transition or another loop
@@ -420,7 +420,7 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
             }
             else {
                 Event* switche = em->getSwitchEvent();
-                if (switche != NULL) {
+                if (switche != nullptr) {
                     // must be quantized, record the fact that we had an 
                     // up transition in the event so the switchEvent handler
                     // will schedule the appropriate return event
@@ -453,7 +453,7 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
         }
         else {
             // else not sustainable, ignore
-            if (susret != NULL) {
+            if (susret != nullptr) {
                 // shouldn't have one of these missed a transition?
                 Trace(l, 1, "LoopTriggerFunction: Unexpected SUSReturn!\n");
                 em->freeEvent(susret);
@@ -461,7 +461,7 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
         }
     }
     else {
-        if (susret != NULL) {
+        if (susret != nullptr) {
             // We either missed an up transition or another
             // loop switch function was executed while the SUS trigger
             // for the last switch is still being held which is more likely, 
@@ -500,15 +500,15 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
 				// if there is a return transition, cancel it??
 
 				Event* e = em->findEvent(ReturnEvent);
-				if (e != NULL) {
+				if (e != nullptr) {
                     // remove from list, clean up side effects, and free
 					em->freeEvent(e);
 				}
 
 				e = em->findEvent(SwitchEvent);
-				if (e != NULL) {
+				if (e != nullptr) {
 					Loop* nextLoop = e->fields.loopSwitch.nextLoop;
-					if (nextLoop != NULL)
+					if (nextLoop != nullptr)
                       nextIndex = nextLoop->getNumber() - 1;
 				}
 
@@ -538,7 +538,7 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
 		if (nextIndex >= 0) {
 			Track* t = l->getTrack();
 			Loop* next = t->getLoop(nextIndex);
-            if (next != NULL) {
+            if (next != nullptr) {
                 event = scheduleTrigger(action,  l, next);
 			
                 // If SwitchVelocity is enabled and this was a MIDI trigger,
@@ -558,8 +558,8 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
     }
 
     // promoteSUSReturn or scheduleTrigger should have done this already
-    if (event != NULL) {
-        if (action->getEvent() == NULL)
+    if (event != nullptr) {
+        if (action->getEvent() == nullptr)
           action->setEvent(event);
 
         else if (action->getEvent() != event)
@@ -649,7 +649,7 @@ Event* LoopTriggerFunction::scheduleTrigger(Action* action,
                                                     Loop* current,
                                                     Loop* next)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = current->getTrack()->getEventManager();
     Event* switche = em->getSwitchEvent();
     MobiusMode* mode = current->getMode();
@@ -670,7 +670,7 @@ Event* LoopTriggerFunction::scheduleTrigger(Action* action,
             if (action->getEvent() != event) {
                 // a roudning mode decided not to use this event, 
                 // this should not happen, it was already traced
-                event = NULL;
+                event = nullptr;
             }
             else {
                 // play InputLatency frames
@@ -678,15 +678,15 @@ Event* LoopTriggerFunction::scheduleTrigger(Action* action,
             }
 		}
 	}
-	else if (mode == PlayMode || switche != NULL) {
+	else if (mode == PlayMode || switche != nullptr) {
 
 		// for switch and confirm, this just changes the existing transition
-		event = scheduleSwitch(action, current, next, NULL);
+		event = scheduleSwitch(action, current, next, nullptr);
 	}
 	else if (mode == MuteMode) {
 		// ?? manual is unclear, just let it happen and check
 		// MuteCancel later
-		event = scheduleSwitch(action, current, next, NULL);
+		event = scheduleSwitch(action, current, next, nullptr);
 	}
 	else if (mode == RecordMode) {
 
@@ -726,11 +726,11 @@ Event* LoopTriggerFunction::scheduleTrigger(Action* action,
 	else if (mode == OverdubMode) {
 		// ?? manual is unclear though it seems reasonable to 
 		// do the transition and stay in overdub?
-		event = scheduleSwitch(action, current, next, NULL);
+		event = scheduleSwitch(action, current, next, nullptr);
 	}
 	else if (mode == RehearseMode) {
         // ?? should we cancel rehearse mode now or wait for switchEvent
-		event = scheduleSwitch(action, current, next, NULL);
+		event = scheduleSwitch(action, current, next, nullptr);
 	}
 	else if (mode == ReplaceMode || mode == SubstituteMode) {
 		// ?? manual is unclear what happens here, wait for switchEvent
@@ -741,7 +741,7 @@ Event* LoopTriggerFunction::scheduleTrigger(Action* action,
         Event* e = em->newEvent(Record, RecordStopEvent, frame + latency);
 		//e->savePreset(current->getPreset());
         em->addEvent(e);
-		event = scheduleSwitch(action, current, next, NULL);
+		event = scheduleSwitch(action, current, next, nullptr);
 	}
 	else if (mode->rounding) {
 		// Insert/Multiply
@@ -753,7 +753,7 @@ Event* LoopTriggerFunction::scheduleTrigger(Action* action,
 		// SwitchQuant plays into this
         // TODO: Bring mode ending logic up here so we can handle
         // like Record
-		event = scheduleSwitch(action, current, next, NULL);
+		event = scheduleSwitch(action, current, next, nullptr);
 	}
 	else {
 		Trace(current, 1, "Loop: In mode %s ignoring switch to %ld\n",
@@ -783,15 +783,15 @@ Event* LoopTriggerFunction::scheduleSwitch(Action* action,
                                                    Loop* next, 
                                                    Event* modeEnd)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = current->getTrack()->getEventManager();
 
     Event* switche = em->getSwitchEvent();
-	if (switche != NULL) {
+	if (switche != nullptr) {
         // already have a switch event, adjust it
 
         // shouldn't be here with a mode end
-        if (modeEnd != NULL)
+        if (modeEnd != nullptr)
           Trace(current, 1, "LoopSwitch: adjusting previous switch with a mode ending event!\n");
 
         // modifying an existing switch
@@ -830,7 +830,7 @@ Event* LoopTriggerFunction::scheduleSwitch(Action* action,
         
         // Replace the previous action so the script can wait on this one.
         Action* prevAction = switche->getAction();
-        if (prevAction != NULL) {
+        if (prevAction != nullptr) {
             prevAction->detachEvent(switche);
             current->getMobius()->completeAction(prevAction);
         }
@@ -849,7 +849,7 @@ Event* LoopTriggerFunction::scheduleSwitch(Action* action,
 		event = addSwitchEvent(action, current, next);
 
         // currently here only when ending a Record
-        if (modeEnd != NULL) {
+        if (modeEnd != nullptr) {
             // add as a child event so we can track later movements
             // of the parent event
             modeEnd->addChild(event);
@@ -860,14 +860,14 @@ Event* LoopTriggerFunction::scheduleSwitch(Action* action,
         }
 
 		if (!needsConfirm) {
-            if (modeEnd == NULL) {
+            if (modeEnd == nullptr) {
                 // go through switch quantization
                 confirmEvent(action, current, event, CONFIRM_FRAME_QUANTIZED);
 
                 if (action->getEvent() != event) {
                     // a rounding mode decided not to use this event
                     // this should not happen and has already been traced
-                    event = NULL;
+                    event = nullptr;
                 }
             }
             else {
@@ -926,7 +926,7 @@ Event* LoopTriggerFunction::addSwitchEvent(Action* action,
     EventManager* em = current->getTrack()->getEventManager();
     Event* switche = em->getSwitchEvent();
 
-	if (switche != NULL)
+	if (switche != nullptr)
 	  Trace(current, 1, "Loop: Overlapping switch events!\n");
     
 	switche = em->newEvent(action->getFunction(), SwitchEvent, 0);
@@ -971,7 +971,7 @@ Event* LoopTriggerFunction::promoteSUSReturn(Action* action,
                                                      Loop* loop, 
                                                      Event* susret)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = loop->getTrack()->getEventManager();
 
     Function* func = action->getFunction();
@@ -996,12 +996,12 @@ Event* LoopTriggerFunction::promoteSUSReturn(Action* action,
         if (mode->rounding) {
             // this will take the Action
             Event* modeEnd = loop->scheduleRoundingModeEnd(action, event);
-            if (modeEnd != NULL && modeEnd->getParent() == NULL) {
+            if (modeEnd != nullptr && modeEnd->getParent() == nullptr) {
                 // Mode ending decided to eat the trigger event,
                 // this shouldn't happen here.
                 Trace(loop, 1, "promoteSUSReturn: lost return event ending rounding mode!\n");
                 // Action will now be owned by modeEnd
-                event = NULL;
+                event = nullptr;
             }
         }
     }
@@ -1026,7 +1026,7 @@ Event* LoopTriggerFunction::promoteSUSReturn(Action* action,
     em->freeEvent(susret);
 
     // attach the action
-    if (event != NULL)
+    if (event != nullptr)
       action->setEvent(event);
 
     // caller will attach it to the Action
@@ -1130,7 +1130,7 @@ void LoopTriggerFunction::confirmEvent(Action* action,
 {
     EventManager* em = l->getTrack()->getEventManager();
 
-    if (switche == NULL || !switche->pending) {
+    if (switche == nullptr || !switche->pending) {
         // should this be an error?
         Trace(l, 2, "Confirm: no pending switch event\n");
     }
@@ -1203,7 +1203,7 @@ void LoopTriggerFunction::confirmEvent(Action* action,
 		// "extending" mode
         MobiusMode* mode = l->getMode();
 		if (!mode->extends)
-		  l->validate(NULL);
+		  l->validate(nullptr);
 
 		// activate the switch event
 		switche->frame = switchFrame;
@@ -1225,7 +1225,7 @@ void LoopTriggerFunction::confirmEvent(Action* action,
 
 			Event* modeEnd = l->scheduleRoundingModeEnd(action, switche);
 				
-            if (modeEnd != NULL && modeEnd->getParent() == NULL) {
+            if (modeEnd != nullptr && modeEnd->getParent() == nullptr) {
                 // Mode ending decided to eat the trigger event,
                 // this should not happen here.  
                 Trace(l, 1, "Switch Confirmation: ending rounding mode lost switch event!\n");
@@ -1250,7 +1250,7 @@ Event* LoopTriggerFunction::scheduleEvent(Action* action, Loop* l)
 {
     (void)action;
     Trace(l, 1, "LoopTriggerFunction::scheduleEvent should not be here!\n");
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************/

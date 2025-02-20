@@ -485,7 +485,7 @@ long Resampler::transpose(float* src, long srcFrames,
     float* nextFrame = &src[mChannels];
     float* lastFrame = &src[(srcFrames - 1) * mChannels];
     float* destFrame = dest;
-	float* lastDestFrame = NULL;
+	float* lastDestFrame = nullptr;
 	long advance = 0;
 	bool remainder = false;
 
@@ -544,7 +544,7 @@ long Resampler::transpose(float* src, long srcFrames,
 
 			if (remainder)
 			  mRemainderFrames++;
-			else if (lastDestFrame != NULL && destFrame > lastDestFrame) {
+			else if (lastDestFrame != nullptr && destFrame > lastDestFrame) {
 				remainder = true;
 				destFrame = mRemainder;
 			}
@@ -621,7 +621,7 @@ float* Resampler::generateSine(int seconds, long* retsamples)
         buffer[i+1] = sample;
     }
 
-    if (retsamples != NULL)
+    if (retsamples != nullptr)
       *retsamples = samples;
 
     return buffer;
@@ -630,7 +630,7 @@ float* Resampler::generateSine(int seconds, long* retsamples)
 void Resampler::writeSine(int seconds, const char* file)
 {
     FILE* fp = fopen(file, "w");
-    if (fp == NULL)
+    if (fp == nullptr)
       printf("Unable to open file %s\n", file);
     else {
         long samples;

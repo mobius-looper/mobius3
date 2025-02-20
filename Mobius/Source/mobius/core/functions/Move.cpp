@@ -130,7 +130,7 @@ MoveFunction::MoveFunction(bool start, bool drift)
 
 Event* MoveFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
 
     if (mStart) {
@@ -152,7 +152,7 @@ Event* MoveFunction::scheduleEvent(Action* action, Loop* l)
         }
         else {
             event = Function::scheduleEvent(action, l);
-            if (event != NULL) {
+            if (event != nullptr) {
                 event->number = 0;
                 if (!event->reschedule)
                   em->schedulePlayJump(l, event);
@@ -168,7 +168,7 @@ Event* MoveFunction::scheduleEvent(Action* action, Loop* l)
 
         long frame = action->arg.getInt();
         event = Function::scheduleEvent(action, l);
-        if (event != NULL) {
+        if (event != nullptr) {
             event->number = frame;
             if (!event->reschedule)
               em->schedulePlayJump(l, event);
@@ -180,7 +180,7 @@ Event* MoveFunction::scheduleEvent(Action* action, Loop* l)
 void MoveFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 {
 	Event* parent = e->getParent();
-	if (parent == NULL) {
+	if (parent == nullptr) {
 		Trace(l, 1, "MoveFunction: jump event with no parent");
 	}
 	else {

@@ -55,5 +55,8 @@ class ParameterSource
     static bool isSwitchVelocity(class Loop* l);
     
     static int getLoops(class Loop* l);
+
+    static int getSubcycles(class Track* t);
+    
 };
 

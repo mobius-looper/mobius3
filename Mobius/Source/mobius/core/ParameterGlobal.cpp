@@ -112,7 +112,7 @@ void GlobalParameter::setObjectValue(void* obj, ExValue* value)
 void GlobalParameter::getValue(Export* exp, ExValue* value)
 {
 	Mobius* m = (Mobius*)exp->getMobius();
-    if (m == NULL) {
+    if (m == nullptr) {
         Trace(1, "Mobius not passed in Export!\n");
 		value->setNull();
     }
@@ -129,14 +129,14 @@ void GlobalParameter::getValue(Export* exp, ExValue* value)
 void GlobalParameter::setValue(Action* action)
 {
 	Mobius* m = (Mobius*)action->mobius;
-    if (m == NULL)
+    if (m == nullptr)
 	  Trace(1, "Mobius not passed in Action!\n");
     else {
         MobiusConfig* config = m->getConfiguration();
         setValue(config, &(action->arg));
 
         config = m->getConfiguration();
-        if (config != NULL)
+        if (config != nullptr)
           setValue(config, &(action->arg));
     }
 }
@@ -145,7 +145,7 @@ int GlobalParameter::getOrdinalValue(Export* exp)
 {
     int value = -1;
 	Mobius* m = (Mobius*)exp->getMobius();
-    if (m == NULL) {
+    if (m == nullptr) {
         Trace(1, "Mobius not passed in Export!\n");
     }
     else {
@@ -264,7 +264,7 @@ void SetupNameParameterType::setValue(MobiusConfig* c, ExValue* value)
 {
     Trace(1, "SetupNameParameter::setValue Who called this?");
     
-    Setup* setup = NULL;
+    Setup* setup = nullptr;
 
     if (value->getType() == EX_INT)
       setup = c->getSetup(value->getInt());
@@ -272,7 +272,7 @@ void SetupNameParameterType::setValue(MobiusConfig* c, ExValue* value)
       setup = c->getSetup(value->getString());
 
     // !! allocates memory
-    if (setup != NULL)
+    if (setup != nullptr)
       c->setStartingSetupName(setup->getName());
 }
 
@@ -309,18 +309,18 @@ void SetupNameParameterType::getValue(Export* exp, ExValue* value)
 void SetupNameParameterType::setValue(Action* action)
 {
 	Mobius* m = (Mobius*)action->mobius;
-	if (m == NULL)
+	if (m == nullptr)
 	  Trace(1, "Mobius not passed in Action!\n");
     else {
         MobiusConfig* config = m->getConfiguration();
 
-        Setup* setup = NULL;
+        Setup* setup = nullptr;
         if (action->arg.getType() == EX_INT)
           setup = config->getSetup(action->arg.getInt());
         else 
           setup = config->getSetup(action->arg.getString());
 
-        if (setup != NULL) {
+        if (setup != nullptr) {
             
             m->setActiveSetup(setup->ordinal);
 
@@ -361,7 +361,7 @@ void SetupNameParameterType::getOrdinalLabel(Mobius* mobius,
     Mobius* m = (Mobius*)mobius;
 	MobiusConfig* config = m->getConfiguration();
 	Setup* setup = config->getSetup(i);
-	if (setup != NULL)
+	if (setup != nullptr)
 	  value->setString(setup->getName());
 	else
       value->setString("???");
@@ -431,7 +431,7 @@ void SetupNumberParameterType::setValue(Action* action)
     int index = action->arg.getInt();
     Setup* setup = config->getSetup(index);
 
-    if (setup != NULL) {
+    if (setup != nullptr) {
         m->setActiveSetup(index);
     }
 }
@@ -495,7 +495,7 @@ void TrackParameterType::getValue(Export* exp, ExValue* value)
 	// let this be 1 based in the script
     Mobius* m = (Mobius*)exp->getMobius();
 	Track* t = m->getTrack(m->getActiveTrack());
-	if (t != NULL)
+	if (t != nullptr)
 	  value->setInt(t->getDisplayNumber());
 	else {
 		// assume zero
@@ -719,7 +719,7 @@ void MaxSyncDriftParameterType::setValue(Action* action)
 	config->setMaxSyncDrift(drift);
 
     MobiusConfig* iconfig = m->getConfiguration();
-    if (iconfig != NULL) {
+    if (iconfig != nullptr) {
         iconfig->setMaxSyncDrift(drift);
 
         // no longer there
@@ -750,7 +750,7 @@ class DriftCheckPointParameterType : public GlobalParameter
 };
 
 const char* DRIFT_CHECK_POINT_NAMES[] = {
-	"loop", "external", NULL
+	"loop", "external", nullptr
 };
 
 DriftCheckPointParameterType::DriftCheckPointParameterType() :
@@ -787,7 +787,7 @@ void DriftCheckPointParameterType::setValue(Action* action)
 	config->setDriftCheckPoint(dcp);
 
     MobiusConfig* iconfig = m->getConfiguration();
-    if (iconfig != NULL) {
+    if (iconfig != nullptr) {
         iconfig->setDriftCheckPoint(dcp);
         // no longer there
         //Synchronizer* sync = m->getSynchronizer();
@@ -954,7 +954,7 @@ void AutoFeedbackReductionParameterType::setValue(Action* action)
     config->setAutoFeedbackReduction(afr);
 
     MobiusConfig* iconfig = m->getConfiguration();
-    if (iconfig != NULL) {
+    if (iconfig != nullptr) {
         iconfig->setAutoFeedbackReduction(afr);
 
         for (int i = 0 ; i < m->getTrackCount() ; i++) {
@@ -1050,7 +1050,7 @@ void MonitorAudioParameterType::setValue(Action* action)
 	config->setMonitorAudio(monitor);
 #if 0
     Recorder* rec = m->getRecorder();
-    if (rec != NULL)
+    if (rec != nullptr)
       rec->setEcho(monitor);
 #endif
 }
@@ -1152,8 +1152,8 @@ AltFeedbackDisableParameterType::AltFeedbackDisableParameterType() :
 void AltFeedbackDisableParameterType::getValue(MobiusConfig* c, ExValue* value)
 {
 	StringList* l = c->getAltFeedbackDisables();
-	if (l == NULL)
-	  value->setString(NULL);
+	if (l == nullptr)
+	  value->setString(nullptr);
 	else {
 		char* str = l->toCsv();
 		value->setString(str);
@@ -1164,7 +1164,7 @@ void AltFeedbackDisableParameterType::getValue(MobiusConfig* c, ExValue* value)
 void AltFeedbackDisableParameterType::setValue(MobiusConfig* c, ExValue* value)
 {
 	if (value->isNull())
-	  c->setAltFeedbackDisables(NULL);
+	  c->setAltFeedbackDisables(nullptr);
 	else
 	  c->setAltFeedbackDisables(new StringList(value->getString()));
 }
@@ -1293,7 +1293,7 @@ void InputLatencyParameterType::setValue(Action* action)
 	config->setInputLatency(latency);
     
     MobiusConfig* iconfig = m->getConfiguration();
-    if (iconfig != NULL) {
+    if (iconfig != nullptr) {
         iconfig->setInputLatency(latency);
 
         for (int i = 0 ; i < m->getTrackCount() ; i++) {
@@ -1352,7 +1352,7 @@ void OutputLatencyParameterType::setValue(Action* action)
 	config->setOutputLatency(latency);
 
     MobiusConfig* iconfig = m->getConfiguration();
-    if (iconfig != NULL) {
+    if (iconfig != nullptr) {
         iconfig->setOutputLatency(latency);
 
         for (int i = 0 ; i < m->getTrackCount() ; i++) {

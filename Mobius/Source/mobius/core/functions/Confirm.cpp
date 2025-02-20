@@ -60,7 +60,7 @@ Event* ConfirmFunction::invoke(Action* action, Loop* l)
         EventManager* em = l->getTrack()->getEventManager();
         Event* switche = em->getSwitchEvent();
 
-        if (switche == NULL) {
+        if (switche == nullptr) {
             Trace(l, 2, "Ignoring Confirm function outside of Switch mode\n");
         }
         else if (!switche->pending) {
@@ -79,7 +79,7 @@ Event* ConfirmFunction::invoke(Action* action, Loop* l)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************/

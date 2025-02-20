@@ -121,7 +121,7 @@ Event* ResetFunction::invoke(Action* action, Loop* loop)
 			track->loopReset(action, loop);
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 /****************************************************************************/

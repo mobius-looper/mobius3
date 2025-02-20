@@ -58,13 +58,13 @@ Export::Export(Action* a)
 
 void Export::init()
 {
-    mNext = NULL;
-    mMobius = NULL;
-    mType = NULL;
-    mObject.object = NULL;
+    mNext = nullptr;
+    mMobius = nullptr;
+    mType = nullptr;
+    mObject.object = nullptr;
     mScopeTrack = 0;
     mScopeGroup = 0;
-    mTrack = NULL;
+    mTrack = nullptr;
     mLast = -1;
     mMidiChannel = 0;
     mMidiNumber = 0;
@@ -74,9 +74,9 @@ Export::~Export()
 {
 	Export *el, *next;
 
-	for (el = mNext ; el != NULL ; el = next) {
+	for (el = mNext ; el != nullptr ; el = next) {
 		next = el->getNext();
-		el->setNext(NULL);
+		el->setNext(nullptr);
 		delete el;
 	}
 }
@@ -186,7 +186,7 @@ ExportType Export::getType()
 
     if (mType == ActionParameter) {
         Parameter* p = mObject.parameter;
-        if (p != NULL) {
+        if (p != nullptr) {
             ParameterType ptype = p->type;
             if (ptype == TYPE_INT) {
                 extype = EXP_INT;
@@ -216,7 +216,7 @@ int Export::getMinimum()
 
     if (mType == ActionParameter) {
         Parameter* p = mObject.parameter;
-        if (p != NULL) {
+        if (p != nullptr) {
             ParameterType type = p->type;
             if (type == TYPE_INT) {
                 min = p->getLow();
@@ -251,11 +251,11 @@ int Export::getMaximum()
  */
 const char** Export::getValueLabels()
 {
-    const char** labels = NULL;
+    const char** labels = nullptr;
 
     if (mType == ActionParameter) {
         Parameter* p = mObject.parameter;
-        if (p != NULL)
+        if (p != nullptr)
           labels = p->valueLabels;
     }
 
@@ -270,7 +270,7 @@ const char** Export::getValueLabels()
  */
 const char* Export::getDisplayName()
 {
-    const char* dname = NULL;
+    const char* dname = nullptr;
 
     if (mType == ActionFunction) {
         Function* f = mObject.function;
@@ -311,7 +311,7 @@ bool Export::isDisplayable()
 
     if (mType == ActionParameter) {
         Parameter* p = mObject.parameter;
-        displayable = (p != NULL && p->bindable);
+        displayable = (p != nullptr && p->bindable);
     }
 
     return displayable;
@@ -329,7 +329,7 @@ bool Export::isDisplayable()
  */
 Track* Export::getTargetTrack()
 {
-    Track* found = NULL;
+    Track* found = nullptr;
 
     if (mScopeTrack > 0) {
         // track specific binding

@@ -77,7 +77,7 @@ Event* BounceFunction::invoke(Action* action, Loop* loop)
 {
 	Mobius* mobius = loop->getMobius();
 	MobiusMode* mode = loop->getMode();
-	Event* event = NULL;
+	Event* event = nullptr;
 
 	if (action->down) {
 		if (mode == ThresholdMode || mode == SynchronizeMode) {
@@ -129,7 +129,7 @@ void BounceFunction::doEvent(Loop* loop, Event* event)
 {
     (void)event;
 	Mobius* mobius = loop->getMobius();
-	mobius->toggleBounceRecording(NULL);
+	mobius->toggleBounceRecording(nullptr);
 }
 
 /****************************************************************************/

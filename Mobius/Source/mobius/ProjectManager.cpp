@@ -119,7 +119,7 @@ Project* ProjectManager::saveProject()
         // it also captured some of the UI state
 #if 0
         BindingConfig* overlay = mConfig->getOverlayBindingConfig();
-        if (overlay != NULL)
+        if (overlay != nullptr)
           p->setBindings(overlay->getName());
 #endif
 
@@ -211,7 +211,7 @@ void ProjectManager::writeProject(Project* p, const char* file, bool isTemplate)
 
 	// clean up existing Audio files
     FILE* fp = fopen(path, "r");
-    if (fp != NULL) {
+    if (fp != nullptr) {
         fclose(fp);
 
         // holy shit, what does this do?  I think just reads the XML structure
@@ -222,7 +222,7 @@ void ProjectManager::writeProject(Project* p, const char* file, bool isTemplate)
 
 	// write the new project and Audio files
 	fp = fopen(path, "w");
-	if (fp == NULL) {
+	if (fp == nullptr) {
         // try multiple alert lines...
         // errors.add(juce::String("Unable to open output file: ") + juce::String(path));
         errors.add("Unable to open project file");
@@ -257,7 +257,7 @@ void ProjectManager::writeAudio(Project* p, const char* baseName)
 void ProjectManager::writeAudio(ProjectTrack* track, const char* baseName, int tracknum)
 {
     List* loops = track->getLoops();
-	if (loops != NULL) {
+	if (loops != nullptr) {
 		for (int i = 0 ; i < loops->size() ; i++) {
 			ProjectLoop* loop = (ProjectLoop*)loops->get(i);
 			writeAudio(loop, baseName, tracknum, i + 1);
@@ -268,7 +268,7 @@ void ProjectManager::writeAudio(ProjectTrack* track, const char* baseName, int t
 void ProjectManager::writeAudio(ProjectLoop* loop, const char* baseName, int tracknum, int loopnum)
 {
     List* layers = loop->getLayers();
-	if (layers != NULL) {
+	if (layers != nullptr) {
 		for (int i = 0 ; i < layers->size() ; i++) {
 			ProjectLayer* layer = (ProjectLayer*)layers->get(i);
 			// use the layer id, it makes more sense
@@ -286,7 +286,7 @@ void ProjectManager::writeAudio(ProjectLayer* layer, const char* baseName,
 
     Audio* audio = layer->getAudio();
 
-    if (audio != NULL && !audio->isEmpty() && !layer->isProtected()) {
+    if (audio != nullptr && !audio->isEmpty() && !layer->isProtected()) {
 
         // todo: need to support inline audio in the XML
         snprintf(path, sizeof(path), "%s-%d-%d-%d.wav", baseName, 
@@ -300,7 +300,7 @@ void ProjectManager::writeAudio(ProjectLayer* layer, const char* baseName,
     }
 
     Audio* overdub = layer->getOverdub();
-	if (overdub != NULL && !overdub->isEmpty()) {
+	if (overdub != nullptr && !overdub->isEmpty()) {
         // todo: need to support inline audio in the XML
         snprintf(path, sizeof(path), "%s-%d-%d-%d-overdub.wav", baseName, 
 				tracknum, loopnum, layernum);
@@ -349,21 +349,21 @@ void ProjectManager::writeAudio(Audio* audio, const char* path)
 void ProjectManager::deleteAudioFiles(Project* p)
 {
     List* tracks = p->getTracks();
-    if (tracks != NULL) {
+    if (tracks != nullptr) {
         for (int i = 0 ; i < tracks->size() ; i++) {
             ProjectTrack* track = (ProjectTrack*)tracks->get(i);
             List* loops = track->getLoops();
-            if (loops != NULL) {
+            if (loops != nullptr) {
                 for (int j = 0 ; j < loops->size() ; j++) {
                     ProjectLoop* loop = (ProjectLoop*)loops->get(j);
                     List* layers = loop->getLayers();
-                    if (layers != NULL) {
+                    if (layers != nullptr) {
                         for (int k = 0 ; k < layers->size() ; k++) {
                             ProjectLayer* layer = (ProjectLayer*)layers->get(k);
                             const char* path = layer->getPath();
-                            if (path != NULL && !layer->isProtected()) {
+                            if (path != nullptr && !layer->isProtected()) {
                                 FILE* fp = fopen(path, "r");
-                                if (fp != NULL) {
+                                if (fp != nullptr) {
                                     fclose(fp);
                                     remove(path);
                                 }
@@ -373,9 +373,9 @@ void ProjectManager::deleteAudioFiles(Project* p)
                                 }
                             }
                             path = layer->getOverdubPath();
-                            if (path != NULL) {
+                            if (path != nullptr) {
                                 FILE* fp = fopen(path, "r");
-                                if (fp != NULL) {
+                                if (fp != nullptr) {
                                     fclose(fp);
                                     remove(path);
                                 }
@@ -505,7 +505,7 @@ void ProjectManager::read(Project* p, juce::File file)
     const char* path = file.getFullPathName().toUTF8();
     
 	FILE* fp = fopen(path, "r");
-	if (fp == NULL) {
+	if (fp == nullptr) {
         // errors.add(juce::String("Unable to open file: ") + path);
         errors.add("Unable to open project file");
         errors.add(path);
@@ -515,9 +515,9 @@ void ProjectManager::read(Project* p, juce::File file)
         
         XomParser* parser = new XomParser();
         XmlDocument* d = parser->parseFile(path);
-        if (d != NULL) {
+        if (d != nullptr) {
             XmlElement* e = d->getChildElement();
-            if (e != NULL) {
+            if (e != nullptr) {
 
                 // I guess if it had previously been read, clean it out
                 p->clear();
@@ -555,22 +555,22 @@ void ProjectManager::readAudio(Project* p)
         for (int i = 0 ; i < tracks->size() && errors.size() == 0 ; i++) {
             ProjectTrack* track = (ProjectTrack*)tracks->get(i);
             List* loops = track->getLoops();
-            if (loops != NULL) {
+            if (loops != nullptr) {
                 for (int j = 0 ; j < loops->size() && errors.size() == 0 ; j++) {
                     ProjectLoop* loop = (ProjectLoop*)loops->get(j);
                     List* layers = loop->getLayers();
-                    if (layers != NULL) {
+                    if (layers != nullptr) {
                         for (int k = 0 ; k < layers->size() && errors.size() == 0 ; k++) {
                             ProjectLayer* layer = (ProjectLayer*)layers->get(k);
 
                             // now the meat
                             const char* path = layer->getPath();
-                            if (path != NULL)
+                            if (path != nullptr)
 							  layer->setAudio(readAudio(path));
 
                             if (errors.size() == 0) {
                                 path = layer->getOverdubPath();
-                                if (path != NULL)
+                                if (path != nullptr)
                                   layer->setOverdub(readAudio(path));
                             }
                         }
@@ -653,8 +653,8 @@ int ProjectManager::WriteFile(const char* name, const char* content)
 	int written = 0;
 
 	FILE* fp = fopen(name, "wb");
-	if (fp != NULL) {
-		if (content != NULL)
+	if (fp != nullptr) {
+		if (content != nullptr)
 		  written = (int)fwrite(content, 1, strlen(content), fp);
 		fclose(fp);
 	}
@@ -699,7 +699,7 @@ int ProjectManager::WriteFile(const char* name, const char* content)
 // Mobius::loadLoop then did this
 PUBLIC void Mobius::loadLoop(Audio* a)
 {
-    if (mTrack != NULL) {
+    if (mTrack != nullptr) {
         Loop* loop = mTrack->getLoop();
         // sigh, Track number is zero based, Loop number is one based
         Project* p = new Project(a, mTrack->getRawNumber(), loop->getNumber() - 1);

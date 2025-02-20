@@ -36,7 +36,7 @@
 FadeTail::FadeTail()
 {
 	mMaxFrames = AUDIO_MAX_FRAMES_PER_BUFFER + AUDIO_MAX_FADE_FRAMES;
-	mTail = NULL;
+	mTail = nullptr;
 	mStart = 0;
 	mFrames = 0;
 	mRecordOffset = 0;

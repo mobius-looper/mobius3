@@ -43,8 +43,8 @@ void Action::init()
     // Trigger
     triggerId = 0;
     triggerOwner = nullptr;
-    trigger = NULL;
-    triggerMode = NULL;
+    trigger = nullptr;
+    triggerMode = nullptr;
     triggerValue = 0;
     triggerOffset = 0;
     down = false;
@@ -64,15 +64,15 @@ void Action::init()
 
     // Arguments
     bindingArgs[0] = 0;
-    scriptArgs = NULL;
-    actionOperator = NULL;
+    scriptArgs = nullptr;
+    actionOperator = nullptr;
     arg.setNull();
-    scriptArgs = NULL;
+    scriptArgs = nullptr;
 
     // Status
-    rescheduling = NULL;
-    reschedulingReason = NULL;
-    mobius = NULL;
+    rescheduling = nullptr;
+    reschedulingReason = nullptr;
+    mobius = nullptr;
     noGroup = false;
     noTrace = false;
     millisecond = 0;
@@ -80,16 +80,16 @@ void Action::init()
 
     // private
 
-    mNext = NULL;
+    mNext = nullptr;
     mPooled = false;
     mPool = nullptr;
     
-    mEvent = NULL;
-    mKernelEvent = NULL;
-    mResolvedTrack = NULL;
-    mLongFunction = NULL;
+    mEvent = nullptr;
+    mKernelEvent = nullptr;
+    mResolvedTrack = nullptr;
+    mLongFunction = nullptr;
 
-    mName = NULL;
+    mName = nullptr;
 }
 
 Action::Action()
@@ -100,7 +100,7 @@ Action::Action()
 Action::Action(Action* src)
 {
     init();
-    if (src != NULL)
+    if (src != nullptr)
       clone(src);
 }
 
@@ -117,9 +117,9 @@ Action::~Action()
     delete mName;
 
 	Action *el, *next;
-	for (el = mNext ; el != NULL ; el = next) {
+	for (el = mNext ; el != nullptr ; el = next) {
 		next = el->getNext();
-		el->setNext(NULL);
+		el->setNext(nullptr);
 		delete el;
 	}
 }
@@ -129,7 +129,7 @@ Action::~Action()
  */
 void Action::free()
 {   
-    if (mPool != NULL)
+    if (mPool != nullptr)
       mPool->freeAction(this);
     else {
         // let this be okay
@@ -203,10 +203,10 @@ void Action::clone(Action* src)
     // Action.  We could but we would have to copy the ExValueList
     // which is a pain.
     //scriptArgs = someKindOfCopy(src->scriptArgs);
-    if (src->scriptArgs != NULL)
+    if (src->scriptArgs != nullptr)
       Trace(1, "Cloning action with script arguments!\n");
     delete scriptArgs;
-    scriptArgs = NULL;
+    scriptArgs = nullptr;
 
     // Runtime
 
@@ -224,8 +224,8 @@ void Action::clone(Action* src)
     streamTime = src->streamTime;
 
     // absolutely not these
-    mEvent = NULL;
-    mKernelEvent = NULL;
+    mEvent = nullptr;
+    mKernelEvent = nullptr;
     
     // Should we clone these?  They're supposed to be transient!
     mResolvedTrack = src->mResolvedTrack;
@@ -270,7 +270,7 @@ void Action::setNext(Action* a)
 
 bool Action::isResolved()
 {
-    return (getTargetObject() != NULL);
+    return (getTargetObject() != nullptr);
 }
 
 /**
@@ -280,7 +280,7 @@ bool Action::isResolved()
 void Action::parseBindingArgs()
 {
     if (strlen(bindingArgs) > 0) {
-        actionOperator = NULL;
+        actionOperator = nullptr;
         
         char* psn = bindingArgs;
 
@@ -295,7 +295,7 @@ void Action::parseBindingArgs()
         *end = 0;
 
         actionOperator = ActionOperator::find(psn);
-        if (actionOperator != NULL) {
+        if (actionOperator != nullptr) {
             // skip to the operand
             *end = save;
             psn = end;
@@ -354,7 +354,7 @@ bool Action::isTargetEqual(Action* other)
  */
 void Action::setTarget(ActionType* t)
 {
-    setTarget(t, NULL);
+    setTarget(t, nullptr);
 }
 
 void Action::setTarget(ActionType* t, void* object)
@@ -380,7 +380,7 @@ void Action::setFunction(Function* f)
 
 Function* Action::getFunction()
 {
-    Function* f = NULL;
+    Function* f = nullptr;
     if (getTarget() == ActionFunction)
       f = (Function*)getTargetObject();
     return f;
@@ -521,7 +521,7 @@ bool Action::isSpread()
 	bool spread = false;
     if (getTarget() == ActionFunction) {
         Function* f = (Function*)getTargetObject();
-        if (f != NULL)
+        if (f != nullptr)
           spread = f->isSpread();
     }
 	return spread;
@@ -534,8 +534,8 @@ bool Action::isSpread()
  */
 void Action::setEvent(Event* e)
 {
-    if (e != NULL) {
-        if (mEvent != NULL) {
+    if (e != nullptr) {
+        if (mEvent != nullptr) {
             if (mEvent != e) {
                 Trace(1, "Action already owned by another event!\n");
                 // steal it?
@@ -548,7 +548,7 @@ void Action::setEvent(Event* e)
                 }
             }
         }
-        else if (e->getAction() != NULL) {
+        else if (e->getAction() != nullptr) {
             if (e->getAction() != this) {
                 Trace(1, "Event already owns another action!\n");
                 // steal it?
@@ -586,14 +586,14 @@ void Action::changeEvent(Event* e)
  */
 void Action::detachEvent(Event* e)
 {
-    if (e != NULL && mEvent != e)
+    if (e != nullptr && mEvent != e)
       Trace(1, "detachEvent: expected event not attached!\n");
     
-    if (mEvent != NULL) {
+    if (mEvent != nullptr) {
         if (mEvent->getAction() != this)
           Trace(1, "detachEvent: Current event doesn't own this action!\n");
-        mEvent->setAction(NULL);
-        mEvent = NULL;
+        mEvent->setAction(nullptr);
+        mEvent = nullptr;
     }
 }
 
@@ -626,7 +626,7 @@ void Action::getDisplayName(char* buffer, int max)
     }
     else {
         // already parsed
-        if (actionOperator != NULL && 
+        if (actionOperator != nullptr && 
             actionOperator != OperatorSet) {
             AppendString(" ", buffer, max);
             AppendString(actionOperator->getName(), buffer, max);
@@ -648,7 +648,7 @@ const char* Action::getDisplayName()
 {
     const char* dname = nullptr;
 
-    if (implementation.object != NULL) {
+    if (implementation.object != nullptr) {
 
         if (type == ActionFunction) {
             Function* f = implementation.function;
@@ -683,7 +683,7 @@ const char* Action::getTypeDisplayName()
     // Scripts are TargetFunction but we'd like a more specicic name
     if (type == ActionFunction) {
         Function* f = implementation.function;
-        if (f != NULL && f->eventType == RunScriptEvent)
+        if (f != nullptr && f->eventType == RunScriptEvent)
           dname = "Script";
     }
     else if (type == ActionParameter) {
@@ -753,7 +753,7 @@ void Action::getFullName(char* buffer, int max)
 
 ActionPool::ActionPool()
 {
-    mActions = NULL;
+    mActions = nullptr;
     mAllocated = 0;
 }
 
@@ -770,7 +770,7 @@ ActionPool::~ActionPool()
  */
 Action* ActionPool::newAction()
 {
-    return allocAction(NULL);
+    return allocAction(nullptr);
 }
 
 Action* ActionPool::newAction(Action* src)
@@ -782,16 +782,16 @@ Action* ActionPool::allocAction(Action* src)
 {
     Action* action = mActions;
 
-    if (action == NULL) {
+    if (action == nullptr) {
         action = NEW1(Action, src);
         action->setPool(this);
         mAllocated++;
     }
     else {
         mActions = action->getNext();
-        action->setNext(NULL);
+        action->setNext(nullptr);
         action->setPooled(false);
-        if (src != NULL)
+        if (src != nullptr)
           action->clone(src);
         else
           action->reset();
@@ -802,7 +802,7 @@ Action* ActionPool::allocAction(Action* src)
 
 void ActionPool::freeAction(Action* action)
 {
-    if (action != NULL) {
+    if (action != nullptr) {
         if (action->isPooled())
           Trace(1, "Ignoring attempt to free pooled action\n");
         else {
@@ -813,9 +813,9 @@ void ActionPool::freeAction(Action* action)
             // Release script args now or wait till it is brought
             // out of the pool?  Might as well do them now
             delete action->scriptArgs;
-            action->scriptArgs = NULL;
+            action->scriptArgs = nullptr;
             // this is transient
-            action->setTargetTrack(NULL);
+            action->setTargetTrack(0);
         }
     }
 }
@@ -824,7 +824,7 @@ void ActionPool::dump()
 {
     int count = 0;
 
-    for (Action* a = mActions ; a != NULL ; a = a->getNext())
+    for (Action* a = mActions ; a != nullptr ; a = a->getNext())
       count++;
 
     printf("ActionPool: %d allocated, %d in the pool, %d in use\n", 

@@ -404,7 +404,7 @@ void RecordFunction::invokeLong(Action* action, Loop* l)
  */
 Event* RecordFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
 	MobiusMode* mode = l->getMode();
 
 	l->checkBreak();
@@ -540,10 +540,10 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
         // the initial recording it should already be there.
         loop->setFrame(0);
         loop->setPlayFrame(0);
-        loop->setPlayLayer(NULL);			// should already be NULL
-        loop->setPrePlayLayer(NULL);
+        loop->setPlayLayer(nullptr);			// should already be nullptr
+        loop->setPrePlayLayer(nullptr);
         Layer* reclayer = loop->getRecordLayer();
-        if (reclayer != NULL)
+        if (reclayer != nullptr)
           reclayer->reset();		// should already be reset
         else {
             LayerPool* lp = loop->getMobius()->getLayerPool();
@@ -571,14 +571,14 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
 	
         Event* end = em->findEvent(RecordEvent);
         Event* stop = em->findEvent(RecordStopEvent);
-        if (end == NULL && stop == NULL)
+        if (end == nullptr && stop == nullptr)
           em->flushEventsExceptScripts();
 
         // If this is an AutoRecord, set the cycle count to give visual
         // clue as to the length of the loop.  Only do this for an unsync'd 
         // recording.  When syncing we will get pulse events and can increment
         // the cycle count during recording which looks nicer.
-        if (stop != NULL && !stop->pending) {
+        if (stop != nullptr && !stop->pending) {
             // bars is also the loop cycle count
             int bars = (int)stop->number;
             loop->setRecordCycles(bars);
@@ -660,7 +660,7 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
                 // as the insert progresses, all we need to do here
                 // is simiulate an insert start event.
 				// !! don't want this here, just schedule an Insert?
-                loop->insertEvent(NULL);
+                loop->insertEvent(nullptr);
 
                 // InsertEvent changed the mode, keep it
                 newMode = loop->getMode();
@@ -687,7 +687,7 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
                 // Setup* setup = GetCurrentSetup(config);
                 Setup* setup = mobius->getSetup();
                 SetupTrack* strack = setup->getTrack(track->getRawNumber());
-                if (strack != NULL)
+                if (strack != nullptr)
                   feedback = strack->getFeedback();
 
                 track->setFeedback(feedback);
@@ -721,8 +721,8 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
             // stacking events.  Move to EventManager
 
             Track* track = loop->getTrack();
-            Event* nextChild = NULL;
-            for (Event* child = event->getChildren() ; child != NULL ; 
+            Event* nextChild = nullptr;
+            for (Event* child = event->getChildren() ; child != nullptr ; 
                  child = nextChild) {
                 nextChild = child->getSibling();
 
@@ -743,14 +743,14 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
                     
                     // if we have a pending event, confirm it
                     // treat an unscheduled event like pending
-                    if (child->pending || child->getList() == NULL) {
+                    if (child->pending || child->getList() == nullptr) {
                         // should already be scheduled
-                        if (child->pending && child->getList() == NULL) {
+                        if (child->pending && child->getList() == nullptr) {
                             // not a problem, but I don't think it can happen
                             Trace(loop, 1, "RecordStopEvent: pending child not scheduled!\n");
                             em->addEvent(child);
                         }
-                        else if (!child->pending && child->getList() == NULL) {
+                        else if (!child->pending && child->getList() == nullptr) {
                             // we treat these like pending, should
                             // we require that the pending flag be set?
                             Trace(loop, 1, "RecordStopEvent: unscheduled child not pending!\n");
@@ -758,7 +758,7 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
                         
                         // and confirm it
                         Trace(loop, 2, "RecordStopEvent: confirming pending child event: %s\n", child->type->name);
-                        child->confirm(NULL, loop, CONFIRM_FRAME_IMMEDIATE);
+                        child->confirm(nullptr, loop, CONFIRM_FRAME_IMMEDIATE);
                     }
                     else {
                         // already scheduled, leave it alone

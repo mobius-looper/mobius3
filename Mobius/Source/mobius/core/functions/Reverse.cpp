@@ -231,7 +231,7 @@ ReverseFunction::ReverseFunction(bool sus, bool tog, bool fwd)
 
 Event* ReverseFunction::scheduleEvent(Action* action , Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
 	MobiusMode* mode = l->getMode();
 
 	if (mode == ResetMode || 
@@ -252,7 +252,7 @@ Event* ReverseFunction::scheduleEvent(Action* action , Loop* l)
 		// that will change that
 
 		event = Function::scheduleEvent(action, l);
-		if (event != NULL) {
+		if (event != nullptr) {
 
 			// if the event is quantized to a loop boundary,
 			// process it after we loop back to zero to prevent
@@ -300,14 +300,14 @@ Event* ReverseFunction::scheduleEvent(Action* action , Loop* l)
  */
 Event* ReverseFunction::scheduleSwitchStack(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
 
 	if (action->down) {
 		Event* switche = em->getUncomittedSwitch();
-		if (switche != NULL) {
+		if (switche != nullptr) {
 			Event* prev = switche->findEvent(eventType);
-			if (prev == NULL) {
+			if (prev == nullptr) {
 				// ignore Forward since we're already going that way
 				if (toggle || !forward)
 				  event = Function::scheduleSwitchStack(action, l);
@@ -333,7 +333,7 @@ Event* ReverseFunction::scheduleSwitchStack(Action* action, Loop* l)
  */
 Event* ReverseFunction::scheduleTransfer(Loop* l)
 {
-    Event* event = NULL;
+    Event* event = nullptr;
     TransferMode tm = ParameterSource::getReverseTransfer(l);
 
     if (tm == XFER_OFF || tm == XFER_RESTORE) {
@@ -342,7 +342,7 @@ Event* ReverseFunction::scheduleTransfer(Loop* l)
         // the if block and would have prevented the event from
         // being returned.  Don't know what problems that may have3
         // caused but look here if there are pitch scheduling anomolies
-        //Event* event = NULL;
+        //Event* event = nullptr;
         
         EventManager* em = l->getTrack()->getEventManager();
 
@@ -351,7 +351,7 @@ Event* ReverseFunction::scheduleTransfer(Loop* l)
         // but not bend.
 
         Event* prev = em->findEvent(eventType);
-        if (prev == NULL) {
+        if (prev == nullptr) {
             if (tm == XFER_OFF) {
                 event = em->newEvent(Forward, l->getFrame());
             }
@@ -364,7 +364,7 @@ Event* ReverseFunction::scheduleTransfer(Loop* l)
 
             }
 
-            if (event != NULL) {
+            if (event != nullptr) {
                 event->automatic = true;
                 em->addEvent(event);
             }

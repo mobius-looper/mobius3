@@ -39,7 +39,7 @@ Segment::Segment()
 Segment::Segment(Layer* src)
 {
     init();
-    if (src != NULL) {
+    if (src != nullptr) {
         mLayer = src;
         mLayer->incReferences();
         mFrames = src->getFrames();
@@ -49,7 +49,7 @@ Segment::Segment(Layer* src)
 Segment::Segment(Audio* src)
 {
     init();
-    if (src != NULL) {
+    if (src != nullptr) {
         mAudio = src;
 		mCursor = NEW(AudioCursor);
         mFrames = src->getFrames();
@@ -59,13 +59,13 @@ Segment::Segment(Audio* src)
 Segment::Segment(Segment* src)
 {
     init();
-    if (src != NULL) {
+    if (src != nullptr) {
 		// we can't clone local Audio, shouldn't be an issue now
 		// since we don't use local segment Audio
-		if (src->mAudio != NULL)
+		if (src->mAudio != nullptr)
 		  Trace(1, "Unable to clone segment audio\n");
 
-		if (src->mLayer != NULL) {
+		if (src->mLayer != nullptr) {
 			mLayer = src->mLayer;
 			mLayer->incReferences();
 		}
@@ -86,17 +86,17 @@ Segment::~Segment()
 {
 	delete mAudio;
 	delete mCursor;
-    if (mLayer != NULL)
+    if (mLayer != nullptr)
 	  mLayer->free();
 }
 
 void Segment::init()
 {
-    mNext = NULL;
+    mNext = nullptr;
     mOffset = 0;
-    mLayer = NULL;
-    mAudio = NULL;
-	mCursor = NULL;
+    mLayer = nullptr;
+    mAudio = nullptr;
+	mCursor = nullptr;
     mStartFrame = 0;
     mFrames = 0;
     mFeedback = 127;
@@ -155,7 +155,7 @@ long Segment::getOffset()
 
 void Segment::setLayer(Layer* l)
 {
-    if (mLayer != NULL)
+    if (mLayer != nullptr)
 	  mLayer->free();
     mLayer = l;
     mLayer->incReferences();
@@ -170,7 +170,7 @@ void Segment::setAudio(Audio* a)
 {
 	delete mAudio;
     mAudio = a;
-	if (mCursor == NULL)
+	if (mCursor == nullptr)
 	  mCursor = NEW(AudioCursor);
 }
 
@@ -367,10 +367,10 @@ void Segment::dump(TraceBuffer* b)
 
 	b->incIndent();
 
-	if (mAudio != NULL)
+	if (mAudio != nullptr)
 	  mAudio->dump(b);
 
-	if (mLayer != NULL)
+	if (mLayer != nullptr)
 	  mLayer->dump(b);
 
 	b->decIndent();
@@ -511,7 +511,7 @@ void Segment::get(LayerContext* con, long startFrame,
 			con->buffer = temp;
 		}
 		  
-		if (mLayer != NULL) {
+		if (mLayer != nullptr) {
 			// Note that we must call getNoReflect here to avoid reflecting
 			// the region again when in reverse.  Reflection only
 			// happens the first tine Loop calls Layer::get
@@ -519,7 +519,7 @@ void Segment::get(LayerContext* con, long startFrame,
 			// flag so the layer can choose the right cursor
 			mLayer->getNoReflect(con, realStartFrame, cursor, false, play);
 		}
-		else if (mAudio != NULL) {
+		else if (mAudio != nullptr) {
 			// Since we have a reflected region, we have to calculate
 			// the end frame since AudioCursor iterates in reverse.
 			long audioFrame = realStartFrame;
@@ -527,7 +527,7 @@ void Segment::get(LayerContext* con, long startFrame,
 			  audioFrame = realStartFrame + con->frames - 1;
 
 			// use our own private cursor if none passed in
-			AudioCursor* cur = ((cursor != NULL) ? cursor : mCursor);
+			AudioCursor* cur = ((cursor != nullptr) ? cursor : mCursor);
 			cur->setReverse(con->isReverse());
 			cur->get(con, mAudio, audioFrame, con->getLevel());
 		}

@@ -137,7 +137,7 @@ const char* WaitTypeNames[] = {
 	"realign",
 	"return",
 	"thread",
-	NULL
+	nullptr
 };
 
 /**
@@ -151,7 +151,7 @@ const char* WaitUnitNames[] = {
 	"subcycle",
 	"cycle",
 	"loop",
-	NULL
+	nullptr
 };
 
 /****************************************************************************
@@ -164,9 +164,9 @@ void ScriptResolver::init(ExSymbol* symbol)
 {
 	mSymbol = symbol;
     mStackArg = 0;
-    mInternalVariable = NULL;
-    mVariable = NULL;
-    mParameter = NULL;
+    mInternalVariable = nullptr;
+    mVariable = nullptr;
+    mParameter = nullptr;
 }
 
 ScriptResolver::ScriptResolver(ExSymbol* symbol, int arg)
@@ -220,11 +220,11 @@ void ScriptResolver::getExValue(ExContext* exContext, ExValue* value)
     if (mStackArg > 0) {
 		si->getStackArg(mStackArg, value);
     }
-    else if (mInternalVariable != NULL) {
+    else if (mInternalVariable != nullptr) {
 		mInternalVariable->getValue(si, value);
     }
-	else if (mVariable != NULL) {
-        UserVariables* vars = NULL;
+	else if (mVariable != nullptr) {
+        UserVariables* vars = nullptr;
         const char* name = mVariable->getName();
 		ScriptVariableScope scope = mVariable->getScope();
 		switch (scope) {
@@ -243,15 +243,15 @@ void ScriptResolver::getExValue(ExContext* exContext, ExValue* value)
                 break;
 		}
         
-        if (vars != NULL)
+        if (vars != nullptr)
           vars->get(name, value);
 	}
-    else if (mParameter != NULL) {
+    else if (mParameter != nullptr) {
         // reuse an export 
         Export* exp = si->getExport();
 
         if (mParameter->scope == PARAM_SCOPE_GLOBAL) {
-            exp->setTrack(NULL);
+            exp->setTrack(nullptr);
             mParameter->getValue(exp, value); 
         }
         else {
@@ -259,9 +259,9 @@ void ScriptResolver::getExValue(ExContext* exContext, ExValue* value)
             mParameter->getValue(exp, value);
         }
     }
-    else if (mInterpreterVariable != NULL) {
+    else if (mInterpreterVariable != nullptr) {
         UserVariables* vars = si->getVariables();
-        if (vars != NULL)
+        if (vars != nullptr)
           vars->get(mInterpreterVariable, value);
     }
     else {
@@ -278,11 +278,11 @@ void ScriptResolver::getExValue(ExContext* exContext, ExValue* value)
 
 ScriptArgument::ScriptArgument()
 {
-    mLiteral = NULL;
+    mLiteral = nullptr;
     mStackArg = 0;
-    mInternalVariable = NULL;
-    mVariable = NULL;
-    mParameter = NULL;
+    mInternalVariable = nullptr;
+    mVariable = nullptr;
+    mParameter = nullptr;
 }
 
 const char* ScriptArgument::getLiteral()
@@ -303,9 +303,9 @@ Parameter* ScriptArgument::getParameter()
 bool ScriptArgument::isResolved()
 {
 	return (mStackArg > 0 ||
-			mInternalVariable != NULL ||
-			mVariable != NULL ||
-			mParameter != NULL);
+			mInternalVariable != nullptr ||
+			mVariable != nullptr ||
+			mParameter != nullptr);
 }
 
 /**
@@ -318,11 +318,11 @@ void ScriptArgument::resolve(Mobius* m, ScriptBlock* block,
 {
 	mLiteral = literal;
     mStackArg = 0;
-    mInternalVariable = NULL;
-    mVariable = NULL;
-    mParameter = NULL;
+    mInternalVariable = nullptr;
+    mVariable = nullptr;
+    mParameter = nullptr;
 
-    if (mLiteral != NULL) {
+    if (mLiteral != nullptr) {
 
 		if (mLiteral[0] == '\'') {
 			// kludge for a universal literal quoter until
@@ -340,12 +340,12 @@ void ScriptArgument::resolve(Mobius* m, ScriptBlock* block,
 			if (mStackArg == 0) {
 
 				mInternalVariable = ScriptInternalVariable::getVariable(ref);
-				if (mInternalVariable == NULL) {
-                    if (block == NULL)
+				if (mInternalVariable == nullptr) {
+                    if (block == nullptr)
                       Trace(1, "ScriptArgument::resolve has no block!\n");
                     else {
                         mVariable = block->findVariable(ref);
-                        if (mVariable == NULL) {
+                        if (mVariable == nullptr) {
                             mParameter = m->getParameter(ref);
                         }
                     }
@@ -368,11 +368,11 @@ void ScriptArgument::get(ScriptInterpreter* si, ExValue* value)
     if (mStackArg > 0) {
 		si->getStackArg(mStackArg, value);
     }
-    else if (mInternalVariable != NULL) {
+    else if (mInternalVariable != nullptr) {
         mInternalVariable->getValue(si, value);
     }
-	else if (mVariable != NULL) {
-        UserVariables* vars = NULL;
+	else if (mVariable != nullptr) {
+        UserVariables* vars = nullptr;
         const char* name = mVariable->getName();
 		ScriptVariableScope scope = mVariable->getScope();
 		switch (scope) {
@@ -391,13 +391,13 @@ void ScriptArgument::get(ScriptInterpreter* si, ExValue* value)
                 break;
 		}
 
-        if (vars != NULL)
+        if (vars != nullptr)
           vars->get(name, value);
 	}
-    else if (mParameter != NULL) {
+    else if (mParameter != nullptr) {
         Export* exp = si->getExport();
         if (mParameter->scope == PARAM_SCOPE_GLOBAL) {
-            exp->setTrack(NULL);
+            exp->setTrack(nullptr);
             mParameter->getValue(exp, value); 
         }
         else {
@@ -405,7 +405,7 @@ void ScriptArgument::get(ScriptInterpreter* si, ExValue* value)
             mParameter->getValue(exp, value);
         }
     }
-    else if (mLiteral != NULL) { 
+    else if (mLiteral != nullptr) { 
 		value->setString(mLiteral);
     }
     else {
@@ -426,7 +426,7 @@ void ScriptArgument::set(ScriptInterpreter* si, ExValue* value)
         Trace(1, "Script %s: Attempt to set script stack argument %s\n", 
               si->getTraceName(), mLiteral);
     }
-	else if (mInternalVariable != NULL) {
+	else if (mInternalVariable != nullptr) {
         const char* name = mInternalVariable->getName();
         char traceval[128];
         value->getString(traceval, sizeof(traceval));
@@ -434,11 +434,11 @@ void ScriptArgument::set(ScriptInterpreter* si, ExValue* value)
               si->getTraceName(), name, traceval);
 		mInternalVariable->setValue(si, value);
     }
-	else if (mVariable != NULL) {
+	else if (mVariable != nullptr) {
         char traceval[128];
         value->getString(traceval, sizeof(traceval));
 
-        UserVariables* vars = NULL;
+        UserVariables* vars = nullptr;
         const char* name = mVariable->getName();
 		ScriptVariableScope scope = mVariable->getScope();
         if (scope == SCRIPT_SCOPE_GLOBAL) {
@@ -456,10 +456,10 @@ void ScriptArgument::set(ScriptInterpreter* si, ExValue* value)
 			vars = si->getVariables();
 		}
         
-        if (vars != NULL)
+        if (vars != nullptr)
           vars->set(name, value);
 	}
-	else if (mParameter != NULL) {
+	else if (mParameter != nullptr) {
         const char* name = mParameter->getName();
         char traceval[128];
         value->getString(traceval, sizeof(traceval));
@@ -474,7 +474,7 @@ void ScriptArgument::set(ScriptInterpreter* si, ExValue* value)
         if (mParameter->scope == PARAM_SCOPE_GLOBAL) {
             Trace(2, "Script %s: setting global parameter %s = %s\n",
                   si->getTraceName(), name, traceval);
-            action->setResolvedTrack(NULL);
+            action->setResolvedTrack(nullptr);
             mParameter->setValue(action);
         }
         else {
@@ -487,7 +487,7 @@ void ScriptArgument::set(ScriptInterpreter* si, ExValue* value)
         if (mParameter->scheduled)
           si->getMobius()->completeAction(action);
 	}
-    else if (mLiteral != NULL) {
+    else if (mLiteral != nullptr) {
         Trace(1, "Script %s: Attempt to set unresolved reference %s\n", 
               si->getTraceName(), mLiteral);
     }
@@ -507,7 +507,7 @@ void ScriptArgument::set(ScriptInterpreter* si, ExValue* value)
 
 ScriptDeclaration::ScriptDeclaration(const char* name, const char* args)
 {
-    mNext = NULL;
+    mNext = nullptr;
     mName = CopyString(name);
     mArgs = CopyString(args);
 }
@@ -546,11 +546,11 @@ const char* ScriptDeclaration::getArgs()
 
 ScriptBlock::ScriptBlock()
 {
-    mParent = NULL;
-    mName = NULL;
-    mDeclarations = NULL;
-	mStatements = NULL;
-	mLast = NULL;
+    mParent = nullptr;
+    mName = nullptr;
+    mDeclarations = nullptr;
+	mStatements = nullptr;
+	mLast = nullptr;
 }
 
 ScriptBlock::~ScriptBlock()
@@ -559,17 +559,17 @@ ScriptBlock::~ScriptBlock()
 
     delete mName;
 
-	ScriptDeclaration* decl = NULL;
-	ScriptDeclaration* nextDecl = NULL;
-	for (decl = mDeclarations ; decl != NULL ; decl = nextDecl) {
+	ScriptDeclaration* decl = nullptr;
+	ScriptDeclaration* nextDecl = nullptr;
+	for (decl = mDeclarations ; decl != nullptr ; decl = nextDecl) {
 		nextDecl = decl->getNext();
 		delete decl;
 	}
 
-	ScriptStatement* stmt = NULL;
-	ScriptStatement* nextStmt = NULL;
+	ScriptStatement* stmt = nullptr;
+	ScriptStatement* nextStmt = nullptr;
 
-	for (stmt = mStatements ; stmt != NULL ; stmt = nextStmt) {
+	for (stmt = mStatements ; stmt != nullptr ; stmt = nextStmt) {
 		nextStmt = stmt->getNext();
 		delete stmt;
 	}
@@ -604,7 +604,7 @@ ScriptDeclaration* ScriptBlock::getDeclarations()
 
 void ScriptBlock::addDeclaration(ScriptDeclaration* decl)
 {
-    if (decl != NULL) {
+    if (decl != nullptr) {
         // order doesn't matter
         decl->setNext(mDeclarations);
         mDeclarations = decl;
@@ -618,8 +618,8 @@ ScriptStatement* ScriptBlock::getStatements()
 
 void ScriptBlock::add(ScriptStatement* a)
 {
-	if (a != NULL) {
-		if (mLast == NULL) {
+	if (a != nullptr) {
+		if (mLast == nullptr) {
 			mStatements = a;
 			mLast = a;
 		}
@@ -628,7 +628,7 @@ void ScriptBlock::add(ScriptStatement* a)
 			mLast = a;
 		}
 
-        if (a->getParentBlock() != NULL)
+        if (a->getParentBlock() != nullptr)
           Trace(1, "ERROR: ScriptStatement already has a block!\n");
         a->setParentBlock(this);
 	}
@@ -639,7 +639,7 @@ void ScriptBlock::add(ScriptStatement* a)
  */
 void ScriptBlock::resolve(Mobius* m)
 {
-    for (ScriptStatement* s = mStatements ; s != NULL ; s = s->getNext())
+    for (ScriptStatement* s = mStatements ; s != nullptr ; s = s->getNext())
       s->resolve(m);
 }
 
@@ -648,7 +648,7 @@ void ScriptBlock::resolve(Mobius* m)
  */
 void ScriptBlock::link(ScriptCompiler* comp)
 {
-    for (ScriptStatement* s = mStatements ; s != NULL ; s = s->getNext())
+    for (ScriptStatement* s = mStatements ; s != nullptr ; s = s->getNext())
 	  s->link(comp);
 }
 
@@ -663,25 +663,25 @@ void ScriptBlock::link(ScriptCompiler* comp)
  */
 ScriptVariableStatement* ScriptBlock::findVariable(const char* name) {
 
-    ScriptVariableStatement* found = NULL;
+    ScriptVariableStatement* found = nullptr;
 
-    for (ScriptStatement* s = mStatements ; s != NULL ; s = s->getNext()) {
+    for (ScriptStatement* s = mStatements ; s != nullptr ; s = s->getNext()) {
 
         if (s->isVariable()) {
             ScriptVariableStatement* v = (ScriptVariableStatement*)s;
-            if (name == NULL || StringEqualNoCase(name, v->getName())) {
+            if (name == nullptr || StringEqualNoCase(name, v->getName())) {
                 found = v;
                 break;
             }
         }
     }
 
-    if (found == NULL) {
+    if (found == nullptr) {
         ScriptBlock* top = mParent;
-        while (top != NULL && top->getParent() != NULL)
+        while (top != nullptr && top->getParent() != nullptr)
           top = top->getParent();
 
-        if (top != NULL)
+        if (top != nullptr)
           found = top->findVariable(name);
     }
 
@@ -693,12 +693,12 @@ ScriptVariableStatement* ScriptBlock::findVariable(const char* name) {
  */
 ScriptLabelStatement* ScriptBlock::findLabel(const char* name)
 {
-	ScriptLabelStatement* found = NULL;
+	ScriptLabelStatement* found = nullptr;
 
-	for (ScriptStatement* s = mStatements ; s != NULL ; s = s->getNext()) {
+	for (ScriptStatement* s = mStatements ; s != nullptr ; s = s->getNext()) {
 		if (s->isLabel()) {
 			ScriptLabelStatement* l = (ScriptLabelStatement*)s;
-			if (name == NULL || StringEqualNoCase(name, l->getArg(0))) {
+			if (name == nullptr || StringEqualNoCase(name, l->getArg(0))) {
                 found = l;
                 break;
             }
@@ -714,24 +714,24 @@ ScriptLabelStatement* ScriptBlock::findLabel(const char* name)
  */
 ScriptProcStatement* ScriptBlock::findProc(const char* name)
 {
-	ScriptProcStatement* found = NULL;
+	ScriptProcStatement* found = nullptr;
 
-	for (ScriptStatement* s = mStatements ; s != NULL ; s = s->getNext()) {
+	for (ScriptStatement* s = mStatements ; s != nullptr ; s = s->getNext()) {
 		if (s->isProc()) {
 			ScriptProcStatement* p = (ScriptProcStatement*)s;
-			if (name == NULL || StringEqualNoCase(name, p->getArg(0))) {
+			if (name == nullptr || StringEqualNoCase(name, p->getArg(0))) {
                 found = p;
                 break;
             }
         }
     }
 
-    if (found == NULL) {
+    if (found == nullptr) {
         ScriptBlock* top = mParent;
-        while (top != NULL && top->getParent() != NULL)
+        while (top != nullptr && top->getParent() != nullptr)
           top = top->getParent();
 
-        if (top != NULL)
+        if (top != nullptr)
           found = top->findProc(name);
     }
 
@@ -743,12 +743,12 @@ ScriptProcStatement* ScriptBlock::findProc(const char* name)
  */
 ScriptIteratorStatement* ScriptBlock::findIterator(ScriptNextStatement* next)
 {
-    ScriptIteratorStatement* found = NULL;
+    ScriptIteratorStatement* found = nullptr;
 
-    for (ScriptStatement* s = mStatements ; s != NULL ; s = s->getNext()) {
+    for (ScriptStatement* s = mStatements ; s != nullptr ; s = s->getNext()) {
 		// loops can be nested so find the nearest one that isn't already
 		// paired with a next statement
-        if (s->isIterator() && ((ScriptIteratorStatement*)s)->getEnd() == NULL)
+        if (s->isIterator() && ((ScriptIteratorStatement*)s)->getEnd() == nullptr)
 		  found = (ScriptIteratorStatement*)s;
         else if (s == next)
 		  break;
@@ -763,10 +763,10 @@ ScriptIteratorStatement* ScriptBlock::findIterator(ScriptNextStatement* next)
  */
 ScriptStatement* ScriptBlock::findElse(ScriptStatement* start)
 {
-	ScriptStatement* found = NULL;
+	ScriptStatement* found = nullptr;
 	int depth = 0;
 
-	for (ScriptStatement* s = start->getNext() ; s != NULL && found == NULL ;
+	for (ScriptStatement* s = start->getNext() ; s != nullptr && found == nullptr ;
 		 s = s->getNext()) {
 
 		// test isElse first since isIf will also true
@@ -796,10 +796,10 @@ ScriptStatement* ScriptBlock::findElse(ScriptStatement* start)
 
 ScriptStatement::ScriptStatement()
 {
-    mParentBlock = NULL;
-	mNext = NULL;
+    mParentBlock = nullptr;
+	mNext = nullptr;
 	for (int i = 0 ; i < MAX_ARGS ; i++)
-	  mArgs[i] = NULL;
+	  mArgs[i] = nullptr;
 }
 
 ScriptStatement::~ScriptStatement()
@@ -834,8 +834,8 @@ ScriptStatement* ScriptStatement::getNext()
 void ScriptStatement::setArg(const char* arg, int psn)
 {
 	delete mArgs[psn];
-	mArgs[psn] = NULL;
-	if (arg != NULL && strlen(arg) > 0)
+	mArgs[psn] = nullptr;
+	if (arg != nullptr && strlen(arg) > 0)
 	  mArgs[psn] = CopyString(arg);
 }
 
@@ -954,7 +954,7 @@ void ScriptStatement::xwrite(FILE* fp)
 {
     fprintf(fp, "%s", getKeyword());
 
-	for (int i = 0 ; mArgs[i] != NULL ; i++) 
+	for (int i = 0 ; mArgs[i] != nullptr ; i++) 
       fprintf(fp, " %s", mArgs[i]);
 
 	fprintf(fp, "\n");
@@ -1000,7 +1000,7 @@ void ScriptStatement::clearArgs()
  */
 char* ScriptStatement::parseArgs(char* line, int argOffset, int toParse)
 {
-	if (line != NULL) {
+	if (line != nullptr) {
 
         int max = MAX_ARGS;
         if (toParse > 0) {
@@ -1096,7 +1096,7 @@ ScriptStatement* ScriptEchoStatement::eval(ScriptInterpreter* si)
     // in TestDriver 
     si->sendKernelEvent(EventEcho, msg);
     
-    return NULL;
+    return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1128,7 +1128,7 @@ ScriptStatement* ScriptTestStartStatement::eval(ScriptInterpreter* si)
 
     Trace(2, "TestStart ******************  %s  ***************\n", msg);
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -1168,7 +1168,7 @@ ScriptStatement* ScriptMessageStatement::eval(ScriptInterpreter* si)
 	Mobius* m = si->getMobius();
     m->sendMobiusMessage(msg);
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -1203,7 +1203,7 @@ ScriptStatement* ScriptPromptStatement::eval(ScriptInterpreter* si)
 	// we always automatically wait for this
 	si->setupWaitThread(this);
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -1212,7 +1212,7 @@ ScriptStatement* ScriptPromptStatement::eval(ScriptInterpreter* si)
  *                                                                          *
  ****************************************************************************/
 
-ScriptEndStatement ScriptEndStatementObj {NULL, NULL};
+ScriptEndStatement ScriptEndStatementObj {nullptr, nullptr};
 ScriptEndStatement* ScriptEndStatement::Pseudo = &ScriptEndStatementObj;
 
 ScriptEndStatement::ScriptEndStatement(ScriptCompiler* comp,
@@ -1235,7 +1235,7 @@ bool ScriptEndStatement::isEnd()
 ScriptStatement* ScriptEndStatement::eval(ScriptInterpreter* si)
 {
     Trace(2, "Script %s: end\n", si->getTraceName());
-    return NULL;
+    return nullptr;
 }
 
 
@@ -1269,7 +1269,7 @@ const char* ScriptCancelStatement::getKeyword()
 
 ScriptStatement* ScriptCancelStatement::eval(ScriptInterpreter* si)
 {
-	ScriptStatement* next = NULL;
+	ScriptStatement* next = nullptr;
 
     Trace(2, "Script %s: cancel\n", si->getTraceName());
 
@@ -1279,7 +1279,7 @@ ScriptStatement* ScriptCancelStatement::eval(ScriptInterpreter* si)
 		// !! Should we set a script local variable that can be tested
 		// to tell if this happened?
 		ScriptStack* stack = si->getStack();
-		if (stack != NULL)
+		if (stack != nullptr)
 		  stack->cancelWaits();
 	}
 	else {
@@ -1332,18 +1332,18 @@ ScriptStatement* ScriptInterruptStatement::eval(ScriptInterpreter* si)
     Trace(3, "Script %s: interrupt\n", si->getTraceName());
 
     ScriptStack* stack = si->getStack();
-    if (stack != NULL)
+    if (stack != nullptr)
       stack->cancelWaits();
 
     // will this work without a declaration?
     UserVariables* vars = si->getVariables();
-    if (vars != NULL) {
+    if (vars != nullptr) {
         ExValue v;
         v.setString("true");
         vars->set("interrupted", &v);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -1356,13 +1356,13 @@ ScriptSetStatement::ScriptSetStatement(ScriptCompiler* comp,
                                        char* args)
 {
     (void)comp;
-	mExpression = NULL;
+	mExpression = nullptr;
 
 	// isolate the first argument representing the reference
 	// to the thing to set, the remainder is an expression
 	args = parseArgs(args, 0, 1);
 
-    if (args == NULL) {
+    if (args == nullptr) {
         Trace(1, "Malformed set statement, missing arguments\n");
     }
     else {
@@ -1394,12 +1394,12 @@ void ScriptSetStatement::resolve(Mobius* m)
 
 ScriptStatement* ScriptSetStatement::eval(ScriptInterpreter* si)
 {
-	if (mExpression != NULL) {
+	if (mExpression != nullptr) {
 		ExValue v;
 		mExpression->eval(si, &v);
 		mName.set(si, &v);
 	}
-	return NULL;
+	return nullptr;
 }
 
 /****************************************************************************
@@ -1425,7 +1425,7 @@ const char* ScriptUseStatement::getKeyword()
 ScriptStatement* ScriptUseStatement::eval(ScriptInterpreter* si)
 {
     Parameter* p = mName.getParameter();
-    if (p == NULL) {
+    if (p == nullptr) {
         Trace(1, "ScriptUseStatement: Not a parameter: %s\n", 
               mName.getLiteral());
     }   
@@ -1446,8 +1446,8 @@ ScriptVariableStatement::ScriptVariableStatement(ScriptCompiler* comp,
                                                  char* args)
 {
 	mScope = SCRIPT_SCOPE_SCRIPT;
-	mName = NULL;
-	mExpression = NULL;
+	mName = nullptr;
+	mExpression = nullptr;
 
 	// isolate the scope identifier and variable name
 
@@ -1482,7 +1482,7 @@ ScriptVariableStatement::ScriptVariableStatement(ScriptCompiler* comp,
 		mName = arg;
 	}
 
-	if (mName == NULL) {
+	if (mName == nullptr) {
 		// first arg was the scope, parse another
         // see comments above about what we're doing here
         delete mArgs[0];
@@ -1493,7 +1493,7 @@ ScriptVariableStatement::ScriptVariableStatement(ScriptCompiler* comp,
 	}
 
 	// ignore = between the name and initializer
-    if (args == NULL) {
+    if (args == nullptr) {
         Trace(1, "Malformed Variable statement: missing arguments\n");
     }
     else {
@@ -1546,11 +1546,11 @@ ScriptStatement* ScriptVariableStatement::eval(ScriptInterpreter* si)
 {
     Trace(3, "Script %s: Variable %s\n", si->getTraceName(), mName);
 
-	if (mName != NULL && mExpression != NULL) {
+	if (mName != nullptr && mExpression != nullptr) {
         
-        UserVariables* vars = NULL;
+        UserVariables* vars = nullptr;
         // sigh, don't have a trace sig that takes 3 strings 
-        const char* tracemsg = NULL;
+        const char* tracemsg = nullptr;
 
 		switch (mScope) {
 			case SCRIPT_SCOPE_GLOBAL: {
@@ -1570,7 +1570,7 @@ ScriptStatement* ScriptVariableStatement::eval(ScriptInterpreter* si)
                 break;
 		}
 
-        if (vars == NULL)  {
+        if (vars == nullptr)  {
             Trace(1, "Script %s: Invalid variable scope!\n", si->getTraceName());
         }
         else if (mScope == SCRIPT_SCOPE_SCRIPT || !vars->isBound(mName)) {
@@ -1583,7 +1583,7 @@ ScriptStatement* ScriptVariableStatement::eval(ScriptInterpreter* si)
         }
 	}
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -1594,7 +1594,7 @@ ScriptStatement* ScriptVariableStatement::eval(ScriptInterpreter* si)
 
 ScriptConditionalStatement::ScriptConditionalStatement()
 {
-	mCondition = NULL;
+	mCondition = nullptr;
 }
 
 ScriptConditionalStatement::~ScriptConditionalStatement()
@@ -1606,7 +1606,7 @@ bool ScriptConditionalStatement::evalCondition(ScriptInterpreter* si)
 {
 	bool value = false;
 
-	if (mCondition != NULL) {
+	if (mCondition != nullptr) {
 		value = mCondition->evalToBool(si);
 	}
 	else {
@@ -1627,12 +1627,12 @@ ScriptJumpStatement::ScriptJumpStatement(ScriptCompiler* comp,
                                          char* args)
 {
     (void)comp;
-    mStaticLabel = NULL;
+    mStaticLabel = nullptr;
 
 	// the label
 	args = parseArgs(args, 0, 1);
     
-    if (args == NULL) {
+    if (args == nullptr) {
         Trace(1, "Malformed Jump statement: missing arguments\n");
     }
     else {
@@ -1660,7 +1660,7 @@ void ScriptJumpStatement::resolve(Mobius* m)
 
 ScriptStatement* ScriptJumpStatement::eval(ScriptInterpreter* si)
 {
-    ScriptStatement* next = NULL;
+    ScriptStatement* next = nullptr;
 	ExValue v;
 
 	mLabel.get(si, &v);
@@ -1669,14 +1669,14 @@ ScriptStatement* ScriptJumpStatement::eval(ScriptInterpreter* si)
 	Trace(3, "Script %s: Jump %s\n", si->getTraceName(), label);
 
 	if (evalCondition(si)) {
-		if (mStaticLabel != NULL)
+		if (mStaticLabel != nullptr)
 		  next = mStaticLabel;
 		else {
 			// dynamic resolution
-            if (mParentBlock != NULL)
+            if (mParentBlock != nullptr)
               next = mParentBlock->findLabel(label);
 
-			if (next == NULL) {
+			if (next == nullptr) {
 				// halt when this happens or ignore?
 				Trace(1, "Script %s: unresolved jump label %s\n", 
                       si->getTraceName(), label);
@@ -1697,11 +1697,11 @@ ScriptIfStatement::ScriptIfStatement(ScriptCompiler* comp,
                                      char* args)
 {
     (void)comp;
-    mElse = NULL;
+    mElse = nullptr;
 
 	// ignore the first token if it is "if", it is a common error to
 	// use "else if" rather than "else if"
-	if (args != NULL) {
+	if (args != nullptr) {
 		while (*args && IsSpace(*args)) args++;
 		if (StartsWithNoCase(args, "if "))
 		  args += 3;
@@ -1734,7 +1734,7 @@ void ScriptIfStatement::resolve(Mobius* m)
 
 ScriptStatement* ScriptIfStatement::eval(ScriptInterpreter* si)
 {
-    ScriptStatement* next = NULL;
+    ScriptStatement* next = nullptr;
 	ScriptIfStatement* clause = this;
 
 	Trace(3, "Script %s: %s\n", si->getTraceName(), getKeyword());
@@ -1747,10 +1747,10 @@ ScriptStatement* ScriptIfStatement::eval(ScriptInterpreter* si)
 	}
 	else {
 		// keep jumping through clauses until we can enter one
-		while (next == NULL && clause != NULL) {
+		while (next == nullptr && clause != nullptr) {
 			if (clause->evalCondition(si)) {
 				next = clause->getNext();
-				if (next == NULL) {
+				if (next == nullptr) {
 					// malformed, don't infinite loop
                     Trace(1, "Script %s: ScriptIfStatement: malformed clause\n", si->getTraceName());
 					next = ScriptEndStatement::Pseudo;
@@ -1758,7 +1758,7 @@ ScriptStatement* ScriptIfStatement::eval(ScriptInterpreter* si)
 			}
 			else {
 				ScriptStatement* nextClause = clause->getElse();
-				if (nextClause == NULL) {
+				if (nextClause == nullptr) {
 					// malformed
                     Trace(1, "Script %s: ScriptIfStatement: else or missing endif\n", si->getTraceName());
 					next = ScriptEndStatement::Pseudo;
@@ -1788,7 +1788,7 @@ ScriptElseStatement::ScriptElseStatement(ScriptCompiler* comp,
 
 const char* ScriptElseStatement::getKeyword()
 {
-    return (mCondition != NULL) ? "Elseif" : "Else";
+    return (mCondition != nullptr) ? "Elseif" : "Else";
 }
 
 bool ScriptElseStatement::isElse()
@@ -1819,7 +1819,7 @@ bool ScriptEndifStatement::isEndif()
 ScriptStatement* ScriptEndifStatement::eval(ScriptInterpreter* si)
 {
     (void)si;
-	return NULL;
+	return nullptr;
 }
 
 /****************************************************************************
@@ -1853,7 +1853,7 @@ bool ScriptLabelStatement::isLabel(const char* name)
 ScriptStatement* ScriptLabelStatement::eval(ScriptInterpreter* si)
 {
     (void)si;
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -1864,8 +1864,8 @@ ScriptStatement* ScriptLabelStatement::eval(ScriptInterpreter* si)
 
 ScriptIteratorStatement::ScriptIteratorStatement()
 {
-	mEnd = NULL;
-	mExpression = NULL;
+	mEnd = nullptr;
+	mExpression = nullptr;
 }
 
 ScriptIteratorStatement::~ScriptIteratorStatement()
@@ -1928,7 +1928,7 @@ bool ScriptForStatement::isFor()
  */
 ScriptStatement* ScriptForStatement::eval(ScriptInterpreter* si)
 {
-	ScriptStatement* next = NULL;
+	ScriptStatement* next = nullptr;
     Mobius* m = si->getMobius();
 	int trackCount = m->getTrackCount();
 	ExValue v;
@@ -1987,13 +1987,13 @@ ScriptStatement* ScriptForStatement::eval(ScriptInterpreter* si)
 	else if (StartsWithNoCase(forspec, "outSyncMaster")) {
         Synchronizer* sync = m->getSynchronizer();
         Track* t = sync->getOutSyncMaster();
-        if (t != NULL)
+        if (t != nullptr)
           stack->addTrack(t);
 	}
 	else if (StartsWithNoCase(forspec, "trackSyncMaster")) {
         Synchronizer* sync = m->getSynchronizer();
         Track* t = sync->getTrackSyncMaster();
-        if (t != NULL)
+        if (t != nullptr)
           stack->addTrack(t);
 	}
 	else {
@@ -2009,7 +2009,7 @@ ScriptStatement* ScriptForStatement::eval(ScriptInterpreter* si)
 				number[digits] = 0;
 				int tracknum = ToInt(number) - 1;
 				Track* t = m->getTrack(tracknum);
-				if (t != NULL)
+				if (t != nullptr)
 				  stack->addTrack(t);
 				digits = 0;
 			}
@@ -2019,10 +2019,10 @@ ScriptStatement* ScriptForStatement::eval(ScriptInterpreter* si)
 	// if nothing was added, then skip it
 	if (stack->getMax() == 0) {
 		si->popStack();
-		if (mEnd != NULL)
+		if (mEnd != nullptr)
 		  next = mEnd->getNext();
 
-		if (next == NULL) {
+		if (next == nullptr) {
 			// at the end of the script
 			// returning null means go to OUR next statement, here
 			// we need to return the pseudo End statement to make
@@ -2044,7 +2044,7 @@ bool ScriptForStatement::isDone(ScriptInterpreter* si)
 
 	ScriptStack* stack = si->getStack();
 
-	if (stack == NULL) {
+	if (stack == nullptr) {
 		Trace(1, "Script %s: For lost iteration frame!\n",
               si->getTraceName());
 		done = true;
@@ -2056,7 +2056,7 @@ bool ScriptForStatement::isDone(ScriptInterpreter* si)
 	}
 	else {
 		Track* nextTrack = stack->nextTrack();
-		if (nextTrack != NULL)
+		if (nextTrack != nullptr)
 		  Trace(3, "Script %s: For track %ld\n", 
                 si->getTraceName(), (long)nextTrack->getDisplayNumber());
 		else {
@@ -2094,11 +2094,11 @@ const char* ScriptRepeatStatement::getKeyword()
  */
 ScriptStatement* ScriptRepeatStatement::eval(ScriptInterpreter* si)
 {
-	ScriptStatement* next = NULL;
+	ScriptStatement* next = nullptr;
 	char spec[MIN_ARG_VALUE + 4];
 	strcpy(spec, "");
 
-	if (mExpression != NULL)
+	if (mExpression != nullptr)
 	  mExpression->evalToString(si, spec, MIN_ARG_VALUE);
 
 	Trace(3, "Script %s: Repeat %s\n", si->getTraceName(), spec);
@@ -2112,10 +2112,10 @@ ScriptStatement* ScriptRepeatStatement::eval(ScriptInterpreter* si)
 	else {
 		// Invalid repetition count or unresolved variable, treat
 		// this like an If with a false condition
-		if (mEnd != NULL)
+		if (mEnd != nullptr)
 		  next = mEnd->getNext();
 
- 		if (next == NULL) {
+ 		if (next == nullptr) {
 			// at the end of the script
 			// returning null means go to OUR next statement, here
 			// we need to return the pseudo End statement to make
@@ -2133,7 +2133,7 @@ bool ScriptRepeatStatement::isDone(ScriptInterpreter* si)
 
 	ScriptStack* stack = si->getStack();
 
-	if (stack == NULL) {
+	if (stack == nullptr) {
 		Trace(1, "Script %s: Repeat lost iteration frame!\n",
               si->getTraceName());
 		done = true;
@@ -2179,9 +2179,9 @@ const char* ScriptWhileStatement::getKeyword()
  */
 ScriptStatement* ScriptWhileStatement::eval(ScriptInterpreter* si)
 {
-	ScriptStatement* next = NULL;
+	ScriptStatement* next = nullptr;
 
-	if (mExpression != NULL && mExpression->evalToBool(si)) {
+	if (mExpression != nullptr && mExpression->evalToBool(si)) {
 
 		// push a block frame to hold iteration state
 		// ScriptStack* stack = si->pushStack(this);
@@ -2190,10 +2190,10 @@ ScriptStatement* ScriptWhileStatement::eval(ScriptInterpreter* si)
 	else {
 		// while condition started off bad, just bad
 		// treat this like an If with a false condition
-		if (mEnd != NULL)
+		if (mEnd != nullptr)
 		  next = mEnd->getNext();
 
- 		if (next == NULL) {
+ 		if (next == nullptr) {
 			// at the end of the script
 			// returning null means go to OUR next statement, here
 			// we need to return the pseudo End statement to make
@@ -2211,7 +2211,7 @@ bool ScriptWhileStatement::isDone(ScriptInterpreter* si)
 
 	ScriptStack* stack = si->getStack();
 
-	if (stack == NULL) {
+	if (stack == nullptr) {
 		Trace(1, "Script %s: While lost iteration frame!\n",
               si->getTraceName());
 		done = true;
@@ -2222,7 +2222,7 @@ bool ScriptWhileStatement::isDone(ScriptInterpreter* si)
               si->getTraceName());
 		done = true;
 	}
-	else if (mExpression == NULL) {
+	else if (mExpression == nullptr) {
 		// shouldn't have bothered by now
 		Trace(1, "Script %s: While without conditional expression!\n",
               si->getTraceName());
@@ -2248,7 +2248,7 @@ ScriptNextStatement::ScriptNextStatement(ScriptCompiler* comp,
 {
     (void)comp;
     (void)args;
-    mIterator = NULL;
+    mIterator = nullptr;
 }
 
 const char* ScriptNextStatement::getKeyword()
@@ -2268,15 +2268,15 @@ void ScriptNextStatement::resolve(Mobius* m)
     mIterator = mParentBlock->findIterator(this);
 
 	// iterators don't know how to resolve the next, so tell it
-	if (mIterator != NULL)
+	if (mIterator != nullptr)
 	  mIterator->setEnd(this);
 }
 
 ScriptStatement* ScriptNextStatement::eval(ScriptInterpreter* si)
 {
-    ScriptStatement* next = NULL;
+    ScriptStatement* next = nullptr;
 
-	if (mIterator == NULL) {
+	if (mIterator == nullptr) {
 		// unmatched next, ignore
 	}
 	else if (!mIterator->isDone(si)) {
@@ -2285,7 +2285,7 @@ ScriptStatement* ScriptNextStatement::eval(ScriptInterpreter* si)
 	else {
 		// we should have an iteration frame on the stack, pop it
 		ScriptStack* stack = si->getStack();
-		if (stack != NULL && stack->getIterator() == mIterator)
+		if (stack != nullptr && stack->getIterator() == mIterator)
 		  si->popStack();
 		else {
 			// odd, must be a mismatched next?
@@ -2338,15 +2338,15 @@ ScriptStatement* ScriptSetupStatement::eval(ScriptInterpreter* si)
 
     // if a name lookup didn't work it may be a number, 
     // these will be zero based!!
-    if (s == NULL)
+    if (s == nullptr)
       s = config->getSetup(ToInt(name));
 
-    if (s != NULL) {
+    if (s != nullptr) {
         // could pass ordinal here too...
 		m->setActiveSetup(s->getName());
 	}
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -2389,18 +2389,18 @@ ScriptStatement* ScriptPresetStatement::eval(ScriptInterpreter* si)
 
     // if a name lookup didn't work it may be a number, 
     // these will be zero based!
-    if (p == NULL)
+    if (p == nullptr)
       p = config->getPreset(ToInt(name));
 
-    if (p != NULL) {
+    if (p != nullptr) {
 		Track* t = si->getTargetTrack();
-		if (t == NULL)
+		if (t == nullptr)
 		  t = m->getTrack();
 
         t->changePreset(p->ordinal);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -2441,7 +2441,7 @@ ScriptStatement* ScriptUnitTestSetupStatement::eval(ScriptInterpreter* si)
     // if we're already in "unit test mode" could disable it if you do it again
     si->sendKernelEvent(e);
 
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -2481,7 +2481,7 @@ ScriptStatement* ScriptInitPresetStatement::eval(ScriptInterpreter* si)
 	// propagate this immediately to the track (avoid a pending preset)
 	// so we can start calling set statements  
 	Track* destTrack = si->getTargetTrack();
-	if (destTrack == NULL)
+	if (destTrack == nullptr)
 	  destTrack = srcTrack;
     else if (destTrack != srcTrack)
       Trace(1, "Script %s: ScriptInitPresetStatement: Unexpected destination track\n",
@@ -2489,7 +2489,7 @@ ScriptStatement* ScriptInitPresetStatement::eval(ScriptInterpreter* si)
 
     destTrack->refreshPreset(p);
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -2524,7 +2524,7 @@ ScriptStatement* ScriptBreakStatement::eval(ScriptInterpreter* si)
 	ScriptBreak = true;
     Loop* loop = si->getTargetTrack()->getLoop();
     loop->setBreak(true);
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -2555,7 +2555,7 @@ ScriptStatement* ScriptLoadStatement::eval(ScriptInterpreter* si)
 	Trace(2, "Script %s: load %s\n", si->getTraceName(), file);
     si->sendKernelEvent(EventLoadLoop, file);
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -2589,7 +2589,7 @@ ScriptStatement* ScriptSaveStatement::eval(ScriptInterpreter* si)
         si->sendKernelEvent(EventSaveProject, file);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -2659,7 +2659,7 @@ ScriptStatement* ScriptDiffStatement::eval(ScriptInterpreter* si)
 
     si->sendKernelEvent(e);
 
-    return NULL;
+    return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2707,7 +2707,7 @@ void ScriptWarpStatement::link(ScriptCompiler* comp)
 
 ScriptStatement* ScriptWarpStatement::eval(ScriptInterpreter* si)
 {
-    ScriptStatement* next = NULL;
+    ScriptStatement* next = nullptr;
 
     // todo: juse make this use a $ reference now that we have them
     const char* procname = si->getActionArgs();
@@ -2722,7 +2722,7 @@ ScriptStatement* ScriptWarpStatement::eval(ScriptInterpreter* si)
         else {
             Trace(2, "ScriptWarp: Warping to Proc %s\n", procname);
             ScriptBlock* block = proc->getChildBlock();
-            if (block != NULL && block->getStatements() != NULL) {
+            if (block != nullptr && block->getStatements() != nullptr) {
                 // this is where Call would evaluate the argument
                 si->pushStack(this, proc);
                 next = block->getStatements();
@@ -2747,15 +2747,15 @@ ScriptStatement* ScriptWarpStatement::eval(ScriptInterpreter* si)
 ScriptCallStatement::ScriptCallStatement(ScriptCompiler* comp,
                                          char* args)
 {
-	mProc = NULL;
-	mScript = NULL;
-    mExpression = NULL;
+	mProc = nullptr;
+	mScript = nullptr;
+    mExpression = nullptr;
 
 	// isolate the first argument representing the name of the
     // thing to call, the remainder is an expression
 	args = parseArgs(args, 0, 1);
 
-    if (args != NULL)
+    if (args != nullptr)
       mExpression = comp->parseExpression(this, args);
 }
 
@@ -2790,10 +2790,10 @@ void ScriptCallStatement::resolve(Mobius* m)
  */
 void ScriptCallStatement::link(ScriptCompiler* comp)
 {
-	if (mProc == NULL && mScript == NULL) {
+	if (mProc == nullptr && mScript == nullptr) {
 
 		mScript = comp->resolveScript(mArgs[0]);
-		if (mScript == NULL)
+		if (mScript == nullptr)
 		  Trace(1, "Script %s: Unresolved call to %s\n", 
 				comp->getScript()->getTraceName(), mArgs[0]);
 	}
@@ -2801,37 +2801,37 @@ void ScriptCallStatement::link(ScriptCompiler* comp)
 
 ScriptStatement* ScriptCallStatement::eval(ScriptInterpreter* si)
 {
-    ScriptStatement* next = NULL;
+    ScriptStatement* next = nullptr;
 
-	if (mProc != NULL) {    
+	if (mProc != nullptr) {    
         ScriptBlock* block = mProc->getChildBlock();
-        if (block != NULL && block->getStatements() != NULL) {
+        if (block != nullptr && block->getStatements() != nullptr) {
             // evaluate the argument list
             // !! figure out a way to pool ExNodes with ExValueLists 
             // in ScriptStack 
             
-            ExValueList* args = NULL;
-            if (mExpression != NULL)
+            ExValueList* args = nullptr;
+            if (mExpression != nullptr)
               args = mExpression->evalToList(si);
 
             si->pushStack(this, si->getScript(), mProc, args);
             next = block->getStatements();
         }
 	}
-	else if (mScript != NULL) {
+	else if (mScript != nullptr) {
 
         ScriptBlock* block = mScript->getBlock();
-        if (block != NULL && block->getStatements() != NULL) {
+        if (block != nullptr && block->getStatements() != nullptr) {
 
             // !! have to be careful with autoload from another "thread"
             // if we have a call in progress, need a reference count or 
             // something on the Script
 
-            ExValueList* args = NULL;
-            if (mExpression != NULL)
+            ExValueList* args = nullptr;
+            if (mExpression != nullptr)
               args = mExpression->evalToList(si);
 
-            si->pushStack(this, mScript, NULL, args);
+            si->pushStack(this, mScript, nullptr, args);
             // and start executing the child script
             next = block->getStatements();
         }
@@ -2856,14 +2856,14 @@ ScriptStatement* ScriptCallStatement::eval(ScriptInterpreter* si)
 ScriptStartStatement::ScriptStartStatement(ScriptCompiler* comp,
                                            char* args)
 {
-	mScript = NULL;
-    mExpression = NULL;
+	mScript = nullptr;
+    mExpression = nullptr;
 
 	// isolate the first argument representing the name of the
     // thing to call, the remainder is an expression
 	args = parseArgs(args, 0, 1);
 
-    if (args != NULL)
+    if (args != nullptr)
       mExpression = comp->parseExpression(this, args);
 }
 
@@ -2877,9 +2877,9 @@ const char* ScriptStartStatement::getKeyword()
  */
 void ScriptStartStatement::link(ScriptCompiler* comp)
 {
-	if (mScript == NULL) {
+	if (mScript == nullptr) {
 		mScript = comp->resolveScript(mArgs[0]);
-		if (mScript == NULL)
+		if (mScript == nullptr)
 		  Trace(1, "Script %s: Unresolved call to %s\n", 
 				comp->getScript()->getTraceName(), mArgs[0]);
 	}
@@ -2888,7 +2888,7 @@ void ScriptStartStatement::link(ScriptCompiler* comp)
 ScriptStatement* ScriptStartStatement::eval(ScriptInterpreter* si)
 {
     (void)si;
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -2899,7 +2899,7 @@ ScriptStatement* ScriptStartStatement::eval(ScriptInterpreter* si)
 
 ScriptBlockingStatement::ScriptBlockingStatement()
 {
-    mChildBlock = NULL;
+    mChildBlock = nullptr;
 }
 
 ScriptBlockingStatement::~ScriptBlockingStatement()
@@ -2912,7 +2912,7 @@ ScriptBlockingStatement::~ScriptBlockingStatement()
  */
 void ScriptBlockingStatement::resolve(Mobius* m)
 {
-    if (mChildBlock != NULL)
+    if (mChildBlock != nullptr)
       mChildBlock->resolve(m);
 }
 
@@ -2921,13 +2921,13 @@ void ScriptBlockingStatement::resolve(Mobius* m)
  */
 void ScriptBlockingStatement::link(ScriptCompiler* compiler)
 {
-    if (mChildBlock != NULL)
+    if (mChildBlock != nullptr)
       mChildBlock->link(compiler);
 }
 
 ScriptBlock* ScriptBlockingStatement::getChildBlock()
 {
-    if (mChildBlock == NULL)
+    if (mChildBlock == nullptr)
       mChildBlock = NEW(ScriptBlock);
     return mChildBlock;
 }
@@ -2964,7 +2964,7 @@ ScriptStatement* ScriptProcStatement::eval(ScriptInterpreter* si)
 {
     (void)si;
 	// no side effects, wait for a call
-    return NULL;
+    return nullptr;
 }
 
 //
@@ -2995,7 +2995,7 @@ bool ScriptEndprocStatement::isEndproc()
 ScriptStatement* ScriptEndprocStatement::eval(ScriptInterpreter* si)
 {
     (void)si;
-	return NULL;
+	return nullptr;
 }
 
 /****************************************************************************
@@ -3035,7 +3035,7 @@ ScriptStatement* ScriptParamStatement::eval(ScriptInterpreter* si)
 {
     (void)si;
 	// no side effects, wait for a reference
-    return NULL;
+    return nullptr;
 }
 
 //
@@ -3066,7 +3066,7 @@ bool ScriptEndparamStatement::isEndparam()
 ScriptStatement* ScriptEndparamStatement::eval(ScriptInterpreter* si)
 {
     (void)si;
-	return NULL;
+	return nullptr;
 }
 
 /****************************************************************************
@@ -3091,13 +3091,13 @@ ScriptFunctionStatement::ScriptFunctionStatement(ScriptCompiler* comp,
     // new: honestly, this sort of tokenizing is better than what parseArgs
     // does allocating new strings for each token
 	char* ptr = comp->skipToken(args, "up");
-    if (ptr != NULL) {
+    if (ptr != nullptr) {
         mUp = true;
         args = ptr;
     }
     else {
         ptr = comp->skipToken(args, "down");
-        if (ptr != NULL) {
+        if (ptr != nullptr) {
             // it isn't enough just to use !mUp, there is logic below that
             // needs to know if an explicit up/down argument was passed
             mDown = true;
@@ -3124,7 +3124,7 @@ ScriptFunctionStatement::ScriptFunctionStatement(ScriptCompiler* comp,
         }
     }
 
-    if (mFunction != NULL && 
+    if (mFunction != nullptr && 
         (!mFunction->expressionArgs && !mFunction->variableArgs)) {
         // old way
         parseArgs(args);
@@ -3149,11 +3149,11 @@ ScriptFunctionStatement::ScriptFunctionStatement(Function* f)
 void ScriptFunctionStatement::init()
 {
     // the four ScriptArguments initialize themselves
-	mFunctionName = NULL;
-	mFunction = NULL;
+	mFunctionName = nullptr;
+	mFunction = nullptr;
 	mUp = false;
     mDown = false;
-    mExpression = NULL;
+    mExpression = nullptr;
 }
 
 ScriptFunctionStatement::~ScriptFunctionStatement()
@@ -3170,7 +3170,7 @@ ScriptFunctionStatement::~ScriptFunctionStatement()
  */
 void ScriptFunctionStatement::resolve(Mobius* m)
 {
-    if (mFunction != NULL && 
+    if (mFunction != nullptr && 
         // if we resolved this to a script always use expressions
         // !! just change RunScriptFunction to set expressionArgs?
         mFunction->eventType != RunScriptEvent && 
@@ -3198,11 +3198,11 @@ void ScriptFunctionStatement::resolve(Mobius* m)
  */
 void ScriptFunctionStatement::link(ScriptCompiler* comp)
 {
-	if (mFunction == NULL) {
+	if (mFunction == nullptr) {
 
         Script* callingScript = comp->getScript();
 
-        if (mFunctionName == NULL) {
+        if (mFunctionName == nullptr) {
             Trace(1, "Script %s: missing function name\n", 
                   callingScript->getTraceName());
             Trace(1, "--> File %s line %ld\n",
@@ -3211,7 +3211,7 @@ void ScriptFunctionStatement::link(ScriptCompiler* comp)
         else {
             // look for a script
             Script* calledScript = comp->resolveScript(mFunctionName);
-            if (calledScript == NULL) {
+            if (calledScript == nullptr) {
                 Trace(1, "Script %s: unresolved script function %s\n", 
                       callingScript->getTraceName(), mFunctionName);
                 Trace(1, "--> File %s line %ld\n",
@@ -3261,7 +3261,7 @@ ScriptStatement* ScriptFunctionStatement::eval(ScriptInterpreter* si)
     // Functions table but that shouldn't be necessary??
     Function* func = mFunction;
 
-    if (func  == NULL) {
+    if (func  == nullptr) {
         Trace(1, "Script %s: unresolved function %s\n", 
               si->getTraceName(), mFunctionName);
     }
@@ -3275,7 +3275,7 @@ ScriptStatement* ScriptFunctionStatement::eval(ScriptInterpreter* si)
 
         a->setFunction(func);
         Track* t = si->getTargetTrack();
-        if (t != NULL) {
+        if (t != nullptr) {
             // force it into this track
             a->setResolvedTrack(t);
         }
@@ -3318,7 +3318,7 @@ ScriptStatement* ScriptFunctionStatement::eval(ScriptInterpreter* si)
 
         // arguments
 
-        if (mExpression == NULL) {
+        if (mExpression == nullptr) {
             // old school single argument
             // do full expansion on these, nice when building path names
             // for SaveFile and SaveRecordedAudio, overkill for everything else
@@ -3354,7 +3354,7 @@ ScriptStatement* ScriptFunctionStatement::eval(ScriptInterpreter* si)
                 // Multiple values for a function that was only
                 // expecting one.  Take the first one and ignore the others
                 ExValueList* list = value->takeList();
-                if (list != NULL && list->size() > 0) {
+                if (list != nullptr && list->size() > 0) {
                     ExValue* first = list->getValue(0);
                     // Better not be a nested list here, ugly ownership issues
                     // could handle it but unnecessary
@@ -3381,7 +3381,7 @@ ScriptStatement* ScriptFunctionStatement::eval(ScriptInterpreter* si)
 		// ?? why?  if the script ends without waiting, then we have to 
 		// remember to clean up this reference before deleting/pooling
 		// the interpreter, I guess that's a good idea anyway
-        if (a->getEvent() != NULL) {
+        if (a->getEvent() != nullptr) {
 			// TODO: need an argument like "async" to turn off
 			// the automatic completion wait, probably only for unit tests.
 			if (func->scriptSync)
@@ -3403,7 +3403,7 @@ ScriptStatement* ScriptFunctionStatement::eval(ScriptInterpreter* si)
         // if the event didn't take it, we can delete it
         m->completeAction(a);
     }
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -3426,7 +3426,7 @@ void ScriptWaitStatement::init()
 {
 	mWaitType = WAIT_NONE;
 	mUnit = UNIT_NONE;
-    mExpression = NULL;
+    mExpression = nullptr;
 	mInPause = false;
 }
 
@@ -3552,7 +3552,7 @@ ScriptWaitStatement::ScriptWaitStatement(ScriptCompiler* comp,
 WaitType ScriptWaitStatement::getWaitType(const char* name)
 {
 	WaitType type = WAIT_NONE;
-	for (int i = 0 ; WaitTypeNames[i] != NULL ; i++) {
+	for (int i = 0 ; WaitTypeNames[i] != nullptr ; i++) {
 		if (StringEqualNoCase(WaitTypeNames[i], name)) {
 			type = (WaitType)i;
 			break;
@@ -3568,7 +3568,7 @@ WaitUnit ScriptWaitStatement::getWaitUnit(const char* name)
     // hack, it is common to put an "s" on the end such
     // as "Wait frames 1000" rather than "Wait frame 1000".
     // Since the error isn't obvious catch it here.
-    if (name != NULL) {
+    if (name != nullptr) {
         int last = (int)strlen(name) - 1;
         if (last > 0 && name[last] == 's') {
             char buffer[128];
@@ -3578,7 +3578,7 @@ WaitUnit ScriptWaitStatement::getWaitUnit(const char* name)
         }
     }
 
-    for (int i = 0 ; WaitUnitNames[i] != NULL ; i++) {
+    for (int i = 0 ; WaitUnitNames[i] != nullptr ; i++) {
         // KLUDGE: recognize old-style plural names for
         // backward compatibility by using StartWith rather than Compare
         // !! this didn't seem to work, had to do the hack above, why?
@@ -3596,7 +3596,7 @@ ScriptStatement* ScriptWaitStatement::eval(ScriptInterpreter* si)
     // reset the "interrupted" variable
     // will this work without a declaration?
     UserVariables* vars = si->getVariables();
-    if (vars != NULL) {
+    if (vars != nullptr) {
         ExValue v;
         v.setNull();
         vars->set("interrupted", &v);
@@ -3635,7 +3635,7 @@ ScriptStatement* ScriptWaitStatement::eval(ScriptInterpreter* si)
                     break;
                 }
             }
-            if (f == NULL)
+            if (f == nullptr)
 			  Trace(1, "Script %s: unresolved wait function %s!\n", 
                     si->getTraceName(), name);
 			else {
@@ -3734,7 +3734,7 @@ ScriptStatement* ScriptWaitStatement::eval(ScriptInterpreter* si)
     // when scheduling future functions from the script
     si->setPostLatency(true);
 
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -3907,7 +3907,7 @@ long ScriptWaitStatement::getWaitFrame(ScriptInterpreter* si)
 long ScriptWaitStatement::getTime(ScriptInterpreter* si)
 {
     long time = 0;
-    if (mExpression != NULL) {
+    if (mExpression != nullptr) {
 		ExValue v;
 		mExpression->eval(si, &v);
         time = v.getLong();
@@ -3975,13 +3975,13 @@ Script::Script(MScriptLibrary* env, const char* filename)
 
 void Script::init()
 {
-	mLibrary = NULL;
-	mNext = NULL;
-    mFunction = NULL;
-    mName = NULL;
-	mDisplayName = NULL;
-	mFilename = NULL;
-    mDirectory = NULL;
+	mLibrary = nullptr;
+	mNext = nullptr;
+    mFunction = nullptr;
+    mName = nullptr;
+	mDisplayName = nullptr;
+	mFilename = nullptr;
+    mDirectory = nullptr;
 
 	mAutoLoad = false;
 	mButton = false;
@@ -3998,13 +3998,13 @@ void Script::init()
 	mSustainMsecs = DEFAULT_SUSTAIN_MSECS;
 	mClickMsecs = DEFAULT_CLICK_MSECS;
 
-    mBlock = NULL;
+    mBlock = nullptr;
 
-	mReentryLabel = NULL;
-	mSustainLabel = NULL;
-	mEndSustainLabel = NULL;
-	mClickLabel = NULL;	
-    mEndClickLabel = NULL;
+	mReentryLabel = nullptr;
+	mSustainLabel = nullptr;
+	mEndSustainLabel = nullptr;
+	mClickLabel = nullptr;	
+    mEndClickLabel = nullptr;
 }
 
 Script::~Script()
@@ -4018,9 +4018,9 @@ Script::~Script()
 	delete mFilename;
 	delete mDirectory;
 
-	for (el = mNext ; el != NULL ; el = next) {
+	for (el = mNext ; el != nullptr ; el = next) {
 		next = el->getNext();
-		el->setNext(NULL);
+		el->setNext(nullptr);
 		delete el;
 	}
 }
@@ -4059,9 +4059,9 @@ const char* Script::getName()
 const char* Script::getDisplayName()
 {
 	const char* name = mName;
-	if (name == NULL) {
-		if (mDisplayName == NULL) {
-            if (mFilename != NULL) {
+	if (name == nullptr) {
+		if (mDisplayName == nullptr) {
+            if (mFilename != nullptr) {
                 // derive a display name from the file path
                 char dname[1024];
                 GetLeafName(mFilename, dname, false);
@@ -4118,17 +4118,17 @@ const char* Script::getDirectory()
 void Script::clear()
 {
     delete mBlock;
-    mBlock = NULL;
-	mReentryLabel = NULL;
-	mSustainLabel = NULL;
-	mEndSustainLabel = NULL;
-	mClickLabel = NULL;
-	mEndClickLabel = NULL;
+    mBlock = nullptr;
+	mReentryLabel = nullptr;
+	mSustainLabel = nullptr;
+	mEndSustainLabel = nullptr;
+	mClickLabel = nullptr;
+	mEndClickLabel = nullptr;
 }
 
 ScriptBlock* Script::getBlock()
 {
-    if (mBlock == NULL)
+    if (mBlock == nullptr)
       mBlock = NEW(ScriptBlock);
     return mBlock;
 }
@@ -4275,9 +4275,9 @@ int Script::getClickMsecs()
 
 void Script::cacheLabels()
 {
-    if (mBlock != NULL) {
+    if (mBlock != nullptr) {
         for (ScriptStatement* s = mBlock->getStatements() ; 
-             s != NULL ; s = s->getNext()) {
+             s != nullptr ; s = s->getNext()) {
 
             if (s->isLabel()) {
                 ScriptLabelStatement* l = (ScriptLabelStatement*)s;
@@ -4313,7 +4313,7 @@ ScriptLabelStatement* Script::getEndSustainLabel()
 
 bool Script::isSustainAllowed()
 {
-	return (mSustainLabel != NULL || mEndSustainLabel != NULL);
+	return (mSustainLabel != nullptr || mEndSustainLabel != nullptr);
 }
 
 ScriptLabelStatement* Script::getClickLabel()
@@ -4328,7 +4328,7 @@ ScriptLabelStatement* Script::getEndClickLabel()
 
 bool Script::isClickAllowed()
 {
-	return (mClickLabel != NULL || mEndClickLabel != NULL);
+	return (mClickLabel != nullptr || mEndClickLabel != nullptr);
 }
 
 void Script::setFunction(RunScriptFunction* f)
@@ -4354,7 +4354,7 @@ RunScriptFunction* Script::getFunction()
  */
 void Script::resolve(Mobius* m)
 {
-    if (mBlock != NULL)
+    if (mBlock != nullptr)
       mBlock->resolve(m);
     
     // good place to do this too
@@ -4370,7 +4370,7 @@ void Script::resolve(Mobius* m)
  */
 void Script::link(ScriptCompiler* comp)
 {
-    if (mBlock != NULL)
+    if (mBlock != nullptr)
       mBlock->link(comp);
 }
 
@@ -4384,16 +4384,16 @@ void Script::link(ScriptCompiler* comp)
 void Script::xwrite(const char* filename)
 {
 	FILE* fp = fopen(filename, "w");
-	if (fp == NULL) {
+	if (fp == nullptr) {
 		// need a configurable alerting mechanism
 		Trace(1, "Script %s: Unable to open file for writing: %s\n", 
               getDisplayName(), filename);
 	}
 	else {
         // !! write the options
-        if (mBlock != NULL) {
+        if (mBlock != nullptr) {
             for (ScriptStatement* a = mBlock->getStatements() ; 
-                 a != NULL ; a = a->getNext())
+                 a != nullptr ; a = a->getNext())
               a->xwrite(fp);
             fclose(fp);
         }
@@ -4409,9 +4409,9 @@ void Script::xwrite(const char* filename)
 
 MScriptLibrary::MScriptLibrary()
 {
-    mNext = NULL;
-    mSource = NULL;
-	mScripts = NULL;
+    mNext = nullptr;
+    mSource = nullptr;
+	mScripts = nullptr;
 }
 
 MScriptLibrary::~MScriptLibrary()
@@ -4421,9 +4421,9 @@ MScriptLibrary::~MScriptLibrary()
     delete mSource;
     delete mScripts;
 
-	for (el = mNext ; el != NULL ; el = next) {
+	for (el = mNext ; el != nullptr ; el = next) {
 		next = el->getNext();
-		el->setNext(NULL);
+		el->setNext(nullptr);
 		delete el;
 	}
 }
@@ -4473,9 +4473,9 @@ bool MScriptLibrary::isDifference(ScriptConfig* config)
 {
     bool difference = false;
 
-    if (mSource == NULL) {
+    if (mSource == nullptr) {
         // started with nothing
-        if (config != NULL && config->getScripts() != NULL)
+        if (config != nullptr && config->getScripts() != nullptr)
           difference = true;
     }
     else {
@@ -4498,9 +4498,9 @@ bool MScriptLibrary::isDifference(ScriptConfig* config)
  */
 Script* MScriptLibrary::getScript(Script* src)
 {
-    Script* found = NULL;
+    Script* found = nullptr;
 
-    for (Script* s = mScripts ; s != NULL ; s = s->getNext()) {
+    for (Script* s = mScripts ; s != nullptr ; s = s->getNext()) {
         if (StringEqual(s->getDisplayName(), src->getDisplayName())) {
             found = s;
             break;
@@ -4518,8 +4518,8 @@ Script* MScriptLibrary::getScript(Script* src)
 
 ScriptStack::ScriptStack()
 {
-    // see comments in init() for why this has to be set NULL first
-    mArguments = NULL;
+    // see comments in init() for why this has to be set nullptr first
+    mArguments = nullptr;
 	init();
 }
 
@@ -4527,32 +4527,32 @@ ScriptStack::ScriptStack()
  * Called to initialize a stack frame when it is allocated
  * for the first time and when it is removed from the pool.
  * NOTE: Handling of mArguments is special because we own it, 
- * everything else is just a reference we can NULL.  The constructor
- * must set mArguments to NULL before calling this.
+ * everything else is just a reference we can nullptr.  The constructor
+ * must set mArguments to nullptr before calling this.
  */
 void ScriptStack::init()
 {
-    mStack = NULL;
-	mScript = NULL;
-    mCall = NULL;
-    mWarp = NULL;
-	mIterator = NULL;
-    mLabel = NULL;
-    mSaveStatement = NULL;
-	mWait = NULL;
-	mWaitEvent = NULL;
-	mWaitKernelEvent = NULL;
-	mWaitFunction = NULL;
+    mStack = nullptr;
+	mScript = nullptr;
+    mCall = nullptr;
+    mWarp = nullptr;
+	mIterator = nullptr;
+    mLabel = nullptr;
+    mSaveStatement = nullptr;
+	mWait = nullptr;
+	mWaitEvent = nullptr;
+	mWaitKernelEvent = nullptr;
+	mWaitFunction = nullptr;
 	mWaitBlock = false;
 	mMax = 0;
 	mIndex = 0;
 
 	for (int i = 0 ; i < MAX_TRACKS ; i++)
-	  mTracks[i] = NULL;
+	  mTracks[i] = nullptr;
 
     // This is the only thing we own
     delete mArguments;
-    mArguments = NULL;
+    mArguments = nullptr;
 }
 
 ScriptStack::~ScriptStack()
@@ -4716,7 +4716,7 @@ void ScriptStack::addTrack(Track* t)
  */
 Track* ScriptStack::nextTrack()
 {
-    Track* next = NULL;
+    Track* next = nullptr;
 
     if (mIndex < mMax) {
         mIndex++;
@@ -4763,20 +4763,20 @@ bool ScriptStack::nextIndex()
  */
 Track* ScriptStack::getTrack()
 {
-	Track* track = NULL;
+	Track* track = nullptr;
 	ScriptStack* stack = this;
-	ScriptStack* found = NULL;
+	ScriptStack* found = nullptr;
 
 	// find the innermost For iteration frame
-	while (found == NULL && stack != NULL) {
+	while (found == nullptr && stack != nullptr) {
 		ScriptIteratorStatement* it = stack->getIterator();
-		if (it != NULL && it->isFor())
+		if (it != nullptr && it->isFor())
 		  found = stack;
 		else
 		  stack = stack->getStack();
 	}
 
-	if (found != NULL && found->mIndex < found->mMax)
+	if (found != nullptr && found->mIndex < found->mMax)
 	  track = found->mTracks[found->mIndex];
 
 	return track;
@@ -4794,13 +4794,13 @@ bool ScriptStack::finishWait(Function* f)
 {
 	bool finished = false;
 
-	if (mWaitFunction != NULL && 
+	if (mWaitFunction != nullptr && 
 		(mWaitFunction == f ||
 		 (mWaitFunction->eventType == SwitchEvent && 
 		  f->eventType == SwitchEvent))) {
 			
 		Trace(3, "Script end wait function %s\n", f->getName());
-		mWaitFunction = NULL;
+		mWaitFunction = nullptr;
 		finished = true;
 	}
 
@@ -4810,7 +4810,7 @@ bool ScriptStack::finishWait(Function* f)
 	// only return true if the current frame was waiting, not an ancestor
 	// becuase we're still executing in the current frame and don't want to 
 	// recursively call run() again
-	if (mStack != NULL) 
+	if (mStack != nullptr) 
 	  mStack->finishWait(f);
 
 	return finished;
@@ -4826,11 +4826,11 @@ bool ScriptStack::finishWait(Event* e)
 	bool finished = false;
 
 	if (mWaitEvent == e) {
-		mWaitEvent = NULL;
+		mWaitEvent = nullptr;
 		finished = true;
 	}
 
-	if (mStack != NULL) {
+	if (mStack != nullptr) {
 		if (mStack->finishWait(e))
 		  finished = true;
 	}
@@ -4851,7 +4851,7 @@ bool ScriptStack::changeWait(Event* orig, Event* neu)
 		found = true;
 	}
 
-	if (mStack != NULL) {
+	if (mStack != nullptr) {
 		if (mStack->changeWait(orig, neu))
 		  found = true;
 	}
@@ -4867,11 +4867,11 @@ bool ScriptStack::finishWait(KernelEvent* e)
 	bool finished = false;
  
 	if (mWaitKernelEvent == e) {
-		mWaitKernelEvent = NULL;
+		mWaitKernelEvent = nullptr;
 		finished = true;
 	}
 
-	if (mStack != NULL) {
+	if (mStack != nullptr) {
 		if (mStack->finishWait(e))
 		  finished = true;
 	}
@@ -4882,7 +4882,7 @@ bool ScriptStack::finishWait(KernelEvent* e)
 void ScriptStack::finishWaitBlock()
 {
 	mWaitBlock = false;
-	if (mStack != NULL)
+	if (mStack != nullptr)
 	  mStack->finishWaitBlock();
 }
 
@@ -4894,31 +4894,31 @@ void ScriptStack::finishWaitBlock()
  */
 void ScriptStack::cancelWaits()
 {
-	if (mWaitEvent != NULL) {
+	if (mWaitEvent != nullptr) {
         // will si->getTargetTrack always be right nere?
         // can't get to it anyway, assume the Event knows
         // the track it is in
         Track* track = mWaitEvent->getTrack();
-        if (track == NULL) {
+        if (track == nullptr) {
             Trace(1, "Wait event without target track!\n");
         }
         else {
-            mWaitEvent->setScriptInterpreter(NULL);
+            mWaitEvent->setScriptInterpreter(nullptr);
 
             EventManager* em = track->getEventManager();
             em->freeEvent(mWaitEvent);
 
-            mWaitEvent = NULL;
+            mWaitEvent = nullptr;
         }
     }
 
-	if (mWaitKernelEvent != NULL)
-	  mWaitKernelEvent = NULL;
+	if (mWaitKernelEvent != nullptr)
+	  mWaitKernelEvent = nullptr;
 
-	mWaitFunction = NULL;
+	mWaitFunction = nullptr;
 	mWaitBlock = false;
 
-	if (mStack != NULL) {
+	if (mStack != nullptr) {
 		mStack->cancelWaits();
 		mStack->finishWaitBlock();
 	}
@@ -4932,7 +4932,7 @@ void ScriptStack::cancelWaits()
 
 ScriptUse::ScriptUse(Parameter* p)
 {
-    mNext = NULL;
+    mNext = nullptr;
     mParameter = p;
     mValue.setNull();
 }
@@ -4941,9 +4941,9 @@ ScriptUse::~ScriptUse()
 {
 	ScriptUse *el, *next;
 
-	for (el = mNext ; el != NULL ; el = next) {
+	for (el = mNext ; el != nullptr ; el = next) {
 		next = el->getNext();
-		el->setNext(NULL);
+		el->setNext(nullptr);
 		delete el;
 	}
 }

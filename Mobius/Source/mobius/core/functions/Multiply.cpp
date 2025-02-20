@@ -210,7 +210,7 @@ bool MultiplyFunction::isUnroundedEnding(Function* f)
  */
 Event* MultiplyFunction::invoke(Action* action, Loop* l) 
 {
-    Event* event = NULL;
+    Event* event = nullptr;
     MobiusConfig* config = l->getMobius()->getConfiguration();
 
 	// If we're in Realign mode, cancel the realign.
@@ -220,7 +220,7 @@ Event* MultiplyFunction::invoke(Action* action, Loop* l)
 
     EventManager* em = l->getTrack()->getEventManager();
 	Event* realign = em->findEvent(RealignEvent);
-	if (realign != NULL) {
+	if (realign != nullptr) {
 		// We're in Realign "mode", cancel it
 		if (action->down)
           em->freeEvent(realign);
@@ -255,10 +255,10 @@ Event* MultiplyFunction::invoke(Action* action, Loop* l)
  */
 Event* MultiplyFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
 
     event = Function::scheduleEvent(action, l);
-    if (event != NULL) {
+    if (event != nullptr) {
         // if we're not in multiply and we're quantized
         // to a loop boundary, be sure to process it 
         // after the loop back to frame zero
@@ -287,7 +287,7 @@ void MultiplyFunction::invokeLong(Action* action, Loop* l)
     
     if (l->getMode() == ResetMode) {
         Track* t = l->getTrack();
-        t->reset(NULL);
+        t->reset(nullptr);
 		// inform any scripts with a TrackReset function wait
 		t->getMobius()->resumeScript(t, TrackReset);
     }
@@ -335,7 +335,7 @@ void MultiplyFunction::doEvent(Loop* l, Event* e)
              resized = true;
         }
         else if (mmode == MULTIPLY_NORMAL &&
-                 (play != NULL && play->getCycles() > 1)) {
+                 (play != nullptr && play->getCycles() > 1)) {
 
             OutputStream* output = l->getOutputStream();
 
@@ -358,7 +358,7 @@ void MultiplyFunction::doEvent(Loop* l, Event* e)
                 }
             }
         }
-        else if (play != NULL) {
+        else if (play != nullptr) {
             // ?? can we really not have a play layer here, doubt it
 
             // Formerly did not shift here, but if we don't and another

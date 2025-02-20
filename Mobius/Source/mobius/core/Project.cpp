@@ -129,7 +129,7 @@ ProjectSegment::ProjectSegment(MobiusConfig* config, Segment* src)
 	mLocalCopyRight = src->getLocalCopyRight();
 
 	Layer* l = src->getLayer();
-	if (l != NULL) {
+	if (l != nullptr) {
 		// !! need a more reliable id?
 		mLayer = l->getNumber();
 	}
@@ -308,11 +308,11 @@ ProjectLayer::ProjectLayer(MobiusConfig* config, Project* p, Layer* l)
         // and we won't have an mOverdub object or an mOverdubPath
 		if (l->isIsolatedOverdub()) {
 			Audio* a = l->getOverdub();
-			if (a != NULL && !a->isEmpty()) {
+			if (a != nullptr && !a->isEmpty()) {
                 // have to copy this since the mExternalAudio flag
                 // must apply to both mAudio and mOverdub
                 AudioPool* pool = a->getPool();
-                if (pool == NULL)
+                if (pool == nullptr)
                   Trace(1, "ProjectLayer: no audio pool!\n");
                 else {
                     Audio* ov = pool->newAudio();
@@ -333,7 +333,7 @@ ProjectLayer::ProjectLayer(MobiusConfig* config, Project* p, Layer* l)
 		if (!a->isEmpty())
 		  setAudio(a);
 
-		for (Segment* seg = l->getSegments() ; seg != NULL ; 
+		for (Segment* seg = l->getSegments() ; seg != nullptr ; 
 			 seg = seg->getNext()) {
 			ProjectSegment* ps = new ProjectSegment(config, seg);
 			add(ps);
@@ -354,17 +354,17 @@ void ProjectLayer::init()
 {
 	mId = 0;
 	mCycles = 0;
-	mSegments = NULL;
-    mAudio = NULL;
-	mOverdub = NULL;
+	mSegments = nullptr;
+    mAudio = nullptr;
+	mOverdub = nullptr;
 	mExternalAudio = false;
-    mPath = NULL;
-	mOverdubPath = NULL;
+    mPath = nullptr;
+	mOverdubPath = nullptr;
     mProtected = false;
 	mDeferredFadeLeft = false;
 	mDeferredFadeRight = false;
 	mReverseRecord = false;
-	mLayer = NULL;
+	mLayer = nullptr;
 }
 
 ProjectLayer::~ProjectLayer()
@@ -374,7 +374,7 @@ ProjectLayer::~ProjectLayer()
 		delete mAudio;
 		delete mOverdub;
 	}
-	if (mSegments != NULL) {
+	if (mSegments != nullptr) {
 		for (int i = 0 ; i < mSegments->size() ; i++) {
 			ProjectSegment* s = (ProjectSegment*)mSegments->get(i);
 			delete s;
@@ -390,21 +390,21 @@ ProjectLayer::~ProjectLayer()
  */
 Layer* ProjectLayer::allocLayer(LayerPool* pool)
 {
-	if (mLayer == NULL) {
-		mLayer = pool->newLayer(NULL);
+	if (mLayer == nullptr) {
+		mLayer = pool->newLayer(nullptr);
 		mLayer->setNumber(mId);
 
-		if (mAudio != NULL) {
+		if (mAudio != nullptr) {
 			mLayer->setAudio(mAudio);
-			mAudio = NULL;
+			mAudio = nullptr;
 		}
 
         // this was an experimental feature that is no longer exposed
         // keep it around for awhile in case we want to resurect it
-		if (mOverdub != NULL) {
+		if (mOverdub != nullptr) {
 			mLayer->setOverdub(mOverdub);
 			mLayer->setIsolatedOverdub(true);
-			mOverdub = NULL;
+			mOverdub = nullptr;
 		}
 
         // when synthesizing Projects to load individual loops, not
@@ -427,14 +427,14 @@ Layer* ProjectLayer::allocLayer(LayerPool* pool)
 
 void ProjectLayer::resolveLayers(Project* p)
 {
-	if (mLayer == NULL) 
+	if (mLayer == nullptr) 
 	  Trace(1, "Calling resolveLayers before layers allocated");
 
-	else if (mSegments != NULL) {
+	else if (mSegments != nullptr) {
 		for (int i = 0 ; i < mSegments->size() ; i++) {
 			ProjectSegment* ps = (ProjectSegment*)mSegments->get(i);
 			Layer* layer = p->findLayer(ps->getLayer());
-			if (layer == NULL) {
+			if (layer == nullptr) {
 				Trace(1, "Unable to resolve project layer id %ld\n", 
 					  (long)ps->getLayer());
 			}
@@ -481,7 +481,7 @@ Audio* ProjectLayer::getAudio()
 Audio* ProjectLayer::stealAudio()
 {
 	Audio* a = mAudio;
-	mAudio = NULL;
+	mAudio = nullptr;
 	mExternalAudio = false;
 	return a;
 }
@@ -501,7 +501,7 @@ Audio* ProjectLayer::getOverdub()
 Audio* ProjectLayer::stealOverdub()
 {
 	Audio* a = mOverdub;
-	mOverdub = NULL;
+	mOverdub = nullptr;
 	return a;
 }
 
@@ -569,7 +569,7 @@ bool ProjectLayer::isReverseRecord()
 
 void ProjectLayer::add(ProjectSegment* seg)
 {
-	if (mSegments == NULL)
+	if (mSegments == nullptr)
 	  mSegments = new List();
 	mSegments->add(seg);
 }
@@ -594,12 +594,12 @@ void ProjectLayer::toXml(XmlBuffer* b)
     b->addAttribute(ATT_CONTAINS_DEFERRED_FADE_RIGHT, mContainsDeferredFadeRight);
     b->addAttribute(ATT_REVERSE_RECORD, mReverseRecord);
 
-	if (mSegments == NULL) 
+	if (mSegments == nullptr) 
 	  b->add("/>\n");
 	else {
 		b->add(">\n");
 
-		if (mSegments != NULL) {
+		if (mSegments != nullptr) {
 			b->incIndent();
 			for (int i = 0 ; i < mSegments->size() ; i++) {
 				ProjectSegment* seg = (ProjectSegment*)mSegments->get(i);
@@ -625,7 +625,7 @@ void ProjectLayer::parseXml(XmlElement* e)
 	setPath(e->getAttribute(ATT_AUDIO));
 	setOverdubPath(e->getAttribute(ATT_OVERDUB));
 
-	for (XmlElement* child = e->getChildElement() ; child != NULL ; 
+	for (XmlElement* child = e->getChildElement() ; child != nullptr ; 
 		 child = child->getNextElement()) {
 
 		add(new ProjectSegment(child));
@@ -660,26 +660,26 @@ ProjectLoop::ProjectLoop(MobiusConfig* config, Project* p, Loop* l)
 	//setFrame(l->getFrame());
 
 	Layer* layer = l->getPlayLayer();
-	while (layer != NULL) {
+	while (layer != nullptr) {
 		add(new ProjectLayer(config, p, layer));
 		if (config->isSaveLayers())
 		  layer = layer->getPrev();
 		else
-		  layer = NULL;
+		  layer = nullptr;
 	}
 }
 
 void ProjectLoop::init()
 {
     mNumber = 0;
-	mLayers = NULL;
+	mLayers = nullptr;
 	mFrame = 0;
 	mActive = false;
 }
 
 ProjectLoop::~ProjectLoop()
 {
-	if (mLayers != NULL) {
+	if (mLayers != nullptr) {
 		for (int i = 0 ; i < mLayers->size() ; i++) {
 			ProjectLayer* l = (ProjectLayer*)mLayers->get(i);
 			delete l;
@@ -690,7 +690,7 @@ ProjectLoop::~ProjectLoop()
 
 void ProjectLoop::add(ProjectLayer* l)
 {
-	if (mLayers == NULL)
+	if (mLayers == nullptr)
 	  mLayers = new List();
 	mLayers->add(l);
 }
@@ -735,9 +735,9 @@ bool ProjectLoop::isActive()
  */
 Layer* ProjectLoop::findLayer(int id)
 {
-	Layer* found = NULL;
-	if (mLayers != NULL) {
-		for (int i = 0 ; i < mLayers->size() && found == NULL ; i++) {
+	Layer* found = nullptr;
+	if (mLayers != nullptr) {
+		for (int i = 0 ; i < mLayers->size() && found == nullptr ; i++) {
 			ProjectLayer* l = (ProjectLayer*)mLayers->get(i);
 			if (l->getId() == id)
 			  found = l->getLayer();
@@ -748,7 +748,7 @@ Layer* ProjectLoop::findLayer(int id)
 
 void ProjectLoop::allocLayers(LayerPool* pool)
 {
-	if (mLayers != NULL) {
+	if (mLayers != nullptr) {
 		for (int i = 0 ; i < mLayers->size() ; i++) {
 			ProjectLayer* l = (ProjectLayer*)mLayers->get(i);
 			l->allocLayer(pool);
@@ -758,7 +758,7 @@ void ProjectLoop::allocLayers(LayerPool* pool)
 
 void ProjectLoop::resolveLayers(Project* p)
 {
-	if (mLayers != NULL) {
+	if (mLayers != nullptr) {
 		for (int i = 0 ; i < mLayers->size() ; i++) {
 			ProjectLayer* l = (ProjectLayer*)mLayers->get(i);
 			l->resolveLayers(p);
@@ -773,12 +773,12 @@ void ProjectLoop::toXml(XmlBuffer* b)
 	if (mFrame > 0)
 	  b->addAttribute(ATT_FRAME, mFrame);
 
-	if (mLayers == NULL)
+	if (mLayers == nullptr)
 	  b->add("/>\n");
 	else {
 		b->add(">\n");
 
-		if (mLayers != NULL) {
+		if (mLayers != nullptr) {
 			b->incIndent();
 			for (int i = 0 ; i < mLayers->size() ; i++) {
 				ProjectLayer* layer = (ProjectLayer*)mLayers->get(i);
@@ -795,7 +795,7 @@ void ProjectLoop::parseXml(XmlElement* e)
 	mActive = e->getBoolAttribute(ATT_ACTIVE);
 	mFrame = e->getIntAttribute(ATT_FRAME);
 
-	for (XmlElement* child = e->getChildElement() ; child != NULL ; 
+	for (XmlElement* child = e->getChildElement() ; child != nullptr ; 
 		 child = child->getNextElement()) {
 
 		add(new ProjectLayer(child));
@@ -852,9 +852,9 @@ ProjectTrack::ProjectTrack(MobiusConfig* config, Project* p, Track* t)
     // we're not saving every transient runtime parameter, why would
     // we save the active preset if it was different than the SetupTrack starting preset?
     Preset* pre = t->getPreset();
-	if (pre != NULL) {
-        const char* dflt = (st != NULL) ? st->getTrackPresetName() : NULL;
-        if (dflt == NULL || !StringEqual(dflt, pre->getName()))
+	if (pre != nullptr) {
+        const char* dflt = (st != nullptr) ? st->getTrackPresetName() : nullptr;
+        if (dflt == nullptr || !StringEqual(dflt, pre->getName()))
           setPreset(pre->getName());
     }
 
@@ -893,9 +893,9 @@ void ProjectTrack::init()
     mPitchStep = 0;
     mPitchBend = 0;
     mTimeStretch = 0;
-	mPreset = NULL;
-	mLoops = NULL;
-	mVariables = NULL;
+	mPreset = nullptr;
+	mLoops = nullptr;
+	mVariables = nullptr;
 }
 
 ProjectTrack::~ProjectTrack()
@@ -903,7 +903,7 @@ ProjectTrack::~ProjectTrack()
 	delete mPreset;
 	delete mVariables;
 
-	if (mLoops != NULL) {
+	if (mLoops != nullptr) {
 		for (int i = 0 ; i < mLoops->size() ; i++) {
 			ProjectLoop* l = (ProjectLoop*)mLoops->get(i);
 			delete l;
@@ -1105,7 +1105,7 @@ bool ProjectTrack::isFocusLock()
 
 void ProjectTrack::add(ProjectLoop* l)
 {
-	if (mLoops == NULL)
+	if (mLoops == nullptr)
 	  mLoops = new List();
 	mLoops->add(l);
 }
@@ -1117,8 +1117,8 @@ List* ProjectTrack::getLoops()
 
 void ProjectTrack::setVariable(const char* name, ExValue* value)
 {
-	if (name != NULL) {
-		if (mVariables == NULL)
+	if (name != nullptr) {
+		if (mVariables == nullptr)
 		  mVariables = new UserVariables();
 		mVariables->set(name, value);
 	}
@@ -1127,15 +1127,15 @@ void ProjectTrack::setVariable(const char* name, ExValue* value)
 void ProjectTrack::getVariable(const char* name, ExValue* value)
 {
 	value->setNull();
-	if (mVariables != NULL)
+	if (mVariables != nullptr)
 	  mVariables->get(name, value);
 }
 
 Layer* ProjectTrack::findLayer(int id)
 {
-	Layer* found = NULL;
-	if (mLoops != NULL) {
-		for (int i = 0 ; i < mLoops->size() && found == NULL ; i++) {
+	Layer* found = nullptr;
+	if (mLoops != nullptr) {
+		for (int i = 0 ; i < mLoops->size() && found == nullptr ; i++) {
 			ProjectLoop* l = (ProjectLoop*)mLoops->get(i);
 			found = l->findLayer(id);
 		}
@@ -1145,7 +1145,7 @@ Layer* ProjectTrack::findLayer(int id)
 
 void ProjectTrack::allocLayers(LayerPool* pool)
 {
-	if (mLoops != NULL) {
+	if (mLoops != nullptr) {
 		for (int i = 0 ; i < mLoops->size() ; i++) {
 			ProjectLoop* l = (ProjectLoop*)mLoops->get(i);
 			l->allocLayers(pool);
@@ -1155,7 +1155,7 @@ void ProjectTrack::allocLayers(LayerPool* pool)
 
 void ProjectTrack::resolveLayers(Project* p)
 {
-	if (mLoops != NULL) {
+	if (mLoops != nullptr) {
 		for (int i = 0 ; i < mLoops->size() ; i++) {
 			ProjectLoop* l = (ProjectLoop*)mLoops->get(i);
 			l->resolveLayers(p);
@@ -1196,14 +1196,14 @@ void ProjectTrack::toXml(XmlBuffer* b, bool isTemplate)
     b->addAttribute(ATT_TIME_STRETCH, mTimeStretch);
 
 
-	if (mLoops == NULL && mVariables == NULL)
+	if (mLoops == nullptr && mVariables == nullptr)
 	  b->add("/>\n");
 	else {
 		b->add(">\n");
 		b->incIndent();
 
 		if (!isTemplate) {
-			if (mLoops != NULL) {
+			if (mLoops != nullptr) {
 				for (int i = 0 ; i < mLoops->size() ; i++) {
 					ProjectLoop* loop = (ProjectLoop*)mLoops->get(i);
 					loop->toXml(b);
@@ -1213,7 +1213,7 @@ void ProjectTrack::toXml(XmlBuffer* b, bool isTemplate)
 
         // UserVariables lost XML at some point, need to restore
 #if 0        
-		if (mVariables != NULL)
+		if (mVariables != nullptr)
 		  mVariables->toXml(b);
 #endif
         
@@ -1234,7 +1234,7 @@ void ProjectTrack::parseXml(XmlElement* e)
 	setAltFeedback(e->getIntAttribute(ATT_ALT_FEEDBACK));
 	setPan(e->getIntAttribute(ATT_PAN));
 
-	for (XmlElement* child = e->getChildElement() ; child != NULL ; 
+	for (XmlElement* child = e->getChildElement() ; child != nullptr ; 
 		 child = child->getNextElement()) {
 
 		if (child->isName(EL_VARIABLES)) {
@@ -1300,11 +1300,11 @@ Project::Project(Audio* a, int trackNumber, int loopNumber)
 void Project::init()
 {
 	mNumber = 0;
-	mPath = NULL;
-	mTracks = NULL;
-	mVariables = NULL;
-	mBindings = NULL;
-	mSetup = NULL;
+	mPath = nullptr;
+	mTracks = nullptr;
+	mVariables = nullptr;
+	mBindings = nullptr;
+	mSetup = nullptr;
 
 	mLayerIds = 0;
 	mError = false;
@@ -1312,9 +1312,9 @@ void Project::init()
 	mIncremental = false;
     mIncludeAudio = true;
 
-	//mFile = NULL;
+	//mFile = nullptr;
 	//strcpy(mBuffer, "");
-	//mTokens = NULL;
+	//mTokens = nullptr;
 	//mNumTokens = 0;
 	//mFinished = false;
 }
@@ -1326,20 +1326,20 @@ Project::~Project()
 
 void Project::clear()
 {
-	if (mTracks != NULL) {
+	if (mTracks != nullptr) {
 		for (int i = 0 ; i < mTracks->size() ; i++) {
 			ProjectTrack* l = (ProjectTrack*)mTracks->get(i);
 			delete l;
 		}
 		delete mTracks;
-		mTracks = NULL;
+		mTracks = nullptr;
 	}
 	delete mVariables;
-	mVariables = NULL;
+	mVariables = nullptr;
 	delete mBindings;
-	mBindings = NULL;
+	mBindings = nullptr;
 	delete mSetup;
-	mSetup = NULL;
+	mSetup = nullptr;
     delete mPath;
     mPath = nullptr;
 }
@@ -1361,9 +1361,9 @@ int Project::getNextLayerId()
 
 Layer* Project::findLayer(int id)
 {
-	Layer* found = NULL;
-	if (mTracks != NULL) {
-		for (int i = 0 ; i < mTracks->size() && found == NULL ; i++) {
+	Layer* found = nullptr;
+	if (mTracks != nullptr) {
+		for (int i = 0 ; i < mTracks->size() && found == nullptr ; i++) {
 			ProjectTrack* t = (ProjectTrack*)mTracks->get(i);
 			found = t->findLayer(id);
 		}
@@ -1395,8 +1395,8 @@ const char* Project::getSetup()
 
 void Project::setVariable(const char* name, ExValue* value)
 {
-	if (name != NULL) {
-		if (mVariables == NULL)
+	if (name != nullptr) {
+		if (mVariables == nullptr)
 		  mVariables = new UserVariables();
 		mVariables->set(name, value);
 	}
@@ -1405,7 +1405,7 @@ void Project::setVariable(const char* name, ExValue* value)
 void Project::getVariable(const char* name, ExValue* value)
 {
 	value->setNull();
-	if (mVariables != NULL)
+	if (mVariables != nullptr)
 	  mVariables->get(name, value);
 }
 
@@ -1460,7 +1460,7 @@ const char* Project::getErrorMessage()
 
 void Project::setErrorMessage(const char* msg)
 {
-	if (msg == NULL)
+	if (msg == nullptr)
 	  strcpy(mMessage, "");
 	else
 	  strcpy(mMessage, msg);
@@ -1469,7 +1469,7 @@ void Project::setErrorMessage(const char* msg)
 
 void Project::add(ProjectTrack* t)
 {
-	if (mTracks == NULL)
+	if (mTracks == nullptr)
 	  mTracks = new List();
 	mTracks->add(t);
 }
@@ -1496,7 +1496,7 @@ bool Project::isIncremental()
 void Project::resolveLayers(LayerPool* pool)
 {
 	int i;
-	if (mTracks != NULL) {
+	if (mTracks != nullptr) {
 		for (i = 0 ; i < mTracks->size() ; i++) {
 			ProjectTrack* t = (ProjectTrack*)mTracks->get(i);
 			t->allocLayers(pool);
@@ -1521,13 +1521,13 @@ void Project::toXml(XmlBuffer* b, bool isTemplate)
 	b->addAttribute(ATT_SETUP, mSetup);
 	b->addAttribute(ATT_AUDIO, mPath);
 
-	if (mTracks == NULL && mVariables == NULL)
+	if (mTracks == nullptr && mVariables == nullptr)
 	  b->add("/>\n");
 	else {
 		b->add(">\n");
 		b->incIndent();
 
-		if (mTracks != NULL) {
+		if (mTracks != nullptr) {
 			for (int i = 0 ; i < mTracks->size() ; i++) {
 				ProjectTrack* track = (ProjectTrack*)mTracks->get(i);
 				track->toXml(b, isTemplate);
@@ -1536,7 +1536,7 @@ void Project::toXml(XmlBuffer* b, bool isTemplate)
 
         // lost UserVariables XML
 #if 0        
-		if (mVariables != NULL)
+		if (mVariables != nullptr)
 		  mVariables->toXml(b);
 #endif
         
@@ -1553,11 +1553,11 @@ void Project::parseXml(XmlElement* e)
     // recognize the old MidiConfig name, the MidiConfigs will
     // have been upgraded to BindingConfigs by now
     const char* bindings = e->getAttribute(ATT_BINDINGS);
-    if (bindings == NULL) 
+    if (bindings == nullptr) 
       bindings = e->getAttribute(ATT_MIDI_CONFIG);
 	setBindings(bindings);
 
-	for (XmlElement* child = e->getChildElement() ; child != NULL ; 
+	for (XmlElement* child = e->getChildElement() ; child != nullptr ; 
 		 child = child->getNextElement()) {
 
 		if (child->isName(EL_VARIABLES)) {

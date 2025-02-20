@@ -68,8 +68,8 @@ const char* GetSyncPulseTypeName(SyncPulseType type)
 
 EventType::EventType()
 {
-	name = NULL;
-	displayName = NULL;
+	name = nullptr;
+	displayName = nullptr;
 	reschedules = false;
 	noUndo = false;
 	noMode = false;
@@ -77,7 +77,7 @@ EventType::EventType()
 
 const char* EventType::getDisplayName()
 {
-	return ((displayName != NULL) ? displayName : name);
+	return ((displayName != nullptr) ? displayName : name);
 }
 
 /**
@@ -86,7 +86,7 @@ const char* EventType::getDisplayName()
  */
 void EventType::invoke(Loop* l, Event* e)
 {
-	if (e->function == NULL)
+	if (e->function == nullptr)
 	  Trace(l, 1, "Cannot do event, no associated function!\n");
 	else
 	  e->function->doEvent(l, e);
@@ -98,7 +98,7 @@ void EventType::invoke(Loop* l, Event* e)
  */
 void EventType::undo(Loop* l, Event* e)
 {
-	if (e->function == NULL)
+	if (e->function == nullptr)
 	  Trace(l, 1, "Cannot undo event, no associated function!\n");
 	else
 	  e->function->undoEvent(l, e);
@@ -110,7 +110,7 @@ void EventType::undo(Loop* l, Event* e)
  */
 void EventType::confirm(Action* action, Loop* l, Event* e, long frame)
 {
-    if (e->function == NULL)
+    if (e->function == nullptr)
 	  Trace(l, 1, "Cannot confrim event, no associated function!\n");
 	else
 	  e->function->confirmEvent(action, l, e, frame);
@@ -171,18 +171,18 @@ EventPool::~EventPool()
  */
 Event* EventPool::newEvent()
 {
-    Event* e = NULL;
+    Event* e = nullptr;
 
-    if (mEvents != NULL) {
+    if (mEvents != nullptr) {
         e = mEvents->getEvents();
-        if (e != NULL) {
+        if (e != nullptr) {
             mEvents->remove(e);
             e->init();
             e->setPooled(false);
         }
     }
 
-    if (e == NULL) {
+    if (e == nullptr) {
         e = NEW1(Event, this);
         mAllocated++;
         // Trace(2, "Allocated event at %10x\n", (int)e);
@@ -203,7 +203,7 @@ Event* EventPool::newEvent()
 void EventPool::freeEvent(Event* e, bool freeAll)
 {
 	// ignore if we have a parent, or are "owned"
-	if (e != NULL && e->getParent() == NULL && !e->isOwned()) {
+	if (e != nullptr && e->getParent() == nullptr && !e->isOwned()) {
 
 		if (e->isPooled()) {
 			// shouldn't happen if we're managing correctly
@@ -214,11 +214,11 @@ void EventPool::freeEvent(Event* e, bool freeAll)
 			// it is still waiting on this.  Shouldn't happen if
 			// we're processing events properly.
 			ScriptInterpreter* script = e->getScriptInterpreter();
-			if (script != NULL) {
+			if (script != nullptr) {
 				// return strue if we were actually waiting on this
 				if (script->cancelEvent(e))
 				  Trace(1, "Attempt to free an event a script is waiting on!\n");
-				e->setScriptInterpreter(NULL);
+				e->setScriptInterpreter(nullptr);
 			}
             // parallel shit for MSL, fuck we don't have a Mobius here
             // this isn't supposed to happen, just let it hang I guess
@@ -229,8 +229,8 @@ void EventPool::freeEvent(Event* e, bool freeAll)
             }
 
 			// if we have children, set them free
-			Event* next = NULL;
-			for (Event* child = e->getChildren() ; child != NULL ; child = next) {
+			Event* next = nullptr;
+			for (Event* child = e->getChildren() ; child != nullptr ; child = next) {
 				next = child->getSibling();
 
 				// NOTE: In a few special cases for shared events,
@@ -238,19 +238,19 @@ void EventPool::freeEvent(Event* e, bool freeAll)
 				if (child->getParent() == e) {
 
 					if (freeAll || child->processed) {
-						child->setParent(NULL);
+						child->setParent(nullptr);
 						freeEvent(child, freeAll);
 					}
 					else {
 						Trace(1, "Freeing event with unprocessed children! %s/%s\n",
 							  e->type->name, child->type->name);
-						child->setParent(NULL);
+						child->setParent(nullptr);
 					}
 				}
 			}
 
             // !! normally have a csect around list manipulations
-			if (e->getList() != NULL) {
+			if (e->getList() != nullptr) {
                 Trace(1, "Freeing event still on a list!\n");
                 e->getList()->remove(e);
             }
@@ -258,11 +258,11 @@ void EventPool::freeEvent(Event* e, bool freeAll)
             // Should not still have an Action, if we do it is usually
             // an ownership error, be safe and let it leak 
             Action* action = e->getAction();
-            if (action != NULL) {
+            if (action != nullptr) {
                 Trace(1, "Event::freeEvent leaking Action!\n");
                 if (action->getEvent() == e)
                   action->detachEvent(e);
-                e->setAction(NULL);
+                e->setAction(nullptr);
             }
 
             if (e->getPool() == nullptr) {
@@ -282,7 +282,7 @@ void EventPool::freeEvent(Event* e, bool freeAll)
 #if 0
 void EventPool::freeEventList(Event* event)
 {
-    while (event != NULL) {
+    while (event != nullptr) {
         Event* next = event->getNext();
 
         // second arg is freeAll
@@ -296,8 +296,8 @@ void EventPool::freeEventList(Event* event)
 void EventPool::dump()
 {
     int pooled = 0;
-    if (mEvents != NULL) {
-        for (Event* head = mEvents->getEvents() ; head != NULL ; 
+    if (mEvents != nullptr) {
+        for (Event* head = mEvents->getEvents() ; head != nullptr ; 
              head = head->getNext())
           pooled++;
     }
@@ -324,7 +324,7 @@ Event::Event(EventPool* pool)
 
 	// this will be allocated as needed, but not reinitialized  every time
     // to make memory more predictable, just go ahead and allocate it now
-	mPreset = NEW(Preset);
+	//mPreset = NEW(Preset);
 }
 
 void Event::init()
@@ -334,7 +334,7 @@ void Event::init()
 	pending		= false;
 	immediate	= false;
 	type		= RecordEvent;
-	function  	= NULL;
+	function  	= nullptr;
 	number		= 0;
 	down		= true;
 	longPress	= false;
@@ -349,17 +349,17 @@ void Event::init()
     silent      = false;
 
 	mOwned		= false;
-    mList       = NULL;
-	mNext		= NULL;
-	mParent		= NULL;
-	mChildren	= NULL;
-	mSibling	= NULL;
-	mPresetValid = false;
-	mScript     = NULL;
+    mList       = nullptr;
+	mNext		= nullptr;
+	mParent		= nullptr;
+	mChildren	= nullptr;
+	mSibling	= nullptr;
+	//mPresetValid = false;
+	mScript     = nullptr;
     mMslWait    = nullptr;
-    mAction     = NULL;
-	mInvokingFunction = NULL;
-    mArguments  = NULL;
+    mAction     = nullptr;
+	mInvokingFunction = nullptr;
+    mArguments  = nullptr;
 
     mInfo[0] = 0;
 
@@ -380,7 +380,7 @@ void Event::init(EventType* etype, long eframe)
  */
 Event::~Event()
 {
-    delete mPreset;
+    //delete mPreset;
 }
 
 /**
@@ -389,7 +389,7 @@ Event::~Event()
  */
 void Event::free()
 {
-    if (mPool != NULL) {
+    if (mPool != nullptr) {
         // I want to know if an event can be marked own yet still be from a pool
         // if this never happens then we don't need both states, lack of pool
         // implies ownership.  This won't actually pool it since
@@ -418,7 +418,7 @@ void Event::free()
  */
 void Event::freeAll()
 {
-    if (mPool != NULL) {
+    if (mPool != nullptr) {
         mPool->freeEvent(this, true);
     }
     else if (!mOwned) {
@@ -541,13 +541,13 @@ ExValueList* Event::getArguments()
 void Event::clearArguments()
 {
     delete mArguments;
-    mArguments = NULL;
+    mArguments = nullptr;
 }
 
 void Event::setArguments(ExValueList* args)
 {
     // shouldn't see this?
-    if (mArguments != NULL) {
+    if (mArguments != nullptr) {
         Trace(1, "Replacing arguments in event");
         delete mArguments;
     }
@@ -558,10 +558,10 @@ void Event::setAction(Action* a)
 {
     // this is probably okay but I want to start removing this
     // yes, it happens with Action::changeEvent
-    if (mAction == NULL && mInvokingFunction != NULL) 
+    if (mAction == nullptr && mInvokingFunction != nullptr) 
       Trace(2, "Event::setAction already had an invoking function\n");
 
-    if (a != NULL && mInvokingFunction != NULL && 
+    if (a != nullptr && mInvokingFunction != nullptr && 
         mInvokingFunction != a->getFunction())
       Trace(1, "Event::setAction mismatched action/invoking function\n");
 
@@ -576,11 +576,11 @@ Action* Event::getAction()
 void Event::setInvokingFunction(Function* f)
 {
     mInvokingFunction = f;
-    if (mAction != NULL && mAction->getFunction() != f) {
+    if (mAction != nullptr && mAction->getFunction() != f) {
         // I don't think this should allowed
         Trace(1, "Event::setInvokingFunction mismatched action/invoking function\n");
     }
-    else if (mAction == NULL) {
+    else if (mAction == nullptr) {
         // this is okay, but I want to start weeding them out
         Trace(2, "Event::setInvokingFunction without action\n");
     }
@@ -593,7 +593,7 @@ void Event::setInvokingFunction(Function* f)
 Function* Event::getInvokingFunction()
 {
     Function* f = mInvokingFunction;
-    if (f == NULL && mAction != NULL)
+    if (f == nullptr && mAction != nullptr)
       f = mAction->getFunction();
     return f;
 }
@@ -606,9 +606,10 @@ Function* Event::getInvokingFunction()
  * !! This should be an inline object!
  * WTF is this for?
  */
+#if 0
 void Event::savePreset(Preset* p)
 {
-	if (p == NULL)
+	if (p == nullptr)
 	  mPresetValid = false;
 	else {
         // should stop doing this and allocate it when
@@ -622,8 +623,9 @@ void Event::savePreset(Preset* p)
 
 Preset* Event::getEventPreset()
 {
-	return ((mPresetValid) ? mPreset : NULL);
+	return ((mPresetValid) ? mPreset : nullptr);
 }
+#endif
 
 const char* Event::getName()
 {
@@ -633,17 +635,17 @@ const char* Event::getName()
 const char* Event::getFunctionName()
 {
 	// since this is only used for trace, always return a non-null value
-	return (function != NULL) ? function->getName() : "";
+	return (function != nullptr) ? function->getName() : "";
 }
 
 const char* Event::getInfo()
 {
-    return (mInfo[0] != 0) ? mInfo : NULL;
+    return (mInfo[0] != 0) ? mInfo : nullptr;
 }
 
 void Event::setInfo(const char* src)
 {
-    if (src == NULL)
+    if (src == nullptr)
       mInfo[0] = 0;
     else
       CopyString(src, mInfo, sizeof(mInfo));
@@ -659,12 +661,12 @@ void Event::addChild(Event* e)
 	if (pending && !e->pending)
 	  e->pending = true;
 
-	if (e != NULL) {
+	if (e != nullptr) {
 		// order these for undo and display
-		Event* last = NULL;
-		for (last = mChildren ; last != NULL && last->mSibling != NULL ; 
+		Event* last = nullptr;
+		for (last = mChildren ; last != nullptr && last->mSibling != nullptr ; 
 			 last = last->mSibling);
-		if (last == NULL)
+		if (last == nullptr)
 		  mChildren = e;
 		else
 		  last->mSibling = e;
@@ -678,10 +680,10 @@ void Event::addChild(Event* e)
  */
 void Event::removeChild(Event* event)
 {
-	Event* prev = NULL;
-	Event* found = NULL;
+	Event* prev = nullptr;
+	Event* found = nullptr;
 
-	for (Event* e = mChildren ; e != NULL ; e = e->mSibling) {
+	for (Event* e = mChildren ; e != nullptr ; e = e->mSibling) {
 		if (e != event)
 		  prev = e;
 		else {
@@ -690,14 +692,14 @@ void Event::removeChild(Event* event)
 		}
 	}
 
-	if (found != NULL) {
-		if (prev == NULL)
+	if (found != nullptr) {
+		if (prev == nullptr)
 		  mChildren = found->mSibling;
 		else
 		  prev->mSibling = found->mSibling;
 
-		found->mSibling = NULL;
-		found->mParent = NULL;
+		found->mSibling = nullptr;
+		found->mParent = nullptr;
 	}
 	else {
 	  Trace(1, "Expected child event not found\n");
@@ -714,14 +716,14 @@ void Event::removeChild(Event* event)
  */
 Event* Event::removeUndoChild()
 {
-	Event* undo = NULL;
+	Event* undo = nullptr;
 
-	for (Event* e = mChildren ; e != NULL ; e = e->mSibling) {
+	for (Event* e = mChildren ; e != nullptr ; e = e->mSibling) {
 		if (e->type != JumpPlayEvent)
 		  undo = e;
 	}
 
-	if (undo != NULL)
+	if (undo != nullptr)
 	  removeChild(undo);
 
 	return undo;
@@ -732,8 +734,8 @@ Event* Event::removeUndoChild()
  */
 Event* Event::findEvent(EventType* childtype)
 {
-	Event* found = NULL;
-	for (Event* e = mChildren ; e != NULL ; e = e->mSibling) {
+	Event* found = nullptr;
+	for (Event* e = mChildren ; e != nullptr ; e = e->mSibling) {
 		if (e->type == childtype) {
 			found = e;
 			break;
@@ -748,8 +750,8 @@ Event* Event::findEvent(EventType* childtype)
  */
 Event* Event::findEvent(EventType* childtype, Function* f)
 {
-	Event* found = NULL;
-	for (Event* e = mChildren ; e != NULL ; e = e->mSibling) {
+	Event* found = nullptr;
+	for (Event* e = mChildren ; e != nullptr ; e = e->mSibling) {
 		if (e->type == childtype && e->function == f) {
 			found = e;
 			break;
@@ -765,7 +767,7 @@ bool Event::inProgress()
 {
 	bool started = false;
 	
-	for (Event* e = mChildren ; e != NULL ; e = e->mSibling) {
+	for (Event* e = mChildren ; e != nullptr ; e = e->mSibling) {
 		if (e->processed) {
 			started = true;
 			break;
@@ -797,11 +799,11 @@ bool Event::inProgress()
  */
 void Event::invoke(Loop* l)
 {
-    if (type != NULL) {
+    if (type != nullptr) {
         // some types may overload this
         type->invoke(l, this);
     }
-    else if (function != NULL) {
+    else if (function != nullptr) {
         // appeared in a few cases in 1.45 but shouldn't happen now?
         Trace(1, "Event without type!\n");
         function->doEvent(l, this);
@@ -846,7 +848,7 @@ void Event::confirm(Action* action, Loop* l, long argFrame)
  */
 void Event::finishScriptWait(Mobius* m) 
 {
-	if (mScript != NULL)
+	if (mScript != nullptr)
 	  mScript->finishEvent(this);
 
     if (mMslWait != nullptr)
@@ -860,7 +862,7 @@ void Event::finishScriptWait(Mobius* m)
  */
 void Event::rescheduleScriptWait(Mobius* m, Event* neu) 
 {
-	if (mScript != NULL)
+	if (mScript != nullptr)
 	  mScript->rescheduleEvent(this, neu);
 
     if (mMslWait != nullptr)
@@ -878,9 +880,9 @@ void Event::rescheduleScriptWait(Mobius* m, Event* neu)
  */
 void Event::cancelScriptWait(Mobius* m)
 {
-    if (mScript != NULL) {
+    if (mScript != nullptr) {
 		mScript->cancelEvent(this);
-        mScript = NULL;
+        mScript = nullptr;
 	}
     
     if (mMslWait != nullptr) {
@@ -897,7 +899,7 @@ void Event::cancelScriptWait(Mobius* m)
 
 EventList::EventList()
 {
-    mEvents = NULL;
+    mEvents = nullptr;
 }
 
 EventList::~EventList()
@@ -920,8 +922,8 @@ EventList::~EventList()
  */
 void EventList::flush(bool reset, bool keepScriptEvents)
 {
-	Event* next = NULL;
-	for (Event* e = mEvents ; e != NULL ; e = next) {
+	Event* next = nullptr;
+	for (Event* e = mEvents ; e != nullptr ; e = next) {
 		next = e->getNext();
 		if (reset || !e->type->noUndo) {
 			if (e->type != ScriptEvent || (reset && !keepScriptEvents)) {
@@ -949,11 +951,11 @@ EventList* EventList::transfer()
 {
 	EventList* list = NEW(EventList);
 
-	for (Event* e = mEvents ; e != NULL ; e = e->getNext())
+	for (Event* e = mEvents ; e != nullptr ; e = e->getNext())
 	  e->setList(list);
 
 	list->mEvents = mEvents;
-	mEvents = NULL;
+	mEvents = nullptr;
 
 	return list;
 }
@@ -970,17 +972,17 @@ Event* EventList::getEvents()
  */
 void EventList::add(Event* event)
 {
-	if (event != NULL) {
+	if (event != nullptr) {
 
-		if (event->getList() != NULL) {
+		if (event->getList() != nullptr) {
             Trace(1, "Attempt to add an event already on another list!\n");
         }
 		else {
-			Event* last = NULL;
-			for (last = mEvents ; last != NULL && last->getNext() != NULL ; 
+			Event* last = nullptr;
+			for (last = mEvents ; last != nullptr && last->getNext() != nullptr ; 
 				 last = last->getNext());
 
-			if (last != NULL)
+			if (last != nullptr)
 			  last->setNext(event);
 			else
 			  mEvents = event;
@@ -995,21 +997,21 @@ void EventList::add(Event* event)
  */
 void EventList::insert(Event* event)
 {
-	if (event != NULL) {
+	if (event != nullptr) {
 
-		if (event->getList() != NULL) {
+		if (event->getList() != nullptr) {
             Trace(1, "Attempt to add an event already on another list!\n");
         }
 		else {
-            Event* prev = NULL;
-            for (Event* e = mEvents ; e != NULL ; e = e->getNext()) {
+            Event* prev = nullptr;
+            for (Event* e = mEvents ; e != nullptr ; e = e->getNext()) {
                 if (e->frame > event->frame)
                   break;
                 else 
                   prev = e;
             }   
 
-            if (prev != NULL) {
+            if (prev != nullptr) {
                 event->setNext(prev->getNext());
                 prev->setNext(event);
             }
@@ -1029,21 +1031,21 @@ void EventList::insert(Event* event)
  */
 void EventList::remove(Event* event)
 {
-	if (event != NULL) {
-		Event* prev = NULL;
+	if (event != nullptr) {
+		Event* prev = nullptr;
 		Event* e;
 
-		for (e = mEvents ; e != NULL && e != event ; e = e->getNext())
+		for (e = mEvents ; e != nullptr && e != event ; e = e->getNext())
 		  prev = e;
 
 		if (e == event) {
-			if (prev == NULL)
+			if (prev == nullptr)
 			  mEvents = e->getNext();
 			else 
 			  prev->setNext(e->getNext());
 
-			e->setList(NULL);
-			e->setNext(NULL);
+			e->setList(nullptr);
+			e->setNext(nullptr);
 		}
 	}
 }
@@ -1055,7 +1057,7 @@ bool EventList::contains(Event* event)
 {
 	bool contains = false;
 
-	for (Event* e = mEvents ; e != NULL ; e = e->getNext()) {
+	for (Event* e = mEvents ; e != nullptr ; e = e->getNext()) {
 		if (e == event) {
 			contains = true;
 			break;
@@ -1069,8 +1071,8 @@ bool EventList::contains(Event* event)
  */
 Event* EventList::find(long frame)
 {
-	Event* event = NULL;
-	for (Event* e = mEvents ; e != NULL ; e = e->getNext()) {
+	Event* event = nullptr;
+	for (Event* e = mEvents ; e != nullptr ; e = e->getNext()) {
 		if (e->frame == frame) {
 			event = e;
 			break;
@@ -1084,8 +1086,8 @@ Event* EventList::find(long frame)
  */
 Event* EventList::find(EventType* type)
 {
-	Event* event = NULL;
-	for (Event* e = mEvents ; e != NULL ; e = e->getNext()) {
+	Event* event = nullptr;
+	for (Event* e = mEvents ; e != nullptr ; e = e->getNext()) {
 		if (e->type == type) {
 			event = e;
 			break;
@@ -1096,8 +1098,8 @@ Event* EventList::find(EventType* type)
 
 Event* EventList::find(Function* f)
 {
-	Event* event = NULL;
-	for (Event* e = mEvents ; e != NULL ; e = e->getNext()) {
+	Event* event = nullptr;
+	for (Event* e = mEvents ; e != nullptr ; e = e->getNext()) {
 		if (e->function == f) {
 			event = e;
 			break;
@@ -1111,8 +1113,8 @@ Event* EventList::find(Function* f)
  */
 Event* EventList::find(EventType* type, long frame)
 {
-	Event* event = NULL;
-	for (Event* e = mEvents ; e != NULL ; e = e->getNext()) {
+	Event* event = nullptr;
+	for (Event* e = mEvents ; e != nullptr ; e = e->getNext()) {
 		if (e->type == type && e->frame == frame) {
 			event = e;
 			break;

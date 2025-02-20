@@ -39,18 +39,18 @@
 
 ScriptCompiler::ScriptCompiler()
 {
-    mMobius     = NULL;
+    mMobius     = nullptr;
 
     // these are dyamically allocated
-    mParser     = NULL;
-    mLibrary        = NULL;
+    mParser     = nullptr;
+    mLibrary        = nullptr;
 
     // these are intermediate compile state that will end
     // up in mLibrary
-    mScripts    = NULL;
-    mLast       = NULL;
-    mScript     = NULL;
-    mBlock      = NULL;
+    mScripts    = nullptr;
+    mLast       = nullptr;
+    mScript     = nullptr;
+    mBlock      = nullptr;
     mLineNumber = 0;
     strcpy(mLine, "");
 }
@@ -73,19 +73,19 @@ ScriptCompiler::~ScriptCompiler()
 MScriptLibrary* ScriptCompiler::compile(Mobius* m, ScriptConfig* config)
 {
     // should not try to use this more than once
-    if (mLibrary != NULL)
+    if (mLibrary != nullptr)
       Trace(1, "ScriptCompiler: dangling library!\n");
 
     mMobius = m;
     mLibrary = new MScriptLibrary();
-    mScripts = NULL;
-    mLast = NULL;
+    mScripts = nullptr;
+    mLast = nullptr;
 
     // give it a copy of the config for later diff detection
     mLibrary->setSource(config->clone());
 
-	if (config != NULL) {
-		for (ScriptRef* ref = config->getScripts() ; ref != NULL ; 
+	if (config != nullptr) {
+		for (ScriptRef* ref = config->getScripts() ; ref != nullptr ; 
 			 ref = ref->getNext()) {
 
             // removed path handling relative to the installation and
@@ -102,7 +102,7 @@ MScriptLibrary* ScriptCompiler::compile(Mobius* m, ScriptConfig* config)
     // Link Phase
     // todo: this I'd like to try deferring until it is
     // actually installed in the kernel
-    for (Script* s = mScripts ; s != NULL ; s = s->getNext())
+    for (Script* s = mScripts ; s != nullptr ; s = s->getNext())
       link(s);
     
     mLibrary->setScripts(mScripts);
@@ -139,10 +139,10 @@ void ScriptCompiler::recompile(Mobius* m, Script* script)
 
 	if (script->isAutoLoad()) {
         const char* filename = script->getFilename();
-        if (filename != NULL) {
+        if (filename != nullptr) {
 #if 0            
             FILE* fp = fopen(filename, "r");
-            if (fp == NULL) {
+            if (fp == nullptr) {
                 Trace(1, "Unable to refresh script %s\n", filename);
                 // just leave it as it was or empty it out?
             }
@@ -200,7 +200,7 @@ void ScriptCompiler::parse(ScriptRef* ref)
 	}
 	else {
         FILE* fp = fopen(filename, "r");
-        if (fp == NULL) {
+        if (fp == nullptr) {
             // file validation should have been done at a higher level now
 			Trace(1, "Unable to open file: %s\n", filename);
 		}
@@ -228,7 +228,7 @@ void ScriptCompiler::parse(ScriptRef* ref)
             mScriptRef = ref;
 
             if (parse(fp, script)) {
-                if (mScripts == NULL)
+                if (mScripts == nullptr)
                   mScripts = script;
                 else
                   mLast->setNext(script);
@@ -256,7 +256,7 @@ bool ScriptCompiler::parse(FILE* fp, Script* script)
     mScript = script;
     mLineNumber = 0;
     
-    if (mParser == NULL)
+    if (mParser == nullptr)
       mParser = new ExParser();
 
     // if here on !authload, remove current contents
@@ -267,7 +267,7 @@ bool ScriptCompiler::parse(FILE* fp, Script* script)
     // start by parsing in to the script block
     mBlock = mScript->getBlock();
 
-	while (fgets(line, SCRIPT_MAX_LINE, fp) != NULL) {
+	while (fgets(line, SCRIPT_MAX_LINE, fp) != nullptr) {
 
         if (mLineNumber == 0) {
             unsigned char first = line[0];
@@ -380,14 +380,14 @@ bool ScriptCompiler::parse(FILE* fp, Script* script)
 				}
 
                 ScriptStatement* s = parseStatement(ptr);
-                if (s != NULL) {
+                if (s != nullptr) {
                     s->setLineNumber(mLineNumber);
 
                     if (s->isEndproc() || s->isEndparam()) {
                         // pop the stack
                         // !! hey, should check to make sure we have the
                         // right ending, currently Endproc can end a Param
-                        if (mBlock != NULL && mBlock->getParent() != NULL) {
+                        if (mBlock != nullptr && mBlock->getParent() != nullptr) {
                             mBlock = mBlock->getParent();
                         }
                         else {
@@ -460,14 +460,14 @@ void ScriptCompiler::parseArgument(char* line, const char* keyword,
 
 ScriptStatement* ScriptCompiler::parseStatement(char* line)
 {
-    ScriptStatement* stmt = NULL;
+    ScriptStatement* stmt = nullptr;
 	char* keyword;
 	char* args;
 
     // parse the initial keyword
 	keyword = parseKeyword(line, &args);
 
-	if (keyword != NULL) {
+	if (keyword != nullptr) {
 
         if (StartsWith(keyword, "!") || EndsWith(keyword, ":"))
           parseDeclaration(keyword, args);
@@ -597,8 +597,8 @@ ScriptStatement* ScriptCompiler::parseStatement(char* line)
  */
 char* ScriptCompiler::parseKeyword(char* line, char** retargs)
 {
-	char* keyword = NULL;
-	char* args = NULL;
+	char* keyword = nullptr;
+	char* args = nullptr;
 
 	// skip preceeding whitespace
 	while (*line && IsSpace(*line)) line++;
@@ -610,7 +610,7 @@ char* ScriptCompiler::parseKeyword(char* line, char** retargs)
 			args = line + 1;
 		}
 		if (strlen(keyword) == 0)
-		  keyword = NULL;
+		  keyword = nullptr;
 	}
 
 	// remove trailing carriage-return from Windows
@@ -628,7 +628,7 @@ char* ScriptCompiler::parseKeyword(char* line, char** retargs)
 void ScriptCompiler::parseDeclaration(const char* keyword, const char* args)
 {
     // mBlock has the containing ScriptBlock
-    if (mBlock != NULL) {
+    if (mBlock != nullptr) {
         // let's defer complicated parsing since it may be block specific?
         // well it shouldn't be...
         ScriptDeclaration* decl = new ScriptDeclaration(keyword, args);
@@ -664,7 +664,7 @@ Script* ScriptCompiler::getScript()
 
 /** 
  * Consume a reserved token in an argument list.
- * Returns NULL if the token was not found.  If found it returns
+ * Returns nullptr if the token was not found.  If found it returns
  * a pointer into "args" after the token.
  *
  * The token may be preceeded by whitespace and MUST be followed
@@ -683,9 +683,9 @@ Script* ScriptCompiler::getScript()
  */
 char* ScriptCompiler::skipToken(char* args, const char* token)
 {
-    char* next = NULL;
+    char* next = nullptr;
 
-    if (args != NULL) {
+    if (args != nullptr) {
         char* ptr = args;
         while (*ptr && IsSpace(*ptr)) ptr++;
         int len = (int)strlen(token);
@@ -712,20 +712,20 @@ char* ScriptCompiler::skipToken(char* args, const char* token)
 ExNode* ScriptCompiler::parseExpression(ScriptStatement* stmt,
                                                const char* src)
 {
-	ExNode* expr = NULL;
+	ExNode* expr = nullptr;
 
     // should have one by now
-    if (mParser == NULL)
+    if (mParser == nullptr)
       mParser = new ExParser();
 
 	expr = mParser->parse(src);
 
     const char* error = mParser->getError();
-	if (error != NULL) {
+	if (error != nullptr) {
 		// !! need a console or something for these
 		char buffer[1024];
 		const char* earg = mParser->getErrorArg();
-		if (earg == NULL || strlen(earg) == 0)
+		if (earg == nullptr || strlen(earg) == 0)
 		  strcpy(buffer, error);
 		else 
 		  snprintf(buffer, sizeof(buffer), "%s (%s)", error, earg);
@@ -812,13 +812,13 @@ void ScriptCompiler::addError(const char* msg, int line)
  */
 Script* ScriptCompiler::resolveScript(const char* name)
 {
-	Script* found = NULL;
+	Script* found = nullptr;
 
-    if (mScripts != NULL) {
+    if (mScripts != nullptr) {
         // must be doing a full ScriptConfig compile
         found = resolveScript(mScripts, name);
     }
-    else if (mLibrary != NULL) {
+    else if (mLibrary != nullptr) {
         // fall back to MScriptLibrary
         found = resolveScript(mLibrary->getScripts(), name);
     }
@@ -828,10 +828,10 @@ Script* ScriptCompiler::resolveScript(const char* name)
 
 Script* ScriptCompiler::resolveScript(Script* scripts, const char* name)
 {
-	Script* found = NULL;
+	Script* found = nullptr;
 
-    if (name != NULL)  {
-        for (Script* s = scripts ; s != NULL ; s = s->getNext()) {
+    if (name != nullptr)  {
+        for (Script* s = scripts ; s != nullptr ; s = s->getNext()) {
 
             // check the !name
             // originally case sensitive but since we're insensntive
@@ -842,7 +842,7 @@ Script* ScriptCompiler::resolveScript(Script* scripts, const char* name)
             else {
                 // check leaf filename
                 const char* fname = s->getFilename();
-                if (fname != NULL) {
+                if (fname != nullptr) {
                     char lname[1024];
                     GetLeafName(fname, lname, true);
 						
@@ -865,7 +865,7 @@ Script* ScriptCompiler::resolveScript(Script* scripts, const char* name)
         }
     }
 
-    if (found != NULL) {
+    if (found != nullptr) {
 		Trace(2, "MScriptLibrary: Reference %s resolved to script %s\n",
 			  name, found->getFilename());
 	}

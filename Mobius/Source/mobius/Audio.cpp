@@ -126,13 +126,13 @@ Audio::Audio(AudioPool* pool, const char *filename)
 
 void Audio::init() 
 {
-    mPool = NULL;
+    mPool = nullptr;
 	mSampleRate = CD_SAMPLE_RATE;
 	mChannels = BUFFER_CHANNELS;
     mBufferSize = BUFFER_SIZE;
 
 	mVersion = 0;
-	mBuffers = NULL;
+	mBuffers = nullptr;
 	mBufferCount = 0;
 	mStartFrame = 0;
 	mFrames = 0;
@@ -207,7 +207,7 @@ bool Audio::isEmpty()
 {
 	bool empty = true;
 	for (int i = 0 ; i < mBufferCount && empty ; i++) {
-		if (mBuffers[i] != NULL)
+		if (mBuffers[i] != nullptr)
 		  empty = false;
 	}
 	return empty;
@@ -236,7 +236,7 @@ void Audio::zero()
 {
 	for (int i = 0 ; i < mBufferCount ; i++) {
 		freeBuffer(mBuffers[i]);
-		mBuffers[i] = NULL;
+		mBuffers[i] = nullptr;
 	}
 	mVersion++;
 
@@ -268,13 +268,13 @@ void Audio::locateStart(int* buffer, int* offset)
  */
 void Audio::initIndex()
 {
-	if (mBuffers == NULL) {
+	if (mBuffers == nullptr) {
 
 		mBufferCount = 60;			// configurable?
 		mBuffers = new float*[mBufferCount];
         MemTrack(mBuffers, "Audio::initIndex", mBufferCount * sizeof(float*));
 		for (int i = 0 ; i < mBufferCount ; i++)
-		  mBuffers[i] = NULL;
+		  mBuffers[i] = nullptr;
 
 		// We'll normally record forward but if we reverse then
 		// we can start pushing new buffers on the front.  Though 
@@ -295,10 +295,10 @@ void Audio::initIndex()
  */
 void Audio::freeBuffers() 
 {
-	if (mBuffers != NULL) {
+	if (mBuffers != nullptr) {
 		for (int i = 0 ; i < mBufferCount ; i++) {
 			freeBuffer(mBuffers[i]);
-			mBuffers[i] = NULL;
+			mBuffers[i] = nullptr;
 		}
 	}
 	mStartFrame = 0;
@@ -326,14 +326,14 @@ void Audio::growIndex(int count, bool up)
 			  buffers[i+count] = mBuffers[i];
 	
 			for (i = 0 ; i < count ; i++)
-			  buffers[i] = NULL;
+			  buffers[i] = nullptr;
 		}
 		else {
 			for (i = 0 ; i < mBufferCount ; i++)
 			  buffers[i] = mBuffers[i];
 	
 			for (i = mBufferCount ; i < newcount ; i++)
-			  buffers[i] = NULL;
+			  buffers[i] = nullptr;
 		}
 
 		mBufferCount = newcount;
@@ -381,7 +381,7 @@ void Audio::prepareIndexFrame(long frame)
  */
 float* Audio::getBuffer(int i) 
 {
-	return ((i >= 0 && i < mBufferCount) ? mBuffers[i] : NULL);
+	return ((i >= 0 && i < mBufferCount) ? mBuffers[i] : nullptr);
 }
 
 /**
@@ -393,7 +393,7 @@ float *Audio::allocBuffer(int index)
 
 	prepareIndex(index);
 	buffer = mBuffers[index];
-	if (buffer == NULL) {
+	if (buffer == nullptr) {
 		buffer = allocBuffer();
 		mBuffers[index] = buffer;
 		mVersion++;
@@ -410,7 +410,7 @@ void Audio::addBuffer(float* buffer, int index)
 {
 	prepareIndex(index);
 	float* existing = mBuffers[index];
-	if (existing != NULL) {
+	if (existing != nullptr) {
 		// ordinarily not supposed to be replacing buffers, but allow it
 		Trace(1, "Audio::addBuffer replacing existing buffer!\n");
         freeBuffer(existing);
@@ -424,9 +424,9 @@ void Audio::addBuffer(float* buffer, int index)
  */
 float* Audio::allocBuffer() 
 {
-    float* buffer = NULL;
+    float* buffer = nullptr;
 
-    if (mPool != NULL) {
+    if (mPool != nullptr) {
         // Sincwe Audio and AudioPool share the same buffer size
         // we dont' have to pass it down.
         buffer = mPool->newBuffer();
@@ -450,7 +450,7 @@ float* Audio::allocBuffer()
  */
 void Audio::freeBuffer(float* buffer)
 {
-    if (mPool != NULL)
+    if (mPool != nullptr)
       mPool->freeBuffer(buffer);
     else {
         // shouldn't be happening
@@ -527,7 +527,7 @@ void Audio::setFrames(long frames)
 
 				// partially clear the new last buffer
 				float* buffer = mBuffers[index];
-				if (buffer != NULL) {
+				if (buffer != nullptr) {
 					// may be more than we need if we're in the same
 					// buffer as the current last frame, but this shouldn't
 					// happen very often
@@ -545,7 +545,7 @@ void Audio::setFrames(long frames)
 
 				for (int i = index + 1 ; i <= lastIndex ; i++) {
 					freeBuffer(mBuffers[i]);
-					mBuffers[i] = NULL;
+					mBuffers[i] = nullptr;
 					mVersion++;
 				}
 			}
@@ -630,7 +630,7 @@ void Audio::setStartFrame(long frame)
 			if (index < mBufferCount) {
 				// partially clear the new first buffer
 				float* buffer = mBuffers[index];
-				if (buffer != NULL) {
+				if (buffer != nullptr) {
 					// may be more than we need if we're in the same
 					// buffer as the current start frame, but this shouldn't
 					// happen often enough to be worth optimizing?
@@ -648,7 +648,7 @@ void Audio::setStartFrame(long frame)
 
 				for (int i = firstIndex ; i <= lastIndex ; i++) {
 					freeBuffer(mBuffers[i]);
-					mBuffers[i] = NULL;
+					mBuffers[i] = nullptr;
 					mVersion++;
 				}
 			}
@@ -712,7 +712,7 @@ long Audio::prepareFrame(long frame, int* retIndex,
 {
 	int index = 0;
 	int offset = 0;
-	float* buffer = NULL;
+	float* buffer = nullptr;
 
 	if (frame >= 0) {
 		// normal forward positioning
@@ -933,7 +933,7 @@ void Audio::copy(Audio* src)
 void Audio::copy(Audio* src, int feedback)
 {
 	reset();
-	if (src != NULL) {
+	if (src != nullptr) {
 		// assume we're all using the same buffer size
 		if (src->mBufferSize != mBufferSize)
 		  Trace(1, "Mismatched Audio buffer size!\n");
@@ -941,7 +941,7 @@ void Audio::copy(Audio* src, int feedback)
 			int srcmax = src->mBufferCount;
 			for (int i = 0 ; i < srcmax ; i++) {
 				float* srcb = src->getBuffer(i);
-				if (srcb != NULL) {
+				if (srcb != nullptr) {
 					// !! todo: if the buffer is empty don't bother allocating
 
 					float* destb = allocBuffer(i);
@@ -984,9 +984,9 @@ void Audio::dump()
 		   mSampleRate, mChannels, mFrames, mStartFrame);
 
 	int allocated = 0;
-	if (mBuffers != NULL) {
+	if (mBuffers != nullptr) {
 		for (int i = 0 ; i < mBufferCount ; i++) {
-			if (mBuffers[i] != NULL)
+			if (mBuffers[i] != nullptr)
 			  allocated++;
 		}
 	}
@@ -1005,9 +1005,9 @@ void Audio::dump()
 void Audio::dump(TraceBuffer* b) 
 {
 	int allocated = 0;
-	if (mBuffers != NULL) {
+	if (mBuffers != nullptr) {
 		for (int i = 0 ; i < mBufferCount ; i++) {
-			if (mBuffers[i] != NULL)
+			if (mBuffers[i] != nullptr)
 			  allocated++;
 		}
 	}
@@ -1143,7 +1143,7 @@ void Audio::append(AudioBuffer* buf)
 	long frames = buf->frames;
 
 	if (frames > 0) {
-		if (buf->buffer == NULL) {
+		if (buf->buffer == nullptr) {
 			// special "append silence" option
 			// put should probably support this too
 			setFrames(mFrames + frames);
@@ -1166,7 +1166,7 @@ void Audio::append(float* src, long frames)
 
 void Audio::append(Audio* src)
 {
-	if (src != NULL && src->getFrames() > 0)
+	if (src != nullptr && src->getFrames() > 0)
 	  put(src, mFrames);
 }
 
@@ -1201,7 +1201,7 @@ void Audio::fadeEdges()
  */
 void Audio::insert(Audio* audio, long insertFrame)
 {
-    if (audio != NULL && audio->getSamples() > 0) {
+    if (audio != nullptr && audio->getSamples() > 0) {
         if (insertFrame >= mFrames) {
             // just an append
             append(audio);
@@ -1233,7 +1233,7 @@ void Audio::insert(Audio* audio, long insertFrame)
             for (int i = 0 ; i < shiftSamples ; i++) {
                 // allow copying from a sparse buffer
                 float sample = 0.0;
-                if (src != NULL)
+                if (src != nullptr)
                     sample = src[srcSample];
                 dest[destSample] = sample;
                 destSample--;

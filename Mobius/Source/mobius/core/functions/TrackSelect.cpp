@@ -163,7 +163,7 @@ TrackSelectFunction::TrackSelectFunction(int i, bool relative)
  */
 Track* TrackSelectFunction::getNextTrack(Action* action, Track* track)
 {
-	Track* nextTrack = NULL;
+	Track* nextTrack = nullptr;
     Mobius* mobius = track->getMobius();
 	int trackCount = mobius->getTrackCount();
     int nextIndex = index;
@@ -234,7 +234,7 @@ Track* TrackSelectFunction::getNextTrack(Action* action, Track* track)
  */
 Event* TrackSelectFunction::invoke(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
 
     if (action->down) {
 		trace(action, l);
@@ -253,14 +253,14 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
         EventManager* em = l->getTrack()->getEventManager();
         Event* prev = em->findEvent(eventType);
 
-        if (prev != NULL) {
+        if (prev != nullptr) {
             // We're already waiting for a track switch.
             // like loop switch we can make repeated invocations
             // just change the destination track.
             // !! Could also treat this like "escape quantization"
             // like we do for other functions
             Track* last = prev->fields.trackSwitch.nextTrack;
-            if (last == NULL)
+            if (last == nullptr)
               Trace(1, "TrackSelect event without track pointer!\n");
             else {
                 Track* next = getNextTrack(action, last);
@@ -270,7 +270,7 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
         }
         else {
             Track* next = getNextTrack(action, l->getTrack());
-            if (next != NULL && next != l->getTrack()) {
+            if (next != nullptr && next != l->getTrack()) {
 
                 TrackLeaveAction leaveAction = ParameterSource::getTrackLeaveAction(l);
                 MobiusMode* mode = l->getMode();
@@ -328,7 +328,7 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                 }
                 else if (mode == ThresholdMode || mode == SynchronizeMode) {
                     // just cancel, no waiting
-                    l->reset(NULL);
+                    l->reset(nullptr);
                     immediate = false;
                 }
                 else if (mode == MuteMode) {
@@ -382,8 +382,8 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
 
                         // Build the fundamental function event, possibly
                         // quantized but not scheduled
-                        Event* stop = em->getFunctionEvent(stopAction, l, NULL);
-                        if (stop == NULL) { 
+                        Event* stop = em->getFunctionEvent(stopAction, l, nullptr);
+                        if (stop == nullptr) { 
                             // shouldn't happen here
                             Trace(1, "TrackSelect: Unable to end mode!\n");
                         }
@@ -412,11 +412,11 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                     // this will schedule it and may change the event frame
                     Event* modeEnd = l->scheduleRoundingModeEnd(action, event);
 
-                    if (modeEnd != NULL && modeEnd->getParent() == NULL) {
+                    if (modeEnd != nullptr && modeEnd->getParent() == nullptr) {
                         // Mode decided not to use the triggering event
                         // and deleted it. This should not happen here
                         Trace(1, "TrackSelect: Rounding mode deleted track select event!\n");
-                        event = NULL;
+                        event = nullptr;
                     }
                     else if (leaveAction == TRACK_LEAVE_CANCEL) {
                         // we supposed to cancel but not wait,  
@@ -454,7 +454,7 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                 }
                 else if (mode == RehearseMode) {
                     // fall back to play mode
-                    l->cancelRehearse(NULL);
+                    l->cancelRehearse(nullptr);
                     immediate = true;
                 }
                 else {

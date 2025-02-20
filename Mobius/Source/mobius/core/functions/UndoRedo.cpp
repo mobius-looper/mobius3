@@ -164,13 +164,13 @@ UndoFunction::UndoFunction(bool dynamic, bool shortpress, bool only)
  */
 Event* UndoFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
 	MobiusMode* mode = l->getMode();
 
 	if (mode == ThresholdMode || mode == SynchronizeMode) {
 		// cancel the recording, but leave track controls as is
-		// l->reset(NULL);
+		// l->reset(nullptr);
         
         // new: if we're recording or synchronizing, immediately pass
         // it over to Synchronizer so it can remove recording units before
@@ -236,7 +236,7 @@ Event* UndoFunction::scheduleSwitchStack(Action* action, Loop* l)
             em->cancelSwitch();
         }
 	}
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -305,7 +305,7 @@ RedoFunction::RedoFunction() :
 Event* RedoFunction::scheduleEvent(Action* action, Loop* l)
 {
     (void)action;
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
 
 	MobiusMode* mode = l->getMode();
@@ -340,11 +340,11 @@ void RedoFunction::doEvent(Loop* l, Event* e)
     Layer* play = l->getPlayLayer();
     Layer* redo = l->getRedoLayer();
 
-	if (play == NULL) {
+	if (play == nullptr) {
 		// must be an initial recording, not sure what redo means
 		// here, ignore for now
 	}
-	else if (redo != NULL) {
+	else if (redo != nullptr) {
 
 		// capture a fade tail now in case the current layer will be pooled
 		// actually, this shouldn't happen on a redo but be safe
@@ -355,7 +355,7 @@ void RedoFunction::doEvent(Loop* l, Event* e)
 
 		// it is important that we clear this, getEventSummary uses
 		// it as an indicator that we're in the redo list
-		redo->setRedo(NULL);
+		redo->setRedo(nullptr);
 
 		// Let's have a redo flush all remaining events, unlike undo
 		// which does them one at a time
@@ -369,7 +369,7 @@ void RedoFunction::doEvent(Loop* l, Event* e)
 		Layer* redoTail = redo->getTail();
 		redoTail->setPrev(play);
 		l->setPlayLayer(redo);
-		l->setPrePlayLayer(NULL);
+		l->setPrePlayLayer(nullptr);
 
 		// recalculate segment fades
 		redo->restore(false);

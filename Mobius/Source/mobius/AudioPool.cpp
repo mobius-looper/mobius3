@@ -21,14 +21,14 @@ AudioPool::AudioPool()
 {
     // mCsect = new CriticalSection("AudioPool");
     // juce::CriticalSection is a member object
-    mPool = NULL;
+    mPool = nullptr;
     mAllocated = 0;
     mInUse = 0;
 
     // needs more testing
     // !! channels
     //mNewPool = new SampleBufferPool(FRAMES_PER_BUFFER * 2);
-    //mNewPool = NULL;
+    //mNewPool = nullptr;
 }
 
 /**
@@ -40,8 +40,8 @@ AudioPool::~AudioPool()
     // delete mCsect;
     // delete mNewPool;
 
-    OldPooledBuffer* next = NULL;
-    for (OldPooledBuffer* p = mPool ; p != NULL ; p = next) {
+    OldPooledBuffer* next = nullptr;
+    for (OldPooledBuffer* p = mPool ; p != nullptr ; p = next) {
         next = p->next;
         delete p;
     }
@@ -97,12 +97,12 @@ float* AudioPool::newBuffer()
     // mCsect->enter();
     { const juce::ScopedLock lock (mCsect);
         
-		if (mPool == NULL) {
+		if (mPool == nullptr) {
 			int bytesize = sizeof(OldPooledBuffer) + (BUFFER_SIZE * sizeof(float));
 			char* bytes = new char[bytesize];
             MemTrack(bytes, "AudioPool:newBuffer", bytesize);
 			OldPooledBuffer* pb = (OldPooledBuffer*)bytes;
-			pb->next = NULL;
+			pb->next = nullptr;
 			pb->pooled = 0;
 			buffer = (float*)(bytes + sizeof(OldPooledBuffer));
             mAllocated++;
@@ -133,9 +133,9 @@ float* AudioPool::newBuffer()
  */
 void AudioPool::freeBuffer(float* buffer)
 {
-	if (buffer != NULL) {
+	if (buffer != nullptr) {
 
-		//if (mNewPool != NULL) {
+		//if (mNewPool != nullptr) {
         //mNewPool->freeSamples(buffer);
         //}
 		//else {
@@ -160,7 +160,7 @@ void AudioPool::freeBuffer(float* buffer)
 
 void AudioPool::dump()
 {
-	//if (mNewPool != NULL) {
+	//if (mNewPool != nullptr) {
     // need a dump method for the new one
     //trace("NewBufferPool: %d in use ?? in pool\n", mInUse);
     //}
@@ -170,7 +170,7 @@ void AudioPool::dump()
     { const juce::ScopedLock lock (mCsect);
         
         //mCsect->enter();
-        for (OldPooledBuffer* p = mPool ; p != NULL ; p = p->next)
+        for (OldPooledBuffer* p = mPool ; p != nullptr ; p = p->next)
           pooled++;
         //mCsect->leave();
     }

@@ -59,11 +59,11 @@ Event* CheckpointFunction::invoke(Action* action, Loop* loop)
 {
     (void)action;
 	Layer* l = loop->getRecordLayer();
-	if (l != NULL) {
+	if (l != nullptr) {
 		// shift any pending change to the play layer
 		loop->shift(true);
 		l = loop->getPlayLayer();
-		if (l != NULL) {
+		if (l != nullptr) {
 			if (l->getCheckpoint() == CHECKPOINT_ON)
 			  l->setCheckpoint(CHECKPOINT_OFF);
 			else
@@ -71,7 +71,7 @@ Event* CheckpointFunction::invoke(Action* action, Loop* loop)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /****************************************************************************/

@@ -312,7 +312,7 @@ MuteFunction::MuteFunction(bool pause, bool sus, bool start, bool glob,
  */
 Event* MuteFunction::invoke(Action* action, Loop* loop)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     MobiusConfig* config = loop->getMobius()->getConfiguration();
 
 	// !! Note how we use the static function pointer rather than checking
@@ -368,7 +368,7 @@ Event* MuteFunction::scheduleEvent(Action* action, Loop* l)
             // same logic as normal Pause
             EventManager* em = l->getTrack()->getEventManager();
             event = Function::scheduleEvent(action, l);
-            if (event != NULL && !event->reschedule)
+            if (event != nullptr && !event->reschedule)
               em->schedulePlayJump(l, event);
         }
     }
@@ -379,7 +379,7 @@ Event* MuteFunction::scheduleEvent(Action* action, Loop* l)
         event = Function::scheduleEvent(action, l);
 
         // and a play transition event
-        if (event != NULL && !event->reschedule) {
+        if (event != nullptr && !event->reschedule) {
             if (!mRestart || action->down) {
                 // this will toggle mute
                 em->schedulePlayJump(l, event);
@@ -449,7 +449,7 @@ void MuteFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
     }
 	else {
 		Event* primary = e;
-		if (e->getParent() != NULL)
+		if (e->getParent() != nullptr)
 		  primary = e->getParent();
 
 		// logic is complicated by the two confusing mute flags
@@ -517,7 +517,7 @@ void MuteFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 				// should always have a parent
 				long muteFrame = e->frame;
                 Event* parent = e->getParent();
-				if (parent != NULL)
+				if (parent != nullptr)
 				  muteFrame = parent->frame;
 
 				long transitionFrame = muteFrame - 
@@ -732,7 +732,7 @@ void MuteFunction::doEvent(Loop* l, Event* e)
 
 	// if this is not a GlobalMute, then GlobalMute is canceled
 	if (e->function != GlobalMute && invoker != Solo)
-	  l->getMobius()->cancelGlobalMute(NULL);
+	  l->getMobius()->cancelGlobalMute(nullptr);
 
 	l->validate(e);
 }

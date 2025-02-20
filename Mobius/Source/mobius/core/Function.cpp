@@ -133,7 +133,7 @@ InvokeEventType::InvokeEventType()
 void InvokeEventType::invoke(Loop* l, Event* e)
 {
 	Function* f = e->function;
-	if (f != NULL)
+	if (f != nullptr)
 	  f->invokeEvent(l, e);
 	else
 	  Trace(1, "InvokeEvent called with no function!");
@@ -345,18 +345,18 @@ Function::Function(const char* name) :
 
 void Function::init()
 {
-	alias1 = NULL;
-	alias2 = NULL;
+	alias1 = nullptr;
+	alias2 = nullptr;
 	externalName = false;
 	ordinal = 0;
     global = false;
     outsideInterrupt = false;
 	index = 0;
-	object = NULL;
+	object = nullptr;
 
-	eventType = NULL;
+	eventType = nullptr;
     mMode = PlayMode;
-	longFunction = NULL;
+	longFunction = nullptr;
 
 	majorMode = false;
 	minorMode = false;
@@ -417,12 +417,12 @@ void Function::localize(MessageCatalog* cat)
 		if (!externalName && !scriptOnly)
 		  Trace(1, "No catalog key for function %s\n", getName());
 		// don't trash previously built display names for RunScriptFunction
-        if (getDisplayName() == NULL)
+        if (getDisplayName() == nullptr)
 		  setDisplayName(getName());
 	}
 	else {
 		const char* msg = cat->get(key);
-		if (msg != NULL)
+		if (msg != nullptr)
 		  setDisplayName(msg);
 		else {
 			Trace(1, "No localization for function %s\n", getName());
@@ -439,7 +439,7 @@ void Function::localize(MessageCatalog* cat)
  */
 bool Function::isSustainable()
 {
-	return (sustain || maySustain || longPressable || longFunction != NULL);
+	return (sustain || maySustain || longPressable || longFunction != nullptr);
 }
 
 /**
@@ -518,7 +518,7 @@ bool Function::isSpread()
     bool result = this->spread;
     if (eventType == RunScriptEvent) {
         Script* script = (Script*)object;
-        if (script != NULL)
+        if (script != nullptr)
           result = script->isSpread();
     }
 	return result;
@@ -534,7 +534,7 @@ bool Function::isSpread()
 Function* Function::getLongPressFunction(Action* action)
 {
     (void)action;
-	return ((longFunction != NULL) ? longFunction : this);
+	return ((longFunction != nullptr) ? longFunction : this);
 }
 
 void Function::trace(Action* action, Mobius* m)
@@ -542,13 +542,13 @@ void Function::trace(Action* action, Mobius* m)
     (void)m;
 	// suppress if we're rescheduling since we've already
 	// done a rescheduling message and it looks like a function came in
-	if (action->rescheduling == NULL && !action->noTrace)
+	if (action->rescheduling == nullptr && !action->noTrace)
 	  Trace(2, "Function %s %s\n", getName(), ((action->down) ? "down" : "up"));
 }
 
 void Function::trace(Action* action, Loop* l)
 {
-	if (action->rescheduling == NULL && !action->noTrace)
+	if (action->rescheduling == nullptr && !action->noTrace)
 	  Trace(l, 2, "Function %s %s\n", getName(), ((action->down) ? "down" : "up"));
 }
 
@@ -581,7 +581,7 @@ void Function::invoke(Action* action, Mobius* m)
  */ 
 Event* Function::invoke(Action* action, Loop* loop)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     Track* track = loop->getTrack();
     EventManager* em = track->getEventManager();
 	MobiusMode* mode = loop->getMode();
@@ -589,9 +589,9 @@ Event* Function::invoke(Action* action, Loop* loop)
 
 	// it is ok to call global functions on loops, but only if they have
 	// an event that can be scheduled, necessary for FullMute
-	if (global && eventType == NULL) {
+	if (global && eventType == nullptr) {
         Trace(1, "Cannot invoking global function %s on a loop\n", getName());
-        return NULL;
+        return nullptr;
     }
 
 	if (action->down || sus) {
@@ -634,10 +634,10 @@ Event* Function::invoke(Action* action, Loop* loop)
 			// !! if this is a "reschedulable" event, then it is proabaly
 			// a SUS up transition so leave it alone, is this
 			// what we want always?
-			if (prev != NULL && prev->reschedule) {
+			if (prev != nullptr && prev->reschedule) {
 				Trace(loop, 2, "Ignoring escape of reschedulable event %s(%s) %ld\n",
 					  prev->getName(), prev->getFunctionName(), prev->frame);
-				prev = NULL;
+				prev = nullptr;
 			}
 
 			// If we're comming from a script, treat it like a SUS and let
@@ -655,7 +655,7 @@ Event* Function::invoke(Action* action, Loop* loop)
             Function* f = action->getFunction();
             bool isRecord = (f == Record || f == AutoRecord);
 
-			if (!isRecord && prev != NULL && !sus && action->trigger != TriggerScript) {
+			if (!isRecord && prev != nullptr && !sus && action->trigger != TriggerScript) {
 
 				// an event was already posted, treat the second invocation
 				// as a "double click" and process the event immediately
@@ -731,7 +731,7 @@ Event* Function::invoke(Action* action, Loop* loop)
     // they will already be bound but scheduleSwitchStack isn't doing it so 
     // rather than track down all the places this is our final catch
     // on the way out.
-    if (event != NULL && action->getEvent() == NULL)
+    if (event != nullptr && action->getEvent() == nullptr)
       action->setEvent(event);
 
 	return event;
@@ -751,7 +751,7 @@ void Function::invokeEvent(Loop* l, Event* e)
     // Original Action must be left on the event, steal it
     Action* action = e->getAction();
 
-    if (action == NULL)
+    if (action == nullptr)
       Trace(l, 1, "Function::invokeEvent event with no action!\n");
     else {
         action->detachEvent(e);
@@ -766,11 +766,11 @@ void Function::invokeEvent(Loop* l, Event* e)
 
         Event* realEvent = invoke(action, l);
 
-        if (realEvent != NULL) {
+        if (realEvent != nullptr) {
             // if we had a Wait last on the pending event, switch it to waiting
             // for the new event
             ScriptInterpreter* si = e->getScriptInterpreter();
-            if (si != NULL)
+            if (si != nullptr)
               si->rescheduleEvent(e, realEvent);
 
             class MslWait* wait = e->getMslWait();
@@ -779,7 +779,7 @@ void Function::invokeEvent(Loop* l, Event* e)
         }
         
         // reclaim the action if the new event doesn't want it
-        if (realEvent == NULL || realEvent->getAction() != action)
+        if (realEvent == nullptr || realEvent->getAction() != action)
           l->getMobius()->completeAction(action);
     }
 }
@@ -862,7 +862,7 @@ void Function::escapeQuantization(Loop* loop, Event* prev)
 
 		// if we have any child events, slide them by a similar amount
 		// but don't let them go back in time
-		for (Event* child = prev->children ; child != NULL ; 
+		for (Event* child = prev->children ; child != nullptr ; 
 			 child = child->sibling) {
 
 			if (!child->processed) {
@@ -904,7 +904,7 @@ Event* Function::scheduleEvent(Action* action, Loop* loop)
  * end Multiply mode with the Multiply function, we only need to end the
  * mode, we don't want another Multiply event to put us back into multiply.
  * In these cases the trigger event will be freed and this method must
- * return NULL so that the Function handlers don't think they have
+ * return nullptr so that the Function handlers don't think they have
  * a normal function event and try to do things like schedule a play jump.
  *
  * In these cases the Action will point to the mode end event.
@@ -920,10 +920,10 @@ Event* Function::scheduleEventDefault(Action* action, Loop* loop)
     // it is not scheduled
 	Event* event = em->getFunctionEvent(action, loop, this);
 
-    if (event != NULL) {
+    if (event != nullptr) {
 
         MobiusMode* mode = loop->getMode();
-		Event* modeEnd = NULL;
+		Event* modeEnd = nullptr;
 
 		if (!event->reschedule && !event->type->noMode && mode->rounding) {
             // Let the mode decide how to handle the triggr event, 
@@ -935,13 +935,13 @@ Event* Function::scheduleEventDefault(Action* action, Loop* loop)
             em->addEvent(event);
         }
 
-		if (modeEnd != NULL && modeEnd->getParent() == NULL) {
+		if (modeEnd != nullptr && modeEnd->getParent() == nullptr) {
 
             // This indicates that the mode end scheduling decided it did
             // not need to keep the triggering event and has deleted it.
             // Must return null to prevent further event processing.
             // Action will now be owned by modeEnd.
-            event = NULL;
+            event = nullptr;
 		}
 	}
 
@@ -965,7 +965,7 @@ Event* Function::scheduleModeStop(Action* action, Loop* l)
 {
     (void)action;
     (void)l;
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -991,7 +991,7 @@ bool Function::undoModeStop(Loop* l)
 Event* Function::scheduleTransfer(Loop* l)
 {
 	Trace(l, 1, "scheduleTransfer not implemented for %s\n", getName());
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -1029,12 +1029,12 @@ void Function::invokeLong(Action* action, Loop* l)
  */
 Event* Function::rescheduleEvent(Loop* l, Event* prev, Event* next)
 {
-	Event* newEvent = NULL;
+	Event* newEvent = nullptr;
 
     // Original Action must be left on the event, steal it and replay it
     Action* action = next->getAction();
     
-    if (action == NULL)
+    if (action == nullptr)
       Trace(l, 1, "Function::rescheduleEvent: event with no action!\n");
     else {
         action->detachEvent(next);
@@ -1061,7 +1061,7 @@ Event* Function::rescheduleEvent(Loop* l, Event* prev, Event* next)
 
         bool traceReschedule = false;
         if (traceReschedule) {
-            if (newEvent != NULL) {
+            if (newEvent != nullptr) {
                 printf("Rescheduled %s event from %ld to %ld\n",
                        getName(), next->frame, newEvent->frame);
             }
@@ -1072,11 +1072,11 @@ Event* Function::rescheduleEvent(Loop* l, Event* prev, Event* next)
             fflush(stdout);
         }
 
-        if (newEvent != NULL) {
+        if (newEvent != nullptr) {
             // if we had a Wait last on the pending event, switch it to waiting
             // for the new event
             ScriptInterpreter* si = next->getScriptInterpreter();
-            if (si != NULL)
+            if (si != nullptr)
               si->rescheduleEvent(next, newEvent);
 
             class MslWait* wait = next->getMslWait();
@@ -1085,13 +1085,13 @@ Event* Function::rescheduleEvent(Loop* l, Event* prev, Event* next)
         }
 
         // reclaim the action if the new event doesn't want it
-        if (newEvent == NULL || newEvent->getAction() != action)
+        if (newEvent == nullptr || newEvent->getAction() != action)
           l->getMobius()->completeAction(action);
 
         // this event is going to be freed, so even though we shouldn't
         // use this again take away the reference so we aren't tempted
-        action->rescheduling = NULL;
-        action->reschedulingReason = NULL;
+        action->rescheduling = nullptr;
+        action->reschedulingReason = nullptr;
     }
 
 	return newEvent;
@@ -1179,19 +1179,19 @@ void Function::changePreset(Action* action, Loop* loop, bool after)
     MobiusConfig* config = m->getConfiguration();
     Structure* presets = config->getPresets();
     Preset* current = loop->getPreset();
-    Structure* next = NULL;
+    Structure* next = nullptr;
 
     // ugh, Structure base class makes iteration harder
-    if (current != NULL && presets != NULL) {
+    if (current != nullptr && presets != nullptr) {
         if (after)
           next = (Preset*)current->getNext();
         else if (current == presets) {
             // get the last one
-            for (Structure* p = presets ; p != NULL ; p = p->getNext())
+            for (Structure* p = presets ; p != nullptr ; p = p->getNext())
               next = p;
         }
         else {
-            for (Structure* p = presets ; p != NULL ; p = p->getNext()) {
+            for (Structure* p = presets ; p != nullptr ; p = p->getNext()) {
                 if (p->getNext() == current) {
                     next = p;
                     break;
@@ -1199,7 +1199,7 @@ void Function::changePreset(Action* action, Loop* loop, bool after)
             }
         }
 
-        if (next != NULL && next != current) {
+        if (next != nullptr && next != current) {
             // !! pretty sure these are zero based like the new ordinals
             //m->setPresetInternal(((Preset*)next)->getNumber());
             m->setActivePreset(((Preset*)next)->ordinal);
@@ -1226,14 +1226,14 @@ void Function::changePreset(Action* action, Loop* loop, bool after)
  */
 Event* Function::scheduleSwitchStack(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     Track* track = l->getTrack();
     EventManager* em = track->getEventManager();
 
 	if (action->down && switchStack) {
 
 		Event* switche = em->getUncomittedSwitch();
-		if (switche == NULL) {
+		if (switche == nullptr) {
 			Trace(l, 2, "Loop: Switch already committed, ignoring stacking of %s!\n",
 				  getName());
 		}
@@ -1243,7 +1243,7 @@ Event* Function::scheduleSwitchStack(Action* action, Loop* l)
 
 			// successive invocations multiplies the recording
 			Event* prev = switche->findEvent(InvokeEvent, this);
-			if (prev != NULL) {
+			if (prev != nullptr) {
 				// !! this should be multipled by RecordBars
 				// which means the Function needs to have a method
 				// to adjust the event
@@ -1257,7 +1257,7 @@ Event* Function::scheduleSwitchStack(Action* action, Loop* l)
         else {
 			// the old way
 			Event* prev = switche->findEvent(eventType);
-			if (prev != NULL)
+			if (prev != nullptr)
 			  em->cancelSwitchStack(prev);
 			else {
 				event = em->newEvent(this, 0);
@@ -1266,7 +1266,7 @@ Event* Function::scheduleSwitchStack(Action* action, Loop* l)
 		}
 	}
 
-    if (event != NULL)
+    if (event != nullptr)
       action->setEvent(event);
 
 	return event;
@@ -1294,7 +1294,7 @@ void ReplicatedFunction::localize(MessageCatalog* cat)
 	Function::localize(cat);
 	if (replicated) {
 		const char* pattern = cat->get(getKey());
-		if (pattern == NULL) {
+		if (pattern == nullptr) {
 			Trace(1, "No localization for function %s\n", getName());
 			pattern = getName();
 		}
@@ -1337,8 +1337,8 @@ void add(Function** array, Function* func)
 	}
 	else {
 		array[FunctionIndex++] = func;
-		// keep it NULL terminated
-		array[FunctionIndex] = NULL;
+		// keep it nullptr terminated
+		array[FunctionIndex] = nullptr;
 	}
 }
 
@@ -1509,10 +1509,10 @@ void Function::initStaticFunctions()
  */
 Function* Function::getFunction(Function** functions, const char * name)
 {
-    Function* found = NULL;
+    Function* found = nullptr;
 
-    if (functions != NULL && name != NULL) {
-        for (int i = 0 ; functions[i] != NULL ; i++) {
+    if (functions != nullptr && name != nullptr) {
+        for (int i = 0 ; functions[i] != nullptr ; i++) {
             Function* f = functions[i];
 			if (f->isMatch(name)) {
                 found = f;

@@ -97,14 +97,14 @@ Mobius::Mobius(MobiusKernel* kernel)
     mActionator = NEW1(Actionator, this);
     mScriptarian = nullptr;
     mPendingScriptarian = nullptr;
-	mSynchronizer = NULL;
+	mSynchronizer = nullptr;
 	mVariables = new UserVariables();
     
-	mTracks = NULL;
-	mTrack = NULL;
+	mTracks = nullptr;
+	mTrack = nullptr;
 	mTrackCount = 0;
 
-	mCaptureAudio = NULL;
+	mCaptureAudio = nullptr;
 	mCapturing = false;
 	mCaptureOffset = 0;
 
@@ -597,7 +597,7 @@ void Mobius::configureTracks(juce::Array<MobiusLooperTrack*>& trackdefs)
                 
         // unclear what to do about this, but it's obscure
         // this is what globalReset() does
-        if (mCaptureAudio != NULL)
+        if (mCaptureAudio != nullptr)
           mCaptureAudio->reset();
         mCapturing = false;
     }
@@ -644,7 +644,7 @@ void Mobius::doTrackReset(Track* t)
     if (t != nullptr) {
         // this normally takes an Action
         // it gets passed to Loop::reset which ignores it
-        // it goes on to Track::trackReset which allows it to be NULL
+        // it goes on to Track::trackReset which allows it to be nullptr
         // and treats it as if it were a GlobalReset which should be fine
         t->reset(nullptr);
 
@@ -1190,11 +1190,11 @@ void Mobius::endAudioInterrupt(MobiusAudioStream* stream)
 	// each port selected in each track
     // see design/capture-bounce.txt
     
-	if (mCapturing && mCaptureAudio != NULL) {
-		float* output = NULL;
+	if (mCapturing && mCaptureAudio != nullptr) {
+		float* output = nullptr;
         // note, only looking at port zero
-		stream->getInterruptBuffers(0, NULL, 0, &output);
-		if (output != NULL) {
+		stream->getInterruptBuffers(0, nullptr, 0, &output);
+		if (output != nullptr) {
 			// the first block in the recording may be a partial block
 			if (mCaptureOffset > 0) {
                 // !! assuming 2 channel ports
@@ -1281,7 +1281,7 @@ void Mobius::startCapture(Action* action)
     // let this toggle like Record and Bounce, but this is only used in
     // scripts right now
 	if (!mCapturing) {
-		if (mCaptureAudio != NULL) {
+		if (mCaptureAudio != nullptr) {
             // left behind from the last capture, clear it
             // if not clear already
             mCaptureAudio->reset();
@@ -1302,7 +1302,7 @@ void Mobius::startCapture(Action* action)
         // like TimeStretch then it is probably wrong, here we need to
         // and won't work if we ever do multi-track capture
         Track* t = resolveTrack(action);
-        if (t == NULL)
+        if (t == nullptr)
           t = mTrack;
 
 		mCaptureOffset = t->getProcessedOutputFrames();
@@ -1335,16 +1335,16 @@ void Mobius::startCapture(Action* action)
  */
 void Mobius::stopCapture(Action* action)
 {
-	if (mCapturing && mCaptureAudio != NULL
+	if (mCapturing && mCaptureAudio != nullptr
 		// && action->trigger == TriggerScript
 		) {
-		float* output = NULL;
+		float* output = nullptr;
 		// TODO: merge the interrupt buffers for all port sets
 		// that are being used by any of the tracks
-		mStream->getInterruptBuffers(0, NULL, 0, &output);
-		if (output != NULL) {
+		mStream->getInterruptBuffers(0, nullptr, 0, &output);
+		if (output != nullptr) {
 			Track* t = resolveTrack(action);
-            if (t == NULL)
+            if (t == nullptr)
               t = mTrack;
 			mCaptureAudio->append(output, t->getProcessedOutputFrames());
 		}
@@ -1401,8 +1401,8 @@ void Mobius::saveCapture(Action* action)
     }
 
     // action won't be non-null any more, if it ever was
-    const char* file = NULL;
-    if (action != NULL && action->arg.getType() == EX_STRING)
+    const char* file = nullptr;
+    if (action != nullptr && action->arg.getType() == EX_STRING)
       file = action->arg.getString();
 
     KernelEvent* e = newKernelEvent();
@@ -1411,7 +1411,7 @@ void Mobius::saveCapture(Action* action)
     // so no ownership issues of the string
     e->setArg(0, file);
 
-    if (action != NULL) {
+    if (action != nullptr) {
         // here we save the event we're sending up on the Action
         // so the script that is calling us can wait on it
         action->setKernelEvent(e);
@@ -1504,16 +1504,16 @@ void Mobius::toggleBounceRecording(Action* action)
 		// stop and capture it
 		stopCapture(action);
 		Audio* bounce = mCaptureAudio;
-		mCaptureAudio = NULL;
+		mCaptureAudio = nullptr;
 		mCapturing = false;
 
-		if (bounce == NULL)
+		if (bounce == nullptr)
 		  Trace(1, "Mobius: No audio after end of bounce recording!\n");
 		else {
 			// Determine the track that supplies the preset parameters
 			// (not actually used right now)
 			Track* source = resolveTrack(action);
-            if (source == NULL)
+            if (source == nullptr)
               source = mTrack;
 
 			//Preset* p = source->getPreset();
@@ -1522,7 +1522,7 @@ void Mobius::toggleBounceRecording(Action* action)
 			// for now assume mute
 			
 			// locate the target track for the bounce
-			Track* target = NULL;
+			Track* target = nullptr;
 			int targetIndex = 0;
 			for (int i = 0 ; i < mTrackCount ; i++) {
 				Track* t = mTracks[i];
@@ -1538,7 +1538,7 @@ void Mobius::toggleBounceRecording(Action* action)
 
 			// determine the number of cycles in the bounce track
 			Track* cycleTrack = source;
-			if (cycleTrack == NULL || cycleTrack->isEmpty()) {
+			if (cycleTrack == nullptr || cycleTrack->isEmpty()) {
 				for (int i = 0 ; i < mTrackCount ; i++) {
 					Track* t = mTracks[i];
 					// ignore muted tracks?
@@ -1550,7 +1550,7 @@ void Mobius::toggleBounceRecording(Action* action)
 			}
 
 			int cycles = 1;
-			if (cycleTrack != NULL) {
+			if (cycleTrack != nullptr) {
 				Loop* l = cycleTrack->getLoop();
 				long cycleFrames = l->getCycleFrames();
 				long recordedFrames = bounce->getFrames();
@@ -1558,7 +1558,7 @@ void Mobius::toggleBounceRecording(Action* action)
 				  cycles = (int)(recordedFrames / cycleFrames);
 			}
             
-			if (target == NULL) {
+			if (target == nullptr) {
 				// all dressed up, nowhere to go
                 // formerly deleted the entire Audio here which
                 // should have returned at least some of it to the AudioPool
@@ -1586,7 +1586,7 @@ void Mobius::toggleBounceRecording(Action* action)
 				for (int i = 0 ; i < mTrackCount ; i++) {
 					Track* t = mTracks[i];
 					if (t != target)
-					  t->setMuteKludge(NULL, true);
+					  t->setMuteKludge(nullptr, true);
 				}
 
 				// and make it the active track
@@ -1626,8 +1626,8 @@ void Mobius::toggleBounceRecording(Action* action)
  */
 void Mobius::saveLoop(Action* action)
 {
-    const char* file = NULL;
-    if (action != NULL && action->arg.getType() == EX_STRING)
+    const char* file = nullptr;
+    if (action != nullptr && action->arg.getType() == EX_STRING)
       file = action->arg.getString();
 
     // this has never supported track scope in the actino, it always
@@ -1643,7 +1643,7 @@ void Mobius::saveLoop(Action* action)
     e->type = EventSaveLoop;
     e->setArg(0, file);
 
-    if (action != NULL) {
+    if (action != nullptr) {
         // here we save the event we're sending up on the Action
         // so the script that is calling us can wait on it
         action->setKernelEvent(e);
@@ -1673,7 +1673,7 @@ Audio* Mobius::getPlaybackAudio()
 
     // since this might be saved to a file make sure the
     // sample rate is correct
-	if (audio != NULL)
+	if (audio != nullptr)
 	  audio->setSampleRate(getSampleRate());
 
     return audio;
@@ -1816,7 +1816,7 @@ Track* Mobius::getTrack()
 
 Track* Mobius::getTrack(int index)
 {
-	return ((index >= 0 && index < mTrackCount) ? mTracks[index] : NULL);
+	return ((index >= 0 && index < mTrackCount) ? mTracks[index] : nullptr);
 }
 
 /**
@@ -1989,7 +1989,7 @@ int Mobius::getRecordThreshold()
  */
 int Mobius::getActiveTrack()
 {
-    return (mTrack != NULL) ? mTrack->getRawNumber() : 0;
+    return (mTrack != nullptr) ? mTrack->getRawNumber() : 0;
 }
 
 /**
@@ -2095,7 +2095,7 @@ void Mobius::cancelScripts(Action* action, Track* t)
 void Mobius::globalReset(Action* action)
 {
 	// let action be null so we can call it internally
-	if (action == NULL || action->down) {
+	if (action == nullptr || action->down) {
 
         // reset global variables
         mVariables->reset();
@@ -2117,7 +2117,7 @@ void Mobius::globalReset(Action* action)
 
 		// cancel in progress audio recordings	
 		// or should we leave the last one behind?
-		if (mCaptureAudio != NULL)
+		if (mCaptureAudio != nullptr)
 		  mCaptureAudio->reset();
 		mCapturing = false;
 
@@ -2296,29 +2296,29 @@ void Mobius::loadProject(Project* p)
 
 	List* tracks = p->getTracks();
 
-    if (tracks == NULL) {
+    if (tracks == nullptr) {
         Trace(2, "Mobius::loadProjectInternal empty project\n");
     }
     else if (!p->isIncremental()) {
 		// globalReset to start from a clean slate
-		globalReset(NULL);
+		globalReset(nullptr);
 
         // change setups to match what was in the project
         // a number of issues here...
         // Project can be old and we may not have this setup any more
 #if 0        
 		const char* name = p->getSetup();
-		if (name != NULL) {
+		if (name != nullptr) {
             // remember to locate the Setup from the interrupt config
             Setup* s = mInterruptConfig->getSetup(name);
-            if (s != NULL) {
+            if (s != nullptr) {
                 setSetupInternal(s);
             }
         }
 #endif
         // this is about the same as above
 		const char* name = p->getSetup();
-		if (name != NULL) {
+		if (name != nullptr) {
             Setup* s = mConfig->getSetup(name);
             if (s != nullptr) {
                 mSetup = s;
@@ -2330,7 +2330,7 @@ void Mobius::loadProject(Project* p)
 		// state in the Setup.
         // new: don't think this is necessary now that we just did
         // propagateConfiguration?
-		globalReset(NULL);
+		globalReset(nullptr);
 
         // change the selected binding overlay
         // this is an unusual case where we're in an interrupt but we
@@ -2343,9 +2343,9 @@ void Mobius::loadProject(Project* p)
         // new: ignoring this, bindings need to be handled at a higher level
 #if 0        
 		name = p->getBindings();
-		if (name != NULL) {
+		if (name != nullptr) {
 			BindingConfig* bindings = mConfig->getBindingConfig(name);
-			if (bindings != NULL)
+			if (bindings != nullptr)
 			  setOverlayBindings(bindings);
 		}
 #endif        
@@ -2385,7 +2385,7 @@ void Mobius::loadProject(Project* p)
                 Track* track = mTracks[tnum];
 
                 List* loops = pt->getLoops();
-                if (loops == NULL) 
+                if (loops == nullptr) 
                   Trace(2, "Mobius::loadProjectInternal empty track\n");
                 else {
                     for (int j = 0 ; j < loops->size() ; j++) {
@@ -2406,7 +2406,7 @@ void Mobius::loadProject(Project* p)
                                   pl->setActive(true);
                             }
 
-                            loop->reset(NULL);
+                            loop->reset(nullptr);
                             loop->loadProject(pl);
 
                             // Kludge: Synchronizer wants to be notified when

@@ -35,7 +35,7 @@ AudioBuffer::AudioBuffer()
 
 void AudioBuffer::initAudioBuffer()
 {
-	buffer = NULL;
+	buffer = nullptr;
 	frames = 0;
 	channels = 2;
 }
@@ -324,7 +324,7 @@ void AudioFade::fade(AudioBuffer* buf, long curFrame)
 		// perform the fade
 #if 0
 		char filename[128];
-		Audio* save = NULL;
+		Audio* save = nullptr;
 		bool trace = false;
 		if (trace) {
 			printf("Layer fade %s: %ld offset %ld frames %s\n",
@@ -342,7 +342,7 @@ void AudioFade::fade(AudioBuffer* buf, long curFrame)
 		fade(fadeDest, buf->channels, 0, fadeFrames, fadeOffset, up);
 
 #if 0
-		if (save != NULL) {
+		if (save != nullptr) {
 			save->reset();
 			save->put(fadeDest, fadeFrames, 0);
 			snprintf(filename, sizeof(filename), "fade-after-%d.wav", FadeCount);
@@ -483,14 +483,14 @@ AudioCursor::~AudioCursor()
 
 void AudioCursor::init()
 {
-	mName = NULL;
-	mAudio = NULL;
+	mName = nullptr;
+	mAudio = nullptr;
 	mVersion = 0;
 	mReverse = false;
 	mFrame = 0;
 	mBufferIndex = 0;
 	mBufferOffset = 0;
-	mBuffer = NULL;
+	mBuffer = nullptr;
 	mAutoExtend = false;
     mOverflowTraced = false;
 	mFade.init();
@@ -517,7 +517,7 @@ bool AudioCursor::isReverse()
  */
 void AudioCursor::decache()
 {
-	mBuffer = NULL;
+	mBuffer = nullptr;
 	mBufferIndex = 0;
 	mBufferOffset = 0;
 	mVersion = 0;
@@ -608,7 +608,7 @@ void AudioCursor::setFrame(long frame)
  */
 void AudioCursor::locateFrame()
 {
-	if (mBuffer == NULL && mBufferOffset == 0) {
+	if (mBuffer == nullptr && mBufferOffset == 0) {
 		// Trace(2, "locateFrame\n");
 		mAudio->locate(mFrame, &mBufferIndex, &mBufferOffset);
 		mBuffer = mAudio->getBuffer(mBufferIndex);
@@ -619,12 +619,12 @@ void AudioCursor::locateFrame()
 /**
  * Called when we need to ensure that the frame identified by
  * the current mFrame counter is writable.  This is called whenever
- * put() is called and mBuffer is NULL.
+ * put() is called and mBuffer is nullptr.
  *
  */
 void AudioCursor::prepareFrame()
 {
-    if (mBuffer == NULL) {
+    if (mBuffer == nullptr) {
 		// Trace(2, "prepareFrame\n");
         // potentially complex extension
         mFrame = (int)(mAudio->prepareFrame(mFrame, &mBufferIndex, &mBufferOffset, 
@@ -644,7 +644,7 @@ void AudioCursor::prepareFrame()
         mFrame = 0;
 
 		if (mAudio->mStartFrame < 0) {
-			// logic error somewhere, mBuffer should have been NULL
+			// logic error somewhere, mBuffer should have been nullptr
 			Trace(1, "Negative start frame!\n");
 			decache();
 		}
@@ -659,7 +659,7 @@ void AudioCursor::prepareFrame()
  * Move to the next frame.
  *
  * Try to keep mBuffer set, but if we fall off the end, just leave
- * it NULL and let prepareFrame do the work if it needs to.
+ * it nullptr and let prepareFrame do the work if it needs to.
  *
  * If this is a reverse play cursor, mFrame may go negative, just
  * keep incrementing and ignore it.  If this is a reverse record cursor,
@@ -776,7 +776,7 @@ void AudioCursor::get(AudioBuffer* buf, float level)
 
 	for (int i = 0 ; i < length ; i++) {
 		get(buf, dest, level);
-		if (dest != NULL)
+		if (dest != nullptr)
 		  dest += channels;
 	}
 }
@@ -814,7 +814,7 @@ void AudioCursor::get(AudioBuffer* buf, float* dest, float level)
 
 	for (int i = 0 ; i < buf->channels ; i++) {
 		float sample = 0.0f;
-		if (mBuffer != NULL)
+		if (mBuffer != nullptr)
 		  sample = mBuffer[mBufferOffset + i];
             
 		if (doLevel)
@@ -822,7 +822,7 @@ void AudioCursor::get(AudioBuffer* buf, float* dest, float level)
 
 		sample = mFade.fade(sample);
 
-		if (dest != NULL) {
+		if (dest != nullptr) {
 			if (replace)
 			  dest[i] = sample;
 			else
@@ -855,7 +855,7 @@ void AudioCursor::put(AudioBuffer* buf, AudioOp op)
 		prepareFrame();
 
 		for (int j = 0 ; j < channels ; j++) {
-			float sample = (src != NULL) ? src[j] : 0.0f;
+			float sample = (src != nullptr) ? src[j] : 0.0f;
 
 			sample = mFade.fade(sample);
 
@@ -869,7 +869,7 @@ void AudioCursor::put(AudioBuffer* buf, AudioOp op)
 		
 		incFrame();
 
-		if (src != NULL)
+		if (src != nullptr)
 		  src += channels;
 	}
 }
@@ -953,7 +953,7 @@ void AudioCursor::fade(int offset, int frames, bool up)
 void AudioCursor::fade(int offset, int frames, bool up, float baseLevel)
 {
 	locateFrame();
-	if (mBuffer != NULL) {
+	if (mBuffer != nullptr) {
 		mFade.activate(offset, up);
 		mFade.setBaseLevel(baseLevel);
 
@@ -962,7 +962,7 @@ void AudioCursor::fade(int offset, int frames, bool up, float baseLevel)
 		for (int i = 0 ; i < frames ; i++) {
 			for (int j = 0 ; j < channels ; j++) {
 				// if mBuffer goes null, we fell off the end
-				if (mBuffer != NULL) {
+				if (mBuffer != nullptr) {
 					float* loc = &(mBuffer[mBufferOffset + j]);
 					*loc = mFade.fade(*loc);
 				}

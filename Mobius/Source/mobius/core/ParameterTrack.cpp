@@ -106,7 +106,7 @@ void TrackParameter::setObjectValue(void* object, ExValue* value)
 void TrackParameter::setValue(Action* action)
 {
     Track* track = action->getResolvedTrack();
-    if (track != NULL)  
+    if (track != nullptr)  
       setValue(track, &action->arg);
 }
 
@@ -127,7 +127,7 @@ void TrackParameter::setValue(Track* t, ExValue* value)
 void TrackParameter::getValue(Export* exp, ExValue* value)
 {
     Track* track = exp->getTrack();
-    if (track != NULL)
+    if (track != nullptr)
       getValue(track, value);
 	else
       value->setNull();
@@ -137,7 +137,7 @@ int TrackParameter::getOrdinalValue(Export* exp)
 {
     int value = -1;
     Track* track = exp->getTrack();
-    if (track != NULL)
+    if (track != nullptr)
 	  value = getOrdinalValue(track);
     return value;
 }
@@ -360,7 +360,7 @@ void GroupParameterType::setValue(Track* t, ExValue* value)
     else {
         // also allow A,B,C since that's what we display
         const char* str = value->getString();
-        if (str != NULL && strlen(str) > 0) {
+        if (str != nullptr && strlen(str) > 0) {
             char letter = (char)toupper(str[0]);
             if (letter >= 'A' && letter <= 'Z') {
                 g = (int)letter - (int)'A';
@@ -1320,7 +1320,7 @@ int TrackPresetParameterType::getOrdinalValue(Track* t)
 
 void TrackPresetParameterType::getValue(Track* t, ExValue* value)
 {
-    const char* presetName = NULL;
+    const char* presetName = nullptr;
 
     // You usually want the string for display.
     // Unfortunately the private track preset did not copy
@@ -1334,7 +1334,7 @@ void TrackPresetParameterType::getValue(Track* t, ExValue* value)
     
     //MobiusConfig* iconfig = t->getMobius()->getConfiguration();
     Preset* p = t->getPreset();
-    if (p != NULL) 
+    if (p != nullptr) 
       presetName = p->getName();
     else {
         // should only happen if we're shifting down a new config object
@@ -1360,7 +1360,7 @@ void TrackPresetParameterType::setValue(Action* action)
     // !! this isn't comming through properly
     // if the argument is a string it is left in bindingArgs but
     // ont in the ExValue arg which will always be left zero
-	Preset* preset = NULL;
+	Preset* preset = nullptr;
     if (strlen(action->bindingArgs) > 0) {
         preset = config->getPreset(action->bindingArgs);
     }
@@ -1373,7 +1373,7 @@ void TrackPresetParameterType::setValue(Action* action)
           preset = config->getPreset(action->arg.getString());
     }
     
-	if (preset != NULL) {
+	if (preset != nullptr) {
         Track* t = action->getResolvedTrack();
         t->changePreset(preset->ordinal);
 	}
@@ -1400,7 +1400,7 @@ void TrackPresetParameterType::getOrdinalLabel(Mobius* m,
 {
 	MobiusConfig* config = m->getConfiguration();
 	Preset* preset = config->getPreset(i);
-	if (preset != NULL)
+	if (preset != nullptr)
 	  value->setString(preset->getName());
 	else
 	  value->setString("???");
@@ -1475,7 +1475,7 @@ void TrackPresetNumberParameterType::setValue(Action* action)
     int index = action->arg.getInt();
 	Preset* preset = config->getPreset(index);
 
-	if (preset != NULL) {
+	if (preset != nullptr) {
         Track* t = action->getResolvedTrack();
         t->changePreset(index);
 	}
@@ -1507,7 +1507,7 @@ class SyncSourceParameterType : public TrackParameter
 };
 
 const char* SYNC_SOURCE_NAMES[] = {
-	"default", "none", "track", "out", "host", "midi", "transport", NULL
+	"default", "none", "track", "out", "host", "midi", "transport", nullptr
 };
 
 SyncSourceParameterType::SyncSourceParameterType() :
@@ -1540,7 +1540,7 @@ int SyncSourceParameterType::getOrdinalValue(Track* t)
 {
     int value = 0;
     SetupTrack* st = t->getSetup();
-    if (st != NULL)
+    if (st != nullptr)
       value = (int)st->getSyncSource();
     return value;
 }
@@ -1556,7 +1556,7 @@ int SyncSourceParameterType::getOrdinalValue(Track* t)
 void SyncSourceParameterType::getValue(Track* t, ExValue* value)
 {
     SetupTrack* st = t->getSetup();
-    if (st != NULL)
+    if (st != nullptr)
       getValue(st, value);
     else
       value->setString("default");
@@ -1565,7 +1565,7 @@ void SyncSourceParameterType::getValue(Track* t, ExValue* value)
 void SyncSourceParameterType::setValue(Track* t, ExValue* value)
 {
     SetupTrack* st = t->getSetup();
-    if (st != NULL)
+    if (st != nullptr)
       setValue(st, value);
 }
 
@@ -1578,7 +1578,7 @@ void SyncSourceParameterType::getOrdinalLabel(Mobius* m,
                                                      int i, ExValue* value)
 {
     // should always have these
-	if (valueLabels == NULL)
+	if (valueLabels == nullptr)
       value->setInt(i);
     else {
 		value->setString(valueLabels[i]);
@@ -1618,7 +1618,7 @@ class TrackSyncUnitParameterType : public TrackParameter
 };
 
 const char* TRACK_SYNC_UNIT_NAMES[] = {
-	"default", "subcycle", "cycle", "loop", NULL
+	"default", "subcycle", "cycle", "loop", nullptr
 };
 
 TrackSyncUnitParameterType::TrackSyncUnitParameterType() :
@@ -1648,7 +1648,7 @@ int TrackSyncUnitParameterType::getOrdinalValue(Track* t)
 {
     int value = 0;
     SetupTrack* st = t->getSetup();
-    if (st != NULL)
+    if (st != nullptr)
       value = (int)st->getSyncTrackUnit();
     return value;
 }
@@ -1661,7 +1661,7 @@ int TrackSyncUnitParameterType::getOrdinalValue(Track* t)
 void TrackSyncUnitParameterType::getValue(Track* t, ExValue* value)
 {
     SetupTrack* st = t->getSetup();
-    if (st != NULL)
+    if (st != nullptr)
       getValue(st, value);
     else
       value->setString("default");
@@ -1670,7 +1670,7 @@ void TrackSyncUnitParameterType::getValue(Track* t, ExValue* value)
 void TrackSyncUnitParameterType::setValue(Track* t, ExValue* value)
 {
     SetupTrack* st = t->getSetup();
-    if (st != NULL)
+    if (st != nullptr)
       setValue(st, value);
 }
 
@@ -1683,7 +1683,7 @@ void TrackSyncUnitParameterType::getOrdinalLabel(Mobius* m,
                                                         int i, ExValue* value)
 {
     // should always have these
-	if (valueLabels == NULL)
+	if (valueLabels == nullptr)
       value->setInt(i);
     else {
 		value->setString(valueLabels[i]);

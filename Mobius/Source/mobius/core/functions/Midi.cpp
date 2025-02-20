@@ -142,7 +142,7 @@ MidiStartFunction::MidiStartFunction(bool isMute, bool isClip)
  */
 Event* MidiStartFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* startEvent = NULL;
+	Event* startEvent = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
 	MobiusMode* mode = l->getMode();
 
@@ -154,13 +154,13 @@ Event* MidiStartFunction::scheduleEvent(Action* action, Loop* l)
 	else {
 		// since this isn't a mode, catch redundant invocations
 		startEvent = em->findEvent(MidiStartEvent);
-		if (startEvent != NULL) {
+		if (startEvent != nullptr) {
 			// ignore
             // new: for ClipStart could use this to adjust the clip parameters
-			startEvent = NULL;
+			startEvent = nullptr;
 		}
 		else {
-			Event* muteEvent = NULL;
+			Event* muteEvent = nullptr;
 
 			// disable quantization of the mute event
 			action->escapeQuantization = true;
@@ -182,7 +182,7 @@ Event* MidiStartFunction::scheduleEvent(Action* action, Loop* l)
 
 			// go through the usual scheduling, but change the frame
 			startEvent = Function::scheduleEvent(action, l);
-			if (startEvent != NULL && !startEvent->reschedule) {
+			if (startEvent != nullptr && !startEvent->reschedule) {
 
 				// !! should this be the "end frame" or zero?
 				startEvent->frame = l->getFrames();
@@ -392,7 +392,7 @@ void MidiOutFunction::invoke(Action* action, Mobius* m)
 	int velocity = 0;
 
     ExValueList* args = action->scriptArgs;
-    if (args != NULL) {
+    if (args != nullptr) {
 
         if (args->size() > 0) {
             ExValue* arg = args->getValue(0);

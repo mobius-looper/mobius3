@@ -161,7 +161,7 @@ Event* ReplaceFunction::scheduleEvent(Action* action, Loop* l)
     Event* event = Function::scheduleEvent(action, l);
 
     // in addition go in and out of mute at the boundary frame
-    if (event != NULL && !event->reschedule)
+    if (event != nullptr && !event->reschedule)
 	  em->schedulePlayJumpAt(l, event, event->frame);
 
 	return event;

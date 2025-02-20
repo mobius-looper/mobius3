@@ -169,10 +169,10 @@ Stream::Stream()
     mPitchBend = 0;
 	mPitch = 1.0;
 
-    mResampler = NULL;
-	mAudioBuffer = NULL;
+    mResampler = nullptr;
+	mAudioBuffer = nullptr;
 	mAudioBufferFrames = 0;
-	mAudioPtr = NULL;
+	mAudioPtr = nullptr;
 	mSmoother = NEW(Smoother);
 
     mCorrection = 0;
@@ -250,7 +250,7 @@ void Stream::reset()
 
 	setReverse(false);
 
-	if (mResampler != NULL) {
+	if (mResampler != nullptr) {
 		mResampler->reset();
 		mResampler->setSpeed(1.0);
 	}
@@ -522,8 +522,8 @@ long Stream::deltaFrames(float* start, float* end)
  */
 void Stream::initProcessedFrames()
 {
-	mAudioBuffer = NULL;
-	mAudioPtr = NULL;
+	mAudioBuffer = nullptr;
+	mAudioPtr = nullptr;
 }
 
 long Stream::getProcessedFrames()
@@ -622,14 +622,14 @@ OutputStream::OutputStream(InputStream* in, AudioPool* aupool)
     mAudioPool = aupool;
     mResampler = NEW1(Resampler, false);
 	mPitchShifter = PitchPlugin::getPlugin(in->getSampleRate());
-	mPlugin = NULL;
+	mPlugin = nullptr;
 	mPan = 64;
 	mMono = false;
-	mLoopBuffer = NULL;
-    mSpeedBuffer = NULL;
+	mLoopBuffer = nullptr;
+    mSpeedBuffer = nullptr;
 	mMaxSample = 0.0;
 
-	mLastLayer = NULL;
+	mLastLayer = nullptr;
 	mLastFrame = 0;
 	mLayerShift = false;
 
@@ -659,7 +659,7 @@ OutputStream::OutputStream(InputStream* in, AudioPool* aupool)
 	int rateBufferSamples = ((loopBufferSamples * MAX_RATE_SHIFT) + 4);
     mSpeedBuffer = MemNewFloat("Outputstream:speedBuffer", rateBufferSamples);
 	mCapture = false;
-	mCaptureAudio = NULL;
+	mCaptureAudio = nullptr;
 	mCaptureTotal = 0;
 	mCaptureMax = 50000;
 }
@@ -696,14 +696,14 @@ void OutputStream::setCapture(bool b)
 
 void OutputStream::setPitchTweak(int tweak, int value)
 {
-	if (mPitchShifter != NULL)
+	if (mPitchShifter != nullptr)
 	  mPitchShifter->setTweak(tweak, value);
 }
 
 int OutputStream::getPitchTweak(int tweak)
 {
     int value = 0;
-	if (mPitchShifter != NULL)
+	if (mPitchShifter != nullptr)
 	  value = mPitchShifter->getTweak(tweak);
     return value;
 }
@@ -778,7 +778,7 @@ Layer* OutputStream::getLastLayer()
  * that the preplay layer may be modified before we need to capture
  * a fadeTail if we go into mute.  Under some conditions (muting)
  * we have already captured a tail so ignore this if mLastLayer is
- * already NULL.
+ * already nullptr.
  *
  * Sigh, the playFrame argument was added to pass the current play
  * frame and compare it to mLastFrame to dedice whether or not to 
@@ -794,7 +794,7 @@ Layer* OutputStream::getLastLayer()
  */
 void OutputStream::squelchLastLayer(Layer* rec, Layer* play, long playFrame)
 {
-	if (mLastLayer != NULL && play != NULL && mLastLayer == rec) {
+	if (mLastLayer != nullptr && play != nullptr && mLastLayer == rec) {
 		mLastLayer = play;
 		if (playFrame == mLastFrame)
 		  mLayerShift = true;
@@ -830,7 +830,7 @@ void OutputStream::setLastFrame(long frame)
  */
 void OutputStream::resetHistory(Loop* l)
 {
-	if (mLastLayer != NULL && mLastLayer->getLoop() == l) {
+	if (mLastLayer != nullptr && mLastLayer->getLoop() == l) {
 
 		// capture a fade tail if we were playing
 		captureTail();
@@ -895,7 +895,7 @@ void OutputStream::play(Loop* loop, long blockFrames, bool last)
 		blockFrames = remaining;
 	}
 
-    if (mAudioBuffer != NULL && blockFrames > 0) {
+    if (mAudioBuffer != nullptr && blockFrames > 0) {
 
 		// add tails at the beginning of the buffer until we start playing
 		// the layer, then they have to be offset
@@ -933,7 +933,7 @@ void OutputStream::play(Loop* loop, long blockFrames, bool last)
 		// If we're changing pitch, capture an outside fade tail.  Plugin edge
 		// fades are complicated see the notes for details.
 		mForceFadeIn = false;
-		if (mPitchShifter != NULL) {
+		if (mPitchShifter != nullptr) {
 			float lastRatio = mPitchShifter->getPitchRatio();
 			if (lastRatio != mPitch) {
 				if (lastRatio == 1.0) {
@@ -1039,13 +1039,13 @@ void OutputStream::play(Loop* loop, long blockFrames, bool last)
 			mTail->play(playBuffer, adjustedFrames);
 
 			// apply pitch shift
-			if (mPitchShifter != NULL && mPitch != 1.0)
+			if (mPitchShifter != nullptr && mPitch != 1.0)
 			  mPitchShifter->process(playBuffer, adjustedFrames);
 
 			// apply other plugins
 			// this is just a stub for later, need to generalize this since
 			// other plugins may have the same latency issues as the pitch shifter
-			if (mPlugin != NULL)
+			if (mPlugin != nullptr)
 			  mPlugin->process(playBuffer, adjustedFrames);
 
 			// merge outside tail
@@ -1299,7 +1299,7 @@ void OutputStream::capture(float* srcBuffer, long srcFrames)
     Trace(1, "OutputStream::capture wants to write to a file!\n");
 #if 0    
     if (mCaptureTotal < mCaptureMax) {
-		if (mCaptureAudio == NULL)
+		if (mCaptureAudio == nullptr)
           mCaptureAudio = mAudioPool->newAudio();
 		mCaptureAudio->append(srcBuffer, srcFrames);
 		mCaptureTotal += srcFrames;
@@ -1387,7 +1387,7 @@ void OutputStream::play(Layer* layer, long playFrame, long playFrames,
 				mForceFadeIn = false;
 			}
 
-			if (mLastLayer == NULL ||
+			if (mLastLayer == nullptr ||
 				(!mLayerShift &&
 				 (mLastLayer != layer || mLastFrame != playFrame))) {
 
@@ -1396,7 +1396,7 @@ void OutputStream::play(Layer* layer, long playFrame, long playFrames,
                     (void)x;
 				}
 
-                if (mLastLayer != NULL && 
+                if (mLastLayer != nullptr && 
 					layer->getPrev() == mLastLayer &&
                     playFrame == 0 &&
                     mLastFrame == mLastLayer->getFrames()) {
@@ -1512,7 +1512,7 @@ void OutputStream::play(Layer* layer, long playFrame, long playFrames,
  */
 void OutputStream::captureTail(FadeTail* tail, float adjust)
 {
-	if (mLastLayer != NULL) {
+	if (mLastLayer != nullptr) {
 
 		captureTail(tail, mLastLayer, mLastFrame, adjust);
 
@@ -1520,7 +1520,7 @@ void OutputStream::captureTail(FadeTail* tail, float adjust)
 		mLastLayer->cancelPlayFade();
 
 		// clear history so we force a fade in on the next play
-		mLastLayer = NULL;
+		mLastLayer = nullptr;
         mLastFrame = 0;
         mLayerShift = false;
 	}
@@ -1878,11 +1878,11 @@ InputStream::InputStream(Synchronizer* sync, int sampleRate)
     mResampler = NEW1(Resampler, true);
 	mSynchronizer = sync;
     mSampleRate= sampleRate;
-    mPlugin = NULL;
+    mPlugin = nullptr;
     mMonitorLevel = 0;
-	mLastLayer = NULL;
-	mLevelBuffer = NULL;
-    mSpeedBuffer = NULL;
+	mLastLayer = nullptr;
+	mLevelBuffer = nullptr;
+    mSpeedBuffer = nullptr;
     mLastSpeed = 1.0f;
 	mLastThreshold = 1.0f;
     mOriginalFramesConsumed = 0;
@@ -2004,8 +2004,8 @@ int InputStream::getSampleRate()
  */
 void InputStream::resetHistory(Loop* l)
 {
-	if (mLastLayer != NULL && mLastLayer->getLoop() == l)
-	  mLastLayer = NULL;
+	if (mLastLayer != nullptr && mLastLayer->getLoop() == l)
+	  mLastLayer = nullptr;
 }
 
 /**
@@ -2077,7 +2077,7 @@ void InputStream::setInputBuffer(MobiusAudioStream* aus, float* input,
 				chan = 0;
 			}
 
-			if (echo != NULL)
+			if (echo != nullptr)
 			  echo[i] += sample;
         
 			if (sample < 0)
@@ -2093,7 +2093,7 @@ void InputStream::setInputBuffer(MobiusAudioStream* aus, float* input,
 			float sample = mAudioBuffer[i];
 			mLevelBuffer[i] = sample * inLevel;
 
-			if (echo != NULL)
+			if (echo != nullptr)
 			  echo[i] += sample;
         
 			if (sample < 0)
@@ -2219,7 +2219,7 @@ long InputStream::record(Loop* loop, Event* event)
 	}
 	else if (recordFrames == 0) {
 		// reached the end
-		if (event != NULL)
+		if (event != nullptr)
 		  Trace(loop, 1, "InputStream at end with event!\n");
 	}
 	else {
@@ -2233,7 +2233,7 @@ long InputStream::record(Loop* loop, Event* event)
 		}
 
 		// adjust the frame count if an event breaks up the input buffer
-		if (event != NULL) {
+		if (event != nullptr) {
 			long actualFrames = event->frame - loop->getFrame();
 			if (actualFrames < 0) {
 				Trace(loop, 1, "Sync event frame calculation underflow!\n");
@@ -2258,7 +2258,7 @@ long InputStream::record(Loop* loop, Event* event)
 			// we can also check transitions to other loops.
 
 			Layer* rec = loop->getRecordLayer();
-			if (mLastLayer != NULL && mLastLayer != rec)
+			if (mLastLayer != nullptr && mLastLayer != rec)
 			  mLastLayer->finalize(this, rec);
 			mLastLayer = rec;
 
@@ -2301,7 +2301,7 @@ long InputStream::record(Loop* loop, Event* event)
 		}
 		mOriginalFramesConsumed = mAudioBufferFrames;
 	}
-	else if (event == NULL && mOriginalFramesConsumed < mAudioBufferFrames) {
+	else if (event == nullptr && mOriginalFramesConsumed < mAudioBufferFrames) {
 		// must have been a rounding error?
 		// this seems to happen a lot figure out why!
 		//Trace(loop, 1, "Unable to consume input buffer, remainder %ld\n",

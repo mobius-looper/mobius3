@@ -471,7 +471,7 @@ void PitchFunction::convertAction(Action* action, Loop* l,
  */
 Event* PitchFunction::invoke(Action* action, Loop* loop)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     bool standard = true;
 
     // Octave, bend and stretch always unquantized controls
@@ -484,9 +484,9 @@ Event* PitchFunction::invoke(Action* action, Loop* loop)
         // since we have subtypes
         EventManager* em = loop->getTrack()->getEventManager();
         Event* prev = em->findEvent(this);
-        if (prev != NULL && !prev->quantized) {
+        if (prev != nullptr && !prev->quantized) {
             Event* jump = prev->findEvent(JumpPlayEvent);
-            if (jump == NULL || !jump->processed) {
+            if (jump == nullptr || !jump->processed) {
                 
                 PitchChange change;
                 convertAction(action, loop, &change);
@@ -514,7 +514,7 @@ Event* PitchFunction::invoke(Action* action, Loop* loop)
  */
 Event* PitchFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     MobiusMode* mode = l->getMode();
     PitchChange change;
 
@@ -543,9 +543,9 @@ Event* PitchFunction::scheduleEvent(Action* action, Loop* l)
         if (quantized) {
             EventManager* em = l->getTrack()->getEventManager();
             Event* prev = em->findEvent(eventType);
-            if (prev != NULL) {
+            if (prev != nullptr) {
                 Event* jump = prev->findEvent(JumpPlayEvent);
-                if (jump == NULL || !jump->processed) {
+                if (jump == nullptr || !jump->processed) {
                     // they must both be of the same unit
                     if (prev->fields.pitch.unit == change.unit) {
                         prev->number = change.value;
@@ -557,7 +557,7 @@ Event* PitchFunction::scheduleEvent(Action* action, Loop* l)
 
         if (!prevModified) {
             event = Function::scheduleEvent(action, l);
-            if (event != NULL) {
+            if (event != nullptr) {
                 annotateEvent(event, &change);
 
                 // !! not messing with a play jump event yet, just change
@@ -625,19 +625,19 @@ bool PitchFunction::isIneffective(Action* a, Loop* l,
  */
 Event* PitchFunction::scheduleSwitchStack(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
 
 	if (action->down) {
 		Event* switche = em->getUncomittedSwitch();
-		if (switche != NULL) {
+		if (switche != nullptr) {
 
             bool schedule = true;
             PitchChange change;
             convertAction(action, l, &change);
 
-            Event* next = NULL;
-            for (Event* e = switche->getChildren() ; e != NULL ; e = next) {
+            Event* next = nullptr;
+            for (Event* e = switche->getChildren() ; e != nullptr ; e = next) {
                 next = e->getSibling();
 
                 // searching on just type isn't enough, have to include 
@@ -677,7 +677,7 @@ Event* PitchFunction::scheduleSwitchStack(Action* action, Loop* l)
  */
 Event* PitchFunction::scheduleTransfer(Loop* l)
 {
-    Event* event = NULL;
+    Event* event = nullptr;
     TransferMode tm = ParameterSource::getPitchTransfer(l);
 
     if (tm == XFER_OFF || tm == XFER_RESTORE) {
@@ -686,7 +686,7 @@ Event* PitchFunction::scheduleTransfer(Loop* l)
         // the if block and would have prevented the event from
         // being returned.  Don't know what problems that may have3
         // caused but look here if there are pitch scheduling anomolies
-        //Event* event = NULL;
+        //Event* event = nullptr;
         
         EventManager* em = l->getTrack()->getEventManager();
 
@@ -695,7 +695,7 @@ Event* PitchFunction::scheduleTransfer(Loop* l)
         // but not bend.
 
         Event* prev = em->findEvent(eventType);
-        if (prev == NULL) {
+        if (prev == nullptr) {
             if (tm == XFER_OFF) {
                 event = em->newEvent(PitchCancel, l->getFrame());
             }
@@ -707,7 +707,7 @@ Event* PitchFunction::scheduleTransfer(Loop* l)
                 event->fields.pitchRestore.bend = state->pitchBend;
             }
 
-            if (event != NULL) {
+            if (event != nullptr) {
                 event->automatic = true;
                 em->addEvent(event);
             }
@@ -797,7 +797,7 @@ void PitchFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 
 	if (e->type == JumpPlayEvent) {
 		Event* parent = e->getParent();
-		if (parent == NULL)
+		if (parent == nullptr)
 		  Trace(l, 1, "PitchFunction: JumpEvent with no parent!\n");
 		else {
             PitchUnit unit = (PitchUnit)parent->fields.pitch.unit;

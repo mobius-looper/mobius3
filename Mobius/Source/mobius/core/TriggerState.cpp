@@ -54,10 +54,10 @@
 
 void TriggerWatcher::init()
 {
-    next = NULL;
-    trigger = NULL;
-    triggerId = NULL;
-    function = NULL;
+    next = nullptr;
+    trigger = nullptr;
+    triggerId = 0;
+    function = nullptr;
     frames = 0;
     longPress = false;
 }
@@ -71,9 +71,9 @@ TriggerWatcher::~TriggerWatcher()
 {
 	TriggerWatcher *el, *nextel;
 
-	for (el = next ; el != NULL ; el = nextel) {
+	for (el = next ; el != nullptr ; el = nextel) {
 		nextel = el->next;
-		el->next = NULL;
+		el->next = nullptr;
 		delete el;
 	}
 }
@@ -104,9 +104,9 @@ void TriggerWatcher::init(Action* a)
 
 TriggerState::TriggerState()
 {
-    mPool = NULL;
-    mWatchers = NULL;
-    mLastWatcher = NULL;
+    mPool = nullptr;
+    mWatchers = nullptr;
+    mLastWatcher = nullptr;
 
     // default to 1/2 second at 44100
     mLongPressFrames = 22050;
@@ -152,7 +152,7 @@ void TriggerState::assimilate(Action* action)
 {
     Function* func = action->getFunction();
     
-    if (func == NULL) {
+    if (func == nullptr) {
         // should have been caught by now
         // what about script triggers that won't have functions?
         // or will it be a RunScriptFunction?
@@ -163,7 +163,7 @@ void TriggerState::assimilate(Action* action)
     else if (!action->down) {
         // an up transition
         TriggerWatcher* tw = remove(action);
-        if (tw != NULL) {
+        if (tw != nullptr) {
             const char* msg;
             if (tw->longPress)
               msg = "TriggerState: ending long press for %s\n";
@@ -210,14 +210,14 @@ void TriggerState::assimilate(Action* action)
             // Triggers of the same id can't overlap, this
             // sometimes happens in debugging.  Reclaim them.
             TriggerWatcher* tw = remove(action);
-            if (tw != NULL) {
+            if (tw != nullptr) {
                 Trace(2, "TriggerState: Cleaning dangling trigger for %s\n",
                       tw->function->getDisplayName());
                 tw->next = mPool;
                 mPool = tw;
             }
 
-            if (mPool == NULL) {
+            if (mPool == nullptr) {
                 // Shouldn't get here unless there is a misconfigured
                 // switch that isn't sending note offs.  We can either
                 // start ignoring new ones or start losing old ones.
@@ -234,10 +234,10 @@ void TriggerState::assimilate(Action* action)
 
                 tw = mPool;
                 mPool = tw->next;
-                tw->next = NULL;
+                tw->next = nullptr;
                 tw->init(action);
 
-                if (mLastWatcher != NULL)
+                if (mLastWatcher != nullptr)
                   mLastWatcher->next = tw;
                 else 
                   mWatchers = tw;
@@ -256,22 +256,22 @@ void TriggerState::assimilate(Action* action)
  */
 TriggerWatcher* TriggerState::remove(Action* action)
 {
-    TriggerWatcher* found = NULL;
-    TriggerWatcher* prev = NULL;
+    TriggerWatcher* found = nullptr;
+    TriggerWatcher* prev = nullptr;
 
-    for (TriggerWatcher* t = mWatchers ; t != NULL ; t = t->next) {
+    for (TriggerWatcher* t = mWatchers ; t != nullptr ; t = t->next) {
         
         // a trigger is always uniquely identified by the Trigger type
         // and the id
         if (t->trigger == action->trigger && t->triggerId == action->triggerId) {
             found = t;
-            if (prev != NULL)
+            if (prev != nullptr)
               prev->next = t->next;
             else 
               mWatchers = t->next;
 
             if (mLastWatcher == t) {
-                if (t->next != NULL)
+                if (t->next != nullptr)
                   Trace(1, "TriggerState: malformed watcher list!\n");
                 mLastWatcher = prev;
             }
@@ -298,7 +298,7 @@ TriggerWatcher* TriggerState::remove(Action* action)
  */
 void TriggerState::advance(Actionator* actionator, int frames)
 {
-    for (TriggerWatcher* t = mWatchers ; t != NULL ; t = t->next) {
+    for (TriggerWatcher* t = mWatchers ; t != nullptr ; t = t->next) {
 
         //Trace(2, "TriggerState: advancing %s %ld\n", 
         //t->function->getDisplayName(), (long)t->frames);

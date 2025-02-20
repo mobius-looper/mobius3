@@ -47,7 +47,7 @@ StreamPlugin::StreamPlugin(int sampleRate)
 	mBatch = false;
 	mStartupFade = false;
 	mStartupFadeOffset = 0;
-	mTailWindow = NULL;
+	mTailWindow = nullptr;
 }
 
 StreamPlugin::~StreamPlugin()
@@ -104,7 +104,7 @@ long StreamPlugin::process(float* buffer, long frames)
 	  doStartupFade(mOutput, actual);
 
 	// and keep a tail window for a shutdown fade
-	if (mTailWindow != NULL)
+	if (mTailWindow != nullptr)
 	  mTailWindow->add(mOutput, actual);
 
 	memcpy(buffer, mOutput, (actual * mChannels) * sizeof(float));
@@ -153,12 +153,12 @@ void StreamPlugin::doStartupFade(float* output, long frames)
 {
 	if (mStartupFade) {
 		// locate the first frame containing a non-zero sample
-		float* start = NULL;
+		float* start = nullptr;
 		float* ptr = output;
 		long offset = 0;
 
-		for (int i = 0 ; i < frames && start == NULL ; i++) {
-			for (int j = 0 ; j < mChannels && start == NULL ; j++) {
+		for (int i = 0 ; i < frames && start == nullptr ; i++) {
+			for (int j = 0 ; j < mChannels && start == nullptr ; j++) {
 				if (ptr[j] != 0.0) {
 					start = ptr;
 					offset = i;
@@ -167,7 +167,7 @@ void StreamPlugin::doStartupFade(float* output, long frames)
 			ptr += mChannels;
 		}
 				
-		if (start != NULL) {
+		if (start != nullptr) {
 			long avail = frames - offset;
 			int range = AudioFade::getRange();
 			long need = range - mStartupFadeOffset;
@@ -240,7 +240,7 @@ void StreamPlugin::captureFadeTail(FadeTail* tail)
 	}
 	else {
 		// not enough, punt and do a reverse tail
-		if (mTailWindow == NULL)
+		if (mTailWindow == nullptr)
 		  Trace(1, "Attempt to capture plugin fade tail with no tail window!\n");
 		else {
 			Trace(1, "StreamPlugin had to use a reverse fade tail!\n");

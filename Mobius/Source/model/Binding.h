@@ -147,7 +147,7 @@ class Binding {
 	// trigger
 
     Trigger *trigger = nullptr;
-    TriggerMode* triggerMode = 0;
+    TriggerMode* triggerMode = nullptr;
 
     // new: flag indicating that this is a "release" binding that
     // may differ from a "press" biding associated with the same trigger

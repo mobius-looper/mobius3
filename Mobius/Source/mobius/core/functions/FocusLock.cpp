@@ -61,7 +61,7 @@ Event* FocusLockFunction::invoke(Action* action, Loop* l)
     if (t != nullptr)
       t->setFocusLock(!t->isFocusLock());
     
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************/

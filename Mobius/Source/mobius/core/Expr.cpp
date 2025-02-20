@@ -86,7 +86,7 @@
 
 ExValueList::ExValueList()
 {
-    mOwner = NULL;
+    mOwner = nullptr;
 }
 
 /**
@@ -110,7 +110,7 @@ void ExValueList::deleteElement(void* o)
  */
 void* ExValueList::copyElement(void* src)
 {
-    if (src != NULL) {
+    if (src != nullptr) {
         ExValue* srcv = (ExValue*)src;
         if (srcv->getType() == EX_LIST) {
             ExValueList* childlist = srcv->getList();   
@@ -147,14 +147,14 @@ ExValueList* ExValueList::copy()
 
     for (int i = 0 ; i < size() ; i++) {
         ExValue* srcvalue = getValue(i);
-        if (srcvalue != NULL) {
+        if (srcvalue != nullptr) {
             ExValue* newvalue = new ExValue();
             neu->add(newvalue);
             if (srcvalue->getType() != EX_LIST)
               newvalue->set(srcvalue);
             else {
                 ExValueList* srclist = srcvalue->getList();
-                if (srclist != NULL)
+                if (srclist != nullptr)
                   newvalue->setOwnedList(srclist->copy());
             }
         }
@@ -169,7 +169,7 @@ ExValueList* ExValueList::copy()
  ****************************************************************************/
 
 /**
- * We don't have an explicit NULL right now.  
+ * We don't have an explicit nullptr right now.  
  * The default value is the empty string
  */
 ExValue::ExValue()
@@ -178,7 +178,7 @@ ExValue::ExValue()
 	mInt = 0;
 	mFloat = 0.0;
 	mBool = false;
-	mList = NULL;
+	mList = nullptr;
 	strcpy(mString, "");
 }
 
@@ -190,10 +190,10 @@ ExValue::~ExValue()
 
 void ExValue::releaseList()
 {
-    if (mList != NULL) {
+    if (mList != nullptr) {
         if (mList->getOwner() == this)
           delete mList;
-        mList = NULL;
+        mList = nullptr;
     }
 }
 
@@ -256,7 +256,7 @@ int ExValue::getInt()
  
 		case EX_LIST: {
 			ExValue* el = getList(0);
-			if (el != NULL)
+			if (el != nullptr)
 			  ival = el->getInt();
 			else
 			  ival = 0;
@@ -316,7 +316,7 @@ float ExValue::getFloat()
 
 		case EX_LIST: {
 			ExValue* el = getList(0);
-			if (el != NULL)
+			if (el != nullptr)
 			  fval = el->getFloat();
 			else
 			  fval = 0.0f;
@@ -365,7 +365,7 @@ bool ExValue::getBool()
 
 		case EX_LIST: {
 			ExValue* el = getList(0);
-			if (el != NULL)
+			if (el != nullptr)
 			  bval = el->getBool();
 			else
 			  bval = false;
@@ -412,7 +412,7 @@ const char* ExValue::getString()
 
 		case EX_LIST: {
 			ExValue* el = getList(0);
-			if (el != NULL)
+			if (el != nullptr)
 			  el->getString(mString, EX_MAX_STRING);
 			else
 			  strcpy(mString, "");
@@ -464,7 +464,7 @@ void ExValue::getString(char* buffer, int max)
             // in theory we should do all of them, just do the first
             // for debugging
 			ExValue* el = getList(0);
-			if (el != NULL)
+			if (el != nullptr)
 			  el->getString(buffer, max);
 			else
 			  strcpy(buffer, "");
@@ -494,8 +494,8 @@ void ExValue::addString(const char* src)
 
 ExValueList* ExValue::getList() 
 {
-	ExValueList* list = NULL;
-	ExValue* first = NULL;
+	ExValueList* list = nullptr;
+	ExValue* first = nullptr;
 
 	switch (mType) {
 
@@ -529,7 +529,7 @@ ExValueList* ExValue::getList()
 		break;
 	}
 
-	if (list == NULL && first != NULL) {
+	if (list == nullptr && first != nullptr) {
 		// it promotes so we can keep track of it
 		list = new ExValueList();
 		list->add(first);
@@ -544,15 +544,15 @@ ExValueList* ExValue::getList()
 ExValueList* ExValue::takeList()
 {
     ExValueList* list = getList();
-    if (list != NULL) {
+    if (list != nullptr) {
         if (list->getOwner() != this) {
             // we weren't the owner, I guess this could happen
             // with intermediate ExValues but it's worrisome that
             // there will be a dangling reference somewhere
             Trace(2, "WARNING: takeList with someone else's list\n");
         }
-        list->setOwner(NULL);
-        mList = NULL;
+        list->setOwner(nullptr);
+        mList = nullptr;
         mType = EX_STRING;
     }
     return list;
@@ -560,7 +560,7 @@ ExValueList* ExValue::takeList()
 
 void ExValue::setList(ExValueList* src)
 {
-    if (src == NULL) {
+    if (src == nullptr) {
         setNull();
     }
     else {
@@ -573,8 +573,8 @@ void ExValue::setList(ExValueList* src)
 
 void ExValue::setOwnedList(ExValueList* src)
 {
-    if (src != NULL) {
-        if (src->getOwner() != NULL) {
+    if (src != nullptr) {
+        if (src->getOwner() != nullptr) {
             Trace(2, "WARNING: setOwnedList called with already owned list\n");
         }
         src->setOwner(this);
@@ -585,7 +585,7 @@ void ExValue::setOwnedList(ExValueList* src)
 void ExValue::set(ExValue* src, bool owned)
 {
     setNull();
-    if (src != NULL) {
+    if (src != nullptr) {
 		ExType otype = src->getType();
 		switch (otype) {
 			case EX_INT:
@@ -676,7 +676,7 @@ int ExValue::compare(ExValue* other)
 {
 	int retval = 0;
 	
-	if (other == NULL) {
+	if (other == nullptr) {
 		// assume we are always larger than nothing, though
 		// if we have the empty string, could consider both sides "null"?
 		retval = 1;
@@ -801,11 +801,11 @@ int ExValue::compareString(ExValue *other)
 	const char* myval = getString();
 	const char* oval = other->getString();
 
-	if (myval == NULL) {
-		if (oval != NULL)
+	if (myval == nullptr) {
+		if (oval != nullptr)
 		  retval = -1;
 	}
-	else if (oval == NULL)
+	else if (oval == nullptr)
 	  retval = 1;
 	else
 	  retval = strcmp(myval, oval);
@@ -818,14 +818,14 @@ void ExValue::toString(Vbuf* b)
     if (mType == EX_LIST) {
         // this is different than getString which is inconsistent and
         // I don't like, think more about toString and getString
-        if (mList == NULL)
+        if (mList == nullptr)
           b->add("null");
         else {
             b->add("[");    
             for (int i = 0 ; i < mList->size() ; i++) {
                 ExValue* el = mList->getValue(i);
                 if (i > 0) b->add(",");
-                if (el == NULL)
+                if (el == nullptr)
                   b->add("null");
                 else
                   el->toString(b);
@@ -869,8 +869,8 @@ void ExValue::dump()
  */
 ExValue* ExValue::getList(int index)
 {
-	ExValue* value = NULL;
-	if (mList != NULL)
+	ExValue* value = nullptr;
+	if (mList != nullptr)
 	  value = mList->getValue(index);
 	return value;
 }
@@ -919,18 +919,18 @@ ExValueList* ExNode::evalToList(ExContext * con)
 
 ExNode::ExNode()
 {
-	mNext = NULL;
-	mParent = NULL;
-	mChildren = NULL;
+	mNext = nullptr;
+	mParent = nullptr;
+	mChildren = nullptr;
 }
 
 ExNode::~ExNode()
 {
 	// we delete our siblings but not the parent
 	ExNode* node = mNext;
-	while (node != NULL) {
+	while (node != nullptr) {
 		ExNode* next = node->getNext();
-        node->setNext(NULL);
+        node->setNext(nullptr);
 		delete node;
 		node = next;
 	}
@@ -968,7 +968,7 @@ ExNode* ExNode::getChildren()
 ExNode* ExNode::stealChildren()
 {
     ExNode* children = mChildren;
-    mChildren = NULL;
+    mChildren = nullptr;
 	return children;
 }
 
@@ -976,23 +976,23 @@ void ExNode::setChildren(ExNode* n)
 {
 	delete mChildren;
 	mChildren = n;
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext())
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext())
 	  c->setParent(this);
 }
 
 ExNode* ExNode::getLastChild(ExNode* first)
 {
 	ExNode* last = first;
-	while (last != NULL && last->getNext() != NULL)
+	while (last != nullptr && last->getNext() != nullptr)
 	  last = last->getNext();
 	return last;
 }
 
 void ExNode::addChild(ExNode* n)
 {
-	if (n != NULL) {
+	if (n != nullptr) {
 		n->setParent(this);
-		if (mChildren == NULL)
+		if (mChildren == nullptr)
 		  mChildren = n;
 		else {
 			ExNode* last = getLastChild(mChildren);
@@ -1003,15 +1003,15 @@ void ExNode::addChild(ExNode* n)
 
 void ExNode::insertChild(ExNode* n, int psn)
 {
-	if (n != NULL) {
+	if (n != nullptr) {
 		n->setParent(this);
-        ExNode* prev = NULL;
+        ExNode* prev = nullptr;
         ExNode* child = mChildren;
-        for (int i = 0 ; i < psn && child != NULL ; i++) {
+        for (int i = 0 ; i < psn && child != nullptr ; i++) {
             prev = child;
             child = child->getNext();
         }
-        if (prev == NULL) {
+        if (prev == nullptr) {
             n->setNext(mChildren);
             mChildren = n;
         }
@@ -1025,7 +1025,7 @@ void ExNode::insertChild(ExNode* n, int psn)
 int ExNode::countChildren()
 {
 	int count = 0;
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext())
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext())
 	  count++;
 	return count;
 }
@@ -1074,25 +1074,25 @@ bool ExNode::hasPrecedence(ExNode* other)
 void ExNode::eval(ExContext* context, ExValue* v)
 {
     (void)context;
-	v->setString(NULL);
+	v->setString(nullptr);
 }
 
 void ExNode::eval1(ExContext* context, ExValue* v1)
 {
-	v1->setString(NULL);
-	if (mChildren != NULL)
+	v1->setString(nullptr);
+	if (mChildren != nullptr)
 	  mChildren->eval(context, v1);
 }
 
 void ExNode::eval2(ExContext* context, ExValue* v1, ExValue* v2)
 {
-	v1->setString(NULL);
-	v2->setString(NULL);
+	v1->setString(nullptr);
+	v2->setString(nullptr);
 
-	if (mChildren != NULL) {
+	if (mChildren != nullptr) {
 		mChildren->eval(context, v1);
 		ExNode* second = mChildren->getNext();
-		if (second != NULL)
+		if (second != nullptr)
 		  second->eval(context, v2);
 	}
 }
@@ -1102,10 +1102,10 @@ void ExNode::evaln(ExContext* context, ExValue* values, int max)
 	int i;
 
 	for (i = 0 ; i < max ; i++)
-	  values[i].setString(NULL);
+	  values[i].setString(nullptr);
 
 	i = 0;
-	for (ExNode* c = mChildren ; c != NULL && i < max ; 
+	for (ExNode* c = mChildren ; c != nullptr && i < max ; 
 		 c = c->getNext(), i++) {
 		c->eval(context, &values[i]);
 	}
@@ -1157,7 +1157,7 @@ void ExLiteral::toString(Vbuf* b)
 ExSymbol::ExSymbol(const char* name)
 {
 	mName = CopyString(name);
-	mResolver = NULL;
+	mResolver = nullptr;
 	mResolved = false;
 }
 
@@ -1185,12 +1185,12 @@ const char* ExSymbol::getName()
  */
 void ExSymbol::eval(ExContext* context, ExValue* value)
 {
-	if (!mResolved && context != NULL) {
+	if (!mResolved && context != nullptr) {
 		mResolver = context->getExResolver(this);
 		mResolved = true;
 	}
 
-	if (mResolver == NULL)
+	if (mResolver == nullptr)
 	  value->setString(mName);
 	else
 	  mResolver->getExValue(context, value);
@@ -1231,7 +1231,7 @@ void ExOperator::toString(Vbuf* b)
 	b->add("(");
 
     if (desired <= 0) {
-        while (child != NULL) {
+        while (child != nullptr) {
             if (child != mChildren)
               b->add(",");
             child->toString(b);
@@ -1242,7 +1242,7 @@ void ExOperator::toString(Vbuf* b)
         for (int i = 0 ; i < desired ; i++) {
             if (i > 0)
               b->add(",");
-            if (child == NULL)
+            if (child == nullptr)
               b->add("?");
             else {
                 child->toString(b);
@@ -1277,7 +1277,7 @@ int ExNot::getPrecedence()
 
 void ExNot::eval(ExContext* context, ExValue* value)
 {
-	if (mChildren == NULL) {
+	if (mChildren == nullptr) {
 		// I guess ! null is true?
 		value->setBool(true);
 	}
@@ -1305,7 +1305,7 @@ int ExNegate::getPrecedence()
 
 void ExNegate::eval(ExContext* context, ExValue* value)
 {
-	if (mChildren == NULL)
+	if (mChildren == nullptr)
 	  value->setInt(0);
 	else {
 		// evaluate first child as an integer boolean and negate
@@ -1465,7 +1465,7 @@ void ExAdd::eval(ExContext* context, ExValue* value)
 	float fval = 0.0;
 	bool floating = false;
 	ExValue v;
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		c->eval(context, &v);
 		if (!floating && v.getType() == EX_FLOAT) {
 			fval = (float)ival;
@@ -1498,7 +1498,7 @@ void ExSubtract::eval(ExContext* context, ExValue* value)
 	float fval = 0.0;
 	bool floating = false;
 	ExValue v;
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		c->eval(context, &v);
 		if (!floating && v.getType() == EX_FLOAT) {
 			fval = (float)ival;
@@ -1541,7 +1541,7 @@ void ExMultiply::eval(ExContext* context, ExValue* value)
 	float fval = 1.0;
 	bool floating = false;
 	ExValue v;
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		c->eval(context, &v);
 		if (!floating && v.getType() == EX_FLOAT) {
 			fval = (float)ival;
@@ -1580,7 +1580,7 @@ void ExDivide::eval(ExContext* context, ExValue* value)
 	float fval = 0.0;
 	bool floating = false;
 	ExValue v;
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		c->eval(context, &v);
 		if (!floating && v.getType() == EX_FLOAT) {
 			fval = (float)ival;
@@ -1656,7 +1656,7 @@ void ExAnd::eval(ExContext* context, ExValue* value)
 	// is an and of nothing also true?
 	bool result = true;
 	ExValue v;
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		c->eval(context, &v);
 		if (!v.getBool()) {
 			result = false;
@@ -1681,7 +1681,7 @@ void ExOr::eval(ExContext* context, ExValue* value)
 	// true if any of the children are true
 	bool result = false;
 	ExValue v;
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		c->eval(context, &v);
 		if (v.getBool()) {
 			result = true;
@@ -1751,7 +1751,7 @@ bool ExBlock::isIndex()
  */
 void ExBlock::eval(ExContext* context, ExValue* value)
 {
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext())
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext())
 	  c->eval(context, value);
 }
 
@@ -1761,7 +1761,7 @@ void ExBlock::eval(ExContext* context, ExValue* value)
 void ExBlock::toString(Vbuf* b)
 {
 	b->add("{");
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		if (c != mChildren)
 		  b->add(",");
 		c->toString(b);
@@ -1784,7 +1784,7 @@ bool ExParenthesis::isParenthesis()
 void ExParenthesis::toString(Vbuf* b)
 {
 	b->add("(");
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		if (c != mChildren)
 		  b->add(",");
 		c->toString(b);
@@ -1808,7 +1808,7 @@ void ExFunction::toString(Vbuf* b)
 {
 	b->add(getFunction());
 	b->add("(");
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		if (c != mChildren)
 		  b->add(",");
 		c->toString(b);
@@ -1828,7 +1828,7 @@ bool ExList::isList()
 void ExList::toString(Vbuf* b)
 {
 	b->add("list(");
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		if (c != mChildren)
 		  b->add(",");
 		c->toString(b);
@@ -1842,9 +1842,9 @@ void ExList::toString(Vbuf* b)
 void ExList::eval(ExContext* context, ExValue* value)
 {
     value->setNull();
-    if (mChildren != NULL) {
+    if (mChildren != nullptr) {
         ExValueList* list = NEW(ExValueList);
-        for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+        for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
             ExValue* el = NEW(ExValue);
             c->eval(context, el);   
             list->add(el);
@@ -1865,7 +1865,7 @@ bool ExArray::isArray()
 void ExArray::toString(Vbuf* b)
 {
 	b->add("array(");
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		if (c != mChildren)
 		  b->add(",");
 		c->toString(b);
@@ -1876,9 +1876,9 @@ void ExArray::toString(Vbuf* b)
 void ExArray::eval(ExContext* context, ExValue* value)
 {
     value->setNull();
-    if (mChildren != NULL) {
+    if (mChildren != nullptr) {
         ExValueList* list = NEW(ExValueList);
-        for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+        for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
             ExValue* el = NEW(ExValue);
             c->eval(context, el);   
             list->add(el);
@@ -1900,7 +1900,7 @@ void ExIndex::toString(Vbuf* b)
 {
 	b->add("index(");
     // should only have one, no multi-dimensional arrays yet
-	for (ExNode* c = mIndexes ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mIndexes ; c != nullptr ; c = c->getNext()) {
 		if (c != mIndexes)
 		  b->add(",");
 		c->toString(b);
@@ -1909,7 +1909,7 @@ void ExIndex::toString(Vbuf* b)
     // always a placeholder between index and children
     b->add(",");
     
-	for (ExNode* c = mChildren ; c != NULL ; c = c->getNext()) {
+	for (ExNode* c = mChildren ; c != nullptr ; c = c->getNext()) {
 		if (c != mChildren)
 		  b->add(",");
 		c->toString(b);
@@ -1927,15 +1927,15 @@ void ExIndex::setIndexes(ExNode* n)
 	delete mIndexes;
 	mIndexes = n;
     // is this relevant?
-	for (ExNode* c = mIndexes ; c != NULL ; c = c->getNext())
+	for (ExNode* c = mIndexes ; c != nullptr ; c = c->getNext())
 	  c->setParent(this);
 }
 
 void ExIndex::addIndex(ExNode* n)
 {
-	if (n != NULL) {
+	if (n != nullptr) {
 		n->setParent(this);
-		if (mIndexes == NULL)
+		if (mIndexes == nullptr)
 		  mChildren = n;
 		else {
 			ExNode* last = getLastChild(mIndexes);
@@ -1957,24 +1957,24 @@ void ExIndex::eval(ExContext* context, ExValue* value)
     value->setNull();
 
     int index = 0;
-    if (mIndexes != NULL) {
+    if (mIndexes != nullptr) {
         // ignore all but the first one
         mIndexes->eval(context, &v);
         index = v.getInt();
     }
 
-    if (mChildren != NULL) {
+    if (mChildren != nullptr) {
         mChildren->eval(context, &v);
         if (v.getType() == EX_LIST) {
             ExValueList* list = v.getList();
-            if (list != NULL) {
+            if (list != nullptr) {
                 ExValue* src = list->getValue(index);
                 value->set(src);
             }
         }
         else if (v.getType() == EX_STRING) {
             const char* str = v.getString();
-            if (str != NULL) {
+            if (str != nullptr) {
                 int len = (int)strlen(str);
                 if (index < len) {
                     char buf[4];
@@ -2146,19 +2146,19 @@ void ExCustom::eval(ExContext* context, ExValue* value)
  */
 ExParser::ExParser()
 {
-	mError = NULL;
+	mError = nullptr;
 	strcpy(mErrorArg, "");
-	mSource = NULL;
+	mSource = nullptr;
 	mSourcePsn = 0;
 	mNext = 0;
 	strcpy(mToken, "");
 	mTokenPsn = 0;
 
-	mOperands = NULL;
-	mOperators = NULL;
-    mCurrent = NULL;
-	mLast = NULL;
-    mLookahead = NULL;
+	mOperands = nullptr;
+	mOperators = nullptr;
+    mCurrent = nullptr;
+	mLast = nullptr;
+    mLookahead = nullptr;
 }
 
 ExParser::~ExParser()
@@ -2174,12 +2174,12 @@ const char* ExParser::getError()
 
 const char* ExParser::getErrorArg()
 {
-	return ((strlen(mErrorArg) > 0) ? mErrorArg : NULL);
+	return ((strlen(mErrorArg) > 0) ? mErrorArg : nullptr);
 }
 
 void ExParser::printError()
 {
-	if (mError == NULL)
+	if (mError == nullptr)
 	  printf("Source string empty\n");
 	else if (strlen(mErrorArg) == 0)
 	  printf("ERROR: %s\n", mError);
@@ -2192,7 +2192,7 @@ void ExParser::printError()
  */
 void ExParser::deleteStack(ExNode* stack)
 {
-	while (stack != NULL) {
+	while (stack != nullptr) {
 		ExNode* prev = stack->getParent();
 		delete stack;
 		stack = prev;
@@ -2217,9 +2217,9 @@ void ExParser::pushOperator(ExNode* n)
 ExNode* ExParser::popOperator()
 {
 	ExNode* op = mOperators;
-	if (op != NULL) {
+	if (op != nullptr) {
 		mOperators = op->getParent();
-		op->setParent(NULL);
+		op->setParent(nullptr);
 	}
 	else {
 		// this would be a bug in the parser
@@ -2231,9 +2231,9 @@ ExNode* ExParser::popOperator()
 ExNode* ExParser::popOperand()
 {
 	ExNode* op = mOperands;
-	if (op != NULL) {
+	if (op != nullptr) {
 		mOperands = op->getParent();
-		op->setParent(NULL);
+		op->setParent(nullptr);
 	}
 	else {
 		// this would be a syntax error
@@ -2253,13 +2253,13 @@ ExNode* ExParser::popOperand()
 bool ExParser::isOperatorSatisfied()
 {
     bool satisfied = false;
-    if (mOperators != NULL) {
+    if (mOperators != nullptr) {
         int desired = mOperators->getDesiredOperands();
         if (desired == 1) {
-            satisfied = (mOperands != NULL);
+            satisfied = (mOperands != nullptr);
         }
         else if (desired == 2) {
-            satisfied = (mOperands != NULL && mOperands->getParent() != NULL);
+            satisfied = (mOperands != nullptr && mOperands->getParent() != nullptr);
         }
         // else, assume block, they're never satisfied
     }
@@ -2282,9 +2282,9 @@ void ExParser::shiftOperator()
         // sigh, if we bootstrapped an ExList it may already hav a child
         // which is logicaly at the head of the list so preserve
         // the order of existing children
-        if (mOperands != NULL) {
+        if (mOperands != nullptr) {
             int psn = op->countChildren();
-            while (mOperands != NULL)
+            while (mOperands != nullptr)
               op->insertChild(popOperand(), psn);
         }
     }
@@ -2301,11 +2301,11 @@ void ExParser::shiftOperator()
  */
 ExNode* ExParser::parse(const char* src)
 {
-	ExNode* root = NULL;
+	ExNode* root = nullptr;
 
-	if (src != NULL) {
+	if (src != nullptr) {
 
-		mError = NULL;
+		mError = nullptr;
 		strcpy(mErrorArg, "");
 
 		mSource = src;
@@ -2315,23 +2315,23 @@ ExNode* ExParser::parse(const char* src)
 		mTokenPsn = 0;
 
 		deleteStack(mOperands);
-		mOperands = NULL;
+		mOperands = nullptr;
 		deleteStack(mOperators);
-		mOperators = NULL;
+		mOperators = nullptr;
 
-        mCurrent = NULL;
-		mLast = NULL;
-        mLookahead = NULL;
+        mCurrent = nullptr;
+		mLast = nullptr;
+        mLookahead = nullptr;
 
-		while (mError == NULL && (mNext || mLookahead != NULL)) {
+		while (mError == nullptr && (mNext || mLookahead != nullptr)) {
 			ExNode *node = nextToken();
 
-			if (mError == NULL) {
-				if (node != NULL) {
+			if (mError == nullptr) {
+				if (node != nullptr) {
 					if (!node->isParent()) {
                         pushOperand(node);
                     }
-					else if (mOperators == NULL) {
+					else if (mOperators == nullptr) {
                         pushOperator(node);
                     }
 					else {
@@ -2341,24 +2341,24 @@ ExNode* ExParser::parse(const char* src)
 						// operators, if we did and node was right-associative
 						// the comparison would be > rather than >=
 						// stop at blocks
-						while (mError == NULL &&
-							   mOperators != NULL && 
+						while (mError == nullptr &&
+							   mOperators != nullptr && 
 							   !mOperators->isBlock() &&
 							   mOperators->hasPrecedence(node)) {
 							shiftOperator();
 						}
-                        if (mError == NULL)
+                        if (mError == nullptr)
                           pushOperator(node);
 					}
 				}
 				else if (!strcmp(mToken, ",")) {
 					// pop till we reach the containing block
-					while (mError == NULL && mOperators != NULL && 
+					while (mError == nullptr && mOperators != nullptr && 
 						   !mOperators->isBlock())
                       shiftOperator();
                     
-                    if (mError == NULL) {
-                        if (mOperators == NULL) {
+                    if (mError == nullptr) {
+                        if (mOperators == nullptr) {
                             // unbalanced block delimiters or misplaced comma
                             // auto promote to list
                             //mError = "Misplaced comma or unbalanced parenthesis";
@@ -2377,11 +2377,11 @@ ExNode* ExParser::parse(const char* src)
                     }
 				}
 				else if (!strcmp(mToken, "(")) {
-					if (mLast != NULL && mLast->isSymbol()) {
+					if (mLast != nullptr && mLast->isSymbol()) {
 						// promote the symbol to a function
 						ExSymbol* s = (ExSymbol*)popOperand();
 						ExNode* func = newFunction(s->getName());
-						if (func != NULL)
+						if (func != nullptr)
 						  pushOperator(func);
 						else {
 							mError = "Invalid function";
@@ -2397,7 +2397,7 @@ ExNode* ExParser::parse(const char* src)
 					// pop until we hit a block, will either leave
                     // one expression node on the top of the operand stack
                     // or we'll get an unbalanced error
-					while (mError == NULL && mOperators != NULL &&
+					while (mError == nullptr && mOperators != nullptr &&
 						   !mOperators->isBlock()) {
 						shiftOperator();
 					}
@@ -2409,11 +2409,11 @@ ExNode* ExParser::parse(const char* src)
                     // caught this in the lexer and converted the
                     // intervening space to a comma
                     
-                    if (mError == NULL) {
-                        // will be a block or NULL
+                    if (mError == nullptr) {
+                        // will be a block or nullptr
                         ExBlock* block = (ExBlock*)popOperator();
                         
-                        if (block == NULL) {
+                        if (block == nullptr) {
                             // didn't find a block
                             mError = "Unbalanced parenthesis";
                         }
@@ -2422,11 +2422,11 @@ ExNode* ExParser::parse(const char* src)
                         }
                         else if (!block->isParenthesis()) {
                             // function or list
-                            if (mOperands != NULL)
+                            if (mOperands != nullptr)
                               block->addChild(popOperand());
                             pushOperand(block);
                         }
-                        else if (block->getChildren() == NULL) {
+                        else if (block->getChildren() == nullptr) {
                             // single element parens are simply removed
                             deleteNode(block);
                         }
@@ -2434,7 +2434,7 @@ ExNode* ExParser::parse(const char* src)
                             // promote to a list constructor    
                             ExList* list = NEW(ExList);
                             list->setChildren(block->stealChildren());
-                            if (mOperands != NULL)
+                            if (mOperands != nullptr)
                               list->addChild(popOperand());
                             pushOperand(list);
                             deleteNode(block);
@@ -2446,7 +2446,7 @@ ExNode* ExParser::parse(const char* src)
                     // a list literal, or both...that would make it a
                     // funny operator with children for the index applied
                     // to a child providing the array...
-                    if (mLast == NULL || mLast->isOperator()) {
+                    if (mLast == nullptr || mLast->isOperator()) {
                         pushOperator(NEW(ExArray));
                     }
                     else {
@@ -2455,27 +2455,27 @@ ExNode* ExParser::parse(const char* src)
 				}
 				else if (!strcmp(mToken, "]")) {
 					// pop until we hit a block
-					while (mError == NULL && mOperators != NULL && 
+					while (mError == nullptr && mOperators != nullptr && 
 						   !mOperators->isBlock()) {
 						shiftOperator();
 					}
 
-                    if (mError == NULL) {
-                        // will be a block or NULL
+                    if (mError == nullptr) {
+                        // will be a block or nullptr
                         ExBlock* block = (ExBlock*)popOperator();
                         
-                        if (block == NULL) {
+                        if (block == nullptr) {
                             // didn't find a block
                             mError = "Unbalanced bracket";
                         }
                         else if (block->isArray()) {
-                            if (mOperands != NULL)
+                            if (mOperands != nullptr)
                               block->addChild(popOperand());
                             pushOperand(block);
                         }
                         else if (block->isIndex()) {
                             ExIndex* index = (ExIndex*)block;
-                            if (mOperands != NULL)
+                            if (mOperands != nullptr)
                               index->addIndex(popOperand());
                             pushOperand(block);
                             // .. must be something more
@@ -2494,25 +2494,25 @@ ExNode* ExParser::parse(const char* src)
 		}
 
 		// shift any remaining operators
-		while (mError == NULL && mOperators != NULL)
+		while (mError == nullptr && mOperators != nullptr)
 		  shiftOperator();
 
-		if (mError == NULL) {
+		if (mError == nullptr) {
 			// operand stack could be empty for special case ()
 			// or an empty source string
-			if (mOperands != NULL) {
+			if (mOperands != nullptr) {
 				// may be more than one if a syntax error of the form
 				// a + b c + d
-				if (mOperands->getParent() != NULL) {
+				if (mOperands->getParent() != nullptr) {
                     // formerly an error, just wrap them in a list
                     //mError = "Multiple expressions in source string";
                     root = NEW(ExList);
-                    while (mOperands != NULL)
+                    while (mOperands != nullptr)
                       root->insertChild(popOperand(), 0);
                 }
 				else {
 					root = mOperands;
-					mOperands = NULL;
+					mOperands = nullptr;
 				}
 			}
 		}
@@ -2531,11 +2531,11 @@ void ExParser::deleteNode(ExNode* node)
     
     // don't know if this can happen
     if (mLast == node)
-      mLast = NULL;
+      mLast = nullptr;
 
     // but this one can
     if (mCurrent == node)
-      mCurrent = NULL;
+      mCurrent = nullptr;
 }
 
 /**
@@ -2544,15 +2544,15 @@ void ExParser::deleteNode(ExNode* node)
  */
 ExNode* ExParser::nextToken()
 {
-    ExNode* node = NULL;
+    ExNode* node = nullptr;
 
     // shift this 
     mLast = mCurrent;
-    bool blockClose = (mLast == NULL && (!strcmp(mToken, ")") || !strcmp(mToken, "]")));
+    bool blockClose = (mLast == nullptr && (!strcmp(mToken, ")") || !strcmp(mToken, "]")));
 
-    if (mLookahead != NULL) {
+    if (mLookahead != nullptr) {
         node = mLookahead;
-        mLookahead = NULL;
+        mLookahead = nullptr;
     }
     else {
         node = nextTokenForReal();
@@ -2561,7 +2561,7 @@ ExNode* ExParser::nextToken()
         // if we find adjacent operands without an operator
         // treat the "gap" as if it were a comma to force the
         // building of a block.  Same for the patterns: ) x and ] x
-        if (node != NULL) {
+        if (node != nullptr) {
             if (!node->isOperator() || node->getDesiredOperands() == 1) {
                 // skip operators AND blocks
                 
@@ -2569,18 +2569,18 @@ ExNode* ExParser::nextToken()
                 // bool pushLookahead = false;
                 
                 // if we just closed a block or shifted a non-operator
-                if (blockClose || (mLast != NULL && !mLast->isParent())) {
+                if (blockClose || (mLast != nullptr && !mLast->isParent())) {
 
-                    if (mLookahead != NULL)
+                    if (mLookahead != nullptr)
                       mError = "Lookahead token overflow";
                     else {
                         mLookahead = node;
-                        node = NULL;
+                        node = nullptr;
                         strcpy(mToken, ",");
                     }
                 }
             }
-            else if (mLast != NULL && mLast->isOperator()) {
+            else if (mLast != nullptr && mLast->isOperator()) {
                 // a non-unary operator
                 // something like a++b catch early
                 // before we confuse the stack?
@@ -2597,7 +2597,7 @@ ExNode* ExParser::nextToken()
 
 ExNode* ExParser::nextTokenForReal()
 {
-	ExNode* node = NULL;
+	ExNode* node = nullptr;
 
     // Determine negatability based on the previous token.
     // If previous token is an operator, block start, or comma
@@ -2610,7 +2610,7 @@ ExNode* ExParser::nextTokenForReal()
     // make space position significant?  
 
     bool negatable;
-    if (mLast != NULL)
+    if (mLast != nullptr)
       negatable = mLast->isOperator();
     else
       negatable = (strlen(mToken) == 0 ||
@@ -2628,7 +2628,7 @@ ExNode* ExParser::nextTokenForReal()
 	if (mNext == '#') {
 		// an end of line comment
 		// hmm, I suppose we could support multi-line expressions?
-		while (mNext && mError == NULL) {
+		while (mNext && mError == nullptr) {
 			nextChar();
 			if (mNext == '\n')
 			  break;
@@ -2641,7 +2641,7 @@ ExNode* ExParser::nextTokenForReal()
 		bool escape = false;
 		bool terminated = false;
 		nextChar();
-		while (mNext && mError == NULL && !terminated) {
+		while (mNext && mError == nullptr && !terminated) {
 			if (escape) {
 				// only one
 				toToken();
@@ -2682,7 +2682,7 @@ ExNode* ExParser::nextTokenForReal()
 	else if (mNext && 
 			 (mNext == '-' ||
 			  isalnum(mNext) || 
-			  strchr(SYMBOL_CHARS, mNext) != NULL)) {
+			  strchr(SYMBOL_CHARS, mNext) != nullptr)) {
 
 		// If we get a leading minus, always try to make it a negative
 		// numeric literal.  If we can't then we have to rewind and make
@@ -2702,12 +2702,12 @@ ExNode* ExParser::nextTokenForReal()
 
 			toToken();
 		}
-		while (mNext && (isalnum(mNext) || strchr(SYMBOL_CHARS, mNext) != NULL));
+		while (mNext && (isalnum(mNext) || strchr(SYMBOL_CHARS, mNext) != nullptr));
 
 		// TODO: If we want to allow "and" and "or" to mean && and ||
 		// this is the place
 
-		if (mError == NULL) {
+		if (mError == nullptr) {
 
 			// ?? should we require negation to be adjacent to the
 			// operand or can there be spaces, e.g. a - - b
@@ -2792,9 +2792,9 @@ void ExParser::toToken()
  */
 ExNode* ExParser::newOperator(const char* name)
 {
-	ExNode* node = NULL;
+	ExNode* node = nullptr;
 
-	if (name != NULL) {
+	if (name != nullptr) {
 
 		if (!strcmp(name, "!"))
 		  node = NEW(ExNot);
@@ -2847,7 +2847,7 @@ ExNode* ExParser::newOperator(const char* name)
  */
 ExNode* ExParser::newFunction(const char* name)
 {
-	ExNode* func = NULL;
+	ExNode* func = nullptr;
 	
 	if (StringEqualNoCase(name, "abs"))
 	  func = NEW(ExAbs);

@@ -107,10 +107,10 @@ InstantMultiplyFunction::InstantMultiplyFunction(int n)
 
 Event* InstantMultiplyFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
 
 	event = Function::scheduleEvent(action, l);
-	if (event != NULL) {
+	if (event != nullptr) {
 		// NOTE: Not scheduling a play jump here, though if we are in mute
 		// and InstantMultiply is a mute cancel function, we technically
 		// should so we can cancel mute in advance.  As it is we'll have
@@ -130,7 +130,7 @@ void InstantMultiplyFunction::doEvent(Loop* loop, Event* event)
 	// Always accept an argument, for the numbered multiples, this is
 	// another level of multiplication.
     Action* action = event->getAction();
-    if (action != NULL) {
+    if (action != nullptr) {
         int ival = action->arg.getInt();
         if (ival > 0) {
             if (mMultiple == 0)
@@ -202,10 +202,10 @@ void InstantMultiplyFunction::multiply(LayerContext* con, Layer* layer,
 {
     (void)con;
 	Segment* segments = layer->getSegments();
-	if (segments == NULL) {
+	if (segments == nullptr) {
 		Trace(layer, 1, "InstantMultiply: no backing layer!\n");
 	}
-	else if (segments->getNext() != NULL) {
+	else if (segments->getNext() != nullptr) {
 		Trace(layer, 1, "InstantMultiply: more than one segment!\n");
 	}
 	else {
@@ -229,7 +229,7 @@ void InstantMultiplyFunction::multiply(LayerContext* con, Layer* layer,
 		// recalculate cycles and frames
 		long newFrames = layer->calcFrames();
 		// resize Audios, reverse doesn't matter
-		layer->setFrames(NULL, newFrames);
+		layer->setFrames(nullptr, newFrames);
 	}
 
 	layer->setStructureChanged(true);

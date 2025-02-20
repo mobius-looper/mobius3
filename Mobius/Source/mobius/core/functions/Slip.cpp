@@ -115,7 +115,7 @@ SlipFunction::SlipFunction(int direction)
 
 Event* SlipFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
 
     int slip = 0;
@@ -127,7 +127,7 @@ Event* SlipFunction::scheduleEvent(Action* action, Loop* l)
       slip = -1;
 
 	Event* prev = em->findEvent(SlipEvent);
-	if (prev != NULL) {
+	if (prev != nullptr) {
 		// normally quantized, but could just be comming in fast
 		// adjust the slip delta of the existing event, this may cause
 		// a change in direction
@@ -139,7 +139,7 @@ Event* SlipFunction::scheduleEvent(Action* action, Loop* l)
 	}
 	else {
 		event = Function::scheduleEvent(action, l);
-		if (event != NULL) {
+		if (event != nullptr) {
 			event->number = slip;
 			if (!event->reschedule) {
 				// defer the calculation of the slip amount to prepareJump
@@ -161,7 +161,7 @@ void SlipFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
     EventManager* em = l->getTrack()->getEventManager();
 	Event* parent = e->getParent();
 
-	if (parent == NULL)
+	if (parent == nullptr)
 	  Trace(l, 1, "Loop: SlipEvent with no parent!\n");
 	else {
 		long playFrame = l->getPlayFrame();

@@ -88,13 +88,13 @@ Test ParseTests[] = {
 
     {"8 (1 2) ((1 .25) 2 (3 .25))", "?"},
 
-	{NULL, NULL}
+	{nullptr, nullptr}
 };
 
 Test UnitParseTests[] = {
     //{"a,(1 a b c+d) d e", "?"},
     {"a (a b) d e", "?"},
-	{NULL, NULL}
+	{nullptr, nullptr}
 };
 
 Test EvalTests[] = {
@@ -126,12 +126,12 @@ Test EvalTests[] = {
     {"1 2 3", "[i(1),i(2),i(3)]"},
     {"(1 (2 3))", "[i(1),[i(2),i(3)]]"},
     {"((1 2) (3 4) (5 6))", "[[i(1),i(2)],[i(3),i(4)],[i(5),i(6)]]"},
-	{NULL, NULL}
+	{nullptr, nullptr}
 };
 
 Test UnitEvalTests[] = {
     {"1,2,3", "[i(1),i(2),i(3)]"},
-	{NULL, NULL}
+	{nullptr, nullptr}
 };
 
 /**
@@ -147,7 +147,7 @@ class TestResolver : public ExResolver {
 	void getExValue(ExContext* context, ExValue* value) {
 
 		const char* name = mSymbol->getName();
-		if (name != NULL) {
+		if (name != nullptr) {
 			if (!strcmp(name, "i"))
 			  value->setInt(42);
 			else if (!strcmp(name, "f"))
@@ -157,7 +157,7 @@ class TestResolver : public ExResolver {
 			else if (!strcmp(name, "s"))
 			  value->setString("a value");
 			else
-			  value->setString(NULL);
+			  value->setString(nullptr);
 		}
 	}
 
@@ -176,7 +176,7 @@ class TestContext : public ExContext {
 	}
 
 	ExResolver* getExResolver(ExFunction* function) {
-		return NULL;
+		return nullptr;
 	}
 
 };
@@ -188,7 +188,7 @@ void parse(const char* source, const char* expected)
 
 	ExParser* p = new ExParser();
 	ExNode* node = p->parse(source);
-	if (node == NULL)	
+	if (node == nullptr)	
 	  p->printError();
 	else {
 		Vbuf* buf = new Vbuf();
@@ -196,8 +196,8 @@ void parse(const char* source, const char* expected)
 		const char* res = buf->getString();
 		printf("Parsed: %s\n", res);
 
-		if (expected != NULL) {
-			if (res == NULL || strcmp(res, expected))
+		if (expected != nullptr) {
+			if (res == nullptr || strcmp(res, expected))
 			  printf("!!!ERROR: expected %s\n", expected);
 		}
 
@@ -211,7 +211,7 @@ void eval(const char* source, const char* expected)
 
 	ExParser* p = new ExParser();
 	ExNode* node = p->parse(source);
-	if (node == NULL)	
+	if (node == nullptr)	
 	  p->printError();
 	else {
 		Vbuf* buf = new Vbuf();
@@ -227,8 +227,8 @@ void eval(const char* source, const char* expected)
 		res = buf->getString();
 		printf("Evaluated: %s\n", res);
 
-		if (expected != NULL) {
-			if (res == NULL || strcmp(res, expected))
+		if (expected != nullptr) {
+			if (res == nullptr || strcmp(res, expected))
 			  printf("!!!ERROR: expected %s\n", expected);
 		}
 
@@ -240,7 +240,7 @@ void eval(const char* source, const char* expected)
 void parse(Test* tests)
 {
     printf("-------- Parsing ------------------------------\n");
-    for (int i = 0 ; tests[i].test != NULL ; i++) {
+    for (int i = 0 ; tests[i].test != nullptr ; i++) {
         printf("*** Parse %d ***\n", i + 1);
         parse(tests[i].test, tests[i].result);
     }
@@ -249,7 +249,7 @@ void parse(Test* tests)
 void eval(Test* tests)
 {
     printf("-------- Evaluating ------------------------------\n");
-    for (int i = 0 ; tests[i].test != NULL ; i++) {
+    for (int i = 0 ; tests[i].test != nullptr ; i++) {
         printf("*** Parse %d ***\n", i + 1);
         eval(tests[i].test, tests[i].result);
     }
@@ -276,7 +276,7 @@ int main(int argc, char** argv)
 			buf->add(argv[i]);
 			buf->add(" ");
 		}
-		parse(buf->getString(), NULL);
+		parse(buf->getString(), nullptr);
 		delete buf;
 	}
 

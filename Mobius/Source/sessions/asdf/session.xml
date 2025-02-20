@@ -161,9 +161,10 @@
     <Value name="controllerActionThreshold" value="64" type="int"/>
     <Value name="fadeFrames" value="128" type="int"/>
     <Value name="hostBarsPerLoop" value="1" type="int"/>
-    <Value name="hostBeatsPerBar" value="4" type="int"/>
-    <Value name="hostOverride" value="false" type="bool"/>
+    <Value name="hostBeatsPerBar" value="3" type="int"/>
+    <Value name="hostOverride" value="true" type="bool"/>
     <Value name="inputLatency" value="0" type="int"/>
+    <Value name="longDisable" value="false" type="bool"/>
     <Value name="longPress" value="250" type="int"/>
     <Value name="maxLoops" value="2" type="int"/>
     <Value name="maxSyncDrift" value="50" type="int"/>

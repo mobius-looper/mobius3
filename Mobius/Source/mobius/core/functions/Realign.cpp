@@ -150,14 +150,14 @@ RealignFunction::RealignFunction(bool b)
 Event* RealignFunction::scheduleEvent(Action* action, Loop* l)
 {
     EventManager* em = l->getTrack()->getEventManager();
-	Event* realignEvent = NULL;
-	Event* muteEvent = NULL;
+	Event* realignEvent = nullptr;
+	Event* muteEvent = nullptr;
 
 	// since this isn't a mode, try to catch reduncant invocations
 	realignEvent = em->findEvent(RealignEvent);
-	if (realignEvent != NULL) {
+	if (realignEvent != nullptr) {
 		// already one scheduled, ignore it
-		realignEvent = NULL;
+		realignEvent = nullptr;
 	}
 	else {
         Setup* setup = l->getMobius()->getSetup();
@@ -203,7 +203,7 @@ Event* RealignFunction::scheduleEvent(Action* action, Loop* l)
 
 			// go through the usual scheduling, but make it pending
 			realignEvent = Function::scheduleEvent(action, l);
-			if (realignEvent != NULL && !realignEvent->reschedule) {
+			if (realignEvent != nullptr && !realignEvent->reschedule) {
 				realignEvent->pending = true;
 				realignEvent->quantized = true;
 
@@ -235,8 +235,8 @@ Event* RealignFunction::scheduleSwitchStack(Action* action, Loop* l)
 	// Event* event = Function::scheduleSwitchStack(action, l);
 	(void)Function::scheduleSwitchStack(action, l);
 
-	// have historically returned NULL here, is that important?
-	return NULL;
+	// have historically returned nullptr here, is that important?
+	return nullptr;
 }
 
 /**

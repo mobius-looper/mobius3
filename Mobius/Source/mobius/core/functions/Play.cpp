@@ -99,7 +99,7 @@ Event* PlayFunction::scheduleSwitchStack(Action* action, Loop* l)
     (void)action;
     EventManager* em = l->getTrack()->getEventManager();
 	em->cancelSwitch();
-	return NULL;
+	return nullptr;
 }
 
 void PlayFunction::undoEvent(Loop* loop, Event* event)

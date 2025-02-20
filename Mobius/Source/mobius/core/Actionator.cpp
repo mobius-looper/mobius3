@@ -705,7 +705,7 @@ Action* Actionator::convertAction(UIAction* src)
     coreAction->noSynchronization = src->noSynchronization;
 
     // don't have this any more
-    coreAction->scriptArgs = NULL;
+    coreAction->scriptArgs = nullptr;
     coreAction->actionOperator = OperatorSet;
 
     // Arguments
@@ -754,31 +754,31 @@ void Actionator::refreshScopeCache(MobiusConfig* config)
  * things in Mobius.  Where should this live?
  *
  * Determine the destination Track for an Action.
- * Return NULL if the action does not specify a destination track.
+ * Return nullptr if the action does not specify a destination track.
  * This can be called by a few function handlers that declare
  * themselves global but may want to target the current track.
  */
 Track* Actionator::resolveTrack(Action* action)
 {
-    Track* track = NULL;
+    Track* track = nullptr;
 
-    if (action != NULL) {
+    if (action != nullptr) {
 
         // This trumps all, it should only be set after the
         // action has been partially processed and replicated
         // for focus lock or groups.
         track = action->getResolvedTrack();
         
-        if (track == NULL) {
+        if (track == nullptr) {
 
             // note that the track number in an action is 1 based
             // zero means "current"
             int tnum = action->getTargetTrack();
             if (tnum > 0) {
                 track = mMobius->getTrack(tnum - 1);
-                if (track == NULL) {
+                if (track == nullptr) {
                     Trace(1, "Actionator: Track index out of range");
-                    // could either return NULL or force it to the lowest
+                    // could either return nullptr or force it to the lowest
                     // or higest
                     track = mMobius->getTrack();
                 }
@@ -789,10 +789,10 @@ Track* Actionator::resolveTrack(Action* action)
             // some of the track management functions from scripts, they may
             // be different.
             Function* f = action->getFunction();
-            if (f != NULL && f->activeTrack) {
+            if (f != nullptr && f->activeTrack) {
                 Track* active = mMobius->getTrack();
                 if (track != active) {
-                    if (track != NULL)
+                    if (track != nullptr)
                       Trace(2, "Mobius: Adjusting target track for activeTrack function %s\n", f->getName());
                     track = active;
                 }
@@ -848,7 +848,7 @@ Action* Actionator::cloneAction(Action* src)
  */
 void Actionator::completeAction(Action* a)
 {
-    if (a->getEvent() == NULL)
+    if (a->getEvent() == nullptr)
       freeAction(a);
 }
 
@@ -902,7 +902,7 @@ void Actionator::doOldAction(Action* a)
     // I don't think this comment applies any more, we're always "inside"
     a->mobius = mMobius;
 
-    if (t == NULL) {
+    if (t == nullptr) {
         Trace(1, "Action with no target!\n");
     }
 
@@ -945,7 +945,7 @@ void Actionator::doPreset(Action* a)
 {
     MobiusConfig* config = mMobius->getConfiguration();
     Preset* p = (Preset*)a->getTargetObject();
-    if (p == NULL) {    
+    if (p == nullptr) {    
         // may be a dynamic action
         // support string args here too?
         int number = a->arg.getInt();
@@ -953,12 +953,12 @@ void Actionator::doPreset(Action* a)
           Trace(1, "Missing action Preset\n");
         else {
             p = config->getPreset(number);
-            if (p == NULL) 
+            if (p == nullptr) 
               Trace(1, "Invalid preset number: %ld\n", (long)number);
         }
     }
 
-    if (p != NULL) {
+    if (p != nullptr) {
         int number = p->ordinal;
 
         Trace(2, "Preset action: %ld\n", (long)number);
@@ -966,7 +966,7 @@ void Actionator::doPreset(Action* a)
         // determine the target track(s) and schedule events
         Track* track = resolveTrack(a);
 
-        if (track != NULL) {
+        if (track != nullptr) {
             track->changePreset(number);
         }
         else if (a->noGroup) {
@@ -1016,19 +1016,19 @@ void Actionator::doSetup(Action* a)
     // If we're here from a Binding should have resolved
     // new: no not any more
     Setup* s = (Setup*)a->getTargetObject();
-    if (s == NULL) {
+    if (s == nullptr) {
         // may be a dynamic action
         int number = a->arg.getInt();
         if (number < 0)
           Trace(1, "Missing action Setup\n");
         else {
             s = config->getSetup(number);
-            if (s == NULL) 
+            if (s == nullptr) 
               Trace(1, "Invalid setup number: %ld\n", (long)number);
         }
     }
 
-    if (s != NULL) {
+    if (s != nullptr) {
         int number = s->ordinal;
         Trace(2, "Setup action: %ld\n", (long)number);
 
@@ -1079,7 +1079,7 @@ void Actionator::doFunction(Action* a)
     mTriggerState->assimilate(a);
 
     Function* f = (Function*)a->getTargetObject();
-    if (f == NULL) {
+    if (f == nullptr) {
         // should have caught this in doAction
         Trace(1, "Missing action Function\n");
     }
@@ -1107,7 +1107,7 @@ void Actionator::doFunction(Action* a)
         // determine the target track(s) and schedule events
         Track* track = resolveTrack(a);
 
-        if (track != NULL) {
+        if (track != nullptr) {
             doFunction(a, f, track);
         }
         else if (a->noGroup) {
@@ -1265,7 +1265,7 @@ void Actionator::doFunction(Action* action, Function* f, Track* t)
         // let the function change how it ends
         if (action->longPress) {
             Function* alt = f->getLongPressFunction(action);
-            if (alt != NULL && alt != f) {
+            if (alt != nullptr && alt != f) {
                 Trace(2, "Actionator::doFunction Long-press %s converts to %s\n",
                       f->getDisplayName(),
                       alt->getDisplayName());
@@ -1296,17 +1296,17 @@ void Actionator::doFunction(Action* action, Function* f, Track* t)
 void Actionator::doParameter(Action* a)
 {
     Parameter* p = (Parameter*)a->getTargetObject();
-    if (p == NULL) {
+    if (p == nullptr) {
         Trace(1, "Missing action Parameter\n");
     }
     else if (p->scope == PARAM_SCOPE_GLOBAL) {
         // Action scope doesn't matter, there is only one
-        doParameter(a, p, NULL);
+        doParameter(a, p, nullptr);
     }
     else if (a->getTargetTrack() > 0) {
         // track specific binding
         Track* t = mMobius->getTrack(a->getTargetTrack() - 1);
-        if (t != NULL)
+        if (t != nullptr)
           doParameter(a, p, t);
     }
     else if (a->getTargetGroup() > 0) {
@@ -1409,7 +1409,7 @@ void Actionator::doParameter(Action* a, Parameter* p, Track* t)
             a->parseBindingArgs();
             
             ActionOperator* op = a->actionOperator;
-            if (op != NULL) {
+            if (op != nullptr) {
                 // apply relative commands
                 Export exp(a);
                 int current = p->getOrdinalValue(&exp);

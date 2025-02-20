@@ -107,7 +107,7 @@ StartPointFunction::StartPointFunction(bool midiop)
 
 Event* StartPointFunction::scheduleEvent(Action* action, Loop* l)
 {
-	Event* event = NULL;
+	Event* event = nullptr;
     EventManager* em = l->getTrack()->getEventManager();
 
 	if (mMidi) {
@@ -116,14 +116,14 @@ Event* StartPointFunction::scheduleEvent(Action* action, Loop* l)
 		event = em->findEvent(StartPointEvent);
 	}
 
-    if (event != NULL) {
+    if (event != nullptr) {
         // we're ignoring it so don't return it
-        event = NULL;
+        event = nullptr;
     }
     else {
 		// this will come back pending if we're ending multiply/insert
 		event = Function::scheduleEvent(action, l);
-		if (event != NULL && !event->reschedule) {
+		if (event != nullptr && !event->reschedule) {
 			if (mMidi) {
 				// we scheduled it normally, but make it pending so we can
 				// defer triggering it until the external start point happens
@@ -143,7 +143,7 @@ void StartPointFunction::invokeLong(Action* action, Loop* l)
     if (!mMidi) {
 		// Performs SyncStartPoint
 		Event* event = em->findEvent(StartPointEvent);
-		if (event != NULL) {
+		if (event != nullptr) {
 			// we haven't processed the simple StartPoint yet
 			event->pending = true;
 			event->function = SyncStartPoint;
@@ -249,10 +249,10 @@ void StartPointFunction::startPoint(LayerContext* con, Layer* layer, long startF
 	if (startFrame == 0) {
 		// must be quantized, ignore
 	}
-	else if (segments == NULL) {
+	else if (segments == nullptr) {
 		Trace(layer, 1, "Layer: startPoint with no backing layer!\n");
 	}
-	else if (segments->getNext() != NULL) {
+	else if (segments->getNext() != nullptr) {
 		Trace(layer, 1, "Layer: startPoint with more than one segment!\n");
 	}
 	else {

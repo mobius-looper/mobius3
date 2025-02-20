@@ -110,7 +110,7 @@ void SoloFunction::invoke(Action* action, Mobius* m)
 
         // !! revisit how functions are used to pass down the
         // semantics of calling cancelGlobalMute!
-        Function* func = (action != NULL) ? action->getFunction() : Solo;
+        Function* func = (action != nullptr) ? action->getFunction() : Solo;
 
         // figure out what state we're in
         // warnings: these were defined but never used
@@ -123,12 +123,12 @@ void SoloFunction::invoke(Action* action, Mobius* m)
         // expecting this to be null but just in case
         // we have another way of forcing it, pay attention
         Track* track = action->getResolvedTrack();
-        if (track == NULL) {
+        if (track == nullptr) {
             // arguments trump binding scope?
             if (action->arg.getType() == EX_INT)
               track = m->getTrack(action->arg.getInt() - 1);
 
-            if (track == NULL) {
+            if (track == nullptr) {
                 int tnum = action->getTargetTrack();
                 if (tnum > 0)
                   track = m->getTrack(tnum - 1);
@@ -153,7 +153,7 @@ void SoloFunction::invoke(Action* action, Mobius* m)
             }
         }
 
-        if (track == NULL) {
+        if (track == nullptr) {
             // must have been an empty group
             Trace(2, "Unable to resolve track to solo\n");
         }

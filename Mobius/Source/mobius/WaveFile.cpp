@@ -153,8 +153,8 @@ WaveFile::WaveFile(const char* file)
 
 void WaveFile::init()
 {
-	mFile = NULL;
-	mHandle = NULL;
+	mFile = nullptr;
+	mHandle = nullptr;
 	mDebug = false;
 	mError = 0;
 	mFormat = WAV_FORMAT_IEEE;
@@ -163,7 +163,7 @@ void WaveFile::init()
     mAverageBytesPerSecond = 0;
     mSampleDepth = 0;
     mBlockAlign = 0;
-	mData = NULL;
+	mData = nullptr;
     mFrames = 0;
 	mDataChunkBytes = 0;
 }
@@ -171,7 +171,7 @@ void WaveFile::init()
 void WaveFile::clear()
 {
 	mError = 0;
-	mHandle = NULL;
+	mHandle = nullptr;
 	mFormat = WAV_FORMAT_IEEE;
 	mChannels = 2;
 	mSampleRate = 44100;
@@ -182,7 +182,7 @@ void WaveFile::clear()
 	mDataChunkBytes = 0;
 
 	delete mData;
-	mData = NULL;
+	mData = nullptr;
 }
 
 WaveFile::~WaveFile()
@@ -270,7 +270,7 @@ float* WaveFile::getData()
 float* WaveFile::stealData()
 {
     float* data = mData;
-    mData = NULL;
+    mData = nullptr;
     return data;
 }
 
@@ -282,7 +282,7 @@ void WaveFile::setData(float* data)
 
 const char* WaveFile::getErrorMessage(int e)
 {
-	const char* msg = NULL;
+	const char* msg = nullptr;
 	switch (e) {
 		case AUF_ERROR_INPUT_FILE:
 			msg = "Invalid input file";
@@ -333,7 +333,7 @@ const char* WaveFile::getErrorMessage(int e)
 void WaveFile::printError(int e)
 {
 	const char* msg = getErrorMessage(e);
-	if (msg != NULL)
+	if (msg != nullptr)
 	  printf("%s\n", msg);
 	else
 	  printf("Unknown error code %d\n", e);
@@ -345,7 +345,7 @@ void WaveFile::printError(int e)
  */
 float* WaveFile::getChannelSamples(int channel)
 {
-	float* samples = NULL;
+	float* samples = nullptr;
 	if (channel < mChannels && mFrames > 0) {   
         samples = MemNewFloat("WaveFile::getChannelSamples", (int)mFrames);
 		for (int i = 0 ; i < mFrames ; i++)
@@ -361,15 +361,15 @@ float* WaveFile::getChannelSamples(int channel)
 void WaveFile::setSamples(float* left, float* right, long frames)
 {
 	delete mData;
-	mData = NULL;
+	mData = nullptr;
 
-	if (frames > 0 && (left != NULL || right != NULL)) {
+	if (frames > 0 && (left != nullptr || right != nullptr)) {
         int samples = (int)(frames * mChannels);
         mData = MemNewFloat("WaveFile::setSamples", samples);
 		for (int i = 0 ; i < mFrames ; i++) {
 			float* dest = &(mData[i * mChannels]);
-			dest[0] = (left != NULL) ? left[i] : 0.0f;
-			dest[1] = (right != NULL) ? right[i] : 0.0f;
+			dest[0] = (left != nullptr) ? left[i] : 0.0f;
+			dest[1] = (right != nullptr) ? right[i] : 0.0f;
 		}
 	}
 
@@ -393,11 +393,11 @@ int WaveFile::read()
 {
 	clear();
 
-	if (mFile == NULL)
+	if (mFile == nullptr)
 	  mError = AUF_ERROR_NO_INPUT_FILE;
 	else {
 		FILE* fp = fopen(mFile, "rb");
-		if (fp == NULL)
+		if (fp == nullptr)
 		  mError = AUF_ERROR_INPUT_FILE;
 		else {
 			// riff header
@@ -416,7 +416,7 @@ int WaveFile::read()
 				  mError = AUF_ERROR_NOT_WAVE;
 				else {
 					myuint32 chunkSize;
-					while (mError == 0 && mData == NULL) {
+					while (mError == 0 && mData == nullptr) {
 						// read chunk header
 						readId(fp, id);
 						if (!mError) {
@@ -846,7 +846,7 @@ int WaveFile::writeStart()
 	mError = 0;
 	mDataChunkBytes = 0;
 
-	if (mFile == NULL)
+	if (mFile == nullptr)
 	  mError = AUF_ERROR_NO_OUTPUT_FILE;
 
     if (mChannels <= 0 || mChannels == 5 || mChannels > 6)
@@ -870,7 +870,7 @@ int WaveFile::writeStart()
 		}
 
         mHandle = fopen(mFile, "wb");
-        if (mHandle == NULL)
+        if (mHandle == nullptr)
             mError = AUF_ERROR_OUTPUT_FILE;
         else {
             // short, ushort, ulong, ulong, ushort, ushort
@@ -980,7 +980,7 @@ void WaveFile::write16(FILE* fp, myuint16 value)
 int WaveFile::write(float* buffer, long frames)
 {
 	if (!mError) {
-		if (mHandle == NULL)
+		if (mHandle == nullptr)
 		  mError = AUF_ERROR_NO_OUTPUT_FILE;
 		else {
 			int samples = (int)(frames * mChannels);
@@ -1009,7 +1009,7 @@ int WaveFile::write(float* buffer, long frames)
  */
 int WaveFile::writeFinish()
 {
-	if (mHandle == NULL)
+	if (mHandle == nullptr)
 	  mError = AUF_ERROR_NO_OUTPUT_FILE;
 	else {
 		if (mDataChunkBytes & 1) {

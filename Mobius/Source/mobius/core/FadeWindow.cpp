@@ -326,8 +326,8 @@ void FadeWindow::reset()
 	mLeftOffset = 0;
 	mRightFrames = 0;
 	mRightOffset = 0;
-	mLeftBuffer = NULL;
-	mRightBuffer = NULL;
+	mLeftBuffer = nullptr;
+	mRightBuffer = nullptr;
 	mForegroundFaded = false;
 	mBackgroundFaded = false;
 
@@ -469,9 +469,9 @@ void FadeWindow::add(float* src, long frames)
 	long end = (mWindowFrames * mChannels);
 	for (int i = 0 ; i < frames ; i++) {
 		for (int j = 0 ; j < mChannels ; j++) {
-			// note that src can be NULL during insert mode
+			// note that src can be nullptr during insert mode
 			float sample = 0.0;
-			if (src != NULL)
+			if (src != nullptr)
 			  sample = *src++;
 			sample = mFade.fade(sample);
 			mBuffer[mCursor++] = sample;
