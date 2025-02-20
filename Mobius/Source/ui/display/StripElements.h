@@ -78,11 +78,13 @@ class StripLoopRadar : public StripElement
     int getPreferredHeight() override;
     int getPreferredWidth() override;
 
+    void configure() override;
     void update(MobiusView* view) override;
     void paint(juce::Graphics& g) override;
 
   private:
 
+    int diameter = 0;
     long loopFrames = 0;
     long loopFrame = 0;
     juce::Colour loopColor;
