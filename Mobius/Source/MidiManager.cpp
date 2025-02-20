@@ -253,7 +253,7 @@ juce::String MidiManager::getDeviceName(MachineConfig* config, Usage usage)
           name = getFirstName(config->pluginMidiExport, usage);
         
         else if (usage == OutputSync)
-          name = getFirstName(config->pluginMidiOutputSync, usage);
+          name = config->pluginMidiOutputSync;
         
         else if (usage == Thru)
           name = getFirstName(config->pluginMidiThru, usage);
@@ -272,7 +272,7 @@ juce::String MidiManager::getDeviceName(MachineConfig* config, Usage usage)
           name = getFirstName(config->midiExport, usage);
         
         else if (usage == OutputSync)
-          name = getFirstName(config->midiOutputSync, usage);
+          name = config->midiOutputSync;
         
         else if (usage == Thru)
           name = getFirstName(config->midiThru, usage);
@@ -524,16 +524,22 @@ void MidiManager::reconcileOutputs(MachineConfig* config)
     outputNames = juce::StringArray::fromTokens(csv, ",", "");
     
     juce::String exportName = getDeviceName(config, Export);
-    juce::String syncName = getDeviceName(config, OutputSync);
+    juce::String syncCsv = getDeviceName(config, OutputSync);
+    juce::StringArray syncNames = juce::StringArray::fromTokens(syncCsv, ",", "");
     juce::String thruName = getDeviceName(config, Thru);
     
     // upgrade old configurations to put the usage-specific devices
     // on the main list
     if (exportName.length() > 0 && !outputNames.contains(exportName))
       outputNames.add(exportName);
+
+    for (auto name : syncNames) {
+        if (!outputNames.contains(name))
+          outputNames.add(name);
+    }
     
-    if (syncName.length() > 0 && !outputNames.contains(syncName))
-      outputNames.add(syncName);
+    //if (syncName.length() > 0 && !outputNames.contains(syncName))
+    //outputNames.add(syncName);
     
     if (thruName.length() > 0 && !outputNames.contains(thruName))
       outputNames.add(thruName);
@@ -545,7 +551,11 @@ void MidiManager::reconcileOutputs(MachineConfig* config)
 
     // get device handles for the usages
     openOutputInternal(exportName, Export);
-    openOutputInternal(syncName, OutputSync);
+    
+    for (auto name : syncNames) {
+        openOutputInternal(name, OutputSync);
+    }
+    
     openOutputInternal(thruName, Thru);
     
     closeUnusedOutputs();
@@ -578,14 +588,19 @@ void MidiManager::openOutputInternal(juce::String name, Usage usage)
         // just a general unspecific output
         (void)findOrOpenOutput(name);
     }
-    else if (usage == Export)
+    else if (usage == Export) {
       exportDevice = findOrOpenOutput(name);
-    
-    else if (usage == OutputSync)
-      outputSyncDevice = findOrOpenOutput(name);
-    
-    else if (usage == Thru)
-      thruDevice = findOrOpenOutput(name);
+    }
+    else if (usage == OutputSync) {
+        juce::MidiOutput* dev = findOrOpenOutput(name);
+        if (dev != nullptr) {
+            if (!outputSyncDevices.contains(dev))
+              outputSyncDevices.add(dev);
+        }
+    }
+    else if (usage == Thru) {
+        thruDevice = findOrOpenOutput(name);
+    }
 }
 
 /**
@@ -610,11 +625,10 @@ void MidiManager::closeOutput(juce::String name, Usage usage)
             if (exportDevice != nullptr && exportDevice->getName() == name)
               exportDevice = nullptr;
         
-            if (outputSyncDevice != nullptr && outputSyncDevice->getName() == name)
-              outputSyncDevice = nullptr;
-        
             if (thruDevice != nullptr && thruDevice->getName() == name)
               thruDevice = nullptr;
+
+            (void)removeOutputSyncDevice(name);
             
             closeUnusedOutputs();
         }
@@ -626,10 +640,8 @@ void MidiManager::closeOutput(juce::String name, Usage usage)
         }
     }
     else if (usage == OutputSync) {
-        if (outputSyncDevice != nullptr && outputSyncDevice->getName() == name) {
-            outputSyncDevice = nullptr;
-            closeUnusedOutputs();
-        }
+        if (removeOutputSyncDevice(name))
+          closeUnusedOutputs();
     }
     else if (usage == Thru) {
         if (thruDevice != nullptr && thruDevice->getName() == name) {
@@ -637,6 +649,19 @@ void MidiManager::closeOutput(juce::String name, Usage usage)
             closeUnusedOutputs();
         }
     }
+}
+
+bool MidiManager::removeOutputSyncDevice(juce::String name)
+{
+    bool removed = false;
+    for (auto dev : outputSyncDevices) {
+        if (dev->getName() == name) {
+            outputSyncDevices.removeAllInstancesOf(dev);
+            removed = true;
+            break;
+        }
+    }
+    return removed;
 }
 
 /**
@@ -708,7 +733,7 @@ void MidiManager::closeUnusedOutputs()
             monitorMessage("Closing output " + dev->getName());
             
             if (dev == exportDevice) exportDevice = nullptr;
-            if (dev == outputSyncDevice) outputSyncDevice = nullptr;
+            outputSyncDevices.removeAllInstancesOf(dev);
             if (dev == thruDevice) thruDevice = nullptr;
             
             outputDevices.removeObject(dev, true);
@@ -726,7 +751,7 @@ void MidiManager::closeAllOutputs()
 
     outputDevices.clear();
     exportDevice = nullptr;
-    outputSyncDevice = nullptr;
+    outputSyncDevices.clear();
     thruDevice = nullptr;
 }
 
@@ -778,7 +803,7 @@ bool MidiManager::hasOutputDevice(Usage usage)
       has = (exportDevice != nullptr);
     
     else if (usage == OutputSync)
-      has = (outputSyncDevice != nullptr) || (exportDevice != nullptr);
+      has = (outputSyncDevices.size() > 0) || (exportDevice != nullptr);
     
     else if (usage == Thru)
       has = (thruDevice != nullptr);
@@ -810,11 +835,13 @@ void MidiManager::sendExport(const juce::MidiMessage& msg)
 
 void MidiManager::sendSync(const juce::MidiMessage& msg)
 {
-    if (outputSyncDevice)
-      outputSyncDevice->sendMessageNow(msg);
-    
-    else if (exportDevice)
-      exportDevice->sendMessageNow(msg);
+    if (outputSyncDevices.size() > 0) {
+        for (auto dev : outputSyncDevices)
+          dev->sendMessageNow(msg);
+    }
+    else if (exportDevice) {
+        exportDevice->sendMessageNow(msg);
+    }
 }
 
 /**

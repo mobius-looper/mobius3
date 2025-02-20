@@ -197,12 +197,12 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     // be brought back into sync by opening and closing devices
     juce::OwnedArray<juce::MidiInput> inputDevices;
     juce::OwnedArray<juce::MidiOutput> outputDevices;
-
+    
     // usage pointers for devices in one of the two device lists
     juce::MidiInput* inputSyncDevice = nullptr;
     juce::MidiOutput* exportDevice = nullptr;
-    juce::MidiOutput* outputSyncDevice = nullptr;
     juce::MidiOutput* thruDevice = nullptr;
+    juce::Array<juce::MidiOutput*> outputSyncDevices;
     
     // tutorial captures this on creation to show relative times
     // when logging incomming MIDI messages
@@ -237,6 +237,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     void openOutputInternal(juce::String name, Usage usage);
     void closeUnusedOutputs();
     void closeAllOutputs();
+    bool removeOutputSyncDevice(juce::String name);
 
     void postListenerMessage (const juce::MidiMessage& message, juce::String& source);
     void record(const juce::MidiMessage& message, juce::String& source);

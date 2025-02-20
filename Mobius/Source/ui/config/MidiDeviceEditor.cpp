@@ -225,8 +225,9 @@ void MidiDeviceEditor::tableCheckboxTouched(BasicTable* table, int row, int coli
         // and expects editor to manage the other half
         if (mdcol != MidiColumnInput && mdcol != MidiColumnPluginInput &&
             mdcol != MidiColumnOutput && mdcol != MidiColumnPluginOutput) {
-            
-            mdt->uncheckOthers(mdcol, row);
+
+            if (mdcol != MidiColumnOutputSync && mdcol != MidiColumnPluginOutputSync)
+              mdt->uncheckOthers(mdcol, row);
             
             // checking any of these forces the device on the main list
             if (mdcol == MidiColumnInputSync)
@@ -235,7 +236,7 @@ void MidiDeviceEditor::tableCheckboxTouched(BasicTable* table, int row, int coli
             else if (mdcol == MidiColumnPluginInputSync)
               mdt->forceCheck(MidiColumnPluginInput, row);
               
-            else if (mdcol == MidiColumnExport || mdcol == MidiColumnOutputSync || mdcol == MidiColumnThru)
+            else if (mdcol == MidiColumnExport || mdcol == MidiColumnThru || mdcol == MidiColumnOutputSync)
               mdt->forceCheck(MidiColumnOutput, row);
             
             else 
