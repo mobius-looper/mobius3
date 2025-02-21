@@ -275,6 +275,10 @@
                 file="../Mobius/Source/ui/session/SessionFormCollection.cpp"/>
           <FILE id="QxWsSb" name="SessionFormCollection.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/session/SessionFormCollection.h"/>
+          <FILE id="dAyoEb" name="SessionFunctionEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/session/SessionFunctionEditor.cpp"/>
+          <FILE id="n2M5sN" name="SessionFunctionEditor.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/session/SessionFunctionEditor.h"/>
           <FILE id="jRFxFe" name="SessionGlobalEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/session/SessionGlobalEditor.cpp"/>
           <FILE id="L1Knl5" name="SessionGlobalEditor.h" compile="0" resource="0"
