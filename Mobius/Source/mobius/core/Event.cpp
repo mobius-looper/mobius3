@@ -11,10 +11,6 @@
  *
  * I really dislike the subtlety around processed/unprocessed children
  * and what free() actually does.  It is EXTREMELY confusing.
- *
- * WTF Moment:  Why the hell are we saving an entire Preset in here
- * and what happens if the configuration changes.  Do better.
- * 
  */
 
 #include <stdio.h>
@@ -321,10 +317,6 @@ Event::Event(EventPool* pool)
 
 	// this is permanent
 	mOwned = false;
-
-	// this will be allocated as needed, but not reinitialized  every time
-    // to make memory more predictable, just go ahead and allocate it now
-	//mPreset = NEW(Preset);
 }
 
 void Event::init()
@@ -354,7 +346,6 @@ void Event::init()
 	mParent		= nullptr;
 	mChildren	= nullptr;
 	mSibling	= nullptr;
-	//mPresetValid = false;
 	mScript     = nullptr;
     mMslWait    = nullptr;
     mAction     = nullptr;
@@ -380,7 +371,6 @@ void Event::init(EventType* etype, long eframe)
  */
 Event::~Event()
 {
-    //delete mPreset;
 }
 
 /**
@@ -597,35 +587,6 @@ Function* Event::getInvokingFunction()
       f = mAction->getFunction();
     return f;
 }
-
-/**
- * Make a copy of the current preset parameter values. 
- * Leave the copy around so we gradually have one for all events in 
- * the pool.
- *
- * !! This should be an inline object!
- * WTF is this for?
- */
-#if 0
-void Event::savePreset(Preset* p)
-{
-	if (p == nullptr)
-	  mPresetValid = false;
-	else {
-        // should stop doing this and allocate it when
-        // the pool is refreshed
-        if (mPreset == nullptr)
-          mPreset = NEW(Preset);
-        mPreset->copyNoAlloc(p);
-		mPresetValid = true;
-	}
-}
-
-Preset* Event::getEventPreset()
-{
-	return ((mPresetValid) ? mPreset : nullptr);
-}
-#endif
 
 const char* Event::getName()
 {

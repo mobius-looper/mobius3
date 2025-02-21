@@ -676,11 +676,6 @@ Event* EventManager::getFunctionEvent(Action* action,
 		}
 	}
 
-	// save a copy of the current parameter values so we can override
-	// them in scripts then restore them before the function actually
-	// runs, do we always want this?
-	//event->savePreset(preset);
-
     // ownership of the action transfers to the event
     action->setEvent(event);
 
@@ -1332,9 +1327,6 @@ void EventManager::scheduleSwitchStack(Event* event)
 
 	if (switche != nullptr) {
 
-		// do we really need to do this?  
-		// should the preset affect all stacked events
-		//event->savePreset(mTrack->getPreset());
 		event->pending = true;
 
 		mTrack->enterCriticalSection("scheduleSwitchStack");
@@ -1652,7 +1644,6 @@ Event* EventManager::schedulePlayJump(Loop* loop, Event* parent)
 	if (!ignore) {
 
 		jump = newEvent(JumpPlayEvent, transitionFrame);
-		//jump->savePreset(mTrack->getPreset());
 		jump->latencyLoss = latencyLoss;
 
         // if the parent doesn't trace, neither do we
@@ -1802,7 +1793,6 @@ Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger,
         }
 
         re = newEvent(trigger->function, ReturnEvent, returnFrame);
-        //re->savePreset(preset);
         re->fields.loopSwitch.nextLoop = prev;
         re->quantized = true;	// so it can be undone
 

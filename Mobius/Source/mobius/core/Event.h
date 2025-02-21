@@ -288,8 +288,6 @@ class Event {
     void setInfo(const char* s);
     const char* getInfo();
 
-	//void savePreset(class Preset* p);
-	//class Preset* getEventPreset();
 	void addChild(Event* e);
 	void removeChild(Event* e);
 	Event* removeUndoChild();
@@ -682,16 +680,6 @@ class Event {
 	 * have more than one child event. (Insert).
 	 */
 	Event* mSibling;
-
-    /**
-     * Private copy of the preset at the moment this event was scheduled.
-     */
-	//class Preset* mPreset;
-
-    /**
-     * True if the preset has been captured.
-     */
-	//bool mPresetValid;
 
     /**
      * Script interpreter waiting for this event to finish.

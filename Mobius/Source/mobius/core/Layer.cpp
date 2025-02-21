@@ -4925,8 +4925,7 @@ Layer* LayerPool::newLayer(Loop* loop)
 
 	layer->setReferences(1);
 
-	// cache some global options now, might want to move this
-	// into the Preset?
+	// cache some global options now
 	if (loop != nullptr) {
         layer->setLoop(loop);
 
@@ -4935,8 +4934,6 @@ Layer* LayerPool::newLayer(Loop* loop)
         // NOTE: the Isolated Overdub parameter was experimental and no
         // longer exposed
 		layer->mIsolatedOverdub = c->isIsolateOverdubs();
-        // originally in MobiusConfig, but this is a useful performance
-        // option so moved to Preset
         layer->mNoFlattening = ParameterSource::isNoLayerFlattening(loop->getTrack());
 	}
 
