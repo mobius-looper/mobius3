@@ -12,14 +12,14 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
-Build 31 included **very** significant changes from the previous build
+Build 32 included **very** significant changes from the previous build
 28.  If you have been using build 28 or earlier for some
 time, I recommend you proceed with caution about upgrading to build
-31.  While I do run through tests on every build, the chance that behavior
-you have been relying on changed in build 31 is much higher than it has been in the past.
-If you are a new user that doesn't have any complex configuration, then build 31 should be fine.
+32.  While I do run through tests on every build, the chance that behavior
+you have been relying on changed in build 32 is much higher than it has been in the past.
+If you are a new user that doesn't have any complex configuration, then build 32 should be fine.
 
-For this reason I'm keeping download links for both builds.  If you decide to try 31
+For this reason I'm keeping download links for both builds.  If you decide to try 32
 and run into a problem, you can go back to 28 until the issue is resolved.
 
 Please read through the new documentation pages for more on the new features that have been added.
@@ -32,13 +32,13 @@ Please read through the new documentation pages for more on the new features tha
 
 [Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-28.pkg)
 
-## Build 31
+## Build 32
 
-[Download for Windows](https://www.mobiuslooper.com/MobiusSetup.exe)
+[Download for Windows](https://www.mobiuslooper.com/MobiusSetup-32.exe)
 
-[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius.pkg)
+[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius-32.pkg)
 
-[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel.pkg)
+[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-32.pkg)
 
 ## Windows Security
 

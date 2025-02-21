@@ -57,7 +57,7 @@ bool Upgrader::upgrade(MobiusConfig* config)
       updated = true;
 
     // testing only
-    bool doPresets = false;
+    bool doPresets = true;
     if (doPresets) {
         if (upgradePresets(config))
           updated = true;
