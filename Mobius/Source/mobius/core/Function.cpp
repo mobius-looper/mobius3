@@ -28,6 +28,8 @@
 #include "../../model/SystemConstant.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Trigger.h"
+#include "../../model/Structure.h"
+#include "../../model/Preset.h"
 
 #include "Action.h"
 #include "../Audio.h"
@@ -475,7 +477,7 @@ bool Function::isMuteCancel(Loop* l)
 {
 	bool isCancel = false;
 
-    MuteCancel muteCancel = ParameterSource::getMuteCancel(l);
+    MuteCancel muteCancel = ParameterSource::getMuteCancel(l->getTrack());
 
 	switch (muteCancel) {
 
@@ -1178,7 +1180,7 @@ void Function::changePreset(Action* action, Loop* loop, bool after)
     Mobius* m = loop->getMobius();
     MobiusConfig* config = m->getConfiguration();
     Structure* presets = config->getPresets();
-    Preset* current = loop->getPreset();
+    Preset* current = loop->getTrack()->getPreset();
     Structure* next = nullptr;
 
     // ugh, Structure base class makes iteration harder

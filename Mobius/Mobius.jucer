@@ -535,6 +535,10 @@
                 file="Source/ui/session/SessionFormCollection.cpp"/>
           <FILE id="y3emuo" name="SessionFormCollection.h" compile="0" resource="0"
                 file="Source/ui/session/SessionFormCollection.h"/>
+          <FILE id="vcWrID" name="SessionFunctionEditor.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionFunctionEditor.cpp"/>
+          <FILE id="RPd4gu" name="SessionFunctionEditor.h" compile="0" resource="0"
+                file="Source/ui/session/SessionFunctionEditor.h"/>
           <FILE id="KOaAEr" name="SessionGlobalEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionGlobalEditor.cpp"/>
           <FILE id="CqSPrU" name="SessionGlobalEditor.h" compile="0" resource="0"

@@ -12,51 +12,65 @@ class ParameterSource
 {
   public:
 
-    static ParameterMuteMode getMuteMode(class Loop* l, class Event* e);
+    static ParameterMuteMode getMuteMode(class Track* t);
     
-    static bool isSpeedRecord(class Loop* l);
-    static int getSpeedStepRange(class Loop* l);
-    static int getSpeedBendRange(class Loop* l);
-    static int getTimeStretchRange(class Loop* l);
-    static class StepSequence* getSpeedSequence(class Loop* l);
-    static bool isSpeedShiftRestart(class Loop* l);
-    static TransferMode getSpeedTransfer(class Loop* l);
+    static bool isSpeedRecord(class Track* t);
+    static int getSpeedStepRange(class Track* t);
+    static int getSpeedBendRange(class Track* t);
+    static int getTimeStretchRange(class Track* t);
+    static class StepSequence* getSpeedSequence(class Track* t);
+    static bool isSpeedShiftRestart(class Track* t);
+    static TransferMode getSpeedTransfer(class Track* t);
 
-    static int getPitchStepRange(class Loop* l);
-    static int getPitchBendRange(class Loop* l);
-    static class StepSequence* getPitchSequence(class Loop* l);
-    static bool isPitchShiftRestart(class Loop* l);
-    static TransferMode getPitchTransfer(class Loop* l);
+    static int getPitchStepRange(class Track* t);
+    static int getPitchBendRange(class Track* t);
+    static class StepSequence* getPitchSequence(class Track* t);
+    static bool isPitchShiftRestart(class Track* t);
+    static TransferMode getPitchTransfer(class Track* t);
 
-    static WindowUnit getWindowSlideUnit(class Loop* l);
-    static int getWindowSlideAmount(class Loop* l);
-    static WindowUnit getWindowEdgeUnit(class Loop* l);
-    static int getWindowEdgeAmount(class Loop* l);
+    static WindowUnit getWindowSlideUnit(class Track* t);
+    static int getWindowSlideAmount(class Track* t);
+    static WindowUnit getWindowEdgeUnit(class Track* t);
+    static int getWindowEdgeAmount(class Track* t);
 
-    static MuteCancel getMuteCancel(class Loop* l);
+    static MuteCancel getMuteCancel(class Track* t);
 
-    static TrackLeaveAction getTrackLeaveAction(class Loop* l);
+    static TrackLeaveAction getTrackLeaveAction(class Track* t);
 
-    static SlipMode getSlipMode(class Loop* l);
-    static int getSlipTime(class Loop* l);
+    static SlipMode getSlipMode(class Track* t);
+    static int getSlipTime(class Track* t);
     
-    static TransferMode getReverseTransfer(class Loop* l);
-
-    static int getSubcycles(class Loop* l);
-    static ShuffleMode getShuffleMode(class Loop* l);
-
-    static bool isRecordResetsFeedback(class Loop* l);
-
-    static ParameterMultiplyMode getMultiplyMode(class Loop* l);
-    
-    static SwitchDuration getSwitchDuration(class Loop* l);
-    static SwitchLocation getSwitchLocation(class Loop* l);
-    static SwitchQuantize getSwitchQuantize(class Loop* l);
-    static bool isSwitchVelocity(class Loop* l);
-    
-    static int getLoops(class Loop* l);
+    static TransferMode getReverseTransfer(class Track* t);
+    static TransferMode getRecordTransfer(class Track* t);
+    static TransferMode getOverdubTransfer(class Track* t);
 
     static int getSubcycles(class Track* t);
+    static ShuffleMode getShuffleMode(class Track* t);
+
+    static ParameterMultiplyMode getMultiplyMode(class Track* t);
     
+    static SwitchDuration getSwitchDuration(class Track* t);
+    static SwitchLocation getSwitchLocation(class Track* t);
+    static SwitchLocation getReturnLocation(class Track* t);
+    static SwitchQuantize getSwitchQuantize(class Track* t);
+    static bool isSwitchVelocity(class Track* t);
+    
+    static int getLoops(class Track* t);
+
+    static int getMaxUndo(class Track* t);
+    static int getMaxRedo(class Track* t);
+    static bool isNoLayerFlattening(class Track* t);
+    static bool isAltFeedbackEnable(class Track* t);
+    static bool isRoundingOverdub(class Track* t);
+    static bool isRecordResetsFeedback(class Track* t);
+    static bool isOverdubQuantized(class Track* t);
+    
+    static CopyMode getTimeCopyMode(class Track* t);
+    static CopyMode getSoundCopyMode(class Track* t);
+    
+    static QuantizeMode getQuantize(class Track* t);
+    static QuantizeMode getBounceQuantize(class Track* t);
+    static EmptyLoopAction getEmptyTrackAction(class Track* t);
+    static EmptyLoopAction getEmptyLoopAction(class Track* t);
 };
 

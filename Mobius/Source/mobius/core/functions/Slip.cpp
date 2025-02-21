@@ -171,7 +171,7 @@ void SlipFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 		long unitFrames = 0;
 		long relativeFrames = 0;
 		QuantizeMode absoluteQ = QUANTIZE_OFF;
-		SlipMode smode = ParameterSource::getSlipMode(l);
+		SlipMode smode = ParameterSource::getSlipMode(l->getTrack());
 		switch (smode) {
 			case SLIP_SUBCYCLE: {
 				absoluteQ = QUANTIZE_SUBCYCLE;
@@ -197,7 +197,7 @@ void SlipFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 				break;
 			case SLIP_MSEC: {
 				// this is complicated by variable speeds!
-				int msecs = ParameterSource::getSlipTime(l);
+				int msecs = ParameterSource::getSlipTime(l->getTrack());
 				float speed = l->getTrack()->getEffectiveSpeed();
 				// should we ceil()?
 				unitFrames = (long)(MSEC_TO_FRAMES(msecs) * speed);

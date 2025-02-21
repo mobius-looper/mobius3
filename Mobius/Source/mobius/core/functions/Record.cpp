@@ -676,7 +676,7 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
             // RecordResetsFeedback.
             // !! Why is this done here, can't we do it when the recording
             // is started?
-            if (ParameterSource::isRecordResetsFeedback(loop)) {
+            if (ParameterSource::isRecordResetsFeedback(loop->getTrack())) {
                 // note that we don't just put it to 127 like the EDP
                 // it goes back to what is defined in the Setup
                 int feedback = 127;

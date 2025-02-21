@@ -14,7 +14,7 @@
 
 #include "../../util/Trace.h"
 
-#include "../../model/Preset.h"
+//#include "../../model/Preset.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -202,7 +202,7 @@ class Loop : public TraceContext {
 	class Mobius* getMobius();
 	class Synchronizer* getSynchronizer();
     Track* getTrack();
-	class Preset* getPreset();
+	//class Preset* getPreset();
 
     // Utilities
 
@@ -354,7 +354,7 @@ class Loop : public TraceContext {
 
     class Mobius* mMobius;
 	class Track* mTrack;
-	class Preset* mPreset;		// copy of Track's Preset
+	//class Preset* mPreset;		// copy of Track's Preset
 	class InputStream* mInput;
 	class OutputStream* mOutput;
 	class Synchronizer* mSynchronizer;

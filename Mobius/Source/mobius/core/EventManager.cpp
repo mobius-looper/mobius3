@@ -144,6 +144,7 @@
 #include "Synchronizer.h"
 #include "Track.h"
 #include "Function.h"
+#include "ParameterSource.h"
 
 #include "EventManager.h"
 #include "Mem.h"
@@ -422,7 +423,6 @@ Event* EventManager::getFunctionEvent(Action* action,
 	Event* event = newEvent(func, 0);
 	QuantizeMode q = QUANTIZE_OFF;
     long frame = 0;
-    Preset* preset = mTrack->getPreset();
 
 	// Quantize may be temorarily disabled if we're "escaping" quantization
 	// or for certain forms of mute scheduling.
@@ -438,15 +438,15 @@ Event* EventManager::getFunctionEvent(Action* action,
 	if (checkQuantize) {
 		if (func == Bounce) {
 			// special case that has its own	
-			q = preset->getBounceQuantize();
+            q = ParameterSource::getBounceQuantize(mTrack);
 		}
 		else if (func->quantized) {
-			q = preset->getQuantize();
+			q = ParameterSource::getQuantize(mTrack);
 		}
 		else if (func->eventType == OverdubEvent) {
 			// EDP does not quantize overdub but we can
-			if (preset->isOverdubQuantized())
-			  q = preset->getQuantize();
+			if (ParameterSource::isOverdubQuantized(mTrack))
+			  q = ParameterSource::getQuantize(mTrack);
 		}
 		else if (func->eventType == RecordEvent && loop->getMode()->rounding) {
 			// It's useful to be able to quantize the end of an unrounded
@@ -454,7 +454,7 @@ Event* EventManager::getFunctionEvent(Action* action,
             // if you've got quant on it makes sense to use it here too,
             // not worth another mode, use a script of you want an unquantized
             // unrounded ending
-            q = preset->getQuantize();
+            q = ParameterSource::getQuantize(mTrack);
 		}
 	}
 
@@ -1757,7 +1757,6 @@ Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger,
                                          Loop* prev, bool sustain)
 {
 	Event* re = findEvent(ReturnEvent);
-    Preset* preset = mTrack->getPreset();
 
 	if (re != nullptr)
 	  Trace(mTrack, 1, "EventManager: Already have a return event!\n");
@@ -1773,7 +1772,7 @@ Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger,
         if (sustain) {
             // SUS switches use SwitchQuantize to determine when to return
             // Assume you don't have to confirm the return
-            SwitchQuantize q = preset->getSwitchQuantize();
+            SwitchQuantize q = ParameterSource::getSwitchQuantize(mTrack);
             long loopFrame = loop->getFrame();
             switch (q) {
                 case SWITCH_QUANT_CYCLE:
@@ -1813,7 +1812,7 @@ Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger,
         re->afterLoop = true;
 
         long nextFrame = 0;
-        SwitchLocation location = preset->getReturnLocation();
+        SwitchLocation location = ParameterSource::getReturnLocation(mTrack);
         if (location == SWITCH_RESTORE) {
             // restore playback to what the record frame was when we left 
             // this feels wrong, but it will be on the right quantization
@@ -2807,8 +2806,7 @@ long EventManager::getQuantizedFrame(Loop* loop, long frame,
 				// of all subcycles is equal to the cycle size
 
 				long cycleFrames = loop->getCycleFrames();
-                Preset* p = mTrack->getPreset();
-				int subCycles = p->getSubcycles();
+				int subCycles = ParameterSource::getSubcycles(mTrack);
 				// sanity check to avoid divide by zero
 				if (subCycles == 0) subCycles = 1;
 				long subCycleFrames = cycleFrames / subCycles;
@@ -2891,8 +2889,7 @@ long EventManager::getPrevQuantizedFrame(Loop* loop, long frame,
 				// of all subcycles is equal to the cycle size
 
 				long cycleFrames = loop->getCycleFrames();
-                Preset* p = mTrack->getPreset();
-				int subCycles = p->getSubcycles();
+				int subCycles = ParameterSource::getSubcycles(mTrack);
 				// sanity check to avoid divide by zero
 				if (subCycles == 0) subCycles = 1;
 				long subCycleFrames = cycleFrames / subCycles;

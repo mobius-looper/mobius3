@@ -382,7 +382,7 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
 
     trace(action, l);
 
-    SwitchDuration duration = ParameterSource::getSwitchDuration(l);
+    SwitchDuration duration = ParameterSource::getSwitchDuration(l->getTrack());
     Event* susret = em->findEvent(SUSReturnEvent);
 
     if (!action->down) {
@@ -474,7 +474,7 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
 
         // already declared this above
         //Preset* p = l->getPreset();
-        int maxLoops = ParameterSource::getLoops(l);
+        int maxLoops = ParameterSource::getLoops(l->getTrack());
         int curIndex = l->getNumber() - 1;
         int nextIndex = index;
 
@@ -550,7 +550,7 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
                 // !! we have that now, figure it out
                 if (replicated &&
                     action->trigger == TriggerMidi &&
-                    ParameterSource::isSwitchVelocity(l)) {
+                    ParameterSource::isSwitchVelocity(l->getTrack())) {
                     t->setOutputLevel(action->triggerValue);
                 }
             }
@@ -585,7 +585,7 @@ bool LoopTriggerFunction::isSustainableLoopTrigger(Loop*loop,
         // all the others can be the parameter says so
         // !! to support long press we should always let these
         // be sustainable, then let invokeLong check the preset
-        SwitchDuration duration = ParameterSource::getSwitchDuration(loop);
+        SwitchDuration duration = ParameterSource::getSwitchDuration(loop->getTrack());
         sustainable = (duration == SWITCH_SUSTAIN ||
                        duration == SWITCH_SUSTAIN_RETURN);
     }
@@ -614,7 +614,7 @@ bool LoopTriggerFunction::isMuteCancel(Loop* l)
 {
     bool cancel = Function::isMuteCancel(l);
     if (!cancel) {
-        SwitchDuration duration = ParameterSource::getSwitchDuration(l);
+        SwitchDuration duration = ParameterSource::getSwitchDuration(l->getTrack());
         if (this == RestartOnce ||
             (this != Restart &&
              (duration == SWITCH_ONCE ||
@@ -839,7 +839,7 @@ Event* LoopTriggerFunction::scheduleSwitch(Action* action,
 	}
 	else {
 		// scheduling a new switch
-		SwitchQuantize q = ParameterSource::getSwitchQuantize(current);
+		SwitchQuantize q = ParameterSource::getSwitchQuantize(current->getTrack());
 		bool needsConfirm = (q == SWITCH_QUANT_CONFIRM ||
                              q == SWITCH_QUANT_CONFIRM_CYCLE ||
                              q == SWITCH_QUANT_CONFIRM_SUBCYCLE ||
@@ -975,7 +975,7 @@ Event* LoopTriggerFunction::promoteSUSReturn(Action* action,
     EventManager* em = loop->getTrack()->getEventManager();
 
     Function* func = action->getFunction();
-    SwitchDuration duration = ParameterSource::getSwitchDuration(loop);
+    SwitchDuration duration = ParameterSource::getSwitchDuration(loop->getTrack());
 
     if (func->sustain || duration == SWITCH_SUSTAIN_RETURN) {
 
@@ -1147,7 +1147,7 @@ void LoopTriggerFunction::confirmEvent(Action* action,
         }
         else if (switchFrame == CONFIRM_FRAME_QUANTIZED) {
 
-            SwitchQuantize q = ParameterSource::getSwitchQuantize(l);
+            SwitchQuantize q = ParameterSource::getSwitchQuantize(l->getTrack());
             int latency = 0;
             if (!action->noLatency) {
                 InputStream* is = l->getInputStream();

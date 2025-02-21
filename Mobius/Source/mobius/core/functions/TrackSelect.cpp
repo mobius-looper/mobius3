@@ -272,7 +272,7 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
             Track* next = getNextTrack(action, l->getTrack());
             if (next != nullptr && next != l->getTrack()) {
 
-                TrackLeaveAction leaveAction = ParameterSource::getTrackLeaveAction(l);
+                TrackLeaveAction leaveAction = ParameterSource::getTrackLeaveAction(l->getTrack());
                 MobiusMode* mode = l->getMode();
 
                 bool schedule = true;

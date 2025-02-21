@@ -184,7 +184,7 @@ void ShuffleFunction::doEvent(Loop* loop, Event* event)
         // old style let a single arg override the granule
         // but use shuffle mode from the preset
         // loop size doesn't change so we don't have to mess with sync
-        int granules = ParameterSource::getSubcycles(loop);
+        int granules = ParameterSource::getSubcycles(loop->getTrack());
 
         if (list != nullptr && list->size() > 0) { 
             ExValue* arg = list->getValue(0);
@@ -193,7 +193,7 @@ void ShuffleFunction::doEvent(Loop* loop, Event* event)
               granules = alt;
         }
 
-        ShuffleMode mode = ParameterSource::getShuffleMode(loop);
+        ShuffleMode mode = ParameterSource::getShuffleMode(loop->getTrack());
 
         shuffle(loop, layer, mode, granules);
         shuffled = true;

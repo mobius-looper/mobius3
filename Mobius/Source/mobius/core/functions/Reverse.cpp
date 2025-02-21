@@ -334,7 +334,7 @@ Event* ReverseFunction::scheduleSwitchStack(Action* action, Loop* l)
 Event* ReverseFunction::scheduleTransfer(Loop* l)
 {
     Event* event = nullptr;
-    TransferMode tm = ParameterSource::getReverseTransfer(l);
+    TransferMode tm = ParameterSource::getReverseTransfer(l->getTrack());
 
     if (tm == XFER_OFF || tm == XFER_RESTORE) {
 

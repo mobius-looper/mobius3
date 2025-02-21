@@ -490,7 +490,7 @@ void MuteFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 		else {
 			// Leaving mute mode
 
-			ParameterMuteMode muteMode = ParameterSource::getMuteMode(l, e);
+			ParameterMuteMode muteMode = ParameterSource::getMuteMode(l->getTrack());
 
 			// Mute/Undo toggles mute mode
 			if (invoker == Undo) {
@@ -629,7 +629,7 @@ void MuteFunction::doEvent(Loop* l, Event* e)
     }
 	else {
 		// pause mode can come from the preset or from specific functions
-		ParameterMuteMode muteMode = ParameterSource::getMuteMode(l, e);
+		ParameterMuteMode muteMode = ParameterSource::getMuteMode(l->getTrack());
 		if (e->function == Pause || e->function == GlobalPause || e->function == MyStop)	
 		  muteMode = MUTE_PAUSE;
 

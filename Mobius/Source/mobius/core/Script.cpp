@@ -64,6 +64,7 @@
 #include "../../model/ScriptConfig.h"
 #include "../../model/UserVariable.h"
 #include "../../model/Symbol.h"
+#include "../../model/Preset.h"
 #include "../MobiusInterface.h"
 
 #include "Action.h"

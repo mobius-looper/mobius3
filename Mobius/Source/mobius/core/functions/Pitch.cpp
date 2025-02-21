@@ -1,3 +1,4 @@
+
 /**
  * Various functions related to pitch shift.
  *
@@ -25,6 +26,8 @@
 #include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
 #include "../../../model/TrackState.h"
+// for StepSequence
+#include "../../../model/Preset.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -390,7 +393,7 @@ void PitchFunction::convertAction(Action* action, Loop* l,
         change->value = action->arg.getInt();
 
         // support rescaling for some triggers
-        int scaledRange = ParameterSource::getPitchStepRange(l);
+        int scaledRange = ParameterSource::getPitchStepRange(l->getTrack());
 
         if (RescaleActionValue(action, l, scaledRange, false, &change->value))
           checkSpreadRange = false;
@@ -400,7 +403,7 @@ void PitchFunction::convertAction(Action* action, Loop* l,
         change->unit = PITCH_UNIT_BEND;
 
         // support rescaling for some triggers
-        int scaledRange = ParameterSource::getPitchBendRange(l);
+        int scaledRange = ParameterSource::getPitchBendRange(l->getTrack());
 
         RescaleActionValue(action, l, scaledRange, true, &change->value);
     }
@@ -425,7 +428,7 @@ void PitchFunction::convertAction(Action* action, Loop* l,
 
         Track* t = l->getTrack();
         int step = t->getPitchSequenceIndex();
-        StepSequence* seq = ParameterSource::getPitchSequence(l);
+        StepSequence* seq = ParameterSource::getPitchSequence(l->getTrack());
         bool next = (mType == PITCH_NEXT);
 
         // stay here if we have no sequence
@@ -599,7 +602,7 @@ bool PitchFunction::isIneffective(Action* a, Loop* l,
     // CANCEL does more than just the step so always do it
 
     if (mType != PITCH_CANCEL &&
-        (!mCanRestart || !ParameterSource::isPitchShiftRestart(l))) {
+        (!mCanRestart || !ParameterSource::isPitchShiftRestart(l->getTrack()))) {
 
         OutputStream* ostream = l->getOutputStream();
 
@@ -678,7 +681,7 @@ Event* PitchFunction::scheduleSwitchStack(Action* action, Loop* l)
 Event* PitchFunction::scheduleTransfer(Loop* l)
 {
     Event* event = nullptr;
-    TransferMode tm = ParameterSource::getPitchTransfer(l);
+    TransferMode tm = ParameterSource::getPitchTransfer(l->getTrack());
 
     if (tm == XFER_OFF || tm == XFER_RESTORE) {
 
@@ -757,7 +760,7 @@ void PitchFunction::doEvent(Loop* l, Event* e)
         
         applyPitchChange(l, &change, true);
 
-        if (mCanRestart && ParameterSource::isPitchShiftRestart(l)) {
+        if (mCanRestart && ParameterSource::isPitchShiftRestart(l->getTrack())) {
             // any other start frame options?
             l->setFrame(0);
             l->recalculatePlayFrame();

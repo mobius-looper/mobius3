@@ -31,6 +31,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
 #include "../../model/ParameterProperties.h"
+#include "../../model/Preset.h"
 
 #include "../MobiusKernel.h"
 #include "../AudioPool.h"
@@ -56,6 +57,7 @@
 #include "ScriptRuntime.h"
 #include "Synchronizer.h"
 #include "Track.h"
+#include "ParameterSource.h"
 
 // for ScriptInternalVariable, encapsulation sucks
 #include "Variable.h"
@@ -1872,9 +1874,7 @@ void Mobius::getTrackProperties(int number, TrackProperties& props)
     if (track != nullptr) {
         props.frames = track->getFrames();
         props.cycles = track->getCycles();
-        Preset* p = track->getPreset();
-        if (p != nullptr)
-          props.subcycles = p->getSubcycles();
+        props.subcycles = ParameterSource::getSubcycles(track);
         props.currentFrame = (int)(track->getFrame());
     }
     else {

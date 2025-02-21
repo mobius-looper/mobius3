@@ -168,7 +168,7 @@ void Loop::init(Mobius* m, Track* track,
 {
     mMobius = m;
 	mTrack = track;
-	mPreset = track->getPreset();
+	//mPreset = track->getPreset();
 	mInput = input;
 	mOutput = output;
 	mSynchronizer = mMobius->getSynchronizer();
@@ -540,10 +540,12 @@ Track* Loop::getTrack()
     return mTrack;
 }
 
+#if 0
 Preset* Loop::getPreset()
 {
 	return mPreset;
 }
+#endif
 
 Mobius* Loop::getMobius()
 {
@@ -866,7 +868,7 @@ long Loop::getSubCycleFrames()
 {
 	long cycleFrames = getCycleFrames();
 	if (cycleFrames > 0) {
-		int divisor = mPreset->getSubcycles();
+		int divisor = ParameterSource::getSubcycles(mTrack);
 		if (divisor > 0)
 		  cycleFrames /= divisor;
 	}
@@ -1706,9 +1708,9 @@ void Loop::notifyBeatListeners(Layer* layer, long frames)
 		}
 
 		// similar calculation as for cycles, is there a faster way?
-		// !! this is the same roundoff problem that 
+		// !! this is the same roundoff problem that
 		// getQuantizedFrame has
-		int ticks = mPreset->getSubcycles();
+        int ticks = ParameterSource::getSubcycles(mTrack);
 		// sanity check to avoid divide by zero
 		if (ticks == 0) ticks = 1;
 		long tickFrames = cycleFrames / ticks;
@@ -1872,7 +1874,7 @@ int Loop::getEffectiveFeedback()
         feedback = 127;
     }
     else {
-		if (mPreset->isAltFeedbackEnable()) {
+		if (ParameterSource::isAltFeedbackEnable(mTrack)) {
             // Similar to what the EDP calls InterfaceMode=Expert.
             // Primary feedback active during play, secondary during
             // overdub, multiply, substitute.  Assuming this means
@@ -2878,7 +2880,7 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
 		Event *recordStop = nullptr;
         long endFrame = 0;
 		// !! don't really need to schedule this if event is quantized
-		if (!mPreset->isRoundingOverdub()) {
+		if (!ParameterSource::isRoundingOverdub(mTrack)) {
 			// have to stop recording early
 			endFrame = getUnroundedRecordStopFrame(event);
             // I HATE how you have to know the "family function" to create
@@ -2916,7 +2918,7 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
 
 		if (mMode == MultiplyMode && 
 			recordStop != nullptr && endFrame < recordStop->frame) {
-			if (mPreset->getMultiplyMode() == MULTIPLY_SIMPLE) {
+			if (ParameterSource::getMultiplyMode(mTrack) == MULTIPLY_SIMPLE) {
 				// quantize the end of the multiply
 				endFrame = recordStop->frame;
 			}
@@ -3033,7 +3035,7 @@ long Loop::getUnroundedRecordStopFrame(Event* e)
 	long stopFrame = e->frame;
 
 	if (!e->quantized) {
-		QuantizeMode q = mPreset->getQuantize();
+		QuantizeMode q = ParameterSource::getQuantize(mTrack);
 		if (q == QUANTIZE_SUBCYCLE) {
             EventManager* em = mTrack->getEventManager();
             stopFrame = em->getQuantizedFrame(this, stopFrame, q, false);
@@ -3108,7 +3110,7 @@ long Loop::getModeEndFrame(Event* event)
 	// mModeStartFrame has the realtime starting frame (latency adjusted)
 	long endFrame = event->frame;
 
-	ParameterMultiplyMode mmode = mPreset->getMultiplyMode();
+	ParameterMultiplyMode mmode = ParameterSource::getMultiplyMode(mTrack);
 
 	if (mMode == MultiplyMode && mmode == MULTIPLY_SIMPLE) {
 		// TODO: a mode that selects immediate end or quantize
@@ -3301,7 +3303,7 @@ Event* Loop::scheduleModeEndPlayJump(Event* endEvent, bool unrounded)
 		jump->fields.jump.nextLayer = mRecord;
 
 		if (unrounded || 
-			(mPreset->getMultiplyMode() == MULTIPLY_NORMAL &&
+			(ParameterSource::getMultiplyMode(mTrack) == MULTIPLY_NORMAL &&
 			 mPlay != nullptr && mPlay->getCycles() > 1)) {
 			// For both unrounded multiply and remultiply (more than one cycle)
 			// we will trim off the content before and after the mode edges.
@@ -3905,7 +3907,7 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
 
 	// Prepare copy default modes based on the preset
 	if (nextEmpty) {
-        EmptyLoopAction action = mPreset->getEmptyLoopAction();
+        EmptyLoopAction action = ParameterSource::getEmptyLoopAction(mTrack);
 		if (srcEmpty) {
             // if the source loop is empty, then the copy modes don't
             // make sense?
@@ -3924,7 +3926,7 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
 
  	// First check transfer modes if we're not restarting
  	if (nextLoop != this) {
- 		TransferMode tm = mPreset->getSpeedTransfer();
+ 		TransferMode tm = ParameterSource::getSpeedTransfer(mTrack);
  		if (tm == XFER_OFF) {
             next->speedToggle = 0;
             next->speedOctave = 0;
@@ -3941,7 +3943,7 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
             next->speedRestore = true;
  		}
 
- 		tm = mPreset->getPitchTransfer();
+ 		tm = ParameterSource::getPitchTransfer(mTrack);
  		if (tm == XFER_OFF) {
             next->pitchOctave = 0;
             next->pitchStep = 0;
@@ -3954,7 +3956,7 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
             next->pitchRestore = true;
  		}
 
- 		tm = mPreset->getReverseTransfer();
+ 		tm = ParameterSource::getReverseTransfer(mTrack);
  		if (tm == XFER_OFF)
  		  next->reverse = false;
  		else if (tm == XFER_RESTORE)
@@ -4069,7 +4071,7 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
 
 	if (!actions.loopCopy && !actions.timeCopy && !actions.mute && 
 		mMode == RecordMode && 
-        mPreset->getRecordTransfer() == XFER_FOLLOW) {
+        ParameterSource::getRecordTransfer(mTrack) == XFER_FOLLOW) {
 
 		actions.record = true;
 	}
@@ -4105,7 +4107,7 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
 		// most things will start the loop over from zero
 		long nextFrame = 0;
 
-		SwitchLocation location = mPreset->getSwitchLocation();
+		SwitchLocation location = ParameterSource::getSwitchLocation(mTrack);
 
 		if (switche->function == RestartOnce) {
 			// doesn't matter what SwitchStyle is, always start
@@ -4119,9 +4121,9 @@ void Loop::adjustSwitchJump(Event* jump, JumpContext* next)
 
                 CopyMode cmode;
                 if (actions.loopCopy)
-                  cmode = mPreset->getSoundCopyMode();
+                  cmode = ParameterSource::getSoundCopyMode(mTrack);
                 else
-                  cmode = mPreset->getTimeCopyMode();
+                  cmode = ParameterSource::getTimeCopyMode(mTrack);
 
                 if (cmode == COPY_INSERT || 
                     cmode == COPY_MULTIPLY) {
@@ -4685,7 +4687,7 @@ void Loop::addRedo(Event* e, Layer* undone)
     (void)e;
 	//Preset* eventPreset = e->getEventPreset();
 	//int max = eventPreset->getMaxRedo();
-    int max = mPreset->getMaxRedo();
+    int max = ParameterSource::getMaxRedo(mTrack);
 
 	if (max == 0)
 	  undone->freeAll();
@@ -5018,7 +5020,7 @@ void Loop::switchEvent(Event* event)
 	// the current state.
 	// !! it would be nice to handle this with a generated event like
 	// we do for the other transfer modes, even though this way is simpler?
-	TransferMode ot = mPreset->getOverdubTransfer();
+	TransferMode ot = ParameterSource::getOverdubTransfer(mTrack);
 	bool overdub = false;
 	if (ot == XFER_FOLLOW)
 	  overdub = mOverdub;
@@ -5194,7 +5196,7 @@ void Loop::switchEvent(Event* event)
     // if we didn't already force recording, carry it over unless we
     // did one of the loop copy things
     if (!recording && wasRecording && 
-        mPreset->getRecordTransfer() == XFER_FOLLOW) {
+        ParameterSource::getRecordTransfer(mTrack) == XFER_FOLLOW) {
 
         switchRecord(next, event, nullptr);
         recording = true;
@@ -5207,7 +5209,7 @@ void Loop::switchEvent(Event* event)
 
 	if (empty && !recording) {
 
-		EmptyLoopAction action = mPreset->getEmptyLoopAction();
+		EmptyLoopAction action = ParameterSource::getEmptyLoopAction(mTrack);
 		switch (action) {
 			case EMPTY_LOOP_NONE: {
                 // leave it in Reset
@@ -5400,7 +5402,7 @@ void Loop::switchEvent(Event* event)
     // Restart ignores SwitchDuration, which feels like what you want
     // since this is often used to bring things back into alignment but
     // keep going.
-    SwitchDuration duration = mPreset->getSwitchDuration();
+    SwitchDuration duration = ParameterSource::getSwitchDuration(mTrack);
 	if (event->function == RestartOnce || 
         (event->function != Restart && duration == SWITCH_ONCE)) {
         if (empty) {
@@ -5581,7 +5583,7 @@ void Loop::switchEvent(Event* event)
 
     //Preset* eventPreset = event->getEventPreset();
     //SwitchLocation location = eventPreset->getSwitchLocation();
-    SwitchLocation location = ParameterSource::getSwitchLocation(this);
+    SwitchLocation location = ParameterSource::getSwitchLocation(mTrack);
     
 	bool syncRestart = (event->function == Restart || 
                           event->function == RestartOnce ||
@@ -5704,7 +5706,7 @@ Event* Loop::copySound(Loop* src, Function* initial,
               (long)src->getNumber(), (long)getNumber());
 
         if (checkCopyMode) {
-            CopyMode copyMode = mPreset->getSoundCopyMode();
+            CopyMode copyMode = ParameterSource::getSoundCopyMode(mTrack);
             switch (copyMode) {
                 case COPY_PLAY:
                     initial = nullptr;
@@ -5754,7 +5756,7 @@ Event* Loop::copyTiming(Loop* src, long modeFrame)
 {
 	Event* event = nullptr;
     EventManager* em = mTrack->getEventManager();
-	CopyMode copyMode = mPreset->getTimeCopyMode();
+	CopyMode copyMode = ParameterSource::getTimeCopyMode(mTrack);
 
 	// clear layers and Audio, but leave positions intact
 	// the record frame has already been set, do *not* trash it
@@ -5928,7 +5930,7 @@ void Loop::trackEvent(Event* e)
 {
     Track* next = e->fields.trackSwitch.nextTrack;
 	if (next != nullptr) {
-		EmptyLoopAction action = mPreset->getEmptyTrackAction();
+		EmptyLoopAction action = ParameterSource::getEmptyTrackAction(mTrack);
 		Loop* dest = next->getLoop();
 
 		// ignore EmptyTrackAction if the loop has content or if we have none

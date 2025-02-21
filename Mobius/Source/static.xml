@@ -16,6 +16,14 @@
      <Tree name='Miscellany'/>
   </Tree>
   
+  <Tree name='sessionFunction'>
+    <Tree name='General'/>
+    <Tree name='Quantize'/>
+    <Tree name='Switch'/>
+    <Tree name='Effects'/>
+    <Tree name='Other'/>
+  </Tree>
+  
   <Tree name='sessionAudioTrack'>
     <Tree name='General'/>
     <Tree name='Sync'/>
@@ -75,4 +83,19 @@
   <Form name='sessionMidiTrackLoopSwitch' title='Loop Switch Options'
         symbols='switchQuantize,emptyLoopAction,switchDuration,switchLocation'/>
 
+  <Form name='sessionFunctionGeneral' title='General Parameters'
+        symbols='maxUndo,maxRedo,noFeedbackUndo,altFeedbackEnable,emptyTrackAction,trackLeaveAction'/>
+  
+  <Form name='sessionFunctionQuantize' title='Quantization Parameters'
+        symbols='quantize,switchQuantize,bounceQuantize,overdubQuantized'/>
+  
+  <Form name='sessionFunctionSwitch' title='Loop Switch Parameters'
+        symbols='emptyLoopAction,timeCopyMode,soundCopyMode,switchLocation,switchDuration,returnLocation,switchVelocity,recordTransfer,overdubTransfer,reverseTransfer,speedTransfer,pitchTransfer'/>
+
+  <Form name='sessionFunctionOther' title='Other'
+        symbols='multiplyMode,shuffleMode,muteMode,muteCancel,slipMode,slipTime,windowSlideUnit,windowSlideAmount,windowEdgeUnit,windowEdgeAmount,roundingOverdub,speedRecord,recordResetsFeedback'/>
+  
+  <Form name='sessionFunctionEffects' title='Effects'
+        symbols='speedShiftRestart,pitchShiftRestart,speedStepRange,speedBendRange,pitchStepRange,pitchBendRange,timeStretchRange'/>
+  
 </StaticConfig>

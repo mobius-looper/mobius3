@@ -270,9 +270,6 @@ class ProjectTrack {
 	void setFocusLock(bool b);
 	bool isFocusLock();
 
-	void setPreset(const char* preset);
-	const char* getPreset();
-
 	void setInputLevel(int i);
 	int getInputLevel();
 
@@ -340,12 +337,6 @@ class ProjectTrack {
      * and loop must specify the target number.
      */
     int mNumber;
-
-	/**
-	 * The name of the preset used in this track (if different
-	 * than the Setup).
-	 */
-	char* mPreset;
 
 	// state at the time of the project snapshot, may be different
 	// than the state in the Setup

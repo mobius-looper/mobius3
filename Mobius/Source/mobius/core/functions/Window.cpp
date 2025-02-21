@@ -345,10 +345,10 @@ void WindowFunction::moveWindow(Event* event)
         }
     }
 
-    WindowUnit unit = ParameterSource::getWindowSlideUnit(mLoop);
+    WindowUnit unit = ParameterSource::getWindowSlideUnit(mLoop->getTrack());
 
     if (amount <= 0) {
-        amount = ParameterSource::getWindowSlideAmount(mLoop);
+        amount = ParameterSource::getWindowSlideAmount(mLoop->getTrack());
         if (amount <= 0)
           amount = 1;
     }
@@ -413,10 +413,10 @@ void WindowFunction::resizeWindow(Event* event)
         }
     }
 
-    WindowUnit unit = ParameterSource::getWindowEdgeUnit(mLoop);
+    WindowUnit unit = ParameterSource::getWindowEdgeUnit(mLoop->getTrack());
 
     if (amount <= 0) {
-        amount = ParameterSource::getWindowEdgeAmount(mLoop);
+        amount = ParameterSource::getWindowEdgeAmount(mLoop->getTrack());
         if (amount <= 0)
           amount = 1;
     }

@@ -335,6 +335,7 @@
 #include "Segment.h"
 #include "Stream.h"
 #include "Mem.h"
+#include "ParameterSource.h"
 
 // In Track.cpp
 extern bool TraceFrameAdvance;
@@ -4793,8 +4794,7 @@ void Layer::lowerBackgroundHead(LayerContext* con)
 void Layer::checkMaxUndo()
 {
     Layer* oldest = nullptr;
-    Preset* p = mLoop->getPreset();
-	int max = p->getMaxUndo();
+    int max = ParameterSource::getMaxUndo(mLoop->getTrack());
 
     if (max > 0) {
         oldest = this;
@@ -4937,8 +4937,7 @@ Layer* LayerPool::newLayer(Loop* loop)
 		layer->mIsolatedOverdub = c->isIsolateOverdubs();
         // originally in MobiusConfig, but this is a useful performance
         // option so moved to Preset
-        Preset* p = loop->getPreset();
-		layer->mNoFlattening = p->isNoLayerFlattening();
+        layer->mNoFlattening = ParameterSource::isNoLayerFlattening(loop->getTrack());
 	}
 
 	return layer;

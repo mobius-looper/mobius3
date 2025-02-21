@@ -322,7 +322,7 @@ void MultiplyFunction::doEvent(Loop* l, Event* e)
 
         bool pruned = false;
         bool resized = false;
-        ParameterMultiplyMode mmode = ParameterSource::getMultiplyMode(l);
+        ParameterMultiplyMode mmode = ParameterSource::getMultiplyMode(l->getTrack());
         Layer* play = l->getPlayLayer();
 
         // I'm not liking the uncontrollable nature of unrounded multiply,

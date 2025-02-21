@@ -22,6 +22,8 @@
 #include "../../model/UIParameter.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Trigger.h"
+#include "../../model/Structure.h"
+#include "../../model/Preset.h"
 
 #include "../MobiusShell.h"
 

@@ -842,22 +842,6 @@ ProjectTrack::ProjectTrack(MobiusConfig* config, Project* p, Track* t)
     mPitchBend = t->getPitchBend();
     mTimeStretch = t->getTimeStretch();
 
-    // include preset only if different than the setup
-    // !! should this be the starting setup?  What if it changed
-    // at runtime?
-    Setup* setup = config->getStartingSetup();
-    SetupTrack* st = setup->getTrack(t->getRawNumber());
-
-    // new: do we need to save this?
-    // we're not saving every transient runtime parameter, why would
-    // we save the active preset if it was different than the SetupTrack starting preset?
-    Preset* pre = t->getPreset();
-	if (pre != nullptr) {
-        const char* dflt = (st != nullptr) ? st->getTrackPresetName() : nullptr;
-        if (dflt == nullptr || !StringEqual(dflt, pre->getName()))
-          setPreset(pre->getName());
-    }
-
 	// suppress emitting XML for empty loops at the end
 	int last = t->getLoopCount();
 	for (i = last - 1 ; i >= 0 ; i--) {
@@ -893,14 +877,12 @@ void ProjectTrack::init()
     mPitchStep = 0;
     mPitchBend = 0;
     mTimeStretch = 0;
-	mPreset = nullptr;
 	mLoops = nullptr;
 	mVariables = nullptr;
 }
 
 ProjectTrack::~ProjectTrack()
 {
-	delete mPreset;
 	delete mVariables;
 
 	if (mLoops != nullptr) {
@@ -940,17 +922,6 @@ int ProjectTrack::getGroup()
 void ProjectTrack::setGroup(int i)
 {
     mGroup = i;
-}
-
-void ProjectTrack::setPreset(const char* p)
-{
-	delete mPreset;
-	mPreset = CopyString(p);
-}
-
-const char* ProjectTrack::getPreset()
-{
-	return mPreset;
 }
 
 void ProjectTrack::setFeedback(int i)
@@ -1173,7 +1144,6 @@ void ProjectTrack::toXml(XmlBuffer* b, bool isTemplate)
 	b->addOpenStartTag(EL_TRACK);
 
     b->addAttribute(ATT_ACTIVE, mActive);
-	b->addAttribute(ATT_PRESET, mPreset);
 
     if (mGroup > 0)
       b->addAttribute(ATT_GROUP, mGroup);
@@ -1225,7 +1195,6 @@ void ProjectTrack::toXml(XmlBuffer* b, bool isTemplate)
 void ProjectTrack::parseXml(XmlElement* e)
 {
 	setActive(e->getBoolAttribute(ATT_ACTIVE));
-	setPreset(e->getAttribute(ATT_PRESET));
     setGroup(e->getIntAttribute(ATT_GROUP));
 	setFocusLock(e->getBoolAttribute(ATT_FOCUS_LOCK));
 	setInputLevel(e->getIntAttribute(ATT_INPUT));

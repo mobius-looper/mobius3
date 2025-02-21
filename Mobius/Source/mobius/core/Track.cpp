@@ -51,6 +51,7 @@
 #include "../../model/MobiusConfig.h"
 #include "../../model/Setup.h"
 #include "../../model/Session.h"
+#include "../../model/Preset.h"
 
 #include "../MobiusInterface.h"
 #include "../MobiusPools.h"
@@ -1859,18 +1860,6 @@ void Track::loadProject(ProjectTrack* pt)
 {
 	List* loops = pt->getLoops();
 	int newLoops = ((loops != nullptr) ? loops->size() : 0);
-
-    // !! feels like there should be more here, if the project doesn't
-    // have a preset for this track then we should be falling back to
-    // what is in the setup, then falling back to the global default
-
-    MobiusConfig* config = mMobius->getConfiguration();
-	const char* preset = pt->getPreset();
-	if (preset != nullptr) {
-		Preset* p = config->getPreset(preset);
-		if (p != nullptr)
-		  refreshPreset(p);
-	}
 
     // !! Projects still store group numbers rather than names, need to fix this
     setGroup(pt->getGroup());
