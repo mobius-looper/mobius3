@@ -399,6 +399,17 @@ MslValue* Session::get(juce::String pname)
     return v;
 }
 
+/**
+ * Used in a few cases where we put transient things in the session
+ * for editing then need to move them somewhere else.
+ * e.g. plugin io pins
+ */
+void Session::remove(juce::String pname)
+{
+    if (globals != nullptr)
+      globals->remove(pname);
+}
+
 bool Session::getBool(juce::String pname)
 {
     MslValue* v = get(pname);

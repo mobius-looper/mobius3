@@ -181,8 +181,6 @@
     <Value name="noFeedbackUndo" value="false" type="bool"/>
     <Value name="noiseFloor" value="50" type="int"/>
     <Value name="outputLatency" value="0" type="int"/>
-    <Value name="pluginInputs" value="4" type="int"/>
-    <Value name="pluginOutputs" value="4" type="int"/>
     <Value name="quickSave" value="mobiusloop"/>
     <Value name="recordResetsFeedback" value="false" type="bool"/>
     <Value name="recordThreshold" value="0" type="int"/>

@@ -65,8 +65,8 @@ void SessionEditorTree::intern(SymbolTreeItem* parent, juce::String treePath, Tr
     juce::String nodeForm = node->formName;
     if (nodeForm.length() == 0)
       item->setAnnotation(treePath);
-    else if (nodeForm != "none")
-      item->setAnnotation(node->formName);
+    else 
+      item->setAnnotation(nodeForm);
 
     // all nodes can be clicked
     item->setNoSelect(false);
@@ -92,7 +92,9 @@ void SessionEditorTree::intern(SymbolTreeItem* parent, juce::String treePath, Tr
             TreeForm* formdef = scon->getForm(formName);
             if (formdef != nullptr) {
                 for (auto sname : formdef->symbols) {
-                    addSymbol(item, sname, formdef->suppressPrefix);
+                    // ignore special rendering symbols
+                    if (!sname.startsWith("*"))
+                      addSymbol(item, sname, formdef->suppressPrefix);
                 }
             }
         }

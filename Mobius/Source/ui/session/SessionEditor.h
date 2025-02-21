@@ -41,7 +41,7 @@ class SessionEditor : public ConfigEditor
     void loadSession();
     void saveSession(class Session* master);
     void invalidateSession();
-    int getPortValue(const char* name, int max);
+    int getPortValue(class ValueSet* set, const char* name, int max);
 
     std::unique_ptr<class Session> session;
     std::unique_ptr<class Session> revertSession;

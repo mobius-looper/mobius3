@@ -172,6 +172,8 @@ class Session
     void setJString(juce::String name, juce::String value);
     void setInt(juce::String name, int value);
     void setBool(juce::String name, bool value);
+
+    void remove(juce::String name);
     
   private:
     

@@ -61,6 +61,10 @@ void SessionFormCollection::decache()
 
 void SessionFormCollection::show(Provider* p, juce::String formName)
 {
+    // for interior nodes that won't have forms
+    // ideally this could auto-expand down to the first child node that has a form
+    if (formName == "none") return;
+    
     ParameterForm* form = formTable[formName];
 
     if (form == nullptr) {
