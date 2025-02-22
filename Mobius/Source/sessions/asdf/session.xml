@@ -16,6 +16,7 @@
       <Value name="pluginOutputPort" value="0" type="int"/>
       <Value name="syncSource" value="none" type="enum" ordinal="0"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackPreset" value="Preset_2010_sync"/>
       <Value name="trackSyncUnit" value="subcycle" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>

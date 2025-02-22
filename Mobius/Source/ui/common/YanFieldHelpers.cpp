@@ -178,7 +178,7 @@ void YanFieldHelpers::initTrackPreset(Provider* p, YanCombo* combo, juce::String
     }
     combo->setItems(names);
 
-    int ordinal = config->getGroupOrdinal(value);
+    int ordinal = Structure::getOrdinal(config->getPresets(), value.toUTF8());
     // ordinal is -1 if not found, which matches [None]
     combo->setSelection(ordinal + 1);
 }
