@@ -26,6 +26,7 @@
 #include "PropertiesEditor.h"
 #include "GroupEditor.h"
 #include "../session/SessionEditor.h"
+#include "../parameter/ParameterEditor.h"
 
 class ScriptPanel : public ConfigPanel
 {
@@ -194,4 +195,17 @@ class SessionPanel : public ConfigPanel
  
   private:
     SessionEditor editor;
+};
+
+class ParameterPanel : public ConfigPanel
+{
+  public:
+    ParameterPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
+        setName("Parameters");
+        setEditor(&editor);
+    }
+    ~ParameterPanel() {}
+ 
+  private:
+    ParameterEditor editor;
 };

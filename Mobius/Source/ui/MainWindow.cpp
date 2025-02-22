@@ -279,6 +279,10 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::SessionManager);
             }
                 break;
+            case MainMenu::ParameterSets: {
+                panelFactory.show(PanelFactory::ParameterSets);
+            }
+                break;
             case MainMenu::MidiControl: {
                 panelFactory.show(PanelFactory::Midi);
             }

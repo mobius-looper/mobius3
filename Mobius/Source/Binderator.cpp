@@ -564,6 +564,10 @@ UIAction* Binderator::buildAction(SymbolTable* symbols, Binding* b)
 
         Trigger* trigger = b->trigger;
         TriggerMode* mode = b->triggerMode;
+        // note: ignore this, was having an uninitialized pointer problem
+        // but even if it was set, need to work out whether we want this
+        // at all and if it should be something else
+        mode = nullptr;
         int sustainId = -1;
 
         if (b->release) {

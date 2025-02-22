@@ -50,6 +50,7 @@ class PanelFactory
         Group,
         Session,
         SessionManager,
+        ParameterSets,
 
         // Devices
         Audio,

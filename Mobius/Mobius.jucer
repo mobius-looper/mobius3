@@ -196,6 +196,12 @@
         <FILE id="lTQjDK" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
+        <GROUP id="{D00C350E-B29D-D24C-688C-04027E4FDEE4}" name="parameter">
+          <FILE id="RAb6By" name="ParameterEditor.cpp" compile="1" resource="0"
+                file="Source/ui/parameter/ParameterEditor.cpp"/>
+          <FILE id="FI6MXo" name="ParameterEditor.h" compile="0" resource="0"
+                file="Source/ui/parameter/ParameterEditor.h"/>
+        </GROUP>
         <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
           <FILE id="lXWr1d" name="BasicButtonRow.cpp" compile="1" resource="0"
                 file="Source/ui/common/BasicButtonRow.cpp"/>

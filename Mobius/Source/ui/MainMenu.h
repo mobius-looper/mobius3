@@ -110,6 +110,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         // Sessions
         EditSession,
         SessionManager,
+        ParameterSets,
         
         // Scripts
         Scripts,
