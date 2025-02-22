@@ -164,7 +164,7 @@ void RootLocator::whereAmI()
  * Errors are returned in the supplied array.
  *
  */
-juce::File RootLocator::getRoot(juce::StringArray errors)
+juce::File RootLocator::getRoot(juce::StringArray& errors)
 {
     juce::File verifiedRoot;
     char error[1024];
@@ -260,40 +260,15 @@ juce::File RootLocator::getRoot(juce::StringArray errors)
                     if (f.existsAsFile()) {
                         trace("RootLocator: mobius.xml found: %s\n", PATHSTRING(f));
                         verifiedRoot = mobiusinst;
-                    }
 #ifdef __APPLE__
-                    else {
-                        // incomplete or missing install
-                        // on Mac we play the game of bootstrapping Application Support
-                        // by copying files from the /Application bundle before looking
-                        // for the development directory
-                        // On Windows we don't have to do this since INNO should be setting
-                        // up AppData as expected
-                        const char* appdirPath = "/Applications/Mobius.app/Contents/Resources/Install";
-                        juce::File appdir = juce::File(appdirPath);
-                        if (!appdir.isDirectory()) {
-                            // todo: could look in /Library/Audio/Plug-Ins/VST3 for the same shenanigans
-                            snprintf(error, sizeof(error), "/Applications/Mobius.app was not installed, unable to locate mobius.xml\n");
-                            errors.add(juce::String(error));
-                        }
-                        else {
-                            // If we can't get the installer to do these extra
-                            // files, we'll need a way to selectively upgrade some of them
-                            // while keeping the custom ones
-                            // mobius.xml is always preserved
-                            // help.xml must be replaced on every new install
-                            // this argues for splitting the locations
-                            trace("RootLocator: Bootstrapping configuration files from /Applications to ~/Library/Application Support\n");
-                            if (appdir.copyDirectoryTo(mobiusinst)) {
-                                verifiedRoot = mobiusinst;
-                            }
-                            else {
-                                snprintf(error, sizeof(error), "/Applications/Mobius.app was not copied\n");
-                                errors.add(juce::String(error));
-                            }
-                        }
-                    }
+                        upgradeAppleInstall(mobiusinst, errors);
 #endif                        
+                    }
+                    else {
+#ifdef __APPLE__
+                        verifiedRoot = bootstrapAppleInstall(mobiusinst, errors);
+#endif                        
+                    }
                 }
             }
         }
@@ -333,6 +308,83 @@ juce::File RootLocator::getRoot(juce::StringArray errors)
     }
 
     return verifiedRoot;
+}
+
+/**
+ * For a new install on Macs, copy over the initial mobius.xml and other
+ * system files from the /Applications package to the user's
+ * /Library/Application Support
+ *
+ * Don't need this on Windows since the INNO installer can do more than
+ * just a package install.
+ */
+juce::File RootLocator::bootstrapAppleInstall(juce::File mobiusinst, juce::StringArray& errors)
+{
+    juce::File verifiedRoot;
+    char error[1024];
+    
+    const char* appdirPath = "/Applications/Mobius.app/Contents/Resources/Install";
+    juce::File appdir = juce::File(appdirPath);
+    if (!appdir.isDirectory()) {
+        // todo: could look in /Library/Audio/Plug-Ins/VST3 for the same shenanigans
+        snprintf(error, sizeof(error), "/Applications/Mobius.app was not installed, unable to locate mobius.xml\n");
+        errors.add(juce::String(error));
+    }
+    else {
+        trace("RootLocator: Bootstrapping configuration files from /Applications to ~/Library/Application Support\n");
+        if (appdir.copyDirectoryTo(mobiusinst)) {
+            verifiedRoot = mobiusinst;
+        }
+        else {
+            snprintf(error, sizeof(error), "/Applications/Mobius.app was not copied\n");
+            errors.add(juce::String(error));
+        }
+    }
+    return verifiedRoot;
+}
+
+/**
+ * For an existing install on Macs, make sure the latest system files are copied
+ * to the user's /Library/Application Support.
+ *
+ * It sucks that we have to do this every time.  Really need to make the installer
+ * smarter with an after-script or something.
+ */
+void RootLocator::upgradeAppleInstall(juce::File mobiusinst, juce::StringArray& errors)
+{
+    const char* appdirPath = "/Applications/Mobius.app/Contents/Resources/Install";
+    juce::File appdir = juce::File(appdirPath);
+    if (!appdir.isDirectory()) {
+        errors.add("/Applications/Mobius.app was not installed, unable to locate mobius.xml\n");
+    }
+    else {
+        upgradeAppleFile("static.xml", appdir, mobiusinst, errors);
+        upgradeAppleFile("symbols.xml", appdir, mobiusinst, errors);
+        upgradeAppleFile("help.xml", appdir, mobiusinst, errors);
+    }
+}
+
+void RootLocator::upgradeAppleFile(juce::String name, juce::File appdir, juce::File instdir, juce::StringArray& errors)
+{
+    juce::File srcfile = appdir.getChildFile(name);
+    if (!srcfile.existsAsFile()) {
+        errors.add(name + " not found in /Applications/Mobius.app");
+    }
+    else {
+        juce::File destfile = instdir.getChildFile(name);
+        if (!destfile.existsAsFile() ||   
+            (destfile.getCreationTime() < srcfile.getCreationTime()) ||
+            (destfile.getCreationTime() < srcfile.getLastModificationTime())) {
+            
+            if (!srcfile.copyFileTo(destfile))
+              errors.add(name + " could not be copied to Application Support");
+            else {
+                juce::String msg = juce::String("RootLocator: Copied ") + name +
+                    + " to Application Support";
+                trace(msg);
+            }
+        }
+    }
 }
 
 juce::File RootLocator::checkRedirect(juce::File::SpecialLocationType type)

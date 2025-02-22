@@ -10,7 +10,7 @@ class RootLocator
   public:
 
     static void whereAmI();
-    static juce::File getRoot(juce::StringArray errors);
+    static juce::File getRoot(juce::StringArray& errors);
 
     RootLocator();
     ~RootLocator();
@@ -24,6 +24,10 @@ class RootLocator
     static juce::File checkRedirect(juce::File path);
     static juce::File checkRedirect(juce::File::SpecialLocationType type);
     static juce::String findRelevantLine(juce::String src);
+    
+    static juce::File bootstrapAppleInstall(juce::File mobiusinst, juce::StringArray& errors);
+    static void upgradeAppleInstall(juce::File mobiusinst, juce::StringArray& errors);
+    static void upgradeAppleFile(juce::String name, juce::File appdir, juce::File instdir, juce::StringArray& errors);
 
     juce::File verifiedRoot;
     juce::StringArray errors;
