@@ -249,14 +249,19 @@ juce::File RootLocator::getRoot(juce::StringArray& errors)
                 mobiusinst = mobius;
                 // don't look for mobius.xml yet, redirect first
                 juce::File alt = checkRedirect(mobius);
-                juce::File f = alt.getChildFile("mobius.xml");
-                if (f.existsAsFile()) {
-                    trace("RootLocator: mobius.xml found: %s\n", PATHSTRING(f));
-                    verifiedRoot = alt;
+                if (alt != mobius) {
+                    juce::File f = alt.getChildFile("mobius.xml");
+                    if (f.existsAsFile()) {
+                        trace("RootLocator: Redirected mobius.xml found: %s\n", PATHSTRING(f));
+                        verifiedRoot = alt;
+                    }
                 }
-                else {
+
+                // don't bother testing for upgrades if a redirect was found since
+                // that's normally a dev directory
+                if (verifiedRoot == juce::File()) {
                     // redirect missing or wrong, look where it normally is
-                    f = mobius.getChildFile("mobius.xml");
+                    juce::File f = mobius.getChildFile("mobius.xml");
                     if (f.existsAsFile()) {
                         trace("RootLocator: mobius.xml found: %s\n", PATHSTRING(f));
                         verifiedRoot = mobiusinst;
@@ -372,9 +377,15 @@ void RootLocator::upgradeAppleFile(juce::String name, juce::File appdir, juce::F
     }
     else {
         juce::File destfile = instdir.getChildFile(name);
+        
+        juce::Time srcCreate = srcfile.getCreationTime();
+        juce::Time destCreate = destfile.getCreationTime();
+        juce::Time srcMod = srcfile.getLastModificationTime();
+        juce::Time destMod = destfile.getLastModificationTime();
+
         if (!destfile.existsAsFile() ||   
-            (destfile.getCreationTime() < srcfile.getCreationTime()) ||
-            (destfile.getCreationTime() < srcfile.getLastModificationTime())) {
+            destCreate < srcCreate ||
+            destMod < srcMod) {
             
             if (!srcfile.copyFileTo(destfile))
               errors.add(name + " could not be copied to Application Support");
