@@ -5,6 +5,14 @@
 
 #include "ParameterSets.h"
 
+
+ParameterSets::ParameterSets(ParameterSets* src)
+{
+    for (auto set : src->sets) {
+        sets.add(new ValueSet(set));
+    }
+}
+
 void ParameterSets::parseXml(juce::XmlElement* root, juce::StringArray& errors)
 {
     for (auto* el : root->getChildIterator()) {

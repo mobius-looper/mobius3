@@ -25,6 +25,7 @@
 #include "model/Query.h"
 #include "model/ParameterProperties.h"
 #include "model/ParameterHelper.h"
+#include "model/ParameterSets.h"
 #include "model/SystemState.h"
 #include "model/PriorityState.h"
 #include "model/DeviceConfig.h"
@@ -1453,6 +1454,32 @@ void Supervisor::propagateConfiguration()
     scriptUtil.configure(mobiusConfig.get(), session.get());
     
     mainWindow->configure();
+}
+
+
+ParameterSets* Supervisor::getParameterSets()
+{
+    if (!parameterSets) {
+        ParameterSets* sets = fileManager.readParameterSets();
+        if (sets == nullptr) {
+            sets = new ParameterSets();
+        }
+
+        parameterSets.reset(sets);
+    }
+    
+    return parameterSets.get();
+
+}
+
+void Supervisor::updateParameterSets()
+{
+    if (parameterSets) {
+        fileManager.writeParameterSets(parameterSets.get());
+
+        // any propagation?
+        // probably bindings
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

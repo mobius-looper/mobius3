@@ -14,6 +14,9 @@ class ParameterSets
 
     constexpr static const char* XmlElementName = "ParameterSets";
     
+    ParameterSets() {}
+    ParameterSets(ParameterSets* src);
+
     juce::OwnedArray<class ValueSet> sets;
 
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);

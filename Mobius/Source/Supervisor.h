@@ -214,6 +214,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class Session* getSession() override;
     void sessionEditorSave();
     void loadSession(class Session* neu);
+
+    class ParameterSets* getParameterSets() override;
+    void updateParameterSets();
     
     class StaticConfig* getStaticConfig() override;
     class HelpCatalog* getHelpCatalog();
@@ -460,6 +463,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     std::unique_ptr<class Session> session;
     std::unique_ptr<class MobiusConfig> mobiusConfig;
     std::unique_ptr<class UIConfig> uiConfig;
+    std::unique_ptr<class ParameterSets> parameterSets;
 
     // non-editable configuration
     std::unique_ptr<class StaticConfig> staticConfig;

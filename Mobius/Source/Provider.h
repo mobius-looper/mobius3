@@ -72,7 +72,7 @@ class Provider
     virtual class MobiusConfig* getOldMobiusConfig() = 0;
     virtual class BindingSet* getBindingSets() = 0;
     virtual class Preset* getPresets() = 0;
-    
+    virtual class ParameterSets* getParameterSets() = 0;
     
     virtual class UIConfig* getUIConfig() = 0;
     virtual void updateUIConfig() = 0;
