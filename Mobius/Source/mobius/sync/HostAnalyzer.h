@@ -103,6 +103,10 @@ class HostAnalyzer : public SyncAnalyzer
     // used for logging, not critical for beat or drift detection
     int elapsedBlocks = 0;
 
+    // flag to reorient drift monitor on the next normalized beat after
+    // changing tempos
+    bool drifterReorient = false;
+
     //
     // Analysis related to pre-emptive beat detection
     //

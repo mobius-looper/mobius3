@@ -394,11 +394,6 @@ void HostAnalyzer::ponderTempo(double newTempo)
             traceFloat("HostAnalyzer: New host tempo %f", tempo);
 
             setUnitLength(newUnit);
-            
-            // whenever the tempo changes the last data point for the
-            // monitor will be invalid, so reset it so it starts seeing
-            // the new tempo ppq width
-            resetTempoMonitor();
         }
     }
 
@@ -463,12 +458,11 @@ void HostAnalyzer::setUnitLength(int newLength)
         // if this wraps is that a "beat", what about bar boundary adjustments
         unitPlayHead = (int)(unitPlayHead / unitLength);
 
-        // !! drift monitor needs to know this
-        // orient assumes we're exactly on a beat, which is the case if
-        // we're doing tempo derivation by watching beats, but not necessarily
-        // if the user is changing the host tempo while it plays
-        // more to do here
-        drifter.orient(unitLength);
+        // drift monitor needs to be reoriented on the next native beat
+        // I suppose we could be smarter about making partial reorientation
+        // in the middle of a beat but if the user is changing tempo,
+        // accuracy isn't that important
+        drifterReorient = true;
     }
 }
 
@@ -533,9 +527,16 @@ void HostAnalyzer::ponderPpqSimple(double beatPosition, int blockSize)
         int newBeat = (int)beatPosition;
         if (newBeat != hostBeat) {
 
-            // beat was actually on the previous block so effective offset
-            // is the start of this block
-            drifter.addBeat(0);
+            if (drifterReorient) {
+                drifter.orient(unitLength);
+                drifterReorient = false;
+            }
+            else {
+                // beat was actually on the previous block so effective offset
+                // is the start of this block
+                drifter.addBeat(0);
+            }
+
             hostBeat = newBeat;
 
             // pre-emptive stuff
