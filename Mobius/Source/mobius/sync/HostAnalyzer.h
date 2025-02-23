@@ -13,6 +13,23 @@
 #include "SyncAnalyzerResult.h"
 #include "DriftMonitor.h"
 
+/**
+ * Struct use to capture host ppq advance during debugging
+ */
+class HostAnalyzerLog
+{
+  public:
+
+    int streamTime = 0;
+    double ppqpos = 0.0f;
+    int blockSize = 0;
+    bool beat = false;
+    int blockOffset = 0;
+    int playHead = 0;
+    int drift = 0;
+};
+
+
 class HostAnalyzer : public SyncAnalyzer
 {
   public:
@@ -20,7 +37,7 @@ class HostAnalyzer : public SyncAnalyzer
     HostAnalyzer();
     ~HostAnalyzer();
 
-    void initialize(juce::AudioProcessor* ap);
+    void initialize(juce::AudioProcessor* ap, juce::File root);
     void setSampleRate(int rate);
 
     //
@@ -108,12 +125,12 @@ class HostAnalyzer : public SyncAnalyzer
     double lastPpq = 0.0f;
     
     // Trace options
-    bool traceppq = false;
+    bool traceppq = true;
     double lastppq = -1.0f;
     bool traceppqFine = false;
     int ppqCount = 0;
 
-    void detectStart(bool newPlaying, double beatPosition);
+    void detectStart(bool newPlaying, double beatPosition, int blockSize);
 
     void ponderTempo(double newTempo);
     int tempoToUnit(double newTempo);
@@ -128,4 +145,15 @@ class HostAnalyzer : public SyncAnalyzer
     
     void advanceAudioStream(int blockFrames);
 
+    // trace governors
+    int derivedTempoWhines = 0;
+
+    static const int MaxLog = 1000;
+    HostAnalyzerLog blockLog[MaxLog];
+    int logIndex = 0;
+    juce::File logRoot;
+    bool logEnabled = true;
+    
+    void log(double beatPosition, int blockSize);
+    void dumpLog();
 };

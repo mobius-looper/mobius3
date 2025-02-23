@@ -76,7 +76,7 @@ void SyncMaster::initialize(MobiusKernel* k, TrackManager* tm)
     pulsator.reset(new Pulsator(this, trackManager, barTender.get()));
 
     // reach out and touch the face of god
-    hostAnalyzer->initialize(container->getAudioProcessor());
+    hostAnalyzer->initialize(container->getAudioProcessor(), container->getRoot());
 
     MidiManager* mm = container->getMidiManager();
     midiRealizer->initialize(this, mm);

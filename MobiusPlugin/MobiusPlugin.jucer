@@ -260,6 +260,16 @@
         <FILE id="Yxp3rh" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
+        <GROUP id="{4D9FCDBF-4B09-3827-C66D-3CD74CEDBAD0}" name="parameter">
+          <FILE id="Y9SuM8" name="ParameterEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/parameter/ParameterEditor.cpp"/>
+          <FILE id="XY9xQ8" name="ParameterEditor.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/parameter/ParameterEditor.h"/>
+          <FILE id="BFgOqa" name="ParameterSetTable.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/parameter/ParameterSetTable.cpp"/>
+          <FILE id="EdLFOh" name="ParameterSetTable.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/parameter/ParameterSetTable.h"/>
+        </GROUP>
         <GROUP id="{A5CDC4BF-E6C3-CD3B-AF36-A965B7BA0834}" name="session">
           <FILE id="YSf8Hz" name="ParameterForm.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/session/ParameterForm.cpp"/>

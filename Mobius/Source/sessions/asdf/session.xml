@@ -14,10 +14,9 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+      <Value name="syncSource" value="host" type="enum" ordinal="3"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
-      <Value name="trackPreset" value="Preset_2010_sync"/>
-      <Value name="trackSyncUnit" value="subcycle" type="enum" ordinal="0"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
   <Track id="2" type="audio">
@@ -150,7 +149,8 @@
     <ValueSet>
       <Value name="loopCount" value="0" type="int"/>
       <Value name="midiChannelOverride" value="off" type="enum" ordinal="0"/>
-      <Value name="midiOutput" value="Bome MIDI Translator 1"/>
+      <Value name="midiInput" value="Host"/>
+      <Value name="midiOutput" value="Host"/>
       <Value name="midiThru" value="false" type="bool"/>
       <Value name="quantize" value="off" type="enum" ordinal="0"/>
       <Value name="subcycles" value="0" type="int"/>
@@ -165,7 +165,7 @@
     <Value name="fadeFrames" value="128" type="int"/>
     <Value name="hostBarsPerLoop" value="1" type="int"/>
     <Value name="hostBeatsPerBar" value="3" type="int"/>
-    <Value name="hostOverride" value="true" type="bool"/>
+    <Value name="hostOverride" value="false" type="bool"/>
     <Value name="inputLatency" value="0" type="int"/>
     <Value name="longDisable" value="false" type="bool"/>
     <Value name="longPress" value="250" type="int"/>
@@ -182,6 +182,8 @@
     <Value name="noFeedbackUndo" value="false" type="bool"/>
     <Value name="noiseFloor" value="50" type="int"/>
     <Value name="outputLatency" value="0" type="int"/>
+    <Value name="pluginInputs" value="4" type="int"/>
+    <Value name="pluginOutputs" value="4" type="int"/>
     <Value name="quickSave" value="mobiusloop"/>
     <Value name="recordResetsFeedback" value="false" type="bool"/>
     <Value name="recordThreshold" value="0" type="int"/>
@@ -200,7 +202,7 @@
     <Value name="transportMetronome" value="false" type="bool"/>
     <Value name="transportMidi" value="true" type="bool"/>
     <Value name="transportMinTempo" value="30" type="int"/>
-    <Value name="transportTempo" value="90" type="int"/>
+    <Value name="transportTempo" value="120" type="int"/>
     <Value name="windowEdgeAmount" value="0" type="int"/>
     <Value name="windowEdgeUnit" value="loop" type="enum" ordinal="0"/>
     <Value name="windowSlideAmount" value="0" type="int"/>

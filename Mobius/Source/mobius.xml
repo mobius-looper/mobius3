@@ -897,16 +897,6 @@
     <Binding name='SelectLoop' trigger='key' value='54' args='6'/>
     <Binding name='SelectLoop' trigger='key' value='55' args='7'/>
     <Binding name='SelectLoop' trigger='key' value='56' args='8'/>
-    <Binding name='output' trigger='host'/>
-    <Binding name='feedback' trigger='host'/>
-    <Binding name='input' trigger='host' value='8'/>
-    <Binding name='output' trigger='host' value='9'/>
-    <Binding name='feedback' trigger='host' value='10'/>
-    <Binding name='altFeedback' trigger='host' value='11'/>
-    <Binding name='pan' trigger='host' value='12'/>
-    <Binding name='selectedTrack' trigger='host' value='5'/>
-    <Binding name='quantize' trigger='host' value='6'/>
-    <Binding name='switchQuantize' trigger='host' value='13'/>
   </BindingSet>
   <BindingSet name='Configuration 1'>
     <Binding name='Record' trigger='program' value='4' channel='16'/>

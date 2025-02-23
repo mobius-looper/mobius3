@@ -77,9 +77,10 @@ HostAnalyzer::~HostAnalyzer()
  * If we're standalone, then AP will be nullptr and needs
  * to be checked on advance.
  */
-void HostAnalyzer::initialize(juce::AudioProcessor* ap)
+void HostAnalyzer::initialize(juce::AudioProcessor* ap, juce::File root)
 {
     audioProcessor = ap;
+    logRoot = root;
 }
 
 /**
@@ -243,7 +244,7 @@ void HostAnalyzer::analyze(int blockSize)
                     //juce::Optional<int64_t> tis = pos->getTimeInSamples();
                     //if (tis.hasValue()) samplePosition = (double)(*tis);
                     
-                    detectStart(pos->getIsPlaying(), beatPosition);
+                    detectStart(pos->getIsPlaying(), beatPosition, blockSize);
                 
                     // haven't cared about getIsLooping in the past but that might be
                     // interesting to explore
@@ -303,7 +304,7 @@ SyncAnalyzerResult* HostAnalyzer::getResult()
  *
  * The isPlaying flag comes from the juce::AudioStream PlayHead.
  */
-void HostAnalyzer::detectStart(bool newPlaying, double beatPosition)
+void HostAnalyzer::detectStart(bool newPlaying, double beatPosition, int blockSize)
 {
     if (newPlaying != playing) {
         
@@ -343,10 +344,14 @@ void HostAnalyzer::detectStart(bool newPlaying, double beatPosition)
                 traceppqFine = true;
                 ppqCount = 0;
             }
+
+            logIndex = 0;
         }
         else {
             Trace(2, "HostAnalyzer: Stop");
             result.stopped = true;
+
+            dumpLog();
 
             // Stop is not considered a beat, application needs
             // to decide what to do in this case if a recording is in progress
@@ -516,8 +521,9 @@ double HostAnalyzer::getBeatsPerSample(double currentPpq, int currentBlockSize)
 
         // normally the block size
         // this isn't that important but I'd like to know
+        // yeah, FL Studio does this all the time so don't complain
         if (sampleAdvance != currentBlockSize) {
-            Trace(2, "HostAnalyzer: Host is giving us random blocks");
+            //Trace(2, "HostAnalyzer: Host is giving us random blocks");
         }
 
         beatsPerSample = ppqAdvance / (double)sampleAdvance;
@@ -536,7 +542,7 @@ double HostAnalyzer::getBeatsPerSample(double currentPpq, int currentBlockSize)
             // HostAnalyzer: Tempo method 0.000045
             //
             // so the difference must be way down in the noise
-#if 0
+#if 0            
             if (tbps != beatsPerSample) {
                 // this is another one that is likely to happen often,
                 // so put a constraint on it
@@ -544,9 +550,13 @@ double HostAnalyzer::getBeatsPerSample(double currentPpq, int currentBlockSize)
                 traceFloat("HostAnalyzer: PPQ advance method %f", beatsPerSample);
                 traceFloat("HostAnalyzer: Tempo method %f", tbps);
             }
-#endif
+#endif            
             (void)samplesPerBeat;
             (void)tbps;
+
+            // due to FL Studio's variable buffer size, prefer the
+            // host tempo method which should be more stable
+            beatsPerSample = tbps;
         }
     }
     
@@ -574,9 +584,12 @@ void HostAnalyzer::ponderPpq(double beatPosition, int blockSize)
 {
     // if the transport is stopped, then the ppqPosition won't be advancing
     if (playing) {
+
+        log(beatPosition, blockSize);
+        
         int startingBeat = hostBeat;
         int blockOffset = 0;
-        
+
         // important number for beat position and tempo guessing
         double beatsPerSample = getBeatsPerSample(beatPosition, blockSize);
 
@@ -586,15 +599,35 @@ void HostAnalyzer::ponderPpq(double beatPosition, int blockSize)
         // now the meat
         // attempt to find the location of the next beat start within this block
         // since ppqPosition doesn't roll it's integral part until after it happens
+
+        // try to detect missed beats, but be careful about looping hosts
+        // that suddenly rewind
+        bool missedBeat = false;
         int newBeat = (int)beatPosition;
         if (newBeat != hostBeat) {
-            // not expecting to get here with early detection
-            Trace(1, "HostAnalyer: Missed a beat detection");
+            if (newBeat < hostBeat) {
+                // usually this means we did a pre-emptive beat increment on the
+                // last block, but the host rewound to zero
+                // this is normal for looping hosts
+                if (traceppq) {
+                    Trace(2, "HostAnalyzer: Beat wrap from %d to %d",
+                          hostBeat, newBeat);
+                }
+                startingBeat = newBeat;
+            }
+            else {
+                // not expecting to get here with early detection
+                // the drift analyzer adjustment feels wrong, need to revisit this
+                // but it's an unusual situation to be in
+                missedBeat = true;
+                Trace(1, "HostAnalyer: Missed a beat detection");
+                drifter.addBeat(0);
+                lastBeatTime = audioStreamTime;
+            }
             hostBeat = newBeat;
-            drifter.addBeat(0);
-            lastBeatTime = audioStreamTime;
         }
-        else if (beatsPerSample > 0.0f) {
+        
+        if (!missedBeat && beatsPerSample > 0.0f) {
             // several ways to detect this, this is one
             
             double nextPpqPosition = beatPosition + (beatsPerSample * (double)blockSize);
@@ -701,12 +734,13 @@ void HostAnalyzer::deriveTempo(double beatsPerSample)
                 // but can also just filter out small errors here
                 int delta = abs(derivedUnitLength - unitLength);
                 if (delta > 4) {
-                    Trace(1, "HostAnalyzer: Host tempo does not match derived tempo");
-                    traceFloat("Host: %f", tempo);
-                    traceFloat("Derived: %f", bpm);
+                    if (derivedTempoWhines < 10) {
+                        Trace(1, "HostAnalyzer: Host tempo does not match derived tempo");
+                        traceFloat("Host: %f", tempo);
+                        traceFloat("Derived: %f", bpm);
+                        derivedTempoWhines++;
+                    }
                 }
-                // since this is likely to happen frequently, need a governor on the
-                // number of times we trace this and decide what if anything we do about it
             }
         }
         else {
@@ -822,6 +856,45 @@ void HostAnalyzer::advanceAudioStream(int blockFrames)
     }
 #endif
     
+}
+
+void HostAnalyzer::log(double beatPosition, int blockSize)
+{
+    if (logEnabled) {
+        if (logIndex < MaxLog) {
+            HostAnalyzerLog* entry = &(blockLog[logIndex]);
+            entry->streamTime = audioStreamTime;
+            entry->ppqpos = beatPosition;
+            entry->blockSize = blockSize;
+            entry->playHead = unitPlayHead;
+            entry->drift = drifter.getDrift();
+            logIndex++;
+        }
+    }
+}
+
+
+void HostAnalyzer::dumpLog()
+{
+    if (logEnabled) {
+        juce::String dump;
+        for (int i = 0 ; i < logIndex ; i++) {
+            HostAnalyzerLog* entry = &(blockLog[i]);
+            dump += juce::String(entry->streamTime);
+            dump += " ";
+            dump += juce::String(entry->ppqpos);
+            dump += " ";
+            dump += juce::String(entry->blockSize);
+            dump += " ";
+            dump += juce::String(entry->playHead);
+            dump+= "\n";
+        }
+
+        // juce::String path = file.getFullPathName();
+        // WriteFile(path.toUTF8(), xml);
+        juce::File f = logRoot.getChildFile("blockdump.txt");
+        f.replaceWithText(dump);
+    }
 }
 
 /****************************************************************************/
