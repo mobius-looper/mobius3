@@ -295,19 +295,25 @@ void BarTender::detectHostBar(bool &onBar, bool& onLoop)
 
     // here we have the option of basing this on the elapsed beat count
     // or the native beat number, same for getBeat below
-    int raw = anal->getNativeBeat();
+    // NOTE: this must be the normalized elapsed beat number
+    // Because host beat numbers jitter relative to the normalized beat
+    // play head it won't always be an accurate way to determine bars.
+    // Looping hosts like FL Studio also throw a wrench into this.  Must
+    // use elapsed beats.
+    //int raw = anal->getNativeBeat();
+    int raw = anal->getElapsedBeats();
 
-    Trace(2, "BarTender: Host beat %d", raw);
+    //Trace(2, "BarTender: Host beat %d", raw);
 
     onBar = ((raw % bpb) == 0);
 
     if (onBar) {
-        Trace(2, "BarTender: Host bar");
+        //Trace(2, "BarTender: Host bar");
         int bpl = getHostBarsPerLoop();
         int beatsPerLoop = bpb * bpl;
         onLoop = ((raw & beatsPerLoop) == 0);
-        if (onLoop)
-          Trace(2, "BarTender: Host loop");
+        //if (onLoop)
+        //Trace(2, "BarTender: Host loop");
     }
 }
 

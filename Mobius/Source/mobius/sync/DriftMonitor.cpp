@@ -11,6 +11,10 @@
  * in the source that should cause recalculation of the unit length.
  * And a disconnect betweeen the following loops and the sync source.
  */
+
+#include <cmath>
+#include "../../util/Trace.h"
+
 #include "DriftMonitor.h"
 
 /**
@@ -51,6 +55,9 @@ void DriftMonitor::addBeat(int blockOffset)
         int beatLength = beatTime - lastBeatTime;
 
         int delta = beatLength - normalizedUnit;
+        if (abs(delta) > 256)
+          Trace(1, "DriftMonitor: Drift starting to get out of hand %d", delta);
+        
         drift += delta;
 
         lastBeatTime = beatTime;

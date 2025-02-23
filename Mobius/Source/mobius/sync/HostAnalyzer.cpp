@@ -127,6 +127,9 @@ bool HostAnalyzer::isRunning()
 
 /**
  * hasNativeBeat returns true in the .h
+ *
+ * NOTE: This is actually useless for bar detection.  Shouldn't
+ * even bother with exposing it since it could be misused.
  */
 int HostAnalyzer::getNativeBeat()
 {
@@ -244,7 +247,7 @@ void HostAnalyzer::analyze(int blockSize)
                     //juce::Optional<int64_t> tis = pos->getTimeInSamples();
                     //if (tis.hasValue()) samplePosition = (double)(*tis);
                     
-                    detectStart(pos->getIsPlaying(), beatPosition, blockSize);
+                    detectStart(pos->getIsPlaying(), beatPosition);
                 
                     // haven't cared about getIsLooping in the past but that might be
                     // interesting to explore
@@ -255,8 +258,8 @@ void HostAnalyzer::analyze(int blockSize)
                         ponderTempo(*bpm);
                     }
 
-                    // Watch for host beat changes and detect tempo
-                    ponderPpq(beatPosition, blockSize);
+                    // Watch for host beat changes, detect tempo and drift
+                    ponderPpqSimple(beatPosition, blockSize);
 
                     // old code never tried to use "bar" information from the host
                     // because it was so unreliable as to be useless, things may have
@@ -285,6 +288,7 @@ void HostAnalyzer::analyze(int blockSize)
     // of the block, not the end
     lastAudioStreamTime = audioStreamTime;
     audioStreamTime += blockSize;
+    elapsedBlocks++;
 }
 
 SyncAnalyzerResult* HostAnalyzer::getResult()
@@ -304,7 +308,7 @@ SyncAnalyzerResult* HostAnalyzer::getResult()
  *
  * The isPlaying flag comes from the juce::AudioStream PlayHead.
  */
-void HostAnalyzer::detectStart(bool newPlaying, double beatPosition, int blockSize)
+void HostAnalyzer::detectStart(bool newPlaying, double beatPosition)
 {
     if (newPlaying != playing) {
         
@@ -331,12 +335,15 @@ void HostAnalyzer::detectStart(bool newPlaying, double beatPosition, int blockSi
                 result.blockOffset = 0;
             }
 
+            elapsedBlocks = 0;
             unitPlayHead = 0;
             elapsedUnits = 0;
             unitCounter = 0;
             elapsedBeats = 0;
+
+            // pre-emptive beat stuff
             lastBeatTime = 0;
-            
+            lastBeatBlock = 0;
             resetTempoMonitor();
             
             // temporary: trace the next 10 blocks
@@ -485,13 +492,79 @@ void HostAnalyzer::traceFloat(const char* format, double value)
 //
 // Beats
 //
+// For reasons I've never understood, ppqPosition at the start of each block has
+// the integral beat number plus the portion of the beat that occurred after the beat.
+// The sample position of the beat actually happened in the previous block.
+//
+// There are two methods for detecting native beats.  Simply watching
+// for the ppqpos integer to change, and trying to pre-emptively determine
+// the beat offset within a block before the integer changes.
+//
+// The first method will detect beats late by up to one block length worth
+// of samples depending on the host.  The second method is more accurate but subject
+// to floating point rounding errors at block edges and involves much more
+// comploex calculations.  If tracks sync to the normalized play head, it doesn't
+// really matter when we detect native beats, except for drift checking.  Drift
+// in the first method will tend to jump around within a larger range than the
+// second, but tends to balance over time if the tempo is in fact remaining constant.
+//
+// Where the second approach is better is if the host doesn't provide a tempo
+// and we need to guess at it by measuring native beats, more like how MIDI sync works.
+// All modern hosts provide stable tempos so I'm not seeing the need for the
+// added complexity, but the code is left behind in case it needs to be
+// resurrected for some reason.
+//
+// Note that with either method, making bar decisions based on the native
+// beat number won't work if the tracks are syncing to the normalized play head
+// since the native beat number will jitter around the end end of the normalized
+// beat. It may sometimes be one less if the native beat change comes in on the
+// next block.  When syncing with the play head, you must always used normalized
+// elapsed beats to determine bars.
+//
+//////////////////////////////////////////////////////////////////////
+
+void HostAnalyzer::ponderPpqSimple(double beatPosition, int blockSize)
+{
+    // if the transport is stopped, then the ppqPosition won't be advancing
+    if (playing) {
+
+        log(beatPosition, blockSize);
+        
+        int newBeat = (int)beatPosition;
+        if (newBeat != hostBeat) {
+
+            // beat was actually on the previous block so effective offset
+            // is the start of this block
+            drifter.addBeat(0);
+            hostBeat = newBeat;
+
+            // pre-emptive stuff
+            lastBeatTime = audioStreamTime;
+            lastBeatBlock = elapsedBlocks;
+            
+            if (traceppq) {
+                traceFloat("HostAnalyzer: Beat %f", beatPosition);
+            }
+        }
+        else {
+            // no beat, but may trace the first few ppqs after start
+            if (traceppqFine && ppqCount < 10) {
+                traceFloat("HostAnalyzer: PPQ %f", beatPosition);
+                ppqCount++;
+            }
+        }
+    }
+
+    lastPpq = beatPosition;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Beat Detection Method 2: Pre-emptive
+//
 //////////////////////////////////////////////////////////////////////
 
 /**
- * For reasons I've never understood, ppqPosition at the start of each block has
- * the integral beat number plus the portion of the beat that occurred after the beat.
- * The sample position of the beat actually happened in the previous block.
- *
  * When attempting to locate beats in the audio stream, it's best if you can try to
  * locate them in the block they actually happened.  The only way I see to do that
  * is to guess by adding some amount to the ppqPosition at the start of each block
@@ -580,7 +653,7 @@ double HostAnalyzer::getBeatsPerSample(double currentPpq, int currentBlockSize)
  * need to be added to the end of the synchronized recording to make it match the unitLength.
  * Or I suppose we could just round up the ending to compensate.
  */
-void HostAnalyzer::ponderPpq(double beatPosition, int blockSize)
+void HostAnalyzer::ponderPpqPreEmptive(double beatPosition, int blockSize)
 {
     // if the transport is stopped, then the ppqPosition won't be advancing
     if (playing) {
@@ -605,6 +678,7 @@ void HostAnalyzer::ponderPpq(double beatPosition, int blockSize)
         bool missedBeat = false;
         int newBeat = (int)beatPosition;
         if (newBeat != hostBeat) {
+
             if (newBeat < hostBeat) {
                 // usually this means we did a pre-emptive beat increment on the
                 // last block, but the host rewound to zero
@@ -613,19 +687,51 @@ void HostAnalyzer::ponderPpq(double beatPosition, int blockSize)
                     Trace(2, "HostAnalyzer: Beat wrap from %d to %d",
                           hostBeat, newBeat);
                 }
+                // this just prevents another ppq trace at the end
                 startingBeat = newBeat;
+            }
+
+            if (beatPending) {
+                // we were on the cusp last time but didn't add a beat
+                drifter.addBeat(0);
+                lastBeatTime = audioStreamTime;
+                lastBeatBlock = elapsedBlocks;
+            }
+            else if (newBeat < hostBeat) {
+                // the beat looped back, this is normal if we detected
+                // it on the last block and thought it should be 4 but
+                // it ended up being 0
+                // there seems to be a floating point edge case where we won't
+                // detect on the last block if things line up very closely on
+                // block boundaries, but the number will either roll forward or
+                // loop back on the next one
+                if (lastBeatBlock != elapsedBlocks - 1) {
+                    // this seems to happen in FL studio about half the time
+                    Trace(1, "HostAnalyzer: Unusual beat jump");
+                    drifter.addBeat(0);
+                    lastBeatTime = audioStreamTime;
+                    lastBeatBlock = elapsedBlocks;
+                }
             }
             else {
                 // not expecting to get here with early detection
                 // the drift analyzer adjustment feels wrong, need to revisit this
                 // but it's an unusual situation to be in
+                // actually, has the same floating point edge case as the loop check
+                // above, shouldn't be whining about it
                 missedBeat = true;
                 Trace(1, "HostAnalyer: Missed a beat detection");
                 drifter.addBeat(0);
                 lastBeatTime = audioStreamTime;
+                lastBeatBlock = elapsedBlocks;
             }
             hostBeat = newBeat;
         }
+        else if (beatPending) {
+            Trace(1, "HostAnalyzer: Expecting to see the beat change");
+        }
+        
+        beatPending = false;
         
         if (!missedBeat && beatsPerSample > 0.0f) {
             // several ways to detect this, this is one
@@ -634,6 +740,12 @@ void HostAnalyzer::ponderPpq(double beatPosition, int blockSize)
             int nextBeat = (int)nextPpqPosition;
             if (nextBeat != hostBeat) {
                 // the beat happened in this block, try to locate the location it changed
+
+                if (lastBeatBlock == elapsedBlocks) {
+                    // must have already added it above, in which case we shouldn't
+                    // be crossing another threshold
+                    Trace(1, "HostAnalyzer: Unexpected beat transition");
+                }
 
                 // method 1: take the remainder and work backward from the end
                 double nextPpqFraction = nextPpqPosition - (double)nextBeat;
@@ -658,10 +770,16 @@ void HostAnalyzer::ponderPpq(double beatPosition, int blockSize)
                     hostBeat = nextBeat;
                     drifter.addBeat(blockOffset);
                     lastBeatTime = audioStreamTime + blockOffset;
+                    lastBeatBlock = elapsedBlocks;
+                }
+                else if (blockOffset == blockSize) {
+                    // it's going to happen on the first frame of the next block
+                    beatPending = true;
                 }
                 else {
                     // this should not happen, let it be picked up on the next block
                     // in the first clause after deriveTempo
+                    Trace(2, "HostAnalyzer: About to miss a beat");
                 }
             }
         }
@@ -839,40 +957,52 @@ void HostAnalyzer::advanceAudioStream(int blockFrames)
                 result.beatDetected = true;
                 result.blockOffset = blockOffset;
 
+                logNormalizedBeat(blockOffset);
+
                 unitCounter = 0;
                 elapsedBeats++;
             }
         }
     }
-
-    // this used to rely on bar/loop tracking to trace drift
-    // do it at a higher level now
-#if 0    
-    if (result.onLoop) {
-
-        int drift = drifter.getDrift();
-        
-        Trace(2, "HostAnalyzer: Drift %d", drift);
-    }
-#endif
-    
 }
+
+///////////////////////////////////////////////////////////////////////
+//
+// Logging
+//
+///////////////////////////////////////////////////////////////////////
 
 void HostAnalyzer::log(double beatPosition, int blockSize)
 {
     if (logEnabled) {
         if (logIndex < MaxLog) {
             HostAnalyzerLog* entry = &(blockLog[logIndex]);
+            entry->block = elapsedBlocks;
             entry->streamTime = audioStreamTime;
             entry->ppqpos = beatPosition;
             entry->blockSize = blockSize;
             entry->playHead = unitPlayHead;
             entry->drift = drifter.getDrift();
+            entry->beat = false;
+            entry->blockOffset = 0;
             logIndex++;
         }
     }
 }
 
+void HostAnalyzer::logNormalizedBeat(int blockOffset)
+{
+    if (logEnabled) {
+        if (logIndex < MaxLog) {
+            HostAnalyzerLog* entry = &(blockLog[logIndex]);
+            entry->block = elapsedBlocks;
+            entry->streamTime = audioStreamTime;
+            entry->beat = true;
+            entry->blockOffset = blockOffset;
+            logIndex++;
+        }
+    }
+}
 
 void HostAnalyzer::dumpLog()
 {
@@ -880,16 +1010,27 @@ void HostAnalyzer::dumpLog()
         juce::String dump;
         for (int i = 0 ; i < logIndex ; i++) {
             HostAnalyzerLog* entry = &(blockLog[i]);
-            dump += juce::String(entry->streamTime);
-            dump += " ";
-            dump += juce::String(entry->ppqpos);
-            dump += " ";
-            dump += juce::String(entry->blockSize);
-            dump += " ";
-            dump += juce::String(entry->playHead);
-            dump+= "\n";
+            if (entry->beat) {
+                dump += juce::String("Beat block ");
+                dump += juce::String(entry->block);
+                dump += " offset ";
+                dump += juce::String(entry->blockOffset);
+                dump += "\n";
+            }
+            else {
+                dump += juce::String(entry->block);
+                dump += " ";
+                dump += juce::String(entry->blockSize);
+                dump += " ";
+                dump += juce::String(entry->streamTime);
+                dump += " ";
+                dump += juce::String(entry->ppqpos);
+                dump += " ";
+                dump += juce::String(entry->playHead);
+                dump+= "\n";
+            }
         }
-
+        
         // juce::String path = file.getFullPathName();
         // WriteFile(path.toUTF8(), xml);
         juce::File f = logRoot.getChildFile("blockdump.txt");
