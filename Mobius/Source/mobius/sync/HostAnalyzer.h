@@ -152,7 +152,7 @@ class HostAnalyzer : public SyncAnalyzer
     int elapsedBeats = 0;
 
     // Trace options
-    bool traceppq = true;
+    bool traceppq = false;
     double lastppq = -1.0f;
     bool traceppqFine = false;
     int ppqCount = 0;
@@ -182,7 +182,7 @@ class HostAnalyzer : public SyncAnalyzer
     HostAnalyzerLog blockLog[MaxLog];
     int logIndex = 0;
     juce::File logRoot;
-    bool logEnabled = true;
+    bool logEnabled = false;
     
     void log(double beatPosition, int blockSize);
     void logNormalizedBeat(int blockOffset);

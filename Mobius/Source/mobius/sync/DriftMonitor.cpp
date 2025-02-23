@@ -54,8 +54,10 @@ void DriftMonitor::addBeat(int blockOffset)
         int beatTime = streamTime + blockOffset;
         int beatLength = beatTime - lastBeatTime;
 
+        // this can be up to one block size, but FL Studio often bounces around
+        // above that
         int delta = beatLength - normalizedUnit;
-        if (abs(delta) > 256)
+        if (abs(delta) > 2048)
           Trace(1, "DriftMonitor: Drift starting to get out of hand %d", delta);
         
         drift += delta;
