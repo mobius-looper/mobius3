@@ -204,8 +204,6 @@ void StripMaster::update(MobiusView* view)
 
 void StripMaster::paint(juce::Graphics& g)
 {
-    juce::Colour textColor = juce::Colour(MobiusGreen);
-
     int textHeight = 12;
     juce::Font font(JuceUtil::getFont(textHeight));
     g.setFont(font);
