@@ -30,6 +30,29 @@ class StripTrackNumber : public StripElement
     UIAction action;
 };
 
+class StripMaster : public StripElement
+{
+  public:
+    
+    StripMaster(class TrackStrip* parent);
+    ~StripMaster();
+
+    void update(MobiusView* view) override;
+
+    int getPreferredHeight() override;
+    int getPreferredWidth() override;
+    
+    void paint(juce::Graphics& g) override;
+    
+    void mouseDown(const class juce::MouseEvent& event) override;
+    
+  private:
+
+    bool transportMaster = false;
+    bool trackSyncMaster = false;
+    UIAction action;
+};
+
 class StripGroupName : public StripElement
 {
   public:

@@ -65,6 +65,7 @@ extern StripElementDefinition* StripDefinitionPan;
 
 // the defaults for the dock, also OutputLevel
 extern StripElementDefinition* StripDefinitionTrackNumber;
+extern StripElementDefinition* StripDefinitionMaster;
 extern StripElementDefinition* StripDefinitionLoopRadar;
 extern StripElementDefinition* StripDefinitionLoopStack;
 extern StripElementDefinition* StripDefinitionOutputMeter;

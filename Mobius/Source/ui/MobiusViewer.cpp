@@ -791,6 +791,7 @@ void MobiusViewer::refreshSync(SystemState* state, TrackState* tstate, MobiusVie
     (void)state;
     tview->syncSource = tstate->syncSource;
     tview->syncUnit = tstate->syncUnit;
+    tview->trackSyncUnit = tstate->trackSyncUnit;
     tview->syncTempo = 0.0f;
     tview->syncBeat = tstate->syncBeat;
     tview->syncBar = tstate->syncBar;

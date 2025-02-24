@@ -287,6 +287,7 @@ class MobiusViewTrack {
     //
     SyncSource syncSource;
     SyncUnit syncUnit;
+    TrackSyncUnit trackSyncUnit;
     float syncTempo = 0.0f;
     int syncBeat = 0;
     int syncBar = 0;

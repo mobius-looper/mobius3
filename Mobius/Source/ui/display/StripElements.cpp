@@ -162,6 +162,79 @@ void StripTrackNumber::mouseDown(const class juce::MouseEvent& event)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Master
+//
+//////////////////////////////////////////////////////////////////////
+
+StripMaster::StripMaster(class TrackStrip* parent) :
+    StripElement(parent, StripDefinitionMaster)
+{
+    action.symbol = strip->getProvider()->getSymbols()->intern("SyncMasterTrack");
+    action.setScopeTrack(parent->getTrackIndex() + 1);
+}
+
+StripMaster::~StripMaster()
+{
+}
+
+int StripMaster::getPreferredWidth()
+{
+    return 180;
+}
+
+int StripMaster::getPreferredHeight()
+{
+    return 30;
+}
+
+void StripMaster::update(MobiusView* view)
+{
+    (void)view;
+    // it's easier to let the containing strip handle it since it knows the track index to follow
+    MobiusViewTrack* track = strip->getTrackView();
+    if (track->refreshName ||
+        track->trackSyncMaster != trackSyncMaster ||
+        track->transportMaster != transportMaster) {
+
+        trackSyncMaster = track->trackSyncMaster;
+        transportMaster = track->transportMaster;
+        repaint();
+    }
+}
+
+void StripMaster::paint(juce::Graphics& g)
+{
+    juce::Colour textColor = juce::Colour(MobiusGreen);
+
+    g.setColour(textColor);
+
+    juce::String text;
+    if (trackSyncMaster)
+      text += "Track Master";
+    if (transportMaster)
+      text += " Transport Master";
+
+    if (text.length() > 0) {
+        juce::Font font(JuceUtil::getFont(getHeight()));
+        g.setFont(font);
+        g.drawText(text, 0, 0, getWidth(), getHeight(),
+                   juce::Justification::centred);
+    }
+}
+
+void StripMaster::mouseDown(const class juce::MouseEvent& event)
+{
+    if (!strip->isActive()) {
+        // superclass will activate it
+        StripElement::mouseDown(event);
+    }
+    else {
+        //strip->getProvider()->doAction(&action);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // GroupName
 //
 //////////////////////////////////////////////////////////////////////

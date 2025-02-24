@@ -917,6 +917,7 @@ void UIConfig::hackDefinitions()
     // so only need to include things here that have implementations
     
     definitions.add(new UIElementDefinition("trackNumber", true));
+    definitions.add(new UIElementDefinition("masters", true));
     definitions.add(new UIElementDefinition("focusLock", true));
     definitions.add(new UIElementDefinition("loopRadar", true));
     definitions.add(new UIElementDefinition("loopMeter", true));

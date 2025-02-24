@@ -50,11 +50,13 @@ void TempoElement::update(MobiusView* view)
 	if (newTempo != mTempo ||
         track->syncSource != mSyncSource ||
         track->syncUnit != mSyncUnit ||
+        track->trackSyncUnit != mTrackSyncUnit ||
 		track->syncBeat != mBeat ||
         track->syncBar != mBar) {
     
         mSyncSource = track->syncSource;
         mSyncUnit = track->syncUnit;
+        mTrackSyncUnit = track->trackSyncUnit;
 		mTempo = newTempo;
 		mBeat = track->syncBeat;
 		mBar = track->syncBar;
@@ -82,17 +84,28 @@ void TempoElement::paint(juce::Graphics& g)
         case SyncSourceMidi: status += "Sync MIDI "; break;
         case SyncSourceHost: status += "Sync Host "; break;
         case SyncSourceTransport: status += "Sync Transport "; break;
+        case SyncSourceTrack: status += "Sync Track "; break;
         default:
             showIt = false;
     }
     
     if (showIt) {
 
-        switch (mSyncUnit) {
-            case SyncUnitBeat: status += "Beat "; break;
-            case SyncUnitBar: status += "Bar "; break;
-            case SyncUnitLoop: status += "Loop "; break;
-            default: break;
+        if (mSyncSource == SyncSourceTrack) {
+            switch (mTrackSyncUnit) {
+                case TrackUnitSubcycle: status += "Subcycle "; break;
+                case TrackUnitCycle: status += "Cycle "; break;
+                case TrackUnitLoop: status += "Loop "; break;
+                default: break;
+            }
+        }
+        else {
+            switch (mSyncUnit) {
+                case SyncUnitBeat: status += "Beat "; break;
+                case SyncUnitBar: status += "Bar "; break;
+                case SyncUnitLoop: status += "Loop "; break;
+                default: break;
+            }
         }
 
         // TODO: we've got two decimal places of precision, only

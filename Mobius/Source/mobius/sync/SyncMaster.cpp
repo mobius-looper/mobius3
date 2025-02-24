@@ -590,6 +590,7 @@ void SyncMaster::refreshState(SystemState* sysstate)
         if (lt != nullptr) {
             tstate->syncSource = lt->getSyncSourceNow();
             tstate->syncUnit = lt->getSyncUnitNow();
+            tstate->trackSyncUnit = lt->getTrackSyncUnitNow();
 
             // old convention was to suppress beat/bar display
             // if the source was not in a started state

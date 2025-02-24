@@ -222,6 +222,7 @@ class TrackState
     // most sync info comes from the common SyncState
     SyncSource syncSource;
     SyncUnit syncUnit;
+    TrackSyncUnit trackSyncUnit;
     // but tracks may override beatsPerBar
     int syncBeat;
     int syncBar;

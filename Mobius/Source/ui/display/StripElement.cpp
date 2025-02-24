@@ -108,6 +108,9 @@ StripElementDefinition* StripDefinitionPan = &StripPanObj;
 StripElementDefinition StripTrackNumberObj {"trackNumber", "Track Number"};
 StripElementDefinition* StripDefinitionTrackNumber = &StripTrackNumberObj;
 
+StripElementDefinition StripMasterObj {"masters", "Masters"};
+StripElementDefinition* StripDefinitionMaster = &StripMasterObj;
+
 StripElementDefinition StripLoopRadarObj {"loopRadar", "Loop Radar"};
 StripElementDefinition* StripDefinitionLoopRadar = &StripLoopRadarObj;
 
@@ -160,6 +163,7 @@ StripElementDefinition* StripDefinitionTimeStretch = &StripTimeStretchObj;
 
 const StripElementDefinition* StripDockDefaults[] = {
     StripDefinitionTrackNumber,
+    StripDefinitionMaster,
     StripDefinitionLoopRadar,
     //StripDefinitionLoopThermometer,
     StripDefinitionLoopStack,

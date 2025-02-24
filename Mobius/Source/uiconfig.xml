@@ -28,6 +28,7 @@
       <Element name="outputMeter"/>
       <Element name="groupName"/>
       <Element name="RC505 Undo/Redo"/>
+      <Element name="masters"/>
       <Element name="loopMeter" disabled="1"/>
     </Strip>
     <Strip name="Floating">

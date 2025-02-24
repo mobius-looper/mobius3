@@ -430,6 +430,9 @@ StripElement* TrackStrip::createStripElement(StripElementDefinition* def)
     if (def == StripDefinitionTrackNumber) {
         el = new StripTrackNumber(this);
     }
+    else if (def == StripDefinitionMaster) {
+        el = new StripMaster(this);
+    }
     else if (def == StripDefinitionFocusLock) {
         el = new StripFocusLock(this);
     }
