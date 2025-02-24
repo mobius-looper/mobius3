@@ -88,7 +88,12 @@ ActionButton::ActionButton(ActionButtons* parent, DisplayButton* src)
         setButtonText(src->name);
     }
     else if (symbolName.length() > 0) {
-        juce::String buttonText = symbolName;
+        juce::String buttonText;
+        if (src->scope.length() > 0) {
+            buttonText += src->scope;
+            buttonText += ":";
+        }
+        buttonText += symbolName;
         if (src->arguments.length() > 0) {
             // formatting here could be more complicated with
             // normalization and capitalization
@@ -96,7 +101,6 @@ ActionButton::ActionButton(ActionButtons* parent, DisplayButton* src)
             buttonText += src->arguments;
             buttonText += ")";
         }
-        // todo: add scope too?
         setButtonText(buttonText);
     }
 
@@ -105,6 +109,7 @@ ActionButton::ActionButton(ActionButtons* parent, DisplayButton* src)
     if (symbolName.length() > 0) {
         action.symbol = actionButtons->getProvider()->getSymbols()->intern(symbolName);
         CopyString(src->arguments.toUTF8(), action.arguments, sizeof(action.arguments));
+        action.setScope(src->scope.toUTF8());
 
         // kludge: This is what Binderator does for MIDI/key bindings
         // if the binding has a simple numeric argument, promote that

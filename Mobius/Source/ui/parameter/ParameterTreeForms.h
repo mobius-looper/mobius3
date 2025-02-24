@@ -6,21 +6,20 @@
 
 #include <JuceHeader.h>
 
-#include "SymbolTree.h"
-#include "../session/SessionEditorTree.h"
-#include "../session/SessionFormCollection.h"
+#include "../session/SymbolTree.h"
+#include "ParameterEditorTree.h"
+#include "ParameterFormCollection.h"
 
 class ParameterTreeForms : public juce::Component, public SymbolTree::Listener
 {
   public:
     
-    SessionTreeForms();
-    ~SessionTreeForms();
+    ParameterTreeForms();
+    ~ParameterTreeForms();
 
-    void initialize(class Provider* p, juce::String treeName);
+    void initialize(class Provider* p, class ValueSet* set);
     void decache();
     
-    void load(class ValueSet* src);
     void save(class ValueSet* dest);
     void cancel();
     
@@ -31,9 +30,10 @@ class ParameterTreeForms : public juce::Component, public SymbolTree::Listener
   private:
 
     class Provider* provider = nullptr;
-    juce::String treeName;
-    SessionEditorTree tree;
-    SessionFormCollection forms;
+    class ValueSet* valueSet = nullptr;
+
+    ParameterEditorTree tree;
+    ParameterFormCollection forms;
 
     juce::StretchableLayoutManager verticalLayout;
     std::unique_ptr<juce::StretchableLayoutResizerBar> verticalDividerBar;

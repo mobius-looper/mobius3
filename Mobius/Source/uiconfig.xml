@@ -107,7 +107,7 @@
     <Button action="TrackReset"/>
     <Button action="Reset"/>
     <Button action="Record"/>
-    <Button action="Overdub" color="-15707416"/>
+    <Button action="Overdub" scope="A" color="-15707416"/>
     <Button action="NextLoop"/>
     <Button action="PrevLoop"/>
     <Button action="Reverse"/>
@@ -142,6 +142,7 @@
     <Button action="Checkpoint"/>
     <Button action="AutoRecord"/>
     <Button action="TrackCopyTiming"/>
+    <Button action="Overdub" scope="A"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

@@ -16,7 +16,7 @@
     altFeedbackEnable='true'
     bounceQuantize='off'
     emptyLoopAction='none'
-    emptyTrackAction='copyTime'
+    emptyTrackAction='none'
     loopCount='4'
     maxRedo='4'
     maxUndo='8'
@@ -39,7 +39,7 @@
     shuffleMode='reverse'
     slipMode='subCycle'
     soundCopyMode='play'
-    subcycles='16'
+    subcycles='4'
     switchDuration='permanent'
     switchLocation='follow'
     switchQuantize='off'
@@ -877,19 +877,6 @@
     <Binding name='SpeedToggle' trigger='key' value='72'/>
     <Binding name='Reverse' trigger='key' value='86'/>
     <Binding name='StartPoint' trigger='key' value='1107'/>
-    <Binding name='Loop1' trigger='key' value='49'/>
-    <Binding name='Loop2' trigger='key' value='50'/>
-    <Binding name='Loop3' trigger='key' value='51'/>
-    <Binding name='Loop4' trigger='key' value='52'/>
-    <Binding name='Loop5' trigger='key' value='53'/>
-    <Binding name='Loop6' trigger='key' value='54'/>
-    <Binding name='Loop7' trigger='key' value='55'/>
-    <Binding name='Loop8' trigger='key' value='56'/>
-    <Binding name='nextParameter' trigger='key' value='98'/>
-    <Binding name='prevParameter' trigger='key' value='104'/>
-    <Binding name='incParameter' trigger='key' value='102'/>
-    <Binding name='decParameter' trigger='key' value='100'/>
-    <Binding name='SelectLoop' trigger='key' value='49' args='1'/>
     <Binding name='SelectLoop' trigger='key' value='50' args='2'/>
     <Binding name='SelectLoop' trigger='key' value='51' args='3'/>
     <Binding name='SelectLoop' trigger='key' value='52' args='4'/>
@@ -898,190 +885,9 @@
     <Binding name='SelectLoop' trigger='key' value='55' args='7'/>
     <Binding name='SelectLoop' trigger='key' value='56' args='8'/>
   </BindingSet>
-  <BindingSet name='Configuration 1'>
-    <Binding name='Record' trigger='program' value='4' channel='16'/>
-    <Binding name='Overdub' trigger='program' value='5' channel='16'/>
-    <Binding name='Multiply' trigger='program' value='6' channel='16'/>
-    <Binding name='Mute' trigger='program' value='8' channel='16'/>
-    <Binding name='Undo' trigger='program' value='3' channel='16'/>
-    <Binding name='Loop1' trigger='note' value='48' channel='1'/>
-    <Binding name='Loop2' trigger='note' value='50' channel='1'/>
-    <Binding name='Loop3' trigger='note' value='52' channel='1'/>
-    <Binding name='Loop4' trigger='note' value='53' channel='1'/>
-    <Binding name='Loop5' trigger='note' value='55' channel='1'/>
-    <Binding name='Loop6' trigger='note' value='57' channel='1'/>
-    <Binding name='Loop7' trigger='note' value='59' channel='1'/>
-    <Binding name='Loop8' trigger='note' value='60' channel='1'/>
-    <Binding name='Replace' trigger='note' value='4' channel='1'/>
-    <Binding name='SpeedToggle' trigger='program' value='7' channel='16'/>
-    <Binding name='Reverse' trigger='program' value='1' channel='16'/>
-    <Binding name='NextLoop' trigger='note' value='9' channel='1'/>
-    <Binding name='Substitute' trigger='program' value='2' channel='16'/>
-    <Binding name='SUSUnroundedInsert' trigger='program' channel='16'/>
-    <Binding name='SelectLoop' trigger='note' value='48' channel='1' args='1'/>
-    <Binding name='SelectLoop' trigger='note' value='50' channel='1' args='2'/>
-    <Binding name='SelectLoop' trigger='note' value='52' channel='1' args='3'/>
-    <Binding name='SelectLoop' trigger='note' value='53' channel='1' args='4'/>
-    <Binding name='SelectLoop' trigger='note' value='55' channel='1' args='5'/>
-    <Binding name='SelectLoop' trigger='note' value='57' channel='1' args='6'/>
-    <Binding name='SelectLoop' trigger='note' value='59' channel='1' args='7'/>
-    <Binding name='SelectLoop' trigger='note' value='60' channel='1' args='8'/>
-  </BindingSet>
-  <BindingSet name='Configuration 2 pmc'>
-    <Binding name='Overdub' trigger='program' value='5' channel='1'/>
-    <Binding name='Multiply' trigger='program' value='6' channel='1'/>
-    <Binding name='Mute' trigger='program' value='8' channel='1'/>
-    <Binding name='Undo' trigger='program' value='3' channel='1'/>
-    <Binding name='Loop1' trigger='note' value='48' channel='1'/>
-    <Binding name='Loop2' trigger='note' value='50' channel='1'/>
-    <Binding name='Loop3' trigger='note' value='52' channel='1'/>
-    <Binding name='Loop4' trigger='note' value='53' channel='1'/>
-    <Binding name='Loop5' trigger='note' value='55' channel='1'/>
-    <Binding name='Loop6' trigger='note' value='57' channel='1'/>
-    <Binding name='Loop7' trigger='note' value='59' channel='1'/>
-    <Binding name='Loop8' trigger='note' value='60' channel='1'/>
-    <Binding name='SpeedToggle' trigger='program' value='7' channel='1'/>
-    <Binding name='Reverse' trigger='program' channel='1'/>
-    <Binding name='NextLoop' trigger='note' value='9' channel='1'/>
-    <Binding name='Record' trigger='program' value='4' channel='1'/>
-    <Binding name='Shuffle' trigger='program' value='9' channel='1'/>
-    <Binding name='Fade Out 110' trigger='program' value='10' channel='1'/>
-    <Binding name='Fade In 110' trigger='program' value='11' channel='1'/>
-    <Binding name='NextTrack' trigger='program' value='2' channel='1'/>
-    <Binding name='PrevTrack' trigger='program' value='1' channel='1'/>
-    <Binding name='Substitute' trigger='control' value='2' channel='1'/>
-    <Binding name='SUSUnroundedInsert' trigger='control' value='1' channel='1'/>
-    <Binding name='Ambient General Reset' trigger='note' channel='1'/>
-    <Binding name='output' scope='1' trigger='control' value='11' channel='1'/>
-    <Binding name='output' scope='2' trigger='control' value='12' channel='1'/>
-    <Binding name='output' scope='3' trigger='control' value='13' channel='1'/>
-    <Binding name='output' scope='4' trigger='control' value='14' channel='1'/>
-    <Binding name='output' scope='5' trigger='control' value='15' channel='1'/>
-    <Binding name='output' scope='6' trigger='control' value='16' channel='1'/>
-    <Binding name='output' scope='7' trigger='control' value='17' channel='1'/>
-    <Binding name='output' scope='8' trigger='control' value='18' channel='1'/>
-    <Binding name='pan' scope='1' trigger='control' value='19' channel='1'/>
-    <Binding name='pan' scope='2' trigger='control' value='20' channel='1'/>
-    <Binding name='pan' scope='3' trigger='control' value='21' channel='1'/>
-    <Binding name='pan' scope='4' trigger='control' value='22' channel='1'/>
-    <Binding name='pan' scope='5' trigger='control' value='23' channel='1'/>
-    <Binding name='pan' scope='6' trigger='control' value='24' channel='1'/>
-    <Binding name='pan' scope='7' trigger='control' value='25' channel='1'/>
-    <Binding name='pan' scope='8' trigger='control' value='26' channel='1'/>
-    <Binding name='SelectLoop' trigger='note' value='48' channel='1' args='1'/>
-    <Binding name='SelectLoop' trigger='note' value='50' channel='1' args='2'/>
-    <Binding name='SelectLoop' trigger='note' value='52' channel='1' args='3'/>
-    <Binding name='SelectLoop' trigger='note' value='53' channel='1' args='4'/>
-    <Binding name='SelectLoop' trigger='note' value='55' channel='1' args='5'/>
-    <Binding name='SelectLoop' trigger='note' value='57' channel='1' args='6'/>
-    <Binding name='SelectLoop' trigger='note' value='59' channel='1' args='7'/>
-    <Binding name='SelectLoop' trigger='note' value='60' channel='1' args='8'/>
-  </BindingSet>
-  <BindingSet name='Configuration 3 per midiwizard'>
-    <Binding name='Overdub' trigger='program' value='5' channel='1'/>
-    <Binding name='Multiply' trigger='program' value='6' channel='1'/>
-    <Binding name='Mute' trigger='program' value='8' channel='1'/>
-    <Binding name='Undo' trigger='program' value='3' channel='1'/>
-    <Binding name='Loop1' trigger='note' value='48' channel='1'/>
-    <Binding name='Loop2' trigger='note' value='50' channel='1'/>
-    <Binding name='Loop3' trigger='note' value='52' channel='1'/>
-    <Binding name='Loop4' trigger='note' value='53' channel='1'/>
-    <Binding name='Loop5' trigger='note' value='55' channel='1'/>
-    <Binding name='Loop6' trigger='note' value='57' channel='1'/>
-    <Binding name='Loop7' trigger='note' value='59' channel='1'/>
-    <Binding name='Loop8' trigger='note' value='60' channel='1'/>
-    <Binding name='SpeedToggle' trigger='program' value='7' channel='1'/>
-    <Binding name='Reverse' trigger='program' channel='1'/>
-    <Binding name='NextLoop' trigger='note' value='9' channel='1'/>
-    <Binding name='Record' trigger='program' value='4' channel='1'/>
-    <Binding name='Shuffle' trigger='program' value='9' channel='1'/>
-    <Binding name='Fade Out 110' trigger='program' value='10' channel='1'/>
-    <Binding name='Fade In 110' trigger='program' value='11' channel='1'/>
-    <Binding name='NextTrack' trigger='program' value='2' channel='1'/>
-    <Binding name='PrevTrack' trigger='program' value='1' channel='1'/>
-    <Binding name='output' scope='1' trigger='control' value='11' channel='1'/>
-    <Binding name='output' scope='2' trigger='control' value='12' channel='1'/>
-    <Binding name='output' scope='4' trigger='control' value='14' channel='1'/>
-    <Binding name='output' scope='5' trigger='control' value='15' channel='1'/>
-    <Binding name='output' scope='6' trigger='control' value='16' channel='1'/>
-    <Binding name='output' scope='7' trigger='control' value='17' channel='1'/>
-    <Binding name='output' scope='8' trigger='control' value='18' channel='1'/>
-    <Binding name='output' scope='3' trigger='control' value='13' channel='1'/>
-    <Binding name='SelectLoop' trigger='note' value='48' channel='1' args='1'/>
-    <Binding name='SelectLoop' trigger='note' value='50' channel='1' args='2'/>
-    <Binding name='SelectLoop' trigger='note' value='52' channel='1' args='3'/>
-    <Binding name='SelectLoop' trigger='note' value='53' channel='1' args='4'/>
-    <Binding name='SelectLoop' trigger='note' value='55' channel='1' args='5'/>
-    <Binding name='SelectLoop' trigger='note' value='57' channel='1' args='6'/>
-    <Binding name='SelectLoop' trigger='note' value='59' channel='1' args='7'/>
-    <Binding name='SelectLoop' trigger='note' value='60' channel='1' args='8'/>
-  </BindingSet>
-  <BindingSet name='2007_novation'>
-    <Binding name='Overdub' trigger='control' value='5' channel='1'/>
-    <Binding name='Multiply' trigger='control' value='6' channel='1'/>
-    <Binding name='Mute' trigger='control' value='8' channel='1'/>
-    <Binding name='Undo' trigger='control' value='3' channel='1'/>
-    <Binding name='SpeedToggle' trigger='control' value='7' channel='1'/>
-    <Binding name='Reverse' trigger='control' channel='1'/>
-    <Binding name='NextTrack' trigger='control' value='27' channel='1'/>
-    <Binding name='SUSSubstitute' trigger='control' value='2' channel='1'/>
-    <Binding name='SUSUnroundedInsert' trigger='control' value='1' channel='1'/>
-    <Binding name='output' scope='1' trigger='control' value='11' channel='1'/>
-    <Binding name='output' scope='2' trigger='control' value='12' channel='1'/>
-    <Binding name='output' scope='3' trigger='control' value='13' channel='1'/>
-    <Binding name='output' scope='4' trigger='control' value='14' channel='1'/>
-    <Binding name='output' scope='5' trigger='control' value='15' channel='1'/>
-    <Binding name='output' scope='6' trigger='control' value='16' channel='1'/>
-    <Binding name='output' scope='7' trigger='control' value='17' channel='1'/>
-    <Binding name='output' scope='8' trigger='control' value='18' channel='1'/>
-    <Binding name='pan' scope='1' trigger='control' value='19' channel='1'/>
-    <Binding name='pan' scope='2' trigger='control' value='20' channel='1'/>
-    <Binding name='pan' scope='3' trigger='control' value='21' channel='1'/>
-    <Binding name='pan' scope='4' trigger='control' value='22' channel='1'/>
-    <Binding name='pan' scope='5' trigger='control' value='23' channel='1'/>
-    <Binding name='pan' scope='6' trigger='control' value='24' channel='1'/>
-    <Binding name='pan' scope='7' trigger='control' value='25' channel='1'/>
-    <Binding name='pan' scope='8' trigger='control' value='26' channel='1'/>
-    <Binding name='Track1' trigger='program' value='31' channel='1'/>
-    <Binding name='Track2' trigger='program' value='32' channel='1'/>
-    <Binding name='Track3' trigger='program' value='33' channel='1'/>
-    <Binding name='Track4' trigger='program' value='34' channel='1'/>
-    <Binding name='Track5' trigger='program' value='35' channel='1'/>
-    <Binding name='Track6' trigger='program' value='36' channel='1'/>
-    <Binding name='Track7' trigger='program' value='37' channel='1'/>
-    <Binding name='Track8' trigger='program' value='38' channel='1'/>
-    <Binding name='Cont Fade Out 110' scope='1' trigger='note' value='1' channel='1'/>
-    <Binding name='Cont Fade Out 110' scope='2' trigger='note' value='2' channel='1'/>
-    <Binding name='Cont Fade Out 110' scope='3' trigger='note' value='3' channel='1'/>
-    <Binding name='Cont Fade Out 110' scope='4' trigger='note' value='4' channel='1'/>
-    <Binding name='Cont Fade Out 110' scope='5' trigger='note' value='5' channel='1'/>
-    <Binding name='Cont Fade Out 110' scope='6' trigger='note' value='6' channel='1'/>
-    <Binding name='Cont Fade Out 110' scope='7' trigger='note' value='7' channel='1'/>
-    <Binding name='Cont Fade Out 110' scope='8' trigger='note' value='8' channel='1'/>
-    <Binding name='Record' trigger='note' value='126' channel='1'/>
-    <Binding name='GlobalMute' trigger='control' value='29' channel='1'/>
-    <Binding name='InstantMultiply' trigger='control' value='30' channel='1'/>
-    <Binding name='PrevTrack' trigger='control' value='28' channel='1'/>
-    <Binding name='Rate12' trigger='program' value='52' channel='1'/>
-    <Binding name='down a 5th' trigger='program' value='53' channel='1'/>
-    <Binding name='SUSOverdub' trigger='note' value='40' channel='1'/>
-    <Binding name='PitchCancel' trigger='program' value='40' channel='1'/>
-    <Binding name='GlobalReset' trigger='control' value='9' channel='1'/>
-    <Binding name='SelectTrack' trigger='program' value='31' channel='1' args='1'/>
-    <Binding name='SelectTrack' trigger='program' value='32' channel='1' args='2'/>
-    <Binding name='SelectTrack' trigger='program' value='33' channel='1' args='3'/>
-    <Binding name='SelectTrack' trigger='program' value='34' channel='1' args='4'/>
-    <Binding name='SelectTrack' trigger='program' value='35' channel='1' args='5'/>
-    <Binding name='SelectTrack' trigger='program' value='36' channel='1' args='6'/>
-    <Binding name='SelectTrack' trigger='program' value='37' channel='1' args='7'/>
-    <Binding name='SelectTrack' trigger='program' value='38' channel='1' args='8'/>
-    <Binding name='output' trigger='control' value='106' channel='5'/>
-  </BindingSet>
-  <BindingSet name='[New]'>
-  </BindingSet>
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav' button='true'/>
   </SampleConfig>
-  <GroupDefinition name='A' color='0'/>
+  <GroupDefinition name='A' color='-1' replicatedFunctions='Overdub'/>
   <GroupDefinition name='B' color='0'/>
 </MobiusConfig>
