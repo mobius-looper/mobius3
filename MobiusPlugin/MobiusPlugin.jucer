@@ -297,10 +297,6 @@
                 file="../Mobius/Source/ui/session/SessionFormCollection.cpp"/>
           <FILE id="QxWsSb" name="SessionFormCollection.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/session/SessionFormCollection.h"/>
-          <FILE id="dAyoEb" name="SessionFunctionEditor.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/session/SessionFunctionEditor.cpp"/>
-          <FILE id="n2M5sN" name="SessionFunctionEditor.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/session/SessionFunctionEditor.h"/>
           <FILE id="jRFxFe" name="SessionGlobalEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/session/SessionGlobalEditor.cpp"/>
           <FILE id="L1Knl5" name="SessionGlobalEditor.h" compile="0" resource="0"
@@ -315,6 +311,10 @@
                 file="../Mobius/Source/ui/session/SessionManagerTable.cpp"/>
           <FILE id="MmnctL" name="SessionManagerTable.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/session/SessionManagerTable.h"/>
+          <FILE id="u20QTF" name="SessionParameterEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/session/SessionParameterEditor.cpp"/>
+          <FILE id="m04UN3" name="SessionParameterEditor.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/session/SessionParameterEditor.h"/>
           <FILE id="KHiytH" name="SessionTrackEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/session/SessionTrackEditor.cpp"/>
           <FILE id="dlDKV6" name="SessionTrackEditor.h" compile="0" resource="0"

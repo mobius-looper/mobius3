@@ -13,7 +13,7 @@
 #include "../common/BasicTabs.h"
 
 #include "SessionGlobalEditor.h"
-#include "SessionFunctionEditor.h"
+#include "SessionParameterEditor.h"
 #include "SessionTrackEditor.h"
 
 // temporary
@@ -25,17 +25,18 @@ SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
 {
     setName("SessionEditor");
 
+    trackEditor.reset(new SessionTrackEditor());
+    tabs.add("Tracks", trackEditor.get());
+    
     globalEditor.reset(new SessionGlobalEditor());
     tabs.add("Globals", globalEditor.get());
     
-    functionEditor.reset(new SessionFunctionEditor());
-    tabs.add("Functions", functionEditor.get());
+    parameterEditor.reset(new SessionParameterEditor());
+    tabs.add("Parameters", parameterEditor.get());
 
-    trackEditor.reset(new SessionTrackEditor());
-    tabs.add("Tracks", trackEditor.get());
 
     globalEditor->initialize(s);
-    functionEditor->initialize(s);
+    parameterEditor->initialize(s);
     trackEditor->initialize(s);
 
     addAndMakeVisible(tabs);
@@ -137,7 +138,7 @@ void SessionEditor::decacheForms()
 {
     invalidateSession();
     globalEditor->decacheForms();
-    functionEditor->decacheForms();
+    parameterEditor->decacheForms();
     trackEditor->decacheForms();
 }
 
@@ -165,7 +166,7 @@ void SessionEditor::invalidateSession()
     // ugly, when nwe delete the copied Session, need to inform the inner components
     // that any ValueSet prevously loaded must be forgotten
     globalEditor->cancel();
-    functionEditor->cancel();
+    parameterEditor->cancel();
     trackEditor->cancel();
 
     session.reset(nullptr);
@@ -185,7 +186,7 @@ void SessionEditor::loadSession()
     ValueSet* globals = session->ensureGlobals();
     
     globalEditor->load(globals);
-    functionEditor->load(globals);
+    parameterEditor->load(globals);
 
     // NOTE: Because TrackEditor needs access to all of the
     // ValueSets for every Session::Track, it is allowed to retain
@@ -201,7 +202,7 @@ void SessionEditor::saveSession(Session* dest)
 {
     ValueSet* globals = dest->ensureGlobals();
     globalEditor->save(globals);
-    functionEditor->save(globals);
+    parameterEditor->save(globals);
     trackEditor->save(dest);
 }
 

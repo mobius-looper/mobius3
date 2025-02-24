@@ -8,12 +8,12 @@
 
 #include "DynamicTreeForms.h"
 
-class SessionFunctionEditor : public juce::Component
+class SessionParameterEditor : public juce::Component
 {
   public:
 
-    SessionFunctionEditor();
-    ~SessionFunctionEditor() {}
+    SessionParameterEditor();
+    ~SessionParameterEditor() {}
 
     // SessionEditor Interface
 

@@ -557,10 +557,6 @@
                 file="Source/ui/session/SessionFormCollection.cpp"/>
           <FILE id="y3emuo" name="SessionFormCollection.h" compile="0" resource="0"
                 file="Source/ui/session/SessionFormCollection.h"/>
-          <FILE id="vcWrID" name="SessionFunctionEditor.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionFunctionEditor.cpp"/>
-          <FILE id="RPd4gu" name="SessionFunctionEditor.h" compile="0" resource="0"
-                file="Source/ui/session/SessionFunctionEditor.h"/>
           <FILE id="KOaAEr" name="SessionGlobalEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionGlobalEditor.cpp"/>
           <FILE id="CqSPrU" name="SessionGlobalEditor.h" compile="0" resource="0"
@@ -575,6 +571,10 @@
                 file="Source/ui/session/SessionManagerTable.cpp"/>
           <FILE id="dEmxtK" name="SessionManagerTable.h" compile="0" resource="0"
                 file="Source/ui/session/SessionManagerTable.h"/>
+          <FILE id="jj21Ov" name="SessionParameterEditor.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionParameterEditor.cpp"/>
+          <FILE id="BdTeWc" name="SessionParameterEditor.h" compile="0" resource="0"
+                file="Source/ui/session/SessionParameterEditor.h"/>
           <FILE id="za4YnZ" name="SessionTrackEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionTrackEditor.cpp"/>
           <FILE id="bxa5u6" name="SessionTrackEditor.h" compile="0" resource="0"

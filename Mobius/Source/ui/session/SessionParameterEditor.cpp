@@ -10,39 +10,39 @@
 
 #include "SessionTreeForms.h"
 
-#include "SessionFunctionEditor.h"
+#include "SessionParameterEditor.h"
 
-SessionFunctionEditor::SessionFunctionEditor()
+SessionParameterEditor::SessionParameterEditor()
 {
     addAndMakeVisible(&forms);
 }
 
-void SessionFunctionEditor::initialize(Provider* p)
+void SessionParameterEditor::initialize(Provider* p)
 {
     forms.initialize(p);
 }
 
-void SessionFunctionEditor::cancel()
+void SessionParameterEditor::cancel()
 {
     forms.cancel();
 }
 
-void SessionFunctionEditor::decacheForms()
+void SessionParameterEditor::decacheForms()
 {
     forms.decache();
 }
 
-void SessionFunctionEditor::resized()
+void SessionParameterEditor::resized()
 {
     forms.setBounds(getLocalBounds());
 }
 
-void SessionFunctionEditor::load(ValueSet* src)
+void SessionParameterEditor::load(ValueSet* src)
 {
     forms.load(src);
 }
 
-void SessionFunctionEditor::save(ValueSet* dest)
+void SessionParameterEditor::save(ValueSet* dest)
 {
     forms.save(dest);
 }

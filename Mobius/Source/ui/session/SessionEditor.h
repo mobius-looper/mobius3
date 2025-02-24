@@ -49,6 +49,6 @@ class SessionEditor : public ConfigEditor
     BasicTabs tabs;
     
     std::unique_ptr<class SessionGlobalEditor> globalEditor;
-    std::unique_ptr<class SessionFunctionEditor> functionEditor;
+    std::unique_ptr<class SessionParameterEditor> parameterEditor;
     std::unique_ptr<class SessionTrackEditor> trackEditor;
 };
