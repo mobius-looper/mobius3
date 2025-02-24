@@ -33,6 +33,8 @@
 
 ////////////// ActiveSetup
 
+// this is gone
+#if 0
 class UIParameterActiveSetupClass : public UIParameter
 {
   public:
@@ -63,6 +65,7 @@ void UIParameterActiveSetupClass::setValue(void* obj, ExValue* value)
 }
 UIParameterActiveSetupClass UIParameterActiveSetupObj;
 UIParameter* UIParameterActiveSetup = &UIParameterActiveSetupObj;
+#endif
 
 ////////////// bindings
 //

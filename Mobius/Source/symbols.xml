@@ -179,7 +179,21 @@ Once those models are fully converted, these symbols can be removed.
   instead of 1-16 it is 0-15?  A more useful concept would just be range=128
   rather than low/high.
   -->
-  
+
+  <!-- UI Functions -->
+
+  <Function name="UIParameterUp" level='ui'/>
+  <Function name="UIParameterDown" level='ui'/>
+  <Function name="UIParameterInc" level='ui'/>
+  <Function name="UIParameterDec" level='ui'/>
+  <Function name="ReloadScripts" level='ui'/>
+  <Function name="ReloadSamples" level='ui'/>
+    
+  <Function name="ShowPanel" level='ui'/>
+  <Function name="Message" level='ui'/>
+    
+  <Function name="AddButton" level='ui' hidden='true'/>
+  <Function name="Listen" level='ui' hidden='true'/>
 
   <!-- =======================================================================
        PRESET
@@ -664,6 +678,23 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='trackSyncMaster' type='int' level='kernel' options='dynamic'/>
     <Parameter name='transportMaster' type='int' level='kernel' options='dynamic'/>
 
+  </ParameterScope>
+    
+  <!-- =======================================================================
+       UI
+       ============================================================================ -->
+
+  <!-- keep tree paths out of these so they don't show up in the SessionEditor trees
+       will probably need another way to do that since the path will be needed when
+       binding windows show trees
+  -->
+  
+  <ParameterScope name='UI'>
+
+    <Parameter name='activeLayout' level='UI' type='structure'/>
+    <Parameter name='activeButtons' level='UI' type='structure'/>
+    <Parameter name='bindingOverlays' level='UI' type='structure'/>
+    
   </ParameterScope>
     
   <!-- =======================================================================

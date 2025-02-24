@@ -13,7 +13,7 @@
 
 /*** GENERATED ***/
 
-extern class UIParameter* UIParameterActiveSetup;
+//extern class UIParameter* UIParameterActiveSetup;
 extern class UIParameter* UIParameterBindings;
 extern class UIParameter* UIParameterFadeFrames;
 extern class UIParameter* UIParameterMaxSyncDrift;

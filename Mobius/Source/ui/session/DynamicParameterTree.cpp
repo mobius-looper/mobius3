@@ -32,8 +32,9 @@ DynamicParameterTree::~DynamicParameterTree()
  */
 void DynamicParameterTree::initialize(Provider* p)
 {
-    provider = p;
     SymbolTreeComparator comparator;
+
+    internCategories();
 
     for (auto s : p->getSymbols()->getSymbols()) {
 
@@ -57,14 +58,33 @@ void DynamicParameterTree::initialize(Provider* p)
 }
 
 /**
+ * Intern the top-level parameter categories in an order that flows
+ * better than alphabetical or as randomly encountered in a ValueSet.
+ */
+void DynamicParameterTree::internCategories()
+{
+    juce::StringArray categories ("Functions", "Quantize", "Switch", "Effects", "General", "Advanced");
+
+    for (auto cat : categories) {
+        SymbolTreeItem* item = root.internChild(cat);
+        // this is used in static trees to identify the static form definition
+        // for dynamic trees, we follow the same convention but since this is just
+        // the name we don't need it
+        item->setAnnotation(cat);
+    }
+}
+
+
+/**
  * Initialize the tree to contain only those values in the provided
  * value set.
  */
 void DynamicParameterTree::initialize(Provider* p, ValueSet* set)
 {
-    provider = p;
     SymbolTreeComparator comparator;
 
+    internCategories();
+    
     juce::StringArray keys = set->getKeys();
     for (auto key : keys) {
         Symbol* s = p->getSymbols()->find(key);
@@ -74,6 +94,10 @@ void DynamicParameterTree::initialize(Provider* p, ValueSet* set)
         else {
             SymbolTreeItem* parent = nullptr;
             if (s->treePath == "") {
+                // thought about lumping these into "Other" as a way to see symbols
+                // that were missing the treePath, but loopCount is in there and this
+                // moved to a primary session parameter and is already shown elsewhere
+                // complain about them in the log instead
                 parent = root.internChild("Other");
                 parent->setAnnotation("Other");
             }

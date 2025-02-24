@@ -27,5 +27,6 @@ class DynamicParameterTree : public SymbolTree
 
   private:
 
-    class Provider* provider = nullptr;
+    void internCategories();
+    
 };

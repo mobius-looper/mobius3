@@ -166,6 +166,9 @@ void Symbolizer::internSymbols()
 //
 //////////////////////////////////////////////////////////////////////
 
+// !! None of this is necessary, now that we're using symbols.xml for everything
+// can just put the UI parameters in there and be consistent about it
+
 void Symbolizer::installUISymbols()
 {
     SymbolTable* symbols = provider->getSymbols();
@@ -183,6 +186,7 @@ void Symbolizer::installUISymbols()
             if (!f->visible)
               s->hidden = true;
             s->treePath = "UI";
+            
             // todo: parse and store the signature
             // atm, these don't need full blown FunctionProperties annotations
             // Well, one of these "ReloadScripts" also has a core function which will
@@ -205,7 +209,14 @@ void Symbolizer::installUISymbols()
             s->level = LevelUI;
             if (p->displayName == nullptr)
               s->hidden = true;
-            s->treePath = "UI";
+
+            // treePath is now used by the SessionEditor to build a parameter
+            // browsing tree from the symbol table, we don't want UI symbols
+            // appearing there as if they were saved in the session which they aren't,
+            // they're in the uiconfig
+            // may need an alternate way to suppress them different tree builders
+            // like for bindings can include them
+            //s->treePath = "UI";
 
             // !! the assumption right now is that these are all TypeStructure
             // but that won't always be true, need more of a definition structure

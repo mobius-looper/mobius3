@@ -198,10 +198,12 @@ Structure* UIParameter::getStructureList(MobiusConfig* container)
 
         list = container->getPresets();
     }
+#if 0    
     else if (this == UIParameterActiveSetup) {
         
         list = container->getSetups();
     }
+#endif    
     else if (this == UIParameterBindings) {
         // this is a weird one, we keep alternates and overlays on the same list
         // as the master binding set which cannot be deleted
