@@ -206,20 +206,38 @@ void StripMaster::paint(juce::Graphics& g)
 {
     juce::Colour textColor = juce::Colour(MobiusGreen);
 
-    g.setColour(textColor);
+    int textHeight = 12;
+    juce::Font font(JuceUtil::getFont(textHeight));
+    g.setFont(font);
 
-    juce::String text;
+    // something weird going on with left, need to push it to get past the border
+    // and even after the normal border width it still truncates on the left
+    // 12 is the absoute minimum
+    int left = 18;
+    int fieldWidth = 50;
+    g.setColour(juce::Colour(MobiusGreen));
+    g.drawText("Master:", left, 0, fieldWidth, getHeight(), juce::Justification::centredRight);
+
+    left += (fieldWidth + 4);
+
     if (trackSyncMaster)
-      text += "Track Master";
-    if (transportMaster)
-      text += " Transport Master";
+      g.setColour(juce::Colour(MobiusYellow));
+    else
+      g.setColour(juce::Colour(MobiusBlue));
+    
+    fieldWidth = 30;
 
-    if (text.length() > 0) {
-        juce::Font font(JuceUtil::getFont(getHeight()));
-        g.setFont(font);
-        g.drawText(text, 0, 0, getWidth(), getHeight(),
-                   juce::Justification::centred);
-    }
+    g.drawText("Track", left, 0, fieldWidth, getHeight(), juce::Justification::centredLeft);
+    
+    left += (fieldWidth + 4);
+    
+    if (transportMaster)
+      g.setColour(juce::Colour(MobiusYellow));
+    else
+      g.setColour(juce::Colour(MobiusBlue));
+
+    fieldWidth = 50;
+    g.drawText("Transport", left, 0, fieldWidth, getHeight(), juce::Justification::centredLeft);
 }
 
 void StripMaster::mouseDown(const class juce::MouseEvent& event)
