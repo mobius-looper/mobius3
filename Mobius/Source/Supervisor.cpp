@@ -667,25 +667,6 @@ MainWindow* Supervisor::getMainWindow()
 }
 
 /**
- * Determine the active Setup being used by the engine.
- * This is used both by Supervisor so we can save it in
- * MobiusConfig, and eventualy a new session object on shutdown,
- * and also by MainMenu to show a tick next to the active setup.
- */
-int Supervisor::getActiveSetup()
-{
-    int ordinal = -1;
-    // !! where is the name constant for this?
-    Symbol* s = symbols.intern("activeSetup");
-    if (s->parameter != nullptr) {
-        Query q (s);
-        if (mobius->doQuery(&q))
-          ordinal = q.value;
-    }
-    return ordinal;
-}
-
-/**
  * Determine the active Preset being used by the active track.
  * Used by MainMenu to show a tick in the menu.
  */

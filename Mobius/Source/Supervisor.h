@@ -233,7 +233,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     juce::String getStructureName(class Symbol* s, int value) override;
     
     // special accessors for things deep within the engine
-    int getActiveSetup();
     int getActivePreset() override;
 
     // entry point for the "maintenance thread" only to be called by MainThread

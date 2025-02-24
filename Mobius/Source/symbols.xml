@@ -491,6 +491,14 @@ Once those models are fully converted, these symbols can be removed.
                options='noBinding,transient,resetRetain'>
       In runtime context this changes the Preset a track is using.
     </Parameter>
+
+    <!-- Unclear if we need this, it would take the place of activeSetup and
+         make it accessible to Instant Parameters, but I'm not liking reinforcing
+         the notion that you can swap sessions easily.
+         activePreset needs rethought too since ParameterSets can be activated in
+         multiples.
+    -->
+    <Parameter name='activeSession' type='structure' options='noBinding,transient'/>
     
   </ParameterScope>
 
@@ -686,8 +694,11 @@ Once those models are fully converted, these symbols can be removed.
         This one behaves differently than most global parameters, it's more like a "session"
         property that just remembers what the last setup was on shutdown and restores
         that on startup.  I decided to take out startingSetup for that reason too.
-        This is part of the evolving "session" concept.  
+        This is part of the evolving "session" concept.
+
+        From build 30 onward, replaced by activeSession
     -->
+    <!--
     <Parameter name='activeSetup' coreName='setup'
                type='structure' structureClass='Setup'
                options='noBinding,transient'>
@@ -695,7 +706,8 @@ Once those models are fully converted, these symbols can be removed.
       from a script to change the active setup with "set setup foo".  This change is
       will persist for the duration of the runtime.  On shutdown it will be saved
       in mobius.xml as "startingSetup".
-    </Parameter>
+      </Parameter>
+    -->
 
     <Parameter name='bindings' options='noBinding'
                type='structure' structureClass='BindingSet'

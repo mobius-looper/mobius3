@@ -15,6 +15,8 @@
 ParameterEditorTree::ParameterEditorTree()
 {
     //disableSearch();
+    tree.setColour(juce::TreeView::ColourIds::backgroundColourId,
+                   getLookAndFeel().findColour(juce::ListBox::backgroundColourId));
 }
 
 ParameterEditorTree::~ParameterEditorTree()

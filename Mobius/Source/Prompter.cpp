@@ -39,10 +39,10 @@ void Prompter::startScriptImport()
     Pathfinder* pf = provider->getPathfinder();
     juce::File startPath(pf->getLastFolder(purpose));
 
-    juce::String title = "Select an MSL script file to import...";
+    juce::String title = "Select an MSL or MOS script file to import...";
 
     // a form of smart pointer
-    chooser = std::make_unique<juce::FileChooser> (title, startPath, "*.msl");
+    chooser = std::make_unique<juce::FileChooser> (title, startPath, "*.msl;*.mos");
 
     auto chooserFlags = juce::FileBrowserComponent::openMode |
                          juce::FileBrowserComponent::canSelectFiles | 

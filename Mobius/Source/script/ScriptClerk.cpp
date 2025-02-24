@@ -1137,8 +1137,8 @@ void ScriptClerk::import(juce::Array<juce::File> files)
         else if (src.getParentDirectory() == libdir) {
             errors.add("File is already in the library: " + path);
         }
-        else if (src.getFileExtension() != ".msl") {
-            errors.add("File is not an MSL file: " + path);
+        else if (src.getFileExtension() != ".msl" && src.getFileExtension() != ".mos") {
+            errors.add("File is not an MSL or MOS file: " + path);
         }
         else {
             juce::String fname = src.getFileName();
@@ -1181,14 +1181,30 @@ void ScriptClerk::import(juce::Array<juce::File> files)
     
     if (filesAdded.size() > 0) {
         MslEnvironment* env = supervisor->getMslEnvironment();
+        int oldFiles = 0;
+        int newFiles = 0;
         for (auto file : filesAdded) {
             juce::File f(file->path);
-            file->source = f.loadFileAsString();
-            MslDetails* unit = env->install(supervisor, file->path, file->source, false);
-            updateDetails(file, unit);
+
+            if (f.getFileExtension() == ".msl") {
+                file->source = f.loadFileAsString();
+                MslDetails* unit = env->install(supervisor, file->path, file->source, false);
+                updateDetails(file, unit);
+                newFiles++;
+            }
+            else {
+                oldFiles++;
+            }
         }
-            
-        env->link(supervisor);
+
+        if (newFiles > 0) 
+          env->link(supervisor);
+
+        if (oldFiles > 0) {
+            // these have to be done in bulk by Supervisor
+            supervisor->reloadMobiusScripts();
+        }
+          
         refreshDetails();
     }
 

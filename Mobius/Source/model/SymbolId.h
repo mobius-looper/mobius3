@@ -210,7 +210,7 @@ typedef enum {
     //
     // Obsolete Parameters
     //
-    // Should be working on removing these.  New code should use them
+    // Should be working on removing these.  New code should not use them
     // and old code should be phased out.
     //
     //////////////////////////////////////////////////////////////////////
