@@ -190,100 +190,119 @@ Once those models are fully converted, these symbols can be removed.
 
   <ParameterScope name='preset'>
      
-    <Parameter name='subcycles' low='1' high='128' />
+    <Parameter name='subcycles' low='1' high='128' tree='General'/>
 
-    <Parameter name='multiplyMode' values='normal,simple'/>
+    <Parameter name='multiplyMode' values='normal,simple' tree='Functions'/>
 
-    <Parameter name='shuffleMode' values='reverse,shift,swap,random'/>
+    <Parameter name='shuffleMode' values='reverse,shift,swap,random' tree='Functions'/>
 
-    <Parameter name='altFeedbackEnable' type='bool' />
+    <Parameter name='altFeedbackEnable' type='bool' tree='General'/>
 
     <Parameter name='emptyLoopAction'
                values='none,record,copy,copyTime'
-               valueLabels='None,Record,Copy Sound,Copy Timing' />
+               valueLabels='None,Record,Copy Sound,Copy Timing'
+               tree='Switch'/>
 
     <Parameter name='emptyTrackAction'
                enumName='Preset::EmptyLoopAction'
                values='none,record,copy,copyTime'
-               valueLabels='None,Record,Copy Sound,Copy Timing' />
+               valueLabels='None,Record,Copy Sound,Copy Timing'
+               tree='Switch'/>
 
     <Parameter name='trackLeaveAction'
                values='none,cancel,wait'
-               valueLabels='None,Cancel Current Mode,Cancel and Wait' />
+               valueLabels='None,Cancel Current Mode,Cancel and Wait'
+               tree='Switch'/>
 
     <Parameter name='loopCount' options='dynamic,noBinding'
                codeName='Loops'
                low='1' high='32'/>
     
-    <Parameter name='muteMode' values='continue,start,pause'/>
+    <Parameter name='muteMode' values='continue,start,pause'
+               tree='Functions'/>
     
     <Parameter name='muteCancel'
                values='never,edit,trigger,effect,custom,always'
-               valueLabels='Never,Edits,Triggers,Effects,Custom,Always' />
+               valueLabels='Never,Edits,Triggers,Effects,Custom,Always'
+               tree='Functions'/>
 
-    <Parameter name='overdubQuantized' type='bool' />
+    <Parameter name='overdubQuantized' type='bool'
+               tree='Quantize'/>
 
     <Parameter name='quantize'
                values='off,subCycle,cycle,loop'
                valueLabels='Off,Subcycle,Cycle,Loop'
                <!-- enum doesn't match getter -->
-               enumName='Preset::QuantizeMode' />
+               enumName='Preset::QuantizeMode'
+               tree='Quantize'/>
 
     <Parameter name='bounceQuantize'
                values='off,subCycle,cycle,loop'
                valueLabels='Off,Subcycle,Cycle,Loop'
-               enumName='Preset::QuantizeMode'/>
+               enumName='Preset::QuantizeMode'
+               tree='Quantize'/>
 
-    <Parameter name='recordResetsFeedback' type='bool' />
+    <Parameter name='recordResetsFeedback' type='bool'
+               tree='Functions'/>
 
-    <Parameter name='speedRecord' type='bool' />
+    <Parameter name='speedRecord' type='bool'
+               tree='Functions'/>
 
-    <Parameter name='roundingOverdub' type='bool' />
+    <Parameter name='roundingOverdub' type='bool'
+               tree='Functions'/>
 
     <Parameter name='switchLocation'
-               values='follow,restore,start,random'/>
+               values='follow,restore,start,random'
+               tree='Switch'/>
 
     <Parameter name='returnLocation'
                values='follow,restore,start,random'
-               enumName='Preset::SwitchLocation'/>
+               enumName='Preset::SwitchLocation'
+               tree='Switch'/>
 
     <Parameter name='switchDuration'
                values='permanent,once,onceReturn,sustain,sustainReturn'
-               enumName='Preset::SwitchDuration'/>
+               enumName='Preset::SwitchDuration'
+               tree='Switch'/>
     
     <Parameter name='switchQuantize'
                values='off,subCycle,cycle,loop,confirm,confirmSubCycle,confirmCycle,confirmLoop'
-               valueLabels='Off,Subcycle,Cycle,Loop,Confirm,Confirm Subcycle,Confirm Cycle,Confirm Loop' />
+               valueLabels='Off,Subcycle,Cycle,Loop,Confirm,Confirm Subcycle,Confirm Cycle,Confirm Loop'
+               tree='Quantize'/>
 
     <Parameter name='timeCopyMode' values='play,overdub,multiply,insert'
-               enumName='Preset::CopyMode'/>
+               enumName='Preset::CopyMode'
+               tree='Switch'/>
 
     <Parameter name='soundCopyMode' values='play,overdub,multiply,insert'
-               enumName='Preset::CopyMode'/>
+               enumName='Preset::CopyMode'
+               tree='Switch'/>
 
-    <Parameter name='switchVelocity' type='bool' />
+    <Parameter name='switchVelocity' type='bool' tree='Switch'/>
 
-    <Parameter name='maxUndo' options='noBinding'/>
-    <Parameter name='maxRedo' options='noBinding'/>
+    <Parameter name='maxUndo' options='noBinding' tree='General'/>
+    <Parameter name='maxRedo' options='noBinding' tree='General'/>
     
-    <Parameter name='noFeedbackUndo' type='bool' options='noBinding'/>
-    <Parameter name='noLayerFlattening' type='bool' options='noBinding'/>
+    <Parameter name='noFeedbackUndo' type='bool' options='noBinding' tree='General'/>
+    <Parameter name='noLayerFlattening' type='bool' options='noBinding' tree='Advanced'/>
     
-    <Parameter name='speedSequence' type='string' options='noBinding'/>
-    <Parameter name='speedShiftRestart' type='bool' options='noBinding'/>
-    <Parameter name='pitchSequence' type='string' options='noBinding'/>
-    <Parameter name='pitchShiftRestart' type='bool' options='noBinding'/>
+    <Parameter name='speedSequence' type='string' options='noBinding' tree='Effects'/>
+    <Parameter name='speedShiftRestart' type='bool' options='noBinding' tree='Effects'/>
+    <Parameter name='pitchSequence' type='string' options='noBinding' tree='Effects'/>
+    <Parameter name='pitchShiftRestart' type='bool' options='noBinding' tree='Effects'/>
     
-    <Parameter name='speedStepRange' low='1' high='48' options='noBinding'/>
-    <Parameter name='speedBendRange' low='1' high='12' options='noBinding'/>
-    <Parameter name='pitchStepRange' low='1' high='48' options='noBinding'/>
-    <Parameter name='pitchBendRange' low='1' high='12' options='noBinding'/>
-    <Parameter name='timeStretchRange' low='1' high='12' options='noBinding'/>
+    <Parameter name='speedStepRange' low='1' high='48' options='noBinding' tree='Effects'/>
+    <Parameter name='speedBendRange' low='1' high='12' options='noBinding' tree='Effects'/>
+    <Parameter name='pitchStepRange' low='1' high='48' options='noBinding' tree='Effects'/>
+    <Parameter name='pitchBendRange' low='1' high='12' options='noBinding' tree='Effects'/>
+    <Parameter name='timeStretchRange' low='1' high='12' options='noBinding' tree='Effects'/>
     
     <Parameter name='slipMode'
-               values='subCycle,cycle,start,relSubCycle,relCycle,time' />
+               values='subCycle,cycle,start,relSubCycle,relCycle,time'
+               tree='Functions'/>
 
-    <Parameter name='slipTime' high='128' />
+    <Parameter name='slipTime' high='128'
+               tree='Functions'/>
     
     <!-- StringList
          List of functions that are sustainable.  Not configurable any more
@@ -292,23 +311,23 @@ Once those models are fully converted, these symbols can be removed.
     -->
 
     <Parameter name='recordTransfer' values='off,follow'
-               enumName='Preset::TransferMode'/>
+               enumName='Preset::TransferMode' tree='Switch/Transfer'/>
     <Parameter name='overdubTransfer' values='off,follow,restore'
-               enumName='Preset::TransferMode'/>
+               enumName='Preset::TransferMode' tree='Switch/Transfer'/>
     <Parameter name='reverseTransfer' values='off,follow,restore'
-               enumName='Preset::TransferMode'/>
+               enumName='Preset::TransferMode' tree='Switch/Transfer'/>
     <Parameter name='speedTransfer' values='off,follow,restore'
-               enumName='Preset::TransferMode'/>
+               enumName='Preset::TransferMode' tree='Switch/Transfer'/>
     <Parameter name='pitchTransfer' values='off,follow,restore'
-               enumName='Preset::TransferMode'/>
+               enumName='Preset::TransferMode' tree='Switch/Transfer'/>
 
     <Parameter name='windowSlideUnit' values='loop,cycle,subcycle,msec,frame'
-               enumName='Preset::WindowUnit'/>
+               enumName='Preset::WindowUnit' tree='Functions'/>
     <Parameter name='windowEdgeUnit' values='loop,cycle,subcycle,msec,frame'
-               enumName='Preset::WindowUnit'/>
+               enumName='Preset::WindowUnit' tree='Functions'/>
     
-    <Parameter name='windowSlideAmount' low='1' high='128' />
-    <Parameter name='windowEdgeAmount' low='1' high='128' />
+    <Parameter name='windowSlideAmount' low='1' high='128' tree='Functions' />
+    <Parameter name='windowEdgeAmount' low='1' high='128' tree='Functions'/>
 
     <!-- DEPRECATED: keep these for temporary documentation but once we're sure
          core code no longer needs them they can be deleted

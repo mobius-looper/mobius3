@@ -63,6 +63,7 @@ void ParameterEditor::load()
     }
 
     show(0);
+    resized();
 }
 
 void ParameterEditor::show(int index)

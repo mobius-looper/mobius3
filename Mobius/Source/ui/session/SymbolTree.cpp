@@ -10,6 +10,7 @@
 #include "../../util/Trace.h"
 #include "../../model/Symbol.h"
 #include "../../model/ParameterProperties.h"
+#include "../../script/MslValue.h"
 
 #include "SymbolTree.h"
 

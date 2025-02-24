@@ -38,4 +38,5 @@ class ParameterTreeForms : public juce::Component, public SymbolTree::Listener
     juce::StretchableLayoutManager verticalLayout;
     std::unique_ptr<juce::StretchableLayoutResizerBar> verticalDividerBar;
     
+    class ParameterForm* buildForm(class SymbolTreeItem* parent);
 };

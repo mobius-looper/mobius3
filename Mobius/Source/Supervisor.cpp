@@ -2148,10 +2148,16 @@ void Supervisor::doAction(UIAction* action)
         Trace(1, "Supervisor::doAction Action without symbol\n");
     }
     else if (s->script != nullptr) {
-        // having some difficult getting levels set on these assume
-        // they don't care and let them transition if necessary
-        ActionAdapter aa;
-        aa.doAction(&scriptenv, this, action);
+        if (s->script->coreScript != nullptr) {
+            // MOS must be sent down
+            mobius->doAction(action);
+        }
+        else {
+            // having some difficult getting levels set on these assume
+            // they don't care and let them transition if necessary
+            ActionAdapter aa;
+            aa.doAction(&scriptenv, this, action);
+        }
     }
     else if (s->level == LevelUI) {
         doUILevelAction(action);

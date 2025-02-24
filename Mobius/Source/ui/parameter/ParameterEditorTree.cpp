@@ -7,7 +7,7 @@
 #include "../../util/Trace.h"
 #include "../../model/Symbol.h"
 #include "../../model/ParameterProperties.h"
-#include "../../model/TreeForm.h"
+#include "../../model/ValueSet.h"
 #include "../../Provider.h"
 
 #include "ParameterEditorTree.h"
@@ -24,10 +24,38 @@ ParameterEditorTree::~ParameterEditorTree()
 void ParameterEditorTree::load(Provider* p, ValueSet* set)
 {
     provider = p;
+    SymbolTreeComparator comparator;
 
-    (void)set;
+    juce::StringArray keys = set->getKeys();
+    for (auto key : keys) {
+        Symbol* s = p->getSymbols()->find(key);
+        if (s == nullptr) {
+            Trace(1, "ParamaeterEditorTree: Unknown symbol %s", key.toUTF8());
+        }
+        else {
+            SymbolTreeItem* parent = nullptr;
+            if (s->treePath == "") {
+                parent = root.internChild("Other");
+                parent->setAnnotation("Other");
+            }
+            else {
+                juce::StringArray path = parsePath(s->treePath);
+                parent = internPath(&root, path);
+                parent->setAnnotation(s->treePath);
+            }
 
-    root.internChild("Test");
+            parent->setNoSelect(false);
+
+            juce::String nodename = s->name;
+            if (s->parameterProperties != nullptr)
+              nodename = s->parameterProperties->displayName;
+            SymbolTreeItem* neu = new SymbolTreeItem(nodename);
+            // put the symbol on the child so we can get to them aalready sorted
+            neu->addSymbol(s);
+            parent->addSubItemSorted(comparator, neu);
+            
+        }
+    }
 }
 
 SymbolTreeItem* ParameterEditorTree::getFirst()
@@ -46,80 +74,6 @@ void ParameterEditorTree::selectFirst()
         first->setSelected(true, false, juce::NotificationType::sendNotification);
     }
 }
-
-#if 0
-void ParameterEditorTree::intern(SymbolTreeItem* parent, juce::String treePath, TreeNode* node)
-{
-    SymbolTreeItem* item = parent->internChild(node->name);
-    treePath = treePath + node->name;
-
-    juce::String nodeForm = node->formName;
-    if (nodeForm.length() == 0)
-      item->setAnnotation(treePath);
-    else 
-      item->setAnnotation(nodeForm);
-
-    // all nodes can be clicked
-    item->setNoSelect(false);
-
-    // first the sub-categories
-    for (auto child : node->nodes) {
-        intern(item, treePath, child);
-    }
-
-    // then symbols at this level
-    // this is unusual and used only if you want to limit the included
-    // symbols that would otherwise be defined in the form
-    for (auto sname : node->symbols) {
-        addSymbol(item, sname, "");
-    }
-    
-    // usually the symbol list comes from the form
-    if (node->symbols.size() == 0) {
-
-        juce::String formName = item->getAnnotation();
-        if (formName.length() > 0) {
-            StaticConfig* scon = provider->getStaticConfig();
-            TreeForm* formdef = scon->getForm(formName);
-            if (formdef != nullptr) {
-                for (auto sname : formdef->symbols) {
-                    // ignore special rendering symbols
-                    if (!sname.startsWith("*"))
-                      addSymbol(item, sname, formdef->suppressPrefix);
-                }
-            }
-        }
-    }
-}
-
-void ParameterEditorTree::addSymbol(SymbolTreeItem* parent, juce::String name,
-                                  juce::String suppressPrefix)
-{
-//    SymbolTreeComparator comparator;
-    
-    Symbol* s = provider->getSymbols()->find(name);
-    if (s == nullptr)
-      Trace(1, "ParameterEditorTree: Invalid symbol name %s", name.toUTF8());
-    else {
-        // don't think this part is necessary
-        parent->addSymbol(s);
-
-        // it doesn't really matter what the name of this is, the important
-        // part is the annotation of the parent node, which is the form reference
-        juce::String nodename = name;
-        if (s->parameterProperties != nullptr) {
-            nodename = s->parameterProperties->displayName;
-            if (suppressPrefix.length() > 0 && nodename.indexOf(suppressPrefix) == 0) {
-                nodename = nodename.fromFirstOccurrenceOf(suppressPrefix + " ", false, false);
-            }
-        }
-        
-        SymbolTreeItem* chitem = new SymbolTreeItem(nodename);
-        //parent->addSubItemSorted(comparator, chitem);
-        parent->addSubItem(chitem);
-    }
-}
-#endif
 
 /****************************************************************************/
 /****************************************************************************/

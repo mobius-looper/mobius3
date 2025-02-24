@@ -68,11 +68,14 @@ void ParameterFormCollection::addForm(juce::String name, ParameterForm* form)
     if (existing != nullptr) {
         // shouldn't be seeing this
         Trace(1, "ParameterFormCollection: Replacing form %s", name.toUTF8());
+        removeChildComponent(existing);
         formTable.remove(name);
         forms.removeObject(existing, true);
     }
     forms.add(form);
     formTable.set(name, form);
+    form->setBounds(getLocalBounds());
+    addChildComponent(form);
 }
 
 void ParameterFormCollection::show(Provider* p, juce::String formName)
@@ -89,7 +92,8 @@ void ParameterFormCollection::show(Provider* p, juce::String formName)
     }
     else {
         //Trace(2, "ParameterFormCollection: Changing form %s", formName.toUTF8());
-        currentForm->setVisible(false);
+        if (currentForm != nullptr)
+          currentForm->setVisible(false);
         // probably need a refresh?
         form->setVisible(true);
         currentForm = form;

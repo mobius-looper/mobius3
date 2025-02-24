@@ -41,12 +41,6 @@ void ParameterTreeForms::initialize(Provider* p, ValueSet* set)
     forms.load(p, set);
     
     tree.selectFirst();
-#if 0    
-    // simulate a click
-    SymbolTreeItem* item = tree.getFirst();
-    if (item != nullptr)
-      symbolTreeClicked(item);
-#endif    
 }
 
 void ParameterTreeForms::decache()
@@ -102,12 +96,27 @@ void ParameterTreeForms::symbolTreeClicked(SymbolTreeItem* item)
     // for form delivery, the tree builder left the form name as the "annotation"
     
     juce::String formName = container->getAnnotation();
-    if (formName.length() == 0) {
-        // default form name is a combination of the tree name and node name
-        formName = item->getName();
+    if (formName.length() > 0) {
+
+        ParameterForm* form = forms.getForm(formName);
+        if (form == nullptr) {
+            form = buildForm(container);
+            forms.addForm(formName, form);
+        }
+        forms.show(provider, formName);
+    }
+}
+
+ParameterForm* ParameterTreeForms::buildForm(SymbolTreeItem* parent)
+{
+    ParameterForm* form = new ParameterForm();
+
+    for (int i = 0 ; i < parent->getNumSubItems() ; i++) {
+        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(parent->getSubItem(i));
+        form->add(item->getSymbols());
     }
     
-    forms.show(provider, formName);
+    return form;
 }
 
 /****************************************************************************/
