@@ -1458,8 +1458,11 @@ void Supervisor::updateParameterSets()
     if (parameterSets) {
         fileManager.writeParameterSets(parameterSets.get());
 
-        // any propagation?
-        // probably bindings
+        // !! todo: lots of propagation issues
+        // sets that were activated need to be sent down to core
+        // to get the new values
+        //
+        // if sets were added or removed this could impact bindings
     }
 }
 

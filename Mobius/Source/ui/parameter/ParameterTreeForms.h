@@ -20,7 +20,7 @@ class ParameterTreeForms : public juce::Component, public SymbolTree::Listener
     void initialize(class Provider* p, class ValueSet* set);
     void decache();
     
-    void save(class ValueSet* dest);
+    void save();
     void cancel();
     
     void resized() override;

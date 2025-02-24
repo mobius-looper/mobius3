@@ -9,7 +9,7 @@
     <Value name="loopCount" value="1" type="int"/>
     <Value name="maxRedo" value="4" type="int"/>
     <Value name="maxUndo" value="8" type="int"/>
-    <Value name="multiplyMode" value="normal" type="enum" ordinal="0"/>
+    <Value name="multiplyMode" value="simple" type="enum" ordinal="1"/>
     <Value name="muteCancel" value="never" type="enum" ordinal="0"/>
     <Value name="muteMode" value="continue" type="enum" ordinal="0"/>
     <Value name="noFeedbackUndo" value="false" type="bool"/>
@@ -296,7 +296,7 @@
     <Value name="muteMode" value="start" type="enum" ordinal="1"/>
     <Value name="noFeedbackUndo" value="false" type="bool"/>
     <Value name="noLayerFlattening" value="false" type="bool"/>
-    <Value name="overdubQuantized" value="false" type="bool"/>
+    <Value name="overdubQuantized" value="true" type="bool"/>
     <Value name="overdubTransfer" value="off" type="enum" ordinal="0"/>
     <Value name="pitchBendRange" value="12" type="int"/>
     <Value name="pitchShiftRestart" value="false" type="bool"/>

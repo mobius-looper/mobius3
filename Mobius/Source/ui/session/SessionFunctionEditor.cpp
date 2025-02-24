@@ -19,7 +19,7 @@ SessionFunctionEditor::SessionFunctionEditor()
 
 void SessionFunctionEditor::initialize(Provider* p)
 {
-    forms.initialize(p, juce::String("sessionFunction"));
+    forms.initialize(p);
 }
 
 void SessionFunctionEditor::cancel()

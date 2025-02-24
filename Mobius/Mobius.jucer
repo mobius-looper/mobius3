@@ -201,22 +201,10 @@
                 file="Source/ui/parameter/ParameterEditor.cpp"/>
           <FILE id="FI6MXo" name="ParameterEditor.h" compile="0" resource="0"
                 file="Source/ui/parameter/ParameterEditor.h"/>
-          <FILE id="vUZgnV" name="ParameterEditorTree.cpp" compile="1" resource="0"
-                file="Source/ui/parameter/ParameterEditorTree.cpp"/>
-          <FILE id="aNI6DS" name="ParameterEditorTree.h" compile="0" resource="0"
-                file="Source/ui/parameter/ParameterEditorTree.h"/>
-          <FILE id="d4Ap6M" name="ParameterFormCollection.cpp" compile="1" resource="0"
-                file="Source/ui/parameter/ParameterFormCollection.cpp"/>
-          <FILE id="t7G2aZ" name="ParameterFormCollection.h" compile="0" resource="0"
-                file="Source/ui/parameter/ParameterFormCollection.h"/>
           <FILE id="zRaNaf" name="ParameterSetTable.cpp" compile="1" resource="0"
                 file="Source/ui/parameter/ParameterSetTable.cpp"/>
           <FILE id="YkGnFH" name="ParameterSetTable.h" compile="0" resource="0"
                 file="Source/ui/parameter/ParameterSetTable.h"/>
-          <FILE id="tqJQOp" name="ParameterTreeForms.cpp" compile="1" resource="0"
-                file="Source/ui/parameter/ParameterTreeForms.cpp"/>
-          <FILE id="r7uXts" name="ParameterTreeForms.h" compile="0" resource="0"
-                file="Source/ui/parameter/ParameterTreeForms.h"/>
         </GROUP>
         <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
           <FILE id="lXWr1d" name="BasicButtonRow.cpp" compile="1" resource="0"
@@ -543,6 +531,18 @@
           <FILE id="NyM8Ef" name="TypicalTable.h" compile="0" resource="0" file="Source/ui/script/TypicalTable.h"/>
         </GROUP>
         <GROUP id="{DF1301BF-7977-3AF9-2F74-88DD7CDC5689}" name="session">
+          <FILE id="hWOict" name="DynamicFormCollection.cpp" compile="1" resource="0"
+                file="Source/ui/session/DynamicFormCollection.cpp"/>
+          <FILE id="EShK4T" name="DynamicFormCollection.h" compile="0" resource="0"
+                file="Source/ui/session/DynamicFormCollection.h"/>
+          <FILE id="zLE1hv" name="DynamicParameterTree.cpp" compile="1" resource="0"
+                file="Source/ui/session/DynamicParameterTree.cpp"/>
+          <FILE id="AtvjSx" name="DynamicParameterTree.h" compile="0" resource="0"
+                file="Source/ui/session/DynamicParameterTree.h"/>
+          <FILE id="aqoiY5" name="DynamicTreeForms.cpp" compile="1" resource="0"
+                file="Source/ui/session/DynamicTreeForms.cpp"/>
+          <FILE id="xPZ2YM" name="DynamicTreeForms.h" compile="0" resource="0"
+                file="Source/ui/session/DynamicTreeForms.h"/>
           <FILE id="y3QGus" name="ParameterForm.cpp" compile="1" resource="0"
                 file="Source/ui/session/ParameterForm.cpp"/>
           <FILE id="D2sieP" name="ParameterForm.h" compile="0" resource="0" file="Source/ui/session/ParameterForm.h"/>

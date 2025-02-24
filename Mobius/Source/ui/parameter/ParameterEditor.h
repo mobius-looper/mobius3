@@ -10,7 +10,7 @@
 #include "../config/ConfigEditor.h"
 #include "../script/TypicalTable.h"
 #include "ParameterSetTable.h"
-#include "ParameterTreeForms.h"
+#include "../session/DynamicTreeForms.h"
 
 class ParameterEditor : public ConfigEditor,
                         public TypicalTable::Listener
@@ -46,5 +46,5 @@ class ParameterEditor : public ConfigEditor,
     std::unique_ptr<class ParameterSets> revertParameters;
     std::unique_ptr<class ParameterSetTable> table;
 
-    juce::OwnedArray<class ParameterTreeForms> treeForms;
+    juce::OwnedArray<class DynamicTreeForms> treeForms;
 };

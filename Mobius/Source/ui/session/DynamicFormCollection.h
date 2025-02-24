@@ -2,11 +2,8 @@
  * Manages a collection of ParameterForms and can swap between them
  * as things change.
  *
- * The SessionEditor has two of these, one for the Global parameters and
- * one for the Track parameters.
- *
- * Forms are created dynamically as selections are made in a corresponding
- * ParameterTree.
+ * These differ from SessionFormCollection in the way the forms are build
+ * dynamically rather than from static TreeForm definitions.
  *
  */
 
@@ -16,12 +13,12 @@
 
 #include "../session/ParameterForm.h"
 
-class ParameterFormCollection : public juce::Component
+class DynamicFormCollection : public juce::Component
 {
   public:
     
-    ParameterFormCollection();
-    ~ParameterFormCollection() {}
+    DynamicFormCollection();
+    ~DynamicFormCollection() {}
 
     void resized() override;
     void paint(juce::Graphics& g) override;

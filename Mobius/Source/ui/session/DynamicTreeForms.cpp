@@ -4,13 +4,13 @@
 #include "../../util/Trace.h"
 #include "../../Provider.h"
 
-#include "../session/SymbolTree.h"
-#include "../session/SessionEditorTree.h"
-#include "../session/SessionFormCollection.h"
+#include "SymbolTree.h"
+#include "DynamicParameterTree.h"
+#include "DynamicFormCollection.h"
 
-#include "ParameterTreeForms.h"
+#include "DynamicTreeForms.h"
 
-ParameterTreeForms::ParameterTreeForms()
+DynamicTreeForms::DynamicTreeForms()
 {
     addAndMakeVisible(tree);
     addAndMakeVisible(forms);
@@ -28,37 +28,66 @@ ParameterTreeForms::ParameterTreeForms()
     addAndMakeVisible (verticalDividerBar.get());
 }
 
-ParameterTreeForms::~ParameterTreeForms()
+DynamicTreeForms::~DynamicTreeForms()
 {
 }
 
-void ParameterTreeForms::initialize(Provider* p, ValueSet* set)
+/**
+ * Initialize with the full symbol table
+ */
+void DynamicTreeForms::initialize(Provider* p)
+{
+    provider = p;
+
+    tree.initialize(p);
+    
+    tree.selectFirst();
+}
+
+/**
+ * Load values after initialization.
+ */
+void DynamicTreeForms::load(ValueSet* set)
+{
+    valueSet = set;
+    forms.load(provider, set);
+}
+
+/**
+ * Initialize with a restricted value set.
+ */
+void DynamicTreeForms::initialize(Provider* p, ValueSet* set)
 {
     provider = p;
     valueSet = set;
 
-    tree.load(p, set);
+    tree.initialize(p, set);
     forms.load(p, set);
     
     tree.selectFirst();
 }
 
-void ParameterTreeForms::decache()
+void DynamicTreeForms::decache()
 {
     forms.decache();
 }
 
-void ParameterTreeForms::save()
+void DynamicTreeForms::save()
 {
-    forms.save(valueSet);
+    save(valueSet);
 }
 
-void ParameterTreeForms::cancel()
+void DynamicTreeForms::save(class ValueSet* set)
+{
+    forms.save(set);
+}
+
+void DynamicTreeForms::cancel()
 {
     forms.cancel();
 }
 
-void ParameterTreeForms::resized()
+void DynamicTreeForms::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     
@@ -83,7 +112,7 @@ void ParameterTreeForms::resized()
     }
 }
 
-void ParameterTreeForms::symbolTreeClicked(SymbolTreeItem* item)
+void DynamicTreeForms::symbolTreeClicked(SymbolTreeItem* item)
 {
     SymbolTreeItem* container = item;
     
@@ -107,7 +136,7 @@ void ParameterTreeForms::symbolTreeClicked(SymbolTreeItem* item)
     }
 }
 
-ParameterForm* ParameterTreeForms::buildForm(SymbolTreeItem* parent)
+ParameterForm* DynamicTreeForms::buildForm(SymbolTreeItem* parent)
 {
     ParameterForm* form = new ParameterForm();
 

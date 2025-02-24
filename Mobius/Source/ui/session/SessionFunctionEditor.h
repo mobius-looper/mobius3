@@ -6,7 +6,7 @@
 
 #include <JuceHeader.h>
 
-#include "SessionTreeForms.h"
+#include "DynamicTreeForms.h"
 
 class SessionFunctionEditor : public juce::Component
 {
@@ -33,7 +33,7 @@ class SessionFunctionEditor : public juce::Component
     class Provider* provider = nullptr;
     class ValueSet* values = nullptr;
 
-    SessionTreeForms forms;
+    DynamicTreeForms forms;
 
 };
 

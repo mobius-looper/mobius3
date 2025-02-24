@@ -10,20 +10,57 @@
 #include "../../model/ValueSet.h"
 #include "../../Provider.h"
 
-#include "ParameterEditorTree.h"
+#include "DynamicParameterTree.h"
 
-ParameterEditorTree::ParameterEditorTree()
+DynamicParameterTree::DynamicParameterTree()
 {
     //disableSearch();
     tree.setColour(juce::TreeView::ColourIds::backgroundColourId,
                    getLookAndFeel().findColour(juce::ListBox::backgroundColourId));
 }
 
-ParameterEditorTree::~ParameterEditorTree()
+DynamicParameterTree::~DynamicParameterTree()
 {
 }
 
-void ParameterEditorTree::load(Provider* p, ValueSet* set)
+/**
+ * Initialize the tree to contain all symbols from the global symbol table
+ * that are marked for inclusion as default session parameters.
+ *
+ * Currently defined as any symbol that has a treePath, but may need more
+ * restrictions on that.
+ */
+void DynamicParameterTree::initialize(Provider* p)
+{
+    provider = p;
+    SymbolTreeComparator comparator;
+
+    for (auto s : p->getSymbols()->getSymbols()) {
+
+        if (s->parameterProperties != nullptr && s->treePath.length() > 0) {
+
+            juce::StringArray path = parsePath(s->treePath);
+            SymbolTreeItem* parent = internPath(&root, path);
+            parent->setAnnotation(s->treePath);
+
+            parent->setNoSelect(false);
+
+            juce::String nodename = s->name;
+            if (s->parameterProperties != nullptr)
+              nodename = s->parameterProperties->displayName;
+            SymbolTreeItem* neu = new SymbolTreeItem(nodename);
+            // put the symbol on the child so we can get to them aalready sorted
+            neu->addSymbol(s);
+            parent->addSubItemSorted(comparator, neu);
+        }
+    }
+}
+
+/**
+ * Initialize the tree to contain only those values in the provided
+ * value set.
+ */
+void DynamicParameterTree::initialize(Provider* p, ValueSet* set)
 {
     provider = p;
     SymbolTreeComparator comparator;
@@ -60,13 +97,13 @@ void ParameterEditorTree::load(Provider* p, ValueSet* set)
     }
 }
 
-SymbolTreeItem* ParameterEditorTree::getFirst()
+SymbolTreeItem* DynamicParameterTree::getFirst()
 {
     SymbolTreeItem* first = static_cast<SymbolTreeItem*>(root.getSubItem(0));
     return first;
 }
 
-void ParameterEditorTree::selectFirst()
+void DynamicParameterTree::selectFirst()
 {
     SymbolTreeItem* first = getFirst();
     if (first != nullptr) {

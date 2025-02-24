@@ -8,26 +8,26 @@
 
 #include "../session/ParameterForm.h"
 
-#include "ParameterFormCollection.h"
+#include "DynamicFormCollection.h"
 
-ParameterFormCollection::ParameterFormCollection()
+DynamicFormCollection::DynamicFormCollection()
 {
 }
 
-void ParameterFormCollection::resized()
+void DynamicFormCollection::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     for (auto form : forms)
       form->setBounds(area);
 }
 
-void ParameterFormCollection::paint(juce::Graphics& g)
+void DynamicFormCollection::paint(juce::Graphics& g)
 {
     g.setColour(juce::Colours::black);
     g.fillRect(0, 0, getWidth(), getHeight());
 }
 
-void ParameterFormCollection::load(Provider* p, ValueSet* src)
+void DynamicFormCollection::load(Provider* p, ValueSet* src)
 {
     // have to save these for later since forms are allocated
     // incrementally as tree nodes are clicked
@@ -40,19 +40,19 @@ void ParameterFormCollection::load(Provider* p, ValueSet* src)
       form->load(p, sourceValues);
 }
 
-void ParameterFormCollection::save(ValueSet* dest)
+void DynamicFormCollection::save(ValueSet* dest)
 {
     for (auto form : forms)
       form->save(dest);
 }
 
-void ParameterFormCollection::cancel()
+void DynamicFormCollection::cancel()
 {
     // forget this, just reload
     sourceValues = nullptr;
 }
 
-void ParameterFormCollection::decache()
+void DynamicFormCollection::decache()
 {
     // first save them
     if (sourceValues != nullptr)
@@ -63,7 +63,7 @@ void ParameterFormCollection::decache()
     currentForm = nullptr;
 }
 
-ParameterForm* ParameterFormCollection::getForm(juce::String name)
+ParameterForm* DynamicFormCollection::getForm(juce::String name)
 {
     return formTable[name];
 }
@@ -77,12 +77,12 @@ ParameterForm* ParameterFormCollection::getForm(juce::String name)
  * the values in the form need to be loaded since the form didn't exist
  * at the point of initialize()
  */
-void ParameterFormCollection::addForm(juce::String name, ParameterForm* form)
+void DynamicFormCollection::addForm(juce::String name, ParameterForm* form)
 {
     ParameterForm* existing = formTable[name];
     if (existing != nullptr) {
         // shouldn't be seeing this
-        Trace(1, "ParameterFormCollection: Replacing form %s", name.toUTF8());
+        Trace(1, "DynamicFormCollection: Replacing form %s", name.toUTF8());
         removeChildComponent(existing);
         formTable.remove(name);
         forms.removeObject(existing, true);
@@ -96,20 +96,20 @@ void ParameterFormCollection::addForm(juce::String name, ParameterForm* form)
     form->load(provider, sourceValues);
 }
 
-void ParameterFormCollection::show(Provider* p, juce::String formName)
+void DynamicFormCollection::show(Provider* p, juce::String formName)
 {
     (void)p;
     
     ParameterForm* form = getForm(formName);
     if (form == nullptr) {
         // these have to be preconstructed
-        Trace(1, "ParameterFormCollection: Unknown form %s", formName.toUTF8());
+        Trace(1, "DynamicFormCollection: Unknown form %s", formName.toUTF8());
     }
     else if (form == currentForm) {
         // Trace(2, "SPE: Form already displayed for category %s", category.toUTF8());
     }
     else {
-        //Trace(2, "ParameterFormCollection: Changing form %s", formName.toUTF8());
+        //Trace(2, "DynamicFormCollection: Changing form %s", formName.toUTF8());
         if (currentForm != nullptr)
           currentForm->setVisible(false);
         // probably need a refresh?
