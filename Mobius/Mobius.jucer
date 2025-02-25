@@ -149,6 +149,9 @@
         <FILE id="UeOHZY" name="StaticConfig.cpp" compile="1" resource="0"
               file="Source/model/StaticConfig.cpp"/>
         <FILE id="YGofo1" name="StaticConfig.h" compile="0" resource="0" file="Source/model/StaticConfig.h"/>
+        <FILE id="kTf2zp" name="StepSequence.cpp" compile="1" resource="0"
+              file="Source/model/StepSequence.cpp"/>
+        <FILE id="ufh9rW" name="StepSequence.h" compile="0" resource="0" file="Source/model/StepSequence.h"/>
         <FILE id="RWjxQk" name="Structure.cpp" compile="1" resource="0" file="Source/model/Structure.cpp"/>
         <FILE id="UvI59d" name="Structure.h" compile="0" resource="0" file="Source/model/Structure.h"/>
         <FILE id="F539YC" name="Symbol.cpp" compile="1" resource="0" file="Source/model/Symbol.cpp"/>

@@ -9,6 +9,7 @@
 
 #include "../../model/ParameterConstants.h"
 #include "../../model/Preset.h"
+#include "../../model/StepSequence.h"
 
 #include "Loop.h"
 #include "Track.h"

@@ -26,8 +26,7 @@
 #include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
 #include "../../../model/TrackState.h"
-// for StepSequence
-#include "../../../model/Preset.h"
+#include "../../../model/StepSequence.h"
 
 #include "../Action.h"
 #include "../Event.h"

@@ -22,8 +22,7 @@
 #include "../../../midi/MidiByte.h"
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
-// for StepSequence
-#include "../../../model/Preset.h"
+#include "../../../model/StepSequence.h"
 
 #include "../Action.h"
 #include "../Event.h"

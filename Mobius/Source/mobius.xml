@@ -885,6 +885,17 @@
     <Binding name='SelectLoop' trigger='key' value='55' args='7'/>
     <Binding name='SelectLoop' trigger='key' value='56' args='8'/>
   </BindingSet>
+  <BindingSet name='midi1'>
+    <Binding name='Overdub' trigger='note' value='50' channel='1'/>
+  </BindingSet>
+  <BindingSet name='midi2'>
+  </BindingSet>
+  <BindingSet name='midi3' overlay='true'>
+    <Binding name='Reset' trigger='note' value='52' channel='1'/>
+  </BindingSet>
+  <BindingSet name='midi4' overlay='true'>
+    <Binding name='Restart' trigger='note' value='53' channel='1'/>
+  </BindingSet>
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav' button='true'/>
   </SampleConfig>
