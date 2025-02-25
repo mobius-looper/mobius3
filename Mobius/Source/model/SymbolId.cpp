@@ -163,6 +163,8 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameDefaultPreset, ParamDefaultPreset},
     {ParamNameActivePreset, ParamActivePreset},
 
+    {"sessionOverlay", ParamSessionOverlay},
+
     {"syncSource", ParamSyncSource},
     {"syncSourceAlternate", ParamSyncSourceAlternate},
     {"syncUnit", ParamSyncUnit},
@@ -191,6 +193,7 @@ SymbolDefinition SymbolDefinitions[] = {
 
     {SessionTrackName, ParamTrackName},
     {ParamNameTrackPreset, ParamTrackPreset},
+    {"trackOverlay", ParamTrackOverlay},
     {ParamNameFocus, ParamFocus},
     {ParamNameMono, ParamMono},
     {ParamNameInput, ParamInput},

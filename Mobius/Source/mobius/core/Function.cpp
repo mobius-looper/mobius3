@@ -1174,6 +1174,7 @@ void Function::prepareSwitch(Loop* loop, Event* event,
  * Mute doesn't do that any more so this is only half implemented and since
  * it's obscure consider taking it out.
  */
+#if 0
 void Function::changePreset(Action* action, Loop* loop, bool after)
 {
     (void)action;
@@ -1208,6 +1209,7 @@ void Function::changePreset(Action* action, Loop* loop, bool after)
         }
     }
 }
+#endif
 
 /****************************************************************************
  *                                                                          *

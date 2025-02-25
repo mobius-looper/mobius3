@@ -32,6 +32,9 @@ class YanFieldHelpers
     static void initTrackPreset(class Provider* p, class YanCombo* combo, juce::String value);
     static juce::String saveTrackPreset(class YanCombo* combo);
     
+    static void initParameterSet(class Provider* p, class YanCombo* combo, juce::String value);
+    static juce::String saveParameterSet(class YanCombo* combo);
+    
 
 };
 

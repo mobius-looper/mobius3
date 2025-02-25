@@ -154,7 +154,7 @@ class Function : public SystemConstant {
 
 	void trace(class Action* action, class Mobius* m);
 	void trace(class Action* action, class Loop* l);
-    void changePreset(class Action* action, class Loop* l, bool after);
+    //void changePreset(class Action* action, class Loop* l, bool after);
 
 	/**
      * True if it is possible to focus lock, and focus lock is not disabled.

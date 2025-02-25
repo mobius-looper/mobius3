@@ -513,6 +513,14 @@ Once those models are fully converted, these symbols can be removed.
          multiples.
     -->
     <Parameter name='activeSession' type='structure' options='noBinding,transient'/>
+
+    <!-- Replacement for defaultPreset -->
+
+    <Parameter name='sessionOverlay'
+               type='structure' 
+               displayType='combo' displayHelper='parameterSet'
+               options='noBinding'>
+    </Parameter>
     
   </ParameterScope>
 
@@ -593,6 +601,14 @@ Once those models are fully converted, these symbols can be removed.
       would be lost on Reset.
 
       todo: "active preset" is a poorly defined concept that needs thought
+    </Parameter>
+
+    <!-- eventual replacement for trackPreset -->
+
+    <Parameter name='trackOverlay'
+               type='structure' 
+               displayType='combo' displayHelper='parameterSet'
+               options='noBinding'>
     </Parameter>
 
     <Parameter name='focus' codeName='FocusLock' type='bool' options='resetRetain,noBinding'/>

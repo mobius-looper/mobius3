@@ -8,6 +8,8 @@
 #include "../../util/Trace.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Preset.h"
+#include "../../model/ParameterSets.h"
+#include "../../model/ValueSet.h"
 #include "../../Provider.h"
 #include "../../MidiManager.h"
 #include "../../Grouper.h"
@@ -32,6 +34,9 @@ void YanFieldHelpers::comboInit(Provider* p, YanCombo* combo, juce::String type,
     else if (type == "trackPreset") {
         initTrackPreset(p, combo, value);
     }
+    else if (type == "parameterSet") {
+        initParameterSet(p, combo, value);
+    }
     else {
         Trace(1, "YanFieldHelpers: Unknown helper type %s", type.toUTF8());
     }
@@ -51,6 +56,9 @@ juce::String YanFieldHelpers::comboSave(YanCombo* combo, juce::String type)
     }
     else if (type == "trackPreset") {
         result = saveTrackPreset(combo);
+    }
+    else if (type == "parameterSet") {
+        result = saveParameterSet(combo);
     }
     else {
         Trace(1, "YanFieldHelpers: Unknown helper type %s", type.toUTF8());
@@ -187,6 +195,46 @@ juce::String YanFieldHelpers::saveTrackPreset(YanCombo* combo)
 {
     juce::String result;
 
+    // filter the [None]
+    int ordinal = combo->getSelection();
+    if (ordinal > 0) {
+        result = combo->getSelectionText();
+    }
+    return result;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Parameter Sets
+//////////////////////////////////////////////////////////////////////
+
+void YanFieldHelpers::initParameterSet(Provider* p, YanCombo* combo, juce::String value)
+{
+    ParameterSets* ps = p->getParameterSets();
+    
+    juce::StringArray names;
+    // assuming we always want a "no selection" option 
+    names.add("[None]");
+    for (auto set : ps->sets) {
+        names.add(set->name);
+    }
+    combo->setItems(names);
+
+    int index = 0;
+    if (value.length() > 0) {
+        index = names.indexOf(value);   
+        if (index < 0) {
+            Trace(2, "YanFieldHelper: Warning: Saved ParameterSet not available %s",
+                  value.toUTF8());
+            index = 0;
+        }
+    }
+    
+    combo->setSelection(index);
+}
+
+juce::String YanFieldHelpers::saveParameterSet(YanCombo* combo)
+{
+    juce::String result;
     // filter the [None]
     int ordinal = combo->getSelection();
     if (ordinal > 0) {

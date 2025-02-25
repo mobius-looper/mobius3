@@ -168,7 +168,6 @@ void Loop::init(Mobius* m, Track* track,
 {
     mMobius = m;
 	mTrack = track;
-	//mPreset = track->getPreset();
 	mInput = input;
 	mOutput = output;
 	mSynchronizer = mMobius->getSynchronizer();
@@ -256,9 +255,7 @@ Layer* Loop::getMuteLayer()
 
 /**
  * Called by Track whenever something changes in the MobiusConfig.
- * Loop always has a reference to the Preset managed by the Track so we
- * don't have to cache any preset parameters.  Just pick up a few
- * global parameters.
+ * Cache a few global parameters.
  */
 void Loop::updateConfiguration(MobiusConfig* config)
 {
@@ -539,13 +536,6 @@ Track* Loop::getTrack()
 {
     return mTrack;
 }
-
-#if 0
-Preset* Loop::getPreset()
-{
-	return mPreset;
-}
-#endif
 
 Mobius* Loop::getMobius()
 {
@@ -2710,7 +2700,6 @@ void Loop::setMuteKludge(Function* f, bool mute)
             Function* muteFunction = (mute) ? MuteOn : MuteOff;
 			Event* e = em->newEvent(muteFunction, MuteEvent, mFrame);
             e->setInvokingFunction(f);
-			//e->savePreset(mPreset);
 		
 			// this was added for things like Bounce where the event may 
 			// not be happening at the "right" latency adusted time, so
@@ -2857,7 +2846,6 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
 
         endEvent = em->newEvent(primaryFunction, endType, event->frame);
 		endEvent->setInvokingFunction(function);
-		//endEvent->savePreset(mPreset);
 		endEvent->quantized = event->quantized;
         em->addEvent(endEvent);
 
@@ -2897,7 +2885,6 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
             // it matters anyway because alternate endings only apply
             // if we're in Record mode.
 			recordStop->setInvokingFunction(primaryFunction);;
-			//recordStop->savePreset(mPreset);
 			em->addEvent(recordStop);
 		}
 
@@ -2932,7 +2919,6 @@ Event* Loop::scheduleRoundingModeEnd(Action* action, Event* event)
 
 		endEvent = em->newEvent(primaryFunction, endType, endFrame);
 		endEvent->setInvokingFunction(function);
-		//endEvent->savePreset(mPreset);
 		endEvent->addChild(recordStop);
 		endEvent->quantized = true;
 		em->addEvent(endEvent);
@@ -4685,8 +4671,6 @@ void Loop::undoEvent(Event* e)
 void Loop::addRedo(Event* e, Layer* undone)
 {
     (void)e;
-	//Preset* eventPreset = e->getEventPreset();
-	//int max = eventPreset->getMaxRedo();
     int max = ParameterSource::getMaxRedo(mTrack);
 
 	if (max == 0)
@@ -5415,7 +5399,6 @@ void Loop::switchEvent(Event* event)
         }
         else {
             Event* mute = em->newEvent(MuteOn, next->getFrames());
-            //mute->savePreset(mPreset);
             mute->quantized = true;	// to make it visible and undoable
             em->addEvent(mute);
             em->schedulePlayJump(next, mute);
@@ -5496,7 +5479,6 @@ void Loop::switchEvent(Event* event)
             // UPDATE: We should have that now with event->action
             if (!recording) {
                 Event* sus = em->newEvent(event->function, SUSReturnEvent, 0);
-                //sus->savePreset(mPreset);
                 sus->fields.loopSwitch.nextLoop = this;
                 sus->pending = true;
                 em->addEvent(sus);
@@ -5534,7 +5516,6 @@ void Loop::switchEvent(Event* event)
             // should do an immediate mute
             if (!empty) {
                 Event* mute = em->newEvent(MuteOn, next->getFrame());
-                //mute->savePreset(mPreset);
                 em->addEvent(mute);
                 em->schedulePlayJump(next, mute);
             }
@@ -5548,7 +5529,6 @@ void Loop::switchEvent(Event* event)
         else if (!empty) {
             // TODO: Use invokingFunction here??
             Event* sus = em->newEvent(event->function, SUSReturnEvent, 0);
-            //sus->savePreset(mPreset);
             sus->fields.loopSwitch.nextLoop = this;
             sus->pending = true;
             em->addEvent(sus);
@@ -5581,8 +5561,6 @@ void Loop::switchEvent(Event* event)
 	// manual.  Now, Restart and RestartOnce will always send START as
 	// will switchLocation=Start
 
-    //Preset* eventPreset = event->getEventPreset();
-    //SwitchLocation location = eventPreset->getSwitchLocation();
     SwitchLocation location = ParameterSource::getSwitchLocation(mTrack);
     
 	bool syncRestart = (event->function == Restart || 

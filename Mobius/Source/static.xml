@@ -8,6 +8,7 @@
 <StaticConfig>
 
   <Tree name='sessionGlobal'>
+    <Tree name='Includes'/>
     <Tree name='Ports'/>
     <Tree name='Sync' form='none'>
       <Tree name='Transport'/>
@@ -32,6 +33,9 @@
     <Tree name='LoopSwitch'/>
   </Tree>
 
+  <Form name='sessionGlobalIncludes' title='Objects to Include'
+        symbols='sessionOverlay'/>
+
   <Form name='sessionGlobalMiscellany' title='Obscure Things for Advanced Users'
         symbols='longDisable,longPress,noiseFloor,monitorAudio,quickSave,spreadRange,fadeFrames,maxSyncDrift,defaultPreset,eventScript,userFileFolder'/>
 
@@ -51,7 +55,7 @@
         symbols='autoRecordUnit,autoRecordUnits,recordThreshold'/>
   
   <Form name='sessionAudioTrackGeneral' title='General Parameters'
-        symbols='trackName,trackGroup,loopCount,trackPreset,focus'/>
+        symbols='trackName,trackGroup,loopCount,trackPreset,trackOverlay,focus'/>
     
   <Form name='sessionAudioSync' title='Synchronization Parameters'
         symbols='syncSource,syncUnit,trackSyncUnit'/>
@@ -66,7 +70,7 @@
         symbols='syncSource,syncUnit,trackSyncUnit'/>
 
   <Form name='sessionMidiTrackGeneral' title='General Parameters'
-        symbols='trackName,trackGroup,midiInput,midiOutput,midiChannelOverride,midiThru,*spacer*,loopCount,quantize,subcycles'/>
+        symbols='trackName,trackGroup,trackOverlay,midiInput,midiOutput,midiChannelOverride,midiThru,*spacer*,loopCount,quantize,subcycles'/>
 
   <Form name='sessionMidiTrackSync' title='Synchronization Parameters'
         symbols='syncSource,syncUnit,trackSyncUnit,midiBeatsPerBar'/>

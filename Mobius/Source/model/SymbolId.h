@@ -61,6 +61,9 @@ typedef enum {
     // a runtime only global for the menu and ParametersElement
     ParamActivePreset,
 
+    // eventual replacement for DefaultPreset
+    ParamSessionOverlay,
+
     //
     // Session Track Parameters
     //
@@ -95,6 +98,8 @@ typedef enum {
     
     ParamTrackName,
     ParamTrackPreset,
+    // eventual replacement for TrackPreset
+    ParamTrackOverlay,
     ParamFocus,
     ParamMono,
     ParamInput,
