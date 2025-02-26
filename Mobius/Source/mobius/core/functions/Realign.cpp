@@ -45,7 +45,6 @@
 
 #include "../../../util/Trace.h"
 #include "../../../util/Util.h"
-#include "../../../model/MobiusConfig.h"
 #include "../../../model/Setup.h"
 #include "../../../model/SymbolId.h"
 

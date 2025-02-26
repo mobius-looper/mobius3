@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
-#include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
 #include "../../../model/TrackState.h"
 
@@ -40,6 +39,7 @@
 #include "../Segment.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
+#include "../ParameterSource.h"
 
 /**
  * Experiment.
@@ -205,9 +205,9 @@ bool InsertFunction::isUnroundedEnding(Function* f)
 Event* InsertFunction::invoke(Action* action, Loop* l) 
 {
     Event* event = nullptr;
-    MobiusConfig* config = l->getMobius()->getConfiguration();
 
-    if (config->isEdpisms() && l->isReset() && action->down) {
+    bool edpisms = ParameterSource::isEdpisms(l);
+    if (edpisms && l->isReset() && action->down) {
         // EDPism
         // Insert in Reset selects the next preset
         Trace(1, "InsertFunction: Edpisms to change presets no longer supported");
@@ -221,7 +221,7 @@ Event* InsertFunction::invoke(Action* action, Loop* l)
         // We now call this RestartOnce.  
         // If isMuteCancel is false, then just insert silently
 
-        if (config->isEdpisms() && 
+        if (edpisms && 
             mode == MuteMode && isMuteCancel(l)) {
             
             // ignore up transitions of a SUSInsert

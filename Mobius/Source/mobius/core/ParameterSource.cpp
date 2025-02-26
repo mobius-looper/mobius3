@@ -9,11 +9,17 @@
 
 #include "../../model/ParameterConstants.h"
 #include "../../model/Preset.h"
+#include "../../model/MobiusConfig.h"
 #include "../../model/StepSequence.h"
 
 #include "Loop.h"
 #include "Track.h"
 #include "Event.h"
+#include "Mobius.h"
+
+// for the stupid MSEC_TO_FRAMES which needs CD_SAMPLE_RATE
+#include "AudioConstants.h"
+
 #include "ParameterSource.h"
 
 /**
@@ -279,3 +285,30 @@ EmptyLoopAction ParameterSource::getEmptyLoopAction(Track* t)
     return p->getEmptyLoopAction();
 }
 
+/**
+ * This one isn't actually in the Preset, it's a global in MobiusConfig
+ */
+bool ParameterSource::isEdpisms(Loop* l)
+{
+    Mobius* m = l->getMobius();
+    MobiusConfig* c = m->getConfiguration();
+    return c->isEdpisms();
+}
+
+int ParameterSource::getSpreadRange(Loop* l)
+{
+    Mobius* m = l->getMobius();
+    MobiusConfig* c = m->getConfiguration();
+    return c->getSpreadRange();
+}
+
+/**
+ * Temporary encapsulation of this old macro.
+ * This is obviously wrong and needs to be using the Container to
+ * get the accurate sample rate.
+ */
+int ParameterSource::msecToFrames(int msec)
+{
+    return MSEC_TO_FRAMES(msec);
+}
+    

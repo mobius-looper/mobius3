@@ -4,6 +4,7 @@
 #include "../util/Trace.h"
 
 #include "ValueSet.h"
+#include "ParameterSets.h"
 #include "Session.h"
 
 Session::Session()
@@ -62,6 +63,48 @@ void Session::setOldConfig(MobiusConfig* config)
 MobiusConfig* Session::getOldConfig()
 {
     return oldConfig;
+}
+
+/**
+ * Similar hack to pass the ParameterSets down in one unit with the session
+ * though in this case the Session owns it.
+ */
+void Session::setParameterSets(ParameterSets* sets)
+{
+    parameterSets.reset(sets);
+}
+
+ParameterSets* Session::getParameterSets()
+{
+    return parameterSets.get();
+}
+
+/**
+ * Return the session includes if one is configured.
+ */
+ValueSet* Session::getSessionOverlay()
+{
+    return sessionOverlay;
+}
+
+void Session::resolveOverlays()
+{
+    sessionOverlay = nullptr;
+
+    for (auto track : tracks)
+      track->setTrackOverlay(nullptr);
+
+    if (parameterSets != nullptr) {
+        const char* ovname = getString("sessionOverlay");
+        if (ovname != nullptr)
+          sessionOverlay = parameterSets->find(ovname);
+
+        for (auto track : tracks) {
+            ovname = track->getString("trackOverlay");
+            if (ovname != nullptr)
+              track->setTrackOverlay(parameterSets->find(ovname));
+        }
+    }
 }
 
 /**
@@ -524,6 +567,16 @@ void Session::Track::setString(juce::String pname, const char* value)
     ValueSet* g = ensureParameters();
     g->setString(pname, value);
 }    
+
+ValueSet* Session::Track::getTrackOverlay()
+{
+    return trackOverlay;
+}
+
+void Session::Track::setTrackOverlay(ValueSet* set)
+{
+    trackOverlay = set;
+}
 
 //////////////////////////////////////////////////////////////////////
 //

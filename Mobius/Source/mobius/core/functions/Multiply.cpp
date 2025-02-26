@@ -23,7 +23,6 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
-#include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
 #include "../../../model/TrackState.h"
 
@@ -211,7 +210,7 @@ bool MultiplyFunction::isUnroundedEnding(Function* f)
 Event* MultiplyFunction::invoke(Action* action, Loop* l) 
 {
     Event* event = nullptr;
-    MobiusConfig* config = l->getMobius()->getConfiguration();
+    bool edpisms = ParameterSource::isEdpisms(l);
 
 	// If we're in Realign mode, cancel the realign.
 	// Not sure if this is supposed to happen but since Mute/Multiply
@@ -225,7 +224,7 @@ Event* MultiplyFunction::invoke(Action* action, Loop* l)
 		if (action->down)
           em->freeEvent(realign);
 	}
-    else if (config->isEdpisms() && 
+    else if (edpisms && 
              l->getMode() == MuteMode && isMuteCancel(l)) {
         // EDPism: Multiply in Mute becomes MuteRealign
         // !! Hey what about MuteMidiStart not supporting that

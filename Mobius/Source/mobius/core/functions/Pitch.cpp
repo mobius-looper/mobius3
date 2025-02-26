@@ -23,7 +23,6 @@
 #include "../../../util/Util.h"
 #include "../../../midi/MidiByte.h"
 #include "../../../model/ParameterConstants.h"
-#include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
 #include "../../../model/TrackState.h"
 #include "../../../model/StepSequence.h"
@@ -450,7 +449,7 @@ void PitchFunction::convertAction(Action* action, Loop* l,
         change->unit == PITCH_UNIT_STEP
         && checkSpreadRange) {
 
-		int maxPitch = l->getMobius()->getConfiguration()->getSpreadRange();
+		int maxPitch = ParameterSource::getSpreadRange(l);
 		int minPitch = -maxPitch;
 		if (change->value < minPitch)
 		  change->value = minPitch;

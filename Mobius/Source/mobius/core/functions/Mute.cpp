@@ -12,7 +12,6 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
-#include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
 #include "../../../model/TrackState.h"
 
@@ -313,7 +312,7 @@ MuteFunction::MuteFunction(bool pause, bool sus, bool start, bool glob,
 Event* MuteFunction::invoke(Action* action, Loop* loop)
 {
 	Event* event = nullptr;
-    MobiusConfig* config = loop->getMobius()->getConfiguration();
+    bool edpisms = ParameterSource::isEdpisms(loop);
 
 	// !! Note how we use the static function pointer rather than checking
 	// mToggle, this is actually potentially simpler way to do function
@@ -322,7 +321,7 @@ Event* MuteFunction::invoke(Action* action, Loop* loop)
 	if (this == Mute && loop->isReset() && action->down) {
 		trace(action, loop);
 
-        if (config->isEdpisms()) {
+        if (edpisms) {
             Trace(1, "MuteFunction: Former Edpisms to change presets is gone");
             //changePreset(action, loop, false);
         }

@@ -25,7 +25,6 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
-#include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
 
 #include "../Action.h"
@@ -200,7 +199,8 @@ void SlipFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 				int msecs = ParameterSource::getSlipTime(l->getTrack());
 				float speed = l->getTrack()->getEffectiveSpeed();
 				// should we ceil()?
-				unitFrames = (long)(MSEC_TO_FRAMES(msecs) * speed);
+                int mframes = ParameterSource::msecToFrames(msecs);
+				unitFrames = (long)(mframes * speed);
 				relativeFrames = unitFrames * units;
 			}
 				break;

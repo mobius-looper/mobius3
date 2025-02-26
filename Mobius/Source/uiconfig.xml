@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <UIConfig windowWidth="1248" windowHeight="790" activeButtonSet="Default"
-          activeLayout="Default" activeBindings="2007_novation">
+          activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="172" height="40"/>
     <Element name="BeatersElement" x="514" y="137" width="108" height="32"/>

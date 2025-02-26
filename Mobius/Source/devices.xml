@@ -18,5 +18,5 @@
   <Machine hostName="frigg.lan" inputPorts="1" outputPorts="1" audioDeviceType=""
            audioInput="" inputChannels="" audioOutput="" outputChannels=""
            sampleRate="0" blockSize="0"/>
-  <PluginConfig defaultAuxInputs="0" defaultAuxOutputs="0"/>
+  <PluginConfig defaultAuxInputs="3" defaultAuxOutputs="3"/>
 </DeviceConfig>

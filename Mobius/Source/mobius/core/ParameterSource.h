@@ -11,7 +11,7 @@
 class ParameterSource
 {
   public:
-
+    
     static ParameterMuteMode getMuteMode(class Track* t);
     
     static bool isSpeedRecord(class Track* t);
@@ -72,5 +72,15 @@ class ParameterSource
     static QuantizeMode getBounceQuantize(class Track* t);
     static EmptyLoopAction getEmptyTrackAction(class Track* t);
     static EmptyLoopAction getEmptyLoopAction(class Track* t);
+
+    static bool isEdpisms(class Loop* l);
+    static int ParameterSource::getSpreadRange(class Loop* l);
+
+    // this isn't a parameter but it wraps a macro that lived in MobiusConfig
+    // which was wrong and needs to take the actual sample rate into account
+    static int msecToFrames(int msec);
+
+
+    
 };
 

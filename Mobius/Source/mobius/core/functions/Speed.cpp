@@ -21,7 +21,6 @@
 #include "../../../util/Util.h"
 #include "../../../midi/MidiByte.h"
 #include "../../../model/ParameterConstants.h"
-#include "../../../model/MobiusConfig.h"
 #include "../../../model/StepSequence.h"
 
 #include "../Action.h"
@@ -657,8 +656,8 @@ void SpeedFunction::convertAction(Action* action, Loop* l, SpeedChange* change)
     if (!change->ignore && 
         change->unit == SPEED_UNIT_STEP
         && checkSpreadRange) {
-        
-		int max = l->getMobius()->getConfiguration()->getSpreadRange();
+
+        int max = ParameterSource::getSpreadRange(l);
 		int min = -max;
 		if (change->value < min)
 		  change->value = min;

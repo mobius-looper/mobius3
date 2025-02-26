@@ -15,6 +15,7 @@
 #include <JuceHeader.h>
 
 #include "ValueSet.h"
+#include "ParameterSets.h"
 
 class Session
 {
@@ -65,8 +66,12 @@ class Session
 
         juce::OwnedArray<class SessionMidiDevice> devices;
 
+        ValueSet* getTrackOverlay();
+        void setTrackOverlay(ValueSet* set);
+
       private:
         std::unique_ptr<ValueSet> parameters;
+        ValueSet* trackOverlay = nullptr;
 
     };
 
@@ -96,6 +101,11 @@ class Session
 
     void setOldConfig(class MobiusConfig* config);
     MobiusConfig* getOldConfig();
+
+    void setParameterSets(class ParameterSets* sets);
+    class ParameterSets* getParameterSets();
+    ValueSet* getSessionOverlay();
+    void resolveOverlays();
 
     /**
      * The session version is a transient number set by Supervisor
@@ -182,6 +192,10 @@ class Session
 
     class MobiusConfig* oldConfig = nullptr;
 
+    // copy of the system ParameterSets, we own this in the kernel
+    std::unique_ptr<class ParameterSets> parameterSets;
+    class ValueSet* sessionOverlay = nullptr;
+  
     // !! make these go away
     // the numbers should be determined by the Track objects
     // unfortunately for older sparse Sessions we had counts that didn't

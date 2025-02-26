@@ -22,7 +22,6 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
-#include "../../../model/MobiusConfig.h"
 #include "../../../model/SymbolId.h"
 
 #include "../Action.h"
@@ -577,7 +576,8 @@ long WindowFunction::getMsecFrames(int msecs)
     float rate = mLoop->getTrack()->getEffectiveSpeed();
 
     // should we ceil()?
-   long frames = (long)(MSEC_TO_FRAMES(msecs) * rate);
+    int mframes = ParameterSource::msecToFrames(msecs);
+    long frames = (long)(mframes * rate);
 
    return frames;
 }
