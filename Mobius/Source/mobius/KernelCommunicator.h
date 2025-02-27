@@ -42,7 +42,6 @@ typedef enum {
 
     MsgNone = 0,
     MsgConfigure,
-    MsgSession,
     MsgAction,
     MsgSamples,
     MsgScripts,
@@ -62,8 +61,7 @@ typedef enum {
 typedef union {
 
     void* pointer;
-    class MobiusConfig* configuration;
-    class Session* session;
+    class ConfigPayload* payload;
     class UIAction* action;
     class SampleManager* samples;
     class Scriptarian* scripts;

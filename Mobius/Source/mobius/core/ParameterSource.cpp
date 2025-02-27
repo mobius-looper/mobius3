@@ -312,3 +312,34 @@ int ParameterSource::msecToFrames(int msec)
     return MSEC_TO_FRAMES(msec);
 }
     
+bool ParameterSource::isAutoFeedbackReduction(Loop* l)
+{
+    Mobius* m = l->getMobius();
+    MobiusConfig* c = m->getConfiguration();
+    return c->isEdpisms();
+}
+
+int ParameterSource::getNoiseFloor(Loop* l)
+{
+    Mobius* m = l->getMobius();
+    MobiusConfig* c = m->getConfiguration();
+    int floor = c->getNoiseFloor();
+    if (floor == 0)
+      floor = DEFAULT_NOISE_FLOOR;
+    return floor;
+}
+
+bool ParameterSource::isIsolateOverdubs(Track* t)
+{
+    Mobius* m = t->getMobius();
+    MobiusConfig* c = m->getConfiguration();
+    return c->isIsolateOverdubs();
+}
+
+bool ParameterSource::isSaveLayers(Track* t)
+{
+    Mobius* m = t->getMobius();
+    MobiusConfig* c = m->getConfiguration();
+    return c->isSaveLayers();
+}
+

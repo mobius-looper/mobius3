@@ -52,7 +52,7 @@ class ProjectSegment {
   public:
 
     ProjectSegment();
-    ProjectSegment(class MobiusConfig* config, class Segment* src);
+    ProjectSegment(class Segment* src);
     ProjectSegment(class XmlElement* e);
     ~ProjectSegment();
 
@@ -102,7 +102,7 @@ class ProjectLayer {
 
     ProjectLayer();
     ProjectLayer(class XmlElement* e);
-    ProjectLayer(class MobiusConfig* config, class Project* p, class Layer* src);
+    ProjectLayer(class Project* p, class Layer* src);
     ProjectLayer(class Audio* src);
     ~ProjectLayer();
 
@@ -195,7 +195,7 @@ class ProjectLoop {
 
 	ProjectLoop();
 	ProjectLoop(class XmlElement* e);
-	ProjectLoop(class MobiusConfig* config, class Project* proj, 
+	ProjectLoop(class Project* proj, 
 				class Loop* loop);
 	~ProjectLoop();
 
@@ -254,7 +254,7 @@ class ProjectTrack {
 
 	ProjectTrack();
 	ProjectTrack(class XmlElement* e);
-	ProjectTrack(class MobiusConfig* config, class Project* proj, 
+	ProjectTrack(class Project* proj, 
 				 class Track* track);
 	~ProjectTrack();
 

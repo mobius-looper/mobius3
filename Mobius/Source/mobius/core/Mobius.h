@@ -399,7 +399,11 @@ class Mobius
                               int followerNumber, int eventId);
     
     void followerEvent(class Loop* l, class Event* e);
-    
+
+    //////////////////////////////////////////////////////////////////////
+    // Redirects for old Parameters
+    //////////////////////////////////////////////////////////////////////
+
   protected:
 
   private:

@@ -204,7 +204,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     // old configuration editor interfaces
     void presetEditorSave(class Preset* newList);
-    void setupEditorSave(class Setup* newList);
     void bindingEditorSave(class BindingSet* newList);
     void groupEditorSave(juce::Array<class GroupDefinition*>& newList);
     void sampleEditorSave(class SampleConfig* newConfig);

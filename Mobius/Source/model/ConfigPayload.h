@@ -16,9 +16,9 @@ class ConfigPayload
 {
   public:
 
-    Session* session = nullptr;
-    MobiusConfig* config = nullptr;
-    ParameterSets* parameters = nullptr;
+    class Session* session = nullptr;
+    class MobiusConfig* config = nullptr;
+    class ParameterSets* parameters = nullptr;
 
     // todo: eventually split bindings out
     // this may be where FunctionProperties need to live too

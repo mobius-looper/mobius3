@@ -40,9 +40,10 @@
 #include "../util/Util.h"
 #include "../util/StructureDumper.h"
 
+#include "../model/ConfigPayload.h"
 #include "../model/MobiusConfig.h"
-#include "../model/Setup.h"
-#include "../model/Preset.h"
+#include "../model/Session.h"
+#include "../model/ParameterSets.h"
 #include "../model/UIAction.h"
 #include "../model/Query.h"
 #include "../model/UIEventType.h"
@@ -199,42 +200,20 @@ void MobiusShell::shutdown()
  * update: Shell no longer has any need for either of these two
  * objects, one copy is passed through to the kernel.
  */
-void MobiusShell::initialize(Session* s, MobiusConfig* c)
+void MobiusShell::initialize(ConfigPayload* p)
 {
     Trace(2, "MobiusShell::initialize\n");
     
-    // initialization mess
-    // to do what it does, the Kernel needs to start with
-    //   shell - given at construction
-    //   communicator - given at construction
-    //   container - given here
-    //   session/config - given here the first time, then passed with a message
-    //   audioPool - immediately calls back to getAudioPool
-    //
-    // most if not all of this could done the same way, either
-    // push it all down once in initialize() or have it pull
-    // it one at a time inside initialize, can do some things
-    // in the constructor, but not all like audioPool and config
-
-    Session* kernelSession = new Session(s);
-    MobiusConfig* kernelConfig = c->clone();
-
-    kernel.initialize(container, kernelSession, kernelConfig);
+    kernel.initialize(container, p);
 }
 
 /**
  * Reconfigure the engine after MobiusConfig has been edited.
  */
-void MobiusShell::reconfigure(Session* s, MobiusConfig* c)
+void MobiusShell::reconfigure(ConfigPayload* p)
 {
     Trace(2, "MobiusShell::reconfigure\n");
-    
-    Session* kernelSession = new Session(s);
-    MobiusConfig* kernelConfig = c->clone();
-
-    // hack to get them both passed in one message
-    kernelSession->setOldConfig(kernelConfig);
-    sendKernelSession(kernelSession);
+    sendKernelConfigure(p);
 }
 
 /**
@@ -486,23 +465,12 @@ UIActionPool* MobiusShell::getActionPool()
  * Send the kernel its copy of the MobiusConfig
  * The object is already a copy
  */
-void MobiusShell::sendKernelConfigure(MobiusConfig* config)
+void MobiusShell::sendKernelConfigure(ConfigPayload* p)
 {
     KernelMessage* msg = communicator.shellAlloc();
     if (msg != nullptr) {
         msg->type = MsgConfigure;
-        msg->object.configuration = config;
-        communicator.shellSend(msg);
-    }
-    // else, pool exhaustion, already traced
-}
-
-void MobiusShell::sendKernelSession(Session* ses)
-{
-    KernelMessage* msg = communicator.shellAlloc();
-    if (msg != nullptr) {
-        msg->type = MsgSession;
-        msg->object.session = ses;
+        msg->object.payload = p;
         communicator.shellSend(msg);
     }
     // else, pool exhaustion, already traced
@@ -546,16 +514,14 @@ void MobiusShell::consumeCommunications()
 
             case MsgConfigure: {
                 // kernel is done with the previous configuration
-                delete msg->object.configuration;
-            }
-                break;
-                
-            case MsgSession: {
-                // kernel is done with the previous configuration
-                Session* s = msg->object.session;
-                MobiusConfig* c = s->getOldConfig();
-                delete c;
-                delete s;
+                // this may be sparse, delete whatever was returned
+                ConfigPayload* p = msg->object.payload;
+                if (p != nullptr) {
+                    delete p->session;
+                    delete p->config;
+                    delete p->parameters;
+                    delete p;
+                }
             }
                 break;
                 

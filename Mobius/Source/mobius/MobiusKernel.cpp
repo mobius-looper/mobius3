@@ -8,8 +8,10 @@
 #include "../util/Util.h"
 #include "../util/StructureDumper.h"
 
+#include "../model/ConfigPayload.h"
 #include "../model/MobiusConfig.h"
 #include "../model/Session.h"
+#include "../model/ParameterSets.h"
 #include "../model/UIAction.h"
 #include "../model/Scope.h"
 #include "../model/Query.h"
@@ -114,6 +116,7 @@ MobiusKernel::~MobiusKernel()
 
     // we do not own shell, communicator, or container
     // use a unique_ptr here!!
+    delete parameters;
     delete configuration;
     delete session;
 
@@ -133,7 +136,7 @@ MobiusKernel::~MobiusKernel()
  * by a later MsgConfigure
  *
  */
-void MobiusKernel::initialize(MobiusContainer* cont, Session* ses, MobiusConfig* config)
+void MobiusKernel::initialize(MobiusContainer* cont, ConfigPayload* p)
 {
     Trace(2, "MobiusKernel::initialize\n");
     
@@ -141,11 +144,19 @@ void MobiusKernel::initialize(MobiusContainer* cont, Session* ses, MobiusConfig*
     container = cont;
     audioPool = shell->getAudioPool();
     actionPool = shell->getActionPool();
-    session = ses;
-    configuration = config;
+
+    // transfer the payload objects and discard it
+    // ugly
+    session = p->session;
+    p->session = nullptr;
+    configuration = p->config;
+    p->config = nullptr;
+    parameters = p->parameters;
+    p->parameters = nullptr;
+    delete p;
 
     scriptUtil.initialize(this);
-    scriptUtil.configure(config, ses);
+    scriptUtil.configure(configuration, session);
 
     // register ourselves as the audio listener
     // unclear when things start pumping in, but do this last
@@ -162,17 +173,17 @@ void MobiusKernel::initialize(MobiusContainer* cont, Session* ses, MobiusConfig*
     installSymbols();
 
     // supposed to be the same now
-    if (config->getCoreTracksDontUseThis() != ses->getAudioTracks())
+    if (configuration->getCoreTracksDontUseThis() != session->getAudioTracks())
       Trace(1, "MobiusKernel: Session audio tracks not right");
 
     mTracks.reset(new TrackManager(this));
-    mTracks->initialize(ses, configuration, mCore);
+    mTracks->initialize(session, configuration, mCore);
 
     notifier.initialize(this, mTracks.get());
-    notifier.configure(ses);
+    notifier.configure(session);
 
     syncMaster.initialize(this, mTracks.get());
-    syncMaster.loadSession(ses);
+    syncMaster.loadSession(session);
 }
 
 void MobiusKernel::propagateSymbolProperties()
@@ -349,7 +360,6 @@ void MobiusKernel::doMessage(KernelMessage* msg)
 {
     switch (msg->type) {
         case MsgConfigure: reconfigure(msg); break;
-        case MsgSession: loadSession(msg); break;
         case MsgSamples: installSamples(msg); break;
         case MsgScripts: installScripts(msg); break;
         case MsgBinderator: installBinderator(msg); break;
@@ -369,86 +379,75 @@ void MobiusKernel::doMessage(KernelMessage* msg)
 }
 
 /**
- * Process a MsgConfigure message containing
- * a change to the MobiusConfig.  This is a copy
- * we get to retain.  Return the old one back to the
- * shell so it can be deleted.
+ * Process a MsgConfigure message containing configuration object
+ * changes. This may be sparse.  Take ownership of what was passed
+ * but keep the others.  Return the old ones for reclamation.
  *
- * NOTE: It would be tempting here to reuse the incomming
- * message for the return, but the consume loop wants to free that
- * not really important and I don't think worth messing with different
- * styles of consumption.
+ * In current usage, this expected to have both a Session and a MobiusConfig
+ * when the Session is edited.  The MobiusConfig will have been derived from
+ * the Session since we don't directly edit it any more.  This will go away once
+ * MobiusConfig dies.
  *
- * update: This is expected now that we package the Session and
- * MobiusConfig together.  This will only become useful again if
- * you get to a point where sparse configs can be sent down with
- * just presets, groups, etc.
+ * The only thing independent is ParameterSets which can come down on it's own.
+ *
  */
 void MobiusKernel::reconfigure(KernelMessage* msg)
 {
-    Trace(1, "MobiusKernel: Not expecting an old MsgConfiguration");
-    
-    MobiusConfig* old = configuration;
+    ConfigPayload* p = msg->object.payload;
 
-    // take the new one
-    configuration = msg->object.configuration;
-    
-    // reuse the request message to respond with the
-    // old one to be deleted
-    msg->object.configuration = old;
+    // swap the objects in the payload
+    // ugly
 
-    // send the old one back
-    communicator->kernelSend(msg);
+    Session* newSession = nullptr;
+    MobiusConfig* newConfig = nullptr;
+    ParameterSets* newParams = nullptr;
 
-    // sigh, the two new config objects are sent down one at a time,
-    // should be together
-    scriptUtil.configure(configuration, session);
-
-    // this is NOT where track configuration comes in
-    mCore->reconfigure(configuration);
-
-    mTracks->reconfigure(configuration);
-}
-
-/**
- * New post-initialize interface for adapting to Session changes.
- */
-void MobiusKernel::loadSession(KernelMessage* msg)
-{
-    Session* old = session;
-
-    // take the new one
-    session = msg->object.session;
-
-    MobiusConfig* newConfig = session->getOldConfig();
-    if (newConfig == nullptr) {
-        Trace(1, "MobiusKernel: Expecting to receive both a Session and MobiusConfig");
-        old->setOldConfig(nullptr);
+    if (p->session != nullptr) {
+        newSession = p->session;
+        p->session = session;
+        session = newSession;
     }
-    else {
-        old->setOldConfig(configuration);
+
+    if (p->config != nullptr) {
+        newConfig = p->config;
+        p->config = configuration;
         configuration = newConfig;
-        session->setOldConfig(nullptr);
-        
-        // do this first so the Presets can get updated before we reconfigure the tracks
+    }
+
+    if (p->parameters != nullptr) {
+        newParams = p->parameters;
+        p->parameters = parameters;
+        parameters = newParams;
+    }
+
+    if (newSession != nullptr || newConfig != nullptr) {
+
+        // the usual case, the session was edited
+        // expecting both of these until MobiusConfig dies
+        if (newSession == nullptr || newConfig == nullptr)
+          Trace(1, "MobiusKernel: Missing Session or MobiusConfig combo");
+
         mCore->reconfigure(configuration);
+        
+        // why the hell does this need both?
+        scriptUtil.configure(configuration, session);
+
+        // give TM the new MobiusConfig first to refresh some unfortunate caches
+        mTracks->reconfigure(configuration);
+
+        // this will do the second call to core to configureTracks
+        mTracks->loadSession(session);
+    
+        notifier.configure(session);
+        syncMaster.loadSession(session);
+    }
+
+    if (newParams != nullptr) {
+        // parameter sets edited too
+        Trace(1, "MobiusKernel: Need to deal with ParameterSets");
     }
     
-    scriptUtil.configure(configuration, session);
-
-
-    // give TM the new MobiusConfig first to refresh some unfortunate caches
-    mTracks->reconfigure(configuration);
-
-    // this will do the second call to core to configureTracks
-    mTracks->loadSession(session);
-    
-    notifier.configure(session);
-    syncMaster.loadSession(session);
-
-    // reuse the request message to respond with the
-    // old one to be deleted
-    msg->object.session = old;
+    // send the old ones back for reclamation
     communicator->kernelSend(msg);
 }
 

@@ -6,7 +6,6 @@
 
 #include "../../model/UIEventType.h"
 #include "../../model/ModeDefinition.h"
-#include "../../model/MobiusConfig.h"
 #include "../../model/Setup.h"
 
 #include "Event.h"

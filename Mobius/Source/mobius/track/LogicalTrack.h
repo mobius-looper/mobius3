@@ -194,6 +194,9 @@ class LogicalTrack
     // this is everything EXCEPT the sync parameters above
     class MslBinding* bindings = nullptr;
 
+    // the parameter includes specified in the Session::Track
+    ValueSet* parameterOverlay = nullptr;
+
     /**
      * Kludge until the Session migration is complete.
      * Fall back to the old Preset model.

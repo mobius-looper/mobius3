@@ -30,9 +30,9 @@ class MobiusShell : public MobiusInterface
     // MobiusInterface
     void setListener(class MobiusListener* l) override;
     void setMidiListener(class MobiusMidiListener* l) override;
-    void initialize(class Session* session, class MobiusConfig* config) override;
+    void initialize(class ConfigPayload* payload) override;
     void propagateSymbolProperties() override;
-    void reconfigure(class Session* session, class MobiusConfig* config) override;
+    void reconfigure(class ConfigPayload* payload) override;
     void initializeState(class SystemState* state) override;
     void requestState(class SystemState* state) override;
     void refreshPriorityState(class PriorityState* state) override;
@@ -155,8 +155,7 @@ class MobiusShell : public MobiusInterface
     void initializeScripts();
     
     void consumeCommunications();
-    void sendKernelConfigure(class MobiusConfig* config);
-    void sendKernelSession(class Session* s);
+    void sendKernelConfigure(class ConfigPayload* payload);
     void sendKernelBinderator(class Binderator* b);
     void sendKernelAction(UIAction* action);
     void doKernelAction(UIAction* action);

@@ -33,8 +33,6 @@
 #include "../../util/XmlBuffer.h"
 #include "../../util/XomParser.h"
 
-#include "../../model/MobiusConfig.h"
-#include "../../model/Setup.h"
 #include "../../model/UserVariable.h"
 
 #include "../AudioPool.h"
@@ -45,6 +43,7 @@
 #include "Layer.h"
 #include "Segment.h"
 #include "Track.h"
+#include "ParameterSource.h"
 
 #include "Project.h"
 
@@ -116,9 +115,8 @@ ProjectSegment::ProjectSegment()
 	init();
 }
 
-ProjectSegment::ProjectSegment(MobiusConfig* config, Segment* src)
+ProjectSegment::ProjectSegment(Segment* src)
 {
-    (void)config;
 	init();
 
 	mOffset = src->getOffset();
@@ -279,7 +277,7 @@ ProjectLayer::ProjectLayer(XmlElement* e)
 	parseXml(e);
 }
 
-ProjectLayer::ProjectLayer(MobiusConfig* config, Project* p, Layer* l)
+ProjectLayer::ProjectLayer(Project* p, Layer* l)
 {
     (void)p;
 	init();
@@ -335,7 +333,7 @@ ProjectLayer::ProjectLayer(MobiusConfig* config, Project* p, Layer* l)
 
 		for (Segment* seg = l->getSegments() ; seg != nullptr ; 
 			 seg = seg->getNext()) {
-			ProjectSegment* ps = new ProjectSegment(config, seg);
+			ProjectSegment* ps = new ProjectSegment(seg);
 			add(ps);
 		}
 	}  	
@@ -649,7 +647,7 @@ ProjectLoop::ProjectLoop(XmlElement* e)
 	parseXml(e);
 }
 
-ProjectLoop::ProjectLoop(MobiusConfig* config, Project* p, Loop* l)
+ProjectLoop::ProjectLoop(Project* p, Loop* l)
 {
 	init();
 
@@ -661,8 +659,8 @@ ProjectLoop::ProjectLoop(MobiusConfig* config, Project* p, Loop* l)
 
 	Layer* layer = l->getPlayLayer();
 	while (layer != nullptr) {
-		add(new ProjectLayer(config, p, layer));
-		if (config->isSaveLayers())
+		add(new ProjectLayer(p, layer));
+		if (ParameterSource::isSaveLayers(l->getTrack()))
 		  layer = layer->getPrev();
 		else
 		  layer = nullptr;
@@ -819,7 +817,7 @@ ProjectTrack::ProjectTrack(XmlElement* e)
 	parseXml(e);
 }
 
-ProjectTrack::ProjectTrack(MobiusConfig* config, Project* p, Track* t)
+ProjectTrack::ProjectTrack(Project* p, Track* t)
 {
 	int i;
 
@@ -851,7 +849,7 @@ ProjectTrack::ProjectTrack(MobiusConfig* config, Project* p, Track* t)
 
 	for (i = 0 ; i < last ; i++) {
 		Loop* l = t->getLoop(i);
-		ProjectLoop* pl = new ProjectLoop(config, p, l);
+		ProjectLoop* pl = new ProjectLoop(p, l);
 		if (l == t->getLoop())
 		  pl->setActive(true);
 		add(pl);
@@ -1382,10 +1380,6 @@ void Project::setTracks(Mobius* m)
 {
 	int i;
 
-	// todo: Project needs to support a lot of save options
-	MobiusConfig* config = m->getConfiguration();
-
-
 	int last = m->getTrackCount();
 
 	// suppress empty tracks at the end (unless they're using
@@ -1399,7 +1393,7 @@ void Project::setTracks(Mobius* m)
 
 	for (i = 0 ; i < last ; i++) {
 		Track* t = m->getTrack(i);
-		ProjectTrack* pt = new ProjectTrack(config, this, t);
+		ProjectTrack* pt = new ProjectTrack(this, t);
 		if (t == m->getTrack())
 		  pt->setActive(true);
 		add(pt);

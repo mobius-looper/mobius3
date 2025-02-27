@@ -80,7 +80,10 @@ class ParameterSource
     // which was wrong and needs to take the actual sample rate into account
     static int msecToFrames(int msec);
 
-
+    static bool isAutoFeedbackReduction(class Loop* l);
+    static int getNoiseFloor(class Loop* l);
+    static bool isIsolateOverdubs(class Track* t);
+    static bool isSaveLayers(class Track* t);
     
 };
 

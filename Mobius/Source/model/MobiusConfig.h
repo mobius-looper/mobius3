@@ -87,17 +87,6 @@
 #define DEFAULT_EVENT_GRAVITY_FRAMES MSEC_TO_FRAMES(DEFAULT_EVENT_GRAVITY_MSEC)
 
 /**
- * The EDP automatically applies around a 5% feedback reduction when
- * overdubbing and feedback is at 100%, in order to help avoid overload.
- * 95% of 128 is 121.6.  This is also the amount of feedback reduction
- * we have to go beyond in order to force a layer shift if no new content
- * was overdubbed.
- *
- * !! Should be in global configuration
- */
-#define AUTO_FEEDBACK_LEVEL 121
-
-/**
  * The maximum number of track groups we allow.
  * !! Should be in global configuration
  */

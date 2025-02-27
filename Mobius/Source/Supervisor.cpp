@@ -16,6 +16,7 @@
 #include "util/Util.h"
 #include "util/List.h"
 
+#include "model/ConfigPayload.h"
 #include "model/MobiusConfig.h"
 #include "model/Setup.h"
 #include "model/Session.h"
@@ -1185,21 +1186,6 @@ void Supervisor::presetEditorSave(Preset* newList)
     updateMobiusConfig();
 }
 
-void Supervisor::setupEditorSave(Setup* newList)
-{
-    // should no longer be using this
-    Trace(1, "Supervisor: You're still using the old Setup editor");
-    
-    MobiusConfig* master = getOldMobiusConfig();
-    master->setSetups(newList);
-    
-    // this flag is necessary to get the engine to pay attention
-    master->setupsEdited = true;
-
-    // continue the old way for a little
-    updateMobiusConfig();
-}
-
 void Supervisor::bindingEditorSave(BindingSet* newList)
 {
     MobiusConfig* master = getOldMobiusConfig();
@@ -1258,6 +1244,12 @@ void Supervisor::upgradePanelSave()
  *
  * It's kind of kludgey but gets the job done.  Once the changes have been
  * propagated clear the flags so we don't do it again.
+ *
+ * update: This is all being phased out for the Session
+ * The only thing remaining in MobiusConfig that is important is the Bindings
+ * and the Presets.
+ *
+ * Presets still need to be sent down.
  */
 void Supervisor::updateMobiusConfig()
 {
@@ -1291,9 +1283,14 @@ void Supervisor::sendInitialMobiusConfig()
     // when the engine finally gets around to dealing with it
     ses->setVersion(++sessionVersion);
 
-    mobius->initialize(ses, synth);
-    
-    delete synth;
+    // make a payload
+    // everything in it is a copy that can be owned by the engine
+    ConfigPayload* payload = new ConfigPayload();
+    payload->session = new Session(ses);
+    payload->config = synth;
+    payload->parameters = new ParameterSets(getParameterSets());
+
+    mobius->initialize(payload);
 }
 
 /**
@@ -1301,6 +1298,7 @@ void Supervisor::sendInitialMobiusConfig()
  * was made to MobiusConfig.
  *
  * Synthesize the merged MobiusConfig and send it down.
+ * !! synthesis is temporary and goes away after Preset and MobiusConfig die
  */
 void Supervisor::sendModifiedMobiusConfig()
 {
@@ -1310,8 +1308,16 @@ void Supervisor::sendModifiedMobiusConfig()
     // bump the session version to trigger a full refresh of the view
     // when the engine finally gets around to dealing with it
     ses->setVersion(++sessionVersion);
+
+    // make a payload
+    // everything in it is a copy that can be owned by the engine
+    // for changes to the Presets and GroupDefinitions don't really
+    // need to send down a new Session, but they're expected to go together
+    ConfigPayload* payload = new ConfigPayload();
+    payload->session = new Session(ses);
+    payload->config = synth;
     
-    mobius->reconfigure(ses, synth);
+    mobius->reconfigure(payload);
 
     // clear speical triggers for the engine now that it is done
     MobiusConfig* config = getOldMobiusConfig();
@@ -1458,11 +1464,18 @@ void Supervisor::updateParameterSets()
     if (parameterSets) {
         fileManager.writeParameterSets(parameterSets.get());
 
-        // !! todo: lots of propagation issues
-        // sets that were activated need to be sent down to core
-        // to get the new values
-        //
-        // if sets were added or removed this could impact bindings
+        // nothing in ParameterSets is used by the UI, just send
+        // it down to the kernel
+
+        ConfigPayload* p = new ConfigPayload();
+        p->parameters = new ParameterSets(parameterSets.get());
+        mobius->reconfigure(p);
+
+        // todo: if sets were added or removed, then this could
+        // impact activation bindings
+
+        // todo: if sets were deleted this could make references
+        // in the Session obsolete, could clean them up now
     }
 }
 

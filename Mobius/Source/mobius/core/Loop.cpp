@@ -259,7 +259,9 @@ Layer* Loop::getMuteLayer()
  */
 void Loop::updateConfiguration(MobiusConfig* config)
 {
-	mAutoFeedbackReduction = config->isAutoFeedbackReduction();
+    (void)config;  // get rid of this parameter
+    
+	mAutoFeedbackReduction = ParameterSource::isAutoFeedbackReduction(this);
 
     if (mMode == ResetMode) {
         // formerly did this based on InterfaceMode=Delay which
@@ -2087,10 +2089,8 @@ bool Loop::isLayerChanged(Layer* layer, bool checkAutoUndo)
 			short max = SampleFloatToInt16(layer->getMaxSample());
 			if (max < 0)
 			  max = -max;
-			MobiusConfig* c = mMobius->getConfiguration();
-            int noiseFloor = c->getNoiseFloor();
-            if (noiseFloor == 0) noiseFloor = DEFAULT_NOISE_FLOOR;
-			changed = (max > c->getNoiseFloor());
+            int noiseFloor = ParameterSource::getNoiseFloor(this);
+			changed = (max > noiseFloor);
 		}
 	}
 	return changed;

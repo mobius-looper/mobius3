@@ -68,6 +68,19 @@
  */
 #define DEFAULT_TRACK_COUNT 8
 
+/**
+ * Formerly in MobiusConfig
+ *
+ * The EDP automatically applies around a 5% feedback reduction when
+ * overdubbing and feedback is at 100%, in order to help avoid overload.
+ * 95% of 128 is 121.6.  This is also the amount of feedback reduction
+ * we have to go beyond in order to force a layer shift if no new content
+ * was overdubbed.
+ *
+ * !! Should be in global configuration
+ */
+#define AUTO_FEEDBACK_LEVEL 121
+
 //////////////////////////////////////////////////////////////////////
 //
 // Things formerly in MobiusConfig

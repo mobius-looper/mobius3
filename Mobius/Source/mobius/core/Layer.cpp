@@ -327,7 +327,6 @@
 #include "Layer.h"
 #include "Loop.h"
 #include "Mobius.h"
-#include "../../model/MobiusConfig.h"
 #include "../../model/TrackState.h"
 #include "Mode.h"
 #include "Project.h"
@@ -4929,11 +4928,9 @@ Layer* LayerPool::newLayer(Loop* loop)
 	if (loop != nullptr) {
         layer->setLoop(loop);
 
-		Mobius* m = loop->getMobius();
-		MobiusConfig* c = m->getConfiguration();
         // NOTE: the Isolated Overdub parameter was experimental and no
         // longer exposed
-		layer->mIsolatedOverdub = c->isIsolateOverdubs();
+		layer->mIsolatedOverdub = ParameterSource::isIsolateOverdubs(loop->getTrack());
         layer->mNoFlattening = ParameterSource::isNoLayerFlattening(loop->getTrack());
 	}
 

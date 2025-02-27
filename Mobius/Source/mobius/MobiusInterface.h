@@ -102,19 +102,21 @@ class MobiusInterface {
      * Initialize the engine for the first time.
      * Must be called before the audio thread is active.
      *
-     * Ownership of the MobiusConfig is retained by the caller.
+     * Ownership of all objects in the payload transfers to the engine.
      *
      * todo: the engine may want to return error messages if it doesn't like
      * something about the configuration
      */
-    virtual void initialize(class Session* session, class MobiusConfig* config) = 0;
+    virtual void initialize(class ConfigPayload* payload) = 0;
 
     /**
      * Reconfigure the Mobius engine.
      * Called after the engine has been running and the configuration
      * was modified by the UI.
+     *
+     * May have a partial payload.
      */
-    virtual void reconfigure(class Session* session, class MobiusConfig* config) =  0;
+    virtual void reconfigure(class ConfigPayload* payload) =  0;
 
     /**
      * Newer alternative to some things that used to be in MobiusConfig
@@ -356,7 +358,7 @@ class MobiusContainer
     /**
      * Return true if the Mobius engine is running as a plugin.
      * Used only by Track to select which audio stream ports
-     * to use from the two sets in MobiusConfig.  The ports to use can be different
+     * to use from the two sets in the Session.  The ports to use can be different
      * between standalone and plugin.
      */
     virtual bool isPlugin() = 0;
