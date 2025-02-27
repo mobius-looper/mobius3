@@ -194,8 +194,9 @@ class LogicalTrack
     // this is everything EXCEPT the sync parameters above
     class MslBinding* bindings = nullptr;
 
-    // the parameter includes specified in the Session::Track
-    ValueSet* parameterOverlay = nullptr;
+    // the parameter includes specified in the Session and Session::Track
+    ValueSet* trackOverlay = nullptr;
+    ValueSet* sessionOverlay = nullptr;
 
     /**
      * Kludge until the Session migration is complete.
@@ -217,6 +218,7 @@ class LogicalTrack
     bool visited = false;
     bool advanced = false;
     
+    void resolveParameterOverlays();
     void cacheSyncParameters();
 };
 

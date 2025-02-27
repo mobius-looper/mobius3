@@ -959,7 +959,6 @@ void MidiTrack::doParameter(UIAction* a)
         case ParamPan: pan = a->value; break;
             
         default:
-            logicalTrack->bindParameter(a);
             break;
     }
 }

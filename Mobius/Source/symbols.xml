@@ -200,7 +200,12 @@ Once those models are fully converted, these symbols can be removed.
        ============================================================================ -->
 
   <!-- These are all effectively Track scope parameters.  They will remain in the Preset
-       until that is converted to use Session tracks -->
+       until that is converted to use Session tracks
+       Symbolizer will make all ScopePreset parameters queryable by default.
+       To turn that off put a query='false' attribute in them.
+
+       To be queryable it also must not be type='string'
+  -->
 
   <ParameterScope name='preset'>
      
@@ -228,9 +233,12 @@ Once those models are fully converted, these symbols can be removed.
                valueLabels='None,Cancel Current Mode,Cancel and Wait'
                tree='Switch'/>
 
+    <!-- this one actually needs to go away, it's more a more of a track configuration
+         parameter like ports that shouldn't jump around -->
     <Parameter name='loopCount' options='dynamic,noBinding'
                codeName='Loops'
-               low='1' high='32'/>
+               low='1' high='32'
+               query='false'/>
     
     <Parameter name='muteMode' values='continue,start,pause'
                tree='Functions'/>
@@ -294,11 +302,13 @@ Once those models are fully converted, these symbols can be removed.
 
     <Parameter name='switchVelocity' type='bool' tree='Switch'/>
 
+    <!-- these are more like loopCount and don't need to be queryable -->
     <Parameter name='maxUndo' options='noBinding' tree='General'/>
     <Parameter name='maxRedo' options='noBinding' tree='General'/>
     
     <Parameter name='noFeedbackUndo' type='bool' options='noBinding' tree='General'/>
-    <Parameter name='noLayerFlattening' type='bool' options='noBinding' tree='Advanced'/>
+    <Parameter name='noLayerFlattening' type='bool' options='noBinding' tree='Advanced'
+               query='false'/>
     
     <Parameter name='speedSequence' type='string' options='noBinding' tree='Effects'/>
     <Parameter name='speedShiftRestart' type='bool' options='noBinding' tree='Effects'/>

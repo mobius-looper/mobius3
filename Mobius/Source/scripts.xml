@@ -132,6 +132,8 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\rectap.mos" name="Record/OverDub/Reset"
             added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\globalstop.msl" name="Global Stop"
+            added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="frigg.lan">

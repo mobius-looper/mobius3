@@ -633,16 +633,14 @@ void TrackManager::doActivation(UIAction* src)
 {
     juce::String name = src->symbol->name;
     if (name.startsWith(Symbol::ActivationPrefixSetup)) {
+        // should no longer see these
+        // Session activations should be handled at a higher level
+        Trace(1, "TrackManager: Received Setup Activation action");
         // it doesn't matter what track this goes to
         audioEngine->doAction(src);
         actionPool->checkin(src);
     }
     else if (name.startsWith(Symbol::ActivationPrefixPreset)) {
-        // technically we should keep these out of MIDI tracks if they're
-        // included due to focus or group membership, it's okay to leave
-        // them in as long as they ignore the activation request without
-        // whining about it in the log, ideally should pass "doMidi and doAudio"
-        // flags to replicateAction
         UIAction* actions = replicateAction(src);
         // don't need results on these
         ActionResult results;

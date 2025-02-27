@@ -122,6 +122,18 @@ void Symbolizer::initialize()
 
     // temporary for ConfigEditors, verify that the definitions match
     installOldDefinitions();
+
+    // assign indexes
+    SymbolTable* table = provider->getSymbols();
+    juce::OwnedArray<Symbol>& list = table->getSymbols();
+    int index = 0;
+    for (auto s : list) {
+        if (s->parameterProperties != nullptr && s->parameterProperties->queryable) {
+            s->parameterProperties->index = index;
+            index++;
+        }
+    }
+    Trace(2, "Symboliszer: There are %d queryable parameter symbols", index);
 }
 
 /**
@@ -483,6 +495,17 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
 
         s->treePath = el->getStringAttribute("tree");
         s->treeInclude = el->getStringAttribute("treeInclude");
+
+        if (el->hasTagName("query")) {
+            // if you bothered to include the attribute, it wins
+            props->queryable = el->getBoolAttribute("query");
+        }
+        else if (scope == ScopePreset) {
+            // assume all ScopePreset parameters are queryable, don't like having
+            // to rely on Scope for this, but it's a shorthand to avoid needing
+            // to put query='true' on all of them
+            props->queryable = true;
+        }
         
         parseTrackTypes(el, s);
     }

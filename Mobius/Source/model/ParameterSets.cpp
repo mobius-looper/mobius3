@@ -50,3 +50,12 @@ ValueSet* ParameterSets::find(juce::String name)
     }
     return found;
 }
+
+ValueSet* ParameterSets::getByOrdinal(int ordinal)
+{
+    ValueSet* found = nullptr;
+    if (ordinal >= 0 && ordinal < sets.size())
+      found = sets[ordinal];
+    return found;
+}
+

@@ -19,6 +19,21 @@ class ParameterProperties
     ~ParameterProperties() {}
 
     /**
+     * True if this parameter may be accessed with a Query
+     * When true the index is used to determine the parameter storage location
+     * in the kernel.
+     */
+    bool queryable = false;
+
+    /**
+     * The internal index of this parameter.
+     * These are assigned after the symbol table is fully populated with
+     * stock symbols and are used as array indexes into the kernel track's
+     * parameter array.
+     */
+    int index = 0;
+
+    /**
      * Don't need a name since we're always attached to a symbol, but
      * we can allow an alternate display name.
      */

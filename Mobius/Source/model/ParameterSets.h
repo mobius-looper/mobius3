@@ -23,5 +23,6 @@ class ParameterSets
     juce::String toXml();
 
     class ValueSet* find(juce::String name);
+    class ValueSet* getByOrdinal(int ordinal);
     
 };

@@ -351,6 +351,8 @@ bool Supervisor::start()
     scriptClerk.initialize();
 
     scriptUtil.initialize(this);
+    // supreme hate for how this is working
+    scriptUtil.configure(mobiusConfig.get(), session.get());
 
     // open MIDI devices before Mobius so MidiTracks can resolve device
     // names in the session to device ids
@@ -1323,8 +1325,6 @@ void Supervisor::sendModifiedMobiusConfig()
     MobiusConfig* config = getOldMobiusConfig();
     config->setupsEdited = false;
     config->presetsEdited = false;
-
-    delete synth;
 }
 
 /*

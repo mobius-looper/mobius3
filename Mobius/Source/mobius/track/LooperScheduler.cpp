@@ -492,6 +492,10 @@ void LooperScheduler::handleResetAction(UIAction* src)
         case FuncSelectLoop:
             loopSwitcher.doSwitchNow(src);
             break;
+
+        case FuncStop:
+            // these are just ignored without trace
+            break;
             
         default: {
             Trace(2, "LooperScheduler: Unsupported function in Reset mode %s", src->symbol->getName());

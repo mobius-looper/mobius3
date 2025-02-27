@@ -91,30 +91,7 @@ void LogicalTrack::loadSession()
         return;
     }
 
-    // locate the parameter overlay, formerly known as the Preset
-    parameterOverlay = nullptr;
-    ParameterSets* sets = manager->getParameterSets();
-    const char* ovname = sessionTrack->getString("trackOverlay");
-    if (ovname != nullptr) {
-        if (sets != nullptr)
-          parameterOverlay = sets->find(juce::String(ovname));
-        
-        if (parameterOverlay == nullptr)
-          Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
-    }
-    else {
-        // wasn't in the track, see if the session has one for all tracks
-        Session* session = manager->getSession();
-        ovname = session->getString("sessionOverlay");
-        if (ovname != nullptr) {
-            if (sets != nullptr)
-              parameterOverlay = sets->find(juce::String(ovname));
-
-            if (parameterOverlay == nullptr)
-              Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
-        }
-    }
-    
+    resolveParameterOverlays();
     cacheSyncParameters();
     
     if (track == nullptr) {
@@ -142,6 +119,65 @@ void LogicalTrack::loadSession()
         // since the inner track can always get back to the LogicalTrack we don't
         // need to pass the Session down
         track->loadSession(sessionTrack);
+    }
+}
+
+/**
+ * Resolve the two potential parameter overlays, one from the Session shared by all tracks
+ * and another for this specific track.
+ * When we get to the point where there can be more than just these two, then the ValueSets
+ * should be merged into a local copy.
+ */
+void LogicalTrack::resolveParameterOverlays()
+{
+    trackOverlay = nullptr;
+    ParameterSets* sets = manager->getParameterSets();
+    if (sessionTrack != nullptr) {
+        const char* ovname = sessionTrack->getString("trackOverlay");
+        if (ovname != nullptr) {
+            if (sets != nullptr)
+              trackOverlay = sets->find(juce::String(ovname));
+        
+            if (trackOverlay == nullptr)
+              Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
+        }
+
+        // support this temporarily, should be upgrading it
+        const char* presetName = sessionTrack->getString("trackPreset");
+        if (presetName != nullptr) {
+            if (ovname != nullptr && !StringEqual(ovname, presetName)) {
+                Trace(1, "LogicalTrack: Mismatch between trackPreset %s and trackOverlay %s",
+                      presetName, ovname);
+            }
+
+            ValueSet* presetOverlay = nullptr;
+            if (sets != nullptr)
+              presetOverlay = sets->find(juce::String(presetName));
+            
+            if (presetOverlay == nullptr)
+              Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
+            else {
+                if (trackOverlay != nullptr)
+                  Trace(1, "LogicalTrack: Replaceing track overlay with preset overlay");
+                trackOverlay = presetOverlay;
+            }
+        }
+    }
+    
+    sessionOverlay = nullptr;
+    Session* session = manager->getSession();
+    if (session != nullptr) {
+        const char* ovname = session->getString("sessionOverlay");
+        if (ovname != nullptr) {
+            if (sets != nullptr)
+              sessionOverlay = sets->find(juce::String(ovname));
+
+            if (sessionOverlay == nullptr)
+              Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
+        }
+
+        // pretty sure we used to have "defaultPreset" in the Setup which should
+        // have been moved to the Session, getting tired of this shit, punt
     }
 }
 
@@ -468,9 +504,77 @@ void LogicalTrack::doAction(UIAction* a)
     if (sid == FuncTrackReset || sid == FuncGlobalReset) {
         clearBindings();
         resetSyncState();
+        resolveParameterOverlays();
+        track->doAction(a);
     }
-    
-    track->doAction(a);
+    else if (sid == ParamActivePreset) {
+        // until Presets are ripped out, intercept that and use it as an alternate way
+        // to select the track overlay
+        // the old TrackPresetParameterType handler which will eventually receive this
+        // accepts a name in the bindingArgs or an ordinal in the value
+
+        ValueSet* overlay = nullptr;
+        ParameterSets* sets = manager->getParameterSets();
+        if (strlen(a->arguments) > 0) {
+            if (sets != nullptr)
+              overlay = sets->find(juce::String(a->arguments));
+            if (overlay == nullptr)
+              Trace(1, "LogicalTrack: Invalid parameter set name %s", a->arguments);
+        }
+
+        if (overlay == nullptr) {
+            if (sets != nullptr)
+              overlay = sets->getByOrdinal(a->value);
+            if (overlay == nullptr)
+              Trace(1, "LogicalTrack: Invalid parameter set ordinal %d", a->value);
+        }
+
+        if (overlay != nullptr)
+          trackOverlay = overlay;
+
+        // also pass it along so core tracks can change their Preset
+        // it will end up in the TrackPresetParameterType handler
+        track->doAction(a);
+    }
+    else if (a->symbol->behavior == BehaviorActivation) {
+        // the only one we support is Preset activation which
+        // should eventually become Overlay selection
+        if (a->symbol->name.startsWith(Symbol::ActivationPrefixPreset)) {
+
+            juce::String pname = a->symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixPreset, false, false);
+            ValueSet* overlay = nullptr;
+            ParameterSets* sets = manager->getParameterSets();
+            if (sets != nullptr)
+              overlay = sets->find(pname);
+            if (overlay == nullptr)
+              Trace(1, "LogicalTrack: Invalid parameter set name %s", pname.toUTF8());
+            else
+              trackOverlay = overlay;
+
+            // let Actionator do the same thing with Presets for awhile
+            track->doAction(a);
+        }
+        else {
+            Trace(1, "LogicalTrack: Received unsupported activation prefix %s",
+                  a->symbol->getName());
+        }
+    }
+    else if (a->symbol->parameterProperties == nullptr) {
+        // usually a function
+        track->doAction(a);
+    }
+    else {
+        // parameters are a little harder
+        // sending an action to change a parameter value establishes
+        // a binding that will persist until the track is reset
+        // the track mayu also choose to cache this value which makes
+        // the binding redundant but be consistent about it
+        // this will be noisy for track controls like input/output levels
+        // consider having BaseTrack::doAction return a boolean if it decided
+        // to cache the value so we don't have to
+        bindParameter(a);
+        track->doAction(a);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -702,81 +806,46 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
             }
         }
         else {
-
-            // !! here is where we need to start using parameterOverlay, followed
-            // by the Session, and stop using Preset
+            // locate it in the session or overlays
+            // If either a track-level or session-level overlay is present,
+            // they have precedence.  This makes them resemble the old Presets.
+            // If neither overlay has a value, then look in the Session::Track and
+            // finally the Session
             
-            // no track bindings, look in the value containers
+            MslValue* value = nullptr;
+            if (trackOverlay != nullptr)
+              value = trackOverlay->get(s->name);
+                
+            if (value == nullptr && sessionOverlay != nullptr)
+              value = sessionOverlay->get(s->name);
 
-            // ugliness: until the Session transition is complete, fall back to the
-            // Preset if there is no value in the Session
+            if (value == nullptr && sessionTrack != nullptr)
+              value = sessionTrack->get(s->name);
             
-            bool foundInSession = false;
-            if (trackType == Session::TypeMidi && sessionTrack != nullptr) {
-                ValueSet* params = sessionTrack->getParameters();
-                if (params != nullptr) {
-                    MslValue* v = params->get(s->name);
-                    if (v != nullptr) {
-                        ordinal = v->getInt();
-                        foundInSession = true;
-                    }
-                }
+            if (value == nullptr) {
+                // Since we need this all the fucking time, may as well keep a handle down here
+                Session* session = manager->getSession();
+                if (session != nullptr)
+                  value = session->get(s->name);
             }
+            
+            if (value != nullptr)
+              ordinal = value->getInt();
+            
+            // temporary verification that the ParameterSets have the same
+            // values as what used to be in the Preset
 
-            if (!foundInSession) {
+            if (s->parameterProperties->scope == ScopePreset) {
+                
+                Preset* p = getPreset();
+                if (p != nullptr) {
+                    ExValue exvalue;
+                    UIParameterHandler::get(symbolId, p, &exvalue);
+                    int presetOrdinal = exvalue.getInt();
 
-                // wasn't in the session, fall back to the old model
-
-                switch (s->parameterProperties->scope) {
-                    case ScopeGlobal: {
-                        // MidiTrack should be getting these from the Session
-                        //Trace(1, "LogicalTrack: Kernel attempt to access global parameter %s",
-                        //s->getName());
-                    }
-                        break;
-                    case ScopePreset: {
-                        Preset* p = getPreset();
-                        if (p != nullptr) {
-                            ExValue value;
-                            UIParameterHandler::get(symbolId, p, &value);
-                            ordinal = value.getInt();
-                        }
-                    }
-                        break;
-                    case ScopeSetup: {
-                        // if 
-                                // not sure why MidiTrack would want things here
-                                //Trace(1, "LogicalTrack: Kernel attempt to access track parameter %s",
-                                //s->getName());
-                                }
-                        break;
-                    case ScopeTrack: {
-                        // mostly for levels which MidiTrack should be intercepting
-                        //Trace(1, "LogicalTrack: Kernel attempt to access track parameter %s",
-                        //s->getName());
-                    }
-                        break;
-                    case ScopeUI: {
-                        // not expecting this from kernel tracks
-                        //Trace(1, "LogicalTrack: Kernel attempt to access UI parameter %s",
-                        //s->getName());
-                    }
-                        break;
-                    case ScopeSync: {
-                        // also supposed to be in Session
-                    }
-                        break;
-                    case ScopeNone: {
-                        Trace(1, "LogicalTrack: Kernel attempt to access unscoped parameter %s",
-                              s->getName());
-                    }
-                        break;
-
-                    case ScopeSession:
-                    case ScopeSessionTrack:
-                        // these would have been found in the Session
-                        // if they were there, avoid unhandled switch warning
-                        break;
+                    if (presetOrdinal != ordinal)
+                      Trace(1, "LogicalTrack: ParameterSet/Preset mismatch for %s",
+                            s->getName());
                 }
             }
         }
