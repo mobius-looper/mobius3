@@ -8,9 +8,13 @@
  */
 
 #include "../../model/ParameterConstants.h"
+#include "../../model/SymbolId.h"
 #include "../../model/Preset.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/StepSequence.h"
+
+#include "../track/LogicalTrack.h"
+
 
 #include "Loop.h"
 #include "Track.h"
@@ -22,14 +26,23 @@
 
 #include "ParameterSource.h"
 
+LogicalTrack* ParameterSource::getLogicalTrack(Loop* l)
+{
+    return l->getTrack()->getLogicalTrack();
+}
+
 /**
  * This is one of the few that looked on the Event for the Preset.
  * Remove this since it wasn't used consistently.
  */
 ParameterMuteMode ParameterSource::getMuteMode(class Track* t)
 {
-    Preset* p = t->getPreset();
-    return p->getMuteMode();
+    //Preset* p = t->getPreset();
+    //return p->getMuteMode();
+
+    // this is the way all of these need to work now
+    LogicalTrack* lt = t->getLogicalTrack();
+    return (ParameterMuteMode)lt->getParameterOrdinal(ParamMuteMode);
 }
 
 bool ParameterSource::isSpeedRecord(Track* t)

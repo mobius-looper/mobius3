@@ -657,6 +657,17 @@ void Mobius::doTrackReset(Track* t)
     }
 }
 
+/**
+ * Get the LogicalTrack associated with a Track.
+ * Not liking how this is evolving, since this relationship is going to become
+ * more critical, Track should just point to this, which also impacts
+ * the shenanigans with MobiusLooperTrack above.
+ */
+LogicalTrack* Mobius::getLogicalTrack(int number)
+{
+    return mKernel->getTrackManager()->getLogicalTrack(number);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Reconfiguration

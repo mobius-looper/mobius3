@@ -295,6 +295,11 @@ Session* TrackManager::getSession()
     return session;
 }
 
+ParameterSets* TrackManager::getParameterSets()
+{
+    return kernel->getParameterSets();
+}
+
 MobiusContainer* TrackManager::getContainer()
 {
     return kernel->getContainer();

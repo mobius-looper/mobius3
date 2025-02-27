@@ -187,6 +187,11 @@ int Track::getLogicalNumber()
     return mLogicalNumber;
 }
 
+class LogicalTrack* Track::getLogicalTrack()
+{
+    return mMobius->getLogicalTrack(mLogicalNumber);
+}
+
 /**
  * All sorts of stuff we should include in this.
  * Add as necessary.

@@ -212,6 +212,8 @@ class Mobius
     //
     //////////////////////////////////////////////////////////////////////
 
+    class LogicalTrack* getLogicalTrack(int number);
+
     void sendMobiusAlert(const char* msg);
     void sendMobiusMessage(const char* msg);
     

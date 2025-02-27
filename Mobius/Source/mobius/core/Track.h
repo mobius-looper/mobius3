@@ -69,6 +69,9 @@ class Track : public TraceContext
     void setLogicalNumber(int n);
     int getLogicalNumber();
 
+    // !! need to start saving this here rather than indirecting it every damn time
+    class LogicalTrack* getLogicalTrack();
+
     void dump(class StructureDumper& d);
 
     int getInputPort() {

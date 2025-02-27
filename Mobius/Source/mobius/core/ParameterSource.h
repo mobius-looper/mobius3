@@ -84,6 +84,11 @@ class ParameterSource
     static int getNoiseFloor(class Loop* l);
     static bool isIsolateOverdubs(class Track* t);
     static bool isSaveLayers(class Track* t);
+
+  private:
+
+    static class LogicalTrack* getLogicalTrack(class Loop* l);
+    
     
 };
 

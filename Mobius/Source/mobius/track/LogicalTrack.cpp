@@ -6,6 +6,7 @@
 #include "../../model/ParameterConstants.h"
 #include "../../model/SyncConstants.h"
 #include "../../model/Session.h"
+#include "../../model/ParameterSets.h"
 #include "../../model/Symbol.h"
 #include "../../model/Enumerator.h"
 #include "../../model/MobiusConfig.h"
@@ -88,6 +89,30 @@ void LogicalTrack::loadSession()
     if (sessionTrack == nullptr) {
         Trace(1, "LogicalTrack::loadSession Session object was not set");
         return;
+    }
+
+    // locate the parameter overlay, formerly known as the Preset
+    parameterOverlay = nullptr;
+    ParameterSets* sets = manager->getParameterSets();
+    const char* ovname = sessionTrack->getString("trackOverlay");
+    if (ovname != nullptr) {
+        if (sets != nullptr)
+          parameterOverlay = sets->find(juce::String(ovname));
+        
+        if (parameterOverlay == nullptr)
+          Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
+    }
+    else {
+        // wasn't in the track, see if the session has one for all tracks
+        Session* session = manager->getSession();
+        ovname = session->getString("sessionOverlay");
+        if (ovname != nullptr) {
+            if (sets != nullptr)
+              parameterOverlay = sets->find(juce::String(ovname));
+
+            if (parameterOverlay == nullptr)
+              Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
+        }
     }
     
     cacheSyncParameters();
@@ -677,6 +702,10 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
             }
         }
         else {
+
+            // !! here is where we need to start using parameterOverlay, followed
+            // by the Session, and stop using Preset
+            
             // no track bindings, look in the value containers
 
             // ugliness: until the Session transition is complete, fall back to the

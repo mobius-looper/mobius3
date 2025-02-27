@@ -131,6 +131,10 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
         return session;
     }
 
+    class ParameterSets* getParameterSets() {
+        return parameters;
+    }
+    
     // for a small number of things that live dangerously
     class Mobius* getCore() {
         return mCore;

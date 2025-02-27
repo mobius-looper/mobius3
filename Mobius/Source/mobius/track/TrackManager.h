@@ -60,6 +60,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     // Services
 
     class Session* getSession();
+    class ParameterSets* getParameterSets();
     class MidiPools* getMidiPools();
     class TrackEventPool* getTrackEventPool();
     class UIActionPool* getActionPool();
