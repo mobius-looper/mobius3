@@ -67,6 +67,7 @@ class SessionClerk
 
     void migrateSetups(bool bootstrapped);
     void fixSession(class Session* s);
+    bool upgradeSession(class Session* s);
     
     void addError(juce::StringArray& errors, juce::String msg);
     

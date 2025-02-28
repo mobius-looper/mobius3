@@ -586,27 +586,10 @@ void Parameter::initParameters()
 
         // Global
 
-        add(AltFeedbackDisableParameter);
-        add(AutoFeedbackReductionParameter);
-        add(BindingsParameter);
-        add(DriftCheckPointParameter);
-        add(FadeFramesParameter);
-        add(GroupFocusLockParameter);
         add(InputLatencyParameter);
-        add(IsolateOverdubsParameter);
-        add(LongPressParameter);
-        add(MaxLoopsParameter);
-        add(MaxSyncDriftParameter);
-        add(MonitorAudioParameter);
-        add(NoiseFloorParameter);
         add(OutputLatencyParameter);
-        add(QuickSaveParameter);
-        add(SaveLayersParameter);
         add(SetupNameParameter);
-        add(SetupNumberParameter);
-        add(SpreadRangeParameter);
         add(TrackParameter);
-        add(EdpismsParameter);
 
         // sanity check on scopes since they're critical
         for (int i = 0 ; Parameters[i] != nullptr ; i++) {

@@ -437,7 +437,18 @@ void Session::setBool(juce::String pname, bool value)
 {
     ValueSet* g = ensureGlobals();
     g->setBool(pname, value);
-}    
+}
+
+/**
+ * Assimilate a ValueSet into the global set.
+ * Used during upgrade of old Presets.
+ * This is somewhat dangerous if you're not careful where the set came from.
+ */
+void Session::assimilate(ValueSet* src)
+{
+    ValueSet* g = ensureGlobals();
+    g->assimilate(src);
+}
 
 //////////////////////////////////////////////////////////////////////
 //

@@ -141,27 +141,6 @@ void LogicalTrack::resolveParameterOverlays()
             if (trackOverlay == nullptr)
               Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
         }
-
-        // support this temporarily, should be upgrading it
-        const char* presetName = sessionTrack->getString("trackPreset");
-        if (presetName != nullptr) {
-            if (ovname != nullptr && !StringEqual(ovname, presetName)) {
-                Trace(1, "LogicalTrack: Mismatch between trackPreset %s and trackOverlay %s",
-                      presetName, ovname);
-            }
-
-            ValueSet* presetOverlay = nullptr;
-            if (sets != nullptr)
-              presetOverlay = sets->find(juce::String(presetName));
-            
-            if (presetOverlay == nullptr)
-              Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
-            else {
-                if (trackOverlay != nullptr)
-                  Trace(1, "LogicalTrack: Replaceing track overlay with preset overlay");
-                trackOverlay = presetOverlay;
-            }
-        }
     }
     
     sessionOverlay = nullptr;

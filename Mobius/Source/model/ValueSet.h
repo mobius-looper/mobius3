@@ -122,6 +122,8 @@ class ValueSet
 
     juce::StringArray getKeys();
 
+    void assimilate(ValueSet* src);
+
     //
     // Subset access
     //

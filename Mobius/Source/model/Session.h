@@ -171,6 +171,8 @@ class Session
     void setBool(juce::String name, bool value);
 
     void remove(juce::String name);
+
+    void assimilate(class ValueSet* src);
     
   private:
     

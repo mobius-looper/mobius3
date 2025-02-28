@@ -2393,9 +2393,12 @@ void Supervisor::menuLoadSession(int ordinal)
     // this will read the session by ordinal, and save it as the startup session
     // that feels wonky, we should do that up here if we want to actually make
     // it the startup session
-    Session* neu = producer->readSession(ordinal);
-    if (neu != nullptr)
-      loadSession(neu);
+    Session* neu = producer->changeSession(ordinal);
+    if (neu != nullptr) {
+        loadSession(neu);
+        // the expectation is that choosing a session from the menu
+        // will make it ths tartup session
+    }
 }
 
 /**

@@ -8,6 +8,7 @@
 // only for Setup migration
 #include "model/MobiusConfig.h"
 #include "model/Setup.h"
+#include "model/ParameterSets.h"
 
 #include "Provider.h"
 #include "FileManager.h"
@@ -219,6 +220,11 @@ Session* SessionClerk::readSession(Folder* f, juce::StringArray& errors)
 
                 // only do this for bootstrap
                 //fixSession(session);
+
+                // this one happens all the time
+                if (upgradeSession(session)) {
+                    writeSession(f, session, errors);
+                }
             }
         }
     }
@@ -257,6 +263,104 @@ void SessionClerk::fixSession(Session* s)
               v->setString("loop");
         }
     }
+}
+
+/**
+ * Once sessions are out there and in use, this is where we make surgical changes
+ * to the model.  Doing this incrementally rather than in a big upgrade pass at
+ * the start, could go either way but seems less disruptive to do them incrementally.
+ *
+ * The transformations are this:
+ *
+ * 1) Session defaultPreset
+ *
+ * This was formerly Setup::defaultPreset and would be the default starting Preset
+ * used by all tracks in this Setup.  If not defined it reversed to the preset named
+ * "Default".   If this is set, the parameter set with that name is found and MERGED
+ * into the session.  defaultPreset is taken out so we don't do this again.  This is
+ * NOT modeled with the sessionOverlay, the session simply becomes a self-contained
+ * parameter set with whatever the default was.  This is slightly less flexible because
+ * if you then edit that parameter set, Setup/Sessions that used it won't get the new
+ * values, you would need to edit them one at a time.  But it gets people out of the habbit
+ * of thinking they always need a Preset/ParameterSet to initialize a session.
+ *
+ * 2) Session::Track trackPreset
+ *
+ * If this is specified and is the same as defaultPreset it is removed
+ * If this is specified and is different than defaultPreset it is retained
+ * but renamed to trackOverlay.
+ */
+bool SessionClerk::upgradeSession(Session* s)
+{
+    bool modified = false;
+    ParameterSets* sets = provider->getParameterSets();
+    
+    // phase 1: defaultPreset
+    ValueSet* globals = s->ensureGlobals();
+    const char* defaultName = nullptr;
+    MslValue* dpv = globals->get("defaultPreset");
+    if (dpv != nullptr) {
+        defaultName = dpv->getString();
+        ValueSet* defaults = nullptr;
+        if (sets != nullptr)
+          defaults = sets->find(juce::String(defaultName));
+        if (defaults == nullptr)
+          Trace(1, "SessionClerk: Invalid defaultPreset %s", dpv->getString());
+        else {
+            // remove the things that we don't consider to be in the preset any more?
+            // the problem child here is loopCount, go ahead and pick that up since
+            // if we're here it won't have been manually edited
+            globals->assimilate(defaults);
+            modified = true;
+        }
+    }
+    else {
+        // now the ugly part
+        // there isn't a reliable way to test to see if Default has been copied
+        // in yet without leaving something behind.  build 33 added parameter forms
+        // that would have populated the session with default values
+        
+        // the convention has been that the first Preset was named "Default" but
+        // it was actually just whatever the first one was
+        defaultName = "Default";
+        
+        if (globals->get("upgraded") == nullptr) {
+            if (sets != nullptr) {
+                ValueSet* defaults = sets->find(defaultName);
+                if (defaults != nullptr) {
+                    globals->assimilate(defaults);
+                }
+            }
+            globals->setBool("upgraded", true);
+            modified = true;
+        }
+    }
+    
+    // phase 2: trackPreset
+    for (int i = 0 ; i < s->getTrackCount() ; i++) {
+        Session::Track* t = s->getTrackByIndex(i);
+        ValueSet* trackValues = t->ensureParameters();
+        MslValue* v = trackValues->get("trackPreset");
+        if (v != nullptr) {
+            // only carry this foward if it differs from the defaultPreset
+            if (!StringEqual(defaultName, v->getString())) {
+                trackValues->setString("trackOverlay", v->getString());
+            }
+            // once this is converted, remove it so trackOverlay becomes authoritative
+            trackValues->remove("trackPreset");
+            modified = true;
+        }
+    }
+
+    // remove this so we don't do it again
+    // note that this has to be done last because we need defualtName
+    // to remain valid during the track iteration
+    if (dpv != nullptr) {
+        globals->remove("defaultPreset");
+        modified = true;
+    }
+
+    return modified;
 }
 
 /**

@@ -42,7 +42,7 @@ class Producer
 
     // Manu Handlers
     void getRecentSessions(juce::StringArray& names);
-    Session* readSession(int ordinal);
+    Session* changeSession(int ordinal);
 
     // SessionManager Interface
     juce::String getActiveSessionName();

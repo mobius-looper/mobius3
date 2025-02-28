@@ -81,7 +81,7 @@ Session* Producer::changeSession(juce::String name)
  * using the activeSetup Symbol.  Sessions don't have a symbol yet, and I don't
  * think I want that to be the interface for changing them.
  */
-Session* Producer::readSession(int ordinal)
+Session* Producer::changeSession(int ordinal)
 {
     Session* session = nullptr;
     
@@ -90,6 +90,11 @@ Session* Producer::readSession(int ordinal)
         SessionClerk::Folder *f = (*folders)[ordinal];
         juce::StringArray errors;
         session = clerk->readSession(f->name, errors);
+        if (session != nullptr) {
+            SystemConfig* sys = supervisor->getSystemConfig();
+            sys->setStartupSession(f->name);
+            supervisor->updateSystemConfig();
+        }
     }
     else {
         Trace(1, "Producer: Session ordinal out of range %d", ordinal);

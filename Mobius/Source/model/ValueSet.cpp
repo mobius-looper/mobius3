@@ -217,6 +217,23 @@ void ValueSet::clear()
     subsets.clear();
 }
 
+/**
+ * Copy the values of one set into another.
+ * This does NOT handle subsets, and the way the Session is shaking out
+ * we're not going to be having subsets at all so those should be removed.
+ */
+void ValueSet::assimilate(ValueSet* src)
+{
+    // faster ways to do this, but it's an unusual operation
+    if (src != nullptr) {
+        juce::StringArray keys = src->getKeys();
+        for (auto key : keys) {
+            MslValue* v = src->get(key);
+            set(key, *v);
+        }
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Subsets

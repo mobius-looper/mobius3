@@ -321,39 +321,10 @@ extern Parameter* SpeedSyncAdjustParameter;
 
 // Global Parameters
 
-extern Parameter* AltFeedbackDisableParameter;
-extern Parameter* AudioInputParameter;
-extern Parameter* AudioOutputParameter;
-extern Parameter* AutoFeedbackReductionParameter;
-extern Parameter* BindingsParameter;
-extern Parameter* CustomMessageFileParameter;
-extern Parameter* DriftCheckPointParameter;
-extern Parameter* FadeFramesParameter;
-extern Parameter* GroupFocusLockParameter;
 extern Parameter* InputLatencyParameter;
-extern Parameter* IsolateOverdubsParameter;
-extern Parameter* LongPressParameter;
-extern Parameter* MaxLoopsParameter;
-extern Parameter* MaxSyncDriftParameter;
-extern Parameter* MidiInputParameter;
-extern Parameter* MidiOutputParameter;
-extern Parameter* MidiThroughParameter;
-extern Parameter* MonitorAudioParameter;
-extern Parameter* NoiseFloorParameter;
 extern Parameter* OutputLatencyParameter;
-extern Parameter* QuickSaveParameter;
-extern Parameter* SampleRateParameter;
-extern Parameter* SaveLayersParameter;
 extern Parameter* SetupNameParameter;
-extern Parameter* SetupNumberParameter;
-extern Parameter* SpreadRangeParameter;
-extern Parameter* TraceDebugLevelParameter;
-extern Parameter* TracePrintLevelParameter;
 extern Parameter* TrackParameter;
-extern Parameter* UnitTestsParameter;
-extern Parameter* TrackInputPortParameter;
-extern Parameter* TrackOutputPortParameter;
-extern Parameter* EdpismsParameter;
 
 // Parameter Groups
 

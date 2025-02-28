@@ -5,8 +5,8 @@
     <Value name="altFeedbackEnable" value="true" type="bool"/>
     <Value name="bounceQuantize" value="off" type="enum" ordinal="0"/>
     <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
-    <Value name="emptyTrackAction" value="copyTime" type="enum" ordinal="3"/>
-    <Value name="loopCount" value="1" type="int"/>
+    <Value name="emptyTrackAction" value="none" type="enum" ordinal="0"/>
+    <Value name="loopCount" value="4" type="int"/>
     <Value name="maxRedo" value="4" type="int"/>
     <Value name="maxUndo" value="8" type="int"/>
     <Value name="multiplyMode" value="normal" type="enum" ordinal="0"/>
@@ -35,7 +35,7 @@
     <Value name="speedShiftRestart" value="false" type="bool"/>
     <Value name="speedStepRange" value="24" type="int"/>
     <Value name="speedTransfer" value="off" type="enum" ordinal="0"/>
-    <Value name="subcycles" value="16" type="int"/>
+    <Value name="subcycles" value="4" type="int"/>
     <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
     <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
     <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
@@ -296,7 +296,7 @@
     <Value name="muteMode" value="start" type="enum" ordinal="1"/>
     <Value name="noFeedbackUndo" value="false" type="bool"/>
     <Value name="noLayerFlattening" value="false" type="bool"/>
-    <Value name="overdubQuantized" value="true" type="bool"/>
+    <Value name="overdubQuantized" value="false" type="bool"/>
     <Value name="overdubTransfer" value="off" type="enum" ordinal="0"/>
     <Value name="pitchBendRange" value="12" type="int"/>
     <Value name="pitchShiftRestart" value="false" type="bool"/>
