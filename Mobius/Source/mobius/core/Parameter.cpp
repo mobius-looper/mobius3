@@ -575,9 +575,6 @@ void Parameter::initParameters()
         //add(BeatsPerBarParameter);
         add(DefaultSyncSourceParameter);
         add(DefaultTrackSyncUnitParameter);
-        //add(ManualStartParameter);
-        //add(MaxTempoParameter);
-        //add(MinTempoParameter);
         add(MuteSyncModeParameter);
         add(RealignTimeParameter);
         add(ResizeSyncAdjustParameter);
