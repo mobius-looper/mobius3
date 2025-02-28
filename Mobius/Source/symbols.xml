@@ -207,7 +207,7 @@ Once those models are fully converted, these symbols can be removed.
        To be queryable it also must not be type='string'
   -->
 
-  <ParameterScope name='preset'>
+  <ParameterScope name='preset' query='true'>
      
     <Parameter name='subcycles' low='1' high='128' tree='General'/>
 
@@ -415,12 +415,12 @@ Once those models are fully converted, these symbols can be removed.
       when loading MIDI files.
     </Parameter>
     
-    <Parameter name='inputLatency' options='noBinding'>
+    <Parameter name='inputLatency' options='noBinding' query='true'>
       The number of samples to use for input latency adjustments.  Overrides
       what is reported by the container for the selected audio device.
     </Parameter>
     
-    <Parameter name='outputLatency' options='noBinding'>
+    <Parameter name='outputLatency' options='noBinding' query='true'>
       The number of samples to use for output latency adjustments.  Overrides
       what is reported by the container for the selected audio device.
     </Parameter>
@@ -430,7 +430,7 @@ Once those models are fully converted, these symbols can be removed.
       has no significant new content.  Has a code default to 13 if zero.
     </Parameter>
 
-    <Parameter name='longPress' low='250' high='10000' options='noBinding'>
+    <Parameter name='longPress' low='250' high='10000' options='noBinding' query='true'>
       The amount of time in milliseconds a trigger can be held before activating long-press behavior.
       Belongs in UIConfig with other Binding parameters.
     </Parameter>
@@ -440,7 +440,7 @@ Once those models are fully converted, these symbols can be removed.
       when we're single stepping so allow it to be turned off.
     </Parameter>
     
-    <Parameter name='monitorAudio' type='bool'>
+    <Parameter name='monitorAudio' type='bool' query='true'>
       Used by Track to enable through monitoring.  Should move this up.
     </Parameter>
     
@@ -500,7 +500,9 @@ Once those models are fully converted, these symbols can be removed.
       This is used only in model context to define the default Preset by name.
 
       This is new and has no correspondence in the old parameter model, but may
-      be used at runtime.  
+      be used at runtime.
+
+      update: needs to be removed, it is replaced by sessionOverlay
     </Parameter>
 
     <!-- This isn't actually in the Session, it is a runtime parameter used by the UI
@@ -514,6 +516,9 @@ Once those models are fully converted, these symbols can be removed.
                codeName='StartingPresetName'
                options='noBinding,transient,resetRetain'>
       In runtime context this changes the Preset a track is using.
+
+      update: needs to be removed or renamed, should be activeOverlay
+      or activeParameters
     </Parameter>
 
     <!-- Unclear if we need this, it would take the place of activeSetup and
@@ -538,7 +543,7 @@ Once those models are fully converted, these symbols can be removed.
        Session Track
   ============================================================================ -->
 
-  <ParameterScope name='track'>
+  <ParameterScope name='track' query='true'>
 
     <!-- the replacement for oldSyncSource defined SyncSource in SyncConstants.h -->
     <Parameter name='syncSource' values='none,transport,track,host,midi,master'/>
@@ -661,6 +666,8 @@ Once those models are fully converted, these symbols can be removed.
   <!-- these are effectively all global parameters but give them a specific scope if that
        becomes useful -->
 
+  <!-- not query='true' which means they can't be used with temporary bindings -->
+
   <ParameterScope name='sync'>
 
     <!-- These are runtime symbols used for actions.  They may be saved in the session
@@ -722,99 +729,11 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='bindingOverlays' level='UI' type='structure'/>
     
   </ParameterScope>
-    
-  <!-- =======================================================================
-       OLD GLOBAL
-       ============================================================================ -->
-
-  <!-- Parameters in this area existed in MobiusConfig but are being phased out
-       or are no longer used-->
-
-  <ParameterScope name='global'>
-
-    <!-- this is NOT a parameter, it's a session property that is used on
-         startup and saved on shutdown, you can't bind to it or change it at runtime
-    <Parameter name='startingSetup'
-               type='structure' structureClass='Setup'
-               codeName='StartingSetupName'
-               options='noBinding'>
-      This is used only in model context to define the starting Setup by name.
-      It cannot be bound to a trigger.  We really don't need this to be a parameter
-      at all since the value will be set as a side effect of the main menu, or when
-      selecting among available presets in the configuration UI.  The fields for that
-      are not generated from a UIParameter definition.
-      </Parameter>
-      -->
-
-    <!--
-        Revisit whether this should be bindable.
-        This one behaves differently than most global parameters, it's more like a "session"
-        property that just remembers what the last setup was on shutdown and restores
-        that on startup.  I decided to take out startingSetup for that reason too.
-        This is part of the evolving "session" concept.
-
-        From build 30 onward, replaced by activeSession
-    -->
-    <!--
-    <Parameter name='activeSetup' coreName='setup'
-               type='structure' structureClass='Setup'
-               options='noBinding,transient'>
-      This is a runtime parameter that has no structure equivalent.  It may be referenced
-      from a script to change the active setup with "set setup foo".  This change is
-      will persist for the duration of the runtime.  On shutdown it will be saved
-      in mobius.xml as "startingSetup".
-      </Parameter>
-    -->
-
-    <Parameter name='bindings' options='noBinding'
-               type='structure' structureClass='BindingSet'
-               >
-      Selects an optional alternate binding set.
-      This is what old Mobius called the "overlay bindings".
-      New Mobius calls this an "alternate binding" which is different from an overlay.
-      It exists in MobiusConfig but is not edited like a normal global parameter.
-      Need a formal declaration so it can behave as a Structure for the binding panels.
-      ?? do we really
-    </Parameter>
-
-    <Parameter name='driftCheckPoint' values='loop,external' options='noBinding'>
-      Where we do sync drift correction
-    </Parameter>
-
-    <Parameter name='pluginPorts' low='1' high='8' options='noBinding'>
-      The number of ports (stereo channel pairs) we will advertise to the plugin host.
-      Arguably belongs in a separate device configuration model.
-      update: well it does, it's in the DeviceConfig but simulated in the session
-      with pluginInputs and pluginOutputs
-    </Parameter>
-
-    <!-- StringList
-         This was a list of Mode names that don't want altFeedback applied.
-         There were only four possibilities: Multiply, Overdub, Stutter, Substitute
-         <Parameter name='altFeedbackDisables' type='string' multi='true'>
-         Diables secondary feedback in modes
-         </Parameter>
-      -->
-
-    <Parameter name='groupFocusLock' type='bool' options='noBinding'>
-      Still relevant?  Move to UI
-    </Parameter>
-
-    <Parameter name='trackCount' coreName='tracks' codeName='Tracks' options='noBinding'>
-      The number of tracks to configure internally and display in the UI
-      Cannot be changed at runtime
-    </Parameter>
-    
-    <Parameter name='maxLoops' options='noBinding'> 
-      The maximum number of loops a track can have.
-      Cannot be changed at runtime.  ** hasnt been used in awhile ***
-    </Parameter>
-    
-  </ParameterScope>
   
   <!-- =======================================================================
        SETUP
-  ============================================================================ -->
+       ============================================================================ -->
+  
   <!--
       Setup parameters are essentially global parameters but they were managed
       inside multiiple objects that could be swapped rather than a single set

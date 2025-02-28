@@ -222,26 +222,26 @@ typedef enum {
 
     // Globals
     
-    ParamActiveSetup,
-    ParamDriftCheckPoint,
-    ParamIntegerWaveFile,
-    ParamGroupFocusLock,
-    ParamTrackCount,
+    //ParamActiveSetup,
+    //ParamDriftCheckPoint,
+    //ParamIntegerWaveFile,
+    //ParamGroupFocusLock,
+    //ParamTrackCount,
     
     // Setup
     
-    ParamDefaultSyncSource,
-    ParamDefaultTrackSyncUnit,
-    ParamSlaveSyncUnit,
+    //ParamDefaultSyncSource,
+    //ParamDefaultTrackSyncUnit,
+    //ParamSlaveSyncUnit,
     //ParamManualStart,
     //ParamMinTempo,
     //ParamMaxTempo,
     //ParamBeatsPerBar,
     //ParamMuteSyncMode,
-    ParamResizeSyncAdjust,
-    ParamSpeedSyncAdjust,
-    ParamRealignTime,
-    ParamActiveTrack,
+    //ParamResizeSyncAdjust,
+    //ParamSpeedSyncAdjust,
+    //ParamRealignTime,
+    //ParamActiveTrack,
 
     // Track
     

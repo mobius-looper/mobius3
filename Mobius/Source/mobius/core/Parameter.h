@@ -285,36 +285,15 @@ extern Parameter* FeedbackLevelParameter;
 extern Parameter* FocusParameter;
 extern Parameter* GroupParameter;
 extern Parameter* InputLevelParameter;
-extern Parameter* InputPortParameter;
 extern Parameter* MonoParameter;
 extern Parameter* OutputLevelParameter;
-extern Parameter* OutputPortParameter;
 extern Parameter* PanParameter;
 extern Parameter* PluginInputPortParameter;
 extern Parameter* PluginOutputPortParameter;
 extern Parameter* SpeedBendParameter;
 extern Parameter* SpeedOctaveParameter;
 extern Parameter* SpeedStepParameter;
-extern Parameter* TrackNameParameter;
-extern Parameter* PitchBendParameter;
-extern Parameter* PitchOctaveParameter;
-extern Parameter* PitchStepParameter;
-extern Parameter* TimeStretchParameter;
 extern Parameter* TrackPresetParameter;
-extern Parameter* TrackPresetNumberParameter;
-extern Parameter* TrackSyncUnitParameter;
-extern Parameter* SyncSourceParameter;
-
-// Setup Parameters
-
-//extern Parameter* BeatsPerBarParameter;
-extern Parameter* DefaultSyncSourceParameter;
-extern Parameter* DefaultTrackSyncUnitParameter;
-extern Parameter* MuteSyncModeParameter;
-extern Parameter* RealignTimeParameter;
-extern Parameter* ResizeSyncAdjustParameter;
-extern Parameter* SlaveSyncUnitParameter;
-extern Parameter* SpeedSyncAdjustParameter;
 
 // Global Parameters
 

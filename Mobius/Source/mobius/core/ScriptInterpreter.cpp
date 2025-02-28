@@ -12,6 +12,9 @@
 #include "../../util/Trace.h"
 #include "../../model/UserVariable.h"
 #include "../../model/Trigger.h"
+#include "../../model/Symbol.h"
+#include "../MobiusKernel.h"
+#include "../MobiusInterface.h"
 
 #include "Action.h"
 #include "Export.h"
@@ -1423,6 +1426,12 @@ ExResolver* ScriptInterpreter::getExResolver(ExSymbol* symbol)
 		if (p != nullptr)
 		  resolver = NEW2(ScriptResolver, symbol, p);
 	}
+
+    if (resolver == nullptr) {
+        Symbol* s = mMobius->getKernel()->getContainer()->getSymbols()->find(juce::String(name));
+        if (s != nullptr && s->parameterProperties != nullptr)
+          resolver = NEW2(ScriptResolver, symbol, s);
+    }
 
     // try some auto-declared system variables
     if (resolver == nullptr) {

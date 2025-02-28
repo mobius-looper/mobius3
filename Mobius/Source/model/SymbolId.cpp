@@ -461,7 +461,7 @@ SymbolDefinition SymbolDefinitions[] = {
     //////////////////////////////////////////////////////////////////////
     // Deprecated
     //////////////////////////////////////////////////////////////////////
-    
+#if 0    
     {ParamNameActiveSetup, ParamActiveSetup},
     //{ParamBindingsName, ParamBindings},
     {ParamNameDriftCheckPoint, ParamDriftCheckPoint},
@@ -481,7 +481,8 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameSpeedSyncAdjust, ParamSpeedSyncAdjust},
     {ParamNameRealignTime, ParamRealignTime},
     {ParamNameActiveTrack, ParamActiveTrack},
-
+#endif
+    
     {"groupName", ParamGroupName},
     {ParamNameOldSyncSource, ParamOldSyncSource},
     {ParamNameOldTrackSyncUnit, ParamOldTrackSyncUnit},

@@ -479,6 +479,7 @@ class ScriptResolver : public ExResolver {
 	ScriptResolver(ExSymbol* symbol, class ScriptInternalVariable* v);
 	ScriptResolver(ExSymbol* symbol, class ScriptVariableStatement* v);
 	ScriptResolver(ExSymbol* symbol, class Parameter* p);
+	ScriptResolver(ExSymbol* symbol, class Symbol* s);
 	ScriptResolver(ExSymbol* symbol, const char* name);
 	~ScriptResolver();
 
@@ -497,6 +498,7 @@ class ScriptResolver : public ExResolver {
     class ScriptInternalVariable* mInternalVariable;
     class ScriptVariableStatement* mVariable;
 	class Parameter* mParameter;
+    class Symbol* mParameterSymbol;
     const char* mInterpreterVariable;
 };
 

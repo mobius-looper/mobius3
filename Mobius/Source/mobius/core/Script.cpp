@@ -168,6 +168,7 @@ void ScriptResolver::init(ExSymbol* symbol)
     mInternalVariable = nullptr;
     mVariable = nullptr;
     mParameter = nullptr;
+    mParameterSymbol = nullptr;
 }
 
 ScriptResolver::ScriptResolver(ExSymbol* symbol, int arg)
@@ -192,6 +193,12 @@ ScriptResolver::ScriptResolver(ExSymbol* symbol, Parameter* p)
 {
 	init(symbol);
     mParameter = p;
+}
+
+ScriptResolver::ScriptResolver(ExSymbol* symbol, Symbol* s)
+{
+	init(symbol);
+    mParameterSymbol = s;
 }
 
 ScriptResolver::ScriptResolver(ExSymbol* symbol, const char* name)
@@ -259,6 +266,9 @@ void ScriptResolver::getExValue(ExContext* exContext, ExValue* value)
             exp->setTrack(si->getTargetTrack());
             mParameter->getValue(exp, value);
         }
+    }
+    else if (mParameterSymbol != nullptr) {
+        // magic happens
     }
     else if (mInterpreterVariable != nullptr) {
         UserVariables* vars = si->getVariables();

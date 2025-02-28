@@ -15,6 +15,7 @@
 #include "model/MobiusConfig.h"
 #include "model/Session.h"
 #include "model/Preset.h"
+#include "model/ParameterSets.h"
 
 #include "Provider.h"
 #include "Producer.h"
@@ -819,6 +820,7 @@ void Symbolizer::installActivationSymbols()
         }
     }
 
+    #if 0
     Preset* presets = provider->getPresets();
     while (presets != nullptr) {
         juce::String name = juce::String(Symbol::ActivationPrefixPreset) + presets->getName();
@@ -828,7 +830,20 @@ void Symbolizer::installActivationSymbols()
         s->hidden = false;
         presets = presets->getNextPreset();
     }
+    #endif
 
+    // this replaces Preset activations
+    ParameterSets* sets = provider->getParameterSets();
+    if (sets != nullptr) {
+        for (auto set : sets->sets) {
+            juce::String name = juce::String(Symbol::ActivationPrefixParameter) + set->name;
+            Symbol* s = symbols->intern(name);
+            s->behavior = BehaviorActivation;
+            s->level = LevelKernel;
+            s->hidden = false;
+        }
+    }
+    
     // unclear if we want Sessions to have activation symbols
     // this feeds into there being an "activeSession" parameter of type=Structure
     // with all the ugly support for structure symbols

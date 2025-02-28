@@ -19,9 +19,9 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
 
         /* Global */
         
-        case ParamActiveSetup:
-            break;
-            
+        //case ParamActiveSetup:
+            //break;
+#if 0            
         case ParamFadeFrames:
             value->setInt(((MobiusConfig*)obj)->getFadeFrames());
             break;
@@ -90,6 +90,7 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
         case ParamNoiseFloor:
             value->setInt(((MobiusConfig*)obj)->getNoiseFloor());
             break;
+#endif
             
             /* Preset */
     
@@ -274,7 +275,7 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
             break;
 
             /* Setup */
-    
+#if 0    
         case ParamDefaultPreset:
             value->setString(((Setup*)obj)->getDefaultPresetName());
             break;
@@ -306,7 +307,7 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
         case ParamActiveTrack:
             value->setInt(((Setup*)obj)->getActiveTrack());
             break;
-            
+#endif            
             /* Track */
     
         case ParamTrackName:
@@ -425,9 +426,9 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
         
         /* Global */
         
-        case ParamActiveSetup:
-            break;
-            
+        //case ParamActiveSetup:
+            //break;
+#if 0            
         case ParamFadeFrames:
             ((MobiusConfig*)obj)->setFadeFrames(value->getInt());
             break;
@@ -495,7 +496,7 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
         case ParamNoiseFloor:
             ((MobiusConfig*)obj)->setNoiseFloor(value->getInt());
             break;
-            
+#endif            
             /* Preset */
     
         case ParamSubcycles:
@@ -679,7 +680,7 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             break;
 
             /* Setup */
-    
+#if 0    
         case ParamDefaultPreset:
             ((Setup*)obj)->setDefaultPresetName(value->getString());
             break;
@@ -711,7 +712,7 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
         case ParamActiveTrack:
             ((Setup*)obj)->setActiveTrack(value->getInt());
             break;
-            
+#endif            
             /* Track */
     
         case ParamTrackName:

@@ -63,6 +63,7 @@ class Track : public TraceContext
 	~Track();
 
     void renumber(int n);
+    void doAction(class UIAction* a);
 
     // the number of this track in the LogicalTrack/Session list
     // this is what needs to be used when communicating with the outside world.

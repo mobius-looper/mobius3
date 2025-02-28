@@ -52,6 +52,8 @@
 #include "../../model/Setup.h"
 #include "../../model/Session.h"
 #include "../../model/Preset.h"
+#include "../../model/UIAction.h"
+#include "../../model/Symbol.h"
 
 #include "../MobiusInterface.h"
 #include "../MobiusPools.h"
@@ -350,6 +352,69 @@ int Track::getFrames()
 int Track::getCycles()
 {
     return (int)(mLoop->getCycles());
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Actions
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This is the new style of UIAction handling for tracks.
+ * The authoritative source for parameter values is now the LogicalTrack.
+ * A handful of track parameters are in addition cached in internal track locations.
+ */
+void Track::doAction(UIAction* a)
+{
+    SymbolId sid = a->symbol->id;
+
+    switch (sid) {
+
+        // these two are temporary, focus and groupness should
+        // be strictly TrackMManager concepts
+        case ParamFocus:
+            setFocusLock((bool)(a->value));
+            break;
+
+        case ParamTrackGroup:
+            setGroup(a->value);
+            break;
+            
+        case ParamMono:
+            setMono((bool)(a->value));
+            break;
+            
+        case ParamInput:
+            setInputLevel(a->value);
+            break;
+        case ParamOutput:
+            setOutputLevel(a->value);
+            break;
+        case ParamFeedback:
+            setFeedback(a->value);
+            break;
+        case ParamAltFeedback:
+            setAltFeedback(a->value);
+            break;
+        case ParamPan:
+            setPan(a->value);
+            break;
+
+        case ParamAudioInputPort:
+        case ParamPluginInputPort:
+            // these are effectively the same thing at runtime
+            setInputPort(a->value);
+            break;
+
+        case ParamAudioOutputPort:
+        case ParamPluginOutputPort:
+            setOutputPort(a->value);
+            break;
+
+        default:
+            break;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

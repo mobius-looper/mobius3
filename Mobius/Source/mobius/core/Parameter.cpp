@@ -546,10 +546,8 @@ void Parameter::initParameters()
         add(FocusParameter);
         add(GroupParameter);
         add(InputLevelParameter);
-        add(InputPortParameter);
         add(MonoParameter);
         add(OutputLevelParameter);
-        add(OutputPortParameter);
         add(PanParameter);
         add(PluginInputPortParameter);
         add(PluginOutputPortParameter);
@@ -558,28 +556,7 @@ void Parameter::initParameters()
         add(SpeedBendParameter);
         add(SpeedStepParameter);
 
-        add(PitchOctaveParameter);
-        add(PitchBendParameter);
-        add(PitchStepParameter);
-
-        add(TimeStretchParameter);
-
-        add(TrackNameParameter);
         add(TrackPresetParameter);
-        add(TrackPresetNumberParameter);
-        add(TrackSyncUnitParameter);
-        add(SyncSourceParameter);
-
-        // Setup
-
-        //add(BeatsPerBarParameter);
-        add(DefaultSyncSourceParameter);
-        add(DefaultTrackSyncUnitParameter);
-        add(MuteSyncModeParameter);
-        add(RealignTimeParameter);
-        add(ResizeSyncAdjustParameter);
-        add(SlaveSyncUnitParameter);
-        add(SpeedSyncAdjustParameter);
 
         // Global
 

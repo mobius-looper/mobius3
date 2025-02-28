@@ -486,7 +486,8 @@ void LogicalTrack::doAction(UIAction* a)
         resolveParameterOverlays();
         track->doAction(a);
     }
-    else if (sid == ParamActivePreset) {
+    else if (sid == ParamActivePreset ||
+             sid == ParamTrackOverlay) {
         // until Presets are ripped out, intercept that and use it as an alternate way
         // to select the track overlay
         // the old TrackPresetParameterType handler which will eventually receive this
@@ -510,17 +511,11 @@ void LogicalTrack::doAction(UIAction* a)
 
         if (overlay != nullptr)
           trackOverlay = overlay;
-
-        // also pass it along so core tracks can change their Preset
-        // it will end up in the TrackPresetParameterType handler
-        track->doAction(a);
     }
     else if (a->symbol->behavior == BehaviorActivation) {
-        // the only one we support is Preset activation which
-        // should eventually become Overlay selection
-        if (a->symbol->name.startsWith(Symbol::ActivationPrefixPreset)) {
-
-            juce::String pname = a->symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixPreset, false, false);
+        // the only one we support is Parameter activation which
+        if (a->symbol->name.startsWith(Symbol::ActivationPrefixParameter)) {
+            juce::String pname = a->symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixParameter, false, false);
             ValueSet* overlay = nullptr;
             ParameterSets* sets = manager->getParameterSets();
             if (sets != nullptr)
@@ -529,9 +524,6 @@ void LogicalTrack::doAction(UIAction* a)
               Trace(1, "LogicalTrack: Invalid parameter set name %s", pname.toUTF8());
             else
               trackOverlay = overlay;
-
-            // let Actionator do the same thing with Presets for awhile
-            track->doAction(a);
         }
         else {
             Trace(1, "LogicalTrack: Received unsupported activation prefix %s",
