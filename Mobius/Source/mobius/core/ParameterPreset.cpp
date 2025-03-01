@@ -104,7 +104,7 @@ void PresetParameter::getValue(Export* exp, ExValue* value)
 {
     Track* track = exp->getTrack();
     if (track != nullptr)
-	  getValue(track->getPreset(), value);
+	  getValue((Preset*)nullptr, value);
     else {
         Trace(1, "PresetParameter:getValue track not resolved!\n");
         value->setNull();
@@ -117,7 +117,7 @@ int PresetParameter::getOrdinalValue(Export* exp)
 
     Track* track = exp->getTrack();
     if (track != nullptr)
-      value = getOrdinalValue(track->getPreset());
+      value = getOrdinalValue((Preset*)nullptr);
     else 
       Trace(1, "PresetParameter:getOrdinalValue track not resolved!\n");
 
@@ -139,7 +139,7 @@ void PresetParameter::setValue(Action* action)
 {
     Track* track = action->getResolvedTrack();
     if (track != nullptr)
-      setValue(track->getPreset(), &(action->arg));
+      setValue(nullptr, &(action->arg));
     else
       Trace(1, "PresetParameter:setValue track not resolved!\n");
 }

@@ -91,7 +91,6 @@ const char* ParamNameWindowEdgeUnit = "windowEdgeUnit";
 const char* ParamNameWindowSlideAmount = "windowSlideAmount";
 const char* ParamNameWindowEdgeAmount = "windowEdgeAmount";
 
-const char* ParamNameDefaultPreset = "defaultPreset";
 const char* ParamNameDefaultSyncSource = "defaultSyncSource";
 const char* ParamNameDefaultTrackSyncUnit = "defaultTrackSyncUnit";
 const char* ParamNameSlaveSyncUnit = "slaveSyncUnit";
@@ -105,7 +104,6 @@ const char* ParamNameSpeedSyncAdjust = "speedSyncAdjust";
 const char* ParamNameRealignTime = "realignTime";
 const char* ParamNameActiveTrack = "activeTrack";
     
-const char* ParamNameTrackPreset = "trackPreset";
 const char* ParamNameActivePreset = "activePreset";
 const char* ParamNameFocus = "focus";
 const char* ParamNameGroup = "groupbbf";
@@ -160,7 +158,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameAutoFeedbackReduction, ParamAutoFeedbackReduction},
     {ParamNameIsolateOverdubs, ParamIsolateOverdubs},
     {ParamNameSaveLayers, ParamSaveLayers},
-    {ParamNameDefaultPreset, ParamDefaultPreset},
     {ParamNameActivePreset, ParamActivePreset},
 
     {"sessionOverlay", ParamSessionOverlay},
@@ -192,7 +189,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {"followQuantizeLocation", ParamFollowQuantizeLocation},
 
     {SessionTrackName, ParamTrackName},
-    {ParamNameTrackPreset, ParamTrackPreset},
     {"trackOverlay", ParamTrackOverlay},
     {ParamNameFocus, ParamFocus},
     {ParamNameMono, ParamMono},

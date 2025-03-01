@@ -293,7 +293,6 @@ extern Parameter* PluginOutputPortParameter;
 extern Parameter* SpeedBendParameter;
 extern Parameter* SpeedOctaveParameter;
 extern Parameter* SpeedStepParameter;
-extern Parameter* TrackPresetParameter;
 
 // Global Parameters
 

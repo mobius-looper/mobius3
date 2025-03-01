@@ -1,4 +1,7 @@
 /**
+ *
+ * Recent gutting for Setups and Presets...
+ *
  * The primary start of the looping engine.
  * The code is mostly old, with a few adjustments for the new MobiusKernel
  * archecture and the way it passes buffers.
@@ -49,9 +52,7 @@
 
 #include "../../model/UserVariable.h"
 #include "../../model/MobiusConfig.h"
-#include "../../model/Setup.h"
 #include "../../model/Session.h"
-#include "../../model/Preset.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
 
@@ -74,6 +75,9 @@
 #include "Stream.h"
 #include "StreamPlugin.h"
 #include "Synchronizer.h"
+#include "ParameterSource.h"
+
+#include "../track/LogicalTrack.h"
 
 #include "Track.h"
 #include "Mem.h"
@@ -101,12 +105,10 @@ void Track::init(Mobius* m, Synchronizer* sync, int number)
     mMobius = m;
     mNotifier = m->getNotifier();
 	mSynchronizer = sync;
-    mSetupCache = nullptr;
     mEventManager = NEW1(EventManager, this);
 	mInput = NEW2(InputStream, sync, m->getSampleRate());
 	mOutput = NEW2(OutputStream, mInput, m->getAudioPool());
 	mVariables = NEW(UserVariables);
-	mPreset = nullptr;
 
 	mLoop = nullptr;
 	mLoopCount = 0;
@@ -136,11 +138,6 @@ void Track::init(Mobius* m, Synchronizer* sync, int number)
     // no longer have a private copy, it will be given to us in getState
 	//mState.init();
     
-    // Each track has it's own private Preset that can be dynamically
-    // changed with scripts or bound parameters without effecting the
-    // master preset stored in mobius.xml.  
-    mPreset = NEW(Preset);
-
     // Flesh out an array of Loop objects, but we'll wait for
     // the installation of the MobiusConfig and the Preset to tell us
     // how many to use.
@@ -166,7 +163,6 @@ Track::~Track()
     delete mEventManager;
 	delete mInput;
 	delete mOutput;
-	delete mPreset;
 	//delete mCsect;
     delete mVariables;
 }
@@ -524,11 +520,6 @@ int Track::getGroup()
     return mGroup;
 }
 
-Preset* Track::getPreset()
-{
-	return mPreset;
-}
-
 void Track::setInputLevel(int level)
 {
 	mInputLevel = level;
@@ -659,31 +650,6 @@ int Track::getPitchTweak(int tweak)
 {
 	// assume pitch affects only output for now
 	return mOutput->getPitchTweak(tweak);
-}
-
-/**
- * SyncState and a few Parameters need things that live in the SetupTrack
- * and we don't copy them all into the Track.
- * Old code cached a copy of the SetupTrack in the Track, but that's dangerous
- * so I'm now always going back to the active Setup.  This will do more
- * linear searching but the time-critical use of this is SyncState which
- * maintains it's own cache.
- *
- * shit!!
- * It's really hard to tell how often this is being called because it's all wound
- * up with Synchronizer, Parameters, and probably pinged by the UI through MobiusState
- * to show beat/bar even if we're not synchronzing.
- *
- * CAREFULLY keep a cache of the last SetupTrack from the active Setup in Mobius,
- * but this MUST be cleared whenever the MobiusConfig or Setup changes.
- */
-SetupTrack* Track::getSetup()
-{
-    if (mSetupCache == nullptr) {
-        Setup* setup = mMobius->getSetup();
-        mSetupCache = setup->getTrack(mRawNumber);
-    }
-    return mSetupCache;
 }
 
 /****************************************************************************
@@ -902,7 +868,10 @@ void Track::refreshState(TrackState* s)
 {
     s->type = Session::TypeAudio;
     s->number = mLogicalNumber;
-	s->preset = mPreset->ordinal;
+
+    // this is now trackOverlay and is handled by LogicalTrack
+	//s->preset = mPreset->ordinal;
+    
     s->inputMonitorLevel = mInput->getMonitorLevel();
 	s->outputMonitorLevel = mOutput->getMonitorLevel();
     
@@ -927,7 +896,9 @@ void Track::refreshState(TrackState* s)
     // added by Loop
 
     // Loop never did set this, I guess get it here
-    s->subcycles = mPreset->getSubcycles();
+    // since parameters are now on LogicalTrack, it could too,
+    // actually it could do a LOT of them
+    s->subcycles = getLogicalTrack()->getSubcycles();
 
 	s->input = mInputLevel;
 	s->output = mOutputLevel;
@@ -1424,21 +1395,10 @@ void Track::notifyBufferModified(float* buffer)
  */
 void Track::updateConfiguration(MobiusConfig* config)
 {
-    // cache must be reset
-    // hate this
-    mSetupCache = nullptr;
-    
     // propagate some of the global parameters to the Loops
     updateGlobalParameters(config);
 
-    // this may have changed unless config->isNoSetupChanges is true
-    Setup* setup = mMobius->getSetup();
-    
-    // pay attention to two transient flags that help avoid needless
-    // reconfiguration and loss of runtime parameter values if nothing
-    // about the setups or presets was changed
-    
-    propagateSetup(config, setup, config->setupsEdited, config->presetsEdited);
+    propagateSetup(config, config->setupsEdited, config->presetsEdited);
 }
 
 /**
@@ -1511,6 +1471,9 @@ void Track::updateGlobalParameters(MobiusConfig* config)
  */
 void Track::changePreset(int number)
 {
+    (void)number;
+    Trace(1, "Track::changePreset Who calls this?");
+#if 0    
     // only refresh if we moved to a different preset
     // since this is only used at runtime, and not after configuration
     // editing, we can use ordinal comparison
@@ -1527,6 +1490,7 @@ void Track::changePreset(int number)
             refreshPreset(preset);
         }
     }
+#endif    
 }
 
 /**
@@ -1535,8 +1499,12 @@ void Track::changePreset(int number)
  */
 void Track::changeSetup(Setup* setup)
 {
+    (void)setup;
+    Trace(1, "Track::changeSetup Who calls this?");
+#if 0    
     if (mSetupOrdinal != setup->ordinal)
       propagateSetup(mMobius->getConfiguration(), setup, false, false);
+#endif    
 }
 
 /**
@@ -1552,198 +1520,47 @@ void Track::changeSetup(Setup* setup)
  * depending on whether we could detect whether Preset object contents were
  * actually changed in this update.  If the were not changed, then we don't
  * need to refresh unless the preset itself changed.
+ *
+ * new: This is a MAJOR gut and replace
+ *
+ * How we got here is ultimately from a Session modification.  What we need to do
+ * is update the following things to reflect what is now in the session.
+ *
+ *   - loop counts
+ *   - port numbers
+ *   - track controls
+ *
+ * In the past, controls were only updated if the track was in Reset, but
+ * loop counts and port numbers seemed to change at any time.
+ *
  */
-void Track::propagateSetup(MobiusConfig* config, Setup* setup,
+void Track::propagateSetup(MobiusConfig* config, 
                            bool setupsEdited, bool presetsEdited)
 {
-    // hate saving a pointer, but it's too wound up with Synchronizer
-    // and needs to be fast until we can make local copies in SyncState
-    // do this even if the ordinals are the same since we can get here
-    // on updateConfiguration with different object pointers
-    mSetupCache = setup->getTrack(mRawNumber);
+    (void)config;
+    (void)setupsEdited;
+    (void)presetsEdited;
     
-    Preset* newPreset = nullptr;
-    // determine whether we need to refresh the preset
-    if (presetsEdited) {
-        // we're getting here after preset editing
-        // unfortately we can't tell WHICH preset was edited, only
-        // that some were, and we have to assume that our local
-        // copy was one of them
-        newPreset = getStartingPreset(config, setup, false);
-    }
-    else if (setupsEdited) {
-        // setups were edited, refresh the preset only if the
-        // starting preset differs
-        Preset* newStarting = getStartingPreset(config, setup, false);
-        if (setupsEdited || newStarting->ordinal != mPreset->ordinal)
-          newPreset = newStarting;
-    }
-    else {
-        // neither presets nor setups were edited, retain the
-        // runtime preset even if it differs from the starting preset
-        // here if you've made a runtime preset change, and then edited a binding
-        // or something that has no impact on the track
-        // don't lose runtime changes if the user is in the middle of something
-    }
-
-    // refresh the local preset if it may have changed
-    // todo: what about when the loop is not in reset, should this
-    // be deferred until reset?
-    // for the most part, this just contains operating parameters
-    // for the functions so it doesn't really matter
-    if (newPreset != nullptr)
-      refreshPreset(newPreset);
-
-    // now do things in the Setup itself
-    if (setupsEdited || mSetupOrdinal != setup->ordinal) {
-    
-        if (mLoop->isReset()) {
-            // loop is empty, reset everything except the preset
-            // third arg is doPreset which we don't need to do since
-            // we've already just done it
-            resetParameters(setup, true, false);
-        }
-        else {
-            // If the loop is busy, don't change any of the controls and
-            // things that resetParameters does, but allow changing IO ports
-            // so we can switch inputs for an overdub. 
-            // !! This would be be better handled with a track parameter
-            // you could bind and dial rather than changing setups.
-            // new: no shit, parameters need to broken out and be independent
-            // of their containers
-
-            if (mSetupCache != nullptr) {
-
-                resetPorts(mSetupCache);
-
-                // I guess do these too...
-                setName(mSetupCache->getName());
-
-                // the SetupTrack used to reference groups by numbers starting
-                // from one, now it uses the name, but the number in the Track
-                // must still be one based
-                // setGroup(mSetupCache->getGroup());
-                setGroup(getGroupNumber(config, mSetupCache));
-            }   
-        }
-    }
-
-    // remember where we were
-    mSetupOrdinal = setup->ordinal;
-}
-
-/**
- * Convert the new group name references into an internal number starting
- * from 1 like the old code did.
- */
-int Track::getGroupNumber(MobiusConfig* config, SetupTrack* st)
-{
-    int groupNumber = 0;
-    int groupOrdinal = config->getGroupOrdinal(st->getGroupName());
-    if (groupOrdinal >= 0)
-      groupNumber = groupOrdinal + 1;
-    return groupNumber;
-}
-
-/**
- * Determine the effective starting preset for a track after a setup change.
- * If the track specifies a preset use that, if not fall back to the
- * default preset in the Setup.
- *
- * If the setup does not define a default preset, keep the last one
- * that was selected.  This is something I added for Fro, and it makes
- * sense since there is no global default preset.
- */
-Preset* Track::getStartingPreset(MobiusConfig* config, Setup* setup, bool globalReset)
-{
-    Preset* preset = nullptr;
-
-    // first look for a track-specific preset override
-    SetupTrack* st = setup->getTrack(mRawNumber);
-    if (st != nullptr) {
-        const char* pname = st->getTrackPresetName();
-        if (pname != nullptr) {
-            preset = config->getPreset(pname);
-            if (preset == nullptr)
-              Trace(this, 1, "ERROR: Unable to resolve track preset: %s\n",
-                    pname);
-        }
-    }
-
-    if (preset == nullptr) {
-        // no track-specific preset, use the default in the Setup
-        const char* pname = setup->getDefaultPresetName();
-        if (pname != nullptr) {
-            preset = config->getPreset(pname);
-            if (preset == nullptr)
-              Trace(this, 1, "ERROR: Unable to resolve default preset: %s\n",
-                    pname);
-        }
-    }
-
-    if (preset == nullptr) {
-        // stay with the last active preset
-
-        // wait, this is confusing...
-        // if neither the setup or the track has a preset, then the expectation
-        // is that GlobalReset will cause all tracks to be the same
-        // but if we use the "keep the last one" rule they can be different
-        // the only way this makes sense is if selecting a preset in a track also
-        // makes it active in all tracks, which I'm not sure is good either
-        // if this is just a loop or track reset, then it kind of makes sense but
-        // global should put it back to the way it would be on startup
-
-        if (!globalReset) {
-            // note: old code searched by ordinals which is unreliable
-            // if you're adding or removing presets, names work better
-            // unless you're also renaming presets
-            // no good way track that
-            preset = config->getPreset(mPreset->getName());
-        }
-    }
-    
-    if (preset == nullptr) {
-        // this will happen if we deleted or renamed it
-        // formerly had a persistent notion of a global default preset
-        // name but now it just picks the first one, since this
-        // really needs to be defined in the Setup if you
-        // want it to stick
-        preset = config->getDefaultPreset();
-    }
-    
-    return preset;
-}
-
-/**
- * Refresh the local preset copy with a source preset.
- * This always does the refresh, decicisions about whether this refresh
- * was necessary are done at a higher leve.
- * 
- * It is permissible in obscure cases for scripts (ScriptInitPresetStatement)
- * for the Preset object here to be the private track preset returned
- * by getPreset.  In this case don't copy over itself but update other
- * thigns to reflect changes.
- */
-void Track::refreshPreset(Preset* src)
-{
-    if (src != nullptr && mPreset != src) {
-        mPreset->copyNoAlloc(src);
-
-        // sigh...Preset::copy does not copy the name, but we need
-        // that because the UI is expecting to see names in the TrackState
-        // and use that to show messages whenever the preset changes.
-        // Also need the name to detect preset changes during updateConfiguration
-        // and setSetup
-        // another memory allocation...
-        // todo: put this in a local string array instead
-        mPreset->setName(src->getName());
-    }
-
-    // expand/contract the loop list if loopCount changed
+    // 1) adjust the loopCount if they changed according to the Preset
     setupLoops();
 
-    // the loops don't need to be notified, they're already pointing
-    // to mPreset
+    if (mLoop->isReset()) {
+        // loop is empty, reset everything except the preset
+        // third arg is doPreset which we don't need to do since
+        // we've already just done it
+        resetParameters(true, false);
+    }
+    else {
+        // If the loop is busy, don't change any of the controls and
+        // things that resetParameters does, but allow changing IO ports
+        // so we can switch inputs for an overdub. 
+        // !! This would be be better handled with a track parameter
+        // you could bind and dial rather than changing setups.
+        // new: no shit, parameters need to broken out and be independent
+        // of their containers
+
+        resetPorts();
+    }
 }
 
 /**
@@ -1775,7 +1592,7 @@ void Track::refreshPreset(Preset* src)
  */
 void Track::setupLoops()
 {
-	int newLoops = (mPreset != nullptr) ? mPreset->getLoops() : mLoopCount;
+	int newLoops = ParameterSource::getLoops(this);
 
     // hard constraint
     if (newLoops > MAX_LOOPS)
@@ -1956,7 +1773,7 @@ void Track::loadProject(ProjectTrack* pt)
 		// !! need more control here, at the very least should
 		// display an alert so the user knows to save the preset
 		// permanently to avoid losing loops
-		mPreset->setLoops(newLoops);
+		//mPreset->setLoops(newLoops);
 		setupLoops();
 	}
 
@@ -2058,15 +1875,12 @@ void Track::trackReset(Action* action)
     // cancel all scripts except the one doing the reset
     mMobius->cancelScripts(action, this);
 
-	// reset the track parameters
-	Setup* setup = mMobius->getSetup();
-
 	// Second arg says whether this is a global reset, in which case we
 	// unconditionally return to the Setup parameters.  If this is an
 	// individual track reset, then have to check the resetables list.
 	bool global = (action == nullptr || action->getFunction() == GlobalReset);
 
-	resetParameters(setup, global, true);
+	resetParameters(global, true);
 
     // GlobalMute must go off so we don't think we're still
     // in GlobalMute mode with only empty tracks.  
@@ -2101,10 +1915,11 @@ void Track::trackReset(Action* action)
  * in that set could be other sets....
  * 
  */
-void Track::resetParameters(Setup* setup, bool global, bool doPreset)
+void Track::resetParameters(bool global, bool doPreset)
 {
-	SetupTrack* st = setup->getTrack(mRawNumber);
-
+    (void)doPreset;
+    LogicalTrack* lt = getLogicalTrack();
+    
 	// for each parameter we can reset, check to see if the setup allows it
 	// or if it is supposed to retain its current value
 
@@ -2112,119 +1927,65 @@ void Track::resetParameters(Setup* setup, bool global, bool doPreset)
     // objects, but here we have the old ones
 
 	if (global || !InputLevelParameter->resetRetain) {
-		if (st == nullptr)
-		  mInputLevel = 127;
-		else
-		  mInputLevel = st->getInputLevel();
+        mInputLevel = lt->getParameterOrdinal(ParamInput);
 	}
 
 	if (global || !OutputLevelParameter->resetRetain) {
-		if (st == nullptr) 
-		  mOutputLevel = 127;
-		else
-		  mOutputLevel = st->getOutputLevel();
+        mOutputLevel = lt->getParameterOrdinal(ParamOutput);
 	}
 
 	if (global || !FeedbackLevelParameter->resetRetain) {
-		if (st == nullptr) 
-		  mFeedbackLevel = 127;
-		else
-		  mFeedbackLevel = st->getFeedback();
+        mFeedbackLevel = lt->getParameterOrdinal(ParamFeedback);
 	}
 
 	if (global || !AltFeedbackLevelParameter->resetRetain) {
-		if (st == nullptr) 
-		  mAltFeedbackLevel = 127;
-		else
-		  mAltFeedbackLevel = st->getAltFeedback();
+        mAltFeedbackLevel = lt->getParameterOrdinal(ParamAltFeedback);
 	}
 
 	if (global || !PanParameter->resetRetain) {
-		if (st == nullptr) 
-		  mPan = 64;
-		else
-		  mPan = st->getPan();
+        mPan = lt->getParameterOrdinal(ParamPan);
 	}
 
-	if (global || !FocusParameter->resetRetain) {
-		if (st == nullptr) 
-		  mFocusLock = false;
-		else
-		  mFocusLock = st->isFocusLock();
-	}
-
-	if (global || !GroupParameter->resetRetain) {
-		if (st == nullptr) 
-		  mGroup = 0;
-		else {
-            MobiusConfig* config = mMobius->getConfiguration();
-            mGroup = getGroupNumber(config, st);
-        }
-	}
-
-    // setting the preset can be disabled in some code paths if it was already
-    // refreshed
-    if (doPreset && 
-        (global || !TrackPresetParameter->resetRetain)) {
-
-        Preset* preset = getStartingPreset(mMobius->getConfiguration(), setup, global);
-        refreshPreset(preset);
-	}
-
+    // when Track always had a Preset, the doPreset flag told this whether or not
+    // to refresh the Preset back to the starting state, which is where the loop count
+    // could change, and the Track's private Preset would be refreshed.
+    
     // Things that can always be reset
 
-    if (st != nullptr) {
-
-        // track port changes for effects
-        resetPorts(st);
-
-        // do we need to defer this?
-        MobiusConfig* config = mMobius->getConfiguration();
-        setGroup(getGroupNumber(config, st));
-
-        // Nice to track names right away since they can only
-        // be changed by editing the preset.  But in that case we should
-        // have caught it in updateConfiguration.  Would be nice
-        // to let this be a bindable parameter too...
-        setName(st->getName());
-	}
-
+    resetPorts();
 }
 
 /**
- * Reset the state of the input and output ports.
- * This is done unconditionally after any kind of reset, and
- * also after any setup edit.
+ * Reset the state of the input and output ports and the mono flag.
+ * 
+ * This has been done unconditionally after any kind of reset, and
+ * also after any setup (now session) edit.
  *
  * The idea here was to allow ports to be changed while loops are active
  * so you could switch instruments for an overdub, or change output
  * ports to splice in different effect chains.  
  * 
- * Those are useful features but we shouldn't have to change setups
- * to get it, these should be bindable track parameters you can
- * dial in with a MIDI pedal or set in a script.
+ * Those are useful features but need work since we're not doing any fades
+ * on the sudden buffer transitions.
  *
- * However this is done, we'll ahve clicks right now because we're
- * not capturing a fade tail from the old ports.
+ * There should also be an action handler for these.
  */
-void Track::resetPorts(SetupTrack* st)
+void Track::resetPorts()
 {
-    if (st != nullptr) {
-
-        // does it make any sense to defer these till a reset?
-        // we could have clicks if we do it immediately
-        MobiusContainer* container = mMobius->getContainer();
-		if (container->isPlugin()) {
-			setInputPort(st->getPluginInputPort());
-			setOutputPort(st->getPluginOutputPort());
-		}
-		else {
-			setInputPort(st->getAudioInputPort());
-			setOutputPort(st->getAudioOutputPort());
-		}
-
-		setMono(st->isMono());
+    // dispense with ParameterSource and start going directly
+    // to the Session
+    LogicalTrack* lt = getLogicalTrack();
+    MobiusContainer* container = mMobius->getContainer();
+    if (container->isPlugin()) {
+        setInputPort(lt->getParameterOrdinal(ParamPluginInputPort));
+        setOutputPort(lt->getParameterOrdinal(ParamPluginOutputPort));
     }
+    else {
+        setInputPort(lt->getParameterOrdinal(ParamAudioInputPort));
+        setOutputPort(lt->getParameterOrdinal(ParamAudioOutputPort));
+    }
+
+    setMono((bool)(lt->getParameterOrdinal(ParamMono)));
 }
 
 /**

@@ -493,18 +493,6 @@ Once those models are fully converted, these symbols can be removed.
 
     <!-- These were once defined in the Setup but they are effectively global -->
 
-    <Parameter name='defaultPreset'
-               type='structure' structureClass='Preset'
-               codeName='DefaultPresetName'
-               options='noBinding'>
-      This is used only in model context to define the default Preset by name.
-
-      This is new and has no correspondence in the old parameter model, but may
-      be used at runtime.
-
-      update: needs to be removed, it is replaced by sessionOverlay
-    </Parameter>
-
     <!-- This isn't actually in the Session, it is a runtime parameter used by the UI
          to show the currenty active preset. Which is what would be used if the
          Track didn't override it.  It will start out the same as defaultPreset
@@ -603,22 +591,6 @@ Once those models are fully converted, these symbols can be removed.
          property of the Session::Track object.  But it can be trreated as if
          it were a normal parameter.  -->
     <Parameter name='trackName' codeName='Name' type='string' options='noBinding'/>
-
-    <Parameter name='trackPreset'
-               type='structure' structureClass='Preset'
-               displayType='combo' displayHelper='trackPreset'
-               coreName='preset' codeName='TrackPresetName'
-               options='noBinding'>
-      In model context defined the starting preset for this track by name.
-
-      In runtime context, this is weird.  It corresponds to the old "preset" parameter
-      which changes the active preset in the Track without modifying config, so it
-      would be lost on Reset.
-
-      todo: "active preset" is a poorly defined concept that needs thought
-    </Parameter>
-
-    <!-- eventual replacement for trackPreset -->
 
     <Parameter name='trackOverlay'
                type='structure' 

@@ -91,10 +91,6 @@ class Track : public TraceContext
         mOutputPort = p;
     }
 
-    // used for sync parameters rather than having
-    // to maintain a local copy
-    class SetupTrack* getSetup();
-    
 	void setHalting(bool b);
 
 	void getTraceContext(int* context, long* time);
@@ -152,19 +148,10 @@ class Track : public TraceContext
 	bool isFocusLock();
 
     // Setup/Preset management
-
-    // change the setup at runtime
+    // all this needs to go away
+    
     void changeSetup(class Setup* setup);
-
-    // change to a different active preset at runtime
 	void changePreset(int number);
-
-    // refresh the local preset copy
-    // this is mostly internal but InitScriptStatement needs access to it
-	void refreshPreset(class Preset* p);
-
-    // return the local Preset copy
-	class Preset* getPreset();
 
 	//
     // status 
@@ -313,12 +300,10 @@ class Track : public TraceContext
 
     // configuration management
     
-    void propagateSetup(MobiusConfig* config, Setup* setup, bool setupsEdited, bool presetsEdited);
-    class Preset* getStartingPreset(MobiusConfig* config, Setup* setup, bool globalReset);
-    int getGroupNumber(class MobiusConfig* config, class SetupTrack* st);
+    void propagateSetup(MobiusConfig* config, bool setupsEdited, bool presetsEdited);
 	void setupLoops();
-	void resetParameters(class Setup* setup, bool global, bool doPreset);
-	void resetPorts(class SetupTrack* st);
+	void resetParameters(bool global, bool doPreset);
+	void resetPorts();
 	void trackReset(class Action* action);
     bool checkSyncEvent(class Event* e);
     void switchLoop(class Function* f, bool forward);
@@ -345,18 +330,12 @@ class Track : public TraceContext
 	class Mobius* mMobius;
     class Notifier* mNotifier = nullptr;
 	class Synchronizer* mSynchronizer;
-    class SetupTrack* mSetupCache = nullptr;
-    int mSetupOrdinal = -1;
     class EventManager* mEventManager;
 	class InputStream* mInput;
 	class OutputStream* mOutput;
 	//class CriticalSection* mCsect;
 	class UserVariables* mVariables;
     
-    // private copy of the active preset
-    // !! needs to be a member object
-	class Preset* mPreset;
-
 	class Loop*	mLoops[MAX_LOOPS];
     class Loop* mLoop;
 	int			mLoopCount;

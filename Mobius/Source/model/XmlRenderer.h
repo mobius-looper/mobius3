@@ -37,10 +37,11 @@ class XmlRenderer {
     void render(class XmlBuffer* b, class UIParameter* p, int value);
     void render(class XmlBuffer* b, class UIParameter* p, bool value);
     void render(class XmlBuffer* b, class UIParameter* p, const char* value);
+    void render(class XmlBuffer* b, const char* name, const char* value);
 
     int parse(class XmlElement* e, class UIParameter* p);
     const char* parseString(class XmlElement* e, class UIParameter* p);
-
+    
     class StringList* parseStringList(class XmlElement* e);
     void renderList(class XmlBuffer* b, const char* elname, class StringList* list);
 

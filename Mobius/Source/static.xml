@@ -37,7 +37,7 @@
         symbols='sessionOverlay'/>
 
   <Form name='sessionGlobalMiscellany' title='Obscure Things for Advanced Users'
-        symbols='longDisable,longPress,noiseFloor,monitorAudio,quickSave,spreadRange,fadeFrames,maxSyncDrift,defaultPreset,eventScript,userFileFolder'/>
+        symbols='longDisable,longPress,noiseFloor,monitorAudio,quickSave,spreadRange,fadeFrames,maxSyncDrift,eventScript,userFileFolder'/>
 
   <Form name='sessionGlobalPorts' title='IO Ports'
         symbols='pluginInputs,pluginOutputs,inputLatency,outputLatency'/>
@@ -55,7 +55,7 @@
         symbols='autoRecordUnit,autoRecordUnits,recordThreshold'/>
   
   <Form name='sessionAudioTrackGeneral' title='General Parameters'
-        symbols='trackName,trackGroup,loopCount,trackPreset,trackOverlay,focus'/>
+        symbols='trackName,trackGroup,loopCount,trackOverlay,focus'/>
     
   <Form name='sessionAudioSync' title='Synchronization Parameters'
         symbols='syncSource,syncUnit,trackSyncUnit'/>

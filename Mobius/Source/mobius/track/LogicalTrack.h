@@ -122,6 +122,9 @@ class LogicalTrack
     TrackSyncUnit getTrackSyncUnitNow();
     int getSyncLeaderNow();
     Pulse* getLeaderPulse();
+
+    // not really sync state, but we need this during the Preset transition mess
+    int getSubcycles();
     
     //////////////////////////////////////////////////////////////////////
     // TimeSlicer State
@@ -175,6 +178,9 @@ class LogicalTrack
     TrackSyncUnit trackSyncUnit = TrackUnitLoop;
     int syncLeader = 0;
 
+    int groupNumber = 0;
+    bool focusLock = false;
+
     // sync recording state
     bool syncRecording = false;
     bool syncRecordStarted = false;
@@ -196,6 +202,7 @@ class LogicalTrack
 
     // the parameter includes specified in the Session and Session::Track
     ValueSet* trackOverlay = nullptr;
+    int trackOverlayNubmer = 0;
     ValueSet* sessionOverlay = nullptr;
 
     /**
@@ -219,7 +226,14 @@ class LogicalTrack
     bool advanced = false;
     
     void resolveParameterOverlays();
-    void cacheSyncParameters();
+    void cacheParameters();
+    void doParameter(class UIAction* a);
+    int getGroupFromSession();
+    bool getFocusLockFromSession();
+    int getEnumOrdinal(class Symbol* s, int value);
+    int getGroupFromAction(class UIAction* a);
+    void resetParameters();
+    
 };
 
  

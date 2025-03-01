@@ -43,7 +43,8 @@ void ParameterHelper::getStructureNames(Provider* p, Symbol* s, juce::StringArra
             }
         }
         // ActivePreset is used by ParametersElement
-        else if (s->id == ParamTrackPreset || s->id == ParamActivePreset) {
+        else if (//s->id == ParamTrackPreset ||
+                 s->id == ParamActivePreset) {
             for (Preset* preset = config->getPresets() ; preset != nullptr ;
                  preset = preset->getNextPreset()) {
                 result.add(juce::String(preset->getName()));
@@ -92,7 +93,8 @@ juce::String ParameterHelper::getStructureName(Provider* p, Symbol* s, int ordin
                 name = def->name;
             }
         }
-        else if (s->id == ParamTrackPreset || s->id == ParamActivePreset) {
+        else if (// s->id == ParamTrackPreset ||
+            s->id == ParamActivePreset) {
             Structure* list = config->getPresets();
             Structure* st = Structure::get(list, ordinal);
             if (st != nullptr)
@@ -140,7 +142,8 @@ int ParameterHelper::getParameterMax(Provider* p, Symbol* s)
             max = config->dangerousGroups.size();
             handled = true;
         }
-        else if (s->id == ParamTrackPreset || s->id == ParamActivePreset) {
+        else if (// s->id == ParamTrackPreset ||
+                 s->id == ParamActivePreset) {
             for (Preset* preset = config->getPresets() ; preset != nullptr ;
                  preset = preset->getNextPreset()) {
                 max++;

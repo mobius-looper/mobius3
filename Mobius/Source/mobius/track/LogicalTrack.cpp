@@ -7,6 +7,8 @@
 #include "../../model/SyncConstants.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterSets.h"
+#include "../../model/UIAction.h"
+#include "../../model/Query.h"
 #include "../../model/Symbol.h"
 #include "../../model/Enumerator.h"
 #include "../../model/MobiusConfig.h"
@@ -92,7 +94,7 @@ void LogicalTrack::loadSession()
     }
 
     resolveParameterOverlays();
-    cacheSyncParameters();
+    cacheParameters();
     
     if (track == nullptr) {
         // this was a new logical track
@@ -135,8 +137,16 @@ void LogicalTrack::resolveParameterOverlays()
     if (sessionTrack != nullptr) {
         const char* ovname = sessionTrack->getString("trackOverlay");
         if (ovname != nullptr) {
-            if (sets != nullptr)
-              trackOverlay = sets->find(juce::String(ovname));
+            if (sets != nullptr) {
+                trackOverlay = sets->find(juce::String(ovname));
+                // sigh, need to return what used to be the trackPreset "ordinal" in
+                // the TrackState, parameter sets don't remember their positiion so do it here
+                // zero means "none"
+                if (trackOverlay != nullptr) {
+                    int index = sets->indexOf(trackOverlay);
+                    trackOverlayNumber = index + 1;
+                }
+            }
         
             if (trackOverlay == nullptr)
               Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
@@ -154,9 +164,6 @@ void LogicalTrack::resolveParameterOverlays()
             if (sessionOverlay == nullptr)
               Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
         }
-
-        // pretty sure we used to have "defaultPreset" in the Setup which should
-        // have been moved to the Session, getting tired of this shit, punt
     }
 }
 
@@ -179,25 +186,6 @@ MobiusLooperTrack* LogicalTrack::getMobiusTrack()
     return mlt;
 }
 
-/**
- * Synchronization parameters are extremely important for deciding things
- * so cache them rather than going back to the Session and the bindings every time.
- *
- * These have been duplicated at several levels, but now that LT is managing them
- * they can get them from here.  These are AUTHORITATIVE over everything above
- * and below the LT.
- *
- * This is also where temporary overrides to the values go if you ahve an action
- * or script that changes them.
- */
-void LogicalTrack::cacheSyncParameters()
-{
-    syncSource = getSyncSourceFromSession();
-    syncSourceAlternate = getSyncSourceAlternateFromSession();
-    syncUnit = getSyncUnitFromSession();
-    trackSyncUnit = getTrackSyncUnitFromSession();
-    syncLeader = sessionTrack->getInt("leaderTrack");
-}    
 
 /**
  * Hack for the SelectTrack case where we need to assemble a UIAction
@@ -234,13 +222,17 @@ void LogicalTrack::getTrackProperties(TrackProperties& props)
 
 int LogicalTrack::getGroup()
 {
-    return track->getGroup();
+    // return track->getGroup();
+    return groupNumber;
 }
 
 bool LogicalTrack::isFocused()
 {
-    return track->isFocused();
+    // track->isFocused();
+    return focusLock;
 }
+
+
 
 /**
  * Audio tracks are handled in bulk through Mobius
@@ -248,11 +240,6 @@ bool LogicalTrack::isFocused()
 void LogicalTrack::processAudioStream(MobiusAudioStream* stream)
 {
     track->processAudioStream(stream);
-}
-
-bool LogicalTrack::doQuery(Query* q)
-{
-    return track->doQuery(q);
 }
 
 /**
@@ -289,6 +276,12 @@ bool LogicalTrack::scheduleWait(MslWait* w)
 
 void LogicalTrack::refreshState(TrackState* state)
 {
+    // what used to be the active preset is now handled here
+    // this used to be the ordinal number of the track's Preset
+    // and it always had one, now trackOverlay is optional so
+    // zero needs to mean "none" in the display
+    state->preset = trackOverlayNumber;
+    
     track->refreshState(state);
 }
 
@@ -468,13 +461,12 @@ int LogicalTrack::getSyncGoalUnits()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * There are a few things we intercept, the reset are passed to the inner track.
+ * A few functions are intercepted here, most are passed along to the BaseTrack.
  *
- * !! This is where we need to add the concept of temporary parameter bindings.
- * Core Mobius does this by maintaining a copy of the Preset on every track, need
- * to unwind that eventually.
+ * Parameters are entirely handled here, BaseTracks are informed only if they wish
+ * to cache values, they can't maintain a value that is different from the LT.
  *
- * MidiTrack calls back to our bindParameter if it isn't one of the control parameters.
+ * Activations are entirely handled here.
  */
 void LogicalTrack::doAction(UIAction* a)
 {
@@ -483,6 +475,7 @@ void LogicalTrack::doAction(UIAction* a)
     if (sid == FuncTrackReset || sid == FuncGlobalReset) {
         clearBindings();
         resetSyncState();
+        resetParameters();
         resolveParameterOverlays();
         track->doAction(a);
     }
@@ -494,23 +487,43 @@ void LogicalTrack::doAction(UIAction* a)
         // accepts a name in the bindingArgs or an ordinal in the value
 
         ValueSet* overlay = nullptr;
+        int overlayNumber = 0;
         ParameterSets* sets = manager->getParameterSets();
         if (strlen(a->arguments) > 0) {
-            if (sets != nullptr)
-              overlay = sets->find(juce::String(a->arguments));
+            if (sets != nullptr) {
+                overlay = sets->find(juce::String(a->arguments));
+                if (overlay != nullptr) {
+                    // need to remember it's position for the TrackState
+                    int index = sets->indexOf(overlay);
+                    overlayNumber = index + 1;
+                }
+            }
             if (overlay == nullptr)
               Trace(1, "LogicalTrack: Invalid parameter set name %s", a->arguments);
         }
-
+        
         if (overlay == nullptr) {
-            if (sets != nullptr)
-              overlay = sets->getByOrdinal(a->value);
-            if (overlay == nullptr)
-              Trace(1, "LogicalTrack: Invalid parameter set ordinal %d", a->value);
+            // unlike Presets which were always present, overlays are optional
+            // and zero means "none"
+            if (a->value == 0) {
+                trackOverlay = nullptr;
+                trackOverlayNumber = 0;
+            }
+            else {
+                if (sets != nullptr) {
+                    overlay = sets->getByOrdinal(a->value);
+                }
+                if (overlay == nullptr)
+                  Trace(1, "LogicalTrack: Invalid parameter set ordinal %d", a->value);
+                else
+                  overlayNumber = a->value;
+            }
         }
 
-        if (overlay != nullptr)
-          trackOverlay = overlay;
+        if (overlay != nullptr) {
+            trackOverlay = overlay;
+            trackOverlayNumber = overlayNumber;
+        }
     }
     else if (a->symbol->behavior == BehaviorActivation) {
         // the only one we support is Parameter activation which
@@ -531,21 +544,213 @@ void LogicalTrack::doAction(UIAction* a)
         }
     }
     else if (a->symbol->parameterProperties == nullptr) {
-        // usually a function
+        // must be a function
         track->doAction(a);
     }
     else {
-        // parameters are a little harder
-        // sending an action to change a parameter value establishes
-        // a binding that will persist until the track is reset
-        // the track mayu also choose to cache this value which makes
-        // the binding redundant but be consistent about it
-        // this will be noisy for track controls like input/output levels
-        // consider having BaseTrack::doAction return a boolean if it decided
-        // to cache the value so we don't have to
+        doParameter(a);
+    }
+}
+
+/**
+ * Process a parameter action.
+ *
+ * A few parameters are managed directly on the LogicalTrack, the reset
+ * are held in the session.  The parameters that are handled here need to
+ * include everything in cacheParameters.
+ */
+void LogicalTrack::doParameter(UIAction* a)
+{
+    Symbol* s = a->symbol;
+    bool handled = true;
+    
+    switch (s->id) {
+        case ParamSyncSource:
+            syncSource = (SyncSource)getEnumOrdinal(s, a->value);
+            break;
+            
+        case ParamSyncSourceAlternate:
+            syncSourceAlternate = (SyncSourceAlternate)getEnumOrdinal(s, a->value);
+            break;
+            
+        case ParamSyncUnit:
+            syncUnit = (SyncUnit)getEnumOrdinal(s, a->value);
+            break;
+            
+        case ParamTrackSyncUnit:
+            trackSyncUnit = (TrackSyncUnit)getEnumOrdinal(s, a->value);
+            break;
+            
+        case ParamLeaderTrack:
+            // todo: need range checking like we do for enums
+            syncLeader = a->value;
+            break;
+            
+        case ParamTrackGroup:
+            groupNumber = getGroupFromAction(a);
+            break;
+            
+        case ParamFocus:
+            focusLock = (bool)(a->value);
+            break;
+            
+        default: handled = false; break;
+    }
+    
+    if (!handled) {
+        // before we just go slamming numbers into the bindings, need
+        // to be doing the equivalent of getEnumOrdinal on these
         bindParameter(a);
         track->doAction(a);
     }
+    else {
+        // none of the directly cached parameters need to be sent to the
+        // tracks right now, but that could change
+    }
+}
+
+/**
+ * Given an uncontrained number from a UIAction value, verify that
+ * it fits within the enumeration range of a parameter.
+ *
+ * This is a generic utiliity, maybe move it to Enumerator?
+ */
+int LogicalTrack::getEnumOrdinal(Symbol* s, int value)
+{
+    int ordinal = 0;
+    
+    ParameterProperties* props = s->parameterProperties.get();
+    if (props == nullptr) {
+        Trace(1, "LogicalTrack::getEnumOrdinal Not a parameter symbol",
+              s->getName());
+    }
+    else if (props->type == TypeEnum) {
+        if (value >= 0 && value < props->values.size())
+          ordinal = value;
+        else
+          Trace(1, "LogicalTrack::getEnumOrdinal Value out of range %s %d",
+                s->getName(), value);
+    }
+    else {
+        // this could also do range checking on numeric parameters
+        Trace(1, "LogicalTrack::getEnumOrdinal not an enumerated parameter symbol %s",
+              s->getName());
+    }
+
+    return ordinal;
+}
+
+/**
+ * Synchronization parameters are extremely important for deciding things
+ * so cache them rather than going back to the Session and the bindings every time.
+ *
+ * These have been duplicated at several levels, but now that LT is managing them
+ * they can get them from here.  These are AUTHORITATIVE over everything above
+ * and below the LT.
+ *
+ * This is also where temporary overrides to the values go if you ahve an action
+ * or script that changes them.
+ *
+ * When the track is reset, the values are recached from the session.
+ */
+void LogicalTrack::cacheParameters()
+{
+    syncSource = getSyncSourceFromSession();
+    syncSourceAlternate = getSyncSourceAlternateFromSession();
+    syncUnit = getSyncUnitFromSession();
+    trackSyncUnit = getTrackSyncUnitFromSession();
+    syncLeader = sessionTrack->getInt("leaderTrack");
+
+    // other convenient things
+    groupNumber = getGroupFromSession();
+
+    // keep the symbol table around, we're going to be needing it...
+    Symbol* s = manager->getSymbols()->getSymbol(ParamFocus);
+    focusLock = sessionTrack->getBool(s->name);
+}
+
+int LogicalTrack::getGroupFromSession()
+{
+    int gnumber = 0;
+
+    const char* groupName = sessionTrack->getString("trackGroup");
+    // since we store the name in the session, have to map it back to an ordinal
+    // which requires the MobiusConfig
+    if (groupName != nullptr) {
+        MobiusConfig* config = manager->getConfigurationForGroups();
+        int ordinal = config->getGroupOrdinal(groupName);
+        if (ordinal < 0)
+          Trace(1, "LogicalTrack: Invalid group name found in session %s", groupName);
+        else
+          gnumber = ordinal + 1;
+    }
+
+    return gnumber;
+}
+
+int LogicalTrack::getGroupFromAction(UIAction* a)
+{
+    int gnumber = 0;
+
+    // todo: assumign we're dealing with numbers, but should take names
+    // in the binding args
+    MobiusConfig* config = manager->getConfigurationForGroups();
+    if (a->value >= 0 && a->value < config->dangerousGroups.size()) {
+        gnumber = a->value;
+    }
+    else {
+        Trace(1, "LogicalTrack: Group number out of range %d", a->value);
+    }
+    
+    return gnumber;
+}
+
+/**
+ * Initialize parameters on GlobalReset or TrackReset
+ *
+ * This is where Track updates the input/output levels, IO ports,
+ * the loop counts, and a few other things.  It caches those so it will
+ * happen when the Reset function is send through the core.
+ */
+void LogicalTrack::resetParameters()
+{
+    // these were formerly handled by Track, and were sensitive
+    // to "reset retain" options on the old Parameter model
+    // now that they live up here, will need awareness of resetRetains as well
+    
+    // other convenient things
+    groupNumber = getGroupFromSession();
+
+    // keep the symbol table around, we're going to be needing it...
+    Symbol* s = manager->getSymbols()->getSymbol(ParamFocus);
+    focusLock = sessionTrack->getBool(s->name);
+
+    // !! Track would formerly revert the Preset to what was in the Setup
+    // on GlobalReset, or TrackReset if the special "reset retain" option was
+    // off for the TrackPreset parameter
+    // in the new world, this means how the trackOverlay is handled
+    // we either revert to the Overlay specified in the Session or keep the current one
+    // punting on this for awhile
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Query
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * The LogicalTrack is authorative over parameter values.
+ * BaseTracks may cache them but they cannot have values that differ.
+ */
+bool LogicalTrack::doQuery(Query* q)
+{
+    //return track->doQuery(q);
+    q->value = getParameterOrdinal(q->symbol->id);
+
+    // assuming we're at the end of the query probe chain and don't
+    // have to bother with returning if this was actually a parameter or not
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -706,6 +911,13 @@ int LogicalTrack::getLoopCountFromSession()
     return result;
 }
 
+int LogicalTrack::getSubcycles()
+{
+    int subcycles = getParameterOrdinal(ParamSubcycles);
+    if (subcycles == 0) subcycles = 4;
+    return subcycles;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Group 2: Things that might be in the Preset
@@ -713,23 +925,6 @@ int LogicalTrack::getLoopCountFromSession()
 // These are temporary until the session editor is fleshed out.
 //
 //////////////////////////////////////////////////////////////////////
-
-Preset* LogicalTrack::getPreset()
-{
-    Preset* preset = nullptr;
-    MobiusConfig* config = manager->getConfigurationForPresets();
-    
-    if (activePreset >= 0)
-      preset = config->getPreset(activePreset);
-    
-    // fall back to the default
-    // !! should be in the Session
-    // actually Presets should go away entirely for MIDI tracks
-    if (preset == nullptr)
-      preset = config->getPresets();
-
-    return preset;
-}
 
 /**
  * The primary mechanism to access parameter values from within the kernel.
@@ -802,23 +997,6 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
             
             if (value != nullptr)
               ordinal = value->getInt();
-            
-            // temporary verification that the ParameterSets have the same
-            // values as what used to be in the Preset
-
-            if (s->parameterProperties->scope == ScopePreset) {
-                
-                Preset* p = getPreset();
-                if (p != nullptr) {
-                    ExValue exvalue;
-                    UIParameterHandler::get(symbolId, p, &exvalue);
-                    int presetOrdinal = exvalue.getInt();
-
-                    if (presetOrdinal != ordinal)
-                      Trace(1, "LogicalTrack: ParameterSet/Preset mismatch for %s",
-                            s->getName());
-                }
-            }
         }
     }
     

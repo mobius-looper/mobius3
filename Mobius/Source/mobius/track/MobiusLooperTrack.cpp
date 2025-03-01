@@ -7,6 +7,7 @@
 #include "../../model/TrackState.h"
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"
+#include "../../model/Symbol.h"
 
 #include "../core/Mobius.h"
 #include "../core/Track.h"
@@ -67,20 +68,33 @@ void MobiusLooperTrack::loadSession(Session::Track* def)
  * This one is complex because we do transformation on the track numbers
  * from the logical track space into the Mobus track space.
  * This needs to be done for UIAction and Query to convert action scope numbers.
+ *
+ * Parameters can now be sent directly to the Track.
+ * Functions have to pass through core/Actionator for various conversions.
  */ 
 void MobiusLooperTrack::doAction(UIAction* a)
 {
     // unclear whether the caller will be confused by this transformation so undo it
     int logicalScope = a->getScopeTrack();
     a->setScopeTrack(track->getDisplayNumber());
-    
-    mobius->doAction(a);
+
+    if (a->symbol->parameterProperties != nullptr) {
+        if (track != nullptr)
+          track->doAction(a);
+    }
+    else {
+        mobius->doAction(a);
+    }
     
     a->setScopeTrack(logicalScope);
 }
 
 bool MobiusLooperTrack::doQuery(Query* q)
 {
+    (void)q;
+    // we actually shouldn't be calling this any more, LogicalTrack handles it
+    Trace(1, "MobiusLooperTrack::doQuery Who called this?");
+#if 0    
     // like actions we have always passed these through Mobius first
     // need to adjust the LogicalTrack scope number to the core track number
     int logicalScope = q->scope;
@@ -90,6 +104,8 @@ bool MobiusLooperTrack::doQuery(Query* q)
     
     q->scope = logicalScope;
     return result;
+#endif
+    return false;
 }
 
 void MobiusLooperTrack::processAudioStream(class MobiusAudioStream* stream) 
@@ -237,9 +253,13 @@ int MobiusLooperTrack::getSubcycles()
 {
     int result = 0;
     // sigh, Variable still uses Preset for this and so shall we
-    Preset* p = track->getPreset();
-    if (p != nullptr)
-      result = p->getSubcycles();
+    //Preset* p = track->getPreset();
+    //if (p != nullptr)
+    //result = p->getSubcycles();
+
+    // this shouldn't be handled by BaseTrack at all!
+    result = logicalTrack->getSubcycles();
+    
     return result;
 }
 

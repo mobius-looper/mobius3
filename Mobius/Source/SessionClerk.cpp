@@ -276,7 +276,10 @@ void SessionClerk::fixSession(Session* s)
  *
  * This was formerly Setup::defaultPreset and would be the default starting Preset
  * used by all tracks in this Setup.  If not defined it reversed to the preset named
- * "Default".   If this is set, the parameter set with that name is found and MERGED
+ * "Default".  This would have been copied in to the session by ModelTransformer
+ * under the name "defaultPreset" which no longer has a SymbolId.
+ *
+ * If this is set, the parameter set with that name is found and MERGED
  * into the session.  defaultPreset is taken out so we don't do this again.  This is
  * NOT modeled with the sessionOverlay, the session simply becomes a self-contained
  * parameter set with whatever the default was.  This is slightly less flexible because
@@ -286,6 +289,9 @@ void SessionClerk::fixSession(Session* s)
  *
  * 2) Session::Track trackPreset
  *
+ * Another thing that ModelTransformer will copy over from the SetupTrack using
+ * the old name.
+ * 
  * If this is specified and is the same as defaultPreset it is removed
  * If this is specified and is different than defaultPreset it is retained
  * but renamed to trackOverlay.

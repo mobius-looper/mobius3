@@ -250,6 +250,12 @@ void XmlRenderer::render(XmlBuffer* b, UIParameter* p, const char* value)
       b->addAttribute(p->getName(), value);
 }
 
+void XmlRenderer::render(XmlBuffer* b, const char* name, const char* value)
+{
+    if (value != nullptr)
+      b->addAttribute(name, value);
+}
+
 /**
  * Most parameters are boolean, integer, or enumerations.
  * Parse and return an int which can then be cast by the caller.
@@ -781,7 +787,7 @@ void XmlRenderer::render(XmlBuffer* b, Setup* setup)
     b->addAttribute(ATT_ACTIVE, setup->getActiveTrack());
     //b->addAttribute(ATT_BINDINGS, setup->getBindings());
 
-    render(b, UIParameterDefaultPreset, setup->getDefaultPresetName());
+    render(b, "defaultPreset", setup->getDefaultPresetName());
     
     // these are a csv while the function lists in MobiusConfig
     // are String lists, should be consistent, I'm liking csv for brevity
@@ -818,7 +824,7 @@ void XmlRenderer::parse(XmlElement* e, Setup* setup)
 	setup->setActiveTrack(e->getIntAttribute(ATT_ACTIVE));
 	//setup->setBindings(e->getAttribute(ATT_BINDINGS));
 
-    setup->setDefaultPresetName(parseString(e, UIParameterDefaultPreset));
+    setup->setDefaultPresetName(e->getAttribute("defaultPreset"));
     
     //setup->setResetRetains(e->getAttribute(ATT_RESET_RETAINS));
 
@@ -863,7 +869,7 @@ void XmlRenderer::render(XmlBuffer* b, SetupTrack* t)
     // this was only InputPort, OutputPort, and PresetNumber
     // actually there are a lot missing and not just ones with transient
 
-    render(b, UIParameterTrackPreset, t->getTrackPresetName());
+    render(b, "trackPreset", t->getTrackPresetName());
     render(b, UIParameterFocus, t->isFocusLock());
     render(b, UIParameterMono, t->isMono());
 
@@ -912,7 +918,7 @@ void XmlRenderer::parse(XmlElement* e, SetupTrack* t)
     if (oldName != nullptr)
       t->setName(oldName);
     
-    t->setTrackPresetName(parseString(e, UIParameterTrackPreset));
+    t->setTrackPresetName(e->getAttribute("trackPreset"));
     t->setFocusLock(parse(e, UIParameterFocus));
     t->setMono(parse(e, UIParameterMono));
 

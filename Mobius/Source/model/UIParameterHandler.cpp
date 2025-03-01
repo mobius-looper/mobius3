@@ -314,9 +314,9 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
             value->setString(((SetupTrack*)obj)->getName());
             break;
             
-        case ParamTrackPreset:
-            value->setString(((SetupTrack*)obj)->getTrackPresetName());
-            break;
+            //case ParamTrackPreset:
+            //value->setString(((SetupTrack*)obj)->getTrackPresetName());
+            //break;
             
         case ParamActivePreset:
             break;
@@ -719,9 +719,9 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
             ((SetupTrack*)obj)->setName(value->getString());
             break;
             
-        case ParamTrackPreset:
-            ((SetupTrack*)obj)->setTrackPresetName(value->getString());
-            break;
+            //case ParamTrackPreset:
+            //((SetupTrack*)obj)->setTrackPresetName(value->getString());
+            //break;
             
         case ParamActivePreset:
             break;

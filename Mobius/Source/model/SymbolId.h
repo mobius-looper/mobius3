@@ -56,12 +56,10 @@ typedef enum {
     ParamIsolateOverdubs,
     ParamSaveLayers,
 
-    // formerly in the Setup
-    ParamDefaultPreset,
     // a runtime only global for the menu and ParametersElement
     ParamActivePreset,
 
-    // eventual replacement for DefaultPreset
+    // replacement for DefaultPreset
     ParamSessionOverlay,
 
     //
@@ -97,8 +95,6 @@ typedef enum {
     // Formerly in SetupTrack
     
     ParamTrackName,
-    ParamTrackPreset,
-    // eventual replacement for TrackPreset
     ParamTrackOverlay,
     ParamFocus,
     ParamMono,

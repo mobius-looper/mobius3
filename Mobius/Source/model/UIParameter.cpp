@@ -192,7 +192,7 @@ Structure* UIParameter::getStructureList(MobiusConfig* container)
 {
     Structure* list = nullptr;
     
-    if (this == UIParameterDefaultPreset ||
+    if (// this == UIParameterDefaultPreset ||
         this == UIParameterActivePreset ||
         this == UIParameterTrackPreset) {
 

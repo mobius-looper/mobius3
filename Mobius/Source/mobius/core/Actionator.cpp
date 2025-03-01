@@ -5,6 +5,9 @@
  * The new model is UIAction and the old model is Action.  There are redundant
  * implementations of both to ease the transition to a common model.
  *
+ * Parameter handling has been gutted since this is now mananged by LogicalTrack
+ * Same with Activations.
+ *
  */
 
 // sprintf
@@ -96,40 +99,21 @@ void Actionator::doAction(UIAction* action)
         Trace(1, "Actionator: action with incorrect level %s %ld\n",
               symbol->getName(), (long)symbol->level);
     }
-#if 0    
-    else if (symbol->id == FuncStart) {
-        // fitting this in to the existing framework is too much a PITA,
-        // simulate it
-        // works for UI actions but not from scripts, could wire it in lower
-        UIAction sub;
-        sub.symbol = mMobius->getContainer()->getSymbols()->getSymbol(FuncRestart);
-        sub.setScope(action->getScope());
-        doAction(&sub);
-    }
-    else if (symbol->id == FuncStop) {
-        // simulate it
-        UIAction first;
-        first.symbol = mMobius->getContainer()->getSymbols()->getSymbol(FuncRestart);
-        first.setScope(action->getScope());
-        doAction(&first);
-        UIAction second;
-        second.symbol = mMobius->getContainer()->getSymbols()->getSymbol(FuncPause);
-        second.setScope(action->getScope());
-        doAction(&second);
-    }
-#endif    
     else if (symbol->coreFunction) {
         Function* f = (Function*)(symbol->coreFunction);
         doFunction(action, f);
     }
     else if (symbol->coreParameter) {
-        Parameter* p = (Parameter*)(symbol->coreParameter);
-        doParameter(action, p);
+        // not supposed to be called any more
+        Trace(1, "Actionator: Action for a parameter");
     }
     else if (symbol->parameter) {
+        Trace(1, "Actionator: Action for a non-core parameter");
         // UI parameter without core, check alias
         // could have done this earlier but it's mostly for thigs like
         // activePreset->preset that don't happen often
+
+        // wtf was this for?
         if (symbol->parameter->coreName != nullptr) {
             Symbol* alt = mMobius->getContainer()->getSymbols()->intern(symbol->parameter->coreName);
             if (alt->coreParameter) {
@@ -142,11 +126,9 @@ void Actionator::doAction(UIAction* action)
         }
     }
     else if (symbol->behavior == BehaviorActivation) {
-        // actually it's worked out best for the UI to not use this action behavior
-        // but it's better for bindings
-        // to change presets/setups in the main menu it's easier to set
-        // the activeSetup and activePreset parameters
-        doActivation(action);
+        // should not be here any more, TrackManager/LogicalTrack handle it
+        Trace(1, "Actionator: Received BehaviorActivation");
+        //doActivation(action);
     }
     else if (symbol->script) {
         doScript(action);
@@ -174,6 +156,7 @@ void Actionator::doAction(UIAction* action)
  * In theory if it schedules that somehow needs to make it back to the calling
  * script so it can wait on it, but I didn't see that happening.
  */
+#if 0
 void Actionator::doParameter(UIAction* action, Parameter* p)
 {
     Action* coreAction = convertAction(action);
@@ -183,6 +166,7 @@ void Actionator::doParameter(UIAction* action, Parameter* p)
     doOldAction(coreAction);
     completeAction(coreAction);
 }
+#endif
 
 /**
  * Process a UIAction containing a coreScript symbol.
@@ -271,6 +255,7 @@ void Actionator::doScript(UIAction* action)
  *
  * BehaviorActivation is a function oriented approach so may want to rethink that.
  */
+#if 0
 void Actionator::doActivation(UIAction* action)
 {
     Symbol* symbol = action->symbol;
@@ -323,6 +308,7 @@ void Actionator::doActivation(UIAction* action)
               symbol->getName());
     }
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -923,13 +909,17 @@ void Actionator::doOldAction(Action* a)
         doFunction(a);
     }
     else if (t == ActionParameter) {
-        doParameter(a);
+        Trace(1, "Actionator::doOldAction with ActionParameter");
+        //doParameter(a);
     }
     else if (t == ActionPreset) {
-        doPreset(a);
+        Trace(1, "Actionator::doOldAction with ActionPreset");
+        //doParameter(a);
+        //doPreset(a);
     }
     else if (t == ActionSetup) {
-        doSetup(a);
+        Trace(1, "Actionator::doOldAction with ActionSetup");
+        //doSetup(a);
     }
     else {
         Trace(1, "Actionator: Invalid action target %s\n", t->getName());
@@ -944,6 +934,7 @@ void Actionator::doOldAction(Action* a)
  * This may be a surprise for some users, consider a global parameter
  * similar to FocusLockFunctions to disable this?
  */
+#if 0
 void Actionator::doPreset(Action* a)
 {
     MobiusConfig* config = mMobius->getConfiguration();
@@ -1005,15 +996,16 @@ void Actionator::doPreset(Action* a)
         }
     }
 }
+#endif
 
 /**
  * Process a TargetSetup action.
  */
+#if 0    
 void Actionator::doSetup(Action* a)
 {
     (void)a;
     // this got redesigned recently, revisit
-#if 0    
     MobiusConfig* config = mMobius->getConfiguration();
 
     // If we're here from a Binding should have resolved
@@ -1056,8 +1048,8 @@ void Actionator::doSetup(Action* a)
         //}
         
     }
-#endif
 }
+#endif
 
 /**
  * Process a function action.
@@ -1302,6 +1294,7 @@ void Actionator::doFunction(Action* action, Function* f, Track* t)
  * Also since these don't schedule Events, we can reuse the same
  * action if it needs to be replicated due to group scope or focus lock.
  */
+#if 0
 void Actionator::doParameter(Action* a)
 {
     Parameter* p = (Parameter*)a->getTargetObject();
@@ -1370,6 +1363,7 @@ void Actionator::doParameter(Action* a)
         }
     }
 }
+#endif
 
 /**
  * Process a parameter action once we've determined the target track.
@@ -1391,6 +1385,7 @@ void Actionator::doParameter(Action* a)
  * bindingArgs for strings and action.value for ints and bools.
  *
  */
+#if 0
 void Actionator::doParameter(Action* a, Parameter* p, Track* t)
 {
     ParameterType type = p->type;
@@ -1454,6 +1449,7 @@ void Actionator::doParameter(Action* a, Parameter* p, Track* t)
         }
     }
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1479,6 +1475,10 @@ void Actionator::doParameter(Action* a, Parameter* p, Track* t)
  */
 bool Actionator::doQuery(Query* query)
 {
+    (void)query;
+    Trace(1, "Actionator::doQuery Who is calling this?");
+    return false;
+#if 0    
     bool success = false;
 
     Symbol* s = query->symbol;
@@ -1508,11 +1508,13 @@ bool Actionator::doQuery(Query* query)
         }
     }
     return success;
+#endif    
 }
 
 /**
  * Parameter accessor after the UIParameter conversion.
  */
+#if 0
 int Actionator::getParameter(Parameter* p, int trackNumber)
 {
     int value = 0;
@@ -1547,6 +1549,7 @@ int Actionator::getParameter(Parameter* p, int trackNumber)
 
     return value;
 }
+#endif
 
 /****************************************************************************/
 /****************************************************************************/

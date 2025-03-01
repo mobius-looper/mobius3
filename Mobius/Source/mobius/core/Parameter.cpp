@@ -556,8 +556,6 @@ void Parameter::initParameters()
         add(SpeedBendParameter);
         add(SpeedStepParameter);
 
-        add(TrackPresetParameter);
-
         // Global
 
         add(InputLatencyParameter);

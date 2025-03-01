@@ -198,6 +198,9 @@ int MidiTrack::getSyncLocation()
  */
 bool MidiTrack::doQuery(Query* q)
 {
+    // shouldn't see this any more
+    Trace(1, "MidiTrack::doQuery Who called this?");
+    
     switch (q->symbol->id) {
 
         // local caches

@@ -437,7 +437,13 @@ void ModelTransformer::transform(Setup* src, Session* dest)
     dest->setName(juce::String(src->getName()));
 
     // still used by Track
-    transform(ParamDefaultPreset, src->getDefaultPresetName(), values);
+
+    // this copies over, but SessionClerk should almost immediately ugprade
+    // to merge the contents of the referenced parameter set into the session
+    // no longer have a parameter symbol for this
+    const char* dp = src->getDefaultPresetName();
+    if (dp != nullptr)
+      values->setString("defaultPreset", dp);
 }
 
 /**
@@ -451,7 +457,7 @@ void ModelTransformer::transform(Session* src, Setup* dest)
     dest->setName(src->getName().toUTF8());
 
     // still used by Track
-    dest->setDefaultPresetName(getString(ParamDefaultPreset, values));
+    dest->setDefaultPresetName(values->getString("defaultPreset"));
 
     SetupTrack* tracks = nullptr;
     SetupTrack* last = nullptr;
@@ -514,8 +520,11 @@ void ModelTransformer::transform(Setup* setup, SetupTrack* src, Session::Track* 
     dest->name = juce::String(src->getName());
 
     // tracks can specify an active preset that overrides the default preset
-    // from the Setup
-    transform(ParamTrackPreset, src->getTrackPresetName(), values);
+    // from the Setup, this is copied over using the old name, but SessionClerk
+    // will almost immediately upgrade this to trackOverlay
+    const char* tp = src->getTrackPresetName();
+    if (tp != nullptr)
+      values->setString("trackPreset", tp);
 
     // this used to be an ordinal number but it should have been upgraded long ago
     juce::String gname = src->getGroupName();
@@ -605,7 +614,7 @@ void ModelTransformer::transform(Session::Track* src, SetupTrack* dest)
 
     // tracks can specify an active preset that overrides the default preset
     // from the Setup
-    dest->setTrackPresetName(getString(ParamTrackPreset, values));
+    dest->setTrackPresetName(values->getString("trackPreset"));
 
     // this used to be an ordinal number but it should have been upgraded long ago
     // this shouldn't be necessary any more, groups are handled by TrackManater

@@ -2475,8 +2475,8 @@ const char* ScriptInitPresetStatement::getKeyword()
  */
 ScriptStatement* ScriptInitPresetStatement::eval(ScriptInterpreter* si)
 {
-    Trace(2, "Script %s: InitPreset\n", si->getTraceName());
-
+    Trace(1, "Script %s: InitPreset\n", si->getTraceName());
+#if 0
     // Not sure if this is necessary but we always started with the preset
     // from the active track then set it in the track specified in the
     // ScriptContext, I would expect them to be the same...
@@ -2499,7 +2499,8 @@ ScriptStatement* ScriptInitPresetStatement::eval(ScriptInterpreter* si)
             si->getTraceName());
 
     destTrack->refreshPreset(p);
-
+#endif
+    
     return nullptr;
 }
 
