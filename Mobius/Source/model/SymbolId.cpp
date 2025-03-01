@@ -201,6 +201,8 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameAudioOutputPort, ParamAudioOutputPort},
     {ParamNamePluginInputPort, ParamPluginInputPort},
     {ParamNamePluginOutputPort, ParamPluginOutputPort},
+    {"inputPort", ParamInputPort},
+    {"outputPort", ParamOutputPort},
     {ParamNameSpeedOctave, ParamSpeedOctave},
     {ParamNameSpeedStep, ParamSpeedStep},
     {ParamNameSpeedBend, ParamSpeedBend},

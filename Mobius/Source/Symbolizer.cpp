@@ -377,11 +377,12 @@ void Symbolizer::parseParameterScope(juce::XmlElement* el)
 {
     juce::String scopeName = el->getStringAttribute("name");
     UIParameterScope scope = parseScope(scopeName);
+    bool queryable = el->getBoolAttribute("query");
     
     juce::XmlElement* child = el->getFirstChildElement();
     while (child != nullptr) {
         if (child->hasTagName("Parameter")) {
-            parseParameter(child, scope);
+            parseParameter(child, scope, queryable);
         }
         child = child->getNextElement();
     }
@@ -435,7 +436,7 @@ UIParameterType Symbolizer::parseType(juce::String name)
     return type;
 }
 
-void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
+void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope, bool scopeSaysQuery)
 {
     juce::String name = el->getStringAttribute("name");
     if (name.length() == 0) {
@@ -501,10 +502,9 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
             // if you bothered to include the attribute, it wins
             props->queryable = el->getBoolAttribute("query");
         }
-        else if (scope == ScopePreset) {
-            // assume all ScopePreset parameters are queryable, don't like having
-            // to rely on Scope for this, but it's a shorthand to avoid needing
-            // to put query='true' on all of them
+        else if (scopeSaysQuery) {
+            // if the query flag was on in the ParameterScope and the Parameter
+            // did not override it, then it can query
             props->queryable = true;
         }
         

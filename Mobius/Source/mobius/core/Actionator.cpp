@@ -1130,9 +1130,15 @@ void Actionator::doFunction(Action* a)
             for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
                 Track* t = mMobius->getTrack(i);
 
-                if ((targetGroup > 0 && targetGroup == t->getGroup()) ||
+                // this no longer exists at this level, but we shouldn't get here
+                // int trackGroup = t->getGroup();
+                int trackGroup = 0;
+                bool isFocused = mMobius->isFocused(t);
+                bool isFocused = false;
+
+                if ((targetGroup > 0 && targetGroup == trackGroup) ||
                     (targetGroup <= 0 &&
-                     (t == active || (f->isFocusable() && mMobius->isFocused(t))))) {
+                     (t == active || (f->isFocusable() && isFocused)))) {
 
                     // if we have more than one, have to clone the
                     // action so it can have independent life

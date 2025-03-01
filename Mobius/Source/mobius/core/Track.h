@@ -144,8 +144,8 @@ class Track : public TraceContext
 	void setGroupOutputBasis(int i);
 	int getGroupOutputBasis();
 
-	void setFocusLock(bool b);
-	bool isFocusLock();
+	//void setFocusLock(bool b);
+	//bool isFocusLock();
 
     // Setup/Preset management
     // all this needs to go away
@@ -342,8 +342,8 @@ class Track : public TraceContext
 
     int         mInputPort;
     int         mOutputPort;
-    int         mGroup;
-	bool 		mFocusLock;
+    //int         mGroup;
+	//bool 		mFocusLock;
 	bool		mHalting;
 	bool		mRunning;
     int         mMonitorLevel;

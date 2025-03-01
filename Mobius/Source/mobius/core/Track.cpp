@@ -112,8 +112,8 @@ void Track::init(Mobius* m, Synchronizer* sync, int number)
 
 	mLoop = nullptr;
 	mLoopCount = 0;
-	mGroup = 0;
-	mFocusLock = false;
+	//mGroup = 0;
+	//mFocusLock = false;
 	mHalting = false;
 	mRunning = false;
     mMonitorLevel = 0;
@@ -354,6 +354,7 @@ int Track::getCycles()
 //
 // Actions
 //
+//
 //////////////////////////////////////////////////////////////////////
 
 /**
@@ -367,16 +368,6 @@ void Track::doAction(UIAction* a)
 
     switch (sid) {
 
-        // these two are temporary, focus and groupness should
-        // be strictly TrackMManager concepts
-        case ParamFocus:
-            setFocusLock((bool)(a->value));
-            break;
-
-        case ParamTrackGroup:
-            setGroup(a->value);
-            break;
-            
         case ParamMono:
             setMono((bool)(a->value));
             break;
@@ -397,20 +388,38 @@ void Track::doAction(UIAction* a)
             setPan(a->value);
             break;
 
-        case ParamAudioInputPort:
-        case ParamPluginInputPort:
-            // these are effectively the same thing at runtime
+        case ParamInputPort:
             setInputPort(a->value);
             break;
 
-        case ParamAudioOutputPort:
-        case ParamPluginOutputPort:
+        case ParamOutputPort:
             setOutputPort(a->value);
             break;
 
         default:
             break;
     }
+}
+
+/**
+ * Refresh cached parameters after a session change or GobalReset
+ * We just pull the current values from the LogicalTrack, LT will deal with
+ * the nuances of "reset retains".
+ *
+ * We get what we get and don't throw a fit.
+ */
+void Track::refreshParameters()
+{
+    LogicalTrack* lt = getLogicalTrack();
+    
+    setMono((bool)(lt->getParameterOrdinal(ParamFocus)));
+    setInputLevel(lt->getParameterOrdinal(ParamInput));
+    setOutputLevel(lt->getParameterOrdinal(ParamOutput));
+    setFeedback(lt->getParameterOrdinal(ParamInput));
+    setAltFeedback(lt->getParameterOrdinal(ParamInput));
+    setPan(lt->getParameterOrdinal(ParamInput));
+    setInputPort(lt->getParameterOrdinal(ParamInputPort));
+    setOutputPort(lt->getParameterOrdinal(ParamOutputPort));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -500,6 +509,7 @@ void Track::notifyLoopSubcycle()
  * pass them down.
  */
 
+#if 0
 void Track::setFocusLock(bool b)
 {
 	mFocusLock = b;
@@ -519,6 +529,7 @@ int Track::getGroup()
 {
     return mGroup;
 }
+#endif
 
 void Track::setInputLevel(int level)
 {
@@ -878,8 +889,8 @@ void Track::refreshState(TrackState* s)
     // sync fields will be added by SyncMaster
     // syncSource, syncUnit, syncBeat, syncBar
 
-	s->focus = mFocusLock;
-	s->group = mGroup;
+	//s->focus = mFocusLock;
+	//s->group = mGroup;
 	s->loopCount = mLoopCount;
     // loop numbers start from 1, state wants the index
     s->activeLoop = mLoop->getNumber() - 1;

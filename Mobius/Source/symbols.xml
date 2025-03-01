@@ -605,14 +605,25 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='feedback' high='127' options='control,resetRetain,mayFocus'/>
     <Parameter name='altFeedback' high='127' options='control,resetRetain,mayFocus'/>
     <Parameter name='pan' high='127' options='control,resetRetain,mayFocus'/>
-    
-    <Parameter name='audioInputPort' low='0' high='31' displayBase='1' options='noBinding'/>
-    <Parameter name='audioOutputPort' low='0' high='31' displayBase='1' options='noBinding'/>
-    <Parameter name='pluginInputPort' low='0' high='31' displayBase='1'options='noBinding'/>
-    <Parameter name='pluginOutputPort' low='0' high='31' displayBase='1' options='noBinding'/>
+
+    <!-- Ports are unusual
+         The port numbers can be different for standalone or plugin operation since
+         the routing is often different.  The qualified audio/plugin names are used only
+         by the SessionEditor during configuration editing so both may be adjusted.
+         At runtime, always use the unqualified names and the appropriate set will be selected.
+    -->
+    <Parameter name='audioInputPort' low='0' high='31' displayBase='1' options='noBinding' query='false'/>
+    <Parameter name='audioOutputPort' low='0' high='31' displayBase='1' options='noBinding' query='false'/>
+    <Parameter name='pluginInputPort' low='0' high='31' displayBase='1'options='noBinding' query='false'/>
+    <Parameter name='pluginOutputPort' low='0' high='31' displayBase='1' options='noBinding' query='false'/>
+
+    <Parameter name='inputPort' low='0' high='31' displayBase='1' options='noBinding'/>
+    <Parameter name='outputPort' low='0' high='31' displayBase='1' options='noBinding'/>
 
     <!-- special catagory of parameters availalbe for runtime bindings, but
          not in the configuration files, no get/set code will be generated
+         todo: work on these.  The look like parameters to the outside, but internally
+         are implemented as functions.  Don't like how this evolved.
     -->
     <Parameter name='speedOctave' high='4'
                options='transient,control,zeroCenter,scheduled'/>

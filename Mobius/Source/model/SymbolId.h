@@ -104,10 +104,16 @@ typedef enum {
     ParamAltFeedback,
     ParamPan,
 
+    // Ports are unusual, for configuration there are two sets, one for
+    // standalone and one for plugin.  At runtime, use only the unqualified
+    // parameters and LogicalTrack will select the right ones based on context.
+    
     ParamAudioInputPort,
     ParamAudioOutputPort,
     ParamPluginInputPort,
     ParamPluginOutputPort,
+    ParamInputPort,
+    ParamOutputPort,
     
     ParamSpeedOctave,
     ParamSpeedStep,
