@@ -63,8 +63,6 @@
 #include "../../util/Trace.h"
 #include "../../Supervisor.h"
 
-#include "../common/Form.h"
-#include "../common/Field.h"
 #include "../common/LogPanel.h"
 #include "../JuceUtil.h"
 

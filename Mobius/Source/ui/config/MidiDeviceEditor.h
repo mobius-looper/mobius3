@@ -9,7 +9,6 @@
 #include "../../MidiManager.h"
 
 #include "../common/BasicTabs.h"
-#include "../common/Form.h"
 #include "../common/Field.h"
 #include "../common/BasicTable.h"
 #include "../MidiLog.h"

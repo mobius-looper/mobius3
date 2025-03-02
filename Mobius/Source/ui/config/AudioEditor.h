@@ -15,8 +15,6 @@
 
 #include <JuceHeader.h>
 
-#include "../common/Form.h"
-#include "../common/Field.h"
 #include "../common/LogPanel.h"
 
 #include "ConfigEditor.h"

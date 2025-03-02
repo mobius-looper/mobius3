@@ -6,7 +6,6 @@
 #include "../../Binderator.h"
 #include "../../util/Trace.h"
 #include "../../model/Binding.h"
-#include "../common/Form.h"
 
 #include "KeyboardEditor.h"
 

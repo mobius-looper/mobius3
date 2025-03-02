@@ -238,8 +238,6 @@
           <FILE id="RjFLPv" name="Field.h" compile="0" resource="0" file="Source/ui/common/Field.h"/>
           <FILE id="tceRTv" name="FieldGrid.cpp" compile="1" resource="0" file="Source/ui/common/FieldGrid.cpp"/>
           <FILE id="wXEPam" name="FieldGrid.h" compile="0" resource="0" file="Source/ui/common/FieldGrid.h"/>
-          <FILE id="ayhV48" name="Form.cpp" compile="1" resource="0" file="Source/ui/common/Form.cpp"/>
-          <FILE id="S7Xbq6" name="Form.h" compile="0" resource="0" file="Source/ui/common/Form.h"/>
           <FILE id="qFRIjz" name="FormPanel.cpp" compile="1" resource="0" file="Source/ui/common/FormPanel.cpp"/>
           <FILE id="JWBS2l" name="FormPanel.h" compile="0" resource="0" file="Source/ui/common/FormPanel.h"/>
           <FILE id="qcxCOI" name="HelpArea.cpp" compile="1" resource="0" file="Source/ui/common/HelpArea.cpp"/>

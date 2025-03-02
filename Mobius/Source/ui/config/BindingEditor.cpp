@@ -31,7 +31,6 @@
 #include "../../model/MobiusConfig.h"
 #include "../../model/Binding.h"
 #include "../../model/Scope.h"
-#include "../common/Form.h"
 #include "../JuceUtil.h"
 #include "../MobiusView.h"
 
