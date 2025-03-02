@@ -852,7 +852,6 @@
             <FILE id="xPUwL0" name="Coverage.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Coverage.cpp"/>
             <FILE id="mzXteI" name="Debug.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Debug.cpp"/>
             <FILE id="cSSxV7" name="Divide.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Divide.cpp"/>
-            <FILE id="T67WnF" name="FocusLock.cpp" compile="1" resource="0" file="Source/mobius/core/functions/FocusLock.cpp"/>
             <FILE id="Xem7S0" name="FunctionUtil.cpp" compile="1" resource="0"
                   file="Source/mobius/core/functions/FunctionUtil.cpp"/>
             <FILE id="vm16kR" name="FunctionUtil.h" compile="0" resource="0" file="Source/mobius/core/functions/FunctionUtil.h"/>
@@ -883,7 +882,6 @@
             <FILE id="BD9WVu" name="Stutter.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Stutter.cpp"/>
             <FILE id="nZvo45" name="Substitute.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Substitute.cpp"/>
             <FILE id="geL4FJ" name="TrackCopy.cpp" compile="1" resource="0" file="Source/mobius/core/functions/TrackCopy.cpp"/>
-            <FILE id="diKBBx" name="TrackGroup.cpp" compile="1" resource="0" file="Source/mobius/core/functions/TrackGroup.cpp"/>
             <FILE id="ZHJtYT" name="TrackSelect.cpp" compile="1" resource="0" file="Source/mobius/core/functions/TrackSelect.cpp"/>
             <FILE id="QolWqa" name="Trim.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Trim.cpp"/>
             <FILE id="a17JLI" name="UndoRedo.cpp" compile="1" resource="0" file="Source/mobius/core/functions/UndoRedo.cpp"/>

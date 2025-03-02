@@ -72,7 +72,7 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
         else if (s->functionProperties != nullptr) {
             cell = "Function";
         }
-        else if (s->parameter != nullptr) {
+        else if (s->parameterProperties != nullptr) {
             cell = "Parameter";
         }
         else if (s->structure != nullptr) {
@@ -133,17 +133,11 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
         else if (s->functionProperties != nullptr && s->level == LevelCore && s->coreFunction == nullptr) {
             cell = "Core function not implemented";
         }
-        else if (s->coreParameter != nullptr && s->parameter == nullptr) {
+        else if (s->coreParameter != nullptr && s->parameterProperties == nullptr) {
             cell = "Core parameter not exposed";
         }
-        else if (s->parameter != nullptr && s->level == LevelCore && s->coreParameter == nullptr) {
+        else if (s->parameterProperties != nullptr && s->level == LevelCore && s->coreParameter == nullptr) {
             cell = "Core parameter not implemented";
-        }
-        else if (s->parameter != nullptr && s->parameterProperties == nullptr) {
-            cell = "UIParameter without ParameterProperties";
-        }
-        else if (s->parameter == nullptr && s->parameterProperties != nullptr) {
-            cell = "ParameterProperties without UIParameter";
         }
         
     }

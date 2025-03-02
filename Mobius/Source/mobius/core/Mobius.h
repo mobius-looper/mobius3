@@ -61,10 +61,10 @@ class Mobius
     void configureTracks(juce::Array<class MobiusLooperTrack*>& trackdefs);
 
     /**
-     * Called by the Kernel after any change to the audio block size is made
-     * so latencies can be cached.
+     * Called whenever the session is reloaded, overlays are changed,
+     * or latencies change.
      */
-    void updateLatencies(int blockSize);
+    void refreshParameters();
 
     /**
      * Called by Kernel during application shutdown to release any resources.
@@ -106,11 +106,6 @@ class Mobius
      */
     void notifyBufferModified(float* buffer);
     
-    /**
-     * Query the value of a core parameter.
-     */
-    bool doQuery(class Query* q);
-
     /**
      * Immediately perform a core action.  This is where function calls
      * in scripts end up rather than the actions queued in processAudioStream.
@@ -196,8 +191,8 @@ class Mobius
     void getTrackProperties(int number, TrackProperties& props);
 
     // needed by TrackManager
-    bool isTrackFocused(int index);
-    int getTrackGroup(int index);
+    //bool isTrackFocused(int index);
+    //int getTrackGroup(int index);
 
     // used by MobiusKernel to build the new SystemState model
     // and include things that were in OldMobiusState
@@ -261,26 +256,6 @@ class Mobius
      */
     class MobiusConfig* getConfiguration();
 
-    /**
-     * Return the Setup currently in use.
-     * new: There is only ever one Setup after the Session conversion.
-     */
-    class Setup* getActiveSetup();
-
-    /**
-     * Ugh, a ton of code uses this old name, redirect
-     * until we can change everything.
-     */
-    class Setup* getSetup() {
-        return getActiveSetup();
-    }
-    
-    /**
-     * Set the active setup by name or ordinal.
-     */
-    void setActiveSetup(int ordinal);
-    void setActiveSetup(const char* name);
-
 	class Synchronizer* getSynchronizer();
     class AudioPool* getAudioPool();
     class LayerPool* getLayerPool();
@@ -291,9 +266,6 @@ class Mobius
      * Used in a few places that need to calculate tempo relative to frames.
      */
     int getSampleRate();
-    // may come from MobiusContainer or overridden in MobiusConfig
-	//int getEffectiveInputLatency();
-	//int getEffectiveOutputLatency();
 
     // Tracks
     // used internally only
@@ -309,8 +281,6 @@ class Mobius
 
     // Control over the active track and preset from functions and parameters
     void setActiveTrack(int index);
-    void setActivePreset(int ordinal);
-    void setActivePreset(int trackIndex, int presetOrdinal);
     
     // Actions
     class Action* newAction();
@@ -412,11 +382,9 @@ class Mobius
 
     // initialization
     void installSymbols();
-    void initializeTracks();
 
     // reconfigure
     void propagateConfiguration();
-    void propagateSetup();
     
     // audio buffers
     void endAudioInterrupt(class MobiusAudioStream* stream);
@@ -458,7 +426,6 @@ class Mobius
 	int mTrackCount;
     
 	class MobiusConfig *mConfig;
-    class Setup* mSetup;
     
 	// state related to realtime audio capture
 	Audio* mCaptureAudio;

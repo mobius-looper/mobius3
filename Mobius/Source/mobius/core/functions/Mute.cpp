@@ -323,7 +323,6 @@ Event* MuteFunction::invoke(Action* action, Loop* loop)
 
         if (edpisms) {
             Trace(1, "MuteFunction: Former Edpisms to change presets is gone");
-            //changePreset(action, loop, false);
         }
         else {
             bool newMode = !loop->isMuteMode();

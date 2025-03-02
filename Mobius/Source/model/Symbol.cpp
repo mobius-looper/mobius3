@@ -37,9 +37,6 @@ juce::String Symbol::getDisplayName()
     if (parameterProperties != nullptr) {
         dname = parameterProperties->displayName;
     }
-    else if (parameter != nullptr) {
-        dname = juce::String(parameter->getDisplayableName());
-    }
 
     if (dname.length() == 0) {
         // this hasn't been set reliably but use it if it was

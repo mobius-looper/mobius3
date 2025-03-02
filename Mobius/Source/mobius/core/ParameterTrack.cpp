@@ -26,7 +26,6 @@
 #include "../../util/Util.h"
 #include "../../util/List.h"
 #include "../../model/MobiusConfig.h"
-#include "../../model/Preset.h"
 #include "../../model/Setup.h"
 #include "../../model/Trigger.h"
 
@@ -207,17 +206,26 @@ void FocusParameterType::setValue(SetupTrack* t, ExValue* value)
 
 void FocusParameterType::getValue(Track* t, ExValue* value)
 {
-    value->setBool(t->isFocusLock());
+    (void)t;
+    (void)value;
+    Trace(1, "FocusParameterType::getValue");
+    //value->setBool(t->isFocusLock());
 }
 
 void FocusParameterType::setValue(Track* t, ExValue* value)
 {
-	t->setFocusLock(value->getBool());
+    (void)t;
+    (void)value;
+    Trace(1, "FocusParameterType::setValue");
+	//t->setFocusLock(value->getBool());
 }
 
 int FocusParameterType::getOrdinalValue(Track* t)
 {
-    return (int)t->isFocusLock();
+    (void)t;
+    Trace(1, "FocusParameterType::getOrdinalValue");
+    //return (int)t->isFocusLock();
+    return 0;
 }
 
 FocusParameterType FocusParameterTypeObj;
@@ -270,18 +278,28 @@ void GroupParameterType::setValue(SetupTrack* t, ExValue* value)
 
 int GroupParameterType::getOrdinalValue(Track* t)
 {
-    return t->getGroup();
+    (void)t;
+    Trace(1, "GroupParameterType::getOrdinalValue");
+    //return t->getGroup();
+    return 0;
 }
 
 void GroupParameterType::getValue(Track* t, ExValue* value)
 {
-    value->setInt(t->getGroup());
+    (void)t;
+    (void)value;
+    Trace(1, "GroupParameterType::getValue");
+    //value->setInt(t->getGroup());
+    value->setInt(0);
 }
 
 void GroupParameterType::setValue(Track* t, ExValue* value)
 {
-    Trace(1, "GroupParameterType::setValue Who is calling this?");
+    (void)t;
+    (void)value;
     
+    Trace(1, "GroupParameterType::setValue Who is calling this?");
+#if 0    
 	Mobius* m = t->getMobius();
     MobiusConfig* config = m->getConfiguration();
 
@@ -306,6 +324,7 @@ void GroupParameterType::setValue(Track* t, ExValue* value)
             }
         }
     }
+#endif    
 }
 
 /**
@@ -339,7 +358,7 @@ int GroupParameterType::getBindingHigh(Mobius* m)
  * Given an ordinal, map it into a display label.
  */
 void GroupParameterType::getOrdinalLabel(Mobius* m, 
-                                                int i, ExValue* value)
+                                         int i, ExValue* value)
 {
     (void)m;
     if (i <= 0)

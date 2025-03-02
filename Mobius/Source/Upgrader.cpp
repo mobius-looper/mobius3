@@ -214,7 +214,7 @@ bool Upgrader::upgradePresets(MobiusConfig* config)
     
     ParameterSets* sets = supervisor->getParameterSets();
 
-    if (sets->sets.size() == 0 || forceUpgrade) {
+    if (sets->getSets().size() == 0 || forceUpgrade) {
     
         ModelTransformer transformer(supervisor);
 
@@ -226,7 +226,7 @@ bool Upgrader::upgradePresets(MobiusConfig* config)
                 // the usual case unless forceUpgrade
                 set = new ValueSet();
                 set->name = juce::String(p->getName());
-                sets->sets.add(set);
+                sets->add(set);
             }
 
             // if this is forceUpgrade, it will only overwrite things or

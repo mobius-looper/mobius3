@@ -66,8 +66,9 @@ void MidiTrack::doPartialReset()
 
     // I guess leave the levels alone
 
+    // no, should not be doing this here
     // script bindings?
-    logicalTrack->clearBindings();
+    //logicalTrack->clearBindings();
 }
 
 /**
@@ -94,13 +95,12 @@ void MidiTrack::doReset(bool full)
     reverse = false;
     //pause = false;
     
+    // !! actuall need to be pulling these from LogicalTrack
+    // call refreshParameters
     input = 127;
     output = 127;
     feedback = 127;
     pan = 64;
-
-    subcycles = logicalTrack->getParameterOrdinal(ParamSubcycles);
-    if (subcycles == 0) subcycles = 4;
 
     if (full) {
         for (auto loop : loops)
@@ -111,10 +111,6 @@ void MidiTrack::doReset(bool full)
         MidiLoop* loop = loops[loopIndex];
         loop->reset();
     }
-
-    // clear parameter bindings
-    // todo: that whole "reset retains" thing
-    logicalTrack->clearBindings();
 
     // force a refresh of the loop stack
     loopsLoaded = true;

@@ -13,55 +13,10 @@
 
 #include "SystemConstant.h"
 
+#include "ParameterConstants.h"
+
 // externs for the generated object pointers are now in here
 #include "UIParameterClasses.h"
-
-//////////////////////////////////////////////////////////////////////
-// Enumerations
-//////////////////////////////////////////////////////////////////////
-
-/**
- * The type of the parameter.
- * The canonical type names found in the generator source files are:
- *
- *   int, bool, enum, string
- *
- * Type names must follow those names with capitalization.
- */
-typedef enum {
-
-	TypeInt,
-	TypeBool,
-	TypeEnum,
-	TypeString,
-    TypeStructure
-
-} UIParameterType;
-
-/**
- * Parameter scope.
- * Canonical names: global, preset, setup, track
- *
- * The corresponding model classes are:
- *
- * MobiusConfig, Preset, Setup, SetupTrack
- *
- * MobiusConfig is the only one whose name differs from the canonical name.
- * Should we have a model for mapping these?
- */
-typedef enum {
-
-    ScopeNone,
-    ScopeGlobal,
-    ScopePreset,
-    ScopeSetup,
-    ScopeTrack,
-    ScopeSession,
-    ScopeSessionTrack,
-    ScopeUI,
-    ScopeSync
-
-} UIParameterScope;
 
 //////////////////////////////////////////////////////////////////////
 // Class

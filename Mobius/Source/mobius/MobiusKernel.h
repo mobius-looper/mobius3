@@ -97,6 +97,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // This is where all the interesting action happens
     void processAudioStream(MobiusAudioStream* stream) override;
 
+    int getBlockSize();
+
     //
     // Internal state needed by the Mobius core
     // and MobiusShell

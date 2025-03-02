@@ -29,7 +29,6 @@
 #include "../../model/MobiusConfig.h"
 #include "../../model/Trigger.h"
 #include "../../model/Structure.h"
-#include "../../model/Preset.h"
 
 #include "Action.h"
 #include "../Audio.h"
@@ -1167,50 +1166,6 @@ void Function::prepareSwitch(Loop* loop, Event* event,
     (void)jump;
 }
 
-/**
- * Select the next or previous preset.
- * This is an EDPism used by a few function event handlers (Insert, Mute)
- * which can change presets when in Reset mode.
- * Mute doesn't do that any more so this is only half implemented and since
- * it's obscure consider taking it out.
- */
-#if 0
-void Function::changePreset(Action* action, Loop* loop, bool after)
-{
-    (void)action;
-    Mobius* m = loop->getMobius();
-    MobiusConfig* config = m->getConfiguration();
-    Structure* presets = config->getPresets();
-    Preset* current = loop->getTrack()->getPreset();
-    Structure* next = nullptr;
-
-    // ugh, Structure base class makes iteration harder
-    if (current != nullptr && presets != nullptr) {
-        if (after)
-          next = (Preset*)current->getNext();
-        else if (current == presets) {
-            // get the last one
-            for (Structure* p = presets ; p != nullptr ; p = p->getNext())
-              next = p;
-        }
-        else {
-            for (Structure* p = presets ; p != nullptr ; p = p->getNext()) {
-                if (p->getNext() == current) {
-                    next = p;
-                    break;
-                }
-            }
-        }
-
-        if (next != nullptr && next != current) {
-            // !! pretty sure these are zero based like the new ordinals
-            //m->setPresetInternal(((Preset*)next)->getNumber());
-            m->setActivePreset(((Preset*)next)->ordinal);
-        }
-    }
-}
-#endif
-
 /****************************************************************************
  *                                                                          *
  *   						  LOOP SWITCH STACK                             *
@@ -1433,8 +1388,6 @@ void Function::initStaticFunctions()
         add(StaticFunctions, Track6);
         add(StaticFunctions, Track7);
         add(StaticFunctions, Track8);
-        add(StaticFunctions, FocusLock);
-        add(StaticFunctions, TrackGroup);
         add(StaticFunctions, TrackCopy);
         add(StaticFunctions, TrackCopyTiming);
         add(StaticFunctions, Checkpoint);

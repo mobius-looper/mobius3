@@ -25,13 +25,11 @@
 #include "../../util/StructureDumper.h"
 
 #include "../../model/MobiusConfig.h"
-#include "../../model/Setup.h"
 #include "../../model/UserVariable.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
 #include "../../model/ParameterProperties.h"
-#include "../../model/Preset.h"
 
 #include "../MobiusKernel.h"
 #include "../AudioPool.h"
@@ -91,7 +89,6 @@ Mobius::Mobius(MobiusKernel* kernel)
     // Kernel may not have a MobiusConfig yet so have to wait
     // to do anything until initialize() is called
     mConfig = nullptr;
-    mSetup = nullptr;
 
     mLayerPool = new LayerPool(mAudioPool);
     mEventPool = new EventPool();
@@ -269,43 +266,12 @@ void Mobius::initialize(MobiusConfig* config)
     // can save this until the next call to reconfigure()
     mConfig = config;
 
-    // Sanity check on some important parameters
-    // TODO: Need more of these...
-    if (mConfig->getCoreTracksDontUseThis() <= 0) {
-        // don't see a need to be more flexible here
-        int newCount = 1;
-        Trace(1, "Mobius::initialize Missing track count, adjusting to %d\n", newCount);
-        mConfig->setCoreTracks(newCount);
-    }
-
-    // having difficulty getting Setup and Preset ordinals set reliably,
-    // make sure that's done whenever we update
-    Structure::ordinate(config->getSetups());
-    Structure::ordinate(config->getPresets());
-
-    // determine the Setup to use, bootstrap if necessary
-    mSetup = config->getStartingSetup();
-    
     // will need a way for this to get MIDI
     mSynchronizer = new Synchronizer(this);
     
-	// Build the track list
-    initializeTracks();
-
-    // common, thread safe configuration propagation
-    // Track has an optimization to ignore configuration propagation
-    // unless these two flags are on.  Since we are initializing for the
-    // first time, force them on
-    config->setupsEdited = true;
-    config->presetsEdited = true;
-    
+    // doesn't do much any more, besides FadeFrames and scope cache for groups
     propagateConfiguration();
-
-    // now turn them off, don't think this is necessary since
-    // reconfigure will always be called with a different object
-    config->setupsEdited = false;
-    config->presetsEdited = false;
-
+    
     installSymbols();
     
     // hmm, order annoyance here
@@ -316,58 +282,14 @@ void Mobius::initialize(MobiusConfig* config)
 }
 
 /**
- * Called by initialize() to set up the tracks for the first time.
- * update: This doesn't do anything now, configureTracks is called later.
+ * This will be called whenever the session has been edited, or other changes
+ * were detected, notably the IO latencies, that tracks need to know about.
  */
-void Mobius::initializeTracks()
+void Mobius::refreshParameters()
 {
-#if 0    
-    int count = mConfig->getCoreTracksDontUseThis();
-
-    // should have caught misconfigured count earlier
-    if (count > 0) {
-
-        // limit this while testing leaks
-        //count = 1;
-
-        Track** tracks = new Track*[count];
-
-        for (int i = 0 ; i < count ; i++) {
-            Track* t = new Track(this, mSynchronizer, i);
-            tracks[i] = t;
-        }
-        mTracks = tracks;
-        mTrack = tracks[0];
-        mTrackCount = count;
-
-        // todo: we don't have to wait for propagateConfiguration
-        // to set the active track from the Setup but since we need
-        // to share that with reconfigure() do it there
-    }
-#endif    
-}
-
-/**
- * Kludge added for the initialization sequence where initialize() can be called
- * before the Juce audio stream is ready and the latencies are not known.
- * This will be called by Kernel after it starts receiving audio blocks and monitors
- * size changes.
- *
- * These can be overridden by MobiusConfig
- */
-void Mobius::updateLatencies(int blockSize)
-{
-    int inputLatency = mConfig->getInputLatency();
-    if (inputLatency == 0)
-      inputLatency = blockSize;
-
-    int outputLatency = mConfig->getOutputLatency();
-    if (outputLatency == 0)
-      outputLatency = blockSize;
-
 	for (int i = 0 ; i < mTrackCount ; i++) {
 		Track* t = mTracks[i];
-		t->updateLatencies(inputLatency, outputLatency);
+		t->refreshParameters();
 	}
 }
 
@@ -605,36 +527,11 @@ void Mobius::configureTracks(juce::Array<MobiusLooperTrack*>& trackdefs)
     }
 
     // this part we do whether or not we reordered tracks,
-    // this is now how Setup changes get propagated to core tracks
-
-    // Track has an optimization to ignore configuration propagation
-    // unless these two flags are on.  Since we are initializing for the
-    // first time, force them on
-    // !! hating this, force it on for now but need to work on how to ignore
-    // inconsequential changes
-    mConfig->setupsEdited = true;
-    mConfig->presetsEdited = true;
-
-    // tracks are sensitive to lots of things in the Setup
-    // they will look at Setup::loopCount and adjust the number of loops
-    // in each track, but this is done within a fixed array and won't
-    // allocate memory.  It also won't adjust tracks that are still doing
-    // something with audio.  This also refreshes the Track's Preset
-    // copy if it isn't doing anything
+    // this is now how Session changes get propagated to core tracks
     for (int i = 0 ; i < mTrackCount ; i++) {
         Track* t = mTracks[i];
-        t->updateConfiguration(mConfig);
+        t->refreshParameters();
     }
-
-    // now turn them off, don't think this is necessary since
-    // reconfigure will always be called with a different object
-    mConfig->setupsEdited = false;
-    mConfig->presetsEdited = false;
-
-    // latency overrides can come in here too without the block size that
-    // kernel is monitoring changing
-    // pretend we got notified by Kernel, this method will check for config overrides
-    updateLatencies(mContainer->getBlockSize());
 }
 
 /**
@@ -741,14 +638,8 @@ void Mobius::reconfigure(class MobiusConfig* config)
     Trace(2, "Mobius::reconfigure");
     mConfig = config;
 
-    // having difficulty getting Setup and Preset ordinals set reliably,
-    // make sure that's done whenever we update
-    Structure::ordinate(config->getSetups());
-    Structure::ordinate(config->getPresets());
-
     // new: formerly had some logic here to look for a Setup with the same
     // name of the currently active setup, now there is only one
-    mSetup = config->getStartingSetup();
     propagateConfiguration();
 }
 
@@ -800,55 +691,16 @@ void Mobius::propagateSymbolProperties()
 void Mobius::propagateConfiguration()
 {
     // let Actionator cache the group names
+    // !! it should not need this any more
     mActionator->refreshScopeCache(mConfig);
 
     // Modes track altFeedbackDisables
-    MobiusMode::updateConfiguration(mConfig);
+    // !! this hasn't been implemented in 3.x and was obscure
+    // could bring it back online but it will require a lot of work
+    //MobiusMode::updateConfiguration(mConfig);
 
     // used to configure fade length in AudioCursor/AudioFade
 	AudioFade::setRange(mConfig->getFadeFrames());
-
-
-    // this no longer happens here, wait until configureTracks
-#if 0    
-    // tracks are sensitive to lots of things in the Setup
-    // they will look at Setup::loopCount and adjust the number of loops
-    // in each track, but this is done within a fixed array and won't
-    // allocate memory.  It also won't adjust tracks that are still doing
-    // something with audio.  This also refreshes the Track's Preset
-    // copy if it isn't doing anything
-	for (int i = 0 ; i < mTrackCount ; i++) {
-		Track* t = mTracks[i];
-		t->updateConfiguration(mConfig);
-	}
-
-    // latency overrides can come in here too without the block size that
-    // kernel is monitoring changing
-    // pretend we got notified by Kernel, this method will check for config overrides
-    updateLatencies(mContainer->getBlockSize());
-#endif
-    
-    // the only thing Track::updateConfiguration didn't
-    // do that was in the setup was set the active track
-    // not sure why, old code would now set the active track
-    // but only if all tracks were in reset
-    // seems relatively harmless to change the active track
-    // don't remember why I was anal about global reset
-    bool allReset = true;
-    for (int i = 0 ; i < mTrackCount ; i++) {
-        Track* t = mTracks[i];
-        Loop* l = t->getLoop();
-        if (l != nullptr) {
-            if (!l->isReset()) {
-                allReset = false;
-                break;
-            }
-        }
-    }
-    
-    if (allReset) {
-        setActiveTrack(mSetup->getActiveTrack());
-    }
 }
 
 /**
@@ -866,68 +718,11 @@ void Mobius::setActiveTrack(int index)
     }
 }
 
-/**
- * This is called by internal components to change the active
- * runtime setup.  It may not be the same as the starting
- * setup from MobiusConfig.
- *
- * This is a runtime value only, it is not put back into
- * MobiusConfig and saved at this level.  The UI treats
- * this as a "session property" and saves it on shutdown.
- *
- * new: this is obsolete after the Session migration.
- * I expect this to only be used by old MOS scripts
- * and we could forward this to Supervisor and ask it
- * to load a different Session.
- */
-void Mobius::setActiveSetup(const char* name)
-{
-    (void)name;
-    Trace(1, "Mobius: Dynamic Setup changes are no longer allowed");
-}
-
-/**
- * Same as above but with an ordinal for the "setup" parameter.
- */
-void Mobius::setActiveSetup(int ordinal)
-{
-    (void)ordinal;
-    Trace(1, "Mobius: Dynamic Setup changes are no longer allowed");
-}
-
-/**
- * Called by a few function handlers and probably the "preset" parameter
- * to change the runtime preset in the active track.
- */
-void Mobius::setActivePreset(int ordinal)
-{
-    mTrack->changePreset(ordinal);
-}
-
-void Mobius::setActivePreset(int track, int ordinal)
-{
-    Track* t = getTrack(track);
-    if (t != nullptr)
-      t->changePreset(ordinal);
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Actions and Parameters
 //
 //////////////////////////////////////////////////////////////////////
-
-/**
- * Query the value of a core parameter.
- * Unlike UIActions that are queued and processed during the audio interrupt,
- * this one is allowed to take place in the UI or maintenance threads.
- *
- * Actionator has the model mapping logic so it lives there for now.
- */
-bool Mobius::doQuery(Query* q)
-{
-    return mActionator->doQuery(q);
-}
 
 /**
  * Perform a core action queueud at the beginning
@@ -1726,14 +1521,6 @@ MobiusConfig* Mobius::getConfiguration()
 	return mConfig;
 }
 
-/**
- * Return the read-only Setup currently in use.
- */
-Setup* Mobius::getActiveSetup()
-{
-	return mSetup;
-}
-
 Synchronizer* Mobius::getSynchronizer()
 {
 	return mSynchronizer;
@@ -1775,44 +1562,6 @@ int Mobius::getSampleRate()
     return mContainer->getSampleRate();
 }
 
-/**
- * Return the effective input latency.
- * The configuration may override what the audio device reports
- * in order to fine tune actual latency.
- *
- * Test scripts will use "set inputLatency xxx" to use the latency
- * that the master test files were captured with.  This needs to
- * override whatever the audio device may actually be using.
- *
- * Note that this does not effect the audio block size.
- *
- * InputLatencyParmeter will save the value in the kernel's MobiusConfig
- * so we just need to return it here.  This will be lost on reconfigure()
- * so the test scripts need to set it every time they run.
- *
- * NEW: Latency should now be passed in through updateLatencies
- * Nothing should need these
- */
-#if 0
-int Mobius::getEffectiveInputLatency()
-{
-    int latency = mConfig->getInputLatency();
-    if (latency == 0) {
-        latency = mContainer->getBlockSize();
-    }
-    return latency;
-}
-
-int Mobius::getEffectiveOutputLatency()
-{
-    int latency = mConfig->getOutputLatency();
-    if (latency == 0) {
-        latency = mContainer->getBlockSize();
-    }
-    return latency;
-}
-#endif
-
 //
 // Tracks
 //
@@ -1832,60 +1581,14 @@ Track* Mobius::getTrack(int index)
 	return ((index >= 0 && index < mTrackCount) ? mTracks[index] : nullptr);
 }
 
-/**
- * Return true if the given track has input focus.
- * Prior to 1.43 track groups had automatic focus
- * beheavior, now you have to ask for that with the
- * groupFocusLock global parameter.
- *
- * UPDATE: Really want to move the concept of focus up to the UI
- * and have it just replicate UIActions to focused tracks
- * rather than doing it down here.
- */
-bool Mobius::isFocused(Track* t) 
-{
-    int group = t->getGroup();
-
-    return (t == mTrack || 
-            t->isFocusLock() ||
-            (mConfig->isGroupFocusLock() && 
-             group > 0 && 
-             group == mTrack->getGroup()));
-}
-
-/**
- * New: Used by TrackManager to handle action replication
- * Only test the focus lock flag, not all that other shit
- * that isFocused(Track) is doing
- */
-bool Mobius::isTrackFocused(int index)
-{
-    bool focused = false;
-    Track* track = getTrack(index);
-    if (track != nullptr)
-      focused = track->isFocusLock();
-    return focused;
-}
-
-/**
- * New: Used by TrackManager to handle action replication
- */
-int Mobius::getTrackGroup(int index)
-{
-    int group = 0;
-    Track* track = getTrack(index);
-    if (track != nullptr)
-      group = track->getGroup();
-    return group;
-}
-
 void Mobius::getTrackProperties(int number, TrackProperties& props)
 {
     Track* track = getTrack(number - 1);
     if (track != nullptr) {
         props.frames = track->getFrames();
         props.cycles = track->getCycles();
-        props.subcycles = ParameterSource::getSubcycles(track);
+        // this will be added by LogicalTrack
+        //props.subcycles = ParameterSource::getSubcycles(track);
         props.currentFrame = (int)(track->getFrame());
     }
     else {
@@ -2124,7 +1827,8 @@ void Mobius::globalReset(Action* action)
 
 		// return to the track selected in the setup
         // but do NOT touch the active setup
-		setActiveTrack(mSetup->getActiveTrack());
+		//setActiveTrack(mSetup->getActiveTrack());
+        setActiveTrack(0);
 
 		// cancel in progress audio recordings	
 		// or should we leave the last one behind?
@@ -2326,7 +2030,7 @@ void Mobius::loadProject(Project* p)
                 setSetupInternal(s);
             }
         }
-#endif
+
         // this is about the same as above
 		const char* name = p->getSetup();
 		if (name != nullptr) {
@@ -2336,7 +2040,8 @@ void Mobius::loadProject(Project* p)
                 propagateConfiguration();
             }
         }
-
+#endif
+        
 		// Global reset again to get the tracks adjusted to the 
 		// state in the Setup.
         // new: don't think this is necessary now that we just did

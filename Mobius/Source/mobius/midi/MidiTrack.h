@@ -44,14 +44,13 @@ class MidiTrack : public LooperTrack, public MslTrack
     //
     
     void loadSession(class Session::Track* def) override;
+    void refreshParameters() override;
     void doAction(class UIAction* a) override;
     bool doQuery(class Query* q) override;
     void processAudioStream(class MobiusAudioStream* stream) override;
     void midiEvent(class MidiEvent* e) override;
     void getTrackProperties(class TrackProperties& props) override;
     void trackNotification(NotificationId notification, TrackProperties& props) override;
-    int getGroup() override;
-    bool isFocused() override;
     void refreshState(class TrackState* stsate) override;
     void refreshPriorityState(class PriorityState* state) override;
     void refreshFocusedState(class FocusedTrackState* state) override;
@@ -111,7 +110,6 @@ class MidiTrack : public LooperTrack, public MslTrack
     void toggleOverdub() override;
     void toggleMute() override;
     void toggleReplace() override;
-    void toggleFocusLock() override;
 
     void finishSwitch(int target) override;
     void loopCopy(int previous, bool sound) override;
@@ -207,8 +205,6 @@ class MidiTrack : public LooperTrack, public MslTrack
     bool overdub = false;
     bool mute = false;
     bool reverse = false;
-    int group = 0;
-    bool focus = false;
     //bool pause = false;
     
     int input = 127;

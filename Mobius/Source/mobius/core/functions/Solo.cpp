@@ -26,6 +26,9 @@
 #include "../Mode.h"
 #include "../Track.h"
 
+// for group awareness
+#include "../../track/LogicalTrack.h"
+
 //////////////////////////////////////////////////////////////////////
 //
 // SoloMode
@@ -139,7 +142,8 @@ void SoloFunction::invoke(Action* action, Mobius* m)
                         // for now pick the first one in the group
                         for (int i = 0 ; i < tracks ; i++) {
                             Track* t = m->getTrack(i);
-                            if (t->getGroup() == group) {
+                            LogicalTrack* lt = t->getLogicalTrack();
+                            if (lt->getGroup() == group) {
                                 track = t;
                                 break;
                             }

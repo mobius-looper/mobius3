@@ -136,7 +136,7 @@ class Loop : public TraceContext {
 
 	void getTraceContext(int* context, long* time);
 
-	void updateConfiguration(class MobiusConfig* config);
+	void refreshParameters();
 	void loadProject(class ProjectLoop* l);
 
     // new individisual loop loader

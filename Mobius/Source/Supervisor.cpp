@@ -672,6 +672,8 @@ MainWindow* Supervisor::getMainWindow()
 /**
  * Determine the active Preset being used by the active track.
  * Used by MainMenu to show a tick in the menu.
+ *
+ * !! This needs to be activeOverlay, and it is permissible for 0 to mean "none"
  */
 int Supervisor::getActivePreset()
 {
@@ -680,7 +682,7 @@ int Supervisor::getActivePreset()
     // or do we show the defaultPreset in global config?
     // active makes the most sense
     Symbol* s = symbols.intern("activePreset");
-    if (s->parameter != nullptr) {
+    if (s->parameterProperties != nullptr) {
         Query q(s);
         if (mobius->doQuery(&q))
           ordinal = q.value;
@@ -1332,6 +1334,12 @@ void Supervisor::sendModifiedMobiusConfig()
  * managed in mobius.xml.  The globals now come from the Session.
  * The full Preset list is preserved.  The Setup list is synthesized
  * to contain only one Setup representing the current session.
+ *
+ * This is reducing to almost nothing now and eventually can
+ * go away entirely.  Everything should be pulled from the Session.
+ *
+ * Unfortunately this is still used as the container for GroupDefinitions
+ * which still has to be sent down.
  */
 MobiusConfig* Supervisor::synthesizeMobiusConfig(Session* src)
 {
@@ -1342,7 +1350,9 @@ MobiusConfig* Supervisor::synthesizeMobiusConfig(Session* src)
 
     // this copies globals from the session and adds
     // a single Setup for the session itself
-    transformer.sessionToConfig(src, synth);
+    // try life without this
+    (void)src;
+    //transformer.sessionToConfig(src, synth);
 
     bool logit = false;
     if (logit) {

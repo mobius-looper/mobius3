@@ -155,6 +155,10 @@ void MobiusKernel::initialize(MobiusContainer* cont, ConfigPayload* p)
     p->parameters = nullptr;
     delete p;
 
+    // immediately give the Session a SymbolTable so it can support the
+    // SymbolId interfaces everyone wants
+    session->setSymbols(container->getSymbols());
+
     scriptUtil.initialize(this);
     scriptUtil.configure(configuration, session);
 
@@ -420,6 +424,10 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
         parameters = newParams;
     }
 
+    // immediately give the Session a SymbolTable so it can support the
+    // SymbolId interfaces everyone wants
+    session->setSymbols(container->getSymbols());
+
     if (newSession != nullptr || newConfig != nullptr) {
 
         // the usual case, the session was edited
@@ -637,8 +645,11 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // TrackManager move
     int newBlockSize = container->getBlockSize();
     if (newBlockSize != lastBlockSize) {
-        mCore->updateLatencies(newBlockSize);
         lastBlockSize = newBlockSize;
+        // this does more than just latencies, but doesn't seem worth
+        // another entry point just for latencies
+        //mCore->updateLatencies(newBlockSize);
+        mCore->refreshParameters();
     }
 
     // save this here for the duration so we don't have to keep passing it around
@@ -701,6 +712,11 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     
     // end whining
     MemTraceEnabled = false;
+}
+
+int MobiusKernel::getBlockSize()
+{
+    return lastBlockSize;
 }
 
 /**
@@ -992,7 +1008,7 @@ void MobiusKernel::updateParameters()
         // here the fun begins, assuming this must be a core parameter
         // though we should really support UI level and pass it up too...
         Symbol* s = param->symbol;
-        if (s->parameter != nullptr) {
+        if (s->parameterProperties != nullptr) {
 
             // these are only allowed to have track scope
             // which is less than what doParameter is allowing so might

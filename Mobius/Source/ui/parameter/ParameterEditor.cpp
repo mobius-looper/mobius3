@@ -55,7 +55,7 @@ void ParameterEditor::load()
 
     table->load(parameters.get());
 
-    for (auto set : parameters->sets) {
+    for (auto set : parameters->getSets()) {
         DynamicTreeForms* dtf = new DynamicTreeForms();
         dtf->initialize(supervisor, set);
         treeForms.add(dtf);
@@ -102,13 +102,7 @@ void ParameterEditor::save()
 
     // rebuild the list for the master ParameterSets container
     ParameterSets* master = supervisor->getParameterSets();
-    master->sets.clear();
-
-    // transfer ownership of the sets we had under our control
-    while (parameters->sets.size() > 0) {
-        ValueSet* vs = parameters->sets.removeAndReturn(0);
-        master->sets.add(vs);
-    }
+    master->transfer(parameters.get());
 
     supervisor->updateParameterSets();
 }

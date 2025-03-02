@@ -257,10 +257,8 @@ Layer* Loop::getMuteLayer()
  * Called by Track whenever something changes in the MobiusConfig.
  * Cache a few global parameters.
  */
-void Loop::updateConfiguration(MobiusConfig* config)
+void Loop::refreshParameters()
 {
-    (void)config;  // get rid of this parameter
-    
 	mAutoFeedbackReduction = ParameterSource::isAutoFeedbackReduction(this);
 
     if (mMode == ResetMode) {

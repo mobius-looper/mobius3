@@ -659,7 +659,6 @@ bool Binderator::looksResolved(Symbol* s)
             s->variable != nullptr ||
             //s->function != nullptr ||
             s->functionProperties != nullptr ||
-            s->parameter != nullptr ||
             s->parameterProperties != nullptr ||
             s->sample != nullptr ||
             s->script != nullptr ||

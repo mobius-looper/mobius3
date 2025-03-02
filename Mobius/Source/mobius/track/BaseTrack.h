@@ -36,11 +36,14 @@ class BaseTrack
     // tracks come in many shapes and sizes
     virtual void loadSession(class Session::Track* def) = 0;
 
+    // they are sensitive to change
+    virtual void refreshParameters() = 0;
 
     // tracks may all do things or schedule them
     virtual void doAction(class UIAction* a) = 0;
 
     // and you can ask them their secrets
+    // todo: should be removed
     virtual bool doQuery(class Query* q) = 0;
 
     // they are voracious consumers of audio
@@ -54,12 +57,6 @@ class BaseTrack
 
     // other tracks can tell them about the world around them
     virtual void trackNotification(NotificationId notification, TrackProperties& props) = 0;
-
-    // sometimes they gather in groups, but it isn't suspicious or anything
-    virtual int getGroup() = 0;
-
-    // and some feel left out if they aren't included
-    virtual bool isFocused() = 0;
 
     // they can have important things to say
     virtual void refreshPriorityState(class PriorityState* state) {(void)state;}

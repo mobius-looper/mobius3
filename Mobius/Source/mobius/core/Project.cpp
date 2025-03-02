@@ -823,8 +823,8 @@ ProjectTrack::ProjectTrack(Project* p, Track* t)
 
 	init();
 
-    mGroup = t->getGroup();
-	mFocusLock = t->isFocusLock();
+    //mGroup = t->getGroup();
+	//mFocusLock = t->isFocusLock();
 	mInputLevel = t->getInputLevel();
 	mOutputLevel = t->getOutputLevel();
 	mFeedback = t->getFeedback();

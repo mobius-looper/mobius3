@@ -376,10 +376,6 @@ bool LooperScheduler::handleExecutiveAction(UIAction* src)
             handled = true;
             break;
 
-        case FuncFocusLock:
-            track->toggleFocusLock();
-            break;
-
         default: break;
     }
 

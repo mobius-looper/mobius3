@@ -762,7 +762,9 @@ void Symbolizer::installOldDefinitions()
         }
     }
 #endif    
-    
+
+    // don't do these any more either
+#if 0    
     // adorn Symbols fromolder UIParameter definitions
     for (int i = 0 ; i < UIParameter::Instances.size() ; i++) {
         UIParameter* def = UIParameter::Instances[i];
@@ -784,6 +786,8 @@ void Symbolizer::installOldDefinitions()
             s->parameter = def;
         }
     }
+#endif
+    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -835,7 +839,7 @@ void Symbolizer::installActivationSymbols()
     // this replaces Preset activations
     ParameterSets* sets = provider->getParameterSets();
     if (sets != nullptr) {
-        for (auto set : sets->sets) {
+        for (auto set : sets->getSets()) {
             juce::String name = juce::String(Symbol::ActivationPrefixParameter) + set->name;
             Symbol* s = symbols->intern(name);
             s->behavior = BehaviorActivation;

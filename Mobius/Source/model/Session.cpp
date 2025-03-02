@@ -4,6 +4,7 @@
 #include "../util/Trace.h"
 
 #include "ValueSet.h"
+#include "Symbol.h"
 #include "Session.h"
 
 Session::Session()
@@ -20,7 +21,8 @@ Session::Session(Session* src)
     version = src->version;
     
     for (auto track : src->tracks) {
-        tracks.add(new Track(track));
+        Track* copy = new Track(track);
+        add(copy);
     }
 
     if (src->globals != nullptr)
@@ -28,6 +30,19 @@ Session::Session(Session* src)
 
     // source tracks should already have ids but make sure
     assignIds();
+
+    // there is only one of these so it's save to copy
+    symbols = src->getSymbols();
+}
+
+void Session::setSymbols(SymbolTable* st)
+{
+    symbols = st;
+}
+
+SymbolTable* Session::getSymbols()
+{
+    return symbols;
 }
 
 int Session::getId()
@@ -203,7 +218,7 @@ void Session::reconcileTrackCount(TrackType type, int required)
         while (currentCount < required) {
             Track* neu = new Track();
             neu->type = type;
-            tracks.add(neu);
+            add(neu);
             currentCount++;
         }
         modified = true;
@@ -244,8 +259,12 @@ void Session::reconcileTrackCount(TrackType type, int required)
  */
 void Session::add(Track* t)
 {
-    if (t != nullptr)
-      tracks.add(t);
+    if (t != nullptr) {
+        // this should be the only way to add a track to ensure
+        // the back pointer is set
+        t->setSession(this);
+        tracks.add(t);
+    }
 }
 
 void Session::deleteTrack(int index)
@@ -271,6 +290,8 @@ void Session::steal(juce::Array<Track*>& dest)
     dest.clear();
     while (tracks.size() > 0) {
         Track* t = tracks.removeAndReturn(0);
+        // this will no longer be valid
+        t->setSession(nullptr);
         dest.add(t);
     }
 }
@@ -279,85 +300,8 @@ void Session::replace(juce::Array<Track*>& src)
 {
     tracks.clear();
     for (auto t : src)
-      tracks.add(t);
+      add(t);
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// OBSOLETE, WEED AND DELETE
-//
-//////////////////////////////////////////////////////////////////////
-
-#if 0
-void Session::clearTracks(TrackType type)
-{
-    int index = 0;
-    while (index < tracks.size()) {
-        Track* t = tracks[index];
-        if (t->type == type) {
-            (void)tracks.remove(index, true);
-        }
-        else
-          index++;
-    }
-}
-#endif
-
-/**
- * Kludge for MidiTrackEditor
- *
- * Find or create a definition for a track of this type
- * with a logical index.  Meaning if the index is 2 there need to be
- * three tracks accessible with that index to store configuration.
- * Will go away once MidiTrackEditor can handle dynamic track add/remove
- * rather than being fixed at 8 tracks.
- */
-#if 0
-Session::Track* Session::ensureTrack(TrackType type, int index)
-{
-    Track* found = getTrackByType(type, index);
-    if (found == nullptr) {
-        int count = countTracks(type);
-        for (int i = count ; i <= index ; i++) {
-            found = new Session::Track();
-            found->type = type;
-            tracks.add(found);
-        }
-        // give any new ones unique ids
-        assignIds();
-    }
-    return found;
-}
-#endif
-
-/**
- * Move the tracks from one session to another.
- * Used by MidiTrackEditor
- */
-#if 0
-void Session::replaceMidiTracks(Session* src)
-{
-    clearTracks(TypeMidi);
-    
-    int index = 0;
-    while (index < src->tracks.size()) {
-        Session::Track* t = src->tracks[index];
-        if (t->type == Session::TypeMidi) {
-            (void)src->tracks.removeAndReturn(index);
-            tracks.add(t);
-        }
-        else {
-            index++;
-        }
-    }
-
-    assignIds();
-
-    // this is authoritative over how many tracks there logically are
-    // the Track array may be sparse or have extras
-    midiTracks = src->midiTracks;
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -385,6 +329,22 @@ MslValue* Session::get(juce::String pname)
     return v;
 }
 
+MslValue* Session::get(SymbolId sid)
+{
+    MslValue* v = nullptr;
+    if (symbols == nullptr) {
+        Trace(1, "Session: No symbol table for reference resolution");
+    }
+    else {
+        Symbol* s = symbols->getSymbol(sid);
+        if (s == nullptr)
+          Trace(1, "Session: No symbol for id, can't happen in my backyard");
+        else
+          v = get(s->name);
+    }
+    return v;
+}
+
 /**
  * Used in a few cases where we put transient things in the session
  * for editing then need to move them somewhere else.
@@ -402,6 +362,12 @@ bool Session::getBool(juce::String pname)
     return (v != nullptr) ? v->getBool() : false;
 }
 
+bool Session::getBool(SymbolId sid)
+{
+    MslValue* v = get(sid);
+    return (v != nullptr) ? v->getBool() : false;
+}
+
 int Session::getInt(juce::String pname)
 
 {
@@ -409,9 +375,21 @@ int Session::getInt(juce::String pname)
     return (v != nullptr) ? v->getInt() : false;
 }
 
+int Session::getInt(SymbolId sid)
+{
+    MslValue* v = get(sid);
+    return (v != nullptr) ? v->getInt() : false;
+}
+
 const char* Session::getString(juce::String pname)
 {
     MslValue* v = get(pname);
+    return (v != nullptr) ? v->getString() : nullptr;
+}
+
+const char* Session::getString(SymbolId sid)
+{
+    MslValue* v = get(sid);
     return (v != nullptr) ? v->getString() : nullptr;
 }
 
@@ -465,6 +443,16 @@ Session::Track::Track(Session::Track* src)
       parameters.reset(new ValueSet(src->parameters.get()));
 }
 
+void Session::Track::setSession(Session* s)
+{
+    session = s;
+}
+
+Session* Session::Track::getSession()
+{
+    return session;
+}
+
 ValueSet* Session::Track::getParameters()
 {
     return parameters.get();
@@ -485,22 +473,63 @@ MslValue* Session::Track::get(juce::String pname)
     return v;
 }
 
+MslValue* Session::Track::get(SymbolId sid)
+{
+    MslValue* v = nullptr;
+    if (session == nullptr)
+      Trace(1, "Session::Track Unable to resolve symbol id, no session pointer");
+    else {
+        // I'm forgetting how inner classes work
+        // "symbols" seems to be in scope here from the Session,
+        // verify this
+        // SymbolTable* symbols = session->getSymbols();
+        SymbolTable* table = session->getSymbols();
+        if (table == nullptr)
+          Trace(1, "Session::Track Unable to resolve symbol id, no symbol table");
+        else {
+            Symbol* s = table->getSymbol(sid);
+            if (s == nullptr)
+              Trace(1, "Session::Track Unable to resolve symbol id");
+            else
+              v = get(s->name);
+        }
+    }
+    return v;
+}
+
 bool Session::Track::getBool(juce::String pname)
 {
     MslValue* v = get(pname);
     return (v != nullptr) ? v->getBool() : false;
 }
 
-int Session::Track::getInt(juce::String pname)
+bool Session::Track::getBool(SymbolId sid)
+{
+    MslValue* v = get(sid);
+    return (v != nullptr) ? v->getBool() : false;
+}
 
+int Session::Track::getInt(juce::String pname)
 {
     MslValue* v = get(pname);
+    return (v != nullptr) ? v->getInt() : false;
+}
+
+int Session::Track::getInt(SymbolId sid)
+{
+    MslValue* v = get(sid);
     return (v != nullptr) ? v->getInt() : false;
 }
 
 const char* Session::Track::getString(juce::String pname)
 {
     MslValue* v = get(pname);
+    return (v != nullptr) ? v->getString() : nullptr;
+}
+
+const char* Session::Track::getString(SymbolId sid)
+{
+    MslValue* v = get(sid);
     return (v != nullptr) ? v->getString() : nullptr;
 }
 
@@ -546,7 +575,8 @@ void Session::parseXml(juce::XmlElement* root, juce::StringArray& errors)
             globals.reset(set);
         }
         else if (el->hasTagName("Track")) {
-            tracks.add(parseTrack(el, errors));
+            Session::Track* t = parseTrack(el, errors);
+            add(t);
         }
         else {
             errors.add(juce::String("Session: Invalid XML element: ") + el->getTagName());
@@ -665,7 +695,7 @@ void Session::parseDevice(juce::XmlElement* root, SessionMidiDevice* device)
     device->record = root->getBoolAttribute("record");
     device->id = root->getIntAttribute("id");
     device->output = root->getStringAttribute("output");
-}
+ }
 
 /****************************************************************************/
 /****************************************************************************/

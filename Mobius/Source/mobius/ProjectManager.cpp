@@ -121,10 +121,10 @@ Project* ProjectManager::saveProject()
         BindingConfig* overlay = mConfig->getOverlayBindingConfig();
         if (overlay != nullptr)
           p->setBindings(overlay->getName());
-#endif
 
         Setup* s = core->getSetup();
         p->setSetup(s->getName());
+#endif
 
         // the old Project model does all the work here
         p->setTracks(core);

@@ -82,7 +82,14 @@ BaseScheduler::~BaseScheduler()
 void BaseScheduler::loadSession(Session::Track* def)
 {
     (void)def;
+    refreshParameters();
+}
 
+void BaseScheduler::refreshParameters()
+{
+    // ugly inconsistency about where we pull things
+    Session::Track* def = logicalTrack->getSession();
+    
     // convert sync options into a Pulsator follow
     // !! using LogicalTrack to do the enumeration conversions
     // get these out of there

@@ -23,6 +23,9 @@
 #include "../core/Mobius.h"
 #include "../midi/MidiEngine.h"
 #include "../midi/MidiTrack.h"
+// for isPlugin
+#include "../MobiusInterface.h"
+
 
 #include "BaseTrack.h"
 #include "MobiusLooperTrack.h"
@@ -93,8 +96,7 @@ void LogicalTrack::loadSession()
         return;
     }
 
-    resolveParameterOverlays();
-    cacheParameters();
+    cacheParameters(false);
     
     if (track == nullptr) {
         // this was a new logical track
@@ -121,49 +123,6 @@ void LogicalTrack::loadSession()
         // since the inner track can always get back to the LogicalTrack we don't
         // need to pass the Session down
         track->loadSession(sessionTrack);
-    }
-}
-
-/**
- * Resolve the two potential parameter overlays, one from the Session shared by all tracks
- * and another for this specific track.
- * When we get to the point where there can be more than just these two, then the ValueSets
- * should be merged into a local copy.
- */
-void LogicalTrack::resolveParameterOverlays()
-{
-    trackOverlay = nullptr;
-    ParameterSets* sets = manager->getParameterSets();
-    if (sessionTrack != nullptr) {
-        const char* ovname = sessionTrack->getString("trackOverlay");
-        if (ovname != nullptr) {
-            if (sets != nullptr) {
-                trackOverlay = sets->find(juce::String(ovname));
-                // sigh, need to return what used to be the trackPreset "ordinal" in
-                // the TrackState, parameter sets don't remember their positiion so do it here
-                // zero means "none"
-                if (trackOverlay != nullptr) {
-                    int index = sets->indexOf(trackOverlay);
-                    trackOverlayNumber = index + 1;
-                }
-            }
-        
-            if (trackOverlay == nullptr)
-              Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
-        }
-    }
-    
-    sessionOverlay = nullptr;
-    Session* session = manager->getSession();
-    if (session != nullptr) {
-        const char* ovname = session->getString("sessionOverlay");
-        if (ovname != nullptr) {
-            if (sets != nullptr)
-              sessionOverlay = sets->find(juce::String(ovname));
-
-            if (sessionOverlay == nullptr)
-              Trace(1, "LogicalTrack: Invalid parameter overlay in session %s", ovname);
-        }
     }
 }
 
@@ -217,22 +176,21 @@ int LogicalTrack::getSessionId()
 
 void LogicalTrack::getTrackProperties(TrackProperties& props)
 {
+    // this we manage
+    props.subcycles = getSubcycles();
+    
     track->getTrackProperties(props);
 }
 
 int LogicalTrack::getGroup()
 {
-    // return track->getGroup();
     return groupNumber;
 }
 
 bool LogicalTrack::isFocused()
 {
-    // track->isFocused();
     return focusLock;
 }
-
-
 
 /**
  * Audio tracks are handled in bulk through Mobius
@@ -272,27 +230,6 @@ bool LogicalTrack::scheduleWait(MslWait* w)
     // todo: create an EventWait with this wait object
     // mark it pending, have beginAudioBlock look for it
     return false;
-}
-
-void LogicalTrack::refreshState(TrackState* state)
-{
-    // what used to be the active preset is now handled here
-    // this used to be the ordinal number of the track's Preset
-    // and it always had one, now trackOverlay is optional so
-    // zero needs to mean "none" in the display
-    state->preset = trackOverlayNumber;
-    
-    track->refreshState(state);
-}
-
-void LogicalTrack::refreshPriorityState(PriorityState* state)
-{
-    track->refreshPriorityState(state);
-}
-
-void LogicalTrack::refreshFocusedState(FocusedTrackState* state)
-{
-    track->refreshFocusedState(state);
 }
 
 void LogicalTrack::dump(StructureDumper& d)
@@ -456,189 +393,111 @@ int LogicalTrack::getSyncGoalUnits()
 
 //////////////////////////////////////////////////////////////////////
 //
-// Actions
+// Overlay Management
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * A few functions are intercepted here, most are passed along to the BaseTrack.
- *
- * Parameters are entirely handled here, BaseTracks are informed only if they wish
- * to cache values, they can't maintain a value that is different from the LT.
- *
- * Activations are entirely handled here.
- */
-void LogicalTrack::doAction(UIAction* a)
+Symbol* LogicalTrack::getSymbol(SymbolId id)
 {
-    SymbolId sid = a->symbol->id;
+    // we're going to need this all the time, just bring
+    // SymbolTable inside
+    return manager->getSymbols()->getSymbol(id);
+}
 
-    if (sid == FuncTrackReset || sid == FuncGlobalReset) {
-        clearBindings();
-        resetSyncState();
-        resetParameters();
-        resolveParameterOverlays();
-        track->doAction(a);
-    }
-    else if (sid == ParamActivePreset ||
-             sid == ParamTrackOverlay) {
-        // until Presets are ripped out, intercept that and use it as an alternate way
-        // to select the track overlay
-        // the old TrackPresetParameterType handler which will eventually receive this
-        // accepts a name in the bindingArgs or an ordinal in the value
-
-        ValueSet* overlay = nullptr;
-        int overlayNumber = 0;
+ValueSet* LogicalTrack::findOverlay(const char* ovname)
+{
+    ValueSet* overlay = nullptr;
+    if (ovname != nullptr) {
         ParameterSets* sets = manager->getParameterSets();
-        if (strlen(a->arguments) > 0) {
-            if (sets != nullptr) {
-                overlay = sets->find(juce::String(a->arguments));
-                if (overlay != nullptr) {
-                    // need to remember it's position for the TrackState
-                    int index = sets->indexOf(overlay);
-                    overlayNumber = index + 1;
-                }
-            }
-            if (overlay == nullptr)
-              Trace(1, "LogicalTrack: Invalid parameter set name %s", a->arguments);
-        }
-        
-        if (overlay == nullptr) {
-            // unlike Presets which were always present, overlays are optional
-            // and zero means "none"
-            if (a->value == 0) {
-                trackOverlay = nullptr;
-                trackOverlayNumber = 0;
-            }
-            else {
-                if (sets != nullptr) {
-                    overlay = sets->getByOrdinal(a->value);
-                }
-                if (overlay == nullptr)
-                  Trace(1, "LogicalTrack: Invalid parameter set ordinal %d", a->value);
-                else
-                  overlayNumber = a->value;
-            }
-        }
-
-        if (overlay != nullptr) {
-            trackOverlay = overlay;
-            trackOverlayNumber = overlayNumber;
-        }
-    }
-    else if (a->symbol->behavior == BehaviorActivation) {
-        // the only one we support is Parameter activation which
-        if (a->symbol->name.startsWith(Symbol::ActivationPrefixParameter)) {
-            juce::String pname = a->symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixParameter, false, false);
-            ValueSet* overlay = nullptr;
-            ParameterSets* sets = manager->getParameterSets();
-            if (sets != nullptr)
-              overlay = sets->find(pname);
-            if (overlay == nullptr)
-              Trace(1, "LogicalTrack: Invalid parameter set name %s", pname.toUTF8());
-            else
-              trackOverlay = overlay;
-        }
+        if (sets == nullptr)
+          Trace(1, "LogicalTrack::findOverlay No ParameterSets defined");
         else {
-            Trace(1, "LogicalTrack: Received unsupported activation prefix %s",
-                  a->symbol->getName());
+            overlay = sets->find(juce::String(ovname));
+            if (overlay == nullptr)
+              Trace(1, "LogicalTrack: Invalid parameter overlay name %s", ovname);
         }
     }
-    else if (a->symbol->parameterProperties == nullptr) {
-        // must be a function
-        track->doAction(a);
+    return overlay;
+}
+
+ValueSet* LogicalTrack::findOverlay(int ovnumber)
+{
+    ValueSet* overlay = nullptr;
+    if (ovnumber > 0) {
+        ParameterSets* sets = manager->getParameterSets();
+        if (sets == nullptr)
+          Trace(1, "LogicalTrack::findOverlay No ParameterSets defined");
+        else {
+            overlay = sets->getByOrdinal(ovnumber);
+            if (overlay == nullptr)
+              Trace(1, "LogicalTrack: Invalid parameter overlay number %d", number);
+        }
     }
-    else {
-        doParameter(a);
-    }
+    return overlay;
+}
+
+ValueSet* LogicalTrack::resolveOverlay(ValueSet* referenceSet,
+                                       const char* referenceName)
+{
+    const char* ovname = referenceSet->getString(referenceName);
+    return findOverlay(ovname);
+}
+
+ValueSet* LogicalTrack::resolveTrackOverlay()
+{
+    return resolveOverlay(sessionTrack->ensureParameters(), "trackOverlay");
+}
+
+ValueSet* LogicalTrack::resolveSessionOverlay()
+{
+    ValueSet* values = nullptr;
+    Session* s = sessionTrack->getSession();
+    if (s == nullptr)
+      Trace(1, "LogicalTrack: Session::Track without Session");
+    else
+      values = resolveOverlay(s->ensureGlobals(), "sessionOverlay");
+    return values;
 }
 
 /**
- * Process a parameter action.
+ * Resolve the two potential parameter overlays, one from the Session shared by all tracks
+ * and another for this specific track.
+ * 
+ * When we get to the point where there can be more than just these two, then the ValueSets
+ * should be merged into a local copy.
  *
- * A few parameters are managed directly on the LogicalTrack, the reset
- * are held in the session.  The parameters that are handled here need to
- * include everything in cacheParameters.
+ * The reset flag is true if this is happening due to TrackReset or GlobalReset
+ * and false if this is due to a session reload.
+ *
+ * Changing the trackOverlay is sensitive to the old "reset retain" option if this
+ * is a reset.
  */
-void LogicalTrack::doParameter(UIAction* a)
+void LogicalTrack::resolveParameterOverlays(bool reset)
 {
-    Symbol* s = a->symbol;
-    bool handled = true;
-    
-    switch (s->id) {
-        case ParamSyncSource:
-            syncSource = (SyncSource)getEnumOrdinal(s, a->value);
-            break;
-            
-        case ParamSyncSourceAlternate:
-            syncSourceAlternate = (SyncSourceAlternate)getEnumOrdinal(s, a->value);
-            break;
-            
-        case ParamSyncUnit:
-            syncUnit = (SyncUnit)getEnumOrdinal(s, a->value);
-            break;
-            
-        case ParamTrackSyncUnit:
-            trackSyncUnit = (TrackSyncUnit)getEnumOrdinal(s, a->value);
-            break;
-            
-        case ParamLeaderTrack:
-            // todo: need range checking like we do for enums
-            syncLeader = a->value;
-            break;
-            
-        case ParamTrackGroup:
-            groupNumber = getGroupFromAction(a);
-            break;
-            
-        case ParamFocus:
-            focusLock = (bool)(a->value);
-            break;
-            
-        default: handled = false; break;
+    Symbol* s = getSymbol(ParamTrackOverlay);
+    if (!reset || !s->parameterProperties->resetRetain) {
+        trackOverlay = resolveTrackOverlay();
     }
     
-    if (!handled) {
-        // before we just go slamming numbers into the bindings, need
-        // to be doing the equivalent of getEnumOrdinal on these
-        bindParameter(a);
-        track->doAction(a);
-    }
-    else {
-        // none of the directly cached parameters need to be sent to the
-        // tracks right now, but that could change
-    }
+    sessionOverlay = resolveSessionOverlay();
 }
 
 /**
- * Given an uncontrained number from a UIAction value, verify that
- * it fits within the enumeration range of a parameter.
- *
- * This is a generic utiliity, maybe move it to Enumerator?
+ * Changing an overlay may impact the cached parameters if we can pull
+ * any of them from the overlay.  There are none at the momemt.
  */
-int LogicalTrack::getEnumOrdinal(Symbol* s, int value)
+void LogicalTrack::changeOverlay(ValueSet* neu)
 {
-    int ordinal = 0;
-    
-    ParameterProperties* props = s->parameterProperties.get();
-    if (props == nullptr) {
-        Trace(1, "LogicalTrack::getEnumOrdinal Not a parameter symbol",
-              s->getName());
-    }
-    else if (props->type == TypeEnum) {
-        if (value >= 0 && value < props->values.size())
-          ordinal = value;
-        else
-          Trace(1, "LogicalTrack::getEnumOrdinal Value out of range %s %d",
-                s->getName(), value);
-    }
-    else {
-        // this could also do range checking on numeric parameters
-        Trace(1, "LogicalTrack::getEnumOrdinal not an enumerated parameter symbol %s",
-              s->getName());
-    }
+    trackOverlay = neu;
 
-    return ordinal;
+    track->refreshParameters();
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Parameter Cache
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Synchronization parameters are extremely important for deciding things
@@ -651,29 +510,43 @@ int LogicalTrack::getEnumOrdinal(Symbol* s, int value)
  * This is also where temporary overrides to the values go if you ahve an action
  * or script that changes them.
  *
- * When the track is reset, the values are recached from the session.
+ * The reset flag is false if this is the result of a session load, and true
+ * if this is the result of a TrackReset or GlobalReset.  Most parameters return
+ * to their session values on reset, except for a few that had the "reset retain" option.
  */
-void LogicalTrack::cacheParameters()
+void LogicalTrack::cacheParameters(bool reset)
 {
+    resolveParameterOverlays(reset);
+
+    // todo: needs lots of work 
+    clearBindings(reset);
+    
     syncSource = getSyncSourceFromSession();
     syncSourceAlternate = getSyncSourceAlternateFromSession();
     syncUnit = getSyncUnitFromSession();
     trackSyncUnit = getTrackSyncUnitFromSession();
-    syncLeader = sessionTrack->getInt("leaderTrack");
+    syncLeader = sessionTrack->getInt(ParamLeaderTrack);
 
     // other convenient things
     groupNumber = getGroupFromSession();
+    focusLock = sessionTrack->getBool(ParamFocus);
 
-    // keep the symbol table around, we're going to be needing it...
-    Symbol* s = manager->getSymbols()->getSymbol(ParamFocus);
-    focusLock = sessionTrack->getBool(s->name);
+    // handle the virtual port swap
+    if (manager->getContainer()->isPlugin()) {
+        inputPort = getParameterOrdinal(ParamPluginInputPort);
+        outputPort = getParameterOrdinal(ParamPluginOutputPort);
+    }
+    else {
+        inputPort = getParameterOrdinal(ParamAudioInputPort);
+        outputPort = getParameterOrdinal(ParamAudioOutputPort);
+    }
 }
 
 int LogicalTrack::getGroupFromSession()
 {
     int gnumber = 0;
 
-    const char* groupName = sessionTrack->getString("trackGroup");
+    const char* groupName = sessionTrack->getString(ParamTrackGroup);
     // since we store the name in the session, have to map it back to an ordinal
     // which requires the MobiusConfig
     if (groupName != nullptr) {
@@ -706,58 +579,245 @@ int LogicalTrack::getGroupFromAction(UIAction* a)
 }
 
 /**
- * Initialize parameters on GlobalReset or TrackReset
- *
- * This is where Track updates the input/output levels, IO ports,
- * the loop counts, and a few other things.  It caches those so it will
- * happen when the Reset function is send through the core.
+ * State refresh is closely related to how parameters are cached.
+ * Most of it is handled by the BaseTrack, but we contribute the
+ * things we manage.
  */
-void LogicalTrack::resetParameters()
+void LogicalTrack::refreshState(TrackState* state)
 {
-    // these were formerly handled by Track, and were sensitive
-    // to "reset retain" options on the old Parameter model
-    // now that they live up here, will need awareness of resetRetains as well
+    // !! todo: old name, revisit
+    if (trackOverlay != nullptr)
+      state->preset = trackOverlay->number;
+    else
+      state->preset = 0;
+
+    state->subcycles = getSubcycles();
+    state->focus = focusLock;
+    state->group = groupNumber;
     
-    // other convenient things
-    groupNumber = getGroupFromSession();
+    track->refreshState(state);
+}
 
-    // keep the symbol table around, we're going to be needing it...
-    Symbol* s = manager->getSymbols()->getSymbol(ParamFocus);
-    focusLock = sessionTrack->getBool(s->name);
+void LogicalTrack::refreshPriorityState(PriorityState* state)
+{
+    track->refreshPriorityState(state);
+}
 
-    // !! Track would formerly revert the Preset to what was in the Setup
-    // on GlobalReset, or TrackReset if the special "reset retain" option was
-    // off for the TrackPreset parameter
-    // in the new world, this means how the trackOverlay is handled
-    // we either revert to the Overlay specified in the Session or keep the current one
-    // punting on this for awhile
+void LogicalTrack::refreshFocusedState(FocusedTrackState* state)
+{
+    track->refreshFocusedState(state);
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// Query
+// Actions
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * The LogicalTrack is authorative over parameter values.
- * BaseTracks may cache them but they cannot have values that differ.
+ * A few functions are intercepted here, most are passed along to the BaseTrack.
+ *
+ * Parameters are entirely handled here, BaseTracks are informed only if they wish
+ * to cache values, they can't maintain a value that is different from the LT.
+ *
+ * Activations are entirely handled here.
  */
-bool LogicalTrack::doQuery(Query* q)
+void LogicalTrack::doAction(UIAction* a)
 {
-    //return track->doQuery(q);
-    q->value = getParameterOrdinal(q->symbol->id);
+    SymbolId sid = a->symbol->id;
 
-    // assuming we're at the end of the query probe chain and don't
-    // have to bother with returning if this was actually a parameter or not
+    if (sid == FuncTrackReset || sid == FuncGlobalReset) {
+        resetSyncState();
+        cacheParameters(true);
+        track->doAction(a);
+    }
+    else if (sid == ParamTrackOverlay) {
+
+        if (strlen(a->arguments) > 0) {
+            // this must resolve, if the name is valid leave the current one in place
+            ValueSet* overlay = findOverlay(a->arguments);
+            if (overlay != nullptr)
+              changeOverlay(overlay);
+        }
+        else if (a->value > 1) {
+            // if out of range leave in place
+            ValueSet* overlay = findOverlay(a->value);
+            if (overlay != nullptr)
+              changeOverlay(overlay);
+        }
+        else {
+            // sending an action with value 0 means to cancel the current overlay
+            changeOverlay(nullptr);
+        }
+    }
+    else if (sid == ParamSessionOverlay) {
+        // todo: issues here are similar except they apply to all tracks
+        // we could either send this to every track which is porobably necessary
+        // the way parameter caches work, or have TrackManager intercept this
+        // and inform the tracks in a different way
+        // not visible right now
+        Trace(1, "LogicalTrack: Unexpected ParamSessionOverlay action");
+    }
+    else if (a->symbol->behavior == BehaviorActivation) {
+        // Activation used to be for both Setup and Preset but now it only
+        // applies to parameter sets at this level
+        if (a->symbol->name.startsWith(Symbol::ActivationPrefixParameter)) {
+            juce::String pname = a->symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixParameter, false, false);
+
+            ValueSet* overlay = findOverlay(pname.toUTF8());
+            if (overlay != nullptr)
+              changeOverlay(overlay);
+        }
+        else {
+            Trace(1, "LogicalTrack: Received unsupported activation prefix %s",
+                  a->symbol->getName());
+        }
+    }
+    else if (sid == FuncFocusLock) {
+        focusLock = !focusLock;
+    }
+    else if (sid == FuncTrackGroup) {
+        doTrackGroup(a);
+    }
+    else if (a->symbol->parameterProperties == nullptr) {
+        // must be a function
+        track->doAction(a);
+    }
+    else {
+        doParameter(a);
+    }
+}
+
+/**
+ * Process a parameter action.
+ *
+ * The new parameter value will either be cached directly in LT fields,
+ * or added to the binding list.
+ *
+ * Only a few need to be passed through to the BaseTrack, but send all of them
+ * and let the tracks sort it out.  The alternative would just be to change the
+ * value here and call BaseTrack::refreshParameters.
+ *
+ * A few are LT level only and do not need to be sent down.
+ */
+void LogicalTrack::doParameter(UIAction* a)
+{
+    Symbol* s = a->symbol;
+
+    bool local = true;
+    bool needsBinding = false;
+    
+    switch (s->id) {
+        case ParamSyncSource:
+            syncSource = (SyncSource)getEnumOrdinal(s, a->value);
+            break;
+            
+        case ParamSyncSourceAlternate:
+            syncSourceAlternate = (SyncSourceAlternate)getEnumOrdinal(s, a->value);
+            break;
+            
+        case ParamSyncUnit:
+            syncUnit = (SyncUnit)getEnumOrdinal(s, a->value);
+            break;
+            
+        case ParamTrackSyncUnit:
+            trackSyncUnit = (TrackSyncUnit)getEnumOrdinal(s, a->value);
+            break;
+            
+        case ParamLeaderTrack:
+            // todo: need range checking like we do for enums
+            syncLeader = a->value;
+            break;
+            
+        case ParamTrackGroup:
+            groupNumber = getGroupFromAction(a);
+            break;
+            
+        case ParamFocus:
+            focusLock = (bool)(a->value);
+            break;
+
+        case ParamInputPort: {
+            // ports are unusual, we maintain one of the two audio/plugin
+            // values but also need to send these down to the core track
+            if (validatePort(a->value, false)) {
+                inputPort = a->value;
+                local = false;
+            }
+        }
+            break;
+            
+        case ParamOutputPort: {
+            if (validatePort(a->value, true)) {
+                outputPort = a->value;
+                local = false;
+            }
+        }
+            break;
+
+        case ParamInputLatency:
+        case ParamOutputLatency:
+            // might want these actionable someday
+            Trace(1, "LogicalTrack: Action on latencies");
+            break;
+            
+        default: {
+            local = false;
+            needsBinding = true;
+        }
+            break;
+    }
+
+    if (needsBinding)
+      bindParameter(a);
+
+    if (!local)
+      track->doAction(a);
+}
+
+/**
+ * Validate an input or output port number sent down in an action.
+ * todo: Need to be smarter here, just trust it for now.
+ * If it is out of range, nothing bad happens, the track just stops
+ * receiving or sending.
+ */
+bool LogicalTrack::validatePort(int port, bool output)
+{
+    (void)port;
+    (void)output;
     return true;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Parameters
-//
-//////////////////////////////////////////////////////////////////////
+/**
+ * Given an uncontrained number from a UIAction value, verify that
+ * it fits within the enumeration range of a parameter.
+ *
+ * This is a generic utiliity, maybe move it to Enumerator?
+ */
+int LogicalTrack::getEnumOrdinal(Symbol* s, int value)
+{
+    int ordinal = 0;
+    
+    ParameterProperties* props = s->parameterProperties.get();
+    if (props == nullptr) {
+        Trace(1, "LogicalTrack::getEnumOrdinal Not a parameter symbol",
+              s->getName());
+    }
+    else if (props->type == TypeEnum) {
+        if (value >= 0 && value < props->values.size())
+          ordinal = value;
+        else
+          Trace(1, "LogicalTrack::getEnumOrdinal Value out of range %s %d",
+                s->getName(), value);
+    }
+    else {
+        // this could also do range checking on numeric parameters
+        Trace(1, "LogicalTrack::getEnumOrdinal not an enumerated parameter symbol %s",
+              s->getName());
+    }
+
+    return ordinal;
+}
 
 /**
  * Here when a track receives an action to change the value of
@@ -802,20 +862,23 @@ void LogicalTrack::bindParameter(UIAction* a)
 
     // todo: only expecting ordinals right now
     value->setInt(a->value);
-
-    // activePreset is special, store it here so we don't have to keep
-    // digging it out of the binding list
-    if (symid == ParamActivePreset)
-      activePreset = a->value;
 }
 
 /**
  * Clear the temporary parameter bindings.
  * Sigh, this is called by the MidiTrack constructor which goes through its
  * Reset processing which wants to clear bindings.
+ *
+ * todo: messy
+ * This should only be done by LT, not indirectly from BaseTrack
+ * If this is how you are going to be doing action overrides, then
+ * clearing them needs to be sensitive to resetRetains.
+ *
+ * But I think this going to be temporary anyway
  */
-void LogicalTrack::clearBindings()
+void LogicalTrack::clearBindings(bool reset)
 {
+    (void)reset;
     while (bindings != nullptr) {
         MslBinding* next = bindings->next;
         bindings->next = nullptr;
@@ -824,9 +887,302 @@ void LogicalTrack::clearBindings()
     }
 }
 
+/**
+ * This is a weird one.
+ * EDP had an option that when entering Record mode it would put the feedback
+ * back up to 127.  This was implemented with an obscure option
+ * RecordResetsFeedback.
+ *
+ * Now that we manage what the feedback value is, the core Record function implementation
+ * needs to call back up here to ask us to reset it, it can't just slam a value into
+ * the track without our knowledge.
+ */
+int LogicalTrack::unbindFeedback()
+{
+    int current = getParameterOrdinal(ParamFeedback);
+
+    // ugh: punting on this since the binding list is too horrible to deal with
+    // revisit when this gets converted to a binding array like you thought about
+    Trace(1, "LogicalTrack::unbindFeedback not implemented");
+
+    return current;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Track Groups
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Handler for the FuncTrackGroup action.
+ *
+ * This replicates what used to be down in core/functions/TrackGroup
+ */
+void LogicalTrack::doTrackGroup(UIAction* a)
+{
+    MobiusConfig* config = manager->getConfigurationForGroups();
+
+    // default is to revert to no group
+    groupNumber = 0;
+
+    // if we're still passing binding args here, obey it
+    if (strlen(a->arguments) > 0) {
+        groupNumber = parseGroupActionArgument(config, a->arguments);
+    }
+    else if (a->value >= 0 && a->value <= config->dangerousGroups.size()) {
+        groupNumber = a->value;
+    }
+    else {
+        Trace(1, "LogicalTrack: Group number out of range %d", a->value);
+    }
+}
+
+/**
+ * Here we have a string group specifier from the binding argument.
+ */
+int LogicalTrack::parseGroupActionArgument(MobiusConfig* config, const char* s)
+{
+    int group = 0;
+
+    if (strlen(s) > 0) {
+        
+        int gnumber = 1;
+        for (auto g : config->dangerousGroups) {
+            // what about case on these?
+            if (g->name.equalsIgnoreCase(s)) {
+                group = gnumber;
+                break;
+            }
+            gnumber++;
+        }
+
+        if (group == 0) {
+            // see if it looks like a number in range
+            if (IsInteger(s)) {
+                group = ToInt(s);
+                if (group < 1 || group > config->dangerousGroups.size()) {
+                    Trace(1, "LogicalTrack: Group number out of range %d", group);
+                    group = 0;
+                }
+            }
+        }
+        
+        if (group == 0) {
+            // name didn't match
+            // accept a few cycle control keywords
+            int delta = 0;
+            if ((strcmp(s, "cycle") == 0) || (strcmp(s, "next") == 0)) {
+                delta = 1;
+            }
+            else if (strcmp(s, "prev") == 0) {
+                delta = -1;
+            }
+            else if (strcmp(s, "clear") == 0) {
+                // leave at zero to clear
+            }
+            else {
+                Trace(1, "LogicalTrack: Invalid group name %s", s);
+            }
+
+            if (delta != 0) {
+                group = groupNumber + delta;
+                if (group > config->dangerousGroups.size())
+                  group = 0;
+                else if (group < 0)
+                  group = config->dangerousGroups.size();
+            }
+        }
+    }
+    
+    return group;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Query
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * The LogicalTrack is authorative over parameter values.
+ * BaseTracks may cache them but they cannot have values that differ.
+ */
+bool LogicalTrack::doQuery(Query* q)
+{
+    //return track->doQuery(q);
+    q->value = getParameterOrdinal(q->symbol->id);
+
+    // assuming we're at the end of the query probe chain and don't
+    // have to bother with returning if this was actually a parameter or not
+    return true;
+}
+
+/**
+ * This is the most important function for parameter access by BaseTracks.
+ *
+ * Whenever a track needs the value of a parameter it MUST call up  to this
+ * which undestands how they are organized in the session and deals with
+ * overlays and action bindings.
+ *
+ * Tracks may choose to cache some of their parameters, but if they do they
+ * MUST respond to a refreshParameters notification and call back to this to
+ * refresh their cache.
+ *
+ * Anything that is maintained in an LT parameter cache needs to be handled
+ * here rather than reversing to the Session.
+ */
+int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
+{
+    Symbol* s = getSymbol(symbolId);
+    int ordinal = 0;
+
+    if (s == nullptr) {
+        Trace(1, "LogicalTrack: Unmapped symbol id %d", symbolId);
+    }
+    else if (s->parameterProperties == nullptr) {
+        Trace(1, "LogicalTrack: Symbol %s is not a parameter", s->getName());
+    }
+    else {
+
+        bool special = true;
+        switch (symbolId) {
+            
+            case ParamTrackOverlay: {
+                if (trackOverlay != nullptr)
+                  ordinal = trackOverlay->number;
+            }
+                break;
+                
+            case ParamSessionOverlay: {
+                if (sessionOverlay != nullptr)
+                  ordinal = sessionOverlay->number;
+            }
+                break;
+                
+            case ParamInputPort:
+                ordinal = inputPort;
+                break;
+                
+            case ParamOutputPort:
+                ordinal = outputPort;
+                break;
+
+            case ParamInputLatency:
+                ordinal = manager->getInputLatency();
+                break;
+
+            case ParamOutputLatency:
+                ordinal = manager->getOutputLatency();
+                break;
+
+            case ParamSyncSource:
+                ordinal = syncSource;
+                break;
+            
+            case ParamSyncSourceAlternate:
+                ordinal = syncSourceAlternate;
+                break;
+            
+            case ParamSyncUnit:
+                ordinal = syncUnit;
+                break;
+            
+            case ParamTrackSyncUnit:
+                ordinal = trackSyncUnit;
+                break;
+            
+            case ParamLeaderTrack:
+                ordinal = syncLeader;
+                break;
+            
+            case ParamTrackGroup:
+                ordinal = groupNumber;
+                break;
+            
+            case ParamFocus:
+                ordinal = focusLock;
+                break;
+                
+            default: special = false; break;
+        }
+
+        if (!special) {
+            // not one of the cached or mutated parameters
+            // start looking for it 
+
+            // first look for a binding
+            MslBinding* binding = nullptr;
+            for (MslBinding* b = bindings ; b != nullptr ; b = b->next) {
+                // MSL doesn't use symbol ids, only names, but since we're overloading
+                // MslBinding for use in LogicalTrack, we will use ids by convention
+                // hmm, cleaner if LogicalTrack just had it's own object pool for this
+                if (b->symbolId == symbolId) {
+                    binding = b;
+                    break;
+                }
+            }
+
+            if (binding != nullptr) {
+                // this wins
+                if (binding->value == nullptr) {
+                    // unclear whether a binding with a null value means
+                    // "unbound" or if it means zero?
+                }
+                else {
+                    ordinal = binding->value->getInt();
+                }
+            }
+            else {
+                // locate it in the session or overlays
+                // If either a track-level or session-level overlay is present,
+                // they have precedence.  This makes them resemble the old Presets.
+                // If neither overlay has a value, then look in the Session::Track and
+                // finally the Session
+            
+                MslValue* value = nullptr;
+                if (trackOverlay != nullptr)
+                  value = trackOverlay->get(s->name);
+                
+                if (value == nullptr && sessionOverlay != nullptr)
+                  value = sessionOverlay->get(s->name);
+
+                if (value == nullptr && sessionTrack != nullptr)
+                  value = sessionTrack->get(s->name);
+            
+                if (value == nullptr) {
+                    Session* session = sessionTrack->getSession();
+                    if (session != nullptr)
+                      value = session->get(s->name);
+                    else
+                      Trace(1, "LogicalTrack: A Session::Track without a Session is like a day without sunshine");
+                }
+            
+                if (value != nullptr) {
+                    // this can only be used for parameters that are numeric
+                    // BaseTrack should not be calling it for anything else
+                    if (value->type == MslValue::Int ||
+                        value->type == MslValue::Bool ||
+                        value->type == MslValue::Enum) {
+                        ordinal = value->getInt();
+                    }
+                    else {
+                        Trace(1, "LogicalTrack::getParameterOrdinal Call with non-numeric parameter %s", s->getName());
+                    }
+                }
+            }
+        }
+    }
+    
+    return ordinal;
+}
+
 ///////////////////////////////////////////////////////////////////////
 //
 // Parameter Enumeration Conversion
+//
+// These are older convenience functions used by MidiTrack that
+// are not as necessary any more.  Weed these...
 //
 // Now that everything is in a ValueSet, it requires conversion into
 // the enumerated constant that is more convenient to use in code.
@@ -835,12 +1191,6 @@ void LogicalTrack::clearBindings()
 //
 // These are only used by MIDI tracks.  Audio tracks still get them from
 // the Setup which is created dynamically from the Session.
-//
-// !! this sucks so hard right now...
-//
-// The relationship between Session/TrackManager/LogicalTrack/SyncMaster
-// is a fucking mess due to the old architecutre.  Now that  LogicalTrack
-// is the center of the universe, we don't need as much of this.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -892,29 +1242,48 @@ LeaderLocation LogicalTrack::getLeaderSwitchLocationFromSession()
                                                   LeaderLocationNone);
 }
 
+/**
+ * !! The loop count was formerly in the Preset which
+ * is now the Session::Track with or without a trackOverlay.
+ *
+ * I'd really rather these be in the special case of track parameters that
+ * don't use overlays.
+ */
 int LogicalTrack::getLoopCountFromSession()
 {
     int result = 2;
-    Symbol* s = manager->getSymbols()->getSymbol(ParamLoopCount);
-    if (s != nullptr) {
-        MslValue* v = sessionTrack->get(s->name);
-        if (v != nullptr) {
-            result = v->getInt();
-            if (result < 1) {
-                // this isn't unusual if the track was created in the editor
-                // and saved without filling in the form
-                //Trace(1, "LogicalTrack: Malformed LoopCount parameter in session %d", number);
-                result = 2;
-            }
+
+    // it is not unusual for this to be zero if the track was created in the
+    // editor and saved without filling in the form, default to 2
+    int count = getParameterOrdinal(ParamLoopCount);
+    if (count > 1) {
+
+        // todo: core tracks have their own limit on this, need to decide
+        // where this lives
+        int max = 16;
+        if (count > max) {
+            Trace(1, "LogicalTrack: Loop count in session out of range %d", count);
+            count = max;
         }
+        
+        result = count;
     }
+
     return result;
 }
 
+/**
+ * This is part of the MslTrack interface, and used in a lot of places so
+ * give it a special accessor.
+ */
 int LogicalTrack::getSubcycles()
 {
     int subcycles = getParameterOrdinal(ParamSubcycles);
+
+    // this is also commonly left zero by the session editor
+    // various levels REALLY expect this to be non-zero so default it
     if (subcycles == 0) subcycles = 4;
+    
     return subcycles;
 }
 
@@ -924,84 +1293,9 @@ int LogicalTrack::getSubcycles()
 //
 // These are temporary until the session editor is fleshed out.
 //
+// todo: more weeding to do
+//
 //////////////////////////////////////////////////////////////////////
-
-/**
- * The primary mechanism to access parameter values from within the kernel.
- *
- * For audio tracks values come from a Preset for MIDI tracks the Session.
- *
- */
-int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
-{
-    Symbol* s = manager->getSymbols()->getSymbol(symbolId);
-    int ordinal = 0;
-
-    if (s == nullptr) {
-        Trace(1, "LogicalTrack: Unmapped symbol id %d", symbolId);
-    }
-    else if (s->parameterProperties == nullptr) {
-        Trace(1, "LogicalTrack: Symbol %s is not a parameter", s->getName());
-    }
-    else if (symbolId == ParamActivePreset) {
-        // this one is special
-        ordinal = activePreset;
-    }
-    else {
-        MslBinding* binding = nullptr;
-
-        // first look for a binding
-        for (MslBinding* b = bindings ; b != nullptr ; b = b->next) {
-            // MSL doesn't use symbol ids, only names, but since we're overloading
-            // MslBinding for use in LogicalTrack, we will use ids by convention
-            // hmm, cleaner if LogicalTrack just had it's own object pool for this
-            if (b->symbolId == symbolId) {
-                binding = b;
-                break;
-            }
-        }
-
-        if (binding != nullptr) {
-            // this wins
-            if (binding->value == nullptr) {
-                // unclear whether a binding with a null value means
-                // "unbound" or if it means zero?
-            }
-            else {
-                ordinal = binding->value->getInt();
-            }
-        }
-        else {
-            // locate it in the session or overlays
-            // If either a track-level or session-level overlay is present,
-            // they have precedence.  This makes them resemble the old Presets.
-            // If neither overlay has a value, then look in the Session::Track and
-            // finally the Session
-            
-            MslValue* value = nullptr;
-            if (trackOverlay != nullptr)
-              value = trackOverlay->get(s->name);
-                
-            if (value == nullptr && sessionOverlay != nullptr)
-              value = sessionOverlay->get(s->name);
-
-            if (value == nullptr && sessionTrack != nullptr)
-              value = sessionTrack->get(s->name);
-            
-            if (value == nullptr) {
-                // Since we need this all the fucking time, may as well keep a handle down here
-                Session* session = manager->getSession();
-                if (session != nullptr)
-                  value = session->get(s->name);
-            }
-            
-            if (value != nullptr)
-              ordinal = value->getInt();
-        }
-    }
-    
-    return ordinal;
-}
 
 ParameterMuteMode LogicalTrack::getMuteMode()
 {

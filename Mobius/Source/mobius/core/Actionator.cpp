@@ -2,11 +2,16 @@
  * Code related to the processing of actions sent to Mobius from the outside,
  * and actions generated inside the engine.
  *
- * The new model is UIAction and the old model is Action.  There are redundant
- * implementations of both to ease the transition to a common model.
+ * The new model is UIAction and the old model is Action.
  *
  * Parameter handling has been gutted since this is now mananged by LogicalTrack
  * Same with Activations.
+ *
+ * Actions will only be sent to the core after having resolved it to a specific
+ * track so none of the old code related to focus and group replication is relevant
+ * any more.
+ *
+ * LongPress is also handled by TrackManager.
  *
  */
 
@@ -26,7 +31,6 @@
 #include "../../model/MobiusConfig.h"
 #include "../../model/Trigger.h"
 #include "../../model/Structure.h"
-#include "../../model/Preset.h"
 
 #include "../MobiusShell.h"
 
@@ -47,13 +51,10 @@ Actionator::Actionator(Mobius* m)
 {
     mMobius = m;
     mActionPool = new ActionPool();
-    mTriggerState = new TriggerState();
 }
 
 Actionator::~Actionator()
 {
-    delete mTriggerState;
-
     mActionPool->dump();
     delete mActionPool;
 }
@@ -68,21 +69,6 @@ void Actionator::dump()
 // New Action Model
 //
 //////////////////////////////////////////////////////////////////////
-
-/**
- * Before audio stream processing begins, advance the long-press
- * watcher and fire off any actions.
- *
- * NEW: This is obsolete and not called.  There is no longer any
- * concept of long presses in core.  
- */
-void Actionator::advanceLongWatcher(int frames)
-{
-    (void)frames;
-    // Advance the long-press tracker too
-    // this may cause other actions to fire.
-    //mTriggerState->advance(this, frames);
-}
 
 /**
  * Do one action queued at the beginning of each block or
@@ -103,33 +89,6 @@ void Actionator::doAction(UIAction* action)
         Function* f = (Function*)(symbol->coreFunction);
         doFunction(action, f);
     }
-    else if (symbol->coreParameter) {
-        // not supposed to be called any more
-        Trace(1, "Actionator: Action for a parameter");
-    }
-    else if (symbol->parameter) {
-        Trace(1, "Actionator: Action for a non-core parameter");
-        // UI parameter without core, check alias
-        // could have done this earlier but it's mostly for thigs like
-        // activePreset->preset that don't happen often
-
-        // wtf was this for?
-        if (symbol->parameter->coreName != nullptr) {
-            Symbol* alt = mMobius->getContainer()->getSymbols()->intern(symbol->parameter->coreName);
-            if (alt->coreParameter) {
-                Parameter* p = (Parameter*)(alt->coreParameter);
-                doParameter(action, p);
-            }
-            else {
-                Trace(1, "Actionator::doAction Unresolved parameter %s\n", alt->getName());
-            }
-        }
-    }
-    else if (symbol->behavior == BehaviorActivation) {
-        // should not be here any more, TrackManager/LogicalTrack handle it
-        Trace(1, "Actionator: Received BehaviorActivation");
-        //doActivation(action);
-    }
     else if (symbol->script) {
         doScript(action);
     }
@@ -138,35 +97,6 @@ void Actionator::doAction(UIAction* action)
               symbol->getName());
     }
 }
-
-/**
- * Process a UIAction containing a coreParameter symbol.
- *
- * Holy shit what a mess.  Convert it to a core Action and let
- * it follow the crooked path.  This is where track and group
- * scope happens, and where the binding args containing
- * ActionOperators are parsed.  For this to work with the new model
- * the bindingargs must have been captured.
- *
- * That part isn't so bad but what's worse is that Parameter::setValue
- * can in few cases schedule an event to apply the parameter value
- * rather than just set it somewhere.  This is for pitch/rate related
- * parameters for reasons I forget.  In those cases the action ownership
- * goes with the event so we can't complete it here.
- * In theory if it schedules that somehow needs to make it back to the calling
- * script so it can wait on it, but I didn't see that happening.
- */
-#if 0
-void Actionator::doParameter(UIAction* action, Parameter* p)
-{
-    Action* coreAction = convertAction(action);
-    coreAction->type = ActionParameter;
-    coreAction->implementation.parameter = p;
-    
-    doOldAction(coreAction);
-    completeAction(coreAction);
-}
-#endif
 
 /**
  * Process a UIAction containing a coreScript symbol.
@@ -207,115 +137,9 @@ void Actionator::doScript(UIAction* action)
     }
 }
 
-/**
- * Process a UIAction containing a structure activation.
- *
- * MobiusShell installs symbols of the form:
- * 
- *     <typePrefix>:<structureName>
- *
- * Examples: Preset:MySong, Setup:Main
- *
- * The id of those symbols will be the Structure ordinal.
- *
- * For Setups and presets you can also accomplish selection by
- * binding to the "setup" and "preset" parameters which are there
- * for backward compatibility with scripts.
- *
- * There are also the SelectPreset and SelectSetup functions
- * which are probably not necessary now that we have Activation symbols.
- *
- * As usual scripts complicate this.  There are two ways to change presets in a script
- *
- *    Preset foo
- *
- * Which is implemented by ScriptPresetStatement.  That parses the name to an ordinal
- * and eventually calls Track::changePreset.  It does not do this with an Action.
- * There is also a parameter style:
- *
- *    set preset foo
- *
- * This is implemented in a script by the ScriptSetStatement which calls
- * TrackPresetParameterType::setValue which eventually calls Track::changePreset
- *
- * Both of those use the old Action model.  Setups do the same with
- * "Setup foo" and "set setup foo".  The function oriented script statements
- * can easilly make a UIAction and invoke it so we end up in the same place.
- * The parameter oriented "set" statement is harder because it is built
- * around special Parameter objects.  We could special case those to avoid
- * needing pseudo Parameters.
- *
- * Preset has it's own level of mess because the duration of it is unclear.  Most
- * track parameters reset to the initial Setup values after GlobalReset.  I'm not sure
- * what Preset does but we've made it look semi-permanent.
- *
- * Having a parameter oriented approach fits well if you think of the "preset"
- * as something that holds a value that can be read from somewhere.  A function can
- * change a preset, but you can't "read" a function to see what the preset is.
- *
- * BehaviorActivation is a function oriented approach so may want to rethink that.
- */
-#if 0
-void Actionator::doActivation(UIAction* action)
-{
-    Symbol* symbol = action->symbol;
-
-    // MobiusShell installs these with prefixes and the id set to the structure ordinal
-    if (symbol->name.startsWith(Symbol::ActivationPrefixPreset)) {
-
-        // kludge: the way activations are dealt with all needs a redesign
-        // formerly stored the structure ordinal in the symbol id but that can't
-        // be done now that it is a SymbolId enumeration
-        // extract the preset name from the symbol and find the ordinal the hard way
-        juce::String pname = symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixPreset, false, false);
-        MobiusConfig* config = mMobius->getConfiguration();
-        int ordinal = Structure::getOrdinal(config->getPresets(), pname.toUTF8());
-        if (ordinal >= 0) {
-            // in the new TrackManager world, we don't have to mess with focus
-            // and groups, the only thing is track scope
-            int trackNumber = action->getScopeTrack();
-            if (trackNumber == 0) {
-                // I don't think we can be here any more, but just go to the active
-                mMobius->setActivePreset(ordinal);
-            }
-            else {
-                mMobius->setActivePreset(trackNumber - 1, ordinal);
-            }
-        }
-        
-        char buf[1024];
-        // ugh, this generates a warning about char* to juce::CharPointer_UTF8 conversion
-        // but it seems to work?
-        // have to add getAddress(), jesus this is a lot of work,
-        // add Symbol::getCharName or juce::String concatenation or something
-        // todo: also needs redesign
-        snprintf(buf, sizeof(buf), "%s activated", pname.toUTF8().getAddress());
-        mMobius->sendMobiusMessage(buf);
-    }
-    else if (symbol->name.startsWith(Symbol::ActivationPrefixSetup)) {
-
-        juce::String sname = symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixSetup, false, false);
-        MobiusConfig* config = mMobius->getConfiguration();
-        int ordinal = Structure::getOrdinal(config->getPresets(), sname.toUTF8());
-        if (ordinal >= 0)
-          mMobius->setActiveSetup(ordinal);
-        char buf[1024];
-        snprintf(buf, sizeof(buf), "%s activated", sname.toUTF8().getAddress());
-        mMobius->sendMobiusMessage(buf);
-    }
-    else {
-        Trace(1, "Actionator::doActivation Unhandled symbol prefix %s\n",
-              symbol->getName());
-    }
-}
-#endif
-
 //////////////////////////////////////////////////////////////////////
 //
 // Function Actions
-//
-// This is a rewrite of the old Action based code that only does the
-// Action conversion immediately before calling Function::invoke
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -324,9 +148,7 @@ void Actionator::doActivation(UIAction* action)
  */
 void Actionator::doFunction(UIAction* action, Function* f)
 {
-    // call one of these during testing
     doFunctionOld(action, f);
-    // doFunctionNew(action, f);
 }
 
 void Actionator::doFunctionOld(UIAction* action, Function* f)
@@ -334,6 +156,7 @@ void Actionator::doFunctionOld(UIAction* action, Function* f)
     Action* coreAction = convertAction(action);
     coreAction->type = ActionFunction;
     coreAction->implementation.function = f;
+    
     doOldAction(coreAction);
 
     // to do MSL waits, we have to convey the old Event pointer
@@ -362,270 +185,6 @@ void Actionator::doFunctionOld(UIAction* action, Function* f)
     
     completeAction(coreAction);
 }
-
-/**
- * Here starts the redesign of function invocation control flow.
- * This level handles global vs. track replication.
- *
- * This is not used, and if you resurrect it, will need to handle
- * passing back the Event that was scheduled like doFunctionOld does...
- */
-#if 0
-void Actionator::doFunctionNew(UIAction* action, Function* f)
-{
-    // inform TriggerState of the up/down transitions
-    // only need this for Function actions
-    // commented out until we can rewrite TriggerState to use UIAction
-    // until then if you take the new path, long press won't work
-    // mTriggerState->assimilate(action);
-    
-    if (f->global) {
-        invoke(action, f);
-    }
-    else {
-        doFunctionTracks(action, f);
-    }
-}
-#endif
-
-/**
- * Determine the track to receive the action, replicating the
- * action if necessary for focus and groups.
- *
- * This is relatively complicated, especially with focus lock involved.
- * Basically the rules are:
- *
- *   - if the action explicitly specifies a single track it goes there
- *
- *   - if the action explicitly specifies a track group it only goes
- *     to tracks in that group
- *
- *   - otherwise it always goes to the active track
- *
- *   - and it optionally goes to other tracks that have focus
- *
- * Focus is complicated.  A track is said to have "focus lock"
- * if it was enabled through an explicit action by the user or from
- * a script.  This sets a flag on the track Track::isFocusLock.
- * It is conceptually  similar to "arming" a track in a DAW.
- *
- * Focus lock may however be ignored by some Functions.  Focus ignoring
- * happens in two ways:
- *
- *   - the function has the noFocusLock flag in the static definition
- *   - the function has the focusLockDisabled flag set at runtime
- *
- * noFocusLock is set for a few functions that never want focus replication
- * like Alert, Midi, Save, and a few others.  These are also usually flagged
- * as Global functions, so it is redundant in most cases.
- * Functions that are not global but declare noFocusLock are:
- *    Bounce, MidiStart, MidiStop, GlobalPause, GlobalMute, DriftCorrect,
- *    GlobalReset, others...
- * They are not declared global I think because they need to be scheduled
- * on a track event loop for quantization or other reasons, but they're only
- * allowed to do what they do once.
- *
- * focusLockDisabled is an obscure option that is set indirectly from the
- * MobiusConfig parameter "focusLockFunctions".  The parameter as a list
- * of the names of functions that are allowed to have focus lock.
- * When MobiusConfig is installed, we find all the functions on this list
- * and if they are NOT on the list set focusLockDisabled.  So a given function
- * MAY have focus lock is noFocusLock is false, but it may not GET focus lock
- * unless it is on the list.  If you can follow all the double negatives in this
- * you're better than I am.
- *
- * Focus handling in general needs serious cleansing.
- *
- * As if that weren't enough in older releases we automatically applied focus lock
- * to other tracks that were in the same group as the active track.  So if 
- * if tracks 1,2,3 are all in group A and you sent an action to track 1, it would
- * also be sent to 2 and 3.  This was a surprise for most so it was disable but
- * keeping with the "everything is configurable" philosophy, there is a global
- * parameter "groupsHaveFocusLock" that can turn that back on.  Which of course
- * no one ever did.  I'm not carrying that one forward, it just makes it worse.
- */
-#if 0
-void Actionator::doFunctionTracks(UIAction* action, Function* f)
-{
-    // parse the scope, returns -1 if this is a group name
-    int scopeTrack = Scope::parseTrackNumber(action->getScope());
-    
-    // old code was sensntive to a Track set directly on the action
-    // "for rescheduling"  Not sure what that means but continue that
-    // and here the model merge gets messier, need to remember
-    // this in the UIAction but it's a core pointer
-    if (action->track != nullptr) {
-        // always force it here
-        doFunctionTrack(action, f, (Track*)(action->track), false);
-    }
-    else if (f->activeTrack) {
-        // special Function flag that says it must run in the active track
-        // this was important "when calling some of the track management functions
-        // from scripts"
-        // need to document what that meant
-        // it is only set by TrackCopyFunction and TrackSelectFunction
-        // I think because the action must be processed in the track that
-        // is the SOURCE of the copy?
-        if (scopeTrack > 0) {
-            // the action thought it was allowed to specify the tracks
-            // but the function said no, probably should not allow this in bindings
-            Trace(1, "Actionator: Ignoring action track scope for Function %s\n",
-                  f->getName());
-        }
-
-        Track* track = mMobius->getTrack();
-        doFunctionTrack(action, f, track, false);
-    }
-    else if (scopeTrack > 0) {
-        // the action was scoped to a particular track
-        // note that track numbers are 1 based and zero means "current"
-        int trackNumber = scopeTrack - 1;
-        Track* track = mMobius->getTrack(trackNumber);
-        if (track == nullptr) {
-            Trace(1, "Actionator: Track scope number out of range %ld\n", (long)trackNumber);
-            // we have historically defaulted to the active track which seems fine
-            track = mMobius->getTrack();
-        }
-
-        doFunctionTrack(action, f, track, false);
-    }
-    else if (action->noGroup) {
-        // this is a weird flag set in Scripts to disable focus/group handling
-        // it isn't supposed to happen and we've already Traced an error
-        // force it to the active track
-        // a better name for this would be currentTrackOnly, or noFocus
-        doFunctionTrack(action, f, mMobius->getTrack(), false);
-    }
-    else {
-        // there was no explicit single-track override
-
-        // when this becomes non-zero we need to start cloning the action
-        int actionsSent = 0;
-        Track* active = mMobius->getTrack();
-        int targetGroup = scopes.parseGroupNumber(action->getScope());
-        
-        for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
-            Track* t = mMobius->getTrack(i);
-
-            // to avoid an obscure single line logic knot, it has been broken
-            // into pieces to make it easier to read
-            bool doit = false;
-            if (targetGroup > 0) {
-                // group scope trumps, only go to tracks in this group
-                doit = (targetGroup == t->getGroup());
-            }
-            else if (t == active) {
-                // when no group scope, it always goes to the active track
-                doit = true;
-            }
-            else {
-                // here we are in the focus mess
-                if (!f->noFocusLock && !f->focusLockDisabled) {
-                    // function said it was okay, does the track want it?
-                    doit = t->isFocusLock();
-                    if (!doit) {
-                        // this is where we would automatically apply focus
-                        // to other tracks in the same group whether the track
-                        // wanted it or not, fuck that
-                    }
-                }
-            }
-            
-            if (doit) {
-                // finally we get to do something
-                // note the final argument is true to indiciate that we need to clone it
-                doFunctionTrack(action, f, t, (actionsSent > 0));
-                actionsSent++;
-            }
-        }
-
-        // !! when you get around to using this code, will need a similar style
-        // of group replication here
-    }
-}
-#endif
-
-/**
- * After laboriously determining what track to send an action to,
- * now we have to do the UIAction/Action model conversion and
- * invoke the function.
- *
- * The needsClone argument means that we've already sent this action
- * to a track and would need to clone it if we want to send it to another.
- * That would be the case once UIAction is sent all the way through to the bottom,
- * but since we're still doing model conversion, that is effectively a clone
- * so we don't need to clone the UIAction yet.
- */
-#if 0
-void Actionator::doFunctionTrack(UIAction* action, Function* f, Track* t, bool needsClone)
-{
-    (void)needsClone;
-    // invoke will do the model conversion
-    invoke(action, f, t);
-}
-#endif
-
-/**
- * Transition to the old Action model for a global function invocation.
- */
-#if 0
-void Actionator::invoke(UIAction* action, Function* f)
-{
-    Action* coreAction = convertAction(action);
-    coreAction->type = ActionFunction;
-    coreAction->implementation.function = f;
-
-    if (action->longPress)
-      f->invokeLong(coreAction, mMobius);
-    else
-      f->invoke(coreAction, mMobius);
-
-    completeAction(coreAction);
-}
-#endif
-
-/**
- * Transition to the old Action model for a track function invocation.
- */
-#if 0
-void Actionator::invoke(UIAction* action, Function* f, Track* t)
-{
-    Action* coreAction = convertAction(action);
-    coreAction->type = ActionFunction;
-    coreAction->implementation.function = f;
-
-    // set this so if we need to reschedule it will always go back
-    // here and not try to do group/focus lock replication
-    // oh sweet jesus, what does this mean??
-    // Parameters need this to know where to set the parameter
-    // Scripts do this when quantizing something, scripts still end up
-    // calling the old code so continue setting it
-    // conceptually it isn't bad, it just forces any follow-on action
-    // processing to this track without needing to work backward from the Loop
-    coreAction->setResolvedTrack(t);
-
-    // this won't be used yet, but start setting it for the future
-    action->track = t;
-    
-    if (action->longPress) {
-        f->invokeLong(coreAction, t->getLoop());
-    }
-    else {
-        f->invoke(coreAction, t->getLoop());
-
-        // old comments
-        // notify the script interpreter on each new invoke
-        // !! sort out whether we wait for invokes or events
-        // !! Script could want the entire Action
-        // TODO: some (most?) manual functions should cancel
-        // a script in progress?
-        mMobius->resumeScript(t, f);
-    }
-
-    // will return to the pool or not if ownership transferred to an Event
-    completeAction(coreAction);
-}
-#endif
 
 /**
  * Convert a new UIAction into an old Action.
@@ -714,6 +273,10 @@ Action* Actionator::convertAction(UIAction* src)
     if (trackNumber >= 0)
       coreAction->scopeTrack = trackNumber;
     else {
+        // groups should have been handled above this, the only
+        // scope sent down to core is track numbers
+        Trace(1, "Actionator: Received action with group scope");
+        
         // must be a group name
         // note that we use group NUMBER here rather than ordinal
         int groupNumber = scopes.parseGroupNumber(scope);
@@ -914,142 +477,14 @@ void Actionator::doOldAction(Action* a)
     }
     else if (t == ActionPreset) {
         Trace(1, "Actionator::doOldAction with ActionPreset");
-        //doParameter(a);
-        //doPreset(a);
     }
     else if (t == ActionSetup) {
         Trace(1, "Actionator::doOldAction with ActionSetup");
-        //doSetup(a);
     }
     else {
         Trace(1, "Actionator: Invalid action target %s\n", t->getName());
     }
 }
-
-/**
- * Handle a TargetPreset action.
- *
- * Prior to 2.0 we did not support focus on preset changes but since
- * we can bind them like any other target I think it makes sense now.
- * This may be a surprise for some users, consider a global parameter
- * similar to FocusLockFunctions to disable this?
- */
-#if 0
-void Actionator::doPreset(Action* a)
-{
-    MobiusConfig* config = mMobius->getConfiguration();
-    Preset* p = (Preset*)a->getTargetObject();
-    if (p == nullptr) {    
-        // may be a dynamic action
-        // support string args here too?
-        int number = a->arg.getInt();
-        if (number < 0)
-          Trace(1, "Missing action Preset\n");
-        else {
-            p = config->getPreset(number);
-            if (p == nullptr) 
-              Trace(1, "Invalid preset number: %ld\n", (long)number);
-        }
-    }
-
-    if (p != nullptr) {
-        int number = p->ordinal;
-
-        Trace(2, "Preset action: %ld\n", (long)number);
-
-        // determine the target track(s) and schedule events
-        Track* track = resolveTrack(a);
-
-        if (track != nullptr) {
-            track->changePreset(number);
-        }
-        else if (a->noGroup) {
-            // selected track only
-            track = mMobius->getTrack();
-            track->changePreset(number);
-        }
-        else {
-            Trace(1, "Actionator: Dealing with Preset focus and you said this wouldn't be on the test");
-            
-            // Apply to the current track, all focused tracks
-            // and all tracks in the Action scope.
-            int targetGroup = a->getTargetGroup();
-
-            // might want a global param for this?
-            bool allowPresetFocus = true;
-
-            if (targetGroup > 0) {
-                // only tracks in this group
-                for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
-                    Track* t = mMobius->getTrack(i);
-                    if (targetGroup == t->getGroup())
-                      t->changePreset(number);
-                }
-            }
-            else if (allowPresetFocus) {
-                for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
-                    Track* t = mMobius->getTrack(i);
-                    if (mMobius->isFocused(t))
-                      t->changePreset(number);
-                }
-            }
-        }
-    }
-}
-#endif
-
-/**
- * Process a TargetSetup action.
- */
-#if 0    
-void Actionator::doSetup(Action* a)
-{
-    (void)a;
-    // this got redesigned recently, revisit
-    MobiusConfig* config = mMobius->getConfiguration();
-
-    // If we're here from a Binding should have resolved
-    // new: no not any more
-    Setup* s = (Setup*)a->getTargetObject();
-    if (s == nullptr) {
-        // may be a dynamic action
-        int number = a->arg.getInt();
-        if (number < 0)
-          Trace(1, "Missing action Setup\n");
-        else {
-            s = config->getSetup(number);
-            if (s == nullptr) 
-              Trace(1, "Invalid setup number: %ld\n", (long)number);
-        }
-    }
-
-    if (s != nullptr) {
-        int number = s->ordinal;
-        Trace(2, "Setup action: %ld\n", (long)number);
-
-        // This is messy, the resolved target will
-        // point to an object from the external config but we have 
-        // to set one from the interrupt config by number
-        SetCurrentSetup(config, number);
-        mMobius->setSetupInternal(number);
-        
-        // special operator just for setups to cause it to be saved
-        // UPDATE: This is old and questionable, it isn't used
-        // anywhere in core code or scripts.  It was used in UI.cpp in response
-        // to selecting a Setup from the main menu.  I don't think this should
-        // necessarily mean to make a permanent change, though that would be convenient
-        // rather than editing the full MobiusConfig.  But if you want that, just
-        // have the UI do that it's own damn self rather than sending it all the way
-        // down here, only to have a KernelEvent back
-        // can remove this EventType
-        //if (a->actionOperator == OperatorPermanent) {
-        //ThreadEvent* te = new ThreadEvent(TE_SAVE_CONFIG);
-        //mMobius->addEvent(te);
-        //}
-        
-    }
-}
-#endif
 
 /**
  * Process a function action.
@@ -1120,99 +555,9 @@ void Actionator::doFunction(Action* a)
             // to be dealing with groups and focus lock and only sending down
             // actions with specific track scope
             Trace(1, "Actionator: Dealing with function group/focus and you said this wouldn't be on the test");
-            
-            // Apply to tracks in a group or focused
-            Action* ta = a;
-            int nactions = 0;
-            int targetGroup = a->getTargetGroup();
-            Track* active = mMobius->getTrack();
-            
-            for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
-                Track* t = mMobius->getTrack(i);
-
-                // this no longer exists at this level, but we shouldn't get here
-                // int trackGroup = t->getGroup();
-                int trackGroup = 0;
-                bool isFocused = mMobius->isFocused(t);
-                bool isFocused = false;
-
-                if ((targetGroup > 0 && targetGroup == trackGroup) ||
-                    (targetGroup <= 0 &&
-                     (t == active || (f->isFocusable() && isFocused)))) {
-
-                    // if we have more than one, have to clone the
-                    // action so it can have independent life
-                    if (nactions > 0)
-                      ta = cloneAction(a);
-
-                    doFunction(ta, f, t);
-
-                    // since we only "return" the first one free the 
-                    // replicants
-                    if (nactions > 0)
-                      completeAction(ta);
-
-                    nactions++;
-                }
-            }
-
-            // hack for group replication
-            //if (targetGroup == 0)
-            //doGroupReplication(a, f);
         }
     }
 }
-
-/**
- * New hack for group function replication.
- * Action replication for group bindings and group replication should be done
- * in the same way, but trying not to disrupt old code.  At this point we've
- * done the action on the active track, and now need to look for replication
- * defined in the GroupDefinition.
- *
- * This is not necessary any more, TrackManager handles it and MOS scripts
- * won't be using it.
- */
-#if 0
-void Actionator::doGroupReplication(Action* action, Function* function)
-{
-    // is the active track in a group?
-    Track* active = mMobius->getTrack();
-    int groupNumber = active->getGroup();
-    if (groupNumber > 0) {
-        // why yes it was
-        MobiusConfig* config = mMobius->getConfiguration();
-        int groupIndex = groupNumber - 1;
-        if (groupIndex >= 0 && groupIndex < config->groups.size()) {
-            GroupDefinition* def = config->groups[groupIndex];
-            if (def->replicationEnabled) {
-                // several ways to do this, could also look at the
-                // coreFunction pointer on the Symbol, but we've lost the Symbol
-                // at this point
-                bool replicateIt = false;
-                for (auto name : def->replicatedFunctions) {
-                    if (strcmp(function->getName(), name.toUTF8()) == 0) {
-                        replicateIt = true;
-                        break;
-                    }
-                }
-
-                if (replicateIt) {
-                    for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
-                        Track* t = mMobius->getTrack(i);
-                        if (t != active && t->getGroup() == groupNumber) {
-                            
-                            Action* ta = cloneAction(action);
-                            doFunction(ta, function, t);
-                            completeAction(ta);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-#endif
 
 /**
  * Do a function action within a resolved track.
@@ -1289,273 +634,6 @@ void Actionator::doFunction(Action* action, Function* f, Track* t)
         f->invoke(action, t->getLoop());
     }
 }
-
-/**
- * Process a parameter action.
- *
- * These are always processed synchronously, we may be inside or
- * outside the interrupt.  These don't schedule Events so the caller
- * is responsible for freeing the action.
- *
- * Also since these don't schedule Events, we can reuse the same
- * action if it needs to be replicated due to group scope or focus lock.
- */
-#if 0
-void Actionator::doParameter(Action* a)
-{
-    Parameter* p = (Parameter*)a->getTargetObject();
-    if (p == nullptr) {
-        Trace(1, "Missing action Parameter\n");
-    }
-    else if (p->scope == PARAM_SCOPE_GLOBAL) {
-        // Action scope doesn't matter, there is only one
-        doParameter(a, p, nullptr);
-    }
-    else if (a->getTargetTrack() > 0) {
-        // track specific binding
-        Track* t = mMobius->getTrack(a->getTargetTrack() - 1);
-        if (t != nullptr)
-          doParameter(a, p, t);
-    }
-    else if (a->getTargetGroup() > 0) {
-        // new: TrackManager should only be sending down actions with track scope
-        Trace(1, "Actionator: Dealign with parameter group binding and you said this wouldn't be on the test");
-        // group specific binding
-        // !! We used to have some special handling for 
-        // OutputLevel where it would remember relative positions
-        // among the group.
-        Action* ta = a;
-        int nactions = 0;
-        int group = a->getTargetGroup();
-        for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
-            Track* t = mMobius->getTrack(i);
-            if (t->getGroup() == group) {
-                if (p->scheduled && nactions > 0)
-                  ta = cloneAction(a);
-                  
-                doParameter(ta, p, t);
-
-                if (p->scheduled && nactions > 0)
-                  completeAction(ta);
-                nactions++;
-            }
-        }
-    }
-    else {
-        Trace(1, "Actionator: Dealign with parameter focus and you said this wouldn't be on the test");
-        // current track and focused
-        // !! Only track parameters have historically obeyed focus lock
-        // Preset parameters could be useful but I'm scared about   
-        // changing this now
-        if (p->scope == PARAM_SCOPE_PRESET) {
-            doParameter(a, p, mMobius->getTrack());
-        }
-        else {
-            Action* ta = a;
-            int nactions = 0;
-            for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
-                Track* t = mMobius->getTrack(i);
-                if (mMobius->isFocused(t)) {
-                    if (p->scheduled && nactions > 0)
-                      ta = cloneAction(a);
-
-                    doParameter(ta, p, t);
-
-                    if (p->scheduled && nactions > 0)
-                      completeAction(ta);
-                    nactions++;
-                }
-            }
-        }
-    }
-}
-#endif
-
-/**
- * Process a parameter action once we've determined the target track.
- *
- * MIDI bindings pass the CC value or note velocity unscaled.
- * 
- * Key bindings will always have a zero value but may have bindingArgs
- * for relative operators.
- *
- * OSC bindings convert the float to an int scaled from 0 to 127.
- * !! If we let the float value come through we could do scaling
- * with a larger range which would be useful in few cases like
- * min/max tempo.
- *
- * Host bindings convert the float to an int scaled from 0 to 127.
- * 
- * When we pass the Action to the Parameter, the value in the
- * Action must have been properly scaled.  The value will be in
- * bindingArgs for strings and action.value for ints and bools.
- *
- */
-#if 0
-void Actionator::doParameter(Action* a, Parameter* p, Track* t)
-{
-    ParameterType type = p->type;
-
-    // set this so if we need to reschedule it will always go back
-    // here and not try to do group/focus lock replication
-    a->setResolvedTrack(t);
-
-    if (type == TYPE_STRING) {
-        // bindingArgs must be set
-        // I suppose we could allow action.value be coerced to 
-        // a string?
-        p->setValue(a);
-    }
-    else { 
-        int min = p->getLow();
-        int max = p->getHigh(mMobius);
-       
-        if (min == 0 && max == 0) {
-            // not a ranged type
-            Trace(1, "Invalid parameter range\n");
-        }
-        else {
-            // numeric parameters support binding args for relative changes
-            a->parseBindingArgs();
-            
-            ActionOperator* op = a->actionOperator;
-            if (op != nullptr) {
-                // apply relative commands
-                Export exp(a);
-                int current = p->getOrdinalValue(&exp);
-                int neu = a->arg.getInt();
-
-                if (op == OperatorMin) {
-                    neu = min;
-                }
-                else if (op == OperatorMax) {
-                    neu = max;
-                }
-                else if (op == OperatorCenter) {
-                    neu = ((max - min) + 1) / 2;
-                }
-                else if (op == OperatorUp) {
-                    int amount = neu;
-                    if (amount == 0) amount = 1;
-                    neu = current + amount;
-                }
-                else if (op == OperatorDown) {
-                    int amount = neu;
-                    if (amount == 0) amount = 1;
-                    neu = current - amount;
-                }
-                // don't need to handle OperatorSet, just use the arg
-
-                if (neu > max) neu = max;
-                if (neu < min) neu = min;
-                a->arg.setInt(neu);
-            }
-
-            p->setValue(a);
-        }
-    }
-}
-#endif
-
-//////////////////////////////////////////////////////////////////////
-//
-// Paramaeters Access
-//
-// This doesn't really belong here since retrieving a value isn't
-// an Action, but we're doing UI/Core function mapping here and
-// this seems as good a place as any to have that for parameters.
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Locate the referenced core parameter and return the runtime value.
- *
- * This is expected to be UI thread safe and synchronous.
- *
- * trackNumber follows the convention of UIAction with a value of zero
- * meaning the active track, and specific track numbers starting from 1.
- *
- * The values returned are ordinals, but could be anything now
- * that we have Query.
- * 
- */
-bool Actionator::doQuery(Query* query)
-{
-    (void)query;
-    Trace(1, "Actionator::doQuery Who is calling this?");
-    return false;
-#if 0    
-    bool success = false;
-
-    Symbol* s = query->symbol;
-    if (s == nullptr) {
-        Trace(1, "Actionator::doQuery Missing symbol\n");
-    }
-    else {
-        Parameter* cp = (Parameter*)(s->coreParameter);
-        if (cp == nullptr) {
-            // usually one of the aliased parameters like activePreset/preset
-            UIParameter* uip = s->parameter;
-            if (uip != nullptr && uip->coreName != nullptr) {
-                Symbol* alt = mMobius->getContainer()->getSymbols()->intern(uip->coreName);
-                cp = (Parameter*)(alt->coreParameter);
-            }
-        }
-    
-        if (cp == nullptr) {
-            Trace(1, "Actionator::doQuery Symbol with no core Parameter %s\n",
-                  s->getName());
-        }
-        else {
-            // finally we get to do something
-            query->value = getParameter(cp, query->scope);
-            query->async = false;
-            success = true;
-        }
-    }
-    return success;
-#endif    
-}
-
-/**
- * Parameter accessor after the UIParameter conversion.
- */
-#if 0
-int Actionator::getParameter(Parameter* p, int trackNumber)
-{
-    int value = 0;
-    
-    Track* track = nullptr;
-    if (trackNumber == 0) {
-        // active track
-        track = mMobius->getTrack();
-    }
-    else {
-        track = mMobius->getTrack(trackNumber - 1);
-        if (track == nullptr) {
-            Trace(1, "Mobius::getParameter track number out of range %d\n", trackNumber);
-        }
-    }
-
-    if (track != nullptr) {
-        
-        Export exp(mMobius);
-        exp.setTarget(p, track);
-        
-        value = exp.getOrdinalValue();
-
-        if (value < 0) {
-            // this convention was followed for invalid Export configuration
-            // not sure the new UI is prepared for this?
-            Trace(1, "Actionator::getParameter Export unable to determine ordinal for %s\n",
-                  p->getName());
-            value = 0;
-        }
-    }
-
-    return value;
-}
-#endif
 
 /****************************************************************************/
 /****************************************************************************/

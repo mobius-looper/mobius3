@@ -12,8 +12,6 @@
 #ifndef MOBIUS_EVENT_H
 #define MOBIUS_EVENT_H
 
-// for SyncSource
-//#include "../../model/Setup.h"
 #include "../../model/SymbolId.h"
 #include "../../model/TrackState.h"
 

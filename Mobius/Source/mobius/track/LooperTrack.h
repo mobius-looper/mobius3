@@ -55,7 +55,6 @@ class LooperTrack : public ScheduledTrack
     virtual void toggleOverdub() = 0;
     virtual void toggleMute() = 0;
     virtual void toggleReplace() = 0;
-    virtual void toggleFocusLock() = 0;
 
     virtual void finishSwitch(int target) = 0;
     virtual void loopCopy(int previous, bool sound) = 0;

@@ -45,7 +45,6 @@
 
 #include "../../../util/Trace.h"
 #include "../../../util/Util.h"
-#include "../../../model/Setup.h"
 #include "../../../model/SymbolId.h"
 
 #include "../Action.h"
@@ -159,7 +158,10 @@ Event* RealignFunction::scheduleEvent(Action* action, Loop* l)
 		realignEvent = nullptr;
 	}
 	else {
-        Setup* setup = l->getMobius()->getSetup();
+        // !! new: no longer in the Session
+        // how Realign works needs major redesign
+        RealignTime realignTime = REALIGN_START;
+        
         Track* t = l->getTrack();
         OldSyncSource src = getEffectiveSyncSource(t);
 		Synchronizer* sync = l->getSynchronizer();
@@ -169,7 +171,7 @@ Event* RealignFunction::scheduleEvent(Action* action, Loop* l)
 			Trace(l, 2, "Ignoring Realign in unsyned track\n");
 		}
 		else if (src == SYNC_TRACK && 
-                 setup->getRealignTime() == REALIGN_NOW) {
+                 realignTime == REALIGN_NOW) {
 
 			// here we don't need an event, immediately jump to the
 			// appropriate frame

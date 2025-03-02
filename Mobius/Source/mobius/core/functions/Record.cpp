@@ -116,7 +116,6 @@
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
 #include "../../../model/Trigger.h"
-#include "../../../model/Setup.h"
 #include "../../../model/SymbolId.h"
 #include "../../../model/TrackState.h"
 #include "../../Audio.h"
@@ -132,6 +131,7 @@
 #include "../Synchronizer.h"
 #include "../Track.h"
 #include "../ParameterSource.h"
+#include "../../track/LogicalTrack.h"
 
 /****************************************************************************
  *                                                                          *
@@ -676,21 +676,13 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
             // RecordResetsFeedback.
             // !! Why is this done here, can't we do it when the recording
             // is started?
-            if (ParameterSource::isRecordResetsFeedback(loop->getTrack())) {
+            Track* t = loop->getTrack();
+            if (ParameterSource::isRecordResetsFeedback(t)) {
                 // note that we don't just put it to 127 like the EDP
-                // it goes back to what is defined in the Setup
-                int feedback = 127;
-                Track* track = loop->getTrack();
-                Mobius* mobius = loop->getMobius();
-                // !! staring setup or the one currently active?
-                //MobiusConfig* config = mobius->getConfiguration();
-                // Setup* setup = GetCurrentSetup(config);
-                Setup* setup = mobius->getSetup();
-                SetupTrack* strack = setup->getTrack(track->getRawNumber());
-                if (strack != nullptr)
-                  feedback = strack->getFeedback();
-
-                track->setFeedback(feedback);
+                // it goes back to what is defined in the Session
+                LogicalTrack* lt = t->getLogicalTrack();
+                int feedback = lt->unbindFeedback();
+                t->setFeedback(feedback);
             }
 
             // if we looped back to the start frame, shift any future events

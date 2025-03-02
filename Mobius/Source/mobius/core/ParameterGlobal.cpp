@@ -482,6 +482,8 @@ void InputLatencyParameterType::setValue(MobiusConfig* c, ExValue* value)
  */
 void InputLatencyParameterType::setValue(Action* action)
 {
+    Trace(1, "InputLatencyParameterType::setValue Need to be doing this differently");
+    
     int latency = action->arg.getInt();
     
     Mobius* m = (Mobius*)action->mobius;
@@ -494,7 +496,8 @@ void InputLatencyParameterType::setValue(Action* action)
 
         for (int i = 0 ; i < m->getTrackCount() ; i++) {
             Track* t = m->getTrack(i);
-            t->updateGlobalParameters(iconfig);
+            (void)t;
+            //t->updateGlobalParameters(iconfig);
         }
     }
 }
@@ -541,6 +544,8 @@ void OutputLatencyParameterType::setValue(MobiusConfig* c, ExValue* value)
  */
 void OutputLatencyParameterType::setValue(Action* action)
 {
+    Trace(1, "OutputLatencyParameterType::setValue Need to be doing this differnetly");
+    
     int latency = action->arg.getInt();
 
     Mobius* m = (Mobius*)action->mobius;
@@ -553,7 +558,8 @@ void OutputLatencyParameterType::setValue(Action* action)
 
         for (int i = 0 ; i < m->getTrackCount() ; i++) {
             Track* t = m->getTrack(i);
-            t->updateGlobalParameters(iconfig);
+            (void)t;
+            //t->updateGlobalParameters(iconfig);
         }
     }
 }

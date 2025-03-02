@@ -135,12 +135,7 @@ juce::String ParametersElement::getDisplayName(Symbol* s)
 {
     juce::String displayName;
 
-    // do we really need to mess with UIParameter any more?
-    // can't we just use parameterProperties
-    if (s->parameter != nullptr) 
-      displayName = s->parameter->getDisplayableName();
-    
-    else if (s->parameterProperties != nullptr)
+    if (s->parameterProperties != nullptr)
       displayName = s->parameterProperties->displayName;
 
     else if (s->script != nullptr) {
@@ -219,8 +214,7 @@ void ParametersElement::update(MobiusView* view)
 
 bool ParametersElement::isUnresolved(ParameterState* ps)
 {
-    return (ps->symbol->parameter == nullptr &&
-            ps->symbol->parameterProperties == nullptr &&
+    return (ps->symbol->parameterProperties == nullptr &&
             ps->symbol->script == nullptr);
 }
 
@@ -248,10 +242,9 @@ void ParametersElement::paint(juce::Graphics& g)
         // ugliness here due to the dual model again
         UIParameterType type = TypeInt;
 
-        if (s->parameter != nullptr)
-          type = s->parameter->type;
-        else if (s->parameterProperties != nullptr)
-          type = s->parameterProperties->type;
+        if (s->parameterProperties != nullptr) {
+            type = s->parameterProperties->type;
+        }
         else if (s->script != nullptr) {
             // these are interesting, MSL exports don't have a type, they
             // can be anything, they'll almost always be integers
@@ -261,10 +254,9 @@ void ParametersElement::paint(juce::Graphics& g)
         }
         
         if (type == TypeEnum) {
-            // only works for UIParameter
-            UIParameter* p = s->parameter;
-            if (p != nullptr)
-              strValue = juce::String(p->getEnumLabel(value));
+            // only works for UIParameter???
+            if (s->parameterProperties != nullptr)
+              strValue = juce::String(s->parameterProperties->getEnumLabel(value));
         }
         else if (type == TypeBool) {
             if (value)
@@ -402,9 +394,8 @@ int ParametersElement::getMin(ParameterState* ps)
 {
     int min = 0;
 
-    // won't parameterProperties have this too?
-    if (ps->symbol->parameter != nullptr)
-      min = ps->symbol->parameter->low;
+    if (ps->symbol->parameterProperties != nullptr)
+      min = ps->symbol->parameterProperties->low;
 
     return min;
 }

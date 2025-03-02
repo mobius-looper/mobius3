@@ -56,6 +56,9 @@ const char* ParameterProperties::getEnumName(int enumOrdinal)
  * Convert an ordinal into the symbolic enumeration label.
  * Labels are usually what is displayed in the UI.
  * getEnumName is what would be in an XML file.
+ *
+ * !! these could just be returning the juce::String now
+ * the UI just converts it to one
  */ 
 const char* ParameterProperties::getEnumLabel(int enumOrdinal)
 {

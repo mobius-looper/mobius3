@@ -214,7 +214,7 @@ void YanFieldHelpers::initParameterSet(Provider* p, YanCombo* combo, juce::Strin
     juce::StringArray names;
     // assuming we always want a "no selection" option 
     names.add("[None]");
-    for (auto set : ps->sets) {
+    for (auto set : ps->getSets()) {
         names.add(set->name);
     }
     combo->setItems(names);

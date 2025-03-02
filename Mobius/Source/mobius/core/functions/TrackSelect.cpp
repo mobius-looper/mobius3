@@ -361,7 +361,6 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                         // be encapsulated in the MobiusMode or RecordFunction.
                         Event* e = em->newEvent(Record, RecordStopEvent, selectFrame);
                         stopAction->setEvent(e);
-                        //e->savePreset(l->getPreset());
                         em->addEvent(e);
                     }
                     else {
@@ -405,7 +404,6 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
 
                     // have to pretend we're going to end here
                     event = em->newEvent(this, TrackEvent, selectFrame);
-                    //event->savePreset(l->getPreset());
                     event->fields.trackSwitch.nextTrack = next;
                     action->setEvent(event);
 
@@ -472,7 +470,6 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                     // EventManager::processEvent and using event->immediate.
 
                     Event* e = em->newEvent(this, TrackEvent, 0);
-                    //e->savePreset(l->getPreset());
                     e->fields.trackSwitch.nextTrack = next;
                     action->setEvent(e);
 
@@ -488,7 +485,6 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                     // rather than NextTrack/PrevTrack.
                     event = em->newEvent(TrackN, TrackEvent, selectFrame);
                     event->number = next->getRawNumber() + 1;
-                    //event->savePreset(l->getPreset());
                     event->fields.trackSwitch.nextTrack = next;
 
                     // set this if we're latency delayed, is selectFrame

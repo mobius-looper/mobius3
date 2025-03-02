@@ -67,8 +67,22 @@ class ValueSet
      */
     juce::String name;
 
+    /**
+     * Sets may be assigned a reference number or "ordinal".
+     * This is not part of the persistent model, it is assigned at runtime
+     * and in practice used only when the set is contained within ParmaeterSets.
+     */
+    int number;
+
     // standard set names, move these outside?
+    // todo: this was never used, weed 
     const char* GlobalSet = "Global";
+
+    /**
+     * If the ValueSet is given the SymbolTable, the value accessors
+     * that take a SymbolId rather than a name string may be used.
+     */
+    void setSymbols(class SymbolTable* st);
 
     //
     // Various forms of value access

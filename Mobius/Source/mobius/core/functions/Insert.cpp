@@ -211,7 +211,6 @@ Event* InsertFunction::invoke(Action* action, Loop* l)
         // EDPism
         // Insert in Reset selects the next preset
         Trace(1, "InsertFunction: Edpisms to change presets no longer supported");
-        //changePreset(action, l, true);
     }
     else {
         MobiusMode* mode = l->getMode();

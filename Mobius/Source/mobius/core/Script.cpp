@@ -87,6 +87,9 @@
 #include "Script.h"
 #include "Mem.h"
 
+// for focus and groups
+#include "../track/LogicalTrack.h"
+
 /****************************************************************************
  *                                                                          *
  *   							  CONSTANTS                                 *
@@ -1963,7 +1966,8 @@ ScriptStatement* ScriptForStatement::eval(ScriptInterpreter* si)
 	else if (StartsWithNoCase(forspec, "focused")) {
 		for (int i = 0 ; i < trackCount ; i++) {
 			Track* t = m->getTrack(i);
-			if (t->isFocusLock() || t == m->getTrack())
+            LogicalTrack* lt = t->getLogicalTrack();
+			if (lt->isFocused() || t == m->getTrack())
 			  stack->addTrack(t);
 		}
 	}
@@ -1990,7 +1994,8 @@ ScriptStatement* ScriptForStatement::eval(ScriptInterpreter* si)
 			// could do that with a bit mask if necessary
 			for (int i = 0 ; i < trackCount ; i++) {
 				Track* t = m->getTrack(i);
-				if (t->getGroup() == group)
+                LogicalTrack* lt = t->getLogicalTrack();
+				if (lt->getGroup() == group)
 				  stack->addTrack(t);
 			}
 		}
@@ -2354,7 +2359,8 @@ ScriptStatement* ScriptSetupStatement::eval(ScriptInterpreter* si)
 
     if (s != nullptr) {
         // could pass ordinal here too...
-		m->setActiveSetup(s->getName());
+		//m->setActiveSetup(s->getName());
+        Trace(1, "ScriptSetupStatement: Unable to change setups");
 	}
 
     return nullptr;
@@ -2408,7 +2414,10 @@ ScriptStatement* ScriptPresetStatement::eval(ScriptInterpreter* si)
 		if (t == nullptr)
 		  t = m->getTrack();
 
-        t->changePreset(p->ordinal);
+        // this is of course all different now
+        // it should be forwarding the whole thing to TrackManager/LogicalTrack
+        //t->changePreset(p->ordinal);
+        Trace(1, "Script::ScriptPresetStatement Unable to change presets");
     }
 
     return nullptr;

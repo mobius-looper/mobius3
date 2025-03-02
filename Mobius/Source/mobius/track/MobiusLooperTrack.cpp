@@ -59,9 +59,20 @@ int MobiusLooperTrack::getCoreTrackNumber()
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * The way core tracks are organized, loading a session is the
+ * same as asking it to refresh parameters, which in retrospect is what
+ * all tracks should be doing.
+ */
 void MobiusLooperTrack::loadSession(Session::Track* def)
 {
     (void)def;
+    refreshParameters();
+}
+
+void MobiusLooperTrack::refreshParameters()
+{
+    if (track != nullptr) track->refreshParameters();
 }
 
 /**
@@ -127,16 +138,6 @@ void MobiusLooperTrack::trackNotification(NotificationId notification, TrackProp
 {
     (void)notification;
     (void)props;
-}
-
-int MobiusLooperTrack::getGroup()
-{
-    return track->getGroup();
-}
-
-bool MobiusLooperTrack::isFocused()
-{
-    return track->isFocusLock();
 }
 
 void MobiusLooperTrack::refreshState(TrackState* state)

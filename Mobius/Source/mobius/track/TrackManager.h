@@ -75,6 +75,8 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void writeDump(juce::String file, juce::String content);
     int getTrackCount();
     int getFocusedTrackIndex();
+    int getInputLatency();
+    int getOutputLatency();
 
     juce::OwnedArray<LogicalTrack>& getTracks() {
         return tracks;
@@ -173,4 +175,6 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     // MSL support
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
+    
+    int getLatency(SymbolId sid);
 };

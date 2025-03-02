@@ -210,7 +210,6 @@ Event* UndoFunction::scheduleEvent(Action* action, Loop* l)
  		// NOTE: not doing a play jump though I supposed we could.
 
 		event = em->newEvent(this, UndoEvent, l->getFrame());
-		//event->savePreset(l->getPreset());
 		em->addEvent(event);
         // don't need to keep the Action
     }
@@ -318,7 +317,6 @@ Event* RedoFunction::scheduleEvent(Action* action, Loop* l)
 	}
     else if (mode != ResetMode) {
 		event = em->newEvent(this, RedoEvent, l->getFrame());
-		//event->savePreset(l->getPreset());
 		em->addEvent(event);
         // any need to save the action?
     }

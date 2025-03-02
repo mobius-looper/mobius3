@@ -127,7 +127,7 @@ class Symbolizer
     SymbolLevel parseLevel(juce::String lname);
 
     void parseParameterScope(juce::XmlElement* root);
-    void parseParameter(juce::XmlElement* el, UIParameterScope scope);
+    void parseParameter(juce::XmlElement* el, UIParameterScope scope, bool queryable);
     UIParameterScope parseScope(juce::String name);
     UIParameterType parseType(juce::String name);
     juce::StringArray parseStringList(juce::String csv);

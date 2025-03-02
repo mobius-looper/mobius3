@@ -17,7 +17,8 @@
 
 #include "../../util/Util.h"
 #include "../../model/ActionType.h"
-
+// for group
+#include "../track/LogicalTrack.h"
 #include "Action.h"
 #include "Mobius.h"
 #include "Function.h"
@@ -340,7 +341,8 @@ Track* Export::getTargetTrack()
         // for exports we just find the first track in the group
         for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
             Track* track = mMobius->getTrack(i);
-            if (track->getGroup() == mScopeGroup) {
+            LogicalTrack* lt = track->getLogicalTrack();
+            if (lt->getGroup() == mScopeGroup) {
                 found = track;
                 break;
             }

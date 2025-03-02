@@ -51,13 +51,20 @@ class Session
         // should this be a first-class member or inside the value set?
         juce::String name;
 
+        void setSession(Session* s);
+        Session* getSession();
+
         ValueSet* getParameters();
         ValueSet* ensureParameters();
         MslValue* get(juce::String name);
+        MslValue* get(SymbolId id);
 
         bool getBool(juce::String name);
+        bool getBool(SymbolId id);
         const char* getString(juce::String name);
+        const char* getString(SymbolId id);
         int getInt(juce::String name);
+        int getInt(SymbolId id);
 
         void setInt(juce::String name, int value);
         void setBool(juce::String name, bool value);
@@ -66,6 +73,8 @@ class Session
         juce::OwnedArray<class SessionMidiDevice> devices;
 
       private:
+
+        Session* session = nullptr;
         std::unique_ptr<ValueSet> parameters;
 
     };
@@ -73,6 +82,9 @@ class Session
     ///////////////////////////////////////////////////////////////////////////////
     // Session
     ///////////////////////////////////////////////////////////////////////////////
+
+    void setSymbols(class SymbolTable* st);
+    SymbolTable* getSymbols();
 
     juce::String getName();
     void setName(juce::String s);
@@ -161,9 +173,13 @@ class Session
     ValueSet* ensureGlobals();
 
     MslValue* get(juce::String pname);
+    MslValue* get(SymbolId id);
     bool getBool(juce::String name);
+    bool getBool(SymbolId id);
     const char* getString(juce::String name);
+    const char* getString(SymbolId id);
     int getInt(juce::String name);
+    int getInt(SymbolId id);
 
     void setString(juce::String name, const char* value);
     void setJString(juce::String name, juce::String value);
@@ -175,6 +191,8 @@ class Session
     void assimilate(class ValueSet* src);
     
   private:
+
+    class SymbolTable* symbols = nullptr;
     
     int id = 0;
     int version = 0;

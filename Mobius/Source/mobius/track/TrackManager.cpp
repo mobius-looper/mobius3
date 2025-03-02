@@ -4,6 +4,7 @@
 #include "../../util/StructureDumper.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
+#include "../../model/ParameterProperties.h"
 #include "../../model/ScriptProperties.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Session.h"
@@ -215,7 +216,8 @@ void TrackManager::configureTracks(Session* ses)
         // this remembers it but does not act on it
         lt->setSession(def, i+1);
     }
-    
+
+    // this is how core tracks get the session updates
     configureMobiusTracks();
         
     // tell the tracks to process the session AFTER the track array has been reorganized
@@ -258,6 +260,47 @@ void TrackManager::configureMobiusTracks()
 // Information and Services
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * Latencies are normally the audio block size as reported by the host.
+ * These may be overridden in the session.
+ * Tracks cannot currently have different latencies but with the Mixer
+ * and plugins, this will change.
+ */
+int TrackManager::getInputLatency()
+{
+    return getLatency(ParamInputLatency);
+}
+
+int TrackManager::getOutputLatency()
+{
+    return getLatency(ParamOutputLatency);
+}
+
+int TrackManager::getLatency(SymbolId sid)
+{
+    int latency = 0;
+    int blockSize = kernel->getBlockSize();
+    
+    if (session == nullptr) {
+        Trace(1, "TrackManager: Latency requested before session loaded");
+        latency = blockSize;
+    }
+    else {
+        int alternate = session->getInt(sid);
+        if (alternate > 0)
+          latency = alternate;
+    }
+
+    // there were some bugs in core where a latency of zero messed up
+    // scheduling or loop advance, if we get here with a zero block size,
+    // default to something reasonable which should be almost immediately corrected
+    if (latency == 0) {
+        Trace(1, "TrackManager: Correcting unavailable latency");
+        latency = 128;
+    }
+    return latency;
+}
 
 int TrackManager::getTrackCount()
 {
@@ -1171,15 +1214,15 @@ bool TrackManager::mslQuery(VarQuery* query)
  */
 void TrackManager::mutateMslReturn(Symbol* s, int value, MslValue* retval)
 {
-    if (s->parameter == nullptr) {
+    if (s->parameterProperties == nullptr) {
         // no extra definition, return whatever it was
         retval->setInt(value);
     }
     else {
-        UIParameterType ptype = s->parameter->type;
+        UIParameterType ptype = s->parameterProperties->type;
         if (ptype == TypeEnum) {
             // don't use labels since I want scripters to get used to the names
-            const char* ename = s->parameter->getEnumName(value);
+            const char* ename = s->parameterProperties->getEnumName(value);
             retval->setEnum(ename, value);
         }
         else if (ptype == TypeBool) {

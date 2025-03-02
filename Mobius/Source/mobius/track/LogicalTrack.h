@@ -139,10 +139,8 @@ class LogicalTrack
     // Subclass parameter accessors
     //////////////////////////////////////////////////////////////////////
 
-    void bindParameter(UIAction* a);
-    void clearBindings();
-    
     int getParameterOrdinal(SymbolId id);
+    int unbindFeedback();
 
     // weed these and just call the cached accessors
     SyncSource getSyncSourceFromSession();
@@ -181,6 +179,10 @@ class LogicalTrack
     int groupNumber = 0;
     bool focusLock = false;
 
+    // ports apply only to audio tracks and will need to evolve through the Mixer
+    int inputPort = 0;
+    int outputPort = 0;
+
     // sync recording state
     bool syncRecording = false;
     bool syncRecordStarted = false;
@@ -202,7 +204,6 @@ class LogicalTrack
 
     // the parameter includes specified in the Session and Session::Track
     ValueSet* trackOverlay = nullptr;
-    int trackOverlayNubmer = 0;
     ValueSet* sessionOverlay = nullptr;
 
     /**
@@ -224,15 +225,32 @@ class LogicalTrack
     // TimeSlicer
     bool visited = false;
     bool advanced = false;
+
+    // new parameter management, needs organization
     
-    void resolveParameterOverlays();
-    void cacheParameters();
+    class Symbol* getSymbol(SymbolId id);
+    class ValueSet* findOverlay(const char* ovname);
+    class ValueSet* findOverlay(int number);
+    class ValueSet* resolveOverlay(class ValueSet* referenceSet, const char* referenceName);
+    class ValueSet* resolveTrackOverlay();
+    class ValueSet* resolveSessionOverlay();
+    
+    void cacheParameters(bool reset);
+    void resolveParameterOverlays(bool reset);
     void doParameter(class UIAction* a);
+    bool validatePort(int number, bool output);
     int getGroupFromSession();
     bool getFocusLockFromSession();
     int getEnumOrdinal(class Symbol* s, int value);
     int getGroupFromAction(class UIAction* a);
     void resetParameters();
+    
+    void bindParameter(UIAction* a);
+    void clearBindings(bool reset);
+    
+    void doTrackGroup(class UIAction* a);
+    int parseGroupActionArgument(class MobiusConfig* config, const char* s);
+    void changeOverlay(class ValueSet* neu);
     
 };
 

@@ -70,7 +70,7 @@ void ParameterSetTable::reload()
 {
     sets.clear();
 
-    for (auto set : parameters->sets) {
+    for (auto set : parameters->getSets()) {
         if (set->name.length() == 0) {
             Trace(1, "ParameterSetTable: ValueSet without a name");
         }
@@ -209,7 +209,7 @@ void ParameterSetTable::yanDialogClosed(YanDialog* d, int button)
         case DialogNew: finishNew(button); break;
         case DialogCopy: finishCopy(button); break;
         case DialogRename: finishRename(button); break;
-        case DialogDelete:finishDelete(button); break;
+        case DialogDelete: finishDelete(button); break;
     }
 }
 
@@ -226,7 +226,7 @@ void ParameterSetTable::finishNew(int button)
         juce::String name = newName.getValue();
         ValueSet* neu = new ValueSet();
         neu->name = name;
-        parameters->sets.add(neu);
+        parameters->add(neu);
         reload();
     }
 }
@@ -239,7 +239,7 @@ void ParameterSetTable::finishCopy(int button)
         // actually need to find the source and copy it!!
         ValueSet* neu = new ValueSet();
         neu->name = name;
-        parameters->sets.add(neu);
+        parameters->add(neu);
 
         reload();
     }

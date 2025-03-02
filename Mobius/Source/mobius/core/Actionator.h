@@ -25,16 +25,9 @@ class Actionator
     // New Model
     //////////////////////////////////////////////////////////////////////
 
-    // advance the long-press detected at the start of every block
-    void advanceLongWatcher(int frames);
-
     // do a queueud action at the start of each block, or from a script
     void doAction(UIAction* a);
     
-    // Parameter value access is in here too since
-    // it has to do similar UI/core mapping and is small
-    bool doQuery(class Query* q);
-
     //////////////////////////////////////////////////////////////////////
     // Old Model
     //////////////////////////////////////////////////////////////////////
@@ -52,39 +45,20 @@ class Actionator
     class Action* cloneAction(class Action* src);
     void completeAction(class Action* a);
 
-
   private:
 
     class Mobius* mMobius;
     class ActionPool* mActionPool;
-    class TriggerState* mTriggerState;
     
     // new model
     void doFunction(UIAction* action, Function* f);
-    void doParameter(UIAction* action, Parameter* p);
     void doScript(UIAction* action);
-    void doActivation(UIAction* action);
 
-    // transitional model
-    void doFunctionOld(UIAction* action, Function* f);
-    void doFunctionNew(UIAction* action, Function* f);
-    void doFunctionTracks(UIAction* action, Function* f);
-    void doFunctionTrack(UIAction* action, Function* f, Track* t, bool needsClone);
-    void doGroupReplication(Action* action, Function* f);
-    class Action* convertAction(UIAction* src);
-    void invoke(UIAction* action, Function* f);
-    void invoke(UIAction* action, Function* f, Track* t);
-    
     // old model
+    void doFunctionOld(UIAction* action, Function* f);
+    class Action* convertAction(UIAction* src);
     void doFunction(class Action* a);
     void doFunction(class Action* action, class Function* f, class Track* t);
-    void doParameter(class Action* a);
-    void doParameter(class Action* a, class Parameter* p, class Track* t);
-
-    void doPreset(class Action* a);
-    void doSetup(class Action* a);
-
-    int getParameter(Parameter* p, int trackNumber);
 
     // scope parsing
     ScopeCache scopes;

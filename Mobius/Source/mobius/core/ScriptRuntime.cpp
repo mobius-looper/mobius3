@@ -14,6 +14,7 @@
 
 #include "../MobiusInterface.h"
 #include "../KernelEvent.h"
+#include "../track/LogicalTrack.h"
 
 #include "Action.h"
 #include "Mobius.h"
@@ -132,7 +133,8 @@ void ScriptRuntime::runScript(Action* action)
                 int nactions = 0;
                 for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
                     Track* t = mMobius->getTrack(i);
-                    if (mMobius->isFocused(t)) {
+                    LogicalTrack* lt = t->getLogicalTrack();
+                    if (lt->isFocused()) {
                         if (nactions > 0)
                           action = mMobius->cloneAction(action);
 
@@ -157,6 +159,9 @@ void ScriptRuntime::runScript(Action* action)
  * Even though we're processed as a global function, scripts can
  * use focus lock and may be run in multiple tracks and the action
  * may target a group.
+ *
+ * !! hating this now that TrackManager/LogicalTrack are in charge
+ * of focus and groups.  Should replicate these like the others.
  */
 void ScriptRuntime::startScript(Action* action, Script* script)
 {
@@ -172,7 +177,8 @@ void ScriptRuntime::startScript(Action* action, Script* script)
         int nactions = 0;
         for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
             Track* t = mMobius->getTrack(i);
-            if (t->getGroup() == group) {
+            LogicalTrack* lt = t->getLogicalTrack();
+            if (lt->getGroup() == group) {
                 if (nactions > 0)
                   action = mMobius->cloneAction(action);
                 startScript(action, script, t);
@@ -188,7 +194,8 @@ void ScriptRuntime::startScript(Action* action, Script* script)
         int nactions = 0;
 		for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
 			Track* t = mMobius->getTrack(i);
-            if (mMobius->isFocused(t)) {
+            LogicalTrack* lt = t->getLogicalTrack();
+            if (lt->isFocused()) {
                 if (nactions > 0)
                   action = mMobius->cloneAction(action);
                 startScript(action, script, t);

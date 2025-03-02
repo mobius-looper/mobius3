@@ -33,14 +33,13 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     //
 
     void loadSession(class Session::Track* def) override;
+    void refreshParameters() override;
     void doAction(class UIAction* a) override;
     bool doQuery(class Query* q) override;
     void processAudioStream(class MobiusAudioStream* stream) override;
     void midiEvent(class MidiEvent* e) override;
     void getTrackProperties(class TrackProperties& props) override;
     void trackNotification(NotificationId notification, TrackProperties& props) override;
-    int getGroup() override;
-    bool isFocused() override;
     void refreshState(class TrackState* state) override;
     void refreshPriorityState(class PriorityState* state) override;
     void refreshFocusedState(class FocusedTrackState* state) override;

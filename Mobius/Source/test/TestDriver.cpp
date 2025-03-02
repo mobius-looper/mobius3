@@ -905,7 +905,11 @@ void TestDriver::installPresetAndSetup(MobiusConfig* config)
     MobiusShell* shell = getMobiusShell();
     MobiusKernel* kernel = shell->getKernel();
     Mobius* mobius = kernel->getCore();
-    mobius->setActiveSetup(UNIT_TEST_SETUP_NAME);
+
+    // this is gone, and the whole unit test subsystem needs to
+    // have a mighty adaptation
+    (void)mobius;
+    //mobius->setActiveSetup(UNIT_TEST_SETUP_NAME);
 }
 
 /**

@@ -30,6 +30,7 @@ class BaseScheduler
     virtual ~BaseScheduler();
     
     void loadSession(Session::Track* def);
+    void refreshParameters();
     
     void refreshState(class TrackState* state);
     void refreshFocusedState(class FocusedTrackState* state);

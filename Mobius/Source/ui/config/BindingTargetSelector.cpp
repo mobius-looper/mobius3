@@ -12,7 +12,7 @@
 #include "../../util/List.h"
 
 #include "../../model/ActionType.h"
-#include "../../model/UIParameter.h"
+#include "../../model/ParameterProperties.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Preset.h"
 #include "../../model/Setup.h"
@@ -91,30 +91,20 @@ void BindingTargetSelector::load()
                 functions.add(symbol->getName());
             }
         }
-        else if (symbol->behavior == BehaviorParameter) {
-            UIParameter* p = symbol->parameter;
-            if (p != nullptr) {
-                // divided into two tabs to put the ones used most in a smaller list
-                // these may have display names
-                // todo: should be copying the display name to the Symbol
-                // NO: can't use display names because those end up in the Binding
-                // and we can't search for symbols on that
-                // either need some sort of display/name mapping here
-                // or store the Symbol in the BindingTable
-                if (p->control)
-                  // controls.add(p->getDisplayableName());
-                  controls.add(symbol->getName());
-                else
-                  // parameters.add(p->getDisplayableName());
-                  parameters.add(symbol->getName());
-            }
-            else {
-                // this isn't catching the two newer UI level parameters
-                // for ActiveLayouts and ActiveButtons
-                // could add those but they're not that important for
-                // bindings and I don't want to mess with the UIParameter/ParameterProperties/Symbol
-                // shit right now
-            }
+        else if (symbol->parameterProperties != nullptr) {
+            // divided into two tabs to put the ones used most in a smaller list
+            // these may have display names
+            // todo: should be copying the display name to the Symbol
+            // NO: can't use display names because those end up in the Binding
+            // and we can't search for symbols on that
+            // either need some sort of display/name mapping here
+            // or store the Symbol in the BindingTable
+            if (symbol->parameterProperties->control)
+              // controls.add(p->getDisplayableName());
+              controls.add(symbol->getName());
+            else
+              // parameters.add(p->getDisplayableName());
+              parameters.add(symbol->getName());
         }
         else if (symbol->behavior == BehaviorScript) {
             scripts.add(symbol->getName());

@@ -472,8 +472,6 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
             em->freeEvent(susret);
         }
 
-        // already declared this above
-        //Preset* p = l->getPreset();
         int maxLoops = ParameterSource::getLoops(l->getTrack());
         int curIndex = l->getNumber() - 1;
         int nextIndex = index;
@@ -739,7 +737,6 @@ Event* LoopTriggerFunction::scheduleTrigger(Action* action,
 		int latency = (action->noLatency) ? 0 : input->latency;
         long frame = current->getFrame();
         Event* e = em->newEvent(Record, RecordStopEvent, frame + latency);
-		//e->savePreset(current->getPreset());
         em->addEvent(e);
 		event = scheduleSwitch(action, current, next, nullptr);
 	}
@@ -931,8 +928,6 @@ Event* LoopTriggerFunction::addSwitchEvent(Action* action,
     
 	switche = em->newEvent(action->getFunction(), SwitchEvent, 0);
 
-	//switche->savePreset(current->getPreset());
-
 	switche->pending = true;
 	switche->quantized = true;	// so it can be undone
 	switche->fields.loopSwitch.nextLoop = next;
@@ -1016,7 +1011,6 @@ Event* LoopTriggerFunction::promoteSUSReturn(Action* action,
         }
         else if (loop->getMode() != ResetMode) {
             event = em->newEvent(MuteOn, loop->getFrame());
-            //event->savePreset(loop->getPreset());
             em->addEvent(event);
             em->schedulePlayJump(loop, event);
         }

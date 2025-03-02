@@ -240,8 +240,8 @@ class Symbol
     
     std::unique_ptr<class FunctionProperties> functionProperties;
 
-    class UIParameter* parameter = nullptr;
-    // eventual replacement for UIParameter
+    //class UIParameter* parameter = nullptr;
+
     std::unique_ptr<class ParameterProperties> parameterProperties;
     
     // don't seem to be using this!?

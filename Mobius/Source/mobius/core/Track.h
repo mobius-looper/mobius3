@@ -62,9 +62,17 @@ class Track : public TraceContext
 	Track(class Mobius* mob, class Synchronizer* sync, int number);
 	~Track();
 
+    //////////////////////////////////////////////////////////////////////
+    // New Interface
+    //////////////////////////////////////////////////////////////////////
+
+    //
+    // Start making these look like BaseTracks
+    
     void renumber(int n);
     void doAction(class UIAction* a);
-
+    void refreshParameters();
+    
     // the number of this track in the LogicalTrack/Session list
     // this is what needs to be used when communicating with the outside world.
     void setLogicalNumber(int n);
@@ -74,6 +82,10 @@ class Track : public TraceContext
     class LogicalTrack* getLogicalTrack();
 
     void dump(class StructureDumper& d);
+
+    //////////////////////////////////////////////////////////////////////
+    // Old Interface
+    //////////////////////////////////////////////////////////////////////
 
     int getInputPort() {
         return mInputPort;
@@ -98,12 +110,6 @@ class Track : public TraceContext
     //void doFunction(Action* action);
     
 	// Parameters
-
-    void setName(const char* name);
-    char* getName();
-
-    void setGroup(int i);
-    int getGroup();
 
 	void setInputLevel(int i);
 	int  getInputLevel();
@@ -147,12 +153,6 @@ class Track : public TraceContext
 	//void setFocusLock(bool b);
 	//bool isFocusLock();
 
-    // Setup/Preset management
-    // all this needs to go away
-    
-    void changeSetup(class Setup* setup);
-	void changePreset(int number);
-
 	//
     // status 
 	//
@@ -195,23 +195,6 @@ class Track : public TraceContext
 	void loadProject(class ProjectTrack* t);
 	void setBounceRecording(class Audio* a, int cycles);
 	void setMuteKludge(class Function* f, bool b);
-
-	/**
-	 * Called by Mobius at the start of an interrupt to assimilate 
-     * configuration changes.
-	 */
-	void updateConfiguration(class MobiusConfig* config);
-
-    /**
-     * Called by Mobius when the block size changes.
-     */
-    void updateLatencies(int inputLatency, int outputLatency);
-
-    /**
-     * Special function called within the script interpreter to
-     * assimilate just global parameter changes.
-     */
-	void updateGlobalParameters(class MobiusConfig* config);
 
 	/**
 	 * Called by Mobius as scripts terminate.
@@ -300,10 +283,7 @@ class Track : public TraceContext
 
     // configuration management
     
-    void propagateSetup(MobiusConfig* config, bool setupsEdited, bool presetsEdited);
 	void setupLoops();
-	void resetParameters(bool global, bool doPreset);
-	void resetPorts();
 	void trackReset(class Action* action);
     bool checkSyncEvent(class Event* e);
     void switchLoop(class Function* f, bool forward);
@@ -342,8 +322,6 @@ class Track : public TraceContext
 
     int         mInputPort;
     int         mOutputPort;
-    //int         mGroup;
-	//bool 		mFocusLock;
 	bool		mHalting;
 	bool		mRunning;
     int         mMonitorLevel;

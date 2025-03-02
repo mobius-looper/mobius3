@@ -33,8 +33,6 @@
 #include "../../model/Symbol.h"
 #include "../../model/Session.h"
 #include "../../model/SymbolId.h"
-// for GroupDefinitions
-#include "../../model/MobiusConfig.h"
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
@@ -107,19 +105,24 @@ MidiTrack::~MidiTrack()
  * 
  * todo: LogicalTrack should now be considered the manager of the Session,
  * we don't need to pass it in.
+ *
+ * todo: what a mess, BaseTrack should just have refreshParameters, it doesn't
+ * need to care if the session is being reloaded or not.
  */
 void MidiTrack::loadSession(Session::Track* def)
 {
-    // capture sync options
-    scheduler.loadSession(def);
+    (void)def;
+    refreshParameters();
+}
 
-    subcycles = logicalTrack->getParameterOrdinal(ParamSubcycles);
-    // default it
-    if (subcycles == 0) subcycles = 4;
+void MidiTrack::refreshParameters()
+{
+    scheduler.refreshParameters();
     
     loopCount = logicalTrack->getLoopCountFromSession();
     
     // tell the player where to go
+    Session::Track* def = logicalTrack->getSession();
     MslValue* v = def->get("outputDevice");
     if (v == nullptr) {
         player.setDeviceId(0);
@@ -143,23 +146,6 @@ void MidiTrack::loadSession(Session::Track* def)
     noReset = def->getBool("noReset");
 
     player.setChannelOverride(def->getInt("midiChannelOverride"));
-
-    const char* groupName = def->getString("trackGroup");
-    // since we store the name in the session, have to map it back to an ordinal
-    // which requires the MobiusConfig
-    // might be better to store this as the ordinal to track renames?
-    // that isn't what SetupTrack does though, it stores the name
-    if (groupName != nullptr) {
-        MobiusConfig* config = manager->getConfigurationForGroups();
-        int ordinal = config->getGroupOrdinal(groupName);
-        if (ordinal < 0)
-          Trace(1, "MidiTrack: Invalid group name found in session %s", groupName);
-        else
-          group = ordinal + 1;
-    }
-    else {
-        group = 0;
-    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -204,7 +190,6 @@ bool MidiTrack::doQuery(Query* q)
     switch (q->symbol->id) {
 
         // local caches
-        case ParamSubcycles: q->value = subcycles; break;
         case ParamInput: q->value = input; break;
         case ParamOutput: q->value = output; break;
         case ParamFeedback: q->value = feedback; break;
@@ -240,7 +225,6 @@ void MidiTrack::getTrackProperties(TrackProperties& props)
 {
     props.frames = recorder.getFrames();
     props.cycles = recorder.getCycles();
-    props.subcycles = subcycles;
     props.currentFrame = recorder.getFrame();
 }
 
@@ -251,20 +235,6 @@ void MidiTrack::getTrackProperties(TrackProperties& props)
 void MidiTrack::trackNotification(NotificationId notification, TrackProperties& props)
 {
     scheduler.trackNotification(notification, props);
-}
-
-/**
- * Return the group ordinal this track is a member of
- * todo: not implemented, need to be pulling this from the session
- */
-int MidiTrack::getGroup()
-{
-    return group;
-}
-
-bool MidiTrack::isFocused()
-{
-    return focus;
 }
 
 // State refresh is toward the bottom
@@ -622,11 +592,6 @@ bool MidiTrack::isPaused()
     return (mode == TrackState::ModePause);
 }
 
-void MidiTrack::toggleFocusLock()
-{
-    focus = !focus;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Follower/Leader State
@@ -822,7 +787,6 @@ void MidiTrack::refreshState(TrackState* state)
     else
       state->cycle = (int)(state->frame / cycleFrames) + 1;
 
-    state->subcycles = subcycles;
     // todo: calculate this!
     state->subcycle = 0;
 
@@ -850,8 +814,6 @@ void MidiTrack::refreshState(TrackState* state)
     state->output = output;
     state->feedback = feedback;
     state->pan = pan;
-    state->focus = focus;
-    state->group = group;
     
     // not the same as mode=Record, can be any type of recording
     bool nowRecording = recorder.isRecording();
@@ -948,14 +910,6 @@ void MidiTrack::doParameter(UIAction* a)
 {
     switch (a->symbol->id) {
         
-        case ParamSubcycles: {
-            if (a->value > 0)
-              subcycles = a->value;
-            else
-              subcycles = 4;
-        }
-            break;
-            
         case ParamInput: input = a->value; break;
         case ParamOutput: output = a->value; break;
         case ParamFeedback: feedback = a->value; break;
@@ -1067,9 +1021,10 @@ int MidiTrack::getCycles()
 {
     return recorder.getCycles();
 }
+
 int MidiTrack::getSubcycles()
 {
-    return subcycles;
+    return logicalTrack->getSubcycles();
 }
 
 int MidiTrack::getSubcycleFrames()
