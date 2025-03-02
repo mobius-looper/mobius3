@@ -17,10 +17,9 @@
 #include "../MobiusInterface.h"
 
 #include "Action.h"
-#include "Export.h"
+//#include "Export.h"
 #include "Mobius.h"
 #include "Variable.h"
-#include "Export.h"
 #include "Mem.h"
 #include "Event.h"
 #include "Function.h"
@@ -74,7 +73,7 @@ void ScriptInterpreter::init()
 	mClickedMsecs = 0;
 	mClickCount = 0;
     mAction = nullptr;
-    mExport = nullptr;
+//    mExport = nullptr;
     resetActionArgs();
 }
 
@@ -92,11 +91,11 @@ ScriptInterpreter::~ScriptInterpreter()
 	  mStack->cancelWaits();
 
     // do this earlier?
-    restoreUses();
+    //restoreUses();
 
     delete mUses;
     delete mAction;
-    delete mExport;
+//    delete mExport;
 
     // new: this was leaking
     delete mVariables;
@@ -168,6 +167,7 @@ Action* ScriptInterpreter::getAction()
  * have a ResolvedTarget since we've already got the
  * Parameter and will be using that directly.
  */
+#if 0
 Export* ScriptInterpreter::getExport()
 {
     if (mExport == nullptr) {
@@ -175,6 +175,7 @@ Export* ScriptInterpreter::getExport()
     }
     return mExport;
 }
+#endif
 
 /**
  * Find a suitable name to include in trace messages so we have
@@ -424,7 +425,7 @@ void ScriptInterpreter::reset()
     }
 
     // this?
-    restoreUses();
+    //restoreUses();
 
     // lose these I suppose?
     mRequestId = 0;
@@ -486,6 +487,7 @@ void ScriptInterpreter::setReturnCode(int i)
 /**
  * Add a use rememberance.  Only do this once.
  */
+#if 0
 void ScriptInterpreter::use(Parameter* p)
 {
     ScriptUse* found = nullptr;
@@ -547,10 +549,12 @@ void ScriptInterpreter::restoreUses()
     mUses = nullptr;
 
 }
+#endif
 
 /**
  * Get the value of a parameter.
  */
+#if 0
 void ScriptInterpreter::getParameter(Parameter* p, ExValue* value)
 {
     Export* exp = getExport();
@@ -564,6 +568,7 @@ void ScriptInterpreter::getParameter(Parameter* p, ExValue* value)
         p->getValue(exp, value);
     }
 }
+#endif
 
 /****************************************************************************
  *                                                                          *
@@ -1421,14 +1426,8 @@ ExResolver* ScriptInterpreter::getExResolver(ExSymbol* symbol)
         }
     }
 
-	if (resolver == nullptr) {
-		Parameter* p = mMobius->getParameter(name);
-		if (p != nullptr)
-		  resolver = NEW2(ScriptResolver, symbol, p);
-	}
-
     if (resolver == nullptr) {
-        Symbol* s = mMobius->getKernel()->getContainer()->getSymbols()->find(juce::String(name));
+        Symbol* s = mMobius->findSymbol(name);
         if (s != nullptr && s->parameterProperties != nullptr)
           resolver = NEW2(ScriptResolver, symbol, s);
     }

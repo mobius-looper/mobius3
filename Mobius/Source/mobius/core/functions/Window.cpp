@@ -22,6 +22,8 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
+#include "../../../model/Symbol.h"
+#include "../../../model/ParameterProperties.h"
 #include "../../../model/SymbolId.h"
 
 #include "../Action.h"
@@ -36,7 +38,7 @@
 #include "../Stream.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
-#include "../Parameter.h"
+//#include "../Parameter.h"
 #include "../ParameterSource.h"
 
 // only for CD_SAMPLE_RATE which is used by MSEC_TO_FRAMES
@@ -512,7 +514,12 @@ WindowUnit WindowFunction::getScriptUnit(ExValue* arg)
 {
     WindowUnit unit = WINDOW_UNIT_INVALID;
     const char* str = arg->getString();
-    int unitOrdinal = WindowSlideUnitParameter->getEnumValue(str);
+
+    // not sure why this shit is necessary, but without Parameter have
+    // to go through the Symbol now
+    Symbol* s = mLoop->getMobius()->findSymbol(ParamWindowSlideUnit);
+    ParameterProperties* props = s->parameterProperties.get();
+    int unitOrdinal = props->getEnumOrdinal(str);
 
     if (unitOrdinal >= 0)
       unit = (WindowUnit)unitOrdinal;

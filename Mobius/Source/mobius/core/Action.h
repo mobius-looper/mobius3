@@ -122,7 +122,7 @@ typedef union {
 
     void* object;
     class Function* function;
-    class Parameter* parameter;
+    //class Parameter* parameter;
     int ordinal;
     
 } TargetPointer;
@@ -338,7 +338,7 @@ class Action {
     void setTarget(class ActionType* t);
     void setTarget(ActionType* t, void* object);
     void setFunction(class Function* f);
-    void setParameter(class Parameter* p);
+    //void setParameter(class Parameter* p);
     void setTargetTrack(int track);
     void setTargetGroup(int group);
 

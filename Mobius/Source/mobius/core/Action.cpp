@@ -21,7 +21,7 @@
 #include "Function.h"
 #include "Event.h"
 #include "Script.h"
-#include "Parameter.h"
+//#include "Parameter.h"
 
 #include "Action.h"
 #include "Mem.h"
@@ -400,10 +400,12 @@ Function* Action::getLongFunction()
  * Dynamically set a target parameter.
  * This is used when building Actions on the fly rather than from Bindings.
  */
+#if 0
 void Action::setParameter(Parameter* p)
 {
     setTarget(ActionParameter, p);
 }
+#endif
 
 /**
  * Convenience method for things that create Actions on the fly with 
@@ -655,8 +657,9 @@ const char* Action::getDisplayName()
             dname = f->getDisplayName();
         }
         else if (type == ActionParameter) {
-            Parameter* p = implementation.parameter;
-            dname = p->getDisplayName();
+            //Parameter* p = implementation.parameter;
+            // dname = p->getDisplayName();
+            dname = "Parameter";
         }
         else {
             // for structures, we no longer keep resolved
@@ -687,9 +690,9 @@ const char* Action::getTypeDisplayName()
           dname = "Script";
     }
     else if (type == ActionParameter) {
-        Parameter* p = implementation.parameter;
-        if (p->control)
-          dname = "Control";
+        //Parameter* p = implementation.parameter;
+        //if (p->control)
+        //dname = "Control";
     }
 
     return dname;

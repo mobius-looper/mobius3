@@ -70,7 +70,7 @@
 #include "Action.h"
 #include "Event.h"
 #include "EventManager.h"
-#include "Export.h"
+//#include "Export.h"
 #include "Function.h"
 #include "Layer.h"
 #include "Loop.h"
@@ -170,7 +170,6 @@ void ScriptResolver::init(ExSymbol* symbol)
     mStackArg = 0;
     mInternalVariable = nullptr;
     mVariable = nullptr;
-    mParameter = nullptr;
     mParameterSymbol = nullptr;
 }
 
@@ -190,12 +189,6 @@ ScriptResolver::ScriptResolver(ExSymbol* symbol, ScriptVariableStatement* v)
 {
 	init(symbol);
     mVariable = v;
-}
-
-ScriptResolver::ScriptResolver(ExSymbol* symbol, Parameter* p)
-{
-	init(symbol);
-    mParameter = p;
 }
 
 ScriptResolver::ScriptResolver(ExSymbol* symbol, Symbol* s)
@@ -257,21 +250,8 @@ void ScriptResolver::getExValue(ExContext* exContext, ExValue* value)
         if (vars != nullptr)
           vars->get(name, value);
 	}
-    else if (mParameter != nullptr) {
-        // reuse an export 
-        Export* exp = si->getExport();
-
-        if (mParameter->scope == PARAM_SCOPE_GLOBAL) {
-            exp->setTrack(nullptr);
-            mParameter->getValue(exp, value); 
-        }
-        else {
-            exp->setTrack(si->getTargetTrack());
-            mParameter->getValue(exp, value);
-        }
-    }
     else if (mParameterSymbol != nullptr) {
-        // magic happens
+        si->getMobius()->getParameter(mParameterSymbol, si->getTargetTrack(), value);
     }
     else if (mInterpreterVariable != nullptr) {
         UserVariables* vars = si->getVariables();
@@ -296,7 +276,7 @@ ScriptArgument::ScriptArgument()
     mStackArg = 0;
     mInternalVariable = nullptr;
     mVariable = nullptr;
-    mParameter = nullptr;
+    mParameterSymbol = nullptr;
 }
 
 const char* ScriptArgument::getLiteral()
@@ -309,9 +289,9 @@ void ScriptArgument::setLiteral(const char* lit)
 	mLiteral = lit;
 }
 
-Parameter* ScriptArgument::getParameter()
+Symbol* ScriptArgument::getParameter()
 {
-    return mParameter;
+    return mParameterSymbol;
 }
 
 bool ScriptArgument::isResolved()
@@ -319,7 +299,7 @@ bool ScriptArgument::isResolved()
 	return (mStackArg > 0 ||
 			mInternalVariable != nullptr ||
 			mVariable != nullptr ||
-			mParameter != nullptr);
+			mParameterSymbol != nullptr);
 }
 
 /**
@@ -334,7 +314,7 @@ void ScriptArgument::resolve(Mobius* m, ScriptBlock* block,
     mStackArg = 0;
     mInternalVariable = nullptr;
     mVariable = nullptr;
-    mParameter = nullptr;
+    mParameterSymbol = nullptr;
 
     if (mLiteral != nullptr) {
 
@@ -360,7 +340,7 @@ void ScriptArgument::resolve(Mobius* m, ScriptBlock* block,
                     else {
                         mVariable = block->findVariable(ref);
                         if (mVariable == nullptr) {
-                            mParameter = m->getParameter(ref);
+                            mParameterSymbol = m->findSymbol(ref);
                         }
                     }
                 }
@@ -408,16 +388,8 @@ void ScriptArgument::get(ScriptInterpreter* si, ExValue* value)
         if (vars != nullptr)
           vars->get(name, value);
 	}
-    else if (mParameter != nullptr) {
-        Export* exp = si->getExport();
-        if (mParameter->scope == PARAM_SCOPE_GLOBAL) {
-            exp->setTrack(nullptr);
-            mParameter->getValue(exp, value); 
-        }
-        else {
-            exp->setTrack(si->getTargetTrack());
-            mParameter->getValue(exp, value);
-        }
+    else if (mParameterSymbol != nullptr) {
+        si->getMobius()->getParameter(mParameterSymbol, si->getTargetTrack(), value);
     }
     else if (mLiteral != nullptr) { 
 		value->setString(mLiteral);
@@ -473,33 +445,8 @@ void ScriptArgument::set(ScriptInterpreter* si, ExValue* value)
         if (vars != nullptr)
           vars->set(name, value);
 	}
-	else if (mParameter != nullptr) {
-        const char* name = mParameter->getName();
-        char traceval[128];
-        value->getString(traceval, sizeof(traceval));
-
-        // can resuse this unless it schedules
-        Action* action = si->getAction();
-        if (mParameter->scheduled)
-          action = si->getMobius()->cloneAction(action);
-
-        action->arg.set(value);
-
-        if (mParameter->scope == PARAM_SCOPE_GLOBAL) {
-            Trace(2, "Script %s: setting global parameter %s = %s\n",
-                  si->getTraceName(), name, traceval);
-            action->setResolvedTrack(nullptr);
-            mParameter->setValue(action);
-        }
-        else {
-            Trace(2, "Script %s: setting track parameter %s = %s\n", 
-                  si->getTraceName(), name, traceval);
-            action->setResolvedTrack(si->getTargetTrack());
-            mParameter->setValue(action);
-        }
-
-        if (mParameter->scheduled)
-          si->getMobius()->completeAction(action);
+	else if (mParameterSymbol != nullptr) {
+        si->getMobius()->setParameter(mParameterSymbol, si->getTargetTrack(), value);
 	}
     else if (mLiteral != nullptr) {
         Trace(1, "Script %s: Attempt to set unresolved reference %s\n", 
@@ -1438,6 +1385,9 @@ const char* ScriptUseStatement::getKeyword()
 
 ScriptStatement* ScriptUseStatement::eval(ScriptInterpreter* si)
 {
+    Trace(1, "ScriptUseStatement: No longer implemented");
+    (void)si;
+#if 0    
     Parameter* p = mName.getParameter();
     if (p == nullptr) {
         Trace(1, "ScriptUseStatement: Not a parameter: %s\n", 
@@ -1448,6 +1398,8 @@ ScriptStatement* ScriptUseStatement::eval(ScriptInterpreter* si)
     }
 
     return ScriptSetStatement::eval(si);
+#endif
+    return nullptr;
 }
 
 /****************************************************************************
@@ -4951,10 +4903,10 @@ void ScriptStack::cancelWaits()
  *                                                                          *
  ****************************************************************************/
 
-ScriptUse::ScriptUse(Parameter* p)
+ScriptUse::ScriptUse(Symbol* s)
 {
     mNext = nullptr;
-    mParameter = p;
+    mParameter = s;
     mValue.setNull();
 }
 
@@ -4979,7 +4931,7 @@ ScriptUse* ScriptUse::getNext()
     return mNext;
 }
 
-Parameter* ScriptUse::getParameter()
+Symbol* ScriptUse::getParameter()
 {
     return mParameter;
 }

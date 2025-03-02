@@ -122,7 +122,7 @@ void Symbolizer::initialize()
     loadSymbolProperties();
 
     // temporary for ConfigEditors, verify that the definitions match
-    installOldDefinitions();
+    //installOldDefinitions();
 
     // assign indexes
     SymbolTable* table = provider->getSymbols();
@@ -732,6 +732,7 @@ void Symbolizer::addProperty(juce::XmlElement& root, Symbol* s, juce::String nam
  * Soon, this will all go away but we have to rewrite the ui/config classes
  * to use symbols instead of UIParameters.
  */
+#if 0    
 void Symbolizer::installOldDefinitions()
 {
     SymbolTable* symbols = provider->getSymbols();
@@ -740,7 +741,6 @@ void Symbolizer::installOldDefinitions()
 
     // don't know why this was here, Mobius will do this when it gets around
     // to initialization and I want to get rid of FunctionDefinition
-#if 0    
     for (int i = 0 ; i < FunctionDefinition::Instances.size() ; i++) {
         FunctionDefinition* def = FunctionDefinition::Instances[i];
         Symbol* s = symbols->find(def->name);
@@ -761,10 +761,8 @@ void Symbolizer::installOldDefinitions()
             s->function = def;
         }
     }
-#endif    
 
     // don't do these any more either
-#if 0    
     // adorn Symbols fromolder UIParameter definitions
     for (int i = 0 ; i < UIParameter::Instances.size() ; i++) {
         UIParameter* def = UIParameter::Instances[i];
@@ -786,9 +784,9 @@ void Symbolizer::installOldDefinitions()
             s->parameter = def;
         }
     }
-#endif
     
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //

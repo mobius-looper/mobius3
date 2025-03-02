@@ -478,7 +478,6 @@ class ScriptResolver : public ExResolver {
 	ScriptResolver(ExSymbol* symbol, int arg);
 	ScriptResolver(ExSymbol* symbol, class ScriptInternalVariable* v);
 	ScriptResolver(ExSymbol* symbol, class ScriptVariableStatement* v);
-	ScriptResolver(ExSymbol* symbol, class Parameter* p);
 	ScriptResolver(ExSymbol* symbol, class Symbol* s);
 	ScriptResolver(ExSymbol* symbol, const char* name);
 	~ScriptResolver();
@@ -495,11 +494,10 @@ class ScriptResolver : public ExResolver {
 
 	const char* mLiteral;
     int mStackArg;
-    class ScriptInternalVariable* mInternalVariable;
-    class ScriptVariableStatement* mVariable;
-	class Parameter* mParameter;
-    class Symbol* mParameterSymbol;
-    const char* mInterpreterVariable;
+    class ScriptInternalVariable* mInternalVariable = nullptr;
+    class ScriptVariableStatement* mVariable = nullptr;
+    class Symbol* mParameterSymbol = nullptr;
+    const char* mInterpreterVariable = nullptr;
 };
 
 /****************************************************************************
@@ -547,16 +545,15 @@ class ScriptArgument {
     void set(class ScriptInterpreter* si, ExValue* value);
 
     // only for ScriptUseStatement
-    class Parameter* getParameter();
+    class Symbol* getParameter();
 
  private:
 
 	const char* mLiteral;
     int mStackArg;
-    ScriptInternalVariable* mInternalVariable;
-    class ScriptVariableStatement* mVariable;
-	class Parameter* mParameter;
-
+    ScriptInternalVariable* mInternalVariable = nullptr;
+    class ScriptVariableStatement* mVariable = nullptr;
+    class Symbol* mParameterSymbol = nullptr;
 };
 
 /****************************************************************************
@@ -1644,23 +1641,25 @@ class ScriptUse {
 
   public:
 
-    ScriptUse(class Parameter* p);   
+    ScriptUse(class Symbol* s);   
     ~ScriptUse();
 
     void setNext(ScriptUse *use);
     ScriptUse* getNext();
 
-    class Parameter* getParameter();
+    class Symbol* getParameter();
     ExValue* getValue();
 
   private:
 
     ScriptUse* mNext;
-    class Parameter* mParameter;
+
+    // punting on trying to adapt this to use Symbols instead
+    class Symbol* mParameter;
+    
     ExValue mValue;
     
 };
-
 
 /****************************************************************************/
 /****************************************************************************/

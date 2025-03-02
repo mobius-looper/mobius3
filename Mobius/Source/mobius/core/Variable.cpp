@@ -70,7 +70,7 @@ ScriptInternalVariable::ScriptInternalVariable()
 {
     mName = nullptr;
 	mAlias = nullptr;
-	mType = TYPE_INT;
+	//mType = TYPE_INT;
 }
 
 ScriptInternalVariable::~ScriptInternalVariable()

@@ -13,6 +13,7 @@
 #pragma once
 
 #include "../../model/ParameterConstants.h"
+#include "../../model/SymbolId.h"
 #include "../track/TrackProperties.h"
 #include "Loader.h"
 #include "MobiusMslHandler.h"
@@ -301,10 +302,17 @@ class Mobius
     void cancelScripts(class Action* action, class Track* t);
 
     // needed for Script compilation
-    class Parameter* getParameter(const char* name);
+    //class Parameter* getParameter(const char* name);
 
     // replacement for threshold in the Preset
     int getRecordThreshold();
+
+    // new replacement for parameter symbol access from the Script interpreter
+    void getParameter(class Symbol* s, class Track* t, class ExValue* result);
+    class Symbol* findSymbol(const char* name);
+    class Symbol* findSymbol(SymbolId sid);
+    void setParameter(class Symbol* s, class Track* t, class ExValue* value);
+    int getParameterOrdinal(SymbolId sid);
 
     //////////////////////////////////////////////////////////////////////
     // Global Function Handlers

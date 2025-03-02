@@ -58,8 +58,8 @@ class ScriptInterpreter : public ExContext {
 	ScriptInterpreter* getNext();
 
     // uses
-    void use(Parameter* p);
-    void getParameter(Parameter* p, ExValue* value);
+    //void use(Parameter* p);
+    //void getParameter(Parameter* p, ExValue* value);
 
 	// control methods called by Mobius
 
@@ -106,7 +106,7 @@ class ScriptInterpreter : public ExContext {
 
 	class Mobius* getMobius();
     class Action* getAction();
-    class Export* getExport();
+    //class Export* getExport();
 	class Script* getScript();
     const char* getTraceName();
     class UserVariables* getVariables();
@@ -151,7 +151,7 @@ class ScriptInterpreter : public ExContext {
     void resetActionArgs();
     void parseActionArgs(class Action* action);
     void getActionArg(int index, ExValue* value);
-    void restoreUses();
+    //void restoreUses();
 
 	ScriptInterpreter* mNext;
     int mNumber;
@@ -165,7 +165,7 @@ class ScriptInterpreter : public ExContext {
 	ScriptStatement* mStatement;
 	class UserVariables *mVariables;
     Action* mAction;
-    Export* mExport;
+    //Export* mExport;
     int mRequestId;
     class Trigger* mTrigger;
     int mTriggerId;

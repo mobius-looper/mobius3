@@ -27,9 +27,11 @@
 #include "../../model/MobiusConfig.h"
 #include "../../model/UserVariable.h"
 #include "../../model/UIAction.h"
+#include "../../model/SymbolId.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
 #include "../../model/ParameterProperties.h"
+#include "../../model/Session.h"
 
 #include "../MobiusKernel.h"
 #include "../AudioPool.h"
@@ -37,17 +39,18 @@
 
 #include "../track/TrackProperties.h"
 #include "../track/MobiusLooperTrack.h"
+#include "../track/LogicalTrack.h"
 #include "../sync/SyncMaster.h"
 
 #include "Action.h"
 #include "Actionator.h"
 #include "Event.h"
-#include "Export.h"
+//#include "Export.h"
 #include "Function.h"
 #include "Layer.h"
 #include "Loop.h"
 #include "Mode.h"
-#include "Parameter.h"
+//#include "Parameter.h"
 #include "Project.h"
 #include "Scriptarian.h"
 #include "ScriptCompiler.h"
@@ -114,7 +117,7 @@ Mobius::Mobius(MobiusKernel* kernel)
     // move this to initialize() !!
     MobiusMode::initModes();
     Function::initStaticFunctions();
-    Parameter::initParameters();
+    //Parameter::initParameters();
 
     // trace some sizes for leak analysis
     Trace(2, "Mobius: object sizes");
@@ -184,8 +187,8 @@ Mobius::~Mobius()
     // changing everything to use static objects rathher than new
 
     // don't need this any more, they're statically allocated
-    if (!mContainer->isPlugin())
-      Parameter::deleteParameters();
+    //if (!mContainer->isPlugin())
+    //Parameter::deleteParameters();
 }
 
 /**
@@ -229,7 +232,7 @@ void Mobius::initStaticObjects()
 {
     MobiusMode::initModes();
     Function::initStaticFunctions();
-    Parameter::initParameters();
+    //Parameter::initParameters();
 }
 
 /**
@@ -244,7 +247,7 @@ void Mobius::initStaticObjects()
 void Mobius::freeStaticObjects()
 {
     // these are now statically allocated as of build 11
-    Parameter::deleteParameters();
+    //Parameter::deleteParameters();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -397,6 +400,7 @@ void Mobius::installSymbols()
         }
     }
 
+    #if 0
     for (int i = 0 ; Parameters[i] != nullptr ; i++) {
         Parameter* p = Parameters[i];
         const char* name = p->getName();
@@ -414,6 +418,8 @@ void Mobius::installSymbols()
         s->coreParameter = p;
         s->behavior = BehaviorParameter;
     }
+    #endif
+    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -673,12 +679,15 @@ void Mobius::propagateSymbolProperties()
                 f->confirms = symbol->functionProperties->confirmation;
             }
         }
+#if 0        
         else if (symbol->coreParameter != nullptr && symbol->parameterProperties != nullptr) {
             Parameter* p = (Parameter*)symbol->coreParameter;
 
             // don't have a mayResetRetain on these
             p->resetRetain = symbol->parameterProperties->resetRetain;
         }
+#endif
+        
     }
 }
 
@@ -1712,10 +1721,12 @@ int Mobius::getActiveTrack()
  *
  * todo: should be able to get rid of this and use SymbolTable instead
  */
+#if 0
 Parameter* Mobius::getParameter(const char* name)
 {
     return Parameter::getParameter(name);
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -2376,6 +2387,119 @@ void Mobius::followerEvent(Loop* l, Event* e)
 
     mNotifier->notify(l->getTrack(), NotificationFollower, props);
     
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Script Paraqmeter Access
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Factored out of Script and a replacement for the old Parameter handlers.
+ * This is what returns the value of a resolved symbol parameter to the
+ * interpreter.  It is used both by ScriptResolver and ScriptArguemnt
+ * though not sure what the difference is.
+ */
+void Mobius::getParameter(Symbol* s, Track* t, ExValue* result)
+{
+    ParameterProperties* props = s->parameterProperties.get();
+    if (props == nullptr) {
+        Trace(1, "Script: Symbol not a parameter symbol %s", s->getName());
+    }
+    else if (props->scope == ScopeGlobal) {
+        if (props->type == TypeInt) {
+            result->setInt(getParameterOrdinal(s->id));
+        }
+        else if (props->type == TypeBool) {
+            result->setBool((bool)(getParameterOrdinal(s->id)));
+        }
+        else {
+            // these are almost all ints so don't need to mess with enum conversion
+            // the exception would be if you wanted to simulate "activeSetup" to
+            // be the session name
+            Trace(1, "Script: Unable to access parameter value %s",
+                  s->getName());
+        }
+    }
+    else if (t == nullptr) {
+        Trace(1, "Script: Symbol did not have a target track %s", s->getName());
+    }
+    else {
+        LogicalTrack* lt = t->getLogicalTrack();
+        if (props->type == TypeInt) {
+            result->setInt(lt->getParameterOrdinal(s->id));
+        }
+        else if (props->type == TypeBool) {
+            result->setBool((bool)(lt->getParameterOrdinal(s->id)));
+        }
+        else if (props->type == TypeEnum) {
+            // these have returned the enumeration symbol, not the ordinal
+            int ordinal = lt->getParameterOrdinal(s->id);
+            result->setString(props->getEnumName(ordinal));
+        }
+        else {
+            // not many strings but the structure activation parameters
+            // are probably interesting
+            Trace(1, "Script: Unable to access parameter value %s",
+                  s->getName());
+        }
+    }
+}
+
+int Mobius::getParameterOrdinal(SymbolId sid)
+{
+    Session* ses = mKernel->getSession();
+    return ses->getInt(sid);
+}
+
+Symbol* Mobius::findSymbol(const char* name)
+{
+    return mKernel->getContainer()->getSymbols()->find(juce::String(name));
+}
+
+Symbol* Mobius::findSymbol(SymbolId sid)
+{
+    return mKernel->getContainer()->getSymbols()->getSymbol(sid);
+}
+
+/**
+ * Assignment formerly used an internal Action passed through
+ * the old Parameter.
+ *
+ * We can do pretty much the same thing with UIAction but forwarding
+ * it up to TrackManager.
+ */
+void Mobius::setParameter(Symbol* s, Track* t, ExValue* value)
+{
+    Trace(1, "Mobius::setParameter Not implemented");
+    (void)s;
+    (void)t;
+    (void)value;
+#if 0    
+    // can resuse this unless it schedules
+    Action* action = si->getAction();
+    if (mParameter->scheduled)
+      action = si->getMobius()->cloneAction(action);
+
+    action->arg.set(value);
+
+    if (mParameter->scope == PARAM_SCOPE_GLOBAL) {
+        Trace(2, "Script %s: setting global parameter %s = %s\n",
+              si->getTraceName(), name, traceval);
+        action->setResolvedTrack(nullptr);
+        mParameter->setValue(action);
+    }
+    else {
+        Trace(2, "Script %s: setting track parameter %s = %s\n", 
+              si->getTraceName(), name, traceval);
+        action->setResolvedTrack(si->getTargetTrack());
+        mParameter->setValue(action);
+    }
+
+    if (mParameter->scheduled)
+      si->getMobius()->completeAction(action);
+#endif
 }
 
 /****************************************************************************/

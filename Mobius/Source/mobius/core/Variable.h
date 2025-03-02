@@ -13,7 +13,7 @@
 #ifndef VARIABLE_H
 #define VARIABLE_H
 
-#include "Parameter.h"
+//#include "Parameter.h"
 
 /****************************************************************************
  *                                                                          *
@@ -50,7 +50,7 @@ class ScriptInternalVariable {
 
     char* mName;
 	char* mAlias;
-	ParameterType mType;
+	//ParameterType mType;
 
 };
 
