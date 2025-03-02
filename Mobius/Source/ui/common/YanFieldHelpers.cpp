@@ -7,7 +7,6 @@
 
 #include "../../util/Trace.h"
 #include "../../model/MobiusConfig.h"
-#include "../../model/Preset.h"
 #include "../../model/ParameterSets.h"
 #include "../../model/ValueSet.h"
 #include "../../Provider.h"
@@ -31,9 +30,6 @@ void YanFieldHelpers::comboInit(Provider* p, YanCombo* combo, juce::String type,
     else if (type == "trackGroup") {
         initTrackGroup(p, combo, value);
     }
-    else if (type == "trackPreset") {
-        initTrackPreset(p, combo, value);
-    }
     else if (type == "parameterSet") {
         initParameterSet(p, combo, value);
     }
@@ -53,9 +49,6 @@ juce::String YanFieldHelpers::comboSave(YanCombo* combo, juce::String type)
     }
     else if (type == "trackGroup") {
         result = saveTrackGroup(combo);
-    }
-    else if (type == "trackPreset") {
-        result = saveTrackPreset(combo);
     }
     else if (type == "parameterSet") {
         result = saveParameterSet(combo);
@@ -158,40 +151,6 @@ void YanFieldHelpers::initTrackGroup(Provider* p, YanCombo* combo, juce::String 
 }
 
 juce::String YanFieldHelpers::saveTrackGroup(YanCombo* combo)
-{
-    juce::String result;
-
-    // filter the [None]
-    int ordinal = combo->getSelection();
-    if (ordinal > 0) {
-        result = combo->getSelectionText();
-    }
-    return result;
-}
-
-//////////////////////////////////////////////////////////////////////
-// Track Preset
-//////////////////////////////////////////////////////////////////////
-
-void YanFieldHelpers::initTrackPreset(Provider* p, YanCombo* combo, juce::String value)
-{
-    MobiusConfig* config = p->getOldMobiusConfig();
-    
-    juce::StringArray names;
-    // assuming we always want a "no selection" option 
-    names.add("[None]");
-    for (Preset* preset = config->getPresets() ; preset != nullptr ;
-         preset = preset->getNextPreset()) {
-        names.add(juce::String(preset->getName()));
-    }
-    combo->setItems(names);
-
-    int ordinal = Structure::getOrdinal(config->getPresets(), value.toUTF8());
-    // ordinal is -1 if not found, which matches [None]
-    combo->setSelection(ordinal + 1);
-}
-
-juce::String YanFieldHelpers::saveTrackPreset(YanCombo* combo)
 {
     juce::String result;
 

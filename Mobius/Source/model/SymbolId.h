@@ -55,9 +55,6 @@ typedef enum {
     ParamIsolateOverdubs,
     ParamSaveLayers,
 
-    // a runtime only global for the menu and ParametersElement
-    ParamActivePreset,
-
     // replacement for DefaultPreset
     ParamSessionOverlay,
 

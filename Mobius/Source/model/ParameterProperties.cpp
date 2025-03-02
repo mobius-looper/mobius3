@@ -1,6 +1,3 @@
-/**
- * Eventual replacement for UIParameter
- */
 
 #include "ParameterProperties.h"
 

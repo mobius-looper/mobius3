@@ -120,8 +120,6 @@ typedef enum {
 
     // symbol corresponds to a value container with an
     // optionally constrained set of values
-    // todo: Parameter has too much legacy baggage, consider
-    // Value or Variable instead
     BehaviorParameter,
 
     // symbol corresponds to a function that may be executed
@@ -138,13 +136,8 @@ typedef enum {
     BehaviorSample,
 
     // symbol that corresponds to a configuration object that may
-    // be "activated", these would be Setups and Presets
-    // this is still evolving, unclear whether I want config object
-    // names to be symbols, and if they are they will need prefixes since
-    // names are not controlled
-    // these could also be modeled with BehaviorParameter
-    // against a few UIParameters (defaultPreset, activeSetup) with the
-    // name passed as an action argument
+    // be "activated", these once were Presets and Setups
+    // and are now ParameterSets (overlays) and Sessions
     BehaviorActivation
 
 } SymbolBehavior;
@@ -172,10 +165,6 @@ class Symbol
     // if we see this in old bindings convert it to a Parameter: activation
     constexpr static const char* ActivationPrefixPreset = "Preset:";
 
-
-    // temporary kludge as we work around the
-    // UIParameter/ParameterProperties transition
-    // actually, might not be that bad since it can handle other things too
     juce::String getDisplayName();
 
     /**

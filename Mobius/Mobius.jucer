@@ -176,16 +176,6 @@
         <FILE id="dgLWU9" name="UIConfig.h" compile="0" resource="0" file="Source/model/UIConfig.h"/>
         <FILE id="qY5nI3" name="UIEventType.cpp" compile="1" resource="0" file="Source/model/UIEventType.cpp"/>
         <FILE id="PBE6wD" name="UIEventType.h" compile="0" resource="0" file="Source/model/UIEventType.h"/>
-        <FILE id="yMAblz" name="UIParameter.cpp" compile="1" resource="0" file="Source/model/UIParameter.cpp"/>
-        <FILE id="xcuW9G" name="UIParameter.h" compile="0" resource="0" file="Source/model/UIParameter.h"/>
-        <FILE id="MwPgTN" name="UIParameterClasses.cpp" compile="1" resource="0"
-              file="Source/model/UIParameterClasses.cpp"/>
-        <FILE id="sf9iOw" name="UIParameterClasses.h" compile="0" resource="0"
-              file="Source/model/UIParameterClasses.h"/>
-        <FILE id="Rhe2jn" name="UIParameterHandler.cpp" compile="1" resource="0"
-              file="Source/model/UIParameterHandler.cpp"/>
-        <FILE id="eekiKa" name="UIParameterHandler.h" compile="0" resource="0"
-              file="Source/model/UIParameterHandler.h"/>
         <FILE id="wa9W4M" name="UserVariable.cpp" compile="1" resource="0"
               file="Source/model/UserVariable.cpp"/>
         <FILE id="JU2prp" name="UserVariable.h" compile="0" resource="0" file="Source/model/UserVariable.h"/>
@@ -234,12 +224,6 @@
           <FILE id="w11puN" name="CustomRotary.cpp" compile="1" resource="0"
                 file="Source/ui/common/CustomRotary.cpp"/>
           <FILE id="VRPeJA" name="CustomRotary.h" compile="0" resource="0" file="Source/ui/common/CustomRotary.h"/>
-          <FILE id="vyeo6h" name="Field.cpp" compile="1" resource="0" file="Source/ui/common/Field.cpp"/>
-          <FILE id="RjFLPv" name="Field.h" compile="0" resource="0" file="Source/ui/common/Field.h"/>
-          <FILE id="tceRTv" name="FieldGrid.cpp" compile="1" resource="0" file="Source/ui/common/FieldGrid.cpp"/>
-          <FILE id="wXEPam" name="FieldGrid.h" compile="0" resource="0" file="Source/ui/common/FieldGrid.h"/>
-          <FILE id="qFRIjz" name="FormPanel.cpp" compile="1" resource="0" file="Source/ui/common/FormPanel.cpp"/>
-          <FILE id="JWBS2l" name="FormPanel.h" compile="0" resource="0" file="Source/ui/common/FormPanel.h"/>
           <FILE id="qcxCOI" name="HelpArea.cpp" compile="1" resource="0" file="Source/ui/common/HelpArea.cpp"/>
           <FILE id="UpmMlt" name="HelpArea.h" compile="0" resource="0" file="Source/ui/common/HelpArea.h"/>
           <FILE id="z0zBNd" name="JLabel.cpp" compile="1" resource="0" file="Source/ui/common/JLabel.cpp"/>

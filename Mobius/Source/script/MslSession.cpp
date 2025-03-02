@@ -9,7 +9,6 @@
 
 #include "../util/Util.h"
 #include "../model/UIAction.h"
-#include "../model/UIParameter.h"
 #include "../model/Query.h"
 #include "../model/Symbol.h"
 #include "../model/ScriptProperties.h"
@@ -1592,7 +1591,7 @@ void MslSession::mslVisit(MslOperatorNode* opnode)
  * Would be nice to do enum wrapping, but I don't think that belongs here.
  *
  * For boolean comparisons, try to be smart about enumerated values from
- * UIParameters.  Those will be saved in the MslValue as an Enum with both
+ * ParameterProperties.  Those will be saved in the MslValue as an Enum with both
  * the ordinal and the symbolic name.
  *
  * Null is treated as zero numerically which might be bad.
@@ -1723,14 +1722,14 @@ void MslSession::addTwoThings(MslValue* v1, MslValue* v2, MslValue* res)
 
 /**
  * Semi-smart comparison that deals with strings and symbols.
- * For UIParameter symbols, this is a little complicated and relies on the
+ * For Parameter symbols, this is a little complicated and relies on the
  * value of the parameter being stored in the MslValue as an Enum containing
  * both the ordinal integer and the symbolic name string.
  *
  * Nullness isn't really a thing yet, which could lead to some weird
  * comparisons with string coercion.
  *
- * Symbols that resolve to UIParameters is a little lose right now, but the main
+ * Symbols that resolve to Parameters is a little lose right now, but the main
  * thing that needs to be supported is this:
  *
  *      if quantize == loop

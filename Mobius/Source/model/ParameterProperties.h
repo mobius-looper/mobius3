@@ -1,15 +1,14 @@
 /**
  * Structure that is attached to a Symbol associated with a Parameter
  * to describe how it behaves.
- *
- * Eventual replacement for UIParameter.
  */
 
 #pragma once
 
-// UIParameterType and UIParameterScope are defined in here
-// until we can move them
-#include "UIParameter.h"
+#include <JuceHeader.h>
+
+// UIParameterType and UIParameterScope
+#include "ParameterConstants.h"
 
 class ParameterProperties
 {

@@ -696,6 +696,9 @@ int Supervisor::getActiveOverlay()
 void Supervisor::getOverlayNames(juce::StringArray& names)
 {
     names.clear();
+    // for consistency with the way other Structure work, reserve
+    // ordinal zero to mean none rather than having to toggle
+    names.add("[None]");
     ParameterSets* sets = getParameterSets();
     if (sets != nullptr) {
         for (auto set : sets->getSets()) {

@@ -35,24 +35,17 @@ void ParameterHelper::getStructureNames(Provider* p, Symbol* s, juce::StringArra
                 Trace(1, "ParameterHelper: Unsupported UI parameter %s", s->getName());
         }
     }
-    else {
+    else if (s->id == ParamTrackGroup) {
         MobiusConfig* config = p->getOldMobiusConfig();
-        if (s->id == ParamTrackGroup) {
-            for (auto group : config->dangerousGroups) {
-                result.add(group->name);
-            }
+        for (auto group : config->dangerousGroups) {
+            result.add(group->name);
         }
-        // ActivePreset is used by ParametersElement
-        else if (//s->id == ParamTrackPreset ||
-                 s->id == ParamActivePreset) {
-            for (Preset* preset = config->getPresets() ; preset != nullptr ;
-                 preset = preset->getNextPreset()) {
-                result.add(juce::String(preset->getName()));
-            }
-        }
-        else {
-            Trace(1, "ParameterHelper: Unsupported parameter %s", s->getName());
-        }
+    }
+    else if (s->id == ParamTrackOverlay) {
+        p->getOverlayNames(result);
+    }
+    else {
+        Trace(1, "ParameterHelper: Unsupported parameter %s", s->getName());
     }
 }
 
@@ -85,25 +78,23 @@ juce::String ParameterHelper::getStructureName(Provider* p, Symbol* s, int ordin
             }
         }
     }
-    else {
+    else if (s->id == ParamTrackGroup) {
         MobiusConfig* config = p->getOldMobiusConfig();
-        if (s->id == ParamTrackGroup) {
-            if (ordinal >= 0 && ordinal < config->dangerousGroups.size()) {
-                GroupDefinition* def = config->dangerousGroups[ordinal];
-                name = def->name;
-            }
-        }
-        else if (// s->id == ParamTrackPreset ||
-            s->id == ParamActivePreset) {
-            Structure* list = config->getPresets();
-            Structure* st = Structure::get(list, ordinal);
-            if (st != nullptr)
-              name = juce::String(st->getName());
-        }
-        else {
-            Trace(1, "ParameterHelper: Unsupported parameter %s", s->getName());
+        if (ordinal >= 0 && ordinal < config->dangerousGroups.size()) {
+            GroupDefinition* def = config->dangerousGroups[ordinal];
+            name = def->name;
         }
     }
+    else if (s->id == ParamTrackOverlay) {
+        juce::StringArray names;
+        p->getOverlayNames(names);
+        if (ordinal >= 0 && ordinal < names.size())
+          name = names[ordinal];
+    }
+    else {
+        Trace(1, "ParameterHelper: Unsupported parameter %s", s->getName());
+    }
+    
     return name;
 }
 
@@ -136,20 +127,16 @@ int ParameterHelper::getParameterMax(Provider* p, Symbol* s)
             default: break;
         }
     }
-    else {
+    else if (s->id == ParamTrackGroup) {
         MobiusConfig* config = p->getOldMobiusConfig();
-        if (s->id == ParamTrackGroup) {
-            max = config->dangerousGroups.size();
-            handled = true;
-        }
-        else if (// s->id == ParamTrackPreset ||
-                 s->id == ParamActivePreset) {
-            for (Preset* preset = config->getPresets() ; preset != nullptr ;
-                 preset = preset->getNextPreset()) {
-                max++;
-            }
-            handled = true;
-        }
+        max = config->dangerousGroups.size();
+        handled = true;
+    }
+    else if (s->id == ParamTrackOverlay) {
+        juce::StringArray names;
+        p->getOverlayNames(names);
+        max = names.size();
+        handled = true;
     }
 
     if (!handled) {

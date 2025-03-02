@@ -325,7 +325,7 @@ void DisplayEditor::initElementSelector(MultiSelectDrag* multi, UIConfig* config
  * Build the list of parameters allowed for inclusion in the
  * Instant Parameters element.
  *
- * By default we'll put every defined UIParameter in here, which will
+ * By default we'll put every defined BehaviorParameter symbol in here, which will
  * be long and unweildy.  Allow this to be restricted to just the ones
  * commonly used.
  *

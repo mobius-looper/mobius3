@@ -11,7 +11,6 @@
 
 #include "../../util/Trace.h"
 #include "../../Provider.h"
-#include "../../model/UIParameter.h"
 #include "../../model/Symbol.h"
 #include "../../ui/MobiusView.h"
 
@@ -38,7 +37,12 @@ StripRotary::StripRotary(class TrackStrip* parent, StripElementDefinition* def) 
     StripElement(parent, def)
 {
     // these always correspond to Parameters with a 0-127 range
-    slider.setRange((float)def->parameter->low, (float)def->parameter->high);
+    // fuck, now that UIParameter is gone, we don't have a great place to get
+    // these during construction, just make it 0 to 127 which is all we ever used
+    // and figure out a better way to handle this if necessary
+    //slider.setRange((float)def->parameter->low, (float)def->parameter->high);
+    slider.setRange((float)0, (float)127);
+
 
     // some of these are now defaults in CustomRotary
     slider.setColour(juce::Slider::ColourIds::textBoxTextColourId, juce::Colours::black);
@@ -57,7 +61,7 @@ StripRotary::StripRotary(class TrackStrip* parent, StripElementDefinition* def) 
 
     // now that we have Symbol, don't need to be passing the UIParameter around
     // in the StripElementDefinition
-    action.symbol = strip->getProvider()->getSymbols()->intern(definition->parameter->getName());
+    action.symbol = strip->getProvider()->getSymbols()->intern(definition->getName());
 
     // see if the slider can pass mouse events up
     // second arg is wantsEventsForAllNestedChildComponents
@@ -90,7 +94,7 @@ int StripRotary::getPreferredWidth()
     int maxWidth = 0;
     
     // Parameters should always have display names
-    const char* label = definition->parameter->getDisplayableName();
+    const char* label = definition->getDisplayableName();
     if (label != nullptr) {
         juce::Font font(JuceUtil::getFont(LabelFontHeight));
         maxWidth = font.getStringWidth(label);
@@ -128,7 +132,7 @@ void StripRotary::paint(juce::Graphics& g)
     //g.setColour(juce::Colours::red);
     //g.drawRect(0, 0, getWidth(), RotaryDiameter);
     
-    const char* label = definition->parameter->getDisplayableName();
+    const char* label = definition->getDisplayableName();
     int top = RotaryDiameter + LabelGap;
     g.setColour(juce::Colour(MobiusBlue));
     g.setFont(JuceUtil::getFont(LabelFontHeight));

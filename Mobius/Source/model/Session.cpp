@@ -345,21 +345,31 @@ MslValue* Session::get(SymbolId sid)
         Symbol* s = symbols->getSymbol(sid);
         if (s == nullptr)
           Trace(1, "Session: No symbol for id, can't happen in my backyard");
-        else {
-            v = get(s->name);
+        else
+          v = get(s);
+    }
+    return v;
+}
 
-            // hack for newly created empty sessions
-            // if there is no explicit value, and the parameter defined a default
-            // bootstrap a value
-            if (v == nullptr && s->parameterProperties != nullptr) {
-                int dflt = s->parameterProperties->defaultValue;
-                if (dflt > 0) {
-                    (void)ensureGlobals();
-                    MslValue dv;
-                    dv.setInt(dflt);
-                    globals->set(s->name, dv);
-                    v = globals->get(s->name);
-                }
+MslValue* Session::get(Symbol* s)
+{
+    MslValue* v = nullptr;
+    if (s == nullptr)
+      Trace(1, "Session: No symbol");
+    else {
+        v = get(s->name);
+
+        // hack for newly created empty sessions
+        // if there is no explicit value, and the parameter defined a default
+        // bootstrap a value
+        if (v == nullptr && s->parameterProperties != nullptr) {
+            int dflt = s->parameterProperties->defaultValue;
+            if (dflt > 0) {
+                (void)ensureGlobals();
+                MslValue dv;
+                dv.setInt(dflt);
+                globals->set(s->name, dv);
+                v = globals->get(s->name);
             }
         }
     }
@@ -512,21 +522,32 @@ MslValue* Session::Track::get(SymbolId sid)
             if (s == nullptr)
               Trace(1, "Session::Track Unable to resolve symbol id");
             else {
-                v = get(s->name);
+                v = get(s);
+            }
+        }
+    }
+    return v;
+}
 
-                // hack for newly created empty sessions
-                // if there is no explicit value, and the parameter defined a default
-                // bootstrap a value
-                if (v == nullptr && s->parameterProperties != nullptr) {
-                    int dflt = s->parameterProperties->defaultValue;
-                    if (dflt > 0) {
-                        ValueSet* params = ensureParameters();
-                        MslValue dv;
-                        dv.setInt(dflt);
-                        params->set(s->name, dv);
-                        v = params->get(s->name);
-                    }
-                }
+MslValue* Session::Track::get(Symbol* s)
+{
+    MslValue* v = nullptr;
+    if (s == nullptr)
+      Trace(1, "Session::Track No symbol");
+    else {
+        v = get(s->name);
+
+        // hack for newly created empty sessions
+        // if there is no explicit value, and the parameter defined a default
+        // bootstrap a value
+        if (v == nullptr && s->parameterProperties != nullptr) {
+            int dflt = s->parameterProperties->defaultValue;
+            if (dflt > 0) {
+                ValueSet* params = ensureParameters();
+                MslValue dv;
+                dv.setInt(dflt);
+                params->set(s->name, dv);
+                v = params->get(s->name);
             }
         }
     }

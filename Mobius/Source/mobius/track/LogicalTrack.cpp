@@ -13,7 +13,6 @@
 #include "../../model/Enumerator.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/ParameterProperties.h"
-#include "../../model/UIParameterHandler.h"
 #include "../../model/ExValue.h"
 
 #include "../../script/MslEnvironment.h"

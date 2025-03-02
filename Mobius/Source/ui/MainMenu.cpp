@@ -185,6 +185,8 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     else if (menuIndex == menuIndexOverlay)
     {
         Provider* provider = mainWindow->getProvider();
+        // assuming Supervisor is stcking "none" at the top so we don't
+        // have to worry about ordinal shifting or toggling
         juce::StringArray names;
         provider->getOverlayNames(names);
         int active = provider->getActiveOverlay();
@@ -192,7 +194,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         for (auto name : names) {
             juce::PopupMenu::Item item = juce::PopupMenu::Item(name).setID(MenuOverlayOffset + index);
             // active overlay ordinal is 1 based, 0 means none
-            if (index == (active - 1))
+            if (index == active)
               item.setTicked(true);
             menu.addItem(item);
             index++;

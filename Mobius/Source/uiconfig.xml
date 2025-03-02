@@ -41,7 +41,7 @@
       <Element name="outputMeter" disabled="1"/>
       <Element name="outputMeter" disabled="1"/>
     </Strip>
-    <InstantParameters names="activePreset,quantize,subcycles,switchQuantize,emptyLoopAction,emptyTrackAction,muteMode,multiplyMode,switchDuration"/>
+    <InstantParameters names="trackOverlay,quantize,subcycles,switchQuantize,emptyLoopAction,emptyTrackAction,muteMode,multiplyMode,switchDuration"/>
   </Layout>
   <Layout name="Another">
     <Element name="ModeElement" x="688" y="182"/>
@@ -70,7 +70,7 @@
       <Element name="pan"/>
       <Element name="altFeedback" disabled="1"/>
     </Strip>
-    <InstantParameters names="activePreset,activeLayout,activeButtons,quantize,subcycles,switchQuantize,emptyLoopAction"/>
+    <InstantParameters names="trackOverlay,activeLayout,activeButtons,quantize,subcycles,switchQuantize,emptyLoopAction"/>
   </Layout>
   <Layout name="Another2">
     <Element name="ModeElement" x="688" y="182"/>
@@ -101,7 +101,7 @@
       <Element name="altFeedback" disabled="1"/>
       <Element name="outputMeter" disabled="1"/>
     </Strip>
-    <InstantParameters names="activePreset,activeButtons,quantize,activeLayout,subcycles,switchQuantize,emptyLoopAction"/>
+    <InstantParameters names="trackOverlay,activeButtons,quantize,activeLayout,subcycles,switchQuantize,emptyLoopAction"/>
   </Layout>
   <ButtonSet name="Default">
     <Button action="GlobalReset" color="-15707416"/>

@@ -19,7 +19,6 @@
 // Globals
 //
 
-const char* ParamNameActiveSetup = "activeSetup";
 const char* ParamNameBindings = "bindings";
 const char* ParamNameFadeFrames = "fadeFrames";
 const char* ParamNameMaxSyncDrift = "maxSyncDrift";
@@ -93,17 +92,11 @@ const char* ParamNameWindowEdgeAmount = "windowEdgeAmount";
 const char* ParamNameDefaultSyncSource = "defaultSyncSource";
 const char* ParamNameDefaultTrackSyncUnit = "defaultTrackSyncUnit";
 const char* ParamNameSlaveSyncUnit = "slaveSyncUnit";
-//const char* ParamNameManualStart = "manualStart";
-//const char* ParamNameMinTempo = "minTempo";
-//const char* ParamNameMaxTempo = "maxTempo";
-//const char* ParamNameBeatsPerBar = "beatsPerBar";
-//const char* ParamNameMuteSyncMode = "muteSyncMode";
 const char* ParamNameResizeSyncAdjust = "resizeSyncAdjust";
 const char* ParamNameSpeedSyncAdjust = "speedSyncAdjust";
 const char* ParamNameRealignTime = "realignTime";
 const char* ParamNameActiveTrack = "activeTrack";
     
-const char* ParamNameActivePreset = "activePreset";
 const char* ParamNameFocus = "focus";
 const char* ParamNameGroup = "groupbbf";
 const char* ParamNameMono = "mono";
@@ -156,7 +149,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameAutoFeedbackReduction, ParamAutoFeedbackReduction},
     {ParamNameIsolateOverdubs, ParamIsolateOverdubs},
     {ParamNameSaveLayers, ParamSaveLayers},
-    {ParamNameActivePreset, ParamActivePreset},
 
     {"sessionOverlay", ParamSessionOverlay},
 
@@ -457,27 +449,6 @@ SymbolDefinition SymbolDefinitions[] = {
     //////////////////////////////////////////////////////////////////////
     // Deprecated
     //////////////////////////////////////////////////////////////////////
-#if 0    
-    {ParamNameActiveSetup, ParamActiveSetup},
-    //{ParamBindingsName, ParamBindings},
-    {ParamNameDriftCheckPoint, ParamDriftCheckPoint},
-    {ParamNameIntegerWaveFile, ParamIntegerWaveFile},
-    {ParamNameGroupFocusLock, ParamGroupFocusLock},
-    {ParamNameTrackCount, ParamTrackCount},
-
-    {ParamNameDefaultSyncSource, ParamDefaultSyncSource},
-    {ParamNameDefaultTrackSyncUnit, ParamDefaultTrackSyncUnit},
-    {ParamNameSlaveSyncUnit, ParamSlaveSyncUnit},
-    //{ParamNameManualStart, ParamManualStart},
-    //{ParamNameMinTempo, ParamMinTempo},
-    //{ParamNameMaxTempo, ParamMaxTempo},
-    //{ParamNameBeatsPerBar, ParamBeatsPerBar},
-    //{ParamNameMuteSyncMode, ParamMuteSyncMode},
-    {ParamNameResizeSyncAdjust, ParamResizeSyncAdjust},
-    {ParamNameSpeedSyncAdjust, ParamSpeedSyncAdjust},
-    {ParamNameRealignTime, ParamRealignTime},
-    {ParamNameActiveTrack, ParamActiveTrack},
-#endif
     
     {"groupName", ParamGroupName},
     {ParamNameOldSyncSource, ParamOldSyncSource},

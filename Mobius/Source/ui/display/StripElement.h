@@ -10,6 +10,8 @@
 
 #include <vector>
 
+#include "../../model/SymbolId.h"
+
 //////////////////////////////////////////////////////////////////////
 //
 // Definition
@@ -36,18 +38,16 @@ class StripElementDefinition
     static std::vector<StripElementDefinition*> Elements;
     static StripElementDefinition* find(const char* name);
 
-    StripElementDefinition(class UIParameter* p);
     StripElementDefinition(const char* argName, const char* argDisplayName);
 
     const char* getName();
     const char* getDisplayName();
-
+    const char* getDisplayableName();
+    
     ~StripElementDefinition() {};
 
-    // most correspond to Parameters
-    class UIParameter* parameter;
-    
-    // those that don't have names here
+    // used to have a UIParameter in here, but those are gone and these
+    // must be constructed with specific names
     const char* name;
     const char* displayName;
 

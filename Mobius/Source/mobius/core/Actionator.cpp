@@ -27,7 +27,6 @@
 #include "../../model/UIAction.h"
 #include "../../model/Scope.h"
 #include "../../model/Query.h"
-#include "../../model/UIParameter.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Trigger.h"
 #include "../../model/Structure.h"

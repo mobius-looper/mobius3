@@ -171,16 +171,11 @@ void MainWindow::mainMenuSelection(int id)
     }
     else if (id >= MainMenu::MenuOverlayOffset && id <= MainMenu::MenuOverlayMax) {
         // overlays are 1 based with 0 meaning "none"
-        int selected = (id - MainMenu::MenuOverlayOffset) + 1;
-        // if this is already active it means to remove it
-        int current = supervisor->getActiveOverlay();
-        
+        // Supervisor will have injected "[None]" at the front
+        int selected = id - MainMenu::MenuOverlayOffset;
         UIAction action;
         action.symbol = symbols->intern("activePreset");
-        if (current == selected)
-          action.value = 0;
-        else
-          action.value = selected;
+        action.value = selected;
         supervisor->doAction(&action);
     }
     else if (id >= MainMenu::MenuSessionOffset && id <= MainMenu::MenuSessionMax) {

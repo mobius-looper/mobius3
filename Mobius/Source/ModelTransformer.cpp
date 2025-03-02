@@ -11,8 +11,6 @@
 #include "model/Symbol.h"
 #include "model/ParameterProperties.h"
 #include "model/ValueSet.h"
-// why the fuck were using this and not Symbol?
-#include "model/UIParameter.h"
 
 #include "model/Session.h"
 
@@ -150,49 +148,22 @@ bool ModelTransformer::getBool(SymbolId id, ValueSet* src)
 /**
  * Build the MslValue for an enumeration preserving both the symbolic enumeration name
  * and the ordinal.
- *
- * This does some consnstency checking that isn't necessary but I want to detect
- * when there are model inconsistencies between UIParameter and ParameterProperties
- * while both still exist.
  */
 void ModelTransformer::transformEnum(SymbolId id, int value, ValueSet* dest)
 {
     Symbol* s = symbols->getSymbol(id);
-    if (s != nullptr) {
-    
-        // method 1: using UIParameter static objects
-        // this needs to go away
-        const char* cname = s->getName();
-        UIParameter* p = UIParameter::find(cname);
-        const char* enumName = nullptr;
-        if (p == nullptr) {
-            Trace(1, "ModelTransformer: Unresolved old parameter %s", cname);
+    if (s == nullptr) {
+        Trace(1, "ModelTransformer: Bad symbol id");
+    }
+    else if (s->parameterProperties == nullptr) {
+        Trace(1, "ModelTransformer: Symbol not a parameter %s", s->getName());
+    }
+    else {
+        const char* enumName = s->parameterProperties->getEnumName(value);
+        if (enumName == nullptr) {
+            Trace(1, "ModelTransformer: Unresolved enumeration %s %d", s->getName(), value);
         }
         else {
-            enumName = p->getEnumName(value);
-            if (enumName == nullptr)
-              Trace(1, "ModelTransformer: Unresolved old enumeration %s %d", cname, value);
-        }
-
-        // method 2: using Symbol and ParameterProperties
-        if (s->parameterProperties == nullptr) {
-            Trace(1, "ModelTransformer: Symbol not a parameter %s", cname);
-        }
-        else {
-            const char* newEnumName = s->parameterProperties->getEnumName(value);
-            if (newEnumName == nullptr)
-              Trace(1, "ModelTransformer: Unresolved new enumeration %s %d", cname, value);
-            else if (enumName != nullptr && strcmp(enumName, newEnumName) != 0)
-              Trace(1, "ModelTransformer: Enum name mismatch %s %s", enumName, newEnumName);
-
-            // so we can limp along, use the new name if the old one didn't match
-            if (enumName == nullptr)
-              enumName = newEnumName;
-        }
-
-        // if we were able to find a name from somewhere, install it
-        // otherwise something was traced
-        if (enumName != nullptr) {
             MslValue* mv = new MslValue();
             mv->setEnum(enumName, value);
             MslValue* existing = dest->replace(s->name, mv);

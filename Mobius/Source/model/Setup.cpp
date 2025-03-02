@@ -18,8 +18,6 @@
 // uses StringList for resettables
 #include "../util/List.h"
 
-#include "UIParameter.h"
-
 #include "ExValue.h"
 #include "Preset.h"
 #include "UserVariable.h"

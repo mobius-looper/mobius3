@@ -58,7 +58,8 @@ class Session
         ValueSet* ensureParameters();
         MslValue* get(juce::String name);
         MslValue* get(SymbolId id);
-
+        MslValue* get(class Symbol* s);
+        
         bool getBool(juce::String name);
         bool getBool(SymbolId id);
         const char* getString(juce::String name);
@@ -174,6 +175,7 @@ class Session
 
     MslValue* get(juce::String pname);
     MslValue* get(SymbolId id);
+    MslValue* get(class Symbol* s);
     bool getBool(juce::String name);
     bool getBool(SymbolId id);
     const char* getString(juce::String name);

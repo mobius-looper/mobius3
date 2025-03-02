@@ -1,7 +1,6 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../model/UIParameter.h"
 #include "../../model/UIConfig.h"
 #include "../../model/Symbol.h"
 #include "../../model/Session.h"

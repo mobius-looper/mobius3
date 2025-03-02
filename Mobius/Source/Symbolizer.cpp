@@ -119,9 +119,6 @@ void Symbolizer::initialize()
     
     loadSymbolProperties();
 
-    // temporary for ConfigEditors, verify that the definitions match
-    //installOldDefinitions();
-
     // assign indexes
     SymbolTable* table = provider->getSymbols();
     juce::OwnedArray<Symbol>& list = table->getSymbols();
@@ -709,81 +706,6 @@ void Symbolizer::addProperty(juce::XmlElement& root, Symbol* s, juce::String nam
     prop->setAttribute("value", value);
     root.addChildElement(prop);
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// Old Static Definitions
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Adorn Symbols using the old FunctionDefinition and UIParameter
- * static objects.  There should be complete overlap now with things
- * defined in the symbols.xml file.
- *
- * These do not use FunctionProperties and ParameterProperties, they
- * use the older convention of putting a pointer to the FunctionDefinition
- * and ParameterDefinition directly on the symbol.  When symbols.xml is loaded
- * the symbols will get properties objects that should match.
- *
- * Soon, this will all go away but we have to rewrite the ui/config classes
- * to use symbols instead of UIParameters.
- */
-#if 0    
-void Symbolizer::installOldDefinitions()
-{
-    SymbolTable* symbols = provider->getSymbols();
-    
-    // adorn Symbols from the older static FunctionDefinitions
-
-    // don't know why this was here, Mobius will do this when it gets around
-    // to initialization and I want to get rid of FunctionDefinition
-    for (int i = 0 ; i < FunctionDefinition::Instances.size() ; i++) {
-        FunctionDefinition* def = FunctionDefinition::Instances[i];
-        Symbol* s = symbols->find(def->name);
-        if (s == nullptr) {
-            // something was missing in SymbolDefinitions
-            Trace(1, "Symbolizer: Missing SymbolDefinition for %s", def->name);
-        }
-        else {
-            if (s->functionProperties == nullptr) {
-                // this must have been missing from symbols.xml
-                Trace(1, "Symbolizer: Missing symbols.xml definition for %s", def->name);
-            }
-        
-            s->behavior = BehaviorFunction;
-            // start them out in core, Mobuis can change that
-            s->level = LevelCore;
-            // we have an ordinal but that won't be used any more
-            s->function = def;
-        }
-    }
-
-    // don't do these any more either
-    // adorn Symbols fromolder UIParameter definitions
-    for (int i = 0 ; i < UIParameter::Instances.size() ; i++) {
-        UIParameter* def = UIParameter::Instances[i];
-
-        // if this is flagged deprecated, it is there only for the XmlRenderer and should
-        // not be isntalled
-        if (def->deprecated) continue;
-        
-        Symbol* s = symbols->find(def->name);
-        if (s == nullptr) {
-            Trace(1, "Symbolizer: Missing SymbolDefinition for %s", def->name);
-        }
-        else {
-            if (s->parameterProperties == nullptr) {
-                Trace(1, "Symbolizer: Missing symbols.xml definition for %s", def->name);
-            }
-            s->behavior = BehaviorParameter;
-            s->level = LevelCore;
-            s->parameter = def;
-        }
-    }
-    
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //
