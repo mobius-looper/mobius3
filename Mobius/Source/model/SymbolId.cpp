@@ -35,7 +35,6 @@ const char* ParamNameIntegerWaveFile = "integerWaveFile";
 const char* ParamNameGroupFocusLock = "groupFocusLock";
 const char* ParamNameTrackCount = "trackCount";
 const char* ParamNameGroupCount = "groupCount";
-const char* ParamNameMaxLoops = "maxLoops";
 const char* ParamNameInputLatency = "inputLatency";
 const char* ParamNameOutputLatency = "outputLatency";
 const char* ParamNameNoiseFloor = "noiseFloor";
@@ -145,7 +144,6 @@ SymbolDefinition SymbolDefinitions[] = {
 
     {ParamNameInputLatency, ParamInputLatency},
     {ParamNameOutputLatency, ParamOutputLatency},
-    {ParamNameMaxLoops, ParamMaxLoops},
     {ParamNameNoiseFloor, ParamNoiseFloor},
     {ParamNameLongPress, ParamLongPress},
     {"longDisable", ParamLongDisable},

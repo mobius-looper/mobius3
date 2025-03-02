@@ -279,12 +279,10 @@ int TrackManager::getOutputLatency()
 
 int TrackManager::getLatency(SymbolId sid)
 {
-    int latency = 0;
-    int blockSize = kernel->getBlockSize();
+    int latency = kernel->getBlockSize();
     
     if (session == nullptr) {
         Trace(1, "TrackManager: Latency requested before session loaded");
-        latency = blockSize;
     }
     else {
         int alternate = session->getInt(sid);
@@ -296,7 +294,8 @@ int TrackManager::getLatency(SymbolId sid)
     // scheduling or loop advance, if we get here with a zero block size,
     // default to something reasonable which should be almost immediately corrected
     if (latency == 0) {
-        Trace(1, "TrackManager: Correcting unavailable latency");
+        // this is common during initialization before the audio stream is open
+        //Trace(1, "TrackManager: Correcting unavailable latency");
         latency = 128;
     }
     return latency;

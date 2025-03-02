@@ -644,6 +644,8 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // TrackManager move
     int newBlockSize = container->getBlockSize();
     if (newBlockSize != lastBlockSize) {
+        Trace(2, "MobiusKernel: Changing block size from %d to %d",
+              lastBlockSize, newBlockSize);
         lastBlockSize = newBlockSize;
         // this does more than just latencies, but doesn't seem worth
         // another entry point just for latencies

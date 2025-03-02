@@ -87,22 +87,6 @@ class Track : public TraceContext
     // Old Interface
     //////////////////////////////////////////////////////////////////////
 
-    int getInputPort() {
-        return mInputPort;
-    }
-    
-    void setInputPort(int p) {
-        mInputPort = p;
-    }
-
-    int getOutputPort() {
-        return mOutputPort;
-    }
-
-    void setOutputPort(int p) {
-        mOutputPort = p;
-    }
-
 	void setHalting(bool b);
 
 	void getTraceContext(int* context, long* time);
@@ -282,7 +266,9 @@ class Track : public TraceContext
 	void init(Mobius* mob, class Synchronizer* sync, int number);
 
     // configuration management
-    
+
+    void setInputPort(int p);
+    void setOutputPort(int p);
 	void setupLoops();
 	void trackReset(class Action* action);
     bool checkSyncEvent(class Event* e);

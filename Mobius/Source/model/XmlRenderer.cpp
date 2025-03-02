@@ -419,6 +419,12 @@ int XmlRenderer::parse(XmlElement* e, SymbolId sid)
     return value;
 }
 
+int XmlRenderer::parse(XmlElement* e, const char* name)
+{
+    const char* value = e->getAttribute(name);
+    return atoi(value);
+}
+
 /**
  * Parse a string attribute.
  * Can return the constant element attribute value, caller is expected
@@ -591,7 +597,7 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
     // don't bother saving this until it can have a more useful range
 	//render(UIParameterFadeFrames, c->getFadeFrames());
     render(b, ParamMaxSyncDrift, c->getMaxSyncDrift());
-    //render(b, UIParameterTrackCount, c->getCoreTracksDontUseThis());
+    render(b, "trackCount", c->getCoreTracksDontUseThis());
     
     // UIParameter is gone, and this shouldn't be used any more, but the
     // upgrader still needs to parse it?
@@ -599,7 +605,7 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
     if (c->getTrackGroupsDeprecated() > 0)
       b->addAttribute("groupCount", c->getTrackGroupsDeprecated());
     
-    render(b, ParamMaxLoops, c->getMaxLoops());
+    render(b, "maxLoops", c->getMaxLoops());
     render(b, ParamLongPress, c->getLongPress());
     render(b, ParamMonitorAudio, c->isMonitorAudio());
 	b->addAttribute(ATT_PLUGIN_HOST_REWINDS, c->isHostRewinds());
@@ -682,12 +688,12 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 	c->setInputLatency(parse(e, ParamInputLatency));
 	c->setOutputLatency(parse(e, ParamOutputLatency));
 	c->setMaxSyncDrift(parse(e, ParamMaxSyncDrift));
-	//c->setCoreTracks(parse(e, ParamTrackCount));
+	c->setCoreTracks(parse(e, "trackCount"));
     
 	//c->setTrackGroupsDeprecated(parse(e, UIParameterGroupCount));
 	c->setTrackGroupsDeprecated(e->getIntAttribute("groupCount"));
     
-	c->setMaxLoops(parse(e, ParamMaxLoops));
+	c->setMaxLoops(parse(e, "maxLoops"));
 	c->setLongPress(parse(e, ParamLongPress));
 
 	c->setMonitorAudio(parse(e, ParamMonitorAudio));
@@ -1114,8 +1120,8 @@ void XmlRenderer::render(XmlBuffer* b, SetupTrack* t)
     render(b, ParamPluginInputPort, t->getPluginInputPort());
     render(b, ParamPluginOutputPort, t->getPluginOutputPort());
 
-    render(b, ParamOldSyncSource, t->getSyncSource());
-    render(b, ParamOldTrackSyncUnit, t->getSyncTrackUnit());
+    render(b, "syncSource", render(t->getSyncSource()));
+    render(b, "trackSyncUnit", render(t->getSyncTrackUnit()));
 
     UserVariables* uv = t->getVariables();
     if (uv == nullptr) {
@@ -1163,8 +1169,8 @@ void XmlRenderer::parse(XmlElement* e, SetupTrack* t)
     t->setPluginInputPort(parse(e, ParamPluginInputPort));
     t->setPluginOutputPort(parse(e, ParamPluginOutputPort));
 
-    t->setSyncSource((OldSyncSource)parse(e, ParamOldSyncSource));
-    t->setSyncTrackUnit((SyncTrackUnit)parse(e, ParamOldTrackSyncUnit));
+    t->setSyncSource((OldSyncSource)parseOldSyncSource(e->getAttribute("syncSource")));
+    t->setSyncTrackUnit((SyncTrackUnit)parseSyncTrackUnit(e->getAttribute("trackSyncUnit")));
 
     // should only have a single UserVariables 
 	for (XmlElement* child = e->getChildElement() ; child != nullptr ; 

@@ -1069,6 +1069,15 @@ MobiusConfig* Supervisor::getOldMobiusConfig()
         }
 
         mobiusConfig.reset(neu);
+#if 0
+        // testing XML transformation after UIParameter rip
+        XmlRenderer xr (getSymbols());
+        char* xml = xr.render(neu);
+        const char* name = "hack.xml";
+        juce::File file = getRoot().getChildFile(name);
+        file.replaceWithText(juce::String(xml));
+        delete xml;
+#endif        
     }
     return mobiusConfig.get();
 }

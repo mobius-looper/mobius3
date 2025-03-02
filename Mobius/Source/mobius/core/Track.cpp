@@ -388,6 +388,26 @@ void Track::doAction(UIAction* a)
     }
 }
 
+void Track::setInputPort(int p)
+{
+    if (p < 0 || p > 64) {
+        Trace(1, "Track: Unacceptable input port %d", p);
+    }
+    else {
+        mInputPort = p;
+    }
+}
+
+void Track::setOutputPort(int p)
+{
+    if (p < 0 || p > 64) {
+        Trace(1, "Track: Unacceptable output port %d", p);
+    }
+    else {
+        mOutputPort = p;
+    }
+}
+
 /**
  * Refresh cached parameters after a session change or GobalReset
  * We just pull the current values from the LogicalTrack, LT will deal with

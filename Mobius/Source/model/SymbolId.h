@@ -42,7 +42,6 @@ typedef enum {
     
     ParamInputLatency,
     ParamOutputLatency,
-    ParamMaxLoops,
     ParamNoiseFloor,
     ParamLongPress,
     ParamLongDisable,

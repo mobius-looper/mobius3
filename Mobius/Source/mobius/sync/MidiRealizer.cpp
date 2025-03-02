@@ -253,6 +253,9 @@ bool MidiClockThread::start()
 
 void MidiClockThread::stop()
 {
+    // delete this so we don't wake up and try to use it during deconstruction
+    realizer = nullptr;
+    
     // example says: allow 2 seconds to stop cleanly - should be plenty of time
     if (!stopThread(2000)) {
         Trace(1, "MidiClockThread: Unable to stop thread\n");
@@ -266,7 +269,8 @@ void MidiClockThread::run()
         // this seems to be innacurate, in testing my delta was frequently
         // 2 and as high as 5 comparing getMilliseondCounter
         wait(1);
-        realizer->clockThreadAdvance();
+        if (realizer != nullptr)
+          realizer->clockThreadAdvance();
     }
 }
 

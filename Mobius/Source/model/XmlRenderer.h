@@ -48,6 +48,7 @@ class XmlRenderer {
 
     //int parse(class XmlElement* e, class UIParameter* p);
     int parse(class XmlElement* e, SymbolId sid);
+    int parse(XmlElement* e, const char* name);
     
     //const char* parseString(class XmlElement* e, class UIParameter* p);
     const char* parseString(class XmlElement* e, SymbolId sid);
