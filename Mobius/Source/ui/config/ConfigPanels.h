@@ -13,7 +13,6 @@
 
 #include "ConfigPanel.h"
 
-#include "PresetEditor.h"
 #include "ScriptConfigEditor.h"
 #include "SampleEditor.h"
 #include "KeyboardEditor.h"
@@ -52,19 +51,6 @@ class SamplePanel : public ConfigPanel
  
   private:
     SampleEditor editor;
-};
-
-class PresetPanel : public ConfigPanel
-{
-  public:
-    PresetPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
-        setName("PresetPanel");
-        setEditor(&editor);
-    }
-    ~PresetPanel() {}
- 
-  private:
-    PresetEditor editor;
 };
 
 class KeyboardPanel : public ConfigPanel

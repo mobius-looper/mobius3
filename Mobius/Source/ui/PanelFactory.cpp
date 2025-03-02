@@ -133,7 +133,6 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case MidiSummary: panel = new MidiSummaryPanel(super); break;
         case KeyboardSummary: panel = new KeyboardSummaryPanel(super); break;
 
-        case Preset: panel = new PresetPanel(super); break;
         case Script: panel = new ScriptPanel(super); break;
         case Sample: panel = new SamplePanel(super); break;
         case Display: panel = new DisplayPanel(super); break;

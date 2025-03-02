@@ -38,7 +38,6 @@ class PanelFactory
         KeyboardSummary,
 
         // configuration editing panels
-        Preset,
         Keyboard,
         Midi,
         Host,

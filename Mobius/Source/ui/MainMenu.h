@@ -95,7 +95,6 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         Exit,
 
         // Configuration
-        Presets,
         MidiControl,
         KeyboardControl,
         Buttons,

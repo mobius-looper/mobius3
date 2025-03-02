@@ -43,7 +43,7 @@
 #include <JuceHeader.h>
 
 // for UIParameterType, UIParameterScope
-#include "model/UIParameter.h"
+#include "model/ParameterConstants.h"
 // for SymbolLevel
 #include "model/Symbol.h"
 // for SymbolId

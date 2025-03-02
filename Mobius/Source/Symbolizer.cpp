@@ -10,7 +10,6 @@
 #include "model/Symbol.h"
 #include "model/SymbolId.h"
 #include "model/FunctionProperties.h"
-#include "model/UIParameter.h"
 #include "model/ParameterProperties.h"
 #include "model/MobiusConfig.h"
 #include "model/Session.h"

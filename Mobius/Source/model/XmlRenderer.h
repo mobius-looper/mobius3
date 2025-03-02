@@ -17,6 +17,7 @@
 #pragma once
 
 #include "SymbolId.h"
+#include "ParameterConstants.h"
 
 class XmlRenderer {
 
@@ -36,18 +37,19 @@ class XmlRenderer {
 
     // common utilities
 
-    void render(class XmlBuffer* b, class UIParameter* p, int value);
+    //void render(class XmlBuffer* b, class UIParameter* p, int value);
     void render(class XmlBuffer* b, SymbolId sid, int value);
-    void render(class XmlBuffer* b, class UIParameter* p, bool value);
+    //void render(class XmlBuffer* b, class UIParameter* p, bool value);
     void render(class XmlBuffer* b, SymbolId sid, bool value);
-    void render(class XmlBuffer* b, class UIParameter* p, const char* value);
+    //void render(class XmlBuffer* b, class UIParameter* p, const char* value);
     void render(class XmlBuffer* b, SymbolId sid, const char* value);
     void render(class XmlBuffer* b, const char* name, const char* value);
+    void render(XmlBuffer* b, const char* name, int value);
 
-    int parse(class XmlElement* e, class UIParameter* p);
+    //int parse(class XmlElement* e, class UIParameter* p);
     int parse(class XmlElement* e, SymbolId sid);
     
-    const char* parseString(class XmlElement* e, class UIParameter* p);
+    //const char* parseString(class XmlElement* e, class UIParameter* p);
     const char* parseString(class XmlElement* e, SymbolId sid);
     
     class StringList* parseStringList(class XmlElement* e);
@@ -99,5 +101,12 @@ class XmlRenderer {
 
     class SymbolTable* symbols = nullptr;
     const char* getSymbolName(SymbolId sid);
+
+
+    const char* XmlRenderer::render(OldSyncSource src);
+    OldSyncSource parseOldSyncSource(const char* value);
+    const char* render(OldSyncUnit unit);
+    const char* render(SyncTrackUnit unit);
+    SyncTrackUnit parseSyncTrackUnit(const char* value);
 
 };

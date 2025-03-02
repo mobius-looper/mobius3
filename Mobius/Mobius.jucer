@@ -330,13 +330,6 @@
                 file="Source/ui/config/ObjectSelector.cpp"/>
           <FILE id="IRESL5" name="ObjectSelector.h" compile="0" resource="0"
                 file="Source/ui/config/ObjectSelector.h"/>
-          <FILE id="aY7LcN" name="ParameterField.cpp" compile="1" resource="0"
-                file="Source/ui/config/ParameterField.cpp"/>
-          <FILE id="Olbaad" name="ParameterField.h" compile="0" resource="0"
-                file="Source/ui/config/ParameterField.h"/>
-          <FILE id="gIdban" name="PresetEditor.cpp" compile="1" resource="0"
-                file="Source/ui/config/PresetEditor.cpp"/>
-          <FILE id="b2ZY1I" name="PresetEditor.h" compile="0" resource="0" file="Source/ui/config/PresetEditor.h"/>
           <FILE id="a1eGSE" name="PropertiesEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/PropertiesEditor.cpp"/>
           <FILE id="emfqEq" name="PropertiesEditor.h" compile="0" resource="0"

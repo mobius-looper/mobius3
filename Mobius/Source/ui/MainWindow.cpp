@@ -267,10 +267,6 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::Group);
             }
                 break;
-            case MainMenu::Presets: {
-                panelFactory.show(PanelFactory::Preset);
-            }
-                break;
             case MainMenu::EditSession: {
                 panelFactory.show(PanelFactory::Session);
             }

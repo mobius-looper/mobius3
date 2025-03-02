@@ -251,7 +251,7 @@ bool Upgrader::upgradePresets(MobiusConfig* config)
             stubconfig->addPreset(p);
             transformer.transform(set, p);
         }
-        XmlRenderer xr (supervisor->getSymbols());
+        XmlRenderer xr;
         char* xml = xr.render(stubconfig);
         juce::File root = supervisor->getRoot();
         juce::File file = root.getChildFile("converted.xml");

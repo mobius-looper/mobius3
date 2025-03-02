@@ -185,9 +185,6 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     }
     else if (menuIndex == menuIndexPreset)
     {
-        menu.addItem(Presets, "Edit Presets...");
-        menu.addSeparator();
-
         Provider* provider = mainWindow->getProvider();
         int active = provider->getActivePreset();
         MobiusConfig* config = provider->getOldMobiusConfig();
