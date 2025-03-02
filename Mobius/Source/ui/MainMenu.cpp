@@ -32,7 +32,6 @@
 #include "../model/MobiusConfig.h"
 #include "../model/UIConfig.h"
 #include "../model/Session.h"
-#include "../model/Preset.h"
 #include "../model/Symbol.h"
 #include "../model/Query.h"
 #include "../model/Binding.h"
@@ -183,22 +182,21 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
             index++;
         }
     }
-    else if (menuIndex == menuIndexPreset)
+    else if (menuIndex == menuIndexOverlay)
     {
         Provider* provider = mainWindow->getProvider();
-        int active = provider->getActivePreset();
-        MobiusConfig* config = provider->getOldMobiusConfig();
-        Preset* preset = config->getPresets();
+        juce::StringArray names;
+        provider->getOverlayNames(names);
+        int active = provider->getActiveOverlay();
         int index = 0;
-        while (preset != nullptr) {
-            juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(preset->getName())).setID(MenuPresetOffset + index);
-            if (index == active)
+        for (auto name : names) {
+            juce::PopupMenu::Item item = juce::PopupMenu::Item(name).setID(MenuOverlayOffset + index);
+            // active overlay ordinal is 1 based, 0 means none
+            if (index == (active - 1))
               item.setTicked(true);
             menu.addItem(item);
             index++;
-            preset = (Preset*)(preset->getNext());
         }
-        
     }
     else if (menuIndex == menuIndexDisplay) {
         menu.addItem(DisplayComponents, "Edit Layouts...");

@@ -430,6 +430,15 @@ void Mobius::installSymbols()
  * This is what allocates the internal Track array and does propagation
  * of the Setup.  It will be called by TrackManager after the session
  * has been processed and the logical track list has been organized.
+ *
+ * This is weirder than it should be due to the funky MobusLooperTrack that
+ * sits between Track and LogicalTrack.  It would be much better if Track could
+ * just implement BaseTrack but that brings in a few dependencies on TrackManager
+ * during construction.
+ *
+ * Since LogicalTrack doesn't have a nice interface for dealing with this multi-level
+ * layering, TrackManager passes in the intermediate MobiusLooperTrack where we
+ * can see the native track pointers.
  */
 void Mobius::configureTracks(juce::Array<MobiusLooperTrack*>& trackdefs)
 {
@@ -446,16 +455,13 @@ void Mobius::configureTracks(juce::Array<MobiusLooperTrack*>& trackdefs)
                 tracksChanged = true;
                 break;
             }
-            // make sure the numbers track, can this happen without
-            // the previous test catching it?
-            if (!tracksChanged && 
-                native->getLogicalNumber() != mlt->getNumber()) {
-                // tracks may have changed logical number but still
-                // have the same count and position, happens if for example
-                // you delete MIDI tracks that were in front of audio tracks
-                //Trace(2, "Mobius: Adjusting logical track number from %d to %d",
-                //native->getLogicalNumber(), mlt->getNumber());
-                native->setLogicalNumber(mlt->getNumber());
+            
+            // make sure the LogicalTrack is refreshed if we decide
+            // not to do the full restructuring below
+            if (!tracksChanged &&
+                native->getLogicalTrack() != mlt->getLogicalTrack()) {
+                Trace(2, "Mobius: Adjusting LogicalTrack reference, weird huh");
+                native->setLogicalTrack(mlt->getLogicalTrack());
             }
         }
     }
@@ -500,9 +506,7 @@ void Mobius::configureTracks(juce::Array<MobiusLooperTrack*>& trackdefs)
                     newTracks[index] = native;
                     def->setCoreTrack(this, native);
                 }
-                // need to remember this too when communicating with SyncMaster
-                // and sending notifications
-                native->setLogicalNumber(def->getNumber());
+                native->setLogicalTrack(def->getLogicalTrack());
                 index++;
             }
         }
@@ -556,17 +560,6 @@ void Mobius::doTrackReset(Track* t)
         UserVariables* vars = t->getVariables();
         vars->reset();
     }
-}
-
-/**
- * Get the LogicalTrack associated with a Track.
- * Not liking how this is evolving, since this relationship is going to become
- * more critical, Track should just point to this, which also impacts
- * the shenanigans with MobiusLooperTrack above.
- */
-LogicalTrack* Mobius::getLogicalTrack(int number)
-{
-    return mKernel->getTrackManager()->getLogicalTrack(number);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2296,6 +2289,9 @@ void Mobius::cancelMslWait(class Event* e)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * This is stubbed out in MobiusKernel, don't remember what the intent was.
+ */
 void Mobius::clipStart(class Loop* l, const char* bindingArgs)
 {
     mKernel->clipStart(l->getTrack()->getLogicalNumber(), bindingArgs);

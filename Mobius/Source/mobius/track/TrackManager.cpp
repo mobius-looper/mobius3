@@ -217,6 +217,13 @@ void TrackManager::configureTracks(Session* ses)
         lt->setSession(def, i+1);
     }
 
+    // before sending anything to the tracks, prime the LogicalTrack's
+    // parameter cache so the BaseTracks can immediately call back to it
+    // for things
+    for (auto track : tracks) {
+        track->prepareParameters();
+    }
+    
     // this is how core tracks get the session updates
     configureMobiusTracks();
         

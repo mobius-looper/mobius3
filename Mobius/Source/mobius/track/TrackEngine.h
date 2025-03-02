@@ -3,6 +3,10 @@
  * BaseTracks for use by TrackManager/LogicalTrack.
  *
  * Nothing in here besides the track constructor but may need more
+ *
+ * THIS IS NO LONGER USED
+ *
+ * Used for awhile with MidiTrack but turned out not to be useful
  */
 
 #pragma once

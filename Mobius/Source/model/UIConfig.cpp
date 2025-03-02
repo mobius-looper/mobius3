@@ -599,6 +599,11 @@ DisplayLayout* UIConfig::parseLayout(juce::XmlElement* root)
             // the DisplayElement with type ParametersElement
             juce::String csv = el->getStringAttribute("names");
             layout->instantParameters = juce::StringArray::fromTokens(csv, ",", "");
+
+            // make a name change after the Preset removal
+            int index = layout->instantParameters.indexOf("activePreset");
+            if (index >= 0)
+              layout->instantParameters.set(index, "trackOverlay");
         }
     }
     return layout;

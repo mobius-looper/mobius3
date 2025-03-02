@@ -27,7 +27,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     enum MenuIndexes {
         menuIndexFile = 0,
         menuIndexSession,
-        menuIndexPreset,
+        menuIndexOverlay,
         menuIndexDisplay,
         menuIndexBindings,
         menuIndexConfig,
@@ -39,7 +39,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     /**
      * Names of the top-level menu items
      */
-    juce::StringArray MenuNames {"File", "Sessions", "Presets", "Display", "Bindings", "Configuration", "Scripts", "Help", "Test"};
+    juce::StringArray MenuNames {"File", "Sessions", "Overlays", "Display", "Bindings", "Configuration", "Scripts", "Help", "Test"};
 
     /**
      * Offset of menu item ids for the generated track setup items
@@ -51,8 +51,8 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     /**
      * Offset of menu item ids for the generated preset items
      */
-    static const int MenuPresetOffset = 200;
-    static const int MenuPresetMax = 299;
+    static const int MenuOverlayOffset = 200;
+    static const int MenuOverlayMax = 299;
 
     /**
      * Offsets for extensible items in the Display menu.
@@ -77,7 +77,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     /**
      * These are menu item model ids which must begin from 1
      *
-     * Menus for Session, Preset, Bindings are special and generated
+     * Menus for Session, Overlay, Bindings are special and generated
      * with their own id ranges.
      */
     enum MenuItems {

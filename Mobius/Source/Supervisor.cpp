@@ -670,24 +670,38 @@ MainWindow* Supervisor::getMainWindow()
 }
 
 /**
- * Determine the active Preset being used by the active track.
+ * Determine the trackOverlay being used by the active track.
  * Used by MainMenu to show a tick in the menu.
- *
- * !! This needs to be activeOverlay, and it is permissible for 0 to mean "none"
+ * This may be zero to mean "none" selected.  Overlays are numbered from 1.
  */
-int Supervisor::getActivePreset()
+int Supervisor::getActiveOverlay()
 {
-    int ordinal = -1;
-    // todo: do we show the activePreset in the activeTrack
-    // or do we show the defaultPreset in global config?
-    // active makes the most sense
-    Symbol* s = symbols.intern("activePreset");
-    if (s->parameterProperties != nullptr) {
+    int ordinal = 0;
+    Symbol* s = symbols.getSymbol(ParamTrackOverlay);
+    if (s == nullptr || s->parameterProperties == nullptr) {
+        Trace(1, "Supervisor: Malformed trackOverlay symbol");
+    }
+    else {
         Query q(s);
         if (mobius->doQuery(&q))
           ordinal = q.value;
     }
     return ordinal;
+}
+
+/**
+ * Determine the names of the availalbe track overlays.
+ * Used by MainMenu.
+ */
+void Supervisor::getOverlayNames(juce::StringArray& names)
+{
+    names.clear();
+    ParameterSets* sets = getParameterSets();
+    if (sets != nullptr) {
+        for (auto set : sets->getSets()) {
+            names.add(set->name);
+        }
+    }
 }
 
 /**
@@ -1088,12 +1102,6 @@ BindingSet* Supervisor::getBindingSets()
     return config->getBindingSets();
 }
 
-Preset* Supervisor::getPresets()
-{
-    MobiusConfig* config = getOldMobiusConfig();
-    return config->getPresets();
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Other Configuration Objects
@@ -1182,23 +1190,6 @@ void Supervisor::decacheForms()
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * Update the preset list after editing.
- * This is temporarily stored in the old mobius.xml file but nothing
- * else in there is modified.
- */
-void Supervisor::presetEditorSave(Preset* newList)
-{
-    MobiusConfig* master = getOldMobiusConfig();
-    master->setPresets(newList);
-    
-    // this flag is necessary to get the engine to pay attention
-    master->presetsEdited = true;
-
-    // continue the old way for a little
-    updateMobiusConfig();
-}
-
 void Supervisor::bindingEditorSave(BindingSet* newList)
 {
     MobiusConfig* master = getOldMobiusConfig();
@@ -1246,23 +1237,10 @@ void Supervisor::upgradePanelSave()
  * In practice this should only be called by ConfigEditors.
  *
  * The object returned by getMobiusConfig is expected to have
- * been movidied and will be sent to Mobius after writing the file.
+ * been modified and will be sent to Mobius after writing the file.
  *
- * There are two transient flags inside MobiusConfig that must be
- * set by the PresetEditor and SetupEditor to indiciate that changes
- * were made to those objects.  This is necessary to get the Mobius engine
- * to actually use the new objects.  This prevents needlessly reconfiguring
- * the* engine and losing runtime parameter values if all you change
- * are bindings or global parameters.
- *
- * It's kind of kludgey but gets the job done.  Once the changes have been
- * propagated clear the flags so we don't do it again.
- *
- * update: This is all being phased out for the Session
- * The only thing remaining in MobiusConfig that is important is the Bindings
- * and the Presets.
- *
- * Presets still need to be sent down.
+ * This has been mostly gutted at this point, the only things of interest
+ * that remain are the BindingSets.
  */
 void Supervisor::updateMobiusConfig()
 {
@@ -1331,11 +1309,6 @@ void Supervisor::sendModifiedMobiusConfig()
     payload->config = synth;
     
     mobius->reconfigure(payload);
-
-    // clear speical triggers for the engine now that it is done
-    MobiusConfig* config = getOldMobiusConfig();
-    config->setupsEdited = false;
-    config->presetsEdited = false;
 }
 
 /*

@@ -32,8 +32,13 @@ MidiEngine::~MidiEngine()
  */
 BaseTrack* MidiEngine::newTrack(TrackManager* tm, LogicalTrack* lt, Session::Track* def)
 {
+    (void)def;
     MidiTrack* mt = new MidiTrack(tm, lt);
-    mt->loadSession(def);
+
+    // loadSession is replaced with refreshParameters
+    // but we shouldn't be using this any more
+    //mt->loadSession(def);
+    
     return mt;
 }
     

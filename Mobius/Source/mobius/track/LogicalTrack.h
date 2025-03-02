@@ -38,7 +38,9 @@ class LogicalTrack
     // this just remembers it during track organization
     void setSession(class Session::Track* def, int trackNumber);
     Session::Track* getSession();
-    // this causes it to be fully loaded
+    // this causes the parameter caches to be loaded
+    void prepareParameters();
+    // this causes the session to be fully loaded and the BaseTracks initialized
     void loadSession();
     
     Session::TrackType getType();

@@ -200,10 +200,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // controlled access to MobiusConfig
     class MobiusConfig* getOldMobiusConfig() override;
     class BindingSet* getBindingSets() override;
-    class Preset* getPresets() override;
     
     // old configuration editor interfaces
-    void presetEditorSave(class Preset* newList);
     void bindingEditorSave(class BindingSet* newList);
     void groupEditorSave(juce::Array<class GroupDefinition*>& newList);
     void sampleEditorSave(class SampleConfig* newConfig);
@@ -232,8 +230,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     juce::String getStructureName(class Symbol* s, int value) override;
     
     // special accessors for things deep within the engine
-    int getActivePreset() override;
-
+    int getActiveOverlay() override;
+    void getOverlayNames(juce::StringArray& names) override;
+    
     // entry point for the "maintenance thread" only to be called by MainThread
     void advance();
     void advanceHigh();

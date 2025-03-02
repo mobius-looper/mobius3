@@ -92,22 +92,24 @@ void Notifier::notify(Loop* loop, NotificationId id)
  */
 void Notifier::notify(Track* track, NotificationId id)
 {
-    int trackNumber = track->getLogicalNumber();
+    LogicalTrack* lt = track->getLogicalTrack();
+    if (lt == nullptr) {
+        Trace(1, "Notifier: Track without LogicalTrack");
+    }
+    else {
+        TrackProperties props;
+        props.number = lt->getNumber();
+        props.frames = track->getFrames();
+        props.cycles = track->getCycles();
+        props.currentFrame = (int)(track->getFrame());
 
-    TrackProperties props;
-    props.number = trackNumber;
-    props.frames = track->getFrames();
-    props.cycles = track->getCycles();
-    props.currentFrame = (int)(track->getFrame());
+        // inform the track listeners
+        lt->notifyListeners(id, props);
 
-    // inform the track listeners
-    LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
-    if (lt != nullptr)
-      lt->notifyListeners(id, props);
-
-    // and any scripts
-    NotificationPayload payload;
-    notifyScript(id, props, payload);
+        // and any scripts
+        NotificationPayload payload;
+        notifyScript(id, props, payload);
+    }
 }
 
 /**
@@ -116,20 +118,22 @@ void Notifier::notify(Track* track, NotificationId id)
  */
 void Notifier::notify(Track* track, NotificationId id, TrackProperties& props)
 {
-    int trackNumber = track->getLogicalNumber();
+    LogicalTrack* lt = track->getLogicalTrack();
+    if (lt == nullptr) {
+        Trace(1, "Notifier: Track without LogicalTrack");
+    }
+    else {
+        // trust that the track info has already been filled in or do ot for the caller?
+        props.number = lt->getNumber();
+        props.frames = track->getFrames();
+        props.cycles = track->getCycles();
+        props.currentFrame = (int)(track->getFrame());
 
-    // trust that the track info has already been filled in or do ot for the caller?
-    props.number = trackNumber;
-    props.frames = track->getFrames();
-    props.cycles = track->getCycles();
-    props.currentFrame = (int)(track->getFrame());
+        lt->notifyListeners(id, props);
 
-    LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
-    if (lt != nullptr)
-      lt->notifyListeners(id, props);
-
-    NotificationPayload payload;
-    notifyScript(id, props, payload);
+        NotificationPayload payload;
+        notifyScript(id, props, payload);
+    }
 }
 
 void Notifier::notify(Loop* loop, NotificationId id, NotificationPayload& payload)
@@ -139,17 +143,22 @@ void Notifier::notify(Loop* loop, NotificationId id, NotificationPayload& payloa
 
 void Notifier::notify(Track* track, NotificationId id, NotificationPayload& payload)
 {
-    int trackNumber = track->getLogicalNumber();
-    TrackProperties props;
-    props.number = trackNumber;
-    props.frames = track->getFrames();
-    props.cycles = track->getCycles();
-    props.currentFrame = (int)(track->getFrame());
+    LogicalTrack* lt = track->getLogicalTrack();
+    if (lt == nullptr) {
+        Trace(1, "Notifier: Track without LogicalTrack");
+    }
+    else {
+        TrackProperties props;
+        props.number = lt->getNumber();
+        props.frames = track->getFrames();
+        props.cycles = track->getCycles();
+        props.currentFrame = (int)(track->getFrame());
             
-    // the older ones that don't use a payload won't have listeners and listeners
-    // aren't prepared to accept a payload, add listeners later
+        // the older ones that don't use a payload won't have listeners and listeners
+        // aren't prepared to accept a payload, add listeners later
 
-    notifyScript(id, props, payload);
+        notifyScript(id, props, payload);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

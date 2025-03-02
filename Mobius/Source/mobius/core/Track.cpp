@@ -160,19 +160,25 @@ void Track::renumber(int n)
     mRawNumber = n;
 }
 
-void Track::setLogicalNumber(int n)
+void Track::setLogicalTrack(LogicalTrack* lt)
 {
-    mLogicalNumber = n;
-}
-
-int Track::getLogicalNumber()
-{
-    return mLogicalNumber;
+    mLogicalTrack = lt;
 }
 
 class LogicalTrack* Track::getLogicalTrack()
 {
-    return mMobius->getLogicalTrack(mLogicalNumber);
+    return mLogicalTrack;
+}
+
+/**
+ * Synchronizer/SyncMaster interface likes to deal with numbers
+ * rather than LogicalTrack objects, for old reasons so make
+ * it easier to get that.  Now that LogicalTrack has permiated
+ * everywhere, may as well just start passsing that around.
+ */
+int Track::getLogicalNumber()
+{
+    return (mLogicalTrack != nullptr) ? mLogicalTrack->getNumber() : 0;
 }
 
 /**
@@ -946,7 +952,7 @@ void Track::refreshPriorityState(PriorityState* s)
 void Track::refreshState(TrackState* s)
 {
     s->type = Session::TypeAudio;
-    s->number = mLogicalNumber;
+    s->number = mLogicalTrack->getNumber();
 
     s->inputMonitorLevel = mInput->getMonitorLevel();
 	s->outputMonitorLevel = mOutput->getMonitorLevel();

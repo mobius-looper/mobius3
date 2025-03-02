@@ -21,7 +21,6 @@
 #include "../../script/MslValue.h"
 
 #include "../core/Mobius.h"
-#include "../midi/MidiEngine.h"
 #include "../midi/MidiTrack.h"
 // for isPlugin
 #include "../MobiusInterface.h"
@@ -85,9 +84,31 @@ Session::TrackType LogicalTrack::getType()
 }
 
 /**
+ * This happens during TrackManager::configureTracks after we've fleshed
+ * out the LogicalTrack array and want to start making or updating the BaseTracks.
+ * Because core tracks are handled in bulk rather than one at a time like
+ * MIDI tracks, we need to have the parameter caches refreshed before
+ * we start touching core tracks.
+ *
+ * Kind of sucks, would be nice if Mobius tracks and MIDI tracks could be initialized
+ * the same way.
+ */
+void LogicalTrack::prepareParameters()
+{
+    if (sessionTrack == nullptr) {
+        Trace(1, "LogicalTrack::loadSession Session object was not set");
+        return;
+    }
+
+    cacheParameters(false);
+}
+
+/**
  * After track reorganization has finished and all tracks
- * are in place, this is called to let it process the definition
- * stored by setSession.
+ * are in place, this is called to send the session to the tracks.
+ * Core tracks will already have been initialized by TrackManager::configureMobiusTracks
+ * so we really just need to deal with MIDI or other tracks that can be dealt
+ * with one at a time.
  */
 void LogicalTrack::loadSession()
 {
@@ -96,19 +117,17 @@ void LogicalTrack::loadSession()
         return;
     }
 
-    cacheParameters(false);
-    
+    // now doen earlier in prepareParameters
+    //cacheParameters(false);
+
     if (track == nullptr) {
         // this was a new logical track
         // make a new inner track using the appopriate track factory
         if (trackType == Session::TypeMidi) {
-            // the engine has no state at the moment, though we may want this
-            // to be where the type specific pools live
-            MidiEngine engine;
             // this one will call back for the BaseScheduler and wire it in
             // with a LooperScheduler
             // not sure I like the handoff here
-            track.reset(engine.newTrack(manager, this, sessionTrack));
+            track.reset(new MidiTrack(manager, this));
         }
         else if (trackType == Session::TypeAudio) {
             // These should have been allocated earlier during Mobius configuration
@@ -118,12 +137,11 @@ void LogicalTrack::loadSession()
             Trace(1, "LogicalTrack: Unknown track type");
         }
     }
-    else {
-        // we've had this one before, tell it to reconfigure
-        // since the inner track can always get back to the LogicalTrack we don't
-        // need to pass the Session down
-        track->loadSession(sessionTrack);
-    }
+
+    // only need to call refreshParameters for non-core tracks right now,
+    // it doesn't hurt but it's redundant
+    if (trackType == Session::TypeMidi)
+      track->refreshParameters();
 }
 
 /**

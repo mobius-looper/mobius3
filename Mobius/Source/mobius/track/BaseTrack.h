@@ -33,10 +33,7 @@ class BaseTrack
     // all tracks have a unique number shown in the UI
     int getNumber();
 
-    // tracks come in many shapes and sizes
-    virtual void loadSession(class Session::Track* def) = 0;
-
-    // they are sensitive to change
+    // tracks are sensitive to change
     virtual void refreshParameters() = 0;
 
     // tracks may all do things or schedule them

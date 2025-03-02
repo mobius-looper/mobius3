@@ -102,19 +102,7 @@ MidiTrack::~MidiTrack()
  * keep playing during minor adjustments to the session.
  *
  * todo: should this be here or should we let TrackScheduler deal with.
- * 
- * todo: LogicalTrack should now be considered the manager of the Session,
- * we don't need to pass it in.
- *
- * todo: what a mess, BaseTrack should just have refreshParameters, it doesn't
- * need to care if the session is being reloaded or not.
  */
-void MidiTrack::loadSession(Session::Track* def)
-{
-    (void)def;
-    refreshParameters();
-}
-
 void MidiTrack::refreshParameters()
 {
     scheduler.refreshParameters();

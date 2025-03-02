@@ -71,7 +71,6 @@ class Provider
     // controlled access to MobiusConfig
     virtual class MobiusConfig* getOldMobiusConfig() = 0;
     virtual class BindingSet* getBindingSets() = 0;
-    virtual class Preset* getPresets() = 0;
     virtual class ParameterSets* getParameterSets() = 0;
     
     virtual class UIConfig* getUIConfig() = 0;
@@ -105,8 +104,9 @@ class Provider
     virtual bool isTestMode() = 0;
     // this is terrible
     virtual bool isIdentifyMode() = 0;
-    virtual int getActivePreset() = 0;
-
+    virtual int getActiveOverlay() = 0;
+    virtual void getOverlayNames(juce::StringArray& names) = 0;
+    
     // obscure things for Parametizer
     virtual class VariableManager* getVariableManager() = 0;
     virtual juce::AudioProcessor* getAudioProcessor() = 0;

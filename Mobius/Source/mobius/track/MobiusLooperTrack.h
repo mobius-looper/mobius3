@@ -32,7 +32,6 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     // BaseTrack
     //
 
-    void loadSession(class Session::Track* def) override;
     void refreshParameters() override;
     void doAction(class UIAction* a) override;
     bool doQuery(class Query* q) override;

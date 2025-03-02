@@ -72,14 +72,10 @@ class Track : public TraceContext
     void renumber(int n);
     void doAction(class UIAction* a);
     void refreshParameters();
-    
-    // the number of this track in the LogicalTrack/Session list
-    // this is what needs to be used when communicating with the outside world.
-    void setLogicalNumber(int n);
-    int getLogicalNumber();
 
-    // !! need to start saving this here rather than indirecting it every damn time
     class LogicalTrack* getLogicalTrack();
+    void setLogicalTrack(class LogicalTrack* lt);
+    int getLogicalNumber();
 
     void dump(class StructureDumper& d);
 
@@ -290,8 +286,7 @@ class Track : public TraceContext
     //
 
 	int mRawNumber;        // zero based
-    int mLogicalNumber;    // the number used in TrackManager/SyncMaster/MobiusView
-    char mName[MAX_TRACK_NAME];
+    class LogicalTrack* mLogicalTrack = nullptr;
 
 	class Mobius* mMobius;
     class Notifier* mNotifier = nullptr;

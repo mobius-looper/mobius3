@@ -35,6 +35,8 @@ MobiusLooperTrack::MobiusLooperTrack(TrackManager* tm, LogicalTrack* lt)
 
 MobiusLooperTrack::~MobiusLooperTrack()
 {
+    // note that we don't own the Track, that will be
+    // reclaimed by Mobius during the configureTracks call by TrackManager
 }
 
 Track* MobiusLooperTrack::getCoreTrack()
@@ -58,17 +60,6 @@ int MobiusLooperTrack::getCoreTrackNumber()
 // BaseTrack
 //
 //////////////////////////////////////////////////////////////////////
-
-/**
- * The way core tracks are organized, loading a session is the
- * same as asking it to refresh parameters, which in retrospect is what
- * all tracks should be doing.
- */
-void MobiusLooperTrack::loadSession(Session::Track* def)
-{
-    (void)def;
-    refreshParameters();
-}
 
 void MobiusLooperTrack::refreshParameters()
 {
