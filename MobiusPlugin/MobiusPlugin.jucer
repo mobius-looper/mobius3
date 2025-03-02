@@ -237,16 +237,6 @@
         <FILE id="oooVI4" name="UIConfig.h" compile="0" resource="0" file="../Mobius/Source/model/UIConfig.h"/>
         <FILE id="f5nezZ" name="UIEventType.cpp" compile="1" resource="0" file="../Mobius/Source/model/UIEventType.cpp"/>
         <FILE id="uA4X73" name="UIEventType.h" compile="0" resource="0" file="../Mobius/Source/model/UIEventType.h"/>
-        <FILE id="F7ZIMK" name="UIParameter.cpp" compile="1" resource="0" file="../Mobius/Source/model/UIParameter.cpp"/>
-        <FILE id="GRem49" name="UIParameter.h" compile="0" resource="0" file="../Mobius/Source/model/UIParameter.h"/>
-        <FILE id="cyi5S2" name="UIParameterClasses.cpp" compile="1" resource="0"
-              file="../Mobius/Source/model/UIParameterClasses.cpp"/>
-        <FILE id="PrpR9L" name="UIParameterClasses.h" compile="0" resource="0"
-              file="../Mobius/Source/model/UIParameterClasses.h"/>
-        <FILE id="EzOQwZ" name="UIParameterHandler.cpp" compile="1" resource="0"
-              file="../Mobius/Source/model/UIParameterHandler.cpp"/>
-        <FILE id="RBBENk" name="UIParameterHandler.h" compile="0" resource="0"
-              file="../Mobius/Source/model/UIParameterHandler.h"/>
         <FILE id="IUOIE3" name="UserVariable.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/UserVariable.cpp"/>
         <FILE id="VSX9TG" name="UserVariable.h" compile="0" resource="0" file="../Mobius/Source/model/UserVariable.h"/>
@@ -603,14 +593,6 @@
           <FILE id="pBPT0O" name="CustomRotary.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/common/CustomRotary.cpp"/>
           <FILE id="XQguhB" name="CustomRotary.h" compile="0" resource="0" file="../Mobius/Source/ui/common/CustomRotary.h"/>
-          <FILE id="Dzkodv" name="Field.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/Field.cpp"/>
-          <FILE id="x2Mdf8" name="Field.h" compile="0" resource="0" file="../Mobius/Source/ui/common/Field.h"/>
-          <FILE id="M7p1Y6" name="FieldGrid.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/FieldGrid.cpp"/>
-          <FILE id="CoIaFA" name="FieldGrid.h" compile="0" resource="0" file="../Mobius/Source/ui/common/FieldGrid.h"/>
-          <FILE id="ZwBs7d" name="Form.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/Form.cpp"/>
-          <FILE id="NtViW8" name="Form.h" compile="0" resource="0" file="../Mobius/Source/ui/common/Form.h"/>
-          <FILE id="yuE9yV" name="FormPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/FormPanel.cpp"/>
-          <FILE id="Zg5O2L" name="FormPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/common/FormPanel.h"/>
           <FILE id="P9L0mG" name="HelpArea.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/HelpArea.cpp"/>
           <FILE id="Kg9nLA" name="HelpArea.h" compile="0" resource="0" file="../Mobius/Source/ui/common/HelpArea.h"/>
           <FILE id="a26w2Q" name="JLabel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/JLabel.cpp"/>
