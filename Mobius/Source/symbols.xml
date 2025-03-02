@@ -223,7 +223,6 @@ Once those models are fully converted, these symbols can be removed.
                tree='Switch'/>
 
     <Parameter name='emptyTrackAction'
-               enumName='Preset::EmptyLoopAction'
                values='none,record,copy,copyTime'
                valueLabels='None,Record,Copy Sound,Copy Timing'
                tree='Switch'/>
@@ -236,7 +235,6 @@ Once those models are fully converted, these symbols can be removed.
     <!-- this one actually needs to go away, it's more a more of a track configuration
          parameter like ports that shouldn't jump around -->
     <Parameter name='loopCount' options='dynamic,noBinding'
-               codeName='Loops'
                low='1' high='32'
                query='false'/>
     
@@ -254,14 +252,11 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='quantize'
                values='off,subCycle,cycle,loop'
                valueLabels='Off,Subcycle,Cycle,Loop'
-               <!-- enum doesn't match getter -->
-               enumName='Preset::QuantizeMode'
                tree='Quantize'/>
 
     <Parameter name='bounceQuantize'
                values='off,subCycle,cycle,loop'
                valueLabels='Off,Subcycle,Cycle,Loop'
-               enumName='Preset::QuantizeMode'
                tree='Quantize'/>
 
     <Parameter name='recordResetsFeedback' type='bool'
@@ -279,12 +274,10 @@ Once those models are fully converted, these symbols can be removed.
 
     <Parameter name='returnLocation'
                values='follow,restore,start,random'
-               enumName='Preset::SwitchLocation'
                tree='Switch'/>
 
     <Parameter name='switchDuration'
                values='permanent,once,onceReturn,sustain,sustainReturn'
-               enumName='Preset::SwitchDuration'
                tree='Switch'/>
     
     <Parameter name='switchQuantize'
@@ -293,11 +286,9 @@ Once those models are fully converted, these symbols can be removed.
                tree='Quantize'/>
 
     <Parameter name='timeCopyMode' values='play,overdub,multiply,insert'
-               enumName='Preset::CopyMode'
                tree='Switch'/>
 
     <Parameter name='soundCopyMode' values='play,overdub,multiply,insert'
-               enumName='Preset::CopyMode'
                tree='Switch'/>
 
     <Parameter name='switchVelocity' type='bool' tree='Switch'/>
@@ -335,20 +326,20 @@ Once those models are fully converted, these symbols can be removed.
     -->
 
     <Parameter name='recordTransfer' values='off,follow'
-               enumName='Preset::TransferMode' tree='Switch/Transfer'/>
+               tree='Switch/Transfer'/>
     <Parameter name='overdubTransfer' values='off,follow,restore'
-               enumName='Preset::TransferMode' tree='Switch/Transfer'/>
+               tree='Switch/Transfer'/>
     <Parameter name='reverseTransfer' values='off,follow,restore'
-               enumName='Preset::TransferMode' tree='Switch/Transfer'/>
+               tree='Switch/Transfer'/>
     <Parameter name='speedTransfer' values='off,follow,restore'
-               enumName='Preset::TransferMode' tree='Switch/Transfer'/>
+               tree='Switch/Transfer'/>
     <Parameter name='pitchTransfer' values='off,follow,restore'
-               enumName='Preset::TransferMode' tree='Switch/Transfer'/>
+               tree='Switch/Transfer'/>
 
     <Parameter name='windowSlideUnit' values='loop,cycle,subcycle,msec,frame'
-               enumName='Preset::WindowUnit' tree='Functions'/>
+               tree='Functions'/>
     <Parameter name='windowEdgeUnit' values='loop,cycle,subcycle,msec,frame'
-               enumName='Preset::WindowUnit' tree='Functions'/>
+               tree='Functions'/>
     
     <Parameter name='windowSlideAmount' low='1' high='128' tree='Functions' />
     <Parameter name='windowEdgeAmount' low='1' high='128' tree='Functions'/>
@@ -499,9 +490,8 @@ Once those models are fully converted, these symbols can be removed.
          but may be changed with the menu.  Since it isn't editable, don't need
          display helpers.
          -->
-    <Parameter name='activePreset' coreName='preset'
+    <Parameter name='activePreset'
                type='structure' structureClass='Preset'
-               codeName='StartingPresetName'
                options='noBinding,transient,resetRetain'>
       In runtime context this changes the Preset a track is using.
 
@@ -590,7 +580,7 @@ Once those models are fully converted, these symbols can be removed.
     <!-- The name is not actually stored in the ValueSet, it will be a top-level
          property of the Session::Track object.  But it can be trreated as if
          it were a normal parameter.  -->
-    <Parameter name='trackName' codeName='Name' type='string' options='noBinding'/>
+    <Parameter name='trackName' type='string' options='noBinding'/>
 
     <Parameter name='trackOverlay'
                type='structure' 
@@ -598,13 +588,18 @@ Once those models are fully converted, these symbols can be removed.
                options='noBinding'>
     </Parameter>
 
-    <Parameter name='focus' codeName='FocusLock' type='bool' options='resetRetain,noBinding'/>
+    <Parameter name='focus' type='bool' options='resetRetain,noBinding'/>
     <Parameter name='mono' type='bool' options='noBinding'/>
-    <Parameter name='input' codeName='InputLevel' high='127' options='control,resetRetain,mayFocus'/>
-    <Parameter name='output' codeName='OutputLevel' high='127' options='control,resetRetain,mayFocus'/>
-    <Parameter name='feedback' high='127' options='control,resetRetain,mayFocus'/>
-    <Parameter name='altFeedback' high='127' options='control,resetRetain,mayFocus'/>
-    <Parameter name='pan' high='127' options='control,resetRetain,mayFocus'/>
+    <Parameter name='input' high='127' defaultValue='127'
+               options='control,resetRetain,mayFocus'/>
+    <Parameter name='output' high='127' defaultValue='127'
+               options='control,resetRetain,mayFocus'/>
+    <Parameter name='feedback' high='127' defaultValue='127'
+               options='control,resetRetain,mayFocus'/>
+    <Parameter name='altFeedback' high='127'defaultValue='127'
+               options='control,resetRetain,mayFocus'/>
+    <Parameter name='pan' high='127' defaultValue='64'
+               options='control,resetRetain,mayFocus'/>
 
     <!-- Ports are unusual
          The port numbers can be different for standalone or plugin operation since
@@ -732,18 +727,10 @@ Once those models are fully converted, these symbols can be removed.
          with the syncSource track scope parameter
     -->
     <Parameter name='defaultSyncSource' values='default,none,track,out,host,midi,transport'
-               options='noBinding'
-               coreName='syncSource'
-               codeName='SyncSource'
-               enumName='SyncSource'/>
+               options='noBinding'/>
     <Parameter name='defaultTrackSyncUnit' values='default,subcycle,cycle,loop'
-               options='noBinding'
-               codeName='SyncTrackUnit'
-               enumName='SyncTrackUnit'/>
-    <Parameter name='slaveSyncUnit' values='beat,bar'
-               options='noBinding'
-               codeName='SyncUnit'
-               enumName='SyncUnit'/>
+               options='noBinding'/>
+    <Parameter name='slaveSyncUnit' values='beat,bar' options='noBinding'/>
 
     <!-- Don't need to clutter the symbol table with these, they have
          been entirely replaced by the Transport
@@ -756,14 +743,11 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='muteSyncMode' values='transport,transportClocks,clocks,none' options='noBinding'/>
     -->
 
-    <Parameter name='resizeSyncAdjust' values='none,tempo' options='noBinding'
-               enumName='SyncAdjust'/>
-    <Parameter name='speedSyncAdjust' values='none,tempo' options='noBinding'
-               enumName='SyncAdjust'/>
+    <Parameter name='resizeSyncAdjust' values='none,tempo' options='noBinding'/>
+    <Parameter name='speedSyncAdjust' values='none,tempo' options='noBinding'/>
     <Parameter name='realignTime' values='start,bar,beat,now' options='noBinding'/>
 
-    <Parameter name='activeTrack' high='8' options='dynamic,noBinding'
-               coreName='selectedTrack'>
+    <Parameter name='activeTrack' high='8' options='dynamic,noBinding'>
       In model context, defines the initial active track, almost always zero.
       Range depends on the global trackCount parameter.
       In runtime context, this changes the active track for focus and display
@@ -793,8 +777,7 @@ Once those models are fully converted, these symbols can be removed.
     -->
     
     <Parameter name='oldSyncSource' values='default,none,track,out,host,midi,transport' options='noBinding'/>
-    <Parameter name='oldTrackSyncUnit' codeName='SyncTrackUnit' enumName='SyncTrackUnit'
-               values='default,subcycle,cycle,loop' />
+    <Parameter name='oldTrackSyncUnit' values='default,subcycle,cycle,loop' />
 
     <!-- this was used for the group name in the Setup days, but trackGroup above should take it's place    -->
     

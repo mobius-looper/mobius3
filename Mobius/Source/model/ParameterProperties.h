@@ -125,17 +125,6 @@ class ParameterProperties
     bool noBinding;
 
     /**
-     * In a few cases the names were changed to be more consistent
-     * or obvious or because I liked them better.  In order to correlate
-     * the new parameter definitions with the old ones, this would
-     * be the name of the old Parameter.
-     *
-     * update: this was used when we generated code for UIParameter definitions
-     * it may not be necessary any more, except for correlating core parameters.
-     */
-    juce::String coreName;
-
-    /**
      * When true, this may be added to Focus Lock Parameters in the GroupDefinition.
      * Not used for general binding focus yet but could be.
      */
