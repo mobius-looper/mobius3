@@ -55,6 +55,8 @@
 #include "SampleConfig.h"
 #include "UIParameter.h"
 #include "GroupDefinition.h"
+#include "Symbol.h"
+#include "ParameterProperties.h"
 
 #include "XmlRenderer.h"
 
@@ -67,8 +69,9 @@
 #define EL_MOBIUS_CONFIG "MobiusConfig"
 #define EL_PRESET "Preset"
 
-XmlRenderer::XmlRenderer()
+XmlRenderer::XmlRenderer(SymbolTable* st)
 {
+    symbols = st;
 }
 
 XmlRenderer::~XmlRenderer()
@@ -232,6 +235,52 @@ void XmlRenderer::render(XmlBuffer* b, UIParameter* p, int value)
     }
 }
 
+void XmlRenderer::render(XmlBuffer* b, SymbolId sid, int value)
+{
+    Symbol* s = symbols->getSymbol(sid);
+    if (s == nullptr) {
+        Trace(1, "XmlRenderer: Invalid symbol id %d", sid);
+    }
+    else {
+        ParameterProperties* props = s->parameterProperties.get();
+        if (props == nullptr) {
+            Trace(1, "XmlRenderer: Symbol not a parameter %s", s->getName());
+        }
+        else if (props->type == UIParameterType::TypeEnum) {
+            if (props->values.size() == 0) {
+                Trace(1, "XmlRenderer: Attempt to render enum parameter without value list %s\n",
+                      s->getName());
+            }
+            else {
+                // should do some range checking here but we're only ever getting a value
+                // from an object member cast as an int
+                // shoudl be letting the
+                // !! put this in UIParameter::getEnumValue
+                b->addAttribute(s->getName(), props->getEnumName(value));
+            }
+        }
+        else {
+            // option to filter zero?
+            // yes, lots of things are zero/false
+            if (value > 0)
+              b->addAttribute(s->getName(), value);
+        }
+    }
+}
+
+const char* XmlRenderer::getSymbolName(SymbolId sid)
+{
+    const char* name = nullptr;
+    Symbol* s = symbols->getSymbol(sid);
+    if (s == nullptr) {
+        Trace(1, "XmlRenderer: Invalid symbol id %d", sid);
+    }
+    else {
+        name = s->getName();
+    }
+    return name;
+}
+
 void XmlRenderer::render(XmlBuffer* b, UIParameter* p, bool value)
 {
     // old way used ExValue.getString which converted false to "false"
@@ -243,11 +292,27 @@ void XmlRenderer::render(XmlBuffer* b, UIParameter* p, bool value)
     //b->addAttribute(p->getName(), "false");
 }
 
+void XmlRenderer::render(XmlBuffer* b, SymbolId sid, bool value)
+{
+    const char* name = getSymbolName(sid);
+    if (name != nullptr && value)
+      b->addAttribute(name, "true");
+    //else
+    //b->addAttribute(p->getName(), "false");
+}
+
 void XmlRenderer::render(XmlBuffer* b, UIParameter* p, const char* value)
 {
     // any filtering options?
     if (value != nullptr)
       b->addAttribute(p->getName(), value);
+}
+
+void XmlRenderer::render(XmlBuffer* b, SymbolId sid, const char* value)
+{
+    const char* name = getSymbolName(sid);
+    if (name != nullptr && value != nullptr)
+      b->addAttribute(name, value);
 }
 
 void XmlRenderer::render(XmlBuffer* b, const char* name, const char* value)
@@ -294,6 +359,51 @@ int XmlRenderer::parse(XmlElement* e, UIParameter* p)
     return value;
 }
 
+int XmlRenderer::parse(XmlElement* e, SymbolId sid)
+{
+    int value = 0;
+
+    Symbol* s = symbols->getSymbol(sid);
+    if (s == nullptr) {
+        Trace(1, "XmlRenderer: Invalid symbol id %d", sid);
+    }
+    else {
+        ParameterProperties* props = s->parameterProperties.get();
+        if (props == nullptr) {
+            Trace(1, "XmlRenderer: Symbol not a parameter %s", s->getName());
+        }
+        else {
+            const char* str = e->getAttribute(s->getName());
+            if (str != nullptr) {
+                if (props->type == UIParameterType::TypeBool) {
+                    value = !strcmp(str, "true");
+                }
+                else if (props->type == UIParameterType::TypeInt) {
+                    value = atoi(str);
+                }
+                else if (props->type == UIParameterType::TypeEnum) {
+                    value = props->getEnumOrdinal(str);
+                    if (value < 0) {
+                        // invalid enum name, leave zero
+                        Trace(1, "XmlRenderer: Invalid enumeration value %s for %s\n", str, s->getName());
+                    }
+                }
+                else {
+                    // error: should not have called this method
+                    Trace(1, "XmlRenderer: Can't parse parameter %s as int\n", s->getName());
+                }
+            }
+            else {
+                // there was no attribute
+                // note that by returning zero here it will initialize the bool/int/enum
+                // to that value rather than selecting a default value or just leaving it alone
+                // okay for now since the element is expected to have all attributes
+            }
+        }
+    }
+    return value;
+}
+
 /**
  * Parse a string attribute.
  * Can return the constant element attribute value, caller is expected
@@ -309,6 +419,30 @@ const char* XmlRenderer::parseString(XmlElement* e, UIParameter* p)
     }
     else {
         Trace(1, "XmlRenderer: Can't parse parameter %s value as a string\n", p->getName());
+    }
+    return value;
+}
+
+const char* XmlRenderer::parseString(XmlElement* e, SymbolId sid)
+{
+    const char* value = nullptr;
+
+    Symbol* s = symbols->getSymbol(sid);
+    if (s == nullptr) {
+        Trace(1, "XmlRenderer: Invalid symbol id %d", sid);
+    }
+    else {
+        ParameterProperties* props = s->parameterProperties.get();
+        if (props == nullptr) {
+            Trace(1, "XmlRenderer: Symbol not a parameter %s", s->getName());
+        }
+        else if (props->type == UIParameterType::TypeString ||
+                 props->type == UIParameterType::TypeStructure) {
+            value = e->getAttribute(s->getName());
+        }
+        else {
+            Trace(1, "XmlRenderer: Can't parse parameter %s value as a string\n", s->getName());
+        }
     }
     return value;
 }

@@ -21,7 +21,6 @@
 #include "Function.h"
 #include "Event.h"
 #include "Script.h"
-//#include "Parameter.h"
 
 #include "Action.h"
 #include "Mem.h"
@@ -395,17 +394,6 @@ Function* Action::getLongFunction()
 {
     return mLongFunction;
 }
-
-/**
- * Dynamically set a target parameter.
- * This is used when building Actions on the fly rather than from Bindings.
- */
-#if 0
-void Action::setParameter(Parameter* p)
-{
-    setTarget(ActionParameter, p);
-}
-#endif
 
 /**
  * Convenience method for things that create Actions on the fly with 

@@ -177,51 +177,6 @@ void SymbolTable::traceTable()
     }
 }
 
-void SymbolTable::traceCorrespondence()
-{
-    // this is changing, what it did is interesting but revisit
-    // after the definition models settle down
-#if 0    
-    Trace(2, "Function Correspondence\n");
-    for (int i = 0 ; i < symbols.size() ; i++) {
-        Symbol* s = symbols[i];
-        if (s->behavior == BehaviorFunction) {
-
-            // this is okay as long as it is marked hidden
-            // note that for functions an id of non-zero still means it's real
-            if (s->function == nullptr && s->id == 0 &&
-                s->coreFunction != nullptr &&
-                !s->hidden) {
-                Trace(2, "  Function with no UI correspondence %s\n",
-                      s->getName());
-            }
-
-            if (s->function != nullptr && s->coreFunction == nullptr) {
-                Trace(2, "  Function with no core correspondence %s\n",
-                      s->getName());
-            }
-        }
-    }
-                  
-    Trace(2, "Parameter Correspondence\n");
-    for (int i = 0 ; i < symbols.size() ; i++) {
-        Symbol* s = symbols[i];
-        if (s->behavior == BehaviorParameter) {
-
-            if (s->parameter == nullptr && s->coreParameter != nullptr) {
-                Trace(2, "  Parameter with no UI correspondence %s\n",
-                      s->getName());
-            }
-
-            if (s->parameter != nullptr && s->coreParameter == nullptr) {
-                Trace(2, "  Parameter with no core correspondence %s\n", 
-                      s->getName());
-            }
-        }
-    }
-#endif
-}
-
 /**
  * AFTER the Symbol table has been fully populated, build an array to map
  * id numbers to Symbols.  Can't do this as they are interned, because

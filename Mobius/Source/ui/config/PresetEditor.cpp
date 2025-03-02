@@ -6,7 +6,6 @@
 
 #include "../../model/MobiusConfig.h"
 #include "../../model/UIParameter.h"
-#include "../../model/XmlRenderer.h"
 #include "../../Supervisor.h"
 
 #include "../common/Form.h"

@@ -158,9 +158,9 @@ MobiusConfig::~MobiusConfig()
  * This doesn't have a proper copy constructor so we have
  * to use XML.
  */
-MobiusConfig* MobiusConfig::clone()
+MobiusConfig* MobiusConfig::clone(SymbolTable* st)
 {
-    XmlRenderer xr;
+    XmlRenderer xr (st);
     MobiusConfig* neu = xr.clone(this);
 
     // these are not in the XML rendering and need

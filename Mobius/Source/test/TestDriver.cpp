@@ -925,7 +925,7 @@ MobiusConfig* TestDriver::readConfigOverlay()
     juce::File file = root.getChildFile("mobius-overlay.xml");
     if (file.existsAsFile()) {
         juce::String xml = file.loadFileAsString();
-        XmlRenderer xr;
+        XmlRenderer xr (supervisor->getSymbols());
         overlay = xr.parseMobiusConfig(xml.toUTF8());
 
         // resolve sample paths

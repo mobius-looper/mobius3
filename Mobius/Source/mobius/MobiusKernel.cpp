@@ -43,7 +43,6 @@
 #include "core/Mobius.h"
 #include "core/Function.h"
 #include "core/Action.h"
-#include "core/Parameter.h"
 #include "core/Mem.h"
 
 #include "track/TrackManager.h"
@@ -918,7 +917,7 @@ void MobiusKernel::consumeParameters()
 void MobiusKernel::doParameter(PluginParameter* p)
 {
     Symbol* s = p->symbol;
-    if (s->coreParameter != nullptr) {
+    if (s->parameterProperties != nullptr) {
         UIAction* action = actionPool->newAction();
         // pool should do this!
         action->reset();

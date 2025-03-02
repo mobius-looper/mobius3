@@ -198,7 +198,7 @@ MobiusConfig* FileManager::readMobiusConfig()
         config = new MobiusConfig();
     }
     else {
-        XmlRenderer xr;
+        XmlRenderer xr (provider->getSymbols());
         config = xr.parseMobiusConfig(xml.toUTF8());
         // todo: capture or trace parse errors
     }
@@ -213,7 +213,7 @@ MobiusConfig* FileManager::readMobiusConfig()
 void FileManager::writeMobiusConfig(MobiusConfig* config)
 {
     if (config != nullptr) {
-        XmlRenderer xr;
+        XmlRenderer xr (provider->getSymbols());
         char* xml = xr.render(config);
         writeConfigFile(MobiusConfigFile, xml);
         delete xml;

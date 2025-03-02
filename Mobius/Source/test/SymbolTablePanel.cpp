@@ -88,9 +88,6 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
             // internal function without FunctionProperties
             cell = "Core Function";
         }
-        else if (s->coreParameter != nullptr) {
-            cell = "Core Parameter";
-        }
         else {
             switch (s->behavior) {
                 // intrinsic functions/parameters
@@ -132,12 +129,6 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
         }
         else if (s->functionProperties != nullptr && s->level == LevelCore && s->coreFunction == nullptr) {
             cell = "Core function not implemented";
-        }
-        else if (s->coreParameter != nullptr && s->parameterProperties == nullptr) {
-            cell = "Core parameter not exposed";
-        }
-        else if (s->parameterProperties != nullptr && s->level == LevelCore && s->coreParameter == nullptr) {
-            cell = "Core parameter not implemented";
         }
         
     }

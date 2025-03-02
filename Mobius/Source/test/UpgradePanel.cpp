@@ -329,7 +329,7 @@ void UpgradeContent::loadMobiusConfig(juce::String xml)
     delete newButtons;
     newButtons = nullptr;
     
-    XmlRenderer xr;
+    XmlRenderer xr (supervisor->getSymbols());
     mobiusConfig = xr.parseMobiusConfig(xml.toUTF8());
     if (mobiusConfig == nullptr) {
         log.add("Unable to parse file");
@@ -849,11 +849,14 @@ Binding* UpgradeContent::upgradeBinding(Binding* src)
         // renamed it above
         log.add("Warning: Binding to unsupported core function: " + name);
     }
+#if 0
+    // don't have coreParameters any more
     else if (symbol != nullptr && symbol->coreParameter != nullptr) {
         // like resolved core functions, this might work, but probably
         // not as intended
         log.add("Warning: Binding to unsupported core parameter: " + name);
     }
+#endif    
     else {
         // unresolved reference
         // this may happen if the scripts can't be loaded
@@ -927,7 +930,7 @@ void UpgradeContent::doInstall()
         // quick and dirty undo
         juce::File root = supervisor->getRoot();
         juce::File undo = root.getChildFile("mobius.xml.undo");
-        XmlRenderer xr;
+        XmlRenderer xr (supervisor->getSymbols());
         char* cxml = xr.render(masterConfig);
         undo.replaceWithText(juce::String(cxml));
         delete cxml;

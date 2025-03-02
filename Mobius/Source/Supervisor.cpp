@@ -1346,7 +1346,7 @@ MobiusConfig* Supervisor::synthesizeMobiusConfig(Session* src)
     ModelTransformer transformer(this);
     
     MobiusConfig* config = getOldMobiusConfig();
-    MobiusConfig* synth = config->clone();
+    MobiusConfig* synth = config->clone(getSymbols());
 
     // this copies globals from the session and adds
     // a single Setup for the session itself
@@ -1356,7 +1356,7 @@ MobiusConfig* Supervisor::synthesizeMobiusConfig(Session* src)
 
     bool logit = false;
     if (logit) {
-        XmlRenderer xr;
+        XmlRenderer xr (getSymbols());
         char* xml = xr.render(synth);
         const char* name = "synth.xml";
         juce::File file = getRoot().getChildFile(name);

@@ -9,7 +9,6 @@
 
 #include "Event.h"
 #include "Function.h"
-#include "Parameter.h"
 #include "Mode.h"
 #include "Mobius.h"
 

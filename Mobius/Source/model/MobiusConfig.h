@@ -137,7 +137,7 @@ class MobiusConfig {
     MobiusConfig(bool dflt);
     ~MobiusConfig();
 
-    MobiusConfig* clone();
+    MobiusConfig* clone(class SymbolTable* st);
 
     // two transient flags to enable optimizations when
     // reconfiguring the engine after editing the entire MobiusConfig

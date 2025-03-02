@@ -16,11 +16,13 @@
 
 #pragma once
 
+#include "SymbolId.h"
+
 class XmlRenderer {
 
   public:
 
-    XmlRenderer();
+    XmlRenderer(class SymbolTable* st);
     ~XmlRenderer();
 
     class MobiusConfig* parseMobiusConfig(const char* xml);
@@ -35,12 +37,18 @@ class XmlRenderer {
     // common utilities
 
     void render(class XmlBuffer* b, class UIParameter* p, int value);
+    void render(class XmlBuffer* b, SymbolId sid, int value);
     void render(class XmlBuffer* b, class UIParameter* p, bool value);
+    void render(class XmlBuffer* b, SymbolId sid, bool value);
     void render(class XmlBuffer* b, class UIParameter* p, const char* value);
+    void render(class XmlBuffer* b, SymbolId sid, const char* value);
     void render(class XmlBuffer* b, const char* name, const char* value);
 
     int parse(class XmlElement* e, class UIParameter* p);
+    int parse(class XmlElement* e, SymbolId sid);
+    
     const char* parseString(class XmlElement* e, class UIParameter* p);
+    const char* parseString(class XmlElement* e, SymbolId sid);
     
     class StringList* parseStringList(class XmlElement* e);
     void renderList(class XmlBuffer* b, const char* elname, class StringList* list);
@@ -88,5 +96,8 @@ class XmlRenderer {
     
     void render(class XmlBuffer* b, class GroupDefinition* g);
     void parse(class XmlElement* e, class GroupDefinition* g);
+
+    class SymbolTable* symbols = nullptr;
+    const char* getSymbolName(SymbolId sid);
 
 };

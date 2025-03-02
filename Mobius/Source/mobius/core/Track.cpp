@@ -60,7 +60,6 @@
 #include "Loop.h"
 #include "Mobius.h"
 #include "Mode.h"
-#include "Parameter.h"
 #include "Project.h"
 #include "Script.h"
 #include "Stream.h"

@@ -240,8 +240,6 @@ class Symbol
     
     std::unique_ptr<class FunctionProperties> functionProperties;
 
-    //class UIParameter* parameter = nullptr;
-
     std::unique_ptr<class ParameterProperties> parameterProperties;
     
     // don't seem to be using this!?
@@ -258,7 +256,6 @@ class Symbol
      * drag in dependencies.  Probably could just "class" these as long as they're
      * not dereferenced.
      */
-    void* coreParameter = nullptr;
     void* coreFunction = nullptr;
     
     /**
@@ -317,7 +314,6 @@ class SymbolTable
      * trace log.
      */
     void traceTable();
-    void traceCorrespondence();
 
     /**
      * Clear the symbol table and release memory.
