@@ -7,7 +7,7 @@ and those with Track scope.
 
 Track parameters apply only to one track.
 
-Some parameters are obsolete and retain only so that Symbols can be defined
+Some parameters are obsolete and retained only so that Symbols can be defined
 for parsing and converting old objects like MobiusConfig, Setup, and Preset.
 Once those models are fully converted, these symbols can be removed.
 
@@ -199,12 +199,8 @@ Once those models are fully converted, these symbols can be removed.
        PRESET
        ============================================================================ -->
 
-  <!-- These are all effectively Track scope parameters.  They will remain in the Preset
-       until that is converted to use Session tracks
-       Symbolizer will make all ScopePreset parameters queryable by default.
-       To turn that off put a query='false' attribute in them.
-
-       To be queryable it also must not be type='string'
+  <!-- These are all effectively Track scope parameters.  They once lived in the Preset object
+       but now live in Session::Track
   -->
 
   <ParameterScope name='preset' query='true'>
@@ -484,26 +480,9 @@ Once those models are fully converted, these symbols can be removed.
 
     <!-- These were once defined in the Setup but they are effectively global -->
 
-    <!-- This isn't actually in the Session, it is a runtime parameter used by the UI
-         to show the currenty active preset. Which is what would be used if the
-         Track didn't override it.  It will start out the same as defaultPreset
-         but may be changed with the menu.  Since it isn't editable, don't need
-         display helpers.
-         -->
-    <Parameter name='activePreset'
-               type='structure' structureClass='Preset'
-               options='noBinding,transient,resetRetain'>
-      In runtime context this changes the Preset a track is using.
-
-      update: needs to be removed or renamed, should be activeOverlay
-      or activeParameters
-    </Parameter>
-
     <!-- Unclear if we need this, it would take the place of activeSetup and
          make it accessible to Instant Parameters, but I'm not liking reinforcing
          the notion that you can swap sessions easily.
-         activePreset needs rethought too since ParameterSets can be activated in
-         multiples.
     -->
     <Parameter name='activeSession' type='structure' options='noBinding,transient'/>
 

@@ -174,7 +174,7 @@ void MainWindow::mainMenuSelection(int id)
         // Supervisor will have injected "[None]" at the front
         int selected = id - MainMenu::MenuOverlayOffset;
         UIAction action;
-        action.symbol = symbols->intern("activePreset");
+        action.symbol = symbols->getSymbol(ParamTrackOverlay);
         action.value = selected;
         supervisor->doAction(&action);
     }

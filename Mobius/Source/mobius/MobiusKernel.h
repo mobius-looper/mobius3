@@ -299,7 +299,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // the big guy
     // see if we can make this a stack object at some point
     class Mobius* mCore = nullptr;
-    int activePreset = 0;
 
     std::unique_ptr<TrackManager> mTracks;
     

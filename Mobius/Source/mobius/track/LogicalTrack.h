@@ -209,13 +209,6 @@ class LogicalTrack
     ValueSet* sessionOverlay = nullptr;
 
     /**
-     * Kludge until the Session migration is complete.
-     * Fall back to the old Preset model.
-     */
-    int activePreset = 0;
-    class Preset* getPreset();
-
-    /**
      * The underlying track implementation, either a MidiTrack
      * or a MobiusLooperTrack.
      */

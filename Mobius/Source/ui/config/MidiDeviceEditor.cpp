@@ -56,7 +56,6 @@
 #include "../../Supervisor.h"
 #include "../../MidiManager.h"
 
-#include "../common/Field.h"
 #include "../JuceUtil.h"
 
 #include "MidiDeviceEditor.h"
