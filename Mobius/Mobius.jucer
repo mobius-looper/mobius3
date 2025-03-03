@@ -97,8 +97,6 @@
                 file="Source/model/old/SystemConstant.h"/>
           <FILE id="KK7X03" name="Trigger.cpp" compile="1" resource="0" file="Source/model/old/Trigger.cpp"/>
           <FILE id="sjCand" name="Trigger.h" compile="0" resource="0" file="Source/model/old/Trigger.h"/>
-          <FILE id="h7Ceyb" name="UIEventType.cpp" compile="1" resource="0" file="Source/model/old/UIEventType.cpp"/>
-          <FILE id="TjT7zE" name="UIEventType.h" compile="0" resource="0" file="Source/model/old/UIEventType.h"/>
           <FILE id="EaQ7Kz" name="XmlRenderer.cpp" compile="1" resource="0" file="Source/model/old/XmlRenderer.cpp"/>
           <FILE id="CyRJqc" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/old/XmlRenderer.h"/>
         </GROUP>

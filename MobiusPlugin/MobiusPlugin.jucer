@@ -142,10 +142,34 @@
         <FILE id="AEg2h2" name="OldMidiEvent.h" compile="0" resource="0" file="../Mobius/Source/midi/OldMidiEvent.h"/>
       </GROUP>
       <GROUP id="{71A3EEC9-3DF0-DFE8-960A-08DD491090C6}" name="model">
-        <FILE id="PYwhUI" name="ActionType.cpp" compile="1" resource="0" file="../Mobius/Source/model/ActionType.cpp"/>
-        <FILE id="Py1opl" name="ActionType.h" compile="0" resource="0" file="../Mobius/Source/model/ActionType.h"/>
-        <FILE id="AVGjak" name="Binding.cpp" compile="1" resource="0" file="../Mobius/Source/model/Binding.cpp"/>
-        <FILE id="LjNtBc" name="Binding.h" compile="0" resource="0" file="../Mobius/Source/model/Binding.h"/>
+        <GROUP id="{E9DF28E1-BBE6-8AF0-83CF-26F2FA16DD9F}" name="old">
+          <FILE id="PSQfMt" name="ActionType.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/ActionType.cpp"/>
+          <FILE id="t8cwi8" name="ActionType.h" compile="0" resource="0" file="../Mobius/Source/model/old/ActionType.h"/>
+          <FILE id="DPLAIR" name="Binding.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Binding.cpp"/>
+          <FILE id="i1TmKb" name="Binding.h" compile="0" resource="0" file="../Mobius/Source/model/old/Binding.h"/>
+          <FILE id="twf6rL" name="Messages.h" compile="0" resource="0" file="../Mobius/Source/model/old/Messages.h"/>
+          <FILE id="Dkj48a" name="MobiusConfig.cpp" compile="1" resource="0"
+                file="../Mobius/Source/model/old/MobiusConfig.cpp"/>
+          <FILE id="V8cTM8" name="MobiusConfig.h" compile="0" resource="0" file="../Mobius/Source/model/old/MobiusConfig.h"/>
+          <FILE id="uxG3cZ" name="ModeDefinition.cpp" compile="1" resource="0"
+                file="../Mobius/Source/model/old/ModeDefinition.cpp"/>
+          <FILE id="mUsDlz" name="ModeDefinition.h" compile="0" resource="0"
+                file="../Mobius/Source/model/old/ModeDefinition.h"/>
+          <FILE id="kCJFMP" name="OscConfig.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/OscConfig.cpp"/>
+          <FILE id="p7QhpN" name="OscConfig.h" compile="0" resource="0" file="../Mobius/Source/model/old/OscConfig.h"/>
+          <FILE id="qX8Z2f" name="Preset.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Preset.cpp"/>
+          <FILE id="ZPgyop" name="Preset.h" compile="0" resource="0" file="../Mobius/Source/model/old/Preset.h"/>
+          <FILE id="bbBoGl" name="Setup.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Setup.cpp"/>
+          <FILE id="djFgKM" name="Setup.h" compile="0" resource="0" file="../Mobius/Source/model/old/Setup.h"/>
+          <FILE id="IC1YY0" name="Structure.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Structure.cpp"/>
+          <FILE id="SuoNss" name="Structure.h" compile="0" resource="0" file="../Mobius/Source/model/old/Structure.h"/>
+          <FILE id="Ft9SHQ" name="SystemConstant.h" compile="0" resource="0"
+                file="../Mobius/Source/model/old/SystemConstant.h"/>
+          <FILE id="gibK8L" name="Trigger.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Trigger.cpp"/>
+          <FILE id="EhxpLM" name="Trigger.h" compile="0" resource="0" file="../Mobius/Source/model/old/Trigger.h"/>
+          <FILE id="lUo8vS" name="XmlRenderer.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/XmlRenderer.cpp"/>
+          <FILE id="NWTo9R" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/old/XmlRenderer.h"/>
+        </GROUP>
         <FILE id="jvFECp" name="DeviceConfig.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/DeviceConfig.cpp"/>
         <FILE id="Cd2npa" name="DeviceConfig.h" compile="0" resource="0" file="../Mobius/Source/model/DeviceConfig.h"/>
@@ -159,18 +183,8 @@
               file="../Mobius/Source/model/GroupDefinition.h"/>
         <FILE id="YdQfhl" name="HelpCatalog.cpp" compile="1" resource="0" file="../Mobius/Source/model/HelpCatalog.cpp"/>
         <FILE id="PExAa2" name="HelpCatalog.h" compile="0" resource="0" file="../Mobius/Source/model/HelpCatalog.h"/>
-        <FILE id="XLFumN" name="Messages.h" compile="0" resource="0" file="../Mobius/Source/model/Messages.h"/>
-        <FILE id="xhGhj4" name="MobiusConfig.cpp" compile="1" resource="0"
-              file="../Mobius/Source/model/MobiusConfig.cpp"/>
-        <FILE id="JADQzi" name="MobiusConfig.h" compile="0" resource="0" file="../Mobius/Source/model/MobiusConfig.h"/>
-        <FILE id="bdLfpv" name="ModeDefinition.cpp" compile="1" resource="0"
-              file="../Mobius/Source/model/ModeDefinition.cpp"/>
-        <FILE id="pPufKY" name="ModeDefinition.h" compile="0" resource="0"
-              file="../Mobius/Source/model/ModeDefinition.h"/>
         <FILE id="xiAFbI" name="ObjectPool.cpp" compile="1" resource="0" file="../Mobius/Source/model/ObjectPool.cpp"/>
         <FILE id="AH2jpY" name="ObjectPool.h" compile="0" resource="0" file="../Mobius/Source/model/ObjectPool.h"/>
-        <FILE id="cbzLSD" name="OscConfig.cpp" compile="1" resource="0" file="../Mobius/Source/model/OscConfig.cpp"/>
-        <FILE id="SjHrT6" name="OscConfig.h" compile="0" resource="0" file="../Mobius/Source/model/OscConfig.h"/>
         <FILE id="wMAPL6" name="ParameterConstants.h" compile="0" resource="0"
               file="../Mobius/Source/model/ParameterConstants.h"/>
         <FILE id="dXaxtL" name="ParameterHelper.cpp" compile="1" resource="0"
@@ -184,8 +198,6 @@
         <FILE id="eUqOF4" name="ParameterSets.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/ParameterSets.cpp"/>
         <FILE id="vgiMas" name="ParameterSets.h" compile="0" resource="0" file="../Mobius/Source/model/ParameterSets.h"/>
-        <FILE id="gLFmjn" name="Preset.cpp" compile="1" resource="0" file="../Mobius/Source/model/Preset.cpp"/>
-        <FILE id="bFBKiP" name="Preset.h" compile="0" resource="0" file="../Mobius/Source/model/Preset.h"/>
         <FILE id="qpJJbo" name="PriorityState.h" compile="0" resource="0" file="../Mobius/Source/model/PriorityState.h"/>
         <FILE id="tisuQ3" name="SampleConfig.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/SampleConfig.cpp"/>
@@ -208,13 +220,9 @@
         <FILE id="KmRv13" name="SessionHelper.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/SessionHelper.cpp"/>
         <FILE id="NjNYnr" name="SessionHelper.h" compile="0" resource="0" file="../Mobius/Source/model/SessionHelper.h"/>
-        <FILE id="gUPJrL" name="Setup.cpp" compile="1" resource="0" file="../Mobius/Source/model/Setup.cpp"/>
-        <FILE id="J4bzxZ" name="Setup.h" compile="0" resource="0" file="../Mobius/Source/model/Setup.h"/>
         <FILE id="nKSjQf" name="StaticConfig.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/StaticConfig.cpp"/>
         <FILE id="rHwo7u" name="StaticConfig.h" compile="0" resource="0" file="../Mobius/Source/model/StaticConfig.h"/>
-        <FILE id="GefmGv" name="Structure.cpp" compile="1" resource="0" file="../Mobius/Source/model/Structure.cpp"/>
-        <FILE id="C4fMLk" name="Structure.h" compile="0" resource="0" file="../Mobius/Source/model/Structure.h"/>
         <FILE id="WEigo3" name="Symbol.cpp" compile="1" resource="0" file="../Mobius/Source/model/Symbol.cpp"/>
         <FILE id="bWMkbO" name="Symbol.h" compile="0" resource="0" file="../Mobius/Source/model/Symbol.h"/>
         <FILE id="AyjBao" name="SymbolId.cpp" compile="1" resource="0" file="../Mobius/Source/model/SymbolId.cpp"/>
@@ -222,21 +230,15 @@
         <FILE id="dRmINj" name="SystemConfig.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/SystemConfig.cpp"/>
         <FILE id="DkaE2e" name="SystemConfig.h" compile="0" resource="0" file="../Mobius/Source/model/SystemConfig.h"/>
-        <FILE id="U9JHYO" name="SystemConstant.h" compile="0" resource="0"
-              file="../Mobius/Source/model/SystemConstant.h"/>
         <FILE id="q0TT6U" name="SystemState.h" compile="0" resource="0" file="../Mobius/Source/model/SystemState.h"/>
         <FILE id="nCnxSW" name="TrackState.cpp" compile="1" resource="0" file="../Mobius/Source/model/TrackState.cpp"/>
         <FILE id="Iq8mNm" name="TrackState.h" compile="0" resource="0" file="../Mobius/Source/model/TrackState.h"/>
         <FILE id="Od5WrC" name="TreeForm.cpp" compile="1" resource="0" file="../Mobius/Source/model/TreeForm.cpp"/>
         <FILE id="yfCtGZ" name="TreeForm.h" compile="0" resource="0" file="../Mobius/Source/model/TreeForm.h"/>
-        <FILE id="LDwuZR" name="Trigger.cpp" compile="1" resource="0" file="../Mobius/Source/model/Trigger.cpp"/>
-        <FILE id="HZ6jxP" name="Trigger.h" compile="0" resource="0" file="../Mobius/Source/model/Trigger.h"/>
         <FILE id="isV75C" name="UIAction.cpp" compile="1" resource="0" file="../Mobius/Source/model/UIAction.cpp"/>
         <FILE id="zBHuKO" name="UIAction.h" compile="0" resource="0" file="../Mobius/Source/model/UIAction.h"/>
         <FILE id="HEkvJP" name="UIConfig.cpp" compile="1" resource="0" file="../Mobius/Source/model/UIConfig.cpp"/>
         <FILE id="oooVI4" name="UIConfig.h" compile="0" resource="0" file="../Mobius/Source/model/UIConfig.h"/>
-        <FILE id="f5nezZ" name="UIEventType.cpp" compile="1" resource="0" file="../Mobius/Source/model/UIEventType.cpp"/>
-        <FILE id="uA4X73" name="UIEventType.h" compile="0" resource="0" file="../Mobius/Source/model/UIEventType.h"/>
         <FILE id="IUOIE3" name="UserVariable.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/UserVariable.cpp"/>
         <FILE id="VSX9TG" name="UserVariable.h" compile="0" resource="0" file="../Mobius/Source/model/UserVariable.h"/>
@@ -246,8 +248,6 @@
               file="../Mobius/Source/model/VariableDefinition.cpp"/>
         <FILE id="XUAlYr" name="VariableDefinition.h" compile="0" resource="0"
               file="../Mobius/Source/model/VariableDefinition.h"/>
-        <FILE id="NljTaJ" name="XmlRenderer.cpp" compile="1" resource="0" file="../Mobius/Source/model/XmlRenderer.cpp"/>
-        <FILE id="Yxp3rh" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
         <GROUP id="{4D9FCDBF-4B09-3827-C66D-3CD74CEDBAD0}" name="parameter">
