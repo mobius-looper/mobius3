@@ -147,6 +147,8 @@
           <FILE id="t8cwi8" name="ActionType.h" compile="0" resource="0" file="../Mobius/Source/model/old/ActionType.h"/>
           <FILE id="DPLAIR" name="Binding.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Binding.cpp"/>
           <FILE id="i1TmKb" name="Binding.h" compile="0" resource="0" file="../Mobius/Source/model/old/Binding.h"/>
+          <FILE id="lcdxW9" name="ExValue.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/ExValue.cpp"/>
+          <FILE id="ywxlxR" name="ExValue.h" compile="0" resource="0" file="../Mobius/Source/model/old/ExValue.h"/>
           <FILE id="twf6rL" name="Messages.h" compile="0" resource="0" file="../Mobius/Source/model/old/Messages.h"/>
           <FILE id="Dkj48a" name="MobiusConfig.cpp" compile="1" resource="0"
                 file="../Mobius/Source/model/old/MobiusConfig.cpp"/>
@@ -167,6 +169,9 @@
                 file="../Mobius/Source/model/old/SystemConstant.h"/>
           <FILE id="gibK8L" name="Trigger.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Trigger.cpp"/>
           <FILE id="EhxpLM" name="Trigger.h" compile="0" resource="0" file="../Mobius/Source/model/old/Trigger.h"/>
+          <FILE id="O61bF7" name="UserVariable.cpp" compile="1" resource="0"
+                file="../Mobius/Source/model/old/UserVariable.cpp"/>
+          <FILE id="bLp02g" name="UserVariable.h" compile="0" resource="0" file="../Mobius/Source/model/old/UserVariable.h"/>
           <FILE id="lUo8vS" name="XmlRenderer.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/XmlRenderer.cpp"/>
           <FILE id="NWTo9R" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/old/XmlRenderer.h"/>
         </GROUP>
@@ -175,8 +180,6 @@
         <FILE id="Cd2npa" name="DeviceConfig.h" compile="0" resource="0" file="../Mobius/Source/model/DeviceConfig.h"/>
         <FILE id="m1sYs0" name="Enumerator.cpp" compile="1" resource="0" file="../Mobius/Source/model/Enumerator.cpp"/>
         <FILE id="cYaKES" name="Enumerator.h" compile="0" resource="0" file="../Mobius/Source/model/Enumerator.h"/>
-        <FILE id="jtAsrG" name="ExValue.cpp" compile="1" resource="0" file="../Mobius/Source/model/ExValue.cpp"/>
-        <FILE id="luXHmM" name="ExValue.h" compile="0" resource="0" file="../Mobius/Source/model/ExValue.h"/>
         <FILE id="WT58wO" name="GroupDefinition.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/GroupDefinition.cpp"/>
         <FILE id="YlB31N" name="GroupDefinition.h" compile="0" resource="0"
@@ -239,9 +242,6 @@
         <FILE id="zBHuKO" name="UIAction.h" compile="0" resource="0" file="../Mobius/Source/model/UIAction.h"/>
         <FILE id="HEkvJP" name="UIConfig.cpp" compile="1" resource="0" file="../Mobius/Source/model/UIConfig.cpp"/>
         <FILE id="oooVI4" name="UIConfig.h" compile="0" resource="0" file="../Mobius/Source/model/UIConfig.h"/>
-        <FILE id="IUOIE3" name="UserVariable.cpp" compile="1" resource="0"
-              file="../Mobius/Source/model/UserVariable.cpp"/>
-        <FILE id="VSX9TG" name="UserVariable.h" compile="0" resource="0" file="../Mobius/Source/model/UserVariable.h"/>
         <FILE id="o3YV9K" name="ValueSet.cpp" compile="1" resource="0" file="../Mobius/Source/model/ValueSet.cpp"/>
         <FILE id="KQlCc6" name="ValueSet.h" compile="0" resource="0" file="../Mobius/Source/model/ValueSet.h"/>
         <FILE id="ht00ZI" name="VariableDefinition.cpp" compile="1" resource="0"

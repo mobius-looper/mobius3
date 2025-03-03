@@ -332,7 +332,7 @@ class SetupTrack {
 	/**
 	 * User defined variable saved with the track.
 	 */
-	class UserVariables* mVariables;
+	//class UserVariables* mVariables;
 };
 
 /****************************************************************************/

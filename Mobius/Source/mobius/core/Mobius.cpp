@@ -25,7 +25,8 @@
 #include "../../util/StructureDumper.h"
 
 #include "../../model/old/MobiusConfig.h"
-#include "../../model/UserVariable.h"
+#include "../../model/old/UserVariable.h"
+
 #include "../../model/UIAction.h"
 #include "../../model/SymbolId.h"
 #include "../../model/Symbol.h"

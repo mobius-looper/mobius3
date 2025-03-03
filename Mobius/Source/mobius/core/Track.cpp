@@ -38,8 +38,9 @@
 #include "../../util/List.h"
 #include "../../util/StructureDumper.h"
 
-#include "../../model/UserVariable.h"
 #include "../../model/old/MobiusConfig.h"
+#include "../../model/old/UserVariable.h"
+
 #include "../../model/Session.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"

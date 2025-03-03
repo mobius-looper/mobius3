@@ -50,8 +50,9 @@
 #include "MobiusConfig.h"
 #include "Preset.h"
 #include "Setup.h"
-#include "../UserVariable.h"
+#include "UserVariable.h"
 #include "Binding.h"
+
 #include "../ScriptConfig.h"
 #include "../SampleConfig.h"
 #include "../GroupDefinition.h"

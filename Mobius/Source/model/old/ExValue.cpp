@@ -10,10 +10,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "../util/Util.h"
-#include "../util/Vbuf.h"
-#include "../util/Trace.h"
-#include "../util/List.h"
+#include "../../util/Util.h"
+#include "../../util/Vbuf.h"
+#include "../../util/Trace.h"
+#include "../../util/List.h"
 
 #include "ExValue.h"
 

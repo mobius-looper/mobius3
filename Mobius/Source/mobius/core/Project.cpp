@@ -31,7 +31,7 @@
 #include "../../util/XmlBuffer.h"
 #include "../../util/XomParser.h"
 
-#include "../../model/UserVariable.h"
+#include "../../model/old/UserVariable.h"
 
 #include "../AudioPool.h"
 

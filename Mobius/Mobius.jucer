@@ -80,6 +80,8 @@
           <FILE id="VY0IAJ" name="ActionType.h" compile="0" resource="0" file="Source/model/old/ActionType.h"/>
           <FILE id="PgEScE" name="Binding.cpp" compile="1" resource="0" file="Source/model/old/Binding.cpp"/>
           <FILE id="rjrpY5" name="Binding.h" compile="0" resource="0" file="Source/model/old/Binding.h"/>
+          <FILE id="hNHIV9" name="ExValue.cpp" compile="1" resource="0" file="Source/model/old/ExValue.cpp"/>
+          <FILE id="R9xCMa" name="ExValue.h" compile="0" resource="0" file="Source/model/old/ExValue.h"/>
           <FILE id="U7jIzu" name="MobiusConfig.cpp" compile="1" resource="0"
                 file="Source/model/old/MobiusConfig.cpp"/>
           <FILE id="Oyhi4E" name="MobiusConfig.h" compile="0" resource="0" file="Source/model/old/MobiusConfig.h"/>
@@ -97,6 +99,9 @@
                 file="Source/model/old/SystemConstant.h"/>
           <FILE id="KK7X03" name="Trigger.cpp" compile="1" resource="0" file="Source/model/old/Trigger.cpp"/>
           <FILE id="sjCand" name="Trigger.h" compile="0" resource="0" file="Source/model/old/Trigger.h"/>
+          <FILE id="a7gcSv" name="UserVariable.cpp" compile="1" resource="0"
+                file="Source/model/old/UserVariable.cpp"/>
+          <FILE id="XvhxYN" name="UserVariable.h" compile="0" resource="0" file="Source/model/old/UserVariable.h"/>
           <FILE id="EaQ7Kz" name="XmlRenderer.cpp" compile="1" resource="0" file="Source/model/old/XmlRenderer.cpp"/>
           <FILE id="CyRJqc" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/old/XmlRenderer.h"/>
         </GROUP>
@@ -105,8 +110,6 @@
         <FILE id="W4myih" name="DeviceConfig.h" compile="0" resource="0" file="Source/model/DeviceConfig.h"/>
         <FILE id="cObUhB" name="Enumerator.cpp" compile="1" resource="0" file="Source/model/Enumerator.cpp"/>
         <FILE id="z4eQpK" name="Enumerator.h" compile="0" resource="0" file="Source/model/Enumerator.h"/>
-        <FILE id="azEsBL" name="ExValue.cpp" compile="1" resource="0" file="Source/model/ExValue.cpp"/>
-        <FILE id="km0fDA" name="ExValue.h" compile="0" resource="0" file="Source/model/ExValue.h"/>
         <FILE id="am0Lis" name="FunctionProperties.cpp" compile="1" resource="0"
               file="Source/model/FunctionProperties.cpp"/>
         <FILE id="VOgufo" name="FunctionProperties.h" compile="0" resource="0"
@@ -175,9 +178,6 @@
         <FILE id="coRPMH" name="UIAction.h" compile="0" resource="0" file="Source/model/UIAction.h"/>
         <FILE id="sCrCkv" name="UIConfig.cpp" compile="1" resource="0" file="Source/model/UIConfig.cpp"/>
         <FILE id="dgLWU9" name="UIConfig.h" compile="0" resource="0" file="Source/model/UIConfig.h"/>
-        <FILE id="wa9W4M" name="UserVariable.cpp" compile="1" resource="0"
-              file="Source/model/UserVariable.cpp"/>
-        <FILE id="JU2prp" name="UserVariable.h" compile="0" resource="0" file="Source/model/UserVariable.h"/>
         <FILE id="pf2sO3" name="ValueSet.cpp" compile="1" resource="0" file="Source/model/ValueSet.cpp"/>
         <FILE id="MiPaWi" name="ValueSet.h" compile="0" resource="0" file="Source/model/ValueSet.h"/>
         <FILE id="OTK6EH" name="VariableDefinition.cpp" compile="1" resource="0"

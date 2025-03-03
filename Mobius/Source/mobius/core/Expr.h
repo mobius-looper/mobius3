@@ -21,7 +21,7 @@
 
 // ExValue moved out so the UI could use it without everything
 // else in here
-#include "../../model/ExValue.h"
+#include "../../model/old/ExValue.h"
 
 #if 0
 /****************************************************************************

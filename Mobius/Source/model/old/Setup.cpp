@@ -448,7 +448,7 @@ SetupTrack::SetupTrack()
 	mNext = nullptr;
     mName = nullptr;
 	mTrackPresetName = nullptr;
-	mVariables = nullptr;
+	//mVariables = nullptr;
 	reset();
 }
 
@@ -458,7 +458,7 @@ SetupTrack::~SetupTrack()
 
 	delete mName;
 	delete mTrackPresetName;
-	delete mVariables;
+	//delete mVariables;
 
 	for (el = mNext ; el != nullptr ; el = next) {
 		next = el->getNext();
@@ -472,7 +472,7 @@ SetupTrack::SetupTrack(SetupTrack* src)
 	mNext = nullptr;
     mName = nullptr;
 	mTrackPresetName = nullptr;
-	mVariables = nullptr;
+	//mVariables = nullptr;
     
     setName(src->getName());
     setTrackPresetName(src->getTrackPresetName());
