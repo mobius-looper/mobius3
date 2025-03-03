@@ -43,7 +43,7 @@
 
 #include "../../../util/Util.h"
 #include "../../../model/ParameterConstants.h"
-#include "../../../model/Trigger.h"
+#include "../../../model/old/Trigger.h"
 #include "../../../model/SymbolId.h"
 #include "../../../model/TrackState.h"
 

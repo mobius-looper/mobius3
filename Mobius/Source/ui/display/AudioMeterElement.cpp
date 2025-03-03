@@ -15,7 +15,6 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../model/ModeDefinition.h"
 #include "../MobiusView.h"
 
 #include "Colors.h"

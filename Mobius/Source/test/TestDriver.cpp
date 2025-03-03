@@ -61,12 +61,13 @@
 #include "../util/Util.h"
 #include "../util/Trace.h"
 
-#include "../model/MobiusConfig.h"
+#include "../model/old/MobiusConfig.h"
+#include "../model/old/Preset.h"
+#include "../model/old/Setup.h"
+#include "../model/old/XmlRenderer.h"
+
 #include "../model/ScriptConfig.h"
 #include "../model/SampleConfig.h"
-#include "../model/Preset.h"
-#include "../model/Setup.h"
-#include "../model/XmlRenderer.h"
 #include "../model/Symbol.h"
 #include "../model/UIAction.h"
 #include "../model/UIConfig.h"

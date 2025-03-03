@@ -3,7 +3,6 @@
 #include <JuceHeader.h>
 
 #include "../../util/Util.h"
-#include "../../model/ModeDefinition.h"
 #include "../MobiusView.h"
 
 #include "../JuceUtil.h"

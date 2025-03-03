@@ -58,13 +58,13 @@
 #include "../../util/Util.h"
 
 #include "../../model/ParameterConstants.h"
-#include "../../model/Trigger.h"
-#include "../../model/MobiusConfig.h"
-#include "../../model/Setup.h"
+#include "../../model/old/Trigger.h"
+#include "../../model/old/MobiusConfig.h"
+#include "../../model/old/Setup.h"
 #include "../../model/ScriptConfig.h"
 #include "../../model/UserVariable.h"
 #include "../../model/Symbol.h"
-#include "../../model/Preset.h"
+#include "../../model/old/Preset.h"
 #include "../MobiusInterface.h"
 
 #include "Action.h"

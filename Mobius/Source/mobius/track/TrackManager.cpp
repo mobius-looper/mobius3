@@ -6,7 +6,7 @@
 #include "../../model/FunctionProperties.h"
 #include "../../model/ParameterProperties.h"
 #include "../../model/ScriptProperties.h"
-#include "../../model/MobiusConfig.h"
+#include "../../model/old/MobiusConfig.h"
 #include "../../model/Session.h"
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"

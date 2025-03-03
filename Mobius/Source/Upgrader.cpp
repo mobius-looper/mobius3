@@ -10,17 +10,17 @@
 
 #include "util/List.h"
 
-#include "model/MobiusConfig.h"
+#include "model/old/MobiusConfig.h"
+#include "model/old/Preset.h"
+#include "model/old/Setup.h"
+#include "model/old/XmlRenderer.h"
 #include "model/Session.h"
 #include "model/ValueSet.h"
-#include "model/Preset.h"
-#include "model/Setup.h"
 #include "model/Symbol.h"
 #include "model/SymbolId.h"
 #include "model/FunctionProperties.h"
 #include "model/ParameterProperties.h"
 #include "model/ParameterSets.h"
-#include "model/XmlRenderer.h"
 
 #include "Symbolizer.h"
 #include "ModelTransformer.h"

@@ -6,7 +6,7 @@
 
 #include "../../util/Trace.h"
 #include "../../util/MidiUtil.h"
-#include "../../model/Binding.h"
+#include "../../model/old/Binding.h"
 #include "../../model/UIConfig.h"
 
 #include "../../Supervisor.h"

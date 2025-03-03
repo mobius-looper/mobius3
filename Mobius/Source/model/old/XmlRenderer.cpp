@@ -39,25 +39,24 @@
 // for strcmp
 #include <string.h>
 
-#include "../util/Trace.h"
-#include "../util/Util.h"
-#include "../util/List.h"
-#include "../util/XmlBuffer.h"
-#include "../util/XomParser.h"
-#include "../util/XmlModel.h"
-#include "../util/FileUtil.h"
+#include "../../util/Trace.h"
+#include "../../util/Util.h"
+#include "../../util/List.h"
+#include "../../util/XmlBuffer.h"
+#include "../../util/XomParser.h"
+#include "../../util/XmlModel.h"
+#include "../../util/FileUtil.h"
 
 #include "MobiusConfig.h"
 #include "Preset.h"
 #include "Setup.h"
-#include "UserVariable.h"
+#include "../UserVariable.h"
 #include "Binding.h"
-#include "ScriptConfig.h"
-#include "SampleConfig.h"
-//#include "UIParameter.h"
-#include "GroupDefinition.h"
-#include "Symbol.h"
-#include "ParameterProperties.h"
+#include "../ScriptConfig.h"
+#include "../SampleConfig.h"
+#include "../GroupDefinition.h"
+#include "../Symbol.h"
+#include "../ParameterProperties.h"
 
 #include "XmlRenderer.h"
 

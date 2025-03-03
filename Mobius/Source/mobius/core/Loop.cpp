@@ -50,7 +50,6 @@
 #include "../../util/StructureDumper.h"
 
 #include "../../model/ParameterConstants.h"
-#include "../../model/old/MobiusConfig.h"
 #include "../../model/old/Trigger.h"
 #include "../../model/PriorityState.h"
 

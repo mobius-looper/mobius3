@@ -23,7 +23,6 @@
 
 #include "../util/Trace.h"
 #include "../util/Util.h"
-#include "../model/MobiusConfig.h"
 #include "../model/SampleConfig.h"
 
 #include "MobiusInterface.h"

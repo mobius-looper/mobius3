@@ -11,7 +11,7 @@
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
 #include "../../model/Enumerator.h"
-#include "../../model/MobiusConfig.h"
+#include "../../model/old/MobiusConfig.h"
 #include "../../model/ParameterProperties.h"
 #include "../../model/ExValue.h"
 

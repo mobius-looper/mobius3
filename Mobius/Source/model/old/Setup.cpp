@@ -12,15 +12,15 @@
 #include <string.h>
 #include <math.h>
 
-#include "../util/Util.h"
-#include "../util/MidiUtil.h"
+#include "../../util/Util.h"
+#include "../../util/MidiUtil.h"
 
 // uses StringList for resettables
-#include "../util/List.h"
+#include "../../util/List.h"
 
-#include "ExValue.h"
+#include "../ExValue.h"
 #include "Preset.h"
-#include "UserVariable.h"
+#include "../UserVariable.h"
 
 #include "Structure.h"
 #include "Setup.h"

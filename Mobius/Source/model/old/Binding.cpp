@@ -12,13 +12,13 @@
  * I forget how these were used, try to get rid of them.
  */
 
-#include "../util/Util.h"
-#include "../util/Trace.h"
+#include "../../util/Util.h"
+#include "../../util/Trace.h"
 
 #include "Trigger.h"
 #include "ActionType.h"
 #include "Structure.h"
-#include "Scope.h"
+#include "../Scope.h"
 
 #include "Binding.h"
 

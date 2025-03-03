@@ -14,8 +14,8 @@
 #include <JuceHeader.h>
 
 #include "util/Trace.h"
-#include "model/MobiusConfig.h"
-#include "model/Binding.h"
+#include "model/old/MobiusConfig.h"
+#include "model/old/Binding.h"
 #include "model/VariableDefinition.h"
 #include "model/Symbol.h"
 

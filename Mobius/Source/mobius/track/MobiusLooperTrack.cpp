@@ -3,7 +3,6 @@
  * Mostly a stub except for doAction, doQuery, and getTrackProperties
  */
 
-#include "../../model/Preset.h"
 #include "../../model/TrackState.h"
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"

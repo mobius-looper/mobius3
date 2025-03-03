@@ -7,7 +7,7 @@
 
 #include "../../util/Trace.h"
 #include "../../model/UIConfig.h"
-#include "../../model/Binding.h"
+#include "../../model/old/Binding.h"
 
 #include "HostEditor.h"
 

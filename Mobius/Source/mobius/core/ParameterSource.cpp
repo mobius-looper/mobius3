@@ -10,9 +10,10 @@
 
 #include "../../model/ParameterConstants.h"
 #include "../../model/SymbolId.h"
-#include "../../model/Preset.h"
-#include "../../model/MobiusConfig.h"
 #include "../../model/StepSequence.h"
+
+// for MSECS_TO_FRAMES
+#include "../../model/old/MobiusConfig.h"
 
 #include "../track/LogicalTrack.h"
 

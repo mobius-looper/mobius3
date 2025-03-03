@@ -36,7 +36,7 @@
 
 #include "../../util/Trace.h"
 #include "../../util/Util.h"
-#include "../../model/Trigger.h"
+#include "../../model/old/Trigger.h"
 
 #include "Action.h"
 #include "Actionator.h"

@@ -10,7 +10,7 @@
  */
 
 // for TriggerEvent
-#include "../../model/Trigger.h"
+#include "../../model/old/Trigger.h"
 
 #include "../MobiusInterface.h"
 #include "../KernelEvent.h"

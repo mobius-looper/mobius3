@@ -2,7 +2,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
-#include "../model/MobiusConfig.h"
+#include "../model/old/MobiusConfig.h"
 #include "../model/Session.h"
 
 #include "MslContext.h"

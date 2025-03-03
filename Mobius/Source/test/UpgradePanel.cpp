@@ -10,12 +10,12 @@
 #include "../util/Trace.h"
 #include "../util/Util.h"
 
-#include "../model/XmlRenderer.h"
-#include "../model/MobiusConfig.h"
+#include "../model/old/XmlRenderer.h"
+#include "../model/old/MobiusConfig.h"
+#include "../model/old/Preset.h"
+#include "../model/old/Setup.h"
+#include "../model/old/Binding.h"
 #include "../model/UIConfig.h"
-#include "../model/Preset.h"
-#include "../model/Setup.h"
-#include "../model/Binding.h"
 #include "../model/ScriptConfig.h"
 
 #include "../Supervisor.h"

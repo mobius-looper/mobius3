@@ -11,7 +11,7 @@
 #include "../../util/Util.h"
 #include "../../util/Trace.h"
 #include "../../model/UserVariable.h"
-#include "../../model/Trigger.h"
+#include "../../model/old/Trigger.h"
 #include "../../model/Symbol.h"
 #include "../MobiusKernel.h"
 #include "../MobiusInterface.h"

@@ -68,12 +68,12 @@
 
 #include "util/Trace.h"
 #include "util/Util.h"
+#include "model/old/MobiusConfig.h"
+#include "model/old/Binding.h"
 #include "model/Symbol.h"
-#include "model/MobiusConfig.h"
 #include "model/UIConfig.h"
 #include "model/UIAction.h"
 #include "model/FunctionProperties.h"
-#include "model/Binding.h"
 #include "model/ScriptProperties.h"
 
 #include "KeyTracker.h"

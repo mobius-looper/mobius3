@@ -19,7 +19,7 @@
 
 #include "../../../util/Util.h"
 #include "../../../midi/MidiByte.h"
-#include "../../../model/Trigger.h"
+#include "../../../model/old/Trigger.h"
 
 #include "../Action.h"
 #include "../Function.h"

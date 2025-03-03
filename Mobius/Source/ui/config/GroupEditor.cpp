@@ -4,7 +4,7 @@
 
 #include <JuceHeader.h>
 
-#include "../../model/MobiusConfig.h"
+#include "../../model/old/MobiusConfig.h"
 #include "../../model/GroupDefinition.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"

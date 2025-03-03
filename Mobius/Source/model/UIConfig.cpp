@@ -3,11 +3,10 @@
 
 #include "../util/Trace.h"
 #include "UIConfig.h"
-#include "MobiusConfig.h"
 #include "UIAction.h"
 #include "Scope.h"
 #include "Symbol.h"
-#include "Binding.h"
+#include "old/Binding.h"
 
 #include "UIConfig.h"
 

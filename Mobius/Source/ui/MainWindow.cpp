@@ -15,8 +15,8 @@
 #include "../model/UIConfig.h"
 #include "../model/UIAction.h"
 #include "../model/Symbol.h"
-#include "../model/MobiusConfig.h"
-#include "../model/Binding.h"
+#include "../model/old/MobiusConfig.h"
+#include "../model/old/Binding.h"
 
 #include "../Supervisor.h"
 #include "../Symbolizer.h"

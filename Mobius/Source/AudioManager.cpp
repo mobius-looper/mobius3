@@ -34,7 +34,6 @@
 #include <JuceHeader.h>
 
 #include "util/Trace.h"
-#include "model/MobiusConfig.h"
 #include "model/DeviceConfig.h"
 
 #include "MainComponent.h"

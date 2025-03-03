@@ -1,5 +1,5 @@
 
-#include "../util/Util.h"
+#include "../../util/Util.h"
 #include "Structure.h"
 
 Structure::Structure()

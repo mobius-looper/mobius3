@@ -16,12 +16,13 @@
 #include "util/Util.h"
 #include "util/List.h"
 
+#include "model/old/MobiusConfig.h"
+#include "model/old/XmlRenderer.h"
+#include "model/old/Binding.h"
+
 #include "model/ConfigPayload.h"
-#include "model/MobiusConfig.h"
-#include "model/Setup.h"
 #include "model/Session.h"
 #include "model/UIConfig.h"
-#include "model/XmlRenderer.h"
 #include "model/UIAction.h"
 #include "model/Query.h"
 #include "model/ParameterProperties.h"
@@ -38,7 +39,6 @@
 #include "model/ScriptConfig.h"
 #include "model/FunctionProperties.h"
 #include "model/ScriptProperties.h"
-#include "model/Binding.h"
 
 #include "ui/MainWindow.h"
 

@@ -27,15 +27,14 @@
 #include "../../model/UIAction.h"
 #include "../../model/Scope.h"
 #include "../../model/Query.h"
-#include "../../model/MobiusConfig.h"
-#include "../../model/Trigger.h"
-#include "../../model/Structure.h"
+#include "../../model/old/MobiusConfig.h"
+#include "../../model/old/Trigger.h"
+#include "../../model/old/Structure.h"
 
 #include "../MobiusShell.h"
 
 #include "Action.h"
 #include "Function.h"
-#include "TriggerState.h"
 #include "Track.h"
 #include "Loop.h"
 #include "Script.h"

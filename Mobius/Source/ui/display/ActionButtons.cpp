@@ -10,7 +10,7 @@
 #include "../../util/Trace.h"
 #include "../../Provider.h"
 #include "../../model/UIConfig.h"
-#include "../../model/Binding.h"
+#include "../../model/old/Binding.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
 #include "../../model/ScriptProperties.h"

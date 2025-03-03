@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "SymbolId.h"
-#include "ParameterConstants.h"
+#include "../SymbolId.h"
+#include "../ParameterConstants.h"
 
 class XmlRenderer {
 

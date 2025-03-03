@@ -19,7 +19,7 @@
 #include "../../util/Trace.h"
 
 #include "Mobius.h"
-#include "../../model/MobiusConfig.h"
+#include "../../model/old/MobiusConfig.h"
 #include "Mode.h"
 #include "Function.h"
 
@@ -184,6 +184,8 @@ void MobiusMode::localizeAll(MessageCatalog* cat)
 
 /**
  * Check the global configuration and update some of the mode options.
+ *
+ * NOTE: This is currently stubbed out in Mobius.cpp 
  */
 void MobiusMode::updateConfiguration(MobiusConfig* config)
 {

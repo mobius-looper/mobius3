@@ -3,8 +3,8 @@
 
 #include "util/Trace.h"
 
-#include "model/XmlRenderer.h"
-#include "model/MobiusConfig.h"
+#include "model/old/XmlRenderer.h"
+#include "model/old/MobiusConfig.h"
 
 #include "model/UIConfig.h"
 #include "model/DeviceConfig.h"

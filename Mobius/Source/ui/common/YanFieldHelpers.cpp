@@ -6,7 +6,6 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../model/MobiusConfig.h"
 #include "../../model/ParameterSets.h"
 #include "../../model/ValueSet.h"
 #include "../../Provider.h"

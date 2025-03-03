@@ -16,7 +16,7 @@
 
 // StringEqualNoCase
 #include "../../../util/Util.h"
-#include "../../../model/Trigger.h"
+#include "../../../model/old/Trigger.h"
 #include "../../../model/Symbol.h"
 #include "../../../model/SymbolId.h"
 

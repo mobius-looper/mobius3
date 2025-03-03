@@ -12,8 +12,8 @@
 #include "../../util/Util.h"
 #include "../../util/Trace.h"
 #include "../../util/List.h"
+#include "../../model/old/Trigger.h"
 #include "../../model/UIAction.h"
-#include "../../model/Trigger.h"
 #include "../../model/Symbol.h"
 
 #include "../../midi/MidiByte.h"

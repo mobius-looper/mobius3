@@ -30,7 +30,7 @@
 #include "../../util/Trace.h"
 #include "../../util/Util.h"
 #include "../../util/Vbuf.h"
-#include "../../model/Trigger.h"
+#include "../../model/old/Trigger.h"
 #include "../../model/SyncConstants.h"
 
 // for AUDIO_FRAMES_PER_BUFFER

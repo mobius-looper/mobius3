@@ -117,11 +117,8 @@
               file="Source/model/GroupDefinition.h"/>
         <FILE id="BIekug" name="HelpCatalog.cpp" compile="1" resource="0" file="Source/model/HelpCatalog.cpp"/>
         <FILE id="smiwwb" name="HelpCatalog.h" compile="0" resource="0" file="Source/model/HelpCatalog.h"/>
-        <FILE id="FZEt89" name="Messages.h" compile="0" resource="0" file="Source/model/Messages.h"/>
         <FILE id="bGX9AO" name="ObjectPool.cpp" compile="1" resource="0" file="Source/model/ObjectPool.cpp"/>
         <FILE id="rppXvP" name="ObjectPool.h" compile="0" resource="0" file="Source/model/ObjectPool.h"/>
-        <FILE id="sWgU5q" name="OscConfig.cpp" compile="1" resource="0" file="Source/model/OscConfig.cpp"/>
-        <FILE id="RfFrrM" name="OscConfig.h" compile="0" resource="0" file="Source/model/OscConfig.h"/>
         <FILE id="C3L3uT" name="ParameterConstants.h" compile="0" resource="0"
               file="Source/model/ParameterConstants.h"/>
         <FILE id="fmYUtB" name="ParameterHelper.cpp" compile="1" resource="0"

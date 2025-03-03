@@ -11,7 +11,6 @@
 #include "../util/Util.h"
 #include "../util/Trace.h"
 
-#include "Binding.h"
 #include "Symbol.h"
 #include "Scope.h"
 

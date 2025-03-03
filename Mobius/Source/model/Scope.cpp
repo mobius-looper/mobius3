@@ -5,7 +5,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
-#include "MobiusConfig.h"
+#include "old/MobiusConfig.h"
 #include "GroupDefinition.h"
 #include "Scope.h"
 
@@ -55,12 +55,14 @@ int Scope::parseGroupOrdinal(MobiusConfig* config, const char* scope)
     int ordinal = -1;
 
     int index = 0;
-    for (auto group : config->dangerousGroups) {
-        if (group->name == scope) {
-            ordinal = index;
-            break;
+    if (config != nullptr) {
+        for (auto group : config->dangerousGroups) {
+            if (group->name == scope) {
+                ordinal = index;
+                break;
+            }
+            index++;
         }
-        index++;
     }
     return ordinal;
 }
@@ -86,14 +88,16 @@ ScopeCache::~ScopeCache()
 void ScopeCache::refresh(MobiusConfig* config)
 {
     int index = 0;
-    for (auto group : config->dangerousGroups) {
-        const char* gname = group->name.toUTF8();
-        strncpy(GroupNames[index], gname, MaxGroupName-1);
-        index++;
-        if (index >= MaxGroupNames) {
-            if (config->dangerousGroups.size() > MaxGroupNames)
-              Trace(1, "ScopeCache: Group name cache overflow");
-            break;
+    if (config != nullptr) {
+        for (auto group : config->dangerousGroups) {
+            const char* gname = group->name.toUTF8();
+            strncpy(GroupNames[index], gname, MaxGroupName-1);
+            index++;
+            if (index >= MaxGroupNames) {
+                if (config->dangerousGroups.size() > MaxGroupNames)
+                  Trace(1, "ScopeCache: Group name cache overflow");
+                break;
+            }
         }
     }
     GroupNameCount = index;

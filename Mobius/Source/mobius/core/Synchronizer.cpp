@@ -25,7 +25,7 @@
 #include "../../util/Util.h"
 
 // TriggerScript
-#include "../../model/Trigger.h"
+#include "../../model/old/Trigger.h"
 #include "../../model/SyncConstants.h"
 
 #include "../MobiusKernel.h"

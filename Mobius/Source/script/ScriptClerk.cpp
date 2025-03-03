@@ -16,7 +16,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
-#include "../model/MobiusConfig.h"
+#include "../model/old/MobiusConfig.h"
 #include "../model/UIConfig.h"
 #include "../model/ScriptConfig.h"
 #include "../Supervisor.h"

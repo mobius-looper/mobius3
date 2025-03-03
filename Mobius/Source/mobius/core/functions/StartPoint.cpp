@@ -14,7 +14,7 @@
 #include <string.h>
 #include <memory.h>
 
-#include "../../../model/Trigger.h"
+#include "../../../model/old/Trigger.h"
 #include "../../../model/SymbolId.h"
 
 #include "../Action.h"

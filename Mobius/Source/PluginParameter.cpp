@@ -5,7 +5,7 @@
 #include "util/Util.h"
 #include "model/Symbol.h"
 #include "model/ParameterProperties.h"
-#include "model/Binding.h"
+#include "model/old/Binding.h"
 #include "model/VariableDefinition.h"
 
 #include "PluginParameter.h"

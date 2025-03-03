@@ -3,9 +3,9 @@
 
 #include "util/Trace.h"
 
-#include "model/MobiusConfig.h"
-#include "model/Setup.h"
-#include "model/Preset.h"
+#include "model/old/MobiusConfig.h"
+#include "model/old/Setup.h"
+#include "model/old/Preset.h"
 #include "model/ParameterConstants.h"
 
 #include "model/Symbol.h"

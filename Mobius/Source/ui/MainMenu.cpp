@@ -29,12 +29,12 @@
 
 #include "../util/Trace.h"
 #include "../util/Util.h"
-#include "../model/MobiusConfig.h"
+#include "../model/old/MobiusConfig.h"
 #include "../model/UIConfig.h"
 #include "../model/Session.h"
 #include "../model/Symbol.h"
 #include "../model/Query.h"
-#include "../model/Binding.h"
+#include "../model/old/Binding.h"
 
 #include "../Provider.h"
 #include "../Producer.h"

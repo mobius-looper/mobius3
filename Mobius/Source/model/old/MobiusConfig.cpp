@@ -15,18 +15,18 @@
 #include <string.h>
 #include <math.h>
 
-#include "../util/Trace.h"
-#include "../util/Util.h"
-#include "../util/List.h"
-#include "../util/MidiUtil.h"
+#include "../../util/Trace.h"
+#include "../../util/Util.h"
+#include "../../util/List.h"
+#include "../../util/MidiUtil.h"
 
 #include "Binding.h"
 #include "Preset.h"
 #include "Setup.h"
-#include "ScriptConfig.h"
-#include "SampleConfig.h"
+#include "../ScriptConfig.h"
+#include "../SampleConfig.h"
 #include "XmlRenderer.h"
-#include "ValueSet.h"
+#include "../ValueSet.h"
 
 #include "MobiusConfig.h"
 

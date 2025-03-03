@@ -7,7 +7,7 @@
 #include <JuceHeader.h>
 
 #include "util/Trace.h"
-#include "model/MobiusConfig.h"
+#include "model/old/MobiusConfig.h"
 #include "model/GroupDefinition.h"
 
 #include "Provider.h"
