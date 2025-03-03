@@ -12,7 +12,7 @@
 #ifndef MOBIUS_MODE_H
 #define MOBIUS_MODE_H
 
-#include "../../model/SystemConstant.h"
+#include "../../model/old/SystemConstant.h"
 #include "../../model/TrackState.h"
 
 /****************************************************************************

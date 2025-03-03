@@ -34,15 +34,12 @@
 #include <stdio.h>
 #include <memory.h>
 
-// MapMode
-#include "Mapper.h"
-
 #include "../../util/Util.h"
 #include "../../util/List.h"
 #include "../../util/StructureDumper.h"
 
 #include "../../model/UserVariable.h"
-#include "../../model/MobiusConfig.h"
+#include "../../model/old/MobiusConfig.h"
 #include "../../model/Session.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
@@ -1030,35 +1027,6 @@ void Track::refreshState(TrackState* s)
 
     if (mLoopCount > s->loops.size())
       Trace(1, "Track::refreshState Loop state overflow");
-
-    // Mode was complicated
-#if 0    
-        Event* switche = mEventManager->getSwitchEvent();
-        if (switche != nullptr) {
-            // MobiusState has a new model for modes
-            if (switche->pending)
-              lstate->mode = MapMode(ConfirmMode);
-            else
-              lstate->mode = MapMode(SwitchMode);	
-        }
-
-        // this really belongs in TrackState...
-        mEventManager->getEventSummary(lstate);
-        // in the new model activeLoop is zero based
-        // do not like the inconsistency but I want all zero based for new code
-        lstate->active = true;
-        s->activeLoop = loopIndex;
-    
-	// getting the pending status is odd because we have to work from the
-	// acive track to the target
-	int pending = mLoop->getNextLoop();
-	if (pending > 0) {
-		// remember this is 1 based
-		s->loops[pending - 1].pending = true;
-	}
-
-	s->loopCount = max;
-#endif
 
     // refreshLoopContent
     // comments say "latching flag indiciating that loops were loaded from files

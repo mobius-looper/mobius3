@@ -125,14 +125,11 @@
 #include <stdio.h>
 #include <memory.h>
 
-// MapEventType, MapFunction
-#include "Mapper.h"
-
 #include "../../util/Trace.h"
 #include "../../util/Util.h"
 #include "../../model/ParameterConstants.h"
-#include "../../model/Trigger.h"
 #include "../../model/TrackState.h"
+#include "../../model/old/Trigger.h"
 
 #include "Action.h"
 #include "Event.h"

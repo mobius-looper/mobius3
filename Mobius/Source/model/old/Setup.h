@@ -11,7 +11,7 @@
 
 #include <JuceHeader.h>
 
-#include "ParameterConstants.h"
+#include "../ParameterConstants.h"
 #include "Structure.h"
 
 /****************************************************************************

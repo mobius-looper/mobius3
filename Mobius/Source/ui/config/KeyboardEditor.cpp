@@ -5,7 +5,7 @@
 #include "../../KeyTracker.h"
 #include "../../Binderator.h"
 #include "../../util/Trace.h"
-#include "../../model/Binding.h"
+#include "../../model/old/Binding.h"
 
 #include "KeyboardEditor.h"
 

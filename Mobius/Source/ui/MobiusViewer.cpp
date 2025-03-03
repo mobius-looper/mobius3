@@ -53,9 +53,8 @@
 #include "../model/SystemState.h"
 #include "../model/TrackState.h"
 
-#include "../model/UIEventType.h"
-#include "../model/ModeDefinition.h"
-#include "../model/MobiusConfig.h"
+//#include "../model/ModeDefinition.h"
+#include "../model/old/MobiusConfig.h"
 #include "../model/Session.h"
 
 #include "MobiusView.h"

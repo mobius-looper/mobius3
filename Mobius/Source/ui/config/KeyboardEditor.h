@@ -9,7 +9,6 @@
 #include "../../KeyTracker.h"
 #include "../common/SimpleTable.h"
 #include "../common/ButtonBar.h"
-//#include "../common/Field.h"
 #include "../common/YanField.h"
 
 #include "BindingEditor.h"

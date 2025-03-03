@@ -13,7 +13,7 @@
 #define MOBIUS_FUNCTION_H
 
 #include <vector>
-#include "../../model/SystemConstant.h"
+#include "../../model/old/SystemConstant.h"
 #include "../../model/SymbolId.h"
 
 /****************************************************************************

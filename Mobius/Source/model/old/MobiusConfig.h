@@ -14,8 +14,8 @@
 #define MOBIUS_CONFIG_H
 
 #include <JuceHeader.h>
-#include "GroupDefinition.h"
-#include "ParameterConstants.h"
+#include "../GroupDefinition.h"
+#include "../ParameterConstants.h"
 
 /****************************************************************************
  *                                                                          *

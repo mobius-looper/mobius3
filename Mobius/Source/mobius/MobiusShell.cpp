@@ -41,12 +41,10 @@
 #include "../util/StructureDumper.h"
 
 #include "../model/ConfigPayload.h"
-#include "../model/MobiusConfig.h"
 #include "../model/Session.h"
 #include "../model/ParameterSets.h"
 #include "../model/UIAction.h"
 #include "../model/Query.h"
-#include "../model/UIEventType.h"
 #include "../model/ScriptConfig.h"
 #include "../model/SampleConfig.h"
 #include "../model/ObjectPool.h"

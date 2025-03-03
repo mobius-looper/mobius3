@@ -6,8 +6,8 @@
 #include "model/Session.h"
 
 // only for Setup migration
-#include "model/MobiusConfig.h"
-#include "model/Setup.h"
+#include "model/old/MobiusConfig.h"
+#include "model/old/Setup.h"
 #include "model/ParameterSets.h"
 
 #include "Provider.h"

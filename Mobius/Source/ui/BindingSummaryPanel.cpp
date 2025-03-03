@@ -3,8 +3,8 @@
 
 #include "../util/Util.h"
 #include "../util/MidiUtil.h"
-#include "../model/MobiusConfig.h"
-#include "../model/Binding.h"
+#include "../model/old/MobiusConfig.h"
+#include "../model/old/Binding.h"
 #include "../model/UIConfig.h"
 #include "../Supervisor.h"
 #include "JuceUtil.h"

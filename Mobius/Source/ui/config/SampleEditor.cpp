@@ -8,7 +8,7 @@
 //#include <sstream>
 
 #include "../../Supervisor.h"
-#include "../../model/MobiusConfig.h"
+#include "../../model/old/MobiusConfig.h"
 
 #include "SampleEditor.h"
 

@@ -5,9 +5,7 @@
 
 #include "Symbol.h"
 #include "ParameterProperties.h"
-#include "MobiusConfig.h"
-#include "Structure.h"
-#include "Preset.h"
+#include "old/MobiusConfig.h"
 #include "UIConfig.h"
 
 #include "../Provider.h"

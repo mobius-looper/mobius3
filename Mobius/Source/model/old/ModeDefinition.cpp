@@ -20,8 +20,8 @@
  * else of interest we want to capture about modes besides just the name.
  */
 
-#include "../util/Trace.h"
-#include "../util/Util.h"
+#include "../../util/Trace.h"
+#include "../../util/Util.h"
 
 #include "SystemConstant.h"
 #include "ModeDefinition.h"

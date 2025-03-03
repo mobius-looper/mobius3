@@ -75,10 +75,33 @@
         <FILE id="uzPNcj" name="OldMidiEvent.h" compile="0" resource="0" file="Source/midi/OldMidiEvent.h"/>
       </GROUP>
       <GROUP id="{35F5BDA4-4F12-7FE6-B25F-7B2965D913CF}" name="model">
-        <FILE id="jPc72V" name="ActionType.cpp" compile="1" resource="0" file="Source/model/ActionType.cpp"/>
-        <FILE id="rE9rrD" name="ActionType.h" compile="0" resource="0" file="Source/model/ActionType.h"/>
-        <FILE id="DDTUb4" name="Binding.cpp" compile="1" resource="0" file="Source/model/Binding.cpp"/>
-        <FILE id="Kl8nMI" name="Binding.h" compile="0" resource="0" file="Source/model/Binding.h"/>
+        <GROUP id="{7CD675C9-D3B9-988B-1CA6-742F4C8893A1}" name="old">
+          <FILE id="fWlQ7a" name="ActionType.cpp" compile="1" resource="0" file="Source/model/old/ActionType.cpp"/>
+          <FILE id="VY0IAJ" name="ActionType.h" compile="0" resource="0" file="Source/model/old/ActionType.h"/>
+          <FILE id="PgEScE" name="Binding.cpp" compile="1" resource="0" file="Source/model/old/Binding.cpp"/>
+          <FILE id="rjrpY5" name="Binding.h" compile="0" resource="0" file="Source/model/old/Binding.h"/>
+          <FILE id="U7jIzu" name="MobiusConfig.cpp" compile="1" resource="0"
+                file="Source/model/old/MobiusConfig.cpp"/>
+          <FILE id="Oyhi4E" name="MobiusConfig.h" compile="0" resource="0" file="Source/model/old/MobiusConfig.h"/>
+          <FILE id="ljZuZa" name="ModeDefinition.cpp" compile="1" resource="0"
+                file="Source/model/old/ModeDefinition.cpp"/>
+          <FILE id="bpD0UO" name="ModeDefinition.h" compile="0" resource="0"
+                file="Source/model/old/ModeDefinition.h"/>
+          <FILE id="FO5Xh3" name="Preset.cpp" compile="1" resource="0" file="Source/model/old/Preset.cpp"/>
+          <FILE id="fd2Dc8" name="Preset.h" compile="0" resource="0" file="Source/model/old/Preset.h"/>
+          <FILE id="Bcv6mG" name="Setup.cpp" compile="1" resource="0" file="Source/model/old/Setup.cpp"/>
+          <FILE id="vZZAYW" name="Setup.h" compile="0" resource="0" file="Source/model/old/Setup.h"/>
+          <FILE id="ybUprK" name="Structure.cpp" compile="1" resource="0" file="Source/model/old/Structure.cpp"/>
+          <FILE id="bFGBSc" name="Structure.h" compile="0" resource="0" file="Source/model/old/Structure.h"/>
+          <FILE id="xWEQLo" name="SystemConstant.h" compile="0" resource="0"
+                file="Source/model/old/SystemConstant.h"/>
+          <FILE id="KK7X03" name="Trigger.cpp" compile="1" resource="0" file="Source/model/old/Trigger.cpp"/>
+          <FILE id="sjCand" name="Trigger.h" compile="0" resource="0" file="Source/model/old/Trigger.h"/>
+          <FILE id="h7Ceyb" name="UIEventType.cpp" compile="1" resource="0" file="Source/model/old/UIEventType.cpp"/>
+          <FILE id="TjT7zE" name="UIEventType.h" compile="0" resource="0" file="Source/model/old/UIEventType.h"/>
+          <FILE id="EaQ7Kz" name="XmlRenderer.cpp" compile="1" resource="0" file="Source/model/old/XmlRenderer.cpp"/>
+          <FILE id="CyRJqc" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/old/XmlRenderer.h"/>
+        </GROUP>
         <FILE id="dnNSw0" name="DeviceConfig.cpp" compile="1" resource="0"
               file="Source/model/DeviceConfig.cpp"/>
         <FILE id="W4myih" name="DeviceConfig.h" compile="0" resource="0" file="Source/model/DeviceConfig.h"/>
@@ -97,13 +120,6 @@
         <FILE id="BIekug" name="HelpCatalog.cpp" compile="1" resource="0" file="Source/model/HelpCatalog.cpp"/>
         <FILE id="smiwwb" name="HelpCatalog.h" compile="0" resource="0" file="Source/model/HelpCatalog.h"/>
         <FILE id="FZEt89" name="Messages.h" compile="0" resource="0" file="Source/model/Messages.h"/>
-        <FILE id="w1kSSZ" name="MobiusConfig.cpp" compile="1" resource="0"
-              file="Source/model/MobiusConfig.cpp"/>
-        <FILE id="rrRIuQ" name="MobiusConfig.h" compile="0" resource="0" file="Source/model/MobiusConfig.h"/>
-        <FILE id="aasR6n" name="ModeDefinition.cpp" compile="1" resource="0"
-              file="Source/model/ModeDefinition.cpp"/>
-        <FILE id="yuqq72" name="ModeDefinition.h" compile="0" resource="0"
-              file="Source/model/ModeDefinition.h"/>
         <FILE id="bGX9AO" name="ObjectPool.cpp" compile="1" resource="0" file="Source/model/ObjectPool.cpp"/>
         <FILE id="rppXvP" name="ObjectPool.h" compile="0" resource="0" file="Source/model/ObjectPool.h"/>
         <FILE id="sWgU5q" name="OscConfig.cpp" compile="1" resource="0" file="Source/model/OscConfig.cpp"/>
@@ -121,8 +137,6 @@
         <FILE id="NxLmY1" name="ParameterSets.cpp" compile="1" resource="0"
               file="Source/model/ParameterSets.cpp"/>
         <FILE id="sJCUv7" name="ParameterSets.h" compile="0" resource="0" file="Source/model/ParameterSets.h"/>
-        <FILE id="pVDAsq" name="Preset.cpp" compile="1" resource="0" file="Source/model/Preset.cpp"/>
-        <FILE id="godsX2" name="Preset.h" compile="0" resource="0" file="Source/model/Preset.h"/>
         <FILE id="PKfY2J" name="PriorityState.h" compile="0" resource="0" file="Source/model/PriorityState.h"/>
         <FILE id="hUNddz" name="Query.h" compile="0" resource="0" file="Source/model/Query.h"/>
         <FILE id="gNzjgL" name="SampleConfig.cpp" compile="1" resource="0"
@@ -144,16 +158,12 @@
         <FILE id="F6Prbt" name="SessionHelper.cpp" compile="1" resource="0"
               file="Source/model/SessionHelper.cpp"/>
         <FILE id="BJ2osP" name="SessionHelper.h" compile="0" resource="0" file="Source/model/SessionHelper.h"/>
-        <FILE id="OZh5wr" name="Setup.cpp" compile="1" resource="0" file="Source/model/Setup.cpp"/>
-        <FILE id="I3HQ2E" name="Setup.h" compile="0" resource="0" file="Source/model/Setup.h"/>
         <FILE id="UeOHZY" name="StaticConfig.cpp" compile="1" resource="0"
               file="Source/model/StaticConfig.cpp"/>
         <FILE id="YGofo1" name="StaticConfig.h" compile="0" resource="0" file="Source/model/StaticConfig.h"/>
         <FILE id="kTf2zp" name="StepSequence.cpp" compile="1" resource="0"
               file="Source/model/StepSequence.cpp"/>
         <FILE id="ufh9rW" name="StepSequence.h" compile="0" resource="0" file="Source/model/StepSequence.h"/>
-        <FILE id="RWjxQk" name="Structure.cpp" compile="1" resource="0" file="Source/model/Structure.cpp"/>
-        <FILE id="UvI59d" name="Structure.h" compile="0" resource="0" file="Source/model/Structure.h"/>
         <FILE id="F539YC" name="Symbol.cpp" compile="1" resource="0" file="Source/model/Symbol.cpp"/>
         <FILE id="PNgWm3" name="Symbol.h" compile="0" resource="0" file="Source/model/Symbol.h"/>
         <FILE id="VvS8a7" name="SymbolId.cpp" compile="1" resource="0" file="Source/model/SymbolId.cpp"/>
@@ -161,21 +171,15 @@
         <FILE id="H7zgLP" name="SystemConfig.cpp" compile="1" resource="0"
               file="Source/model/SystemConfig.cpp"/>
         <FILE id="yhV3fk" name="SystemConfig.h" compile="0" resource="0" file="Source/model/SystemConfig.h"/>
-        <FILE id="JZYXKm" name="SystemConstant.h" compile="0" resource="0"
-              file="Source/model/SystemConstant.h"/>
         <FILE id="W5mEyK" name="SystemState.h" compile="0" resource="0" file="Source/model/SystemState.h"/>
         <FILE id="mlzDDU" name="TrackState.cpp" compile="1" resource="0" file="Source/model/TrackState.cpp"/>
         <FILE id="neInsb" name="TrackState.h" compile="0" resource="0" file="Source/model/TrackState.h"/>
         <FILE id="BmxzkX" name="TreeForm.cpp" compile="1" resource="0" file="Source/model/TreeForm.cpp"/>
         <FILE id="KI598c" name="TreeForm.h" compile="0" resource="0" file="Source/model/TreeForm.h"/>
-        <FILE id="Gs8SHl" name="Trigger.cpp" compile="1" resource="0" file="Source/model/Trigger.cpp"/>
-        <FILE id="A7dZul" name="Trigger.h" compile="0" resource="0" file="Source/model/Trigger.h"/>
         <FILE id="AbOPmx" name="UIAction.cpp" compile="1" resource="0" file="Source/model/UIAction.cpp"/>
         <FILE id="coRPMH" name="UIAction.h" compile="0" resource="0" file="Source/model/UIAction.h"/>
         <FILE id="sCrCkv" name="UIConfig.cpp" compile="1" resource="0" file="Source/model/UIConfig.cpp"/>
         <FILE id="dgLWU9" name="UIConfig.h" compile="0" resource="0" file="Source/model/UIConfig.h"/>
-        <FILE id="qY5nI3" name="UIEventType.cpp" compile="1" resource="0" file="Source/model/UIEventType.cpp"/>
-        <FILE id="PBE6wD" name="UIEventType.h" compile="0" resource="0" file="Source/model/UIEventType.h"/>
         <FILE id="wa9W4M" name="UserVariable.cpp" compile="1" resource="0"
               file="Source/model/UserVariable.cpp"/>
         <FILE id="JU2prp" name="UserVariable.h" compile="0" resource="0" file="Source/model/UserVariable.h"/>
@@ -185,8 +189,6 @@
               file="Source/model/VariableDefinition.cpp"/>
         <FILE id="Oi3yrZ" name="VariableDefinition.h" compile="0" resource="0"
               file="Source/model/VariableDefinition.h"/>
-        <FILE id="BDrDZa" name="XmlRenderer.cpp" compile="1" resource="0" file="Source/model/XmlRenderer.cpp"/>
-        <FILE id="lTQjDK" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
         <GROUP id="{D00C350E-B29D-D24C-688C-04027E4FDEE4}" name="parameter">
@@ -886,8 +888,6 @@
           <FILE id="lfkRxb" name="Loader.h" compile="0" resource="0" file="Source/mobius/core/Loader.h"/>
           <FILE id="MjJST1" name="Loop.cpp" compile="1" resource="0" file="Source/mobius/core/Loop.cpp"/>
           <FILE id="A548Vd" name="Loop.h" compile="0" resource="0" file="Source/mobius/core/Loop.h"/>
-          <FILE id="q1lpim" name="Mapper.cpp" compile="1" resource="0" file="Source/mobius/core/Mapper.cpp"/>
-          <FILE id="BHbh81" name="Mapper.h" compile="0" resource="0" file="Source/mobius/core/Mapper.h"/>
           <FILE id="AXgurM" name="Mem.cpp" compile="1" resource="0" file="Source/mobius/core/Mem.cpp"/>
           <FILE id="Kz2Efj" name="Mem.h" compile="0" resource="0" file="Source/mobius/core/Mem.h"/>
           <FILE id="lHBt2R" name="Mobius.cpp" compile="1" resource="0" file="Source/mobius/core/Mobius.cpp"/>

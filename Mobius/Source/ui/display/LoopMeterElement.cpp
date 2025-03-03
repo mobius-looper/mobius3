@@ -8,8 +8,6 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../model/Preset.h"
-#include "../../model/UIEventType.h"
 #include "../../model/Symbol.h"
 #include "../../model/Query.h"
 

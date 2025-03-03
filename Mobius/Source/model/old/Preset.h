@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "ParameterConstants.h"
+#include "../ParameterConstants.h"
 #include "Structure.h"
-#include "StepSequence.h"
+#include "../StepSequence.h"
 
 /****************************************************************************
  *                                                                          *

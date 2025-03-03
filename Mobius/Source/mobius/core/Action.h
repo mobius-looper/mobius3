@@ -45,9 +45,9 @@
 
 #pragma once
 
-#include "../../model/SystemConstant.h"
+#include "../../model/old/SystemConstant.h"
+#include "../../model/old/ActionType.h"
 #include "../../model/UIAction.h"
-#include "../../model/ActionType.h"
 
 // sigh, need this until we can figure out what to do with ExValue
 #include "Expr.h"

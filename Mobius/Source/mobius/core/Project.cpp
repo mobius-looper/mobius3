@@ -25,8 +25,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "Mapper.h"
-
 #include "../../util/Util.h"
 #include "../../util/List.h"
 #include "../../util/XmlModel.h"
