@@ -16,11 +16,12 @@
 #include "../../util/MidiUtil.h"
 
 // uses StringList for resettables
-#include "../../util/List.h"
+//#include "../../util/List.h"
 
-#include "../ExValue.h"
 #include "Preset.h"
-#include "../UserVariable.h"
+
+//#include "../ExValue.h"
+//#include "../UserVariable.h"
 
 #include "Structure.h"
 #include "Setup.h"
@@ -757,6 +758,7 @@ void SetupTrack::setSyncTrackUnit(SyncTrackUnit unit)
     mSyncTrackUnit = unit;
 }
 
+#if 0
 UserVariables* SetupTrack::getVariables()
 {
     return mVariables;
@@ -783,6 +785,7 @@ void SetupTrack::getVariable(const char* name, ExValue* value)
 	if (mVariables != nullptr)
 	  mVariables->get(name, value);
 }
+#endif
 
 /****************************************************************************/
 /****************************************************************************/

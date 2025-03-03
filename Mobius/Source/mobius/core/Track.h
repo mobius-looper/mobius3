@@ -285,54 +285,54 @@ class Track : public TraceContext
     // Fields
     //
 
-	int mRawNumber;        // zero based
+	int mRawNumber = 0;        // zero based
     class LogicalTrack* mLogicalTrack = nullptr;
 
-	class Mobius* mMobius;
+	class Mobius* mMobius = nullptr;
     class Notifier* mNotifier = nullptr;
-	class Synchronizer* mSynchronizer;
-    class EventManager* mEventManager;
-	class InputStream* mInput;
-	class OutputStream* mOutput;
+	class Synchronizer* mSynchronizer = nullptr;
+    class EventManager* mEventManager = nullptr;
+	class InputStream* mInput = nullptr;
+	class OutputStream* mOutput = nullptr;
 	//class CriticalSection* mCsect;
-	class UserVariables* mVariables;
+	class UserVariables* mVariables = nullptr;
     
 	class Loop*	mLoops[MAX_LOOPS];
-    class Loop* mLoop;
-	int			mLoopCount;
+    class Loop* mLoop = nullptr;
+	int			mLoopCount = 0;
 
-    int         mInputPort;
-    int         mOutputPort;
-	bool		mHalting;
-	bool		mRunning;
-    int         mMonitorLevel;
-	bool		mGlobalMute;
-	bool 		mSolo;
+    int         mInputPort = 0;
+    int         mOutputPort = 0;
+	bool		mHalting = false;
+	bool		mRunning = false;
+    int         mMonitorLevel = 0;
+	bool		mGlobalMute = false;
+	bool 		mSolo = false;
     bool        mThroughMonitor = false;
-	int         mInputLevel;
-	int         mOutputLevel;
-	int         mFeedbackLevel;
-	int         mAltFeedbackLevel;
-	int         mPan;
-    int         mSpeedToggle;
-	bool        mMono;
-	bool        mUISignal;
-	int         mSpeedSequenceIndex;
-	int         mPitchSequenceIndex;
+	int         mInputLevel = 0;
+	int         mOutputLevel = 0;
+	int         mFeedbackLevel = 0;
+	int         mAltFeedbackLevel = 0;
+	int         mPan = 0;
+    int         mSpeedToggle = 0;
+	bool        mMono = false;
+	bool        mUISignal = false;
+	int         mSpeedSequenceIndex = 0;
+	int         mPitchSequenceIndex = 0;
 
     /**
      * Support for an old feature where we could move the controls
      * for a group (only output level) keeping the same relative
      * mix.  This no longer works.
      */
-	int         mGroupOutputBasis;
+	int         mGroupOutputBasis = 0;
 
     // Track sync event encountered during the last interrupt
-    Event* mTrackSyncEvent;
+    Event* mTrackSyncEvent = nullptr;
 
 	// debug/test state
 
-    bool mInterruptBreakpoint;
+    bool mInterruptBreakpoint = false;
 
 	// state exposed to the outside world
     // we no longer maintain an internal copy, we will be given
@@ -340,7 +340,7 @@ class Track : public TraceContext
 	//MobiusTrackState mState;
 
     // true if this is a MIDI track
-    bool mMidi;
+    bool mMidi = false;
 };
 
 /****************************************************************************/

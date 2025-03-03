@@ -40,6 +40,10 @@
 #include "../util/Util.h"
 #include "../util/StructureDumper.h"
 
+// need this for "deletion of pointer to incomplete type" error
+// not sure why, something embedded
+#include "../model/old/MobiusConfig.h"
+
 #include "../model/ConfigPayload.h"
 #include "../model/Session.h"
 #include "../model/ParameterSets.h"

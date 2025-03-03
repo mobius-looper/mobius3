@@ -10,6 +10,8 @@ class GroupDefinition
 {
   public:
 
+    constexpr static const char* XmlElementName = "GroupDefinition";
+    
     GroupDefinition();
     GroupDefinition(GroupDefinition* src);
     ~GroupDefinition();
@@ -58,5 +60,19 @@ class GroupDefinition
         letter += (char)('A' + ordinal);
         return letter;
     }
+
+};
+
+class GroupDefinitions
+{
+  public:
+
+    constexpr static const char* XmlElementName = "GroupDefinitions";
+    
+    juce::OwnedArray<GroupDefinition> groups;
+
+    juce::String toXml();
+    void toXml(juce::XmlElement* root);
+    void parseXml(juce::XmlElement* root, juce::StringArray& errors);
 
 };

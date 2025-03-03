@@ -299,11 +299,11 @@ class SetupTrack {
     SyncTrackUnit getSyncTrackUnit();
     void setSyncTrackUnit(SyncTrackUnit unit);
 
-    class UserVariables* getVariables();
-    void setVariables(UserVariables* vars);
+    //class UserVariables* getVariables();
+    //void setVariables(UserVariables* vars);
     
-	void setVariable(const char* name, class ExValue* value);
-	void getVariable(const char* name, class ExValue* value);
+	//void setVariable(const char* name, class ExValue* value);
+	//void getVariable(const char* name, class ExValue* value);
 
   private:
 

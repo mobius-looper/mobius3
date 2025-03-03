@@ -1122,6 +1122,8 @@ void XmlRenderer::render(XmlBuffer* b, SetupTrack* t)
     render(b, "syncSource", render(t->getSyncSource()));
     render(b, "trackSyncUnit", render(t->getSyncTrackUnit()));
 
+    b->add("/>\n");
+#if 0
     UserVariables* uv = t->getVariables();
     if (uv == nullptr) {
         b->add("/>\n");
@@ -1135,6 +1137,7 @@ void XmlRenderer::render(XmlBuffer* b, SetupTrack* t)
 		b->decIndent();
 		b->addEndTag(EL_SETUP_TRACK);
 	}
+#endif    
 }
 
 void XmlRenderer::parse(XmlElement* e, SetupTrack* t)
@@ -1174,12 +1177,13 @@ void XmlRenderer::parse(XmlElement* e, SetupTrack* t)
     // should only have a single UserVariables 
 	for (XmlElement* child = e->getChildElement() ; child != nullptr ; 
 		 child = child->getNextElement()) {
-
+#if 0
 		if (child->isName(EL_VARIABLES)) {
             UserVariables* uv = new UserVariables();
             parse(child, uv);
             t->setVariables(uv);
 		}
+#endif        
 	}
 }
 
