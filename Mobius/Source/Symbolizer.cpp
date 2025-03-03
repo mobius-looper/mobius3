@@ -362,8 +362,8 @@ SymbolLevel Symbolizer::parseLevel(juce::String lname)
       slevel = LevelShell;
     else if (lname == "kernel")
       slevel = LevelKernel;
-    else if (lname == "core")
-      slevel = LevelCore;
+    else if (lname == "track" || lname == "core")
+      slevel = LevelTrack;
 
     return slevel;
 }

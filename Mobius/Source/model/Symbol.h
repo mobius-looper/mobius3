@@ -45,37 +45,38 @@
 #include "SymbolId.h"
 
 /**
- * Symbols are normally associated with the code at various
- * levels of the system architecture.  The levels are not necessary
+ * Symbols are associated with funcctions or parameters that are implemented
+ * at different levels of the system.  Levels are not necessary
  * for the user to understand in order to define trigger bindings,
  * but assist the internal code in determining where the symbol's
  * behavior should be applied.
  *
- * todo: avoiding a SystemConstant for these since we don't realy
- * need display names and that adds clutter.  An enum class would
- * be a good option here for namespacing.
+ * The most important distinction is UI vs. Kernel since this determines
+ * which "side" of the architecture an action or query must be sent to.
  */
 typedef enum {
 
-    // a random user defined variable, could apply at any level
-    // should be specified in the VariableDefinition
-    // needs thought
+    // When unspecified the default is to send it to the Kernel
     LevelNone,
 
     // applies to the user interface
     LevelUI,
 
     // applies to the outer "shell" of the Mobius implementation
+    // this means the symbol isn't handled by the UI but doesn't need
+    // to be passed into the audio thread
+    // todo: This distinction isn't actually necessary as there
+    // are no MobiusShell level symbols, and even if there were it can
+    // just filter them before passing to the Kernel
     LevelShell,
 
     // applies to the inner kernel of the Mobius implementation
     // that operates in the real-time audio thread
     LevelKernel,
 
-    // applies to the innermost core of the Mobius implementation
-    // consisting of legacy code
-    // todo: This should really be named LevelTrack
-    LevelCore
+    // applies to the lowest level track implementation
+    // this may not actually be necessary
+    LevelTrack
 
 } SymbolLevel;
 
@@ -193,6 +194,9 @@ class Symbol
      * levels of the system architecture.  The level is used by internal
      * code to direct an action to the appropriate place where
      * it can be handled.
+     *
+     * If unspecified it assumed to be either Kernel or Core and will be
+     * sent to the engine, where MobiusKernel needs to sort it out.
      */
     SymbolLevel level = LevelNone;
 

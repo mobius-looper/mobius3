@@ -991,7 +991,7 @@ void MobiusKernel::doParameter(PluginParameter* p)
         }
     }
     else {
-        // can get here if we allowed bindings to things that were not LevelCore
+        // can get here if we allowed bindings to things that were not LevelKernel
         // there aren't any that useful right now, punt
         Trace(1, "MobiusKernel: Unhandled PluginParameter %s\n", s->getName());
     }
@@ -1177,11 +1177,24 @@ void MobiusKernel::doAction(UIAction* action)
         ActionAdapter aa;
         aa.doAction(container->getMslEnvironment(), this, action);
     }
-    else if (symbol->level == LevelKernel) {
-        doKernelAction(action);
+    else if (symbol->level == LevelUI || symbol->level == LevelShell) {
+        // this one needs to go up
+        // if we got here via a KernelMessage from the shell it would
+        // be a logic error because we may be in a loop that would just bounce
+        // the action back and forth
+        KernelMessage* msg = communicator->kernelAlloc();
+        msg->type = MsgAction;
+        msg->object.action = action;
+        communicator->kernelSend(msg);
+        passed = true;
     }
-    else if (symbol->level == LevelCore) {
-
+    else if (symbol->level == LevelKernel) {
+        // !! don't like requiring that LevelKernel be set just to avoid
+        // sending it to the tracks, should just filter the ones we handle
+        // and pass the rest
+        (void)doKernelAction(action);
+    }
+    else {
         // GlobalReset is important to intercept so we can reset some of the components
         // that live at the same level as TrackManager, this probably needs to be LevelKernel
         // in the symbol definition
@@ -1193,17 +1206,6 @@ void MobiusKernel::doAction(UIAction* action)
 
         // TrackManager does it's magic
         mTracks->doAction(action);
-        passed = true;
-    }
-    else {
-        // this one needs to go up
-        // if we got here via a KernelMessage from the shell it would
-        // be a logic error because we may be in a loop that would just bounce
-        // the action back and forth
-        KernelMessage* msg = communicator->kernelAlloc();
-        msg->type = MsgAction;
-        msg->object.action = action;
-        communicator->kernelSend(msg);
         passed = true;
     }
 
@@ -1226,30 +1228,42 @@ void MobiusKernel::doAction(UIAction* action)
  * SamplePlay function with an argument number, you can just bind directly to the
  * sample symbol.  Supporting both styles till we sort out the best way forward.
  */
-void MobiusKernel::doKernelAction(UIAction* action)
+bool MobiusKernel::doKernelAction(UIAction* action)
 {
+    bool handled = false;
     Symbol* symbol = action->symbol;
 
     if (symbol->sample) {
         // it's a direct reference to a sample symbol
         playSample(action);
+        handled = true;
     }
     else {
         switch (symbol->id) {
 
-            case FuncSamplePlay: playSample(action); break;
+            case FuncSamplePlay: {
+                playSample(action);
+                handled = true;
+            }
+                break;
                 
             default: {
                 // SyncMaster has a few
-                if (!syncMaster.doAction(action)) {
-                    
-                    Trace(1, "MobiusKernel::doAction Unknwon action symbol %s",
-                          symbol->getName());
-                }
+                handled = syncMaster.doAction(action);
             }
                 break;
         }
     }
+
+    // here we could either be strict and require LevelKernel be set
+    // or we could just return false and let it be passed to the tracks
+    // assuming if it made it to the audio thread and it wasn't one of
+    // ours, it's at track level
+    if (!handled) {
+        Trace(1, "MobiusKernel::doAction Unhandled LevelKernel action %s",
+              symbol->getName());
+    }
+    return handled;
 }
 
 /**
@@ -1277,7 +1291,7 @@ void MobiusKernel::doActionFromCore(UIAction* action)
         Trace(1, "MobiusKernel: Core action without symbol!\n");
     }
     else if (symbol->level == LevelKernel) {
-        doKernelAction(action);
+        (void)doKernelAction(action);
     }
     else {
         // pass it up to the shell
@@ -1699,7 +1713,7 @@ bool MobiusKernel::mslAction(MslAction* action)
         // !! why?  I guess the interpreter can do the group-to-tracks expansion
         uia->setScopeTrack(action->scope);
 
-        if (symbol->level == LevelCore) {
+        if (symbol->level == LevelNone || symbol->level == LevelTrack) {
 
             // now that we don't have that stupid action queue we could just forward
             // this to Kernel::doAction but I don't think it matters, this can

@@ -568,7 +568,7 @@ void TrackManager::doAction(UIAction* src)
 
 /**
  * Distribute an action to the LogicalTracks.
- * This only handles LevelCore actions, Kernel will have already
+ * This only handles LevelTrack actions, Kernel will have already
  * dealt with upward actions.  Kernel also handled script actions.
  */
 void TrackManager::doActionWithResult(UIAction* src, ActionResult& result)
@@ -1235,7 +1235,7 @@ void TrackManager::mutateMslReturn(Symbol* s, int value, MslValue* retval)
         }
         else if (ptype == TypeStructure) {
             // hmm, the understanding of LevelUI symbols that live in
-            // UIConfig and LevelCore symbols that live in MobiusConfig
+            // UIConfig and LevelTrack symbols that live in MobiusConfig
             // is in Supervisor right now
             // todo: Need to repackage this
             // todo: this could also be Type::Enum in the value but I don't

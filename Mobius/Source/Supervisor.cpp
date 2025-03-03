@@ -1980,14 +1980,6 @@ void Supervisor::mobiusDoAction(UIAction* action)
     else if (s->level == LevelUI) {
         doUILevelAction(action);
     }
-    else if (s->level == LevelNone) {
-        // most likely something bound to a missing script
-        // there would be a MIDI binding for this name which interned a symbol,
-        // but there is no behavior in it
-        // should we be checking Level or Behavior?
-        juce::String msg = "Symbol " + s->name + " has no associated behavior";
-        alert(msg);
-    }
     else {
         Trace(1, "Supervisor::doAction Mobius sent up an action not at LevelUI\n");
     }
@@ -2153,14 +2145,6 @@ void Supervisor::doAction(UIAction* action)
     }
     else if (s->level == LevelUI) {
         doUILevelAction(action);
-    }
-    else if (s->level == LevelNone) {
-        // most likely something bound to a missing script
-        // there would be a MIDI binding for this name which interned a symbol,
-        // but there is no behavior in it
-        // should we be checking Level or Behavior?
-        juce::String msg = "Symbol " + s->name + " has no defined level";
-        alert(msg);
     }
     else {
         // send it down
@@ -2583,10 +2567,10 @@ bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
                 ext->object = s;
             
                 // MSL only has two contexts shell and kernel
-                if (s->level == LevelKernel || s->level == LevelCore)
-                  ext->context = MslContextKernel;
-                else
+                if (s->level == LevelUI || s->level == LevelShell)
                   ext->context = MslContextShell;
+                else
+                  ext->context = MslContextKernel;
             
                 success = true;
             }

@@ -77,10 +77,6 @@ void Actionator::doAction(UIAction* action)
     if (symbol == nullptr) {
         Trace(1, "Actionator: action without a symbol\n");
     }
-    else if (symbol->level != LevelCore) {
-        Trace(1, "Actionator: action with incorrect level %s %ld\n",
-              symbol->getName(), (long)symbol->level);
-    }
     else if (symbol->coreFunction) {
         Function* f = (Function*)(symbol->coreFunction);
         doFunction(action, f);

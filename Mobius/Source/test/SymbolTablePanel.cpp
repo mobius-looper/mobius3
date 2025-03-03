@@ -104,11 +104,11 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
     }
     else if (columnId == SymbolTableLevelColumn) {
         switch (s->level) {
-            case LevelNone: cell = "Custom"; break;
+            case LevelNone: cell = "None"; break;
             case LevelUI: cell = "UI"; break;
             case LevelShell: cell = "Shell"; break;
             case LevelKernel: cell = "Kernel"; break;
-            case LevelCore: cell = "Core"; break;
+            case LevelTrack: cell = "Track"; break;
         }
     }
     else if (columnId == SymbolTableFlagsColumn) {
@@ -127,7 +127,10 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
             // FunctionProperties, should leave a flag instead
             cell = "Core function not exposed";
         }
-        else if (s->functionProperties != nullptr && s->level == LevelCore && s->coreFunction == nullptr) {
+        else if (s->functionProperties != nullptr && s->level == LevelTrack && s->coreFunction == nullptr) {
+            // !! this isn't accurate, LevelTrack just means it is at the lowest level
+            // the track implementation doesn't necessarily need a coreFunction, only
+            // Mobius audio tracks do
             cell = "Core function not implemented";
         }
         

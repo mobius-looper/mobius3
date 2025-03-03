@@ -332,7 +332,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     
     // actions
     void doAction(class UIAction* action);
-    void doKernelAction(UIAction* action);
+    bool doKernelAction(UIAction* action);
 
     void playSample(UIAction* action);
 

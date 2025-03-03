@@ -370,9 +370,9 @@ void Mobius::installSymbols()
         }
 
         // adjust the level
-        s->level = LevelCore;
+        s->level = LevelTrack;
         // unclear why we need the level duplicated here
-        props->level = LevelCore;
+        props->level = LevelTrack;
 
         // some things still check behavior though should be testing FunctionProperties
         s->behavior = BehaviorFunction;
@@ -413,7 +413,7 @@ void Mobius::installSymbols()
             // todo: could bootstrap a ParameterProperties for these too,
             // but not supposed to see them
         }
-        s->level = LevelCore;
+        s->level = LevelTrack;
         s->coreParameter = p;
         s->behavior = BehaviorParameter;
     }

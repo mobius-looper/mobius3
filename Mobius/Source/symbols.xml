@@ -134,11 +134,11 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="WindowEndBackward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="WindowEndForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
 
-  <Function name="UpCycle" mayFocus='true' level='core' tree='MIDI'/>
-  <Function name="DownCycle" mayFocus='true' level='core' tree='MIDI'/>
-  <Function name="SetCycles" level='core' tree='MIDI'/>
-  <Function name="Start" level='core' tree='Movement' mayQuantize='true'/>
-  <Function name="Stop" level='core' tree='Movement' mayQuantize='true'/>
+  <Function name="UpCycle" mayFocus='true' tree='MIDI'/>
+  <Function name="DownCycle" mayFocus='true' tree='MIDI'/>
+  <Function name="SetCycles" tree='MIDI'/>
+  <Function name="Start" tree='Movement' mayQuantize='true'/>
+  <Function name="Stop" tree='Movement' mayQuantize='true'/>
 
   <!-- file oriented functions -->
   <Function name="LoadMidi" level='ui' tree='ui'/>
@@ -149,13 +149,13 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="TraceStatus" tree='Utility' hidden='true'/>
 
   <!-- new one for MIDI structure dumping -->
-  <Function name="Dump" level="core" tree='Utility'/>
+  <Function name="Dump" tree='Utility'/>
 
   <!-- MIDI specific -->
 
-  <Function name="MidiResize" midi='true' mayFocus='true' level='core' tree='MIDI'/>
-  <Function name="MidiHalfspeed" midi='true' mayFocus='true' mayQuantize='true' level='core' tree='MIDI'/>
-  <Function name="MidiDoublespeed" midi='true' mayFocus='true' mayQuantize='true' level='core' tree='MIDI'/>
+  <Function name="MidiResize" midi='true' mayFocus='true'  tree='MIDI'/>
+  <Function name="MidiHalfspeed" midi='true' mayFocus='true' mayQuantize='true' tree='MIDI'/>
+  <Function name="MidiDoublespeed" midi='true' mayFocus='true' mayQuantize='true' tree='MIDI'/>
 
   <Function name='TransportStart' level='kernel' tree='Transport'/>
   <Function name='TransportStop' level='kernel' tree='Transport'/>

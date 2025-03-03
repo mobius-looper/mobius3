@@ -1240,7 +1240,7 @@ void MobiusShell::installSymbols(Scriptarian* scriptarian)
                               s->getName());
                     }
                     s->behavior = BehaviorScript;
-                    s->level = LevelCore;
+                    s->level = LevelTrack;
 
                     ScriptProperties* props = new ScriptProperties();
                     props->coreScript = script;
