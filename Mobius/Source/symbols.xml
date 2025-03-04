@@ -199,8 +199,10 @@ Once those models are fully converted, these symbols can be removed.
        PRESET
        ============================================================================ -->
 
-  <!-- These are all effectively Track scope parameters.  They once lived in the Preset object
-       but now live in Session::Track
+  <!-- These are all effectively Track scope parameters.  They once lived in the Preset.
+       They are mostly options for the fundamental looping functions with
+       a few track configuration options mixed in.
+
   -->
 
   <ParameterScope name='preset' query='true'>
