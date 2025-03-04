@@ -1,7 +1,14 @@
 /**
  * See here for simple example
+ *   https://forum.juce.com/t/treeview-tutorial/20187/6
  *
- * https://forum.juce.com/t/treeview-tutorial/20187/6
+ * This is the basis for tree view where node associated with Symbols
+ * or categories of symbols.
+ *
+ * Not used directly, extended by ParameterTree.
+ *
+ * The first implementation of this walked over the SymbolTable and built
+ * a tree for everything, both functions and parameters.  This is no longer used.
  *
  */
 
@@ -16,7 +23,7 @@
 
 //////////////////////////////////////////////////////////////////////
 //
-// Tree
+// Construction
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -35,6 +42,16 @@ SymbolTree::SymbolTree()
 SymbolTree::~SymbolTree()
 {
     setLookAndFeel(nullptr);
+}
+
+void SymbolTree::setListener(Listener* l)
+{
+    listener = l;
+}
+
+void SymbolTree::setDropListener(DropTreeView::Listener* l)
+{
+    tree.setListener(l);
 }
 
 SymbolTree::LookAndFeel::LookAndFeel(SymbolTree* st)
@@ -57,22 +74,6 @@ void SymbolTree::LookAndFeel::drawTreeviewPlusMinusBox (juce::Graphics& g,
     g.fillPath (p, p.getTransformToScaleToFit (area.reduced (2, area.getHeight() / 4), true));
 }
 
-void SymbolTree::disableSearch()
-{
-    removeChildComponent(&search);
-    searchDisabled = true;
-}
-
-void SymbolTree::setListener(Listener* l)
-{
-    listener = l;
-}
-
-void SymbolTree::setDropListener(DropTreeView::Listener* l)
-{
-    tree.setListener(l);
-}
-
 void SymbolTree::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
@@ -81,22 +82,56 @@ void SymbolTree::resized()
     tree.setBounds(area);
 }
 
-void SymbolTree::inputEditorShown(YanInput*)
+//////////////////////////////////////////////////////////////////////
+//
+// Building
+//
+//////////////////////////////////////////////////////////////////////
+
+SymbolTreeItem* SymbolTree::internPath(SymbolTreeItem* parent, juce::StringArray path)
 {
-    startSearch();
+    SymbolTreeItem* level = parent;
+    for (auto node : path) {
+        level = level->internChild(node);
+    }
+    return level;
 }
 
-void SymbolTree::inputEditorChanged(YanInput* input, juce::String text)
+juce::StringArray SymbolTree::parsePath(juce::String s)
 {
-    (void)input;
-    //Trace(2, "%s", text.toUTF8());
-    searchTree(text, &root);
+    return juce::StringArray::fromTokens(s, "/", "");
 }
 
-void SymbolTree::inputEditorHidden(YanInput*)
+void SymbolTree::unhide(SymbolTreeItem* node)
 {
-    endSearch();
+    node->setHidden(false);
+    if (node->isSelected())
+      node->setSelected(false, false, juce::NotificationType::sendNotification);
+    for (int i = 0 ; i < node->getNumSubItems() ; i++) {
+        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(node->getSubItem(i));
+        unhide(item);
+    }
 }
+
+/**
+ * This is called by one of the items.
+ * Can either have a listener here or the subclass can override it.
+ */
+void SymbolTree::itemClicked(SymbolTreeItem* item)
+{
+    if (item->canBeSelected()) {
+        //Trace(2, "Clicked %s", item->getName().toUTF8());
+        if (listener != nullptr)
+          listener->symbolTreeClicked(item);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Old Load Interface
+// Remove this
+//
+//////////////////////////////////////////////////////////////////////
 
 void SymbolTree::loadSymbols(SymbolTable* symbols, juce::String newFavorites)
 {
@@ -191,23 +226,33 @@ void SymbolTree::loadSymbols(SymbolTable* symbols, juce::String newFavorites,
     }
 }
 
-juce::String SymbolTree::getFavorites()
+//////////////////////////////////////////////////////////////////////
+//
+// Search
+//
+//////////////////////////////////////////////////////////////////////
+
+void SymbolTree::disableSearch()
 {
-    return favorites.joinIntoString(",");
+    removeChildComponent(&search);
+    searchDisabled = true;
 }
 
-SymbolTreeItem* SymbolTree::internPath(SymbolTreeItem* parent, juce::StringArray path)
+void SymbolTree::inputEditorShown(YanInput*)
 {
-    SymbolTreeItem* level = parent;
-    for (auto node : path) {
-        level = level->internChild(node);
-    }
-    return level;
+    startSearch();
 }
 
-juce::StringArray SymbolTree::parsePath(juce::String s)
+void SymbolTree::inputEditorChanged(YanInput* input, juce::String text)
 {
-    return juce::StringArray::fromTokens(s, "/", "");
+    (void)input;
+    //Trace(2, "%s", text.toUTF8());
+    searchTree(text, &root);
+}
+
+void SymbolTree::inputEditorHidden(YanInput*)
+{
+    endSearch();
 }
 
 void SymbolTree::startSearch()
@@ -290,28 +335,15 @@ void SymbolTree::endSearch()
     //unhide(&root);
 }
 
-void SymbolTree::unhide(SymbolTreeItem* node)
-{
-    node->setHidden(false);
-    if (node->isSelected())
-      node->setSelected(false, false, juce::NotificationType::sendNotification);
-    for (int i = 0 ; i < node->getNumSubItems() ; i++) {
-        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(node->getSubItem(i));
-        unhide(item);
-    }
-}
+//////////////////////////////////////////////////////////////////////
+//
+// Favorites
+//
+//////////////////////////////////////////////////////////////////////
 
-/**
- * This is called by one of the items.
- * Can either have a listener here or the subclass can override it.
- */
-void SymbolTree::itemClicked(SymbolTreeItem* item)
+juce::String SymbolTree::getFavorites()
 {
-    if (item->canBeSelected()) {
-        //Trace(2, "Clicked %s", item->getName().toUTF8());
-        if (listener != nullptr)
-          listener->symbolTreeClicked(item);
-    }
+    return favorites.joinIntoString(",");
 }
 
 void SymbolTree::addFavorite(juce::String name)
@@ -364,9 +396,55 @@ juce::String SymbolTreeItem::getName()
     return name;
 }
 
+/**
+ * Set this only if you want this to be a draggable tree.
+ */
+void SymbolTreeItem::setDragDescription(juce::String s)
+{
+    dragDescription;
+}
+
+/**
+ * This is the Juce overload to return the drag desription if you want
+ * this to be draggable.
+ * If the dragDescription is empty then this should return void
+ */
+juce::var SymbolTreeItem::getDragSourceDescription()
+{
+    if (dragDesription.length > 0)
+      return dragDescrpition;
+    else
+      return juce::var();
+}
+
+void SymbolTreeItem::setSymbol(Symbol* s)
+{
+    symbol = s;
+}
+
+Symbol* SymbolTreeItem::getSymbol()
+{
+    return symbol;
+}
+
 void SymbolTreeItem::addSymbol(Symbol* s)
 {
     symbols.add(s);
+}
+
+juce::Array<class Symbol*>& getSymbols()
+{
+    return symbols;
+}
+
+void SymbolTreeItem::setAnnotation(juce::String s)
+{
+    annotation = s;
+}
+
+juce::String SymbolTreeItem::getAnnotation()
+{
+    return annotation;
 }
 
 void SymbolTreeItem::setColor(juce::Colour c)
@@ -394,19 +472,29 @@ void SymbolTreeItem::setNoSelect(bool b)
     noSelect = b;
 }
 
-bool SymbolTreeItem::mightContainSubItems()
-{
-    return getNumSubItems() != 0;
-}
+//
+// Tree Building
+//
 
-int SymbolTreeItem::getItemHeight() const
+SymbolTreeItem* SymbolTreeItem::internChild(juce::String childName)
 {
-    return (hidden) ? 0 : 14;
-}
+    SymbolTreeItem* found = nullptr;
+    
+    for (int i = 0 ; i < getNumSubItems() ; i++) {
+        SymbolTreeItem* child = static_cast<SymbolTreeItem*>(getSubItem(i));
+        if (child->getName() == childName) {
+            found = child;
+            break;
+        }
+    }
 
-bool SymbolTreeItem::canBeSelected() const
-{
-    return !noSelect;
+    if (found == nullptr) {
+        found = new SymbolTreeItem(childName);
+        found->setNoSelect(true);
+        addSubItem(found);
+    }
+
+    return found;
 }
 
 void SymbolTreeItem::remove(juce::String childName)
@@ -421,6 +509,25 @@ void SymbolTreeItem::remove(juce::String childName)
     }
     if (index >= 0)
       removeSubItem(index, true);
+}
+
+//
+// Juce Overrides
+//
+
+bool SymbolTreeItem::mightContainSubItems()
+{
+    return getNumSubItems() != 0;
+}
+
+int SymbolTreeItem::getItemHeight() const
+{
+    return (hidden) ? 0 : 14;
+}
+
+bool SymbolTreeItem::canBeSelected() const
+{
+    return !noSelect;
 }
 
 void SymbolTreeItem::paintItem(juce::Graphics& g, int width, int height)
@@ -445,6 +552,10 @@ void SymbolTreeItem::paintItem(juce::Graphics& g, int width, int height)
     }
 }
 
+/**
+ * Right click handler for "Favorites".
+ * An older experimental features, needs work.
+ */
 void SymbolTreeItem::itemClicked(const juce::MouseEvent& e)
 {
     if (e.mods.isRightButtonDown()) {
@@ -464,6 +575,10 @@ void SymbolTreeItem::itemClicked(const juce::MouseEvent& e)
     }
 }
 
+/**
+ * Menu handler for "Favorites"
+ * An older experimental features, needs work.
+ */
 void SymbolTreeItem::popupSelection(int result)
 {
     if (result == 1) {
@@ -475,32 +590,6 @@ void SymbolTreeItem::popupSelection(int result)
             tree->addFavorite(name);
         }
     }
-}
-
-SymbolTreeItem* SymbolTreeItem::internChild(juce::String childName)
-{
-    SymbolTreeItem* found = nullptr;
-    
-    for (int i = 0 ; i < getNumSubItems() ; i++) {
-        SymbolTreeItem* child = static_cast<SymbolTreeItem*>(getSubItem(i));
-        if (child->getName() == childName) {
-            found = child;
-            break;
-        }
-    }
-
-    if (found == nullptr) {
-        found = new SymbolTreeItem(childName);
-        found->setNoSelect(true);
-        addSubItem(found);
-    }
-
-    return found;
-}
-
-juce::var SymbolTreeItem::getDragSourceDescription()
-{
-    return name;
 }
 
 //////////////////////////////////////////////////////////////////////
