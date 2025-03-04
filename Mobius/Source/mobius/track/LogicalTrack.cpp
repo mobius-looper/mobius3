@@ -3,6 +3,9 @@
 
 #include "../../util/Trace.h"
 #include "../../util/StructureDumper.h"
+
+#include "../../model/old/MobiusConfig.h"
+
 #include "../../model/ParameterConstants.h"
 #include "../../model/SyncConstants.h"
 #include "../../model/Session.h"
@@ -11,9 +14,7 @@
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
 #include "../../model/Enumerator.h"
-#include "../../model/old/MobiusConfig.h"
 #include "../../model/ParameterProperties.h"
-#include "../../model/ExValue.h"
 
 #include "../../script/MslEnvironment.h"
 #include "../../script/MslBinding.h"
@@ -656,7 +657,7 @@ void LogicalTrack::doAction(UIAction* a)
             if (overlay != nullptr)
               changeOverlay(overlay);
         }
-        else if (a->value > 1) {
+        else if (a->value > 0) {
             // if out of range leave in place
             ValueSet* overlay = findOverlay(a->value);
             if (overlay != nullptr)
@@ -1185,6 +1186,21 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
                     }
                     else {
                         Trace(1, "LogicalTrack::getParameterOrdinal Call with non-numeric parameter %s", s->getName());
+                    }
+                }
+                else {
+                    // The parameter is undefined, this is common after creating
+                    // a new empty session.  In this case the value reverts to the defaultValue
+                    // defined in the parameter definition, which is expected for the track
+                    // levels and a few other things.
+                    // the SessionEditor will normally do the same transformatio nso we wo't
+                    // be here after the session has been edited snad saved once
+                    ParameterProperties* props = s->parameterProperties.get();
+                    if (props != nullptr &&
+                        props->type == TypeInt ||
+                        props->type == TypeBool ||
+                        props->type == TypeEnum) {
+                        ordinal = props->defaultValue;
                     }
                 }
             }

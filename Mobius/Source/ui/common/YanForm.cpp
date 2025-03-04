@@ -37,6 +37,7 @@ void YanForm::add(class YanField* f)
 
     if (f->isSection()) {
         juce::Label* label = f->getLabel();
+        //label->addMouseListener(this);
         label->setJustificationType(juce::Justification::centredLeft);
 
         label->setFont (JuceUtil::getFontf(16.0f, juce::Font::bold));
@@ -55,6 +56,7 @@ void YanForm::add(class YanField* f)
     }
     else {
         juce::Label* label = f->getLabel();
+        //label->addMouseListener(this);
         label->setJustificationType(juce::Justification::centredRight);
 
         // make them look like the old Form/Fields
@@ -226,6 +228,25 @@ void YanForm::forceResize()
 {
     resized();
 }
+
+YanField* YanForm::find(juce::String label)
+{
+    YanField* found = nullptr;
+    for (auto field : fields) {
+        if (field->getLabel()->getText() == label) {
+            found = field;
+            break;
+        }
+    }
+    return found;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MouseListener for Drag and Drop
+//
+//////////////////////////////////////////////////////////////////////
+
 
 /****************************************************************************/
 /****************************************************************************/

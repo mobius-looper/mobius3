@@ -493,6 +493,11 @@ SymbolTreeItem* SymbolTreeItem::internChild(juce::String childName)
     return found;
 }
 
+juce::var SymbolTreeItem::getDragSourceDescription()
+{
+    return name;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Sort Comparator

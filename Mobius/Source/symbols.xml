@@ -503,16 +503,19 @@ Once those models are fully converted, these symbols can be removed.
   <ParameterScope name='track' query='true'>
 
     <!-- the replacement for oldSyncSource defined SyncSource in SyncConstants.h -->
-    <Parameter name='syncSource' values='none,transport,track,host,midi,master'/>
+    <Parameter name='syncSource' values='none,transport,track,host,midi,master'
+               tree='Sync'/>
 
     <!-- the SyncSource to use when syncSource is Master and there is already a master -->
     <Parameter name='syncSourceAlternate' values='track,transport'/>
     
     <!-- the replacements for slaveSyncUnit, used for all except track -->
-    <Parameter name='syncUnit' values='beat,bar,loop'/>
+    <Parameter name='syncUnit' values='beat,bar,loop'
+               tree='Sync'/>
     
     <!-- the replacement for oldTrackSyncUnit -->
-    <Parameter name='trackSyncUnit' values='subcycle,cycle,loop'/>
+    <Parameter name='trackSyncUnit' values='subcycle,cycle,loop'
+               tree='Sync'/>
 
     <!-- these apply only to Midi tracks ATM -->
     
@@ -570,15 +573,16 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='focus' type='bool' options='resetRetain,noBinding'/>
     <Parameter name='mono' type='bool' options='noBinding'/>
     <Parameter name='input' high='127' defaultValue='127'
-               options='control,resetRetain,mayFocus'/>
+               options='control,resetRetain,mayFocus'
+               tree='Mixer'/>
     <Parameter name='output' high='127' defaultValue='127'
-               options='control,resetRetain,mayFocus'/>
+               options='control,resetRetain,mayFocus' tree='Mixer'/>
     <Parameter name='feedback' high='127' defaultValue='127'
-               options='control,resetRetain,mayFocus'/>
+               options='control,resetRetain,mayFocus' tree='Mixer'/>
     <Parameter name='altFeedback' high='127'defaultValue='127'
-               options='control,resetRetain,mayFocus'/>
+               options='control,resetRetain,mayFocus' tree='Mixer'/>
     <Parameter name='pan' high='127' defaultValue='64'
-               options='control,resetRetain,mayFocus'/>
+               options='control,resetRetain,mayFocus' tree='Mixer'/>
 
     <!-- Ports are unusual
          The port numbers can be different for standalone or plugin operation since

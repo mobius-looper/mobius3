@@ -21,13 +21,21 @@
 #include "../common/YanForm.h"
 #include "../common/YanParameter.h"
 
-class ParameterForm : public juce::Component
+class ParameterForm : public juce::Component, public juce::DragAndDropTarget,
+                      public juce::DragAndDropContainer
 {
   public:
 
     ParameterForm();
     ~ParameterForm() {}
 
+    class Listener {
+      public:
+        virtual ~Listener() {}
+        virtual void parameterFormDrop(ParameterForm* src, juce::String desc) = 0;
+    };
+    void setListener(Listener* l);
+    
     /**
      * Forms may have an optional title which is displayed above the form fields.
      * When there is a title the fields are inset.
@@ -72,6 +80,11 @@ class ParameterForm : public juce::Component
      */
     void save(class ValueSet* values);
 
+    /**
+     * Strange interface for dynamic parameter forms.
+     */
+    void add(class Provider* p, class Symbol* s, class ValueSet* values);
+
     //
     // Juce
     //
@@ -81,7 +94,12 @@ class ParameterForm : public juce::Component
 
     void forceResize();
 
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details) override;
+    void itemDropped (const juce::DragAndDropTarget::SourceDetails&) override;
+
   private:
+
+    Listener* listener = nullptr;
 
     juce::String title;
 

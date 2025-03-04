@@ -71,7 +71,7 @@
 #include "../../util/Trace.h"
 #include "../../util/List.h"
 // ExValue and ExValue list are now in model/ExValue
-#include "../../model/ExValue.h"
+#include "../../model/old/ExValue.h"
 
 #include "Expr.h"
 #include "Mem.h"

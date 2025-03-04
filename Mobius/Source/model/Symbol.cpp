@@ -128,6 +128,28 @@ Symbol* SymbolTable::find(juce::String name)
     return found;
 }
 
+/**
+ * Lookup by display name doesn't have a HashMap but it doesn't happen often.
+ */
+Symbol* SymbolTable::findDisplayName(juce::String dname)
+{
+    Symbol* found = nullptr;
+    for (int i = 0 ; i < symbols.size() ; i++) {
+        Symbol* s = symbols[i];
+
+        // where display names live is a mess
+        // the Symbol may have one, but if this is a Parameter, then ParameterProperties
+        // also has one.  Unclear who wins
+        if ((s->parameterProperties != nullptr &&
+             s->parameterProperties->displayName == dname) ||
+            (s->displayName == dname)) {
+            found = s;
+            break;
+        }
+    }
+    return found;
+}
+
 void SymbolTable::intern(Symbol* s)
 {
     if (s->name.length() == 0) {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Session name="asdf" audioTracks="8">
-  <Track id="1" number="1" type="audio" name="whe555e">
+<Session name="newsession" audioTracks="8">
+  <Track id="1" type="audio" name="whe555e">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -19,7 +19,7 @@
       <Value name="trackSyncUnit" value="subcycle"/>
     </ValueSet>
   </Track>
-  <Track id="2" number="2" type="audio">
+  <Track id="2" type="audio">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -37,7 +37,7 @@
       <Value name="trackSyncUnit" value="subcycle"/>
     </ValueSet>
   </Track>
-  <Track id="3" number="3" type="audio">
+  <Track id="3" type="audio">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -55,7 +55,7 @@
       <Value name="trackSyncUnit" value="subcycle"/>
     </ValueSet>
   </Track>
-  <Track id="4" number="4" type="audio">
+  <Track id="4" type="audio">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -73,7 +73,7 @@
       <Value name="trackSyncUnit" value="subcycle"/>
     </ValueSet>
   </Track>
-  <Track id="5" number="5" type="audio">
+  <Track id="5" type="audio">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -91,7 +91,7 @@
       <Value name="trackSyncUnit" value="subcycle"/>
     </ValueSet>
   </Track>
-  <Track id="6" number="6" type="audio">
+  <Track id="6" type="audio">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -109,7 +109,7 @@
       <Value name="trackSyncUnit" value="subcycle"/>
     </ValueSet>
   </Track>
-  <Track id="7" number="7" type="audio">
+  <Track id="7" type="audio">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -127,7 +127,7 @@
       <Value name="trackSyncUnit" value="subcycle"/>
     </ValueSet>
   </Track>
-  <Track id="8" number="8" type="audio">
+  <Track id="8" type="audio">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
@@ -146,16 +146,62 @@
     </ValueSet>
   </Track>
   <ValueSet>
+    <Value name="altFeedbackEnable" value="true" type="bool"/>
+    <Value name="bounceQuantize" value="off" type="enum" ordinal="0"/>
     <Value name="controllerActionThreshold" value="64" type="int"/>
+    <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
+    <Value name="emptyTrackAction" value="none" type="enum" ordinal="0"/>
     <Value name="fadeFrames" value="128" type="int"/>
     <Value name="inputLatency" value="0" type="int"/>
     <Value name="longPress" value="500" type="int"/>
+    <Value name="loopCount" value="4" type="int"/>
     <Value name="maxLoops" value="2" type="int"/>
+    <Value name="maxRedo" value="4" type="int"/>
     <Value name="maxSyncDrift" value="50" type="int"/>
+    <Value name="maxUndo" value="8" type="int"/>
     <Value name="monitorAudio" value="0" type="int"/>
+    <Value name="multiplyMode" value="normal" type="enum" ordinal="0"/>
+    <Value name="muteCancel" value="never" type="enum" ordinal="0"/>
+    <Value name="muteMode" value="continue" type="enum" ordinal="0"/>
+    <Value name="noFeedbackUndo" value="false" type="bool"/>
+    <Value name="noLayerFlattening" value="false" type="bool"/>
     <Value name="noiseFloor" value="50" type="int"/>
     <Value name="outputLatency" value="0" type="int"/>
+    <Value name="overdubQuantized" value="false" type="bool"/>
+    <Value name="overdubTransfer" value="off" type="enum" ordinal="0"/>
+    <Value name="pitchBendRange" value="12" type="int"/>
+    <Value name="pitchShiftRestart" value="false" type="bool"/>
+    <Value name="pitchStepRange" value="24" type="int"/>
+    <Value name="pitchTransfer" value="off" type="enum" ordinal="0"/>
+    <Value name="quantize" value="off" type="enum" ordinal="0"/>
     <Value name="quickSave" value="mobiusloop"/>
+    <Value name="recordResetsFeedback" value="false" type="bool"/>
+    <Value name="recordTransfer" value="off" type="enum" ordinal="0"/>
+    <Value name="returnLocation" value="follow" type="enum" ordinal="0"/>
+    <Value name="reverseTransfer" value="off" type="enum" ordinal="0"/>
+    <Value name="roundingOverdub" value="true" type="bool"/>
+    <Value name="shuffleMode" value="reverse" type="enum" ordinal="0"/>
+    <Value name="slipMode" value="subCycle" type="enum" ordinal="0"/>
+    <Value name="slipTime" value="0" type="int"/>
+    <Value name="soundCopyMode" value="play" type="enum" ordinal="0"/>
+    <Value name="speedBendRange" value="12" type="int"/>
+    <Value name="speedRecord" value="false" type="bool"/>
+    <Value name="speedShiftRestart" value="false" type="bool"/>
+    <Value name="speedStepRange" value="24" type="int"/>
+    <Value name="speedTransfer" value="off" type="enum" ordinal="0"/>
     <Value name="spreadRange" value="48" type="int"/>
+    <Value name="subcycles" value="4" type="int"/>
+    <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
+    <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
+    <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
+    <Value name="switchVelocity" value="false" type="bool"/>
+    <Value name="timeCopyMode" value="play" type="enum" ordinal="0"/>
+    <Value name="timeStretchRange" value="12" type="int"/>
+    <Value name="trackLeaveAction" value="none" type="enum" ordinal="0"/>
+    <Value name="upgraded" value="true" type="bool"/>
+    <Value name="windowEdgeAmount" value="1" type="int"/>
+    <Value name="windowEdgeUnit" value="loop" type="enum" ordinal="0"/>
+    <Value name="windowSlideAmount" value="1" type="int"/>
+    <Value name="windowSlideUnit" value="loop" type="enum" ordinal="0"/>
   </ValueSet>
 </Session>

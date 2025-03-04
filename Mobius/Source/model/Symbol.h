@@ -280,6 +280,8 @@ class SymbolTable
      */
     Symbol* find(juce::String name);
 
+    Symbol* findDisplayName(juce::String dname);
+
     /**
      * Add a new symbol to the table.
      * The symbol is assumed to be a dynamically allocated object

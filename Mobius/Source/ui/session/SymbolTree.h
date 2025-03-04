@@ -13,6 +13,9 @@ class SymbolTreeItem : public juce::TreeViewItem
 	SymbolTreeItem(juce::String s);
 	~SymbolTreeItem();
 
+    // for drag-and-drop
+    juce::var getDragSourceDescription();
+
     // kludge for tree forms, figure out how this should work
     void setAnnotation(juce::String s) {
         annotation = s;

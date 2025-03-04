@@ -15,7 +15,10 @@
 #include "DynamicParameterTree.h"
 #include "DynamicFormCollection.h"
 
-class DynamicTreeForms : public juce::Component, public SymbolTree::Listener
+class DynamicTreeForms : public juce::Component,
+                         public SymbolTree::Listener,
+                         public ParameterForm::Listener,
+                         public juce::DragAndDropTarget
 {
   public:
     
@@ -41,12 +44,18 @@ class DynamicTreeForms : public juce::Component, public SymbolTree::Listener
     void resized() override;
 
     void symbolTreeClicked(class SymbolTreeItem* item) override;
+
+    void parameterFormDrop(class ParameterForm* src, juce::String desc) override;
+
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details) override;
+    void itemDropped (const juce::DragAndDropTarget::SourceDetails&) override;
     
   private:
 
     class Provider* provider = nullptr;
     class ValueSet* valueSet = nullptr;
 
+    bool restricted = false;
     DynamicParameterTree tree;
     DynamicFormCollection forms;
 

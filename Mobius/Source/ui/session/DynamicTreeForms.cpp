@@ -2,6 +2,8 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
+#include "../../model/Symbol.h"
+#include "../../model/ValueSet.h"
 #include "../../Provider.h"
 
 #include "SymbolTree.h"
@@ -55,15 +57,26 @@ void DynamicTreeForms::load(ValueSet* set)
 
 /**
  * Initialize with a restricted value set.
+ *
+ * Start initializing the tree just with things from the set,
+ * but now it does a full tree so it can be used for drag-and-drop
  */
 void DynamicTreeForms::initialize(Provider* p, ValueSet* set)
 {
     provider = p;
     valueSet = set;
 
-    tree.initialize(p, set);
+    // only show things in the ValueSet
+    restricted = true;
+
+    //tree.initialize(p, set);
+    tree.initialize(p);
+
+    // this actually won't do anything since the should be none during
+    // initialization
     forms.load(p, set);
-    
+
+    // this is where the first form will be constructed
     tree.selectFirst();
 }
 
@@ -130,6 +143,7 @@ void DynamicTreeForms::symbolTreeClicked(SymbolTreeItem* item)
         ParameterForm* form = forms.getForm(formName);
         if (form == nullptr) {
             form = buildForm(container);
+            form->setListener(this);
             forms.addForm(formName, form);
         }
         forms.show(provider, formName);
@@ -142,10 +156,71 @@ ParameterForm* DynamicTreeForms::buildForm(SymbolTreeItem* parent)
 
     for (int i = 0 ; i < parent->getNumSubItems() ; i++) {
         SymbolTreeItem* item = static_cast<SymbolTreeItem*>(parent->getSubItem(i));
-        form->add(item->getSymbols());
+        juce::Array<Symbol*>& symbols = item->getSymbols();
+        
+        if (!restricted) {
+            // add all of them under this tree node
+            form->add(symbols);
+        }
+        else {
+            // only those symbols that have matching values are shown
+            for (auto s : symbols) {
+                MslValue* v = valueSet->get(s->name);
+                if (v != nullptr) {
+                    // okay, so why does the incremental one need all this
+                    // context but not the bulk symbol loader,
+                    // work this out
+                    form->add(provider, s, valueSet);
+                }
+            }
+        }
+            
     }
     
     return form;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Drag and Drop
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Here in a roundabout way after a item was dragged from our DynamicParameterTree
+ * onto one of the ParameterForms in our DynamicFormCollection.
+ *
+ * ParameterForm doesn't have enough context (the Provider) to alter itself, so it forwards
+ * back to a higher power to do it.
+ */
+void DynamicTreeForms::parameterFormDrop(ParameterForm* src, juce::String desc)
+{
+    (void)src;
+
+    // description is the display name, find the symbol
+    Symbol* s = provider->getSymbols()->findDisplayName(desc);
+    if (s == nullptr) {
+        Trace(1, "DynamicTreeForms: Unable to locate symbol with display name %s",
+              desc.toUTF8());
+    }
+    else {
+        Trace(2, "DynamicTreeForms::parameterFormDrop %s", desc.toUTF8());
+
+        // hmm, we don't necessarily need to pass the valueSet here since if this
+        // is a new field, there shouldn't have been a value, but if they take it
+        // out and put it back, this would restore the value
+        src->add(provider, s, valueSet);
+    }
+}
+
+bool DynamicTreeForms::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details)
+{
+    return true;
+}
+
+void DynamicTreeForms::itemDropped (const juce::DragAndDropTarget::SourceDetails& details)
+{
+    Trace(2, "DynamicTreeForms::itemDropped");
 }
 
 /****************************************************************************/

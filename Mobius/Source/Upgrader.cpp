@@ -221,18 +221,23 @@ bool Upgrader::upgradePresets(MobiusConfig* config)
         for (Preset* p = config->getPresets() ; p != nullptr ; p = p->getNextPreset()) {
 
             ValueSet* set = sets->find(juce::String(p->getName()));
+            bool isNew = false;
             
             if (set == nullptr) {
                 // the usual case unless forceUpgrade
                 set = new ValueSet();
                 set->name = juce::String(p->getName());
                 sets->add(set);
+                isNew = true;
             }
 
-            // if this is forceUpgrade, it will only overwrite things or
-            // add new things, it won't remove things
-            transformer.transform(p, set);
-            updated = true;
+
+            if (forceUpgrade || isNew) {
+                // if this is forceUpgrade, it will only overwrite things or
+                // add new things, it won't remove things
+                transformer.transform(p, set);
+                updated = true;
+            }
         }
 
         if (updated) {

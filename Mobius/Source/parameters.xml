@@ -330,4 +330,8 @@
     <Value name="windowSlideAmount" value="1" type="int"/>
     <Value name="windowSlideUnit" value="loop" type="enum" ordinal="0"/>
   </ValueSet>
+  <ValueSet name="testlevels">
+    <Value name="input" value="127" type="int"/>
+    <Value name="output" value="127" type="int"/>
+  </ValueSet>
 </ParameterSets>

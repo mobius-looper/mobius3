@@ -8,6 +8,10 @@
 
 #include "YanField.h"
 
+/**
+ * DragAndDropContainer is for when forms are used inside the Session or Parmaeter set
+ * editor and fields are allowed to be removed from the form.
+ */
 class YanForm : public juce::Component
 {
   public:
@@ -28,6 +32,7 @@ class YanForm : public juce::Component
     // fields
     void add(class YanField* f);
     void addSpacer();
+    YanField* find(juce::String label);
 
     // rendering
     int getPreferredHeight();

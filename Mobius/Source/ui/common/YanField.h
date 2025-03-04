@@ -10,6 +10,21 @@
 
 #include "ColorPopup.h"
 
+/**
+ * Subclass used for Labels within a YanField/YanForm
+ * Used to capture mouse events for drag-and-drop.
+ * Probably better ways to do this.
+ */
+class YanFieldLabel: public juce::Label
+{
+  public:
+
+    void mouseDown(const juce::MouseEvent& e) override;
+    
+  private:
+    
+};
+
 class YanField : public juce::Component
 {
   public:
@@ -34,7 +49,7 @@ class YanField : public juce::Component
         
   private:
 
-    juce::Label label;
+    YanFieldLabel label;
     bool adjacent = false;
 
 };
