@@ -18,7 +18,8 @@ DynamicTreeForms::DynamicTreeForms()
     addAndMakeVisible(forms);
 
     tree.setListener(this);
-
+    tree.setDropListener(this);
+    
     // set up the layout and resizer bars..
     verticalLayout.setItemLayout (0, -0.2, -0.8, -0.35); // width of the font list must be
     // between 20% and 80%, preferably 50%
@@ -213,14 +214,41 @@ void DynamicTreeForms::parameterFormDrop(ParameterForm* src, juce::String desc)
     }
 }
 
-bool DynamicTreeForms::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details)
+void DynamicTreeForms::dropTreeViewDrop(DropTreeView* dtv, const juce::DragAndDropTarget::SourceDetails& details)
 {
-    return true;
-}
+    (void)dtv;
+    (void)details;
 
-void DynamicTreeForms::itemDropped (const juce::DragAndDropTarget::SourceDetails& details)
-{
-    Trace(2, "DynamicTreeForms::itemDropped");
+    juce::String oname = details.sourceComponent->getName();
+
+    // god, target details sucks, a fucking String!?  That's it?
+    // what we want is the ParameterForm the field is inside, we could traverse up
+    // doing dynamic_cast until we find it, or walk down, it will normally
+    // be the one that is currently displayed
+    if (oname == "YanFieldLabel") {
+        YanFieldLabel* label = dynamic_cast<YanFieldLabel*>(details.sourceComponent.get());
+        if (label == nullptr) {
+            Trace(1, "DynamicTreeForms: YanFieldLabel failed dynamic cast");
+        }
+        else {
+            ParameterForm* form = forms.findFormWithLabel(label);
+            if (form == nullptr) {
+                Trace(1, "DynamicTreeForms: Unable to locate form with drag label");
+            }
+            else {
+                // ugh, we just did this to find the ParameterForm
+                // could avoid the redundant work by just asking to remove it when
+                // it finds it...
+                YanParameter* f = form->findFieldWithLabel(label);
+                if (f == nullptr) {
+                    Trace(1, "DynamicTreeForms: Form with label didn't have the field");
+                }
+                else {
+                    form->remove(f);
+                }
+            }
+        }
+    }
 }
 
 /****************************************************************************/

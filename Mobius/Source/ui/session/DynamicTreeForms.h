@@ -18,7 +18,10 @@
 class DynamicTreeForms : public juce::Component,
                          public SymbolTree::Listener,
                          public ParameterForm::Listener,
-                         public juce::DragAndDropTarget
+                         public DropTreeView::Listener,
+                         // it is important that this be as high as possible to encompass
+                         // all the drag sources
+                         public juce::DragAndDropContainer
 {
   public:
     
@@ -47,9 +50,10 @@ class DynamicTreeForms : public juce::Component,
 
     void parameterFormDrop(class ParameterForm* src, juce::String desc) override;
 
-    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details) override;
-    void itemDropped (const juce::DragAndDropTarget::SourceDetails&) override;
+    void dropTreeViewDrop(DropTreeView* dtv, const juce::DragAndDropTarget::SourceDetails& details) override;
     
+
+
   private:
 
     class Provider* provider = nullptr;

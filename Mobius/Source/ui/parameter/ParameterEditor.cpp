@@ -9,6 +9,7 @@
 #include "../../model/ValueSet.h"
 #include "../../Supervisor.h"
 #include "../../Provider.h"
+#include "../JuceUtil.h"
 
 #include "ParameterSetTable.h"
 
@@ -83,6 +84,8 @@ void ParameterEditor::show(int index)
             currentSet = -1;
         }
     }
+
+    JuceUtil::dumpComponent(this);
 }    
 
 /**

@@ -4,6 +4,7 @@
 #include <JuceHeader.h>
 
 #include "../common/YanField.h"
+#include "DropTreeView.h"
 
 class SymbolTreeItem : public juce::TreeViewItem
 {
@@ -107,6 +108,7 @@ class SymbolTree : public juce::Component, public YanInput::Listener
 
     void disableSearch();
     void setListener(Listener* l);
+    void setDropListener(DropTreeView::Listener* l);
     
     void resized() override;
 
@@ -127,14 +129,16 @@ class SymbolTree : public juce::Component, public YanInput::Listener
     void itemClicked(SymbolTreeItem* item);
 
     juce::StringArray favorites;
-    
+
   protected:
 
     LookAndFeel laf {this};
     Listener* listener = nullptr;
     bool searchDisabled = false;
-    
-    juce::TreeView tree;
+
+    // use this just to get drop target
+    //juce::TreeView tree;
+    DropTreeView tree;
     SymbolTreeItem root;
     YanInput search {"Search"};
 

@@ -21,8 +21,8 @@
 #include "../common/YanForm.h"
 #include "../common/YanParameter.h"
 
-class ParameterForm : public juce::Component, public juce::DragAndDropTarget,
-                      public juce::DragAndDropContainer
+class ParameterForm : public juce::Component, public juce::DragAndDropTarget
+                      //public juce::DragAndDropContainer
 {
   public:
 
@@ -84,6 +84,9 @@ class ParameterForm : public juce::Component, public juce::DragAndDropTarget,
      * Strange interface for dynamic parameter forms.
      */
     void add(class Provider* p, class Symbol* s, class ValueSet* values);
+
+    class YanParameter* findFieldWithLabel(class YanFieldLabel* l);
+    void remove(class YanParameter* p);
 
     //
     // Juce

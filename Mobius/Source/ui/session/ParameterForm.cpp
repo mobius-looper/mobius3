@@ -114,6 +114,29 @@ void ParameterForm::add(Provider* p, Symbol* s, ValueSet* values)
     }
 }
 
+YanParameter* ParameterForm::findFieldWithLabel(YanFieldLabel* l)
+{
+    YanParameter* found = nullptr;
+    for (auto p : parameters) {
+        if (p->hasLabel(l)) {
+            found = p;
+            break;
+        }
+    }
+    return found;
+}
+
+void ParameterForm::remove(YanParameter* p)
+{
+    if (parameters.contains(p)) {
+        form.remove(p);
+        parameters.removeObject(p, true);
+    }
+    else {
+        Trace(1, "ParameterForm::remove Form does not contain this field");
+    }
+}
+
 void ParameterForm::add(juce::Array<Symbol*>& symbols)
 {
     for (auto s : symbols) {

@@ -32,6 +32,8 @@ class DynamicFormCollection : public juce::Component
     void save(class ValueSet* dest);
     void cancel();
     void decache();
+
+    class ParameterForm* findFormWithLabel(class YanFieldLabel* l);
     
   private:
 

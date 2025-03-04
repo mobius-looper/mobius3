@@ -118,6 +118,24 @@ void DynamicFormCollection::show(Provider* p, juce::String formName)
     }
 }
 
+ParameterForm* DynamicFormCollection::findFormWithLabel(YanFieldLabel* l)
+{
+    ParameterForm* found = nullptr;
+
+    // first look in current
+    if (currentForm != nullptr) {
+        YanParameter* f = currentForm->findFieldWithLabel(l);
+        if (f != nullptr)
+          found = currentForm;
+    }
+
+    // could try to look in the others but shouldn't happen
+    if (found == nullptr)
+      Trace(1, "DynamicFormCollection::findFormWithLabel For not found");
+    
+    return found;
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -13,6 +13,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+YanFieldLabel::YanFieldLabel()
+{
+    setName("YanFieldLabel");
+}
+
 void YanFieldLabel::mouseDown(const juce::MouseEvent& e)
 {
     (void)e;
@@ -45,6 +50,11 @@ YanField::YanField(juce::String argLabel)
 
 YanField::~YanField()
 {
+}
+
+bool YanField::hasLabel(YanFieldLabel* l)
+{
+    return (l == &label);
 }
 
 void YanField::setLabel(juce::String s)

@@ -18,6 +18,7 @@
 class YanFieldLabel: public juce::Label
 {
   public:
+    YanFieldLabel();
 
     void mouseDown(const juce::MouseEvent& e) override;
     
@@ -38,6 +39,7 @@ class YanField : public juce::Component
     void setAdjacent(bool b);
     bool isAdjacent();
     virtual bool isSection() {return false;};
+    bool hasLabel(YanFieldLabel* l);
     
     int getPreferredWidth(int rowHeight);
     

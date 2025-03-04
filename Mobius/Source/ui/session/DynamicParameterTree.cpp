@@ -145,46 +145,6 @@ void DynamicParameterTree::selectFirst()
     }
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Drag and Drop Shit
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * The only reason we're a DragAndDropTarget is so parameter forms can drag
- * fields off it to indiciate that the parameter should be removed from the form.
- * The usual weird control flow for Juce dnd.
- *
- * The only source we care about is ParmeterForm.
- */
-bool DynamicParameterTree::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details)
-{
-    bool interested = false;
-    juce::Component* c = details.sourceComponent.get();
-
-    // so...dynamic_cast is supposed to be evil, but we've got a problem here
-    // how do you know what this thing is if all Juce gives you is a Component?
-    // I suppose we could search upward and see if we are in the parent hierarchy.
-    YanFieldLabel * l = dynamic_cast<YanFieldLabel*>(c);
-    if (l == nullptr) {
-        interested = true;
-    }
-
-    return interested;
-}
-
-void DynamicParameterTree::itemDropped (const juce::DragAndDropTarget::SourceDetails& details)
-{
-    if (dropListener != nullptr)
-      dropListener->dynamicParameterTreeDrop(this, details.description.toString());
-}
-
-void DynamicParameterTree::setDropListener(DropListener* l)
-{
-    dropListener = l;
-}
-
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -1,6 +1,7 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/Trace.h"
 #include "../JuceUtil.h"
 #include "YanField.h"
 #include "YanForm.h"
@@ -79,6 +80,27 @@ void YanForm::addSpacer()
 {
     fields.add(&spacer);
     labels.add(spacer.getLabel());
+}
+
+/**
+ * This will not handle adjacent labels properly AT ALL.
+ * Works well enough for current usage with DynamicParameterForm
+ */
+bool YanForm::remove(YanField* f)
+{
+    bool removed = false;
+    int index = fields.indexOf(f);
+    if (index >= 0) {
+        removeChildComponent(f);
+        removeChildComponent(f->getLabel());
+        labels.remove(index);
+        fields.remove(index);
+        removed = true;
+    }
+    else {
+        Trace(1, "YanForm::remove Field not found");
+    }
+    return removed;
 }
 
 int YanForm::getPreferredHeight()

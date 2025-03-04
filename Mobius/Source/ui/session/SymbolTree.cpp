@@ -68,6 +68,11 @@ void SymbolTree::setListener(Listener* l)
     listener = l;
 }
 
+void SymbolTree::setDropListener(DropTreeView::Listener* l)
+{
+    tree.setListener(l);
+}
+
 void SymbolTree::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();

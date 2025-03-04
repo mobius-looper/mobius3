@@ -506,6 +506,9 @@
           <FILE id="NyM8Ef" name="TypicalTable.h" compile="0" resource="0" file="Source/ui/script/TypicalTable.h"/>
         </GROUP>
         <GROUP id="{DF1301BF-7977-3AF9-2F74-88DD7CDC5689}" name="session">
+          <FILE id="OkxcXb" name="DropTreeView.cpp" compile="1" resource="0"
+                file="Source/ui/session/DropTreeView.cpp"/>
+          <FILE id="wtqkUF" name="DropTreeView.h" compile="0" resource="0" file="Source/ui/session/DropTreeView.h"/>
           <FILE id="hWOict" name="DynamicFormCollection.cpp" compile="1" resource="0"
                 file="Source/ui/session/DynamicFormCollection.cpp"/>
           <FILE id="EShK4T" name="DynamicFormCollection.h" compile="0" resource="0"
