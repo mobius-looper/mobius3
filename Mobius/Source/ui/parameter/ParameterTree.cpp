@@ -181,9 +181,6 @@ void ParameterTree::initializeDynamic(Provider* p)
 {
     SymbolTreeComparator comparator;
 
-    // I think we can just assume this?
-    draggable = true;
-
     internCategories();
 
     for (auto s : p->getSymbols()->getSymbols()) {

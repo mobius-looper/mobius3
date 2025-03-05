@@ -25,9 +25,17 @@ SessionGlobalEditor::SessionGlobalEditor()
 void SessionGlobalEditor::initialize(Provider* p)
 {
     provider = p;
+
+    // this is used by the inherited symbolTreeClicked method
+    // to generate form names when the tree is clicked if the clicked
+    // node didn't specify one
+    treeName = juce::String(TreeName);
     
-    tree.initializeStatic(provider, juce::String(TreeName));
-    
+    tree.initializeStatic(provider, treeName);
+    // get clicks from the tree
+    // the global tree forms do not need drag-and-drop so no DropListsener
+    tree.setListener(this);
+
     // this wants a ValueSet but we don't get that until load
     forms.initialize(p, this, nullptr);
 }
@@ -53,29 +61,8 @@ void SessionGlobalEditor::decacheForms()
 }
 
 /**
- * When a tree node is clicked, ask the form collection to display the form.
+ * Global editor is guided by the static form definitions.
  */
-void SessionGlobalEditor::symbolTreeClicked(SymbolTreeItem* item)
-{
-    SymbolTreeItem* container = item;
-    
-    // if this is a leaf node, go up to the parent and show the entire parent form
-    if (item->getNumSubItems() == 0) {
-        container = static_cast<SymbolTreeItem*>(item->getParentItem());
-    }
-
-    // SymbolTreeItem is a generic model that doesn't understand it's usage
-    // for form delivery, the tree builder left the form name as the "annotation"
-    
-    juce::String formName = container->getAnnotation();
-    if (formName.length() == 0) {
-        // default form name is a combination of the tree name and node name
-        formName = juce::String(TreeName) + item->getName();
-    }
-    
-    forms.show(formName);
-}
-
 ParameterForm* SessionGlobalEditor::parameterFormCollectionCreate(juce::String formName)
 {
     ParameterForm* form = nullptr;

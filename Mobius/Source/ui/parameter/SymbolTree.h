@@ -118,6 +118,9 @@ class SymbolTree : public juce::Component, public YanInput::Listener
     void loadSymbols(class SymbolTable* table, juce::String favorites);
     void loadSymbols(class SymbolTable* table, juce::String favorites,
                      juce::String includes);
+
+    // wandering
+    SymbolTreeItem* findAnnotatedItem(juce::String annotation);
     
     // favorites
     void addFavorite(juce::String name);
@@ -149,10 +152,12 @@ class SymbolTree : public juce::Component, public YanInput::Listener
 
     SymbolTreeItem* internPath(SymbolTreeItem* parent, juce::StringArray path);
     juce::StringArray parsePath(juce::String s);
+    SymbolTreeItem* findAnnotatedItem(SymbolTreeItem* parent, juce::String annotation);
     
     void startSearch();
     int searchTree(juce::String text, SymbolTreeItem* node);
     void endSearch();
     void unhide(SymbolTreeItem* node);
+    
     
 };

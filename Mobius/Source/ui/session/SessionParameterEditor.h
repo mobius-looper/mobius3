@@ -1,14 +1,16 @@
 /**
- * A tree/form combo that edits the global session parameters.
+ * A tree/form combo that edits the full set of deafult track parameters.
  */
 
 #pragma once
 
 #include <JuceHeader.h>
 
-#include "DynamicTreeForms.h"
+#include "../parameter/ParameterTreeForms.h"
+#include "../parameter/ParameterFormCollection.h"
 
-class SessionParameterEditor : public juce::Component
+class SessionParameterEditor : public ParameterTreeForms,
+                               public ParameterFormCollection::Factory
 {
   public:
 
@@ -24,16 +26,12 @@ class SessionParameterEditor : public juce::Component
     void cancel();
     void decacheForms();
 
-    void showInitial(juce::String name);
-    
-    void resized() override;
+    class ParameterForm* parameterFormCollectionCreate(juce::String formid) override;
     
   private:
 
     class Provider* provider = nullptr;
     class ValueSet* values = nullptr;
-
-    DynamicTreeForms forms;
 
 };
 

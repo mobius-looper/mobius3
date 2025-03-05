@@ -126,6 +126,30 @@ void SymbolTree::itemClicked(SymbolTreeItem* item)
     }
 }
 
+SymbolTreeItem* SymbolTree::findAnnotatedItem(juce::String s)
+{
+    return findAnnotatedItem(&root, s);
+}
+
+SymbolTreeItem* SymbolTree::findAnnotatedItem(SymbolTreeItem* parent, juce::String s)
+{
+    SymbolTreeItem* found = nullptr;
+    if (parent != nullptr) {
+        if (parent->getAnnotation() == s) {
+            found = parent;
+        }
+        else {
+            for (int i = 0 ; i < parent->getNumSubItems() ; i++) {
+                SymbolTreeItem* item = static_cast<SymbolTreeItem*>(parent->getSubItem(i));
+                found = findAnnotatedItem(item, s);
+                if (found != nullptr)
+                  break;
+            }
+        }
+    }
+    return found;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Old Load Interface

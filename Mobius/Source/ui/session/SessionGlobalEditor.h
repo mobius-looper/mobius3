@@ -9,7 +9,6 @@
 #include "../parameter/ParameterTreeForms.h"
 
 class SessionGlobalEditor : public ParameterTreeForms,
-                            public SymbolTree::Listener,
                             public ParameterFormCollection::Factory
 {
   public:
@@ -28,9 +27,6 @@ class SessionGlobalEditor : public ParameterTreeForms,
     void cancel();
     void decacheForms();
 
-    void showInitial(juce::String name);
-
-    void symbolTreeClicked(class SymbolTreeItem* item) override;
     class ParameterForm* parameterFormCollectionCreate(juce::String formid) override;
     
   private:
