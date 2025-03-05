@@ -6,7 +6,7 @@
 
 #include <JuceHeader.h>
 
-#include "ParameterTreeForms.h"
+#include "../parameter/ParameterTreeForms.h"
 
 class SessionGlobalEditor : public ParameterTreeForms,
                             public SymbolTree::Listener,

@@ -6,7 +6,7 @@
 #include "../../model/ValueSet.h"
 #include "../../Provider.h"
 
-#include "../session/ParameterForm.h"
+#include "../parameter/ParameterForm.h"
 
 #include "DynamicFormCollection.h"
 

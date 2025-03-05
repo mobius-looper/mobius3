@@ -8,7 +8,7 @@
 
 #include <JuceHeader.h>
 
-#include "SymbolTree.h"
+#include "../parameter/SymbolTree.h"
 
 class SessionEditorTree : public SymbolTree
 {

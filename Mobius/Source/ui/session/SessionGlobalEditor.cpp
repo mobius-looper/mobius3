@@ -11,10 +11,10 @@
 #include "../../model/ValueSet.h"
 #include "../../Provider.h"
 
-#include "SymbolTree.h"
-#include "ParameterForm.h"
-#include "ParameterTree.h"
-#include "ParameterFormCollection.h"
+#include "../parameter/SymbolTree.h"
+#include "../parameter/ParameterForm.h"
+#include "../parameter/ParameterTree.h"
+#include "../parameter/ParameterFormCollection.h"
 
 #include "SessionGlobalEditor.h"
 

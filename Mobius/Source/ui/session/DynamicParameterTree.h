@@ -7,7 +7,7 @@
 
 #include <JuceHeader.h>
 
-#include "../session/SymbolTree.h"
+#include "../parameter/SymbolTree.h"
 
 class DynamicParameterTree : public SymbolTree
 {

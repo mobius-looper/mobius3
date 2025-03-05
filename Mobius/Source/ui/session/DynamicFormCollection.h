@@ -11,7 +11,7 @@
 
 #include <JuceHeader.h>
 
-#include "../session/ParameterForm.h"
+#include "../parameter/ParameterForm.h"
 
 class DynamicFormCollection : public juce::Component
 {

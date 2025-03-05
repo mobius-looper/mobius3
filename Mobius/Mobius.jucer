@@ -187,14 +187,33 @@
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
         <GROUP id="{D00C350E-B29D-D24C-688C-04027E4FDEE4}" name="parameter">
+          <FILE id="oXrWw9" name="DropTreeView.cpp" compile="1" resource="0"
+                file="Source/ui/parameter/DropTreeView.cpp"/>
+          <FILE id="BwflDo" name="DropTreeView.h" compile="0" resource="0" file="Source/ui/parameter/DropTreeView.h"/>
           <FILE id="RAb6By" name="ParameterEditor.cpp" compile="1" resource="0"
                 file="Source/ui/parameter/ParameterEditor.cpp"/>
           <FILE id="FI6MXo" name="ParameterEditor.h" compile="0" resource="0"
                 file="Source/ui/parameter/ParameterEditor.h"/>
+          <FILE id="AbILLK" name="ParameterForm.cpp" compile="1" resource="0"
+                file="Source/ui/parameter/ParameterForm.cpp"/>
+          <FILE id="nFdZRs" name="ParameterForm.h" compile="0" resource="0" file="Source/ui/parameter/ParameterForm.h"/>
+          <FILE id="pn3BV0" name="ParameterFormCollection.cpp" compile="1" resource="0"
+                file="Source/ui/parameter/ParameterFormCollection.cpp"/>
+          <FILE id="a2Qf3K" name="ParameterFormCollection.h" compile="0" resource="0"
+                file="Source/ui/parameter/ParameterFormCollection.h"/>
           <FILE id="zRaNaf" name="ParameterSetTable.cpp" compile="1" resource="0"
                 file="Source/ui/parameter/ParameterSetTable.cpp"/>
           <FILE id="YkGnFH" name="ParameterSetTable.h" compile="0" resource="0"
                 file="Source/ui/parameter/ParameterSetTable.h"/>
+          <FILE id="eKicrQ" name="ParameterTree.cpp" compile="1" resource="0"
+                file="Source/ui/parameter/ParameterTree.cpp"/>
+          <FILE id="VnJwV3" name="ParameterTree.h" compile="0" resource="0" file="Source/ui/parameter/ParameterTree.h"/>
+          <FILE id="cXYZ0a" name="ParameterTreeForms.cpp" compile="1" resource="0"
+                file="Source/ui/parameter/ParameterTreeForms.cpp"/>
+          <FILE id="q0xi5w" name="ParameterTreeForms.h" compile="0" resource="0"
+                file="Source/ui/parameter/ParameterTreeForms.h"/>
+          <FILE id="PRBOHZ" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/parameter/SymbolTree.cpp"/>
+          <FILE id="U8HVKL" name="SymbolTree.h" compile="0" resource="0" file="Source/ui/parameter/SymbolTree.h"/>
         </GROUP>
         <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
           <FILE id="lXWr1d" name="BasicButtonRow.cpp" compile="1" resource="0"
@@ -506,9 +525,6 @@
           <FILE id="NyM8Ef" name="TypicalTable.h" compile="0" resource="0" file="Source/ui/script/TypicalTable.h"/>
         </GROUP>
         <GROUP id="{DF1301BF-7977-3AF9-2F74-88DD7CDC5689}" name="session">
-          <FILE id="OkxcXb" name="DropTreeView.cpp" compile="1" resource="0"
-                file="Source/ui/session/DropTreeView.cpp"/>
-          <FILE id="wtqkUF" name="DropTreeView.h" compile="0" resource="0" file="Source/ui/session/DropTreeView.h"/>
           <FILE id="hWOict" name="DynamicFormCollection.cpp" compile="1" resource="0"
                 file="Source/ui/session/DynamicFormCollection.cpp"/>
           <FILE id="EShK4T" name="DynamicFormCollection.h" compile="0" resource="0"
@@ -521,20 +537,6 @@
                 file="Source/ui/session/DynamicTreeForms.cpp"/>
           <FILE id="xPZ2YM" name="DynamicTreeForms.h" compile="0" resource="0"
                 file="Source/ui/session/DynamicTreeForms.h"/>
-          <FILE id="y3QGus" name="ParameterForm.cpp" compile="1" resource="0"
-                file="Source/ui/session/ParameterForm.cpp"/>
-          <FILE id="D2sieP" name="ParameterForm.h" compile="0" resource="0" file="Source/ui/session/ParameterForm.h"/>
-          <FILE id="Xv2OWr" name="ParameterFormCollection.cpp" compile="1" resource="0"
-                file="Source/ui/session/ParameterFormCollection.cpp"/>
-          <FILE id="vqWMNV" name="ParameterFormCollection.h" compile="0" resource="0"
-                file="Source/ui/session/ParameterFormCollection.h"/>
-          <FILE id="JBogMi" name="ParameterTree.cpp" compile="1" resource="0"
-                file="Source/ui/session/ParameterTree.cpp"/>
-          <FILE id="P0mijA" name="ParameterTree.h" compile="0" resource="0" file="Source/ui/session/ParameterTree.h"/>
-          <FILE id="JiWjsc" name="ParameterTreeForms.cpp" compile="1" resource="0"
-                file="Source/ui/session/ParameterTreeForms.cpp"/>
-          <FILE id="HbBtm4" name="ParameterTreeForms.h" compile="0" resource="0"
-                file="Source/ui/session/ParameterTreeForms.h"/>
           <FILE id="h5SWoP" name="SessionEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionEditor.cpp"/>
           <FILE id="YLdxmd" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/session/SessionEditor.h"/>
@@ -576,8 +578,6 @@
                 file="Source/ui/session/SessionTreeForms.cpp"/>
           <FILE id="EQhLym" name="SessionTreeForms.h" compile="0" resource="0"
                 file="Source/ui/session/SessionTreeForms.h"/>
-          <FILE id="uzUdnw" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/session/SymbolTree.cpp"/>
-          <FILE id="rYvScn" name="SymbolTree.h" compile="0" resource="0" file="Source/ui/session/SymbolTree.h"/>
         </GROUP>
         <FILE id="i40dnE" name="AboutPanel.cpp" compile="1" resource="0" file="Source/ui/AboutPanel.cpp"/>
         <FILE id="Cgk0He" name="AboutPanel.h" compile="0" resource="0" file="Source/ui/AboutPanel.h"/>

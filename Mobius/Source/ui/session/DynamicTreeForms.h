@@ -11,7 +11,7 @@
 
 #include <JuceHeader.h>
 
-#include "SymbolTree.h"
+#include "../parameter/SymbolTree.h"
 #include "DynamicParameterTree.h"
 #include "DynamicFormCollection.h"
 

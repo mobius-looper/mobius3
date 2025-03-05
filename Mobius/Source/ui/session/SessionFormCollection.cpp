@@ -8,7 +8,7 @@
 #include "../../model/ValueSet.h"
 #include "../../Provider.h"
 
-#include "ParameterForm.h"
+#include "../parameter/ParameterForm.h"
 
 #include "SessionFormCollection.h"
 

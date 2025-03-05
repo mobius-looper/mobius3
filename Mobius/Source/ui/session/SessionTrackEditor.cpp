@@ -7,7 +7,7 @@
 #include "../../Provider.h"
 #include "../JuceUtil.h"
 
-#include "ParameterForm.h"
+#include "../parameter/ParameterForm.h"
 #include "SessionTrackTable.h"
 #include "SessionTreeForms.h"
 
