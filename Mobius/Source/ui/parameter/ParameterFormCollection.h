@@ -33,6 +33,7 @@ class ParameterFormCollection : public juce::Component
     
     // may call back to the factory if the form was not found
     void show(juce::String formName);
+    ParameterForm* getCurrentForm();
 
     void load(class ValueSet* src);
     void save(class ValueSet* dest);

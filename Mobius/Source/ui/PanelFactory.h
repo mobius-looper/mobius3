@@ -49,7 +49,7 @@ class PanelFactory
         Group,
         Session,
         SessionManager,
-        ParameterSets,
+        Overlay,
 
         // Devices
         Audio,

@@ -277,8 +277,8 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::SessionManager);
             }
                 break;
-            case MainMenu::ParameterSets: {
-                panelFactory.show(PanelFactory::ParameterSets);
+            case MainMenu::Overlays: {
+                panelFactory.show(PanelFactory::Overlay);
             }
                 break;
             case MainMenu::MidiControl: {

@@ -49,6 +49,11 @@ class ParameterForm : public juce::Component, public juce::DragAndDropTarget
     void setFormInset(int x);
 
     /**
+     * True if the symbol fields can be dragged out.
+     */
+    void setDraggable(bool b);
+
+    /**
      * Add a list of editing fields for parameter symbols.
      * The fields are added in the same order as the array.
      */
@@ -87,6 +92,7 @@ class ParameterForm : public juce::Component, public juce::DragAndDropTarget
 
     class YanParameter* findFieldWithLabel(class YanFieldLabel* l);
     void remove(class YanParameter* p);
+    bool remove(class Symbol* s);
 
     //
     // Juce
@@ -103,7 +109,8 @@ class ParameterForm : public juce::Component, public juce::DragAndDropTarget
   private:
 
     Listener* listener = nullptr;
-
+    bool draggable = false;
+    
     juce::String title;
 
     // this gives it a little border between the title and the container

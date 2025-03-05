@@ -25,7 +25,7 @@
 #include "PropertiesEditor.h"
 #include "GroupEditor.h"
 #include "../session/SessionEditor.h"
-#include "../parameter/ParameterEditor.h"
+#include "../parameter/OverlayEditor.h"
 
 class ScriptPanel : public ConfigPanel
 {
@@ -183,15 +183,15 @@ class SessionPanel : public ConfigPanel
     SessionEditor editor;
 };
 
-class ParameterPanel : public ConfigPanel
+class OverlayPanel : public ConfigPanel
 {
   public:
-    ParameterPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
-        setName("Parameters");
+    OverlayPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
+        setName("Parameter Overlays");
         setEditor(&editor);
     }
-    ~ParameterPanel() {}
+    ~OverlayPanel() {}
  
   private:
-    ParameterEditor editor;
+    OverlayEditor editor;
 };

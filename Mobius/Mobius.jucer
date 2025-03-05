@@ -190,10 +190,16 @@
           <FILE id="oXrWw9" name="DropTreeView.cpp" compile="1" resource="0"
                 file="Source/ui/parameter/DropTreeView.cpp"/>
           <FILE id="BwflDo" name="DropTreeView.h" compile="0" resource="0" file="Source/ui/parameter/DropTreeView.h"/>
-          <FILE id="RAb6By" name="ParameterEditor.cpp" compile="1" resource="0"
-                file="Source/ui/parameter/ParameterEditor.cpp"/>
-          <FILE id="FI6MXo" name="ParameterEditor.h" compile="0" resource="0"
-                file="Source/ui/parameter/ParameterEditor.h"/>
+          <FILE id="Ngb478" name="OverlayEditor.cpp" compile="1" resource="0"
+                file="Source/ui/parameter/OverlayEditor.cpp"/>
+          <FILE id="cyVNeK" name="OverlayEditor.h" compile="0" resource="0" file="Source/ui/parameter/OverlayEditor.h"/>
+          <FILE id="r92bXL" name="OverlayTable.cpp" compile="1" resource="0"
+                file="Source/ui/parameter/OverlayTable.cpp"/>
+          <FILE id="kY6984" name="OverlayTable.h" compile="0" resource="0" file="Source/ui/parameter/OverlayTable.h"/>
+          <FILE id="Md0qr1" name="OverlayTreeForms.cpp" compile="1" resource="0"
+                file="Source/ui/parameter/OverlayTreeForms.cpp"/>
+          <FILE id="X06tBs" name="OverlayTreeForms.h" compile="0" resource="0"
+                file="Source/ui/parameter/OverlayTreeForms.h"/>
           <FILE id="AbILLK" name="ParameterForm.cpp" compile="1" resource="0"
                 file="Source/ui/parameter/ParameterForm.cpp"/>
           <FILE id="nFdZRs" name="ParameterForm.h" compile="0" resource="0" file="Source/ui/parameter/ParameterForm.h"/>
@@ -201,10 +207,6 @@
                 file="Source/ui/parameter/ParameterFormCollection.cpp"/>
           <FILE id="a2Qf3K" name="ParameterFormCollection.h" compile="0" resource="0"
                 file="Source/ui/parameter/ParameterFormCollection.h"/>
-          <FILE id="zRaNaf" name="ParameterSetTable.cpp" compile="1" resource="0"
-                file="Source/ui/parameter/ParameterSetTable.cpp"/>
-          <FILE id="YkGnFH" name="ParameterSetTable.h" compile="0" resource="0"
-                file="Source/ui/parameter/ParameterSetTable.h"/>
           <FILE id="eKicrQ" name="ParameterTree.cpp" compile="1" resource="0"
                 file="Source/ui/parameter/ParameterTree.cpp"/>
           <FILE id="VnJwV3" name="ParameterTree.h" compile="0" resource="0" file="Source/ui/parameter/ParameterTree.h"/>

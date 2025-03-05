@@ -32,9 +32,6 @@ void SessionGlobalEditor::initialize(Provider* p)
     treeName = juce::String(TreeName);
     
     tree.initializeStatic(provider, treeName);
-    // get clicks from the tree
-    // the global tree forms do not need drag-and-drop so no DropListsener
-    tree.setListener(this);
 
     // this wants a ValueSet but we don't get that until load
     forms.initialize(p, this, nullptr);

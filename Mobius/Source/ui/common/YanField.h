@@ -14,15 +14,29 @@
  * Subclass used for Labels within a YanField/YanForm
  * Used to capture mouse events for drag-and-drop.
  * Probably better ways to do this.
+ *
+ * You can only drag a field by clicking on it's label, which
+ * is enough for most forms but for those that use rows of adjacent
+ * fields with a common label, that won't work.
  */
 class YanFieldLabel: public juce::Label
 {
   public:
-    YanFieldLabel();
+
+    // when Drag-and-drop is allowed and initiated, this is the
+    // source idtifier prefix put in the description
+    constexpr static const char* DragPrefix = "YanField:";
+    
+    YanFieldLabel(class YanField* parent);
 
     void mouseDown(const juce::MouseEvent& e) override;
     
   private:
+
+    // the logical parent is the assdociated YanField
+    // it is NOT the juce::Component parent
+    // YanFrom is allowed to put the label anywhere
+    class YanField* parent = nullptr;
     
 };
 
@@ -45,14 +59,21 @@ class YanField : public juce::Component
     
     virtual int getPreferredComponentWidth() = 0;
 
+
+    // special support for draggable forms
+    void setDragDescription(juce::String s);
+    juce::String getDragDescription();
+    
   protected:
     
     juce::Rectangle<int> resizeLabel();
         
   private:
 
-    YanFieldLabel label;
+    YanFieldLabel label {this};
     bool adjacent = false;
+
+    juce::String dragDescription;
 
 };
 

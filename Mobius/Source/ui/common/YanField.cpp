@@ -13,17 +13,42 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-YanFieldLabel::YanFieldLabel()
+YanFieldLabel::YanFieldLabel(YanField* p)
 {
     setName("YanFieldLabel");
+    parent = p;
 }
 
+/**
+ * Drag is only necessary for ParameterForm and only in a few usages.
+ * Is it bad to assume we can always be a drag initiator?
+ *
+ * Since the DropTarget only gets a juce::String describing the thing to drop
+ * and where it came from, the convention I'm following is to previx the string
+ * with a source identifier followed by an object identifier of some kind.
+ * In current use for ParameterForms, the label text is the display name of the Symbol
+ * 
+ */
 void YanFieldLabel::mouseDown(const juce::MouseEvent& e)
 {
     (void)e;
-    juce::DragAndDropContainer* cont = juce::DragAndDropContainer::findParentDragContainerFor(this);
-    if (cont != nullptr)
-      cont->startDragging(getText(), this);
+    if (parent != nullptr) {
+        // this is only draggable if it was given a description,
+        // in current usage, that is always a Symbol name
+        juce::String desc = parent->getDragDescription();
+        if (desc.length() > 0) {
+            // must be inside something that supports DnD
+            juce::DragAndDropContainer* cont = juce::DragAndDropContainer::findParentDragContainerFor(this);
+            if (cont != nullptr) {
+
+                // the actual description we pass combines a source identifier
+                // with the component description, use a generic YanField prefix
+                // until we need something more complex
+                juce::String qualifiedDesc = juce::String(DragPrefix) + desc;
+                cont->startDragging(qualifiedDesc, this);
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -107,6 +132,16 @@ juce::Rectangle<int> YanField::resizeLabel()
         (void)area.removeFromLeft(4);
     }
     return area;
+}
+
+void YanField::setDragDescription(juce::String s)
+{
+    dragDescription = s;
+}
+
+juce::String YanField::getDragDescription()
+{
+    return dragDescription;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -19,6 +19,11 @@ ParameterForm::ParameterForm()
     addAndMakeVisible(form);
 }
 
+void ParameterForm::setDraggable(bool b)
+{
+    draggable = b;
+}
+
 void ParameterForm::setTitle(juce::String s)
 {
     title = s;
@@ -89,7 +94,7 @@ void ParameterForm::paint(juce::Graphics& g)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * This is what eventually happens when you drag a symbol from the DynamicParameterTree
+ * This is what eventually happens when you drag a symbol from a ParameterTree
  * onto the form.
  *
  * If we already have this symbol in the form, ignore it, otherwise add it.
@@ -100,8 +105,14 @@ void ParameterForm::add(Provider* p, Symbol* s, ValueSet* values)
     YanField* existing = form.find(s->getDisplayName());
     if (existing == nullptr) {
         YanParameter* field = new YanParameter(s->getDisplayName());
-        parameters.add(field);
         field->init(s);
+
+        // if this is a draggable form, the drag scription is the canonical symbol name,
+        // not the displayName used for the label
+        if (draggable) 
+          field->setDragDescription(s->name);
+        
+        parameters.add(field);
         form.add(field);
 
         MslValue* v = nullptr;
@@ -114,6 +125,7 @@ void ParameterForm::add(Provider* p, Symbol* s, ValueSet* values)
     }
 }
 
+// temporary: remove this
 YanParameter* ParameterForm::findFieldWithLabel(YanFieldLabel* l)
 {
     YanParameter* found = nullptr;
@@ -126,6 +138,7 @@ YanParameter* ParameterForm::findFieldWithLabel(YanFieldLabel* l)
     return found;
 }
 
+// temporary: remove this
 void ParameterForm::remove(YanParameter* p)
 {
     if (parameters.contains(p)) {
@@ -136,6 +149,26 @@ void ParameterForm::remove(YanParameter* p)
         Trace(1, "ParameterForm::remove Form does not contain this field");
     }
 }
+
+bool ParameterForm::remove(Symbol* s)
+{
+    YanParameter* found = nullptr;
+    
+    for (auto p : parameters) {
+        if (p->getSymbol() == s) {
+            found = p;
+            break;
+        }
+    }
+
+    if (found != nullptr) {
+        form.remove(found);
+        parameters.removeObject(found, true);
+    }
+
+    return (found != nullptr);
+}
+                     
 
 void ParameterForm::add(juce::Array<Symbol*>& symbols)
 {

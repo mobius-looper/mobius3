@@ -332,6 +332,7 @@
   </ValueSet>
   <ValueSet name="testlevels">
     <Value name="input" value="127" type="int"/>
+    <Value name="multiplyMode" value="normal" type="enum" ordinal="0"/>
     <Value name="output" value="127" type="int"/>
   </ValueSet>
 </ParameterSets>

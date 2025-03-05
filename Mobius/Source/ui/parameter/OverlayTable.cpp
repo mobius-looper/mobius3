@@ -13,13 +13,13 @@
 #include "../common/YanDialog.h"
 #include "../common/YanField.h"
 
-#include "ParameterSetTable.h"
+#include "OverlayTable.h"
 
-ParameterSetTable::ParameterSetTable(Supervisor* s)
+OverlayTable::OverlayTable(Supervisor* s)
 {
     supervisor = s;
     producer = s->getProducer();
-    setName("ParameterSetTable");
+    setName("OverlayTable");
 
     initialize();
 
@@ -56,28 +56,28 @@ ParameterSetTable::ParameterSetTable(Supervisor* s)
     table.addMouseListener(this, false);
 }
 
-ParameterSetTable::~ParameterSetTable()
+OverlayTable::~OverlayTable()
 {
 }
 
-void ParameterSetTable::load(ParameterSets* set)
+void OverlayTable::load(ParameterSets* sets)
 {
-    parameters = set;
+    overlays = sets;
     reload();
 }
 
-void ParameterSetTable::reload()
+void OverlayTable::reload()
 {
-    sets.clear();
+    overlayRows.clear();
 
-    for (auto set : parameters->getSets()) {
+    for (auto set : overlays->getSets()) {
         if (set->name.length() == 0) {
-            Trace(1, "ParameterSetTable: ValueSet without a name");
+            Trace(1, "OverlayTable: ValueSet without a name");
         }
         else {
-            ParameterSetTableRow* row = new ParameterSetTableRow();
+            OverlayTableRow* row = new OverlayTableRow();
             row->name = set->name;
-            sets.add(row);
+            overlayRows.add(row);
         }
     }
     
@@ -85,9 +85,9 @@ void ParameterSetTable::reload()
 }
 
 // this doesn't make sense right?
-void ParameterSetTable::clear()
+void OverlayTable::clear()
 {
-    Trace(1, "ParameterSetTable::clear Who is calling this?");
+    Trace(1, "OverlayTable::clear Who is calling this?");
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -96,16 +96,16 @@ void ParameterSetTable::clear()
 //
 //////////////////////////////////////////////////////////////////////
 
-int ParameterSetTable::getRowCount()
+int OverlayTable::getRowCount()
 {
-    return sets.size();
+    return overlayRows.size();
 }
 
-juce::String ParameterSetTable::getCellText(int rowNumber, int columnId)
+juce::String OverlayTable::getCellText(int rowNumber, int columnId)
 {
     juce::String cell;
     
-    ParameterSetTableRow* row = sets[rowNumber];
+    OverlayTableRow* row = overlayRows[rowNumber];
 
     if (columnId == ColumnName) {
         cell = row->name;
@@ -114,7 +114,7 @@ juce::String ParameterSetTable::getCellText(int rowNumber, int columnId)
     return cell;
 }
 
-void ParameterSetTable::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+void OverlayTable::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
     if (event.mods.isRightButtonDown())
       rowPopup.show();
@@ -133,7 +133,7 @@ void ParameterSetTable::cellClicked(int rowNumber, int columnId, const juce::Mou
  * I suppose we could just add ourselves as the MouseListener, but I'd really like to move toward
  * a more opaque table model rather than this dumb subclassing.
  */
-void ParameterSetTable::mouseDown(const juce::MouseEvent& event)
+void OverlayTable::mouseDown(const juce::MouseEvent& event)
 {
     // will actually want a different popup here that doesn't have Delete
     if (event.mods.isRightButtonDown())
@@ -146,7 +146,7 @@ void ParameterSetTable::mouseDown(const juce::MouseEvent& event)
 //
 //////////////////////////////////////////////////////////////////////
 
-void ParameterSetTable::yanPopupSelected(YanPopup* src, int id)
+void OverlayTable::yanPopupSelected(YanPopup* src, int id)
 {
     (void)src;
     
@@ -161,15 +161,15 @@ void ParameterSetTable::yanPopupSelected(YanPopup* src, int id)
     }
 }
 
-void ParameterSetTable::doActivate()
+void OverlayTable::doActivate()
 {
 }
 
-void ParameterSetTable::doDeactivate()
+void OverlayTable::doDeactivate()
 {
 }
 
-void ParameterSetTable::startNew()
+void OverlayTable::startNew()
 {
     nameDialog.setTitle("Create New Parameter Set");
     nameDialog.setId(DialogNew);
@@ -177,7 +177,7 @@ void ParameterSetTable::startNew()
     nameDialog.show(getParentComponent());
 }
 
-void ParameterSetTable::startCopy()
+void OverlayTable::startCopy()
 {
     nameDialog.setTitle("Copy Parameter Set");
     nameDialog.setId(DialogCopy);
@@ -185,7 +185,7 @@ void ParameterSetTable::startCopy()
     nameDialog.show(getParentComponent());
 }
 
-void ParameterSetTable::startRename()
+void OverlayTable::startRename()
 {
     nameDialog.setTitle("Rename Parmeter Set");
     nameDialog.setId(DialogRename);
@@ -195,14 +195,14 @@ void ParameterSetTable::startRename()
     nameDialog.show(getParentComponent());
 }
 
-void ParameterSetTable::startDelete()
+void OverlayTable::startDelete()
 {
     deleteAlert.setId(DialogDelete);
 
     deleteAlert.show(getParentComponent());
 }
 
-void ParameterSetTable::yanDialogClosed(YanDialog* d, int button)
+void OverlayTable::yanDialogClosed(YanDialog* d, int button)
 {
     int id = d->getId();
     switch (id) {
@@ -213,25 +213,25 @@ void ParameterSetTable::yanDialogClosed(YanDialog* d, int button)
     }
 }
 
-juce::String ParameterSetTable::getSelectedName()
+juce::String OverlayTable::getSelectedName()
 {
     int rownum = getSelectedRow();
-    ParameterSetTableRow* row = sets[rownum];
+    OverlayTableRow* row = overlayRows[rownum];
     return row->name;
 }
 
-void ParameterSetTable::finishNew(int button)
+void OverlayTable::finishNew(int button)
 {
     if (button == 0) {
         juce::String name = newName.getValue();
         ValueSet* neu = new ValueSet();
         neu->name = name;
-        parameters->add(neu);
+        overlays->add(neu);
         reload();
     }
 }
 
-void ParameterSetTable::finishCopy(int button)
+void OverlayTable::finishCopy(int button)
 {
     if (button == 0) {
         juce::String name = newName.getValue();
@@ -239,13 +239,13 @@ void ParameterSetTable::finishCopy(int button)
         // actually need to find the source and copy it!!
         ValueSet* neu = new ValueSet();
         neu->name = name;
-        parameters->add(neu);
+        overlays->add(neu);
 
         reload();
     }
 }
 
-void ParameterSetTable::finishRename(int button)
+void OverlayTable::finishRename(int button)
 {
     if (button == 0) {
         juce::String name = newName.getValue();
@@ -253,7 +253,7 @@ void ParameterSetTable::finishRename(int button)
     }
 }
 
-void ParameterSetTable::finishDelete(int button)
+void OverlayTable::finishDelete(int button)
 {
     if (button == 0) {
         reload();

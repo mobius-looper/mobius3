@@ -425,7 +425,7 @@ juce::String SymbolTreeItem::getName()
  */
 void SymbolTreeItem::setDragDescription(juce::String s)
 {
-    dragDescription;
+    dragDescription = s;
 }
 
 /**

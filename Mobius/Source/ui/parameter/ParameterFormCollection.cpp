@@ -49,8 +49,18 @@ void ParameterFormCollection::load(ValueSet* vs)
     
 void ParameterFormCollection::save(ValueSet* dest)
 {
-    for (auto form : forms)
-      form->save(dest);
+    // if an alternate destination was not providied,
+    // save to the same set we had at initialization
+    // !! is this ever not the case?
+    if (dest == nullptr)
+      dest = valueSet;
+
+    if (dest == nullptr)
+      Trace(1, "ParameterFormCollection: Save without a ValueSet");
+    else {
+        for (auto form : forms)
+          form->save(dest);
+    }
 }
 
 void ParameterFormCollection::cancel()
@@ -87,6 +97,11 @@ void ParameterFormCollection::add(juce::String formName, ParameterForm* form)
         // trouble getting this fleshed out dynamically
         form->resized();
     }
+}
+
+ParameterForm* ParameterFormCollection::getCurrentForm()
+{
+    return currentForm;
 }
 
 void ParameterFormCollection::show(juce::String formName)

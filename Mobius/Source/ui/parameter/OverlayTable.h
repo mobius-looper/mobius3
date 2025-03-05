@@ -12,20 +12,21 @@
 
 #include "../../Producer.h"
 
-class ParameterSetTableRow
+class OverlayTableRow
 {
   public:
-    ParameterSetTableRow() {
+    OverlayTableRow() {
     }
-    ~ParameterSetTableRow() {
+    ~OverlayTableRow() {
     }
 
     juce::String name;
     
 };
 
-class ParameterSetTable : public TypicalTable, public YanPopup::Listener,
-                          public YanDialog::Listener
+class OverlayTable : public TypicalTable,
+                     public YanPopup::Listener,
+                     public YanDialog::Listener
 {
   public:
 
@@ -40,10 +41,10 @@ class ParameterSetTable : public TypicalTable, public YanPopup::Listener,
         DialogDelete
     } Dialog;
     
-    ParameterSetTable(class Supervisor* s);
-    ~ParameterSetTable();
+    OverlayTable(class Supervisor* s);
+    ~OverlayTable();
 
-    void load(class ParameterSets* set);
+    void load(class ParameterSets* sets);
     void clear();
 
     // TypicalTable overrides
@@ -60,9 +61,9 @@ class ParameterSetTable : public TypicalTable, public YanPopup::Listener,
     
     class Supervisor* supervisor = nullptr;
     class Producer* producer = nullptr;
-    class ParameterSets* parameters = nullptr;
+    class ParameterSets* overlays = nullptr;
     
-    juce::OwnedArray<class ParameterSetTableRow> sets;
+    juce::OwnedArray<class OverlayTableRow> overlayRows;
     
     YanPopup rowPopup {this};
     YanPopup emptyPopup {this};

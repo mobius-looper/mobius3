@@ -11,29 +11,30 @@
 #include "../../Provider.h"
 #include "../JuceUtil.h"
 
-#include "ParameterSetTable.h"
+#include "OverlayTable.h"
+#include "OverlayTreeForms.h"
 
-#include "ParameterEditor.h"
+#include "OverlayEditor.h"
 
-ParameterEditor::ParameterEditor(Supervisor* s) : ConfigEditor(s)
+OverlayEditor::OverlayEditor(Supervisor* s) : ConfigEditor(s)
 {
-    setName("ParameterEditor");
+    setName("OverlayEditor");
 
-    table.reset(new ParameterSetTable(s));
+    table.reset(new OverlayTable(s));
     addAndMakeVisible(table.get());
 
     table->setListener(this);
 }
 
-ParameterEditor::~ParameterEditor()
+OverlayEditor::~OverlayEditor()
 {
 }
 
-void ParameterEditor::prepare()
+void OverlayEditor::prepare()
 {
 }
 
-void ParameterEditor::resized()
+void OverlayEditor::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
 
@@ -48,19 +49,20 @@ void ParameterEditor::resized()
 //
 //////////////////////////////////////////////////////////////////////
 
-void ParameterEditor::load()
+void OverlayEditor::load()
 {
     ParameterSets* master = supervisor->getParameterSets();
-    parameters.reset(new ParameterSets(master));
-    revertParameters.reset(new ParameterSets(master));
+    overlays.reset(new ParameterSets(master));
+    revertOverlays.reset(new ParameterSets(master));
 
-    table->load(parameters.get());
+    table->load(overlays.get());
 
-    for (auto set : parameters->getSets()) {
-        DynamicTreeForms* dtf = new DynamicTreeForms();
-        dtf->initialize(supervisor, set);
-        treeForms.add(dtf);
-        addChildComponent(dtf);
+    for (auto set : overlays->getSets()) {
+        OverlayTreeForms* otf = new OverlayTreeForms();
+        otf->initialize(supervisor);
+        otf->load(set);
+        treeForms.add(otf);
+        addChildComponent(otf);
     }
 
     table->selectRow(0);
@@ -68,14 +70,14 @@ void ParameterEditor::load()
     resized();
 }
 
-void ParameterEditor::show(int index)
+void OverlayEditor::show(int index)
 {
     if (index != currentSet) {
         if (currentSet >= 0) {
-            DynamicTreeForms* existing = treeForms[currentSet];
+            OverlayTreeForms* existing = treeForms[currentSet];
             existing->setVisible(false);
         }
-        DynamicTreeForms* neu = treeForms[index];
+        OverlayTreeForms* neu = treeForms[index];
         if (neu != nullptr) {
             neu->setVisible(true);
             currentSet = index;
@@ -96,16 +98,20 @@ void ParameterEditor::show(int index)
  * outside modifications to portions of it, we can completely rebuild the ValueSet list
  * and put it in the master ParmaeterSets.
  */
-void ParameterEditor::save()
+void OverlayEditor::save()
 {
     // save any forms that were built and displayed back to the ValueSets
     // in our copied ParameterSets
-    for (auto tf : treeForms)
-      tf->save();
+    for (auto tf : treeForms) {
+        // DynamicTreeForms saved back ot the ValueSet it was created with
+        // OverlayTreeForms wants a target, pass null to behave like DTFs
+        //tf->save();
+        tf->save(nullptr);
+    }
 
     // rebuild the list for the master ParameterSets container
     ParameterSets* master = supervisor->getParameterSets();
-    master->transfer(parameters.get());
+    master->transfer(overlays.get());
 
     supervisor->updateParameterSets();
 }
@@ -113,17 +119,17 @@ void ParameterEditor::save()
 /**
  * Throw away all editing state.
  */
-void ParameterEditor::cancel()
+void OverlayEditor::cancel()
 {
 }
 
-void ParameterEditor::decacheForms()
+void OverlayEditor::decacheForms()
 {
 }
 
-void ParameterEditor::revert()
+void OverlayEditor::revert()
 {
-    parameters.reset(new ParameterSets(revertParameters.get()));
+    overlays.reset(new ParameterSets(revertOverlays.get()));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -136,7 +142,7 @@ void ParameterEditor::revert()
  * This is called when the selected row changes either by clicking on
  * it or using the keyboard arrow keys after a row has been selected.
  */
-void ParameterEditor::typicalTableChanged(TypicalTable* t, int row)
+void OverlayEditor::typicalTableChanged(TypicalTable* t, int row)
 {
     (void)t;
     if (row < 0) {
