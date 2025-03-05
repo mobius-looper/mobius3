@@ -90,7 +90,7 @@ void SessionFormCollection::show(Provider* p, juce::String formName)
             if (title.length() == 0) title = formName;
 
             form->setTitle(title);
-            form->add(p, formdef);
+            form->build(p, formdef);
 
             // must have been loaded by now
             if (sourceValues != nullptr)

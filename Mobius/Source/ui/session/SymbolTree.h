@@ -110,7 +110,6 @@ class SymbolTree : public juce::Component, public YanInput::Listener
         virtual void symbolTreeClicked(SymbolTreeItem* item) =  0;
     };
 
-
     void setListener(Listener* l);
     void setDropListener(DropTreeView::Listener* l);
     void itemClicked(SymbolTreeItem* item);

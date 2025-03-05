@@ -157,7 +157,7 @@ void ParameterForm::addSpacer()
 /**
  * Build a form from a TreeForm
  */
-void ParameterForm::add(Provider* p, TreeForm* formdef)
+void ParameterForm::build(Provider* p, TreeForm* formdef)
 {
     juce::String suppressPrefix = formdef->suppressPrefix;
     for (auto name : formdef->symbols) {

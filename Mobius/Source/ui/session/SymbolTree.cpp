@@ -411,8 +411,8 @@ void SymbolTreeItem::setDragDescription(juce::String s)
  */
 juce::var SymbolTreeItem::getDragSourceDescription()
 {
-    if (dragDesription.length > 0)
-      return dragDescrpition;
+    if (dragDescription.length() > 0)
+      return dragDescription;
     else
       return juce::var();
 }
@@ -432,8 +432,8 @@ void SymbolTreeItem::addSymbol(Symbol* s)
     symbols.add(s);
 }
 
-juce::Array<class Symbol*>& getSymbols()
-{
+juce::Array<class Symbol*>& SymbolTreeItem::getSymbols()
+ {
     return symbols;
 }
 

@@ -6,11 +6,15 @@
 
 #include <JuceHeader.h>
 
-#include "SessionTreeForms.h"
+#include "ParameterTreeForms.h"
 
-class SessionGlobalEditor : public juce::Component
+class SessionGlobalEditor : public ParameterTreeForms,
+                            public SymbolTree::Listener,
+                            public ParameterFormCollection::Factory
 {
   public:
+
+    constexpr static const char* TreeName = "sessionGlobal";
 
     SessionGlobalEditor();
     ~SessionGlobalEditor() {}
@@ -25,15 +29,15 @@ class SessionGlobalEditor : public juce::Component
     void decacheForms();
 
     void showInitial(juce::String name);
-    
-    void resized() override;
+
+    void symbolTreeClicked(class SymbolTreeItem* item) override;
+    class ParameterForm* parameterFormCollectionCreate(juce::String formid) override;
     
   private:
 
     class Provider* provider = nullptr;
     class ValueSet* values = nullptr;
 
-    SessionTreeForms forms;
 
 };
 

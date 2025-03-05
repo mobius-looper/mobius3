@@ -524,6 +524,17 @@
           <FILE id="y3QGus" name="ParameterForm.cpp" compile="1" resource="0"
                 file="Source/ui/session/ParameterForm.cpp"/>
           <FILE id="D2sieP" name="ParameterForm.h" compile="0" resource="0" file="Source/ui/session/ParameterForm.h"/>
+          <FILE id="Xv2OWr" name="ParameterFormCollection.cpp" compile="1" resource="0"
+                file="Source/ui/session/ParameterFormCollection.cpp"/>
+          <FILE id="vqWMNV" name="ParameterFormCollection.h" compile="0" resource="0"
+                file="Source/ui/session/ParameterFormCollection.h"/>
+          <FILE id="JBogMi" name="ParameterTree.cpp" compile="1" resource="0"
+                file="Source/ui/session/ParameterTree.cpp"/>
+          <FILE id="P0mijA" name="ParameterTree.h" compile="0" resource="0" file="Source/ui/session/ParameterTree.h"/>
+          <FILE id="JiWjsc" name="ParameterTreeForms.cpp" compile="1" resource="0"
+                file="Source/ui/session/ParameterTreeForms.cpp"/>
+          <FILE id="HbBtm4" name="ParameterTreeForms.h" compile="0" resource="0"
+                file="Source/ui/session/ParameterTreeForms.h"/>
           <FILE id="h5SWoP" name="SessionEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionEditor.cpp"/>
           <FILE id="YLdxmd" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/session/SessionEditor.h"/>

@@ -67,7 +67,7 @@ class ParameterForm : public juce::Component, public juce::DragAndDropTarget
     /**
      * Add form fields from a form definition.
      */
-    void add(class Provider* p, class TreeForm* formdef);
+    void build(class Provider* p, class TreeForm* formdef);
     
     /**
      * Load the values of symbol parameter fields from the value set.

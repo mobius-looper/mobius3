@@ -7,6 +7,7 @@
 #include "../../util/Trace.h"
 #include "../../model/Symbol.h"
 #include "../../model/ParameterProperties.h"
+#include "../../model/ValueSet.h"
 #include "../../model/StaticConfig.h"
 #include "../../model/TreeForm.h"
 #include "../../Provider.h"
@@ -54,8 +55,9 @@ void ParameterTree::selectFirst()
         // to itemClicked which is what usually happens
         // just do it manually by calling itemClicked
         first->setSelected(true, false, juce::NotificationType::sendNotification);
-
-        itemClicked(first);
+        
+        SymbolTreeItem* sti = static_cast<SymbolTreeItem*>(first);
+        itemClicked(sti);
     }
 }
 
@@ -67,26 +69,30 @@ void ParameterTree::selectFirst()
 
 /**
  * Load a static tree given the name of a TreeNode from StaticConfig.
+ *
+ * This one requires a Provider because it needs access to the StaticConfig
+ * for both the TreeNode definition, and the TreeForms it may reference since
+ * the symbols in the tree nodes may come from the forms rather than the tree
+ * definition.
  */
-void ParameterTree::initializeStatic(Provider* p, juce::String treename)
+void ParameterTree::initializeStatic(Provider* p, juce::String treeName)
 {
-    provider = p;
-    
     StaticConfig* scon = p->getStaticConfig();
-    TreeNode* treedef = scon->getTree(treename);
+    TreeNode* treedef = scon->getTree(treeName);
     if (treedef == nullptr) {
-        Trace(1, "ParameterTree: No tree definition %s", treename.toUTF8());
+        Trace(1, "SessionGlobalEditor: No tree definition %s", treeName.toUTF8());
     }
     else {
         // the root of the tree definition is not expected to be a useful form node
         // adding the children
         for (auto child : treedef->nodes) {
-            intern(&root, treename, child);
+            intern(p, scon, &root, treeName, child);
         }
     }
 }
 
-void ParameterTree::intern(SymbolTreeItem* parent, juce::String treePath, TreeNode* node)
+void ParameterTree::intern(Provider* p, StaticConfig* scon, SymbolTreeItem* parent,
+                           juce::String treePath, TreeNode* node)
 {
     SymbolTreeItem* item = parent->internChild(node->name);
     treePath = treePath + node->name;
@@ -102,14 +108,14 @@ void ParameterTree::intern(SymbolTreeItem* parent, juce::String treePath, TreeNo
 
     // first the sub-categories
     for (auto child : node->nodes) {
-        intern(item, treePath, child);
+        intern(p, scon, item, treePath, child);
     }
 
     // then symbols at this level
     // this is unusual and used only if you want to limit the included
     // symbols that would otherwise be defined in the form
     for (auto sname : node->symbols) {
-        addSymbol(item, sname, "");
+        addSymbol(p, item, sname, "");
     }
     
     // usually the symbol list comes from the form
@@ -117,24 +123,23 @@ void ParameterTree::intern(SymbolTreeItem* parent, juce::String treePath, TreeNo
 
         juce::String formName = item->getAnnotation();
         if (formName.length() > 0) {
-            StaticConfig* scon = provider->getStaticConfig();
             TreeForm* formdef = scon->getForm(formName);
             if (formdef != nullptr) {
                 for (auto sname : formdef->symbols) {
                     // ignore special rendering symbols
                     if (!sname.startsWith("*"))
-                      addSymbol(item, sname, formdef->suppressPrefix);
+                      addSymbol(p, item, sname, formdef->suppressPrefix);
                 }
             }
         }
     }
 }
 
-void ParameterTree::addSymbol(SymbolTreeItem* parent, juce::String name,
+void ParameterTree::addSymbol(Provider* p, SymbolTreeItem* parent, juce::String name,
                               juce::String suppressPrefix)
 {
     // SymbolTreeComparator comparator;
-    Symbol* s = provider->getSymbols()->find(name);
+    Symbol* s = p->getSymbols()->find(name);
     if (s == nullptr)
       Trace(1, "ParameterTree: Invalid symbol name %s", name.toUTF8());
     else {

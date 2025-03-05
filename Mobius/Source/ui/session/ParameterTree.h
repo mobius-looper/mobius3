@@ -17,6 +17,9 @@
  *
  * Both are normally associated with a ParameterFormCollection that defines the forms to
  * display when tree nodes are selected.
+ *
+ * As a SymbolTree, a Listener provides a callback when nodes are clicked
+ * and a DropTreeListener provides a callback for when something is dropped on the tree.
  * 
  */
 
@@ -37,18 +40,20 @@ class ParameterTree : public SymbolTree
 
     void initializeStatic(class Provider* p, juce::String treeName);
     void initializeDynamic(class Provider* p);
+    void setDraggable(bool b);
 
     class SymbolTreeItem* getFirst();
     void selectFirst();
 
   private:
 
-    class Provider* provider = nullptr;
     bool draggable = false;
 
     // static building
-    void intern(class SymbolTreeItem* parent, juce::String treepath, class TreeNode* node);
-    void addSymbol(class SymbolTreeItem* parent, juce::String name, juce::String suppressPrefix);
+    void intern(class Provider* p, class StaticConfig* scon, class SymbolTreeItem* parent,
+                juce::String treepath, class TreeNode* node);
+    void addSymbol(class Provider* p, class SymbolTreeItem* parent,
+                   juce::String name, juce::String suppressPrefix);
 
     // dynamic building
     void internCategories();
