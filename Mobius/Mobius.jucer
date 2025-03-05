@@ -527,18 +527,6 @@
           <FILE id="NyM8Ef" name="TypicalTable.h" compile="0" resource="0" file="Source/ui/script/TypicalTable.h"/>
         </GROUP>
         <GROUP id="{DF1301BF-7977-3AF9-2F74-88DD7CDC5689}" name="session">
-          <FILE id="hWOict" name="DynamicFormCollection.cpp" compile="1" resource="0"
-                file="Source/ui/session/DynamicFormCollection.cpp"/>
-          <FILE id="EShK4T" name="DynamicFormCollection.h" compile="0" resource="0"
-                file="Source/ui/session/DynamicFormCollection.h"/>
-          <FILE id="zLE1hv" name="DynamicParameterTree.cpp" compile="1" resource="0"
-                file="Source/ui/session/DynamicParameterTree.cpp"/>
-          <FILE id="AtvjSx" name="DynamicParameterTree.h" compile="0" resource="0"
-                file="Source/ui/session/DynamicParameterTree.h"/>
-          <FILE id="aqoiY5" name="DynamicTreeForms.cpp" compile="1" resource="0"
-                file="Source/ui/session/DynamicTreeForms.cpp"/>
-          <FILE id="xPZ2YM" name="DynamicTreeForms.h" compile="0" resource="0"
-                file="Source/ui/session/DynamicTreeForms.h"/>
           <FILE id="h5SWoP" name="SessionEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionEditor.cpp"/>
           <FILE id="YLdxmd" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/session/SessionEditor.h"/>
