@@ -7,7 +7,8 @@
 
 #include "../ui/common/BasicTabs.h"
 #include "../ui/common/BasicLog.h"
-#include "../ui/common/BasicInput.h"
+#include "../ui/common/YanField.h"
+#include "../ui/common/YanForm.h"
 
 class TestPanel : public juce::Component, public juce::Button::Listener,
                   public TraceListener
@@ -46,7 +47,8 @@ class TestPanel : public juce::Component, public juce::Button::Listener,
     BasicTabs tabs;
     BasicLog rawlog;
     BasicLog summary;
-    BasicInput testName {"Test", 20};
+    YanForm form;
+    YanInput testName {"Test", 10};
     
     juce::Array<juce::Button*> footerButtons;
     juce::TextButton endButton {"End"};

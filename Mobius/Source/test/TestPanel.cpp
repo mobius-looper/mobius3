@@ -65,7 +65,8 @@ TestPanel::TestPanel(TestDriver* d)
     initCommandButtons();
 
     // test name input field
-    addAndMakeVisible(&testName);
+    addAndMakeVisible(&form);
+    form.add(&testName);
 
     // as large as the config panels for now, adjust this
     // and nice to make resizeable and draggable
@@ -93,7 +94,7 @@ void TestPanel::show()
     refreshTestButtons();
 
     UIConfig* config = driver->getSupervisor()->getUIConfig();
-    testName.setText(config->get("testName"));
+    testName.setValue(config->get("testName"));
     
     setVisible(true);
     // log("Test mode activated");
@@ -112,7 +113,7 @@ void TestPanel::hide()
 
 juce::String TestPanel::getTestName()
 {
-    return testName.getText();
+    return testName.getValue();
 }
 
 /**
@@ -177,9 +178,10 @@ void TestPanel::resized()
     layoutTestButtons(area, testButtons);
 
     // put the test name box under the test buttons
-    // it will have sized itself
-    testName.setTopLeftPosition(area.getX(), area.getY());
-    area.removeFromTop(testName.getHeight());
+    form.setBounds(area.removeFromTop(40));
+    //testName.setTopLeftPosition(area.getX(), area.getY());
+    //testName.setSize(testName.getPreferredComponentWidth(), 20);
+    //area.removeFromTop(testName.getHeight());
 
     // row of command buttons
     juce::Rectangle<int> commandRow = area.removeFromTop(TestPanelCommandButtonHeight);
@@ -471,7 +473,7 @@ void TestPanel::buttonClicked(juce::Button* b)
             Trace(1, "TestPanel: Not a test button %s\n", b->getButtonText().toUTF8());
         }
         else {
-            driver->runTest(tb->symbol, testName.getText());
+            driver->runTest(tb->symbol, testName.getValue());
         }
     }
 }

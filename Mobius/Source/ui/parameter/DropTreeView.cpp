@@ -5,6 +5,11 @@
 
 #include "DropTreeView.h"
 
+DropTreeView::DropTreeView()
+{
+    setColour(juce::TreeView::backgroundColourId, juce::Colours::darkgrey.darker());
+}
+
 void DropTreeView::setListener(Listener* l)
 {
     listener = l;

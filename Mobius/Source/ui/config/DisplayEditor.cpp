@@ -275,11 +275,11 @@ void DisplayEditor::loadLayout(int ordinal)
     instantParameters.clear();
 
     UIConfig* config = supervisor->getUIConfig();
-    trackRows.setText(config->get("trackRows"));
-    loopRows.setText(config->get("loopRows"));
-    buttonHeight.setText(config->get("buttonHeight"));
-    radarDiameter.setText(config->get("radarDiameter"));
-    alertDuration.setText(config->get("alertDuration"));
+    trackRows.setValue(config->get("trackRows"));
+    loopRows.setValue(config->get("loopRows"));
+    buttonHeight.setValue(config->get("buttonHeight"));
+    radarDiameter.setValue(config->get("radarDiameter"));
+    alertDuration.setValue(config->get("alertDuration"));
     
     initElementSelector(&mainElements, config, layout->mainElements, false);
 
@@ -427,11 +427,11 @@ void DisplayEditor::saveLayout(int ordinal)
 
     // todo: really need to be constraining this to an integer before saving
     // if we're just using a text field
-    config->put("trackRows", trackRows.getText());
-    config->put("loopRows", loopRows.getText());
-    config->put("buttonHeight", buttonHeight.getText());
-    config->put("radarDiameter", radarDiameter.getText());
-    config->put("alertDuration", alertDuration.getText());
+    config->put("trackRows", trackRows.getValue());
+    config->put("loopRows", loopRows.getValue());
+    config->put("buttonHeight", buttonHeight.getValue());
+    config->put("radarDiameter", radarDiameter.getValue());
+    config->put("alertDuration", alertDuration.getValue());
 }
 
 /**

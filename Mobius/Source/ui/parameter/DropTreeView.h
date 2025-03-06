@@ -19,6 +19,8 @@ class DropTreeView : public juce::TreeView
         virtual void dropTreeViewDrop(DropTreeView* dtv, const juce::DragAndDropTarget::SourceDetails& details) = 0;
     };
 
+    DropTreeView();
+
     void setListener(Listener* l);
 
     bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details) override;

@@ -222,10 +222,6 @@
                 file="Source/ui/common/BasicButtonRow.cpp"/>
           <FILE id="eRmfPe" name="BasicButtonRow.h" compile="0" resource="0"
                 file="Source/ui/common/BasicButtonRow.h"/>
-          <FILE id="vk7Xvn" name="BasicForm.cpp" compile="1" resource="0" file="Source/ui/common/BasicForm.cpp"/>
-          <FILE id="xwO8bF" name="BasicForm.h" compile="0" resource="0" file="Source/ui/common/BasicForm.h"/>
-          <FILE id="ny8ZPI" name="BasicInput.cpp" compile="1" resource="0" file="Source/ui/common/BasicInput.cpp"/>
-          <FILE id="MT14lz" name="BasicInput.h" compile="0" resource="0" file="Source/ui/common/BasicInput.h"/>
           <FILE id="oO9q1o" name="BasicLog.cpp" compile="1" resource="0" file="Source/ui/common/BasicLog.cpp"/>
           <FILE id="iD2q8n" name="BasicLog.h" compile="0" resource="0" file="Source/ui/common/BasicLog.h"/>
           <FILE id="akjBJh" name="BasicTable.cpp" compile="1" resource="0" file="Source/ui/common/BasicTable.cpp"/>

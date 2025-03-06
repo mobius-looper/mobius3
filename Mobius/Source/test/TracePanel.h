@@ -8,7 +8,6 @@
 
 #include "../util/Trace.h"
 #include "../ui/BasePanel.h"
-#include "../ui/common/BasicInput.h"
 #include "../ui/common/BasicButtonRow.h"
 #include "../ui/common/BasicLog.h"
 

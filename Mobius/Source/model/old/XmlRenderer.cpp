@@ -422,7 +422,7 @@ int XmlRenderer::parse(XmlElement* e, SymbolId sid)
 int XmlRenderer::parse(XmlElement* e, const char* name)
 {
     const char* value = e->getAttribute(name);
-    return atoi(value);
+    return (value == nullptr) ? 0 : atoi(value);
 }
 
 /**

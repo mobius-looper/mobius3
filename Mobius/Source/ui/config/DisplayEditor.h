@@ -8,8 +8,8 @@
 
 #include "../common/HelpArea.h"
 #include "../common/BasicTabs.h"
-#include "../common/BasicInput.h"
-#include "../common/BasicForm.h"
+#include "../common/YanField.h"
+#include "../common/YanForm.h"
 #include "MultiSelectDrag.h"
 
 #include "ConfigEditor.h"
@@ -48,12 +48,12 @@ class DisplayEditor : public ConfigEditor
     MultiSelectDrag floatingStrip;
     MultiSelectDrag instantParameters;
 
-    BasicForm properties;
-    BasicInput loopRows {"Loop Rows", 20};
-    BasicInput trackRows {"Track Rows", 20};
-    BasicInput buttonHeight {"Button Height", 20};
-    BasicInput radarDiameter {"Radar Diameter", 30};
-    BasicInput alertDuration {"Alert Duration", 20};
+    YanForm properties;
+    YanInput loopRows {"Loop Rows", 20};
+    YanInput trackRows {"Track Rows", 20};
+    YanInput buttonHeight {"Button Height", 20};
+    YanInput radarDiameter {"Radar Diameter", 20};
+    YanInput alertDuration {"Alert Duration", 20};
     
     BasicTabs tabs;
     

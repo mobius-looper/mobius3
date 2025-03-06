@@ -138,8 +138,11 @@ void BasePanel::resized()
 void BasePanel::paint(juce::Graphics& g)
 {
     juce::Rectangle<int> area = getLocalBounds();
-    
+
+    // drakgrey looks nice and highlights where the black input fields
+    // are but it should be darker
     g.fillAll (juce::Colours::black);
+    g.fillAll (juce::Colours::darkgrey.darker(0.8f));
 
     g.setColour(borderColor);
     g.drawRect(area, BorderWidth);
