@@ -5,11 +5,11 @@
     <ValueSet>
       <Value name="beatsPerBar" value="2"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
-      <Value name="followMute" value="0" type="int"/>
-      <Value name="followQuantizeLocation" value="0" type="int"/>
-      <Value name="followRecord" value="0" type="int"/>
-      <Value name="followRecordEnd" value="0" type="int"/>
-      <Value name="followerMuteStart" value="0" type="int"/>
+      <Value name="followMute" value="false" type="bool"/>
+      <Value name="followQuantizeLocation" value="false" type="bool"/>
+      <Value name="followRecord" value="false" type="bool"/>
+      <Value name="followRecordEnd" value="false" type="bool"/>
+      <Value name="followerMuteStart" value="false" type="bool"/>
       <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
       <Value name="leaderType" value="none" type="enum" ordinal="0"/>
       <Value name="loopCount" value="0" type="int"/>
@@ -35,14 +35,14 @@
       <Value name="durationMode" value="1" type="int"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
       <Value name="followLocation" value="1" type="int"/>
-      <Value name="followMute" value="1" type="int"/>
-      <Value name="followQuantizeLocation" value="1" type="int"/>
-      <Value name="followRecord" value="1" type="int"/>
-      <Value name="followRecordEnd" value="1" type="int"/>
-      <Value name="followSize" value="1" type="int"/>
-      <Value name="followerMuteStart" value="0" type="int"/>
+      <Value name="followMute" value="true" type="bool"/>
+      <Value name="followQuantizeLocation" value="true" type="bool"/>
+      <Value name="followRecord" value="true" type="bool"/>
+      <Value name="followRecordEnd" value="true" type="bool"/>
+      <Value name="followSize" value="true" type="bool"/>
+      <Value name="followerMuteStart" value="false" type="bool"/>
       <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
-      <Value name="leaderTrack" value="1"/>
+      <Value name="leaderTrack" value="1" type="int"/>
       <Value name="leaderType" value="track" type="enum" ordinal="1"/>
       <Value name="loopCount" value="2" type="int"/>
       <Value name="midiBeatsPerBar" value="4" type="int"/>
@@ -236,8 +236,6 @@
     <Value name="pitchShiftRestart" value="false" type="bool"/>
     <Value name="pitchStepRange" value="24" type="int"/>
     <Value name="pitchTransfer" value="off" type="enum" ordinal="0"/>
-    <Value name="pluginInputs" value="4" type="int"/>
-    <Value name="pluginOutputs" value="4" type="int"/>
     <Value name="quantize" value="off" type="enum" ordinal="0"/>
     <Value name="quickSave" value="mobiusloop"/>
     <Value name="recordResetsFeedback" value="false" type="bool"/>
