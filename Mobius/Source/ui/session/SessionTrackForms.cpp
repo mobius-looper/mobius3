@@ -32,8 +32,9 @@ void SessionTrackForms::initialize(Provider* p, Session* s, Session::Track* def)
     session = s;
     sessionTrack = def;
     values = sessionTrack->ensureParameters();
-    
-    tree.setDraggable(true);
+
+    if (!lockingStyle)
+      tree.setDraggable(true);
 
     if (def->type == Session::TypeAudio)
       tree.setTrackType(TrackTypeAudio);
@@ -100,12 +101,16 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
     }
     else {
         form = new ParameterForm();
-        // allow fields to gbe dragged out
-        form->setDraggable(true);
-        // this is what causes label clicks to be passed up
-        form->setLocking(true);
-        // allow symbols to be dragged in
         form->setListener(this);
+
+        if (lockingStyle) {
+            // this is what causes label clicks to be passed up
+            form->setLocking(true);
+        }
+        else {
+            // this allows fields to be dragged out
+            form->setDraggable(true);
+        }
         
         // todo: form title
 
@@ -119,16 +124,17 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
                       item->getName().toUTF8());
             }
             else {
-                // only add it if we have it
-                // OR if it is flagged as noDefault
-                bool sparse = false;
-                if (sparse) {
+                if (!lockingStyle) {
+                    // sparse mode: only add it if we have it
+                    // OR if it is flagged as noDefault
                     ParameterProperties* props = s->parameterProperties.get();
                     MslValue* v = values->get(s->name);
                     if (v != nullptr || (props != nullptr && props->noDefault))
                       (void)form->add(provider, s, values);
                 }
                 else {
+                    // locking mode: it will always be added, but may be disabled if not in the
+                    // value set
                     MslValue* v = values->get(s->name);
                     if (v != nullptr) {
                         // normal overridden value
@@ -154,6 +160,13 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
     return form;
 }
 
+/**
+ * This should be called only if we're in locking style which
+ * caused field label listeners to be installed.
+ *
+ * Simple toggle works well enough, but you could use the MouseEvent to
+ * popup a selection menu on right click.
+ */
 void SessionTrackForms::parameterFormClick(ParameterForm* f, YanParameter* p, const juce::MouseEvent& e)
 {
     (void)f;

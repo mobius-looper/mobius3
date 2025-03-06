@@ -50,6 +50,13 @@ class SessionTrackForms : public ParameterTreeForms,
     class Session::Track* sessionTrack = nullptr;
     ValueSet* values = nullptr;
 
+    // this determines the style of form population
+    // when true, the form will be fully populated with unlockable fields
+    // showing the default values
+    // when false, forms show only those fields that are being overridden and
+    // override fields must be dragged in
+    bool lockingStyle = true;
+
     void toggleParameterLock(class YanParameter* p);
     
 };
