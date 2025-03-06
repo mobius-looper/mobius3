@@ -19,20 +19,6 @@
      <Tree name='Miscellany'/>
   </Tree>
   
-  <Tree name='sessionAudioTrack'>
-    <Tree name='General'/>
-    <Tree name='Sync'/>
-    <Tree name='Mixer'/>
-    <Tree name='Ports'/>
-  </Tree>
-  
-  <Tree name='sessionMidiTrack'>
-    <Tree name='General'/>
-    <Tree name='Sync'/>
-    <Tree name='Follower'/>
-    <Tree name='LoopSwitch'/>
-  </Tree>
-
   <Form name='sessionGlobalIncludes' title='Objects to Include'
         symbols='sessionOverlay'/>
 
@@ -53,32 +39,41 @@
 
   <Form name='sessionGlobalSyncAutoRecord' title='Auto Record Parameters'
         symbols='autoRecordUnit,autoRecordUnits,recordThreshold'/>
+
+  <!-- These aren't actually form definitions like the ones for Global parameters,
+       they just serve to define a title and to define the order of
+       the possible symbols if they are chosen to be included.  Symbols that are missing
+       from the ordered list will be appended in random order.
+  -->
+
+  <Form name='sessionCategoryGeneral'
+        symbols='trackName,trackGroup,focus,trackOverlay'/>
   
-  <Form name='sessionAudioTrackGeneral' title='General Parameters'
-        symbols='trackName,trackGroup,loopCount,trackOverlay,focus'/>
-    
-  <Form name='sessionAudioSync' title='Synchronization Parameters'
+  <Form name='sessionCategorySync'
         symbols='syncSource,syncUnit,trackSyncUnit'/>
   
-  <Form name='sessionAudioTrackMixer' title='Mixer Parameters'
-        symbols='input,output,feedback,altFeedback,pan,mono'/>
+  <Form name='sessionCategoryMixer'
+        symbols='input,output,feedback,altFeedback,altFeedbackEnable,pan'/>
   
-  <Form name='sessionAudioTrackPorts' title='Audio Ports'
-        symbols='audioInputPort,audioOutputPort,pluginInputPort,pluginOutputPort'/>
+  <Form name='sessionCategoryMidi'
+        symbols='midiInput,midiOutput,midiChannelOverride,midiThru'/>
   
-  <Form name='sessionAudioTrackSync' title='Synchronization Parameters'
-        symbols='syncSource,syncUnit,trackSyncUnit'/>
-
-  <Form name='sessionMidiTrackGeneral' title='General Parameters'
-        symbols='trackName,trackGroup,trackOverlay,midiInput,midiOutput,midiChannelOverride,midiThru,*spacer*,loopCount,quantize,subcycles'/>
-
-  <Form name='sessionMidiTrackSync' title='Synchronization Parameters'
-        symbols='syncSource,syncUnit,trackSyncUnit,midiBeatsPerBar'/>
+  <Form name='sessionCategoryFollow'
+        symbols='leaderType,leaderTrack,leaderSwitchLocation,followRecord,followRecordEnd,followSize,followMute,followQuantizeLocation'/>
   
-  <Form name='sessionMidiTrackFollower' title='Follower Parmeters'
-        symbols='leaderType,leaderTrack,followRecord,followRecordEnd,followerMuteStart,followMute,leaderSwitchLocation,followQuantizeLocation'/>
+  <Form name='sessionCategoryFunctions'
+        symbols=''/>
   
-  <Form name='sessionMidiTrackLoopSwitch' title='Loop Switch Options'
-        symbols='switchQuantize,emptyLoopAction,switchDuration,switchLocation'/>
+  <Form name='sessionCategoryQuantize'
+        symbols=''/>
+  
+  <Form name='sessionCategorySwitch'
+        symbols=''/>
+  
+  <Form name='sessionCategoryEffects'
+        symbols=''/>
+  
+  <Form name='sessionCategoryAdvanced'
+        symbols=''/>
 
 </StaticConfig>

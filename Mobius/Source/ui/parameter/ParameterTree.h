@@ -31,6 +31,19 @@
 
 #include "SymbolTree.h"
 
+class ParameterTreeComparator
+{
+  public:
+
+    ParameterTreeComparator(class TreeForm* tf);
+
+    int compareElements(juce::TreeViewItem* first, juce::TreeViewItem* second);
+
+  private:
+
+    class TreeForm* form = nullptr;
+};
+
 class ParameterTree : public SymbolTree
 {
   public:
@@ -63,6 +76,7 @@ class ParameterTree : public SymbolTree
 
     // dynamic building
     void internCategories();
+    void hideEmptyCategories();
     void initializeSparse(class Provider* p, class ValueSet* set);
     bool isFiltered(class Symbol* s, class ParameterProperties* props);
     

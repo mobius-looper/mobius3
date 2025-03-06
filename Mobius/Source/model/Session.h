@@ -59,6 +59,7 @@ class Session
         MslValue* get(juce::String name);
         MslValue* get(SymbolId id);
         MslValue* get(class Symbol* s);
+        void remove(juce::String name);
         
         bool getBool(juce::String name);
         bool getBool(SymbolId id);

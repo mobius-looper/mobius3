@@ -10,6 +10,7 @@
 #include "../common/YanPopup.h"
 #include "../common/YanDialog.h"
 #include "../common/YanField.h"
+#include "SessionTrackEditor.h"
 
 class SessionTrackTableRow
 {
@@ -36,15 +37,9 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
     SessionTrackTable();
     ~SessionTrackTable();
 
-    void initialize(class Provider* p, class SessionTrackEditor* e);
-    void load(class Provider* p, class Session* s);
-    void reload();
+    void initialize(class SessionTrackEditor* e);
 
-    SessionTrackTableRow* getRow(int index);
-    
-    bool isMidi(int row);
-
-    void clear();
+    void load(juce::OwnedArray<SessionTrackEditor::TrackState>& states);
 
     // TypicalTable overrides
     int getRowCount() override;

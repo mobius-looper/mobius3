@@ -197,8 +197,8 @@ void ParameterTree::addSymbol(Provider* p, SymbolTreeItem* parent, juce::String 
  */
 void ParameterTree::initializeDynamic(Provider* p)
 {
-    SymbolTreeComparator comparator;
-
+    StaticConfig* scon = p->getStaticConfig();
+    
     internCategories();
 
     for (auto s : p->getSymbols()->getSymbols()) {
@@ -215,6 +215,11 @@ void ParameterTree::initializeDynamic(Provider* p)
                 parent->setAnnotation(s->treePath);
                 parent->setNoSelect(false);
 
+                // so much string slinging, could cache these
+                juce::String formName = juce::String("sessionCategory") + s->treePath;
+                TreeForm* form = scon->getForm(formName);
+                ParameterTreeComparator comparator (form);
+                
                 juce::String nodename = s->name;
                 if (props->displayName.length() > 0)
                   nodename = props->displayName;
@@ -232,6 +237,8 @@ void ParameterTree::initializeDynamic(Provider* p)
             }
         }
     }
+
+    hideEmptyCategories();
 }
 
 /**
@@ -260,7 +267,7 @@ bool ParameterTree::isFiltered(Symbol* s, ParameterProperties* props)
  */
 void ParameterTree::internCategories()
 {
-    juce::StringArray categories ("General", "Sync", "Follow", "Mixer", "Functions", "Quantize", "Switch", "Effects", "Advanced");
+    juce::StringArray categories ("General", "Sync", "Mixer", "Midi", "Follow", "Functions", "Quantize", "Switch", "Effects", "Advanced");
 
     for (auto cat : categories) {
         SymbolTreeItem* item = root.internChild(cat);
@@ -271,6 +278,21 @@ void ParameterTree::internCategories()
     }
 }
 
+/**
+ * After popuplating a dynamic form, remove any catagories that ended up with
+ * nothing in them due to exclusion options in the symbols.
+ * Technically, this should traverse looking for categories more than one level deep
+ * but right now the only ones of concern are at the top.
+ */
+void ParameterTree::hideEmptyCategories()
+{
+    for (int i = 0 ; i < root.getNumSubItems() ; i++) {
+        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(root.getSubItem(i));
+        if (item->getNumSubItems() == 0) {
+            item->setHidden(true);
+        }
+    }
+}
 
 /**
  * Initialize the tree to contain only those values in the provided
@@ -326,6 +348,45 @@ void ParameterTree::initializeSparse(Provider* p, ValueSet* set)
             
         }
     }
+
+    hideEmptyCategories();
+}
+
+/**
+ * Special node sorter that is guided by a TreeForm definition.
+ */
+ParameterTreeComparator::ParameterTreeComparator(TreeForm* tf)
+{
+    form = tf;
+}
+
+int ParameterTreeComparator::compareElements(juce::TreeViewItem* first, juce::TreeViewItem* second)
+{
+    int result = 0;
+    if (form == nullptr || form->symbols.size() == 0) {
+        // same as alphabetic comparator in SymbolTree
+        juce::String name1 = (static_cast<SymbolTreeItem*>(first))->getName();
+        juce::String name2 = (static_cast<SymbolTreeItem*>(second))->getName();
+        result = name1.compareIgnoreCase(name2);
+    }
+    else {
+        Symbol* s1 = (static_cast<SymbolTreeItem*>(first))->getSymbol();
+        Symbol* s2 = (static_cast<SymbolTreeItem*>(second))->getSymbol();
+        // these should NOT be null, but don't die
+        if (s1 != nullptr && s2 != nullptr) {
+            int index1 = form->symbols.indexOf(s1->name);
+            int index2 = form->symbols.indexOf(s2->name);
+            if (index1 < 0) {
+                // not on the list put at the end
+                result = 1;
+            }
+            else if (index1 < index2)
+              result = -1;
+            else if (index1 > index2)
+              result = 1;
+        }
+    }
+    return result;
 }
 
 /****************************************************************************/

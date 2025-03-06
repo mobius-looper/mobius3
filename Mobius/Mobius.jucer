@@ -530,14 +530,6 @@
           <FILE id="h5SWoP" name="SessionEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionEditor.cpp"/>
           <FILE id="YLdxmd" name="SessionEditor.h" compile="0" resource="0" file="Source/ui/session/SessionEditor.h"/>
-          <FILE id="QRDZ18" name="SessionEditorTree.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionEditorTree.cpp"/>
-          <FILE id="Tu3Rui" name="SessionEditorTree.h" compile="0" resource="0"
-                file="Source/ui/session/SessionEditorTree.h"/>
-          <FILE id="goG27g" name="SessionFormCollection.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionFormCollection.cpp"/>
-          <FILE id="y3emuo" name="SessionFormCollection.h" compile="0" resource="0"
-                file="Source/ui/session/SessionFormCollection.h"/>
           <FILE id="KOaAEr" name="SessionGlobalEditor.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionGlobalEditor.cpp"/>
           <FILE id="CqSPrU" name="SessionGlobalEditor.h" compile="0" resource="0"
@@ -568,10 +560,6 @@
                 file="Source/ui/session/SessionTrackTable.cpp"/>
           <FILE id="jADQbN" name="SessionTrackTable.h" compile="0" resource="0"
                 file="Source/ui/session/SessionTrackTable.h"/>
-          <FILE id="TFYMwC" name="SessionTreeForms.cpp" compile="1" resource="0"
-                file="Source/ui/session/SessionTreeForms.cpp"/>
-          <FILE id="EQhLym" name="SessionTreeForms.h" compile="0" resource="0"
-                file="Source/ui/session/SessionTreeForms.h"/>
         </GROUP>
         <FILE id="i40dnE" name="AboutPanel.cpp" compile="1" resource="0" file="Source/ui/AboutPanel.cpp"/>
         <FILE id="Cgk0He" name="AboutPanel.h" compile="0" resource="0" file="Source/ui/AboutPanel.h"/>

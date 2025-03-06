@@ -3,23 +3,61 @@
 
 #include "../../util/Trace.h"
 #include "../../model/Session.h"
-#include "../../model/SessionConstants.h"
+//#include "../../model/SessionConstants.h"
 #include "../../Provider.h"
-#include "../JuceUtil.h"
 
-#include "../parameter/ParameterForm.h"
 #include "SessionTrackTable.h"
-#include "SessionTreeForms.h"
+#include "SessionTrackForms.h"
 
 #include "SessionTrackEditor.h"
 
+//////////////////////////////////////////////////////////////////////
+//
+// TrackState
+//
+//////////////////////////////////////////////////////////////////////
+
+SessionTrackEditor::TrackState::TrackState(Session::Track* t)
+{
+    trackdef.reset(t);
+}
+
+Session::Track* SessionTrackEditor::TrackState::getTrack()
+{
+    return trackdef.get();
+}
+
+Session::Track* SessionTrackEditor::TrackState::stealTrack()
+{
+    return trackdef.release();
+}
+
+SessionTrackForms* SessionTrackEditor::TrackState::getForms()
+{
+    return forms.get();
+}
+
+void SessionTrackEditor::TrackState::setForms(SessionTrackForms* f)
+{
+    if (forms != nullptr)
+      Trace(1, "SessionTrackEditor: Attempt to set different track forms");
+    else
+      forms.reset(f);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// SessionTrackEditor
+//
+//////////////////////////////////////////////////////////////////////
+
 SessionTrackEditor::SessionTrackEditor()
 {
-    tracks.reset(new SessionTrackTable());
+    table.reset(new SessionTrackTable());
 
-    addAndMakeVisible(tracks.get());
+    addAndMakeVisible(table.get());
 
-    tracks->setListener(this);
+    table->setListener(this);
 
     currentTrack = 0;
 }
@@ -30,17 +68,17 @@ SessionTrackEditor::~SessionTrackEditor()
 
 void SessionTrackEditor::initialize(Provider* p)
 {
-    // temporarily save this until SessionTrackTable can
-    // get everything it needs from just the hsession
     provider = p;
-    
-    tracks->initialize(p, this);
+    table->initialize(this);
 }
 
 void SessionTrackEditor::decacheForms()
 {
-    for (auto form : trackForms)
-      form->decache();
+    for (auto state : states) {
+        SessionTrackForms* forms = state->getForms();
+        if (forms != nullptr)
+          forms->decacheForms();
+    }
 }
 
 void SessionTrackEditor::resized()
@@ -50,108 +88,68 @@ void SessionTrackEditor::resized()
     // the one column in the track header is 200 and
     // getting a horizontal scroll bar if the outer track is
     // the same size, give it a little extra
-    tracks->setBounds(area.removeFromLeft(204));
+    table->setBounds(area.removeFromLeft(204));
     
-    for (auto form : trackForms)
-      form->setBounds(area);
+    for (auto state : states) {
+        SessionTrackForms* forms = state->getForms();
+        if (forms != nullptr)
+          forms->setBounds(area);
+    }
 }
 
 void SessionTrackEditor::load(Session* s)
 {
-    // we are allowed to retain a pointer to this so track forms
-    // can pull in new values as selections in the table and trees change
-    session = s;
-    
-    // track configuration may change
-    tracks->load(provider, s);
+    states.clear();
+
+    // ownership of the Session::Tracks transfers to the TrackStates
+    juce::Array<Session::Track*> defs;
+    s->steal(defs);
+    for (auto def : defs) {
+        // convert the track name field into an entry in the ValueSet which is all
+        // forms can deal with
+        ValueSet* values = def->ensureParameters();
+        values->setString("trackName", def->name.toUTF8());
+        
+        TrackState* state = new TrackState(def);
+        states.add(state);
+    }
+    table->load(states);
     
     // forms show the selected track
-    loadForms(currentTrack);
+    show(currentTrack);
 }
 
 /**
- * Save is complicated.
- *
- * If forms were displayed for a track, they need to be saved to our
- * edited Session copy.
- *
- * After that we need to replace Session::Tracks in the destination session
- * with ours, adding new ones, and removing ones that were deleted.
+ * The editing copy of the Session had all of the Session::Tracks removed
+ * and transferred to the TrackState list.  Some of those may have been
+ * deleted or new ones created.  The resulting list replaces the
+ * track list in the destination session.
  */
-
 void SessionTrackEditor::save(Session* dest)
 {
-    // get everything out of the forms and back into the Session copy
-    for (auto form : trackForms)
-      form->save();
+    // get everything out of the forms and back into the Session::Track
+    for (auto state : states) {
+        SessionTrackForms* forms = state->getForms();
+        if (forms != nullptr)
+          forms->save();
+    }
 
-    // bring out the source and destination tracks
+    // bring out the new Session::Track list
     juce::Array<Session::Track*> editedTracks;
-    session->steal(editedTracks);
-
-    juce::Array<Session::Track*> originalTracks;
-    dest->steal(originalTracks);
-
-    juce::Array<Session::Track*> resultTracks;
-
-    // could be smarter and avoid some memory churn by only replacing
-    // Session::Tracks that were in fact edited, which we can tell if there
-    // was a SessionTrackForms object instantiated for it
-    
-    int srcIndex = 0;
-    while (srcIndex < editedTracks.size()) {
-        
-        Session::Track* srcTrack = editedTracks[srcIndex];
-        Session::Track* destTrack = findMatchingTrack(originalTracks, srcTrack->id);
-        
-        if (destTrack == nullptr) {
-            // this must be a new track that wasn't in the original, move it
-            // to the result
-            editedTracks.removeAllInstancesOf(srcTrack);
-            resultTracks.add(srcTrack);
+    for (auto state : states) {
+        Session::Track* track = state->stealTrack();
+        // uncoonvert the name from within the ValueSet back to a top-level field
+        // ugh, these aren't reliably connected to a Session/SymbolTable at this point
+        // so have to use names
+        MslValue* v = track->get("trackName");
+        if (v != nullptr) {
+            track->name = juce::String(v->getString());
+            track->remove("trackName");
         }
-        else {
-            // this is the only thing that isn't in the ValueSet
-            destTrack->name = srcTrack->name;
-
-            ValueSet* srcValues = srcTrack->stealParameters();
-            destTrack->replaceParameters(srcValues);
-
-            // move the merged destTrack from the original list onto the result
-            originalTracks.removeAllInstancesOf(destTrack);
-            resultTracks.add(destTrack);
-            srcIndex++;
-        }
+        editedTracks.add(track);
     }
 
-    // at this point
-    // editedTracks has things that were merged into something from originalTrack
-    // originalTracks has tracks left over that were deleted in the new session
-    // resultTracks has a combination of new tracks and merged tracks
-
-    deleteRemaining(editedTracks);
-    deleteRemaining(originalTracks);
-    dest->replace(resultTracks);
-}
-
-Session::Track* SessionTrackEditor::findMatchingTrack(juce::Array<Session::Track*>& array, int id)
-{
-    Session::Track* found = nullptr;
-    for (auto t : array) {
-        if (t->id == id) {
-            found = t;
-            break;
-        }
-    }
-    return found;
-}
-
-void SessionTrackEditor::deleteRemaining(juce::Array<Session::Track*>& array)
-{
-    while (array.size() > 0) {
-        Session::Track* t = array.removeAndReturn(0);
-        delete t;
-    }
+    dest->replace(editedTracks);
 }
 
 /**
@@ -160,8 +158,11 @@ void SessionTrackEditor::deleteRemaining(juce::Array<Session::Track*>& array)
  */
 void SessionTrackEditor::cancel()
 {
-    for (auto form : trackForms)
-      form->cancel();
+    for (auto state : states) {
+        SessionTrackForms* forms = state->getForms();
+        if (forms != nullptr)
+          forms->cancel();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -173,22 +174,18 @@ void SessionTrackEditor::cancel()
 /**
  * This is called when the selected row changes either by clicking on
  * it or using the keyboard arrow keys after a row has been selected.
- *
- * Save the current forms back to the intermediate session,
- * then display the appropriate tree forms for the new track type
- * and load those forms.
  */
 void SessionTrackEditor::typicalTableChanged(TypicalTable* t, int row)
 {
     (void)t;
     (void)row;
-    
-    int newRow = tracks->getSelectedRow();
+    // yuno trust the passed row?
+    int newRow = table->getSelectedRow();
     if (newRow < 0) {
         Trace(1, "SessionTrackEditor: Change alert with no selected track number");
     }
     else if (newRow != currentTrack) {
-        loadForms(newRow);
+        show(newRow);
         currentTrack = newRow;
     }
 }
@@ -197,9 +194,6 @@ void SessionTrackEditor::typicalTableChanged(TypicalTable* t, int row)
  * The track table would like to move a row.
  * sourceRow is the track INDEX it wants to move and
  * desiredRow is the index the track should have.
- *
- * After the Session tracks are restructured the track table
- * will repaint itself to pull the new model.
  *
  * oddment:  The sourceRow is the selected row or the row you are ON
  * and want to move, and desiredRow is the row you were over when the
@@ -210,7 +204,7 @@ void SessionTrackEditor::typicalTableChanged(TypicalTable* t, int row)
  * maybe I'm just not mathing this right.   Anyway, if you're moving up the
  * two indexes work, but if you're moving down you have to -1 the desiredRow.
  */
-void SessionTrackEditor::move(int sourceRow, int desiredRow)
+void SessionTrackEditor::moveTrack(int sourceRow, int desiredRow)
 {
     if (sourceRow != desiredRow) {
 
@@ -218,144 +212,192 @@ void SessionTrackEditor::move(int sourceRow, int desiredRow)
         if (desiredRow > sourceRow)
           adjustedRow--;
 
-        // this does the structural changes in the Session
-        // necessary because the table builds itself from the Session rather
-        // than the other way around
-        session->move(sourceRow, adjustedRow);
+        // formerly relied on the Session to do this
+        //session->move(sourceRow, adjustedRow);
 
-        tracks->reload();
+        if (sourceRow != adjustedRow &&
+            sourceRow >= 0 && sourceRow < states.size() &&
+            adjustedRow >= 0 && adjustedRow < states.size()) {
 
+            states.move(sourceRow, adjustedRow);
+        }
+        
+        table->load(states);
         // keep on the same object
         // should already be there but make sure it's in sync
-        tracks->selectRow(desiredRow);
+        table->selectRow(desiredRow);
         currentTrack = desiredRow;
-        loadForms(currentTrack);
+        show(currentTrack);
     }
 }
 
-/**
- * TrackTable would like to add a new track of the given type
- */
+SessionTrackEditor::TrackState* SessionTrackEditor::getState(int index)
+{
+    SessionTrackEditor::TrackState* state = nullptr;
+    if (index >= 0 && index < states.size())
+      state = states[index];
+    else
+      Trace(1, "SessionTrackEditor: Track index out of range %d", index);
+    return state;
+}
+
+void SessionTrackEditor::renameTrack(int index, juce::String newName)
+{
+    TrackState* state = getState(index);
+    if (state != nullptr) {
+        // while the track is being edited, the name lives inside the ValueSet
+        Session::Track* track = state->getTrack();
+        ValueSet* values = track->ensureParameters();
+        values->setString("trackName", newName.toUTF8());
+        // this is the only thing that can edit a track parameter outside the form
+        // the one field containing this must be reloaded, but there isn't an easy
+        // way to get to that from here so reload all of them, rename from the table is unusual
+        show(currentTrack);
+    }
+}
+
 void SessionTrackEditor::addTrack(Session::TrackType type)
 {
-    saveForms(currentTrack);
-
-    Session::Track* neu = new Session::Track();
-    neu->type = type;
-    session->add(neu);
-
-    currentTrack = session->getTrackCount() - 1;
-    tracks->reload();
-    tracks->selectRow(currentTrack);
+    addState(type);
     
-    loadForms(currentTrack);
+    currentTrack = states.size() - 1;
+    table->load(states);
+    table->selectRow(currentTrack);
+    
+    show(currentTrack);
 }
 
 void SessionTrackEditor::deleteTrack(int row)
 {
-    saveForms(currentTrack);
-
-    session->deleteTrack(row);
-
+    deleteState(row);
+     
     // go back to the beginning, though could try to be one after the
     // deleted one
     currentTrack = 0;
 
-    tracks->reload();
-    tracks->selectRow(currentTrack);
-    loadForms(currentTrack);
+    table->load(states);
+    table->selectRow(currentTrack);
+    show(currentTrack);
 }
 
 void SessionTrackEditor::bulkReconcile(int audioCount, int midiCount)
 {
-    saveForms(currentTrack);
-
-    session->reconcileTrackCount(Session::TypeAudio, audioCount);
-    session->reconcileTrackCount(Session::TypeMidi, midiCount);
+    reconcileTrackCount(Session::TypeAudio, audioCount);
+    reconcileTrackCount(Session::TypeMidi, midiCount);
 
     // pick one of the new ones or go back to the top
     currentTrack = 0;
 
-    tracks->reload();
-    tracks->selectRow(currentTrack);
-    loadForms(currentTrack);
+    table->load(states);
+    table->selectRow(currentTrack);
+    show(currentTrack);
+}
+
+/**
+ * Pulled over the same algorithm from Session::reconcileTrackCount
+ * uses because I'm lazy.  Could do both types in one pass if you tried.
+ */
+void SessionTrackEditor::reconcileTrackCount(Session::TrackType type, int required)
+{
+    // how many are there now?
+    int currentCount = 0;
+    for (auto state : states) {
+        Session::Track* t = state->getTrack();
+        if (t->type == type) {
+            currentCount++;
+        }
+    }
+
+    if (currentCount < required) {
+        // add new ones
+        while (currentCount < required) {
+            addState(type);
+            currentCount++;
+        }
+    }
+    else if (currentCount > required) {
+        // awkward since they can be in random order
+        // seek up to the position after the last track of this type
+        int position = 0;
+        int found = 0;
+        while (position < states.size() && found < required) {
+            TrackState* state = states[position];
+            Session::Track* t = state->getTrack();
+            if (t->type == type)
+              found++;
+            position++;
+        }
+        // now delete the remainder
+        while (position < states.size()) {
+            TrackState* state = states[position];
+            Session::Track* t = state->getTrack();
+            if (t->type == type)
+              deleteState(position);
+            else
+              position++;
+        }
+    }
+}
+
+void SessionTrackEditor::addState(Session::TrackType type)
+{
+    Session::Track* neu = new Session::Track();
+    neu->type = type;
+    
+    TrackState* state = new TrackState(neu);
+    states.add(state);
+}
+
+void SessionTrackEditor::deleteState(int index)
+{
+    TrackState* state = getState(index);
+    if (state != nullptr) {
+        SessionTrackForms* forms = state->getForms();
+        if (forms != nullptr) {
+            // it is important that we take this out of the component hierarchy
+            // since they're all about to be deleted
+            removeChildComponent(forms);
+        }
+
+        // todo: this will lose whatever was configured in this track
+        // could save this on an undo list and bring it back if they add a track
+        // of this type again
+        states.remove(index, true);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// Internal State Transfer
+// Tree/Form Display
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Load the current set of editing forms with data from
- * the selected track.
- *
- * To avoid an ugly correspondence, I'm just saving the forms directly
- * in the table rows so we can add/remove/move/ them without having
- * to maintain order in a parallel array or do id searches.
+ * Show the tree forms for the desired track.
  */
-void SessionTrackEditor::loadForms(int row)
+void SessionTrackEditor::show(int row)
 {
-    SessionTrackForms* forms = nullptr;
-    SessionTrackTableRow* row = tracks.getRow(row);
-    if (row != nullptr) {
-        forms = row->forms;
+    TrackState* state = getState(row);
+    if (state != nullptr) {
+        SessionTrackForms* forms = state->getForms();
         if (forms == nullptr) {
             // first time here
-            Session::Track* trackdef = session->getTrackByIndex(row);
-            if (trackdef == nullptr) {
-                Trace(1, "SessionTrackEditor: Invalid track index %d", row);
-            }
-            else {
-                ValueSet* values = trackdef->ensureParameters();
-
-                // demote the Session::Track::name into the ValueSet so it
-                // can be dealt with through the ParamTrackName parameter like
-                // any of the others
-                values->setJString(SessionTrackName, trackdef->name);
-
-                forms = new SessionTrackForms();
-                forms->initialize(provider, trackdef);
-                trackForms.add(forms);
-                addChildComponent(forms);
-            }
+            forms = new SessionTrackForms();
+            forms->initialize(provider, state->getTrack());
+            state->setForms(forms);
+            addChildComponent(forms);
+            // this will need the size of the others
+            resized();
         }
-    }
 
-    if (forms != nullptr) {
-        for (auto f : trackForms) {
-            if (f == forms)
-              f->setVisible(true);
-            else
-              f->setVisible(false);
-        }
-    }
-}
-
-void SessionTrackEditor::saveForms(int row)
-{    
-    Session::Track* trackdef = session->getTrackByIndex(row);
-    if (trackdef == nullptr) {
-        Trace(1, "SessionTrackEditor: Invalid intermediate session track index %d", row);
-    }
-    else {
-        ValueSet* values = trackdef->ensureParameters();
-        if (trackdef->type == Session::TypeMidi)
-          midiForms.save(values);
-        else
-          audioForms.save(values);
-
-        // upgrade the track name from the value map back to the track object
-        MslValue* v = values->get(SessionTrackName);
-        if (v != nullptr) {
-            juce::String newName = juce::String(v->getString());
-            if (newName != trackdef->name) {
-                trackdef->name = newName;
-                // refresh the table to have the new name
-                tracks->reload();
+        for (auto s : states) {
+            SessionTrackForms* stf = s->getForms();
+            if (stf != nullptr) {
+                if (stf == forms)
+                  stf->setVisible(true);
+                else
+                  stf->setVisible(false);
             }
-            values->remove(SessionTrackName);
         }
     }
 }

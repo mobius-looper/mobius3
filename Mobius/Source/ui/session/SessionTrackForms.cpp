@@ -7,6 +7,7 @@
 #include "../../util/Trace.h"
 
 #include "../../model/Symbol.h"
+#include "../../model/ParameterProperties.h"
 #include "../../model/ValueSet.h"
 #include "../../Provider.h"
 
@@ -113,8 +114,10 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
             }
             else {
                 // only add it if we have it
+                // OR if it is flagged as noDefault
+                ParameterProperties* props = s->parameterProperties.get();
                 MslValue* v = values->get(s->name);
-                if (v != nullptr)
+                if (v != nullptr || (props != nullptr && props->noDefault))
                   form->add(provider, s, values);
             }
         }

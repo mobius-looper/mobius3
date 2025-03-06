@@ -8,11 +8,10 @@
 #include "../../util/Util.h"
 #include "../../model/Symbol.h"
 #include "../../model/Session.h"
-#include "../../Provider.h"
-#include "../MobiusView.h"
 
 // unfortunately can't be that independent unless
 // you add a complex Listener for all the callbacks
+// and a way to wire in the model
 #include "SessionTrackEditor.h"
 
 #include "SessionTrackTable.h"
@@ -68,11 +67,8 @@ SessionTrackTable::~SessionTrackTable()
 {
 }
 
-void SessionTrackTable::initialize(Provider* p, SessionTrackEditor* e)
+void SessionTrackTable::initialize(SessionTrackEditor* e)
 {
-    // nothing to do during initialization, must
-    // reload the table every time the editor is opened
-    (void)p;
     editor = e;
     
     // it is vital you call this to get the header and other parts
@@ -80,32 +76,13 @@ void SessionTrackTable::initialize(Provider* p, SessionTrackEditor* e)
     TypicalTable::initialize();
 }
 
-SessionTrackTableRow* SessionTrackTable::getRow(int index)
-{
-    SessionTrackTableRow* row = nullptr;
-    if (index >= 0 && index < tracks.size())
-      row = tracks[index];
-    else
-      Trace(1, "SessionTrackTable: Index out of range %d", index);
-    return row;
-}
-
-void SessionTrackTable::load(Provider* p, Session* s)
-{
-    (void)p;
-    session = s;
-    reload();
-}
-
-void SessionTrackTable::reload()
+void SessionTrackTable::load(juce::OwnedArray<SessionTrackEditor::TrackState>& states)
 {
     tracks.clear();
 
-    int total = session->getTrackCount();
-    for (int i = 0 ; i < total ; i++) {
-        int number = i+1;
-        Session::Track* t = session->getTrackByIndex(i);
-        
+    int number = 1;
+    for (auto state : states) {
+        Session::Track* t = state->getTrack();
         juce::String name = juce::String(number) + ":";
         if (t->type == Session::TypeMidi)
           name += "Midi";
@@ -120,29 +97,12 @@ void SessionTrackTable::reload()
         row->midi = (t->type == Session::TypeMidi);
         
         tracks.add(row);
+        number++;
     }
     
     // load the things and make the list
     updateContent();
     repaint();
-}
-
-/**
- * Now that we're effectively editing the Session, it doesn't make
- * any sense to call clear().  It's more clearing the Session and
- * then asking the table to reload.
- */
-void SessionTrackTable::clear()
-{
-    Trace(1, "SessionTrackTable::clear Who is calling this?");
-    //tracks.clear();
-    //updateContent();
-}
-
-bool SessionTrackTable::isMidi(int row)
-{
-    SessionTrackTableRow* trow = tracks[row];
-    return trow->midi;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -319,10 +279,7 @@ void SessionTrackTable::finishRename(int button)
 {
     if (button == 0) {
         int row = getSelectedRow();
-        Session::Track* t = session->getTrackByIndex(row);
-        // todo: should have some validation on allowed names
-        t->name = newName.getValue();
-        reload();
+        editor->renameTrack(row, newName.getValue());
     }
 }
 
@@ -562,7 +519,7 @@ bool SessionTrackTable::doMove(int sourceRow, int dropRow)
     }
     else {
         // somewhere to go
-        editor->move(sourceRow, dropRow);
+        editor->moveTrack(sourceRow, dropRow);
         moved = true;
     }
     return moved;

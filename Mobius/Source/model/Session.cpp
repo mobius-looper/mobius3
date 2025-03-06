@@ -564,6 +564,12 @@ MslValue* Session::Track::get(Symbol* s)
     return v;
 }
 
+void Session::Track::remove(juce::String pname)
+{
+    if (parameters != nullptr)
+      parameters->remove(pname);
+}
+
 bool Session::Track::getBool(juce::String pname)
 {
     MslValue* v = get(pname);

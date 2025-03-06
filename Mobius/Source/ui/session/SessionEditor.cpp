@@ -28,13 +28,12 @@ SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
     trackEditor.reset(new SessionTrackEditor());
     tabs.add("Tracks", trackEditor.get());
     
+    parameterEditor.reset(new SessionParameterEditor());
+    tabs.add("Default Parameters", parameterEditor.get());
+
     globalEditor.reset(new SessionGlobalEditor());
     tabs.add("Globals", globalEditor.get());
     
-    parameterEditor.reset(new SessionParameterEditor());
-    tabs.add("Parameters", parameterEditor.get());
-
-
     globalEditor->initialize(s);
     parameterEditor->initialize(s);
     trackEditor->initialize(s);
