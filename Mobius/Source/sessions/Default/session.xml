@@ -75,9 +75,9 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="master"/>
-      <Value name="syncUnit" value="bar"/>
-      <Value name="trackSyncUnit" value="loop"/>
+      <Value name="syncSource" value="master" type="enum" ordinal="5"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
   <Track id="4" type="audio" name="a2">
@@ -254,7 +254,7 @@
     <Value name="speedStepRange" value="24" type="int"/>
     <Value name="speedTransfer" value="off" type="enum" ordinal="0"/>
     <Value name="spreadRange" value="48" type="int"/>
-    <Value name="subcycles" value="4" type="int"/>
+    <Value name="subcycles" value="8" type="int"/>
     <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
     <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
     <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>

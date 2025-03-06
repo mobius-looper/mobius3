@@ -2,6 +2,6 @@
 
 <SystemConfig>
   <ValueSet>
-    <Value name="startupSession" value="testing"/>
+    <Value name="startupSession" value="Sync to previous track"/>
   </ValueSet>
 </SystemConfig>
