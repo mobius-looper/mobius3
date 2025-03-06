@@ -331,8 +331,8 @@
     <Value name="windowSlideUnit" value="loop" type="enum" ordinal="0"/>
   </ValueSet>
   <ValueSet name="testlevels">
-    <Value name="input" value="127" type="int"/>
+    <Value name="input" value="90" type="int"/>
     <Value name="multiplyMode" value="normal" type="enum" ordinal="0"/>
-    <Value name="output" value="127" type="int"/>
+    <Value name="output" value="64" type="int"/>
   </ValueSet>
 </ParameterSets>

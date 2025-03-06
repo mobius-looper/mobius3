@@ -427,32 +427,24 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     // SymbolId interfaces everyone wants
     session->setSymbols(container->getSymbols());
 
-    if (newSession != nullptr || newConfig != nullptr) {
-
-        // the usual case, the session was edited
-        // expecting both of these until MobiusConfig dies
-        if (newSession == nullptr || newConfig == nullptr)
-          Trace(1, "MobiusKernel: Missing Session or MobiusConfig combo");
-
-        mCore->reconfigure(configuration);
+    // actually doesn't do much any more, sets some Function flags to match the Symbols
+    mCore->reconfigure(configuration);
         
-        // why the hell does this need both?
-        scriptUtil.configure(configuration, session);
+    // why the hell does this need both?
+    scriptUtil.configure(configuration, session);
 
-        // give TM the new MobiusConfig first to refresh some unfortunate caches
-        mTracks->reconfigure(configuration);
+    // give TM the new MobiusConfig first to refresh the stupid scope cache
+    mTracks->reconfigure(configuration);
 
-        // this will do the second call to core to configureTracks
-        mTracks->loadSession(session);
+    // this will do the second call to core to configureTracks where
+    // most of the excitment happens
+    // note that this needs to happen even if the payload didn't have a new Session
+    // since the ParameterSets may have changed and this can impact the LogicalTrack
+    // parameter caches
+    mTracks->loadSession(session);
     
-        notifier.configure(session);
-        syncMaster.loadSession(session);
-    }
-
-    if (newParams != nullptr) {
-        // parameter sets edited too
-        Trace(1, "MobiusKernel: Need to deal with ParameterSets");
-    }
+    notifier.configure(session);
+    syncMaster.loadSession(session);
     
     // send the old ones back for reclamation
     communicator->kernelSend(msg);

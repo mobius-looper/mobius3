@@ -70,6 +70,8 @@ void ParameterFormCollection::cancel()
     // we need to rebuild them every time, just reloading new values over the
     // top of them isn't enough
     forms.clear();
+    formTable.clear();
+    currentForm = nullptr;
 }
 
 void ParameterFormCollection::decache()

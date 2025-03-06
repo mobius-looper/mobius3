@@ -124,10 +124,10 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
                       item->getName().toUTF8());
             }
             else {
+                ParameterProperties* props = s->parameterProperties.get();
                 if (!lockingStyle) {
                     // sparse mode: only add it if we have it
                     // OR if it is flagged as noDefault
-                    ParameterProperties* props = s->parameterProperties.get();
                     MslValue* v = values->get(s->name);
                     if (v != nullptr || (props != nullptr && props->noDefault))
                       (void)form->add(provider, s, values);
@@ -135,10 +135,16 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
                 else {
                     // locking mode: it will always be added, but may be disabled if not in the
                     // value set
+                    bool noDefault = (props != nullptr && props->noDefault);
                     MslValue* v = values->get(s->name);
-                    if (v != nullptr) {
-                        // normal overridden value
-                        (void)form->add(provider, s, values);
+                    if (v != nullptr || noDefault) {
+                        // normal overridden value or one that has no default
+                        YanParameter* field = form->add(provider, s, values);
+                        // if this is a noDefault field it can't be unlocked
+                        // actually rather than set yet another flag, can just check
+                        // for it in the click handler
+                        //field->setNoLocking(true);
+                        (void)field;
                     }
                     else {
                         // there is no value but we can show the default
@@ -171,7 +177,12 @@ void SessionTrackForms::parameterFormClick(ParameterForm* f, YanParameter* p, co
 {
     (void)f;
     (void)e;
-    toggleParameterLock(p);
+    // if this field has the noDefault flag set, then it can't be unlocked
+    Symbol* s = p->getSymbol();
+    ParameterProperties* props = s->parameterProperties.get();
+    bool noLocking = (props != nullptr && props->noDefault);
+    if (!noLocking)
+      toggleParameterLock(p);
 }
 
 void SessionTrackForms::toggleParameterLock(YanParameter* p)
