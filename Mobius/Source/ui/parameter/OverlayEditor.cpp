@@ -86,8 +86,6 @@ void OverlayEditor::show(int index)
             currentSet = -1;
         }
     }
-
-    JuceUtil::dumpComponent(this);
 }    
 
 /**

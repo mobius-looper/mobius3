@@ -62,18 +62,21 @@
         symbols='leaderType,leaderTrack,leaderSwitchLocation,followRecord,followRecordEnd,followSize,followMute,followQuantizeLocation'/>
   
   <Form name='sessionCategoryFunctions'
-        symbols=''/>
+        symbols='maxUndo,maxRedo,muteMode,muteCancel,multiplyMode,recordResetsFeedback,roundingOverdub,shuffleMode,slipMode,slipTime,speedRecord,windowEdgeUnit,windowEdgeAmount,windowSlideUnit,windowSlideAmount'/>
   
   <Form name='sessionCategoryQuantize'
-        symbols=''/>
+        symbols='quantize,subcycles,switchQuantize,overdubQuantized,bounceQuantize'/>
   
   <Form name='sessionCategorySwitch'
-        symbols=''/>
+        symbols='switchDuration,switchLocation,switchVelocity,returnLocation,timeCopyMode,soundCopyMode,emptyLoopAction,emptyTrackAction,trackLeaveAction'/>
   
   <Form name='sessionCategoryEffects'
         symbols=''/>
   
   <Form name='sessionCategoryAdvanced'
         symbols=''/>
+
+  <Form name='sessionCategoryAdvanced'
+        symbols='audioInputPort,audioOutputPort,pluginInputPort,pluginOutputPort,mono'/>
 
 </StaticConfig>
