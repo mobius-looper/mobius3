@@ -65,8 +65,11 @@ void ParameterFormCollection::save(ValueSet* dest)
 
 void ParameterFormCollection::cancel()
 {
-    // forget this, just reload
     valueSet = nullptr;
+    // since forms are how highly sensitive to the Session contents
+    // we need to rebuild them every time, just reloading new values over the
+    // top of them isn't enough
+    forms.clear();
 }
 
 void ParameterFormCollection::decache()
