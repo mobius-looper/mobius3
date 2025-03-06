@@ -23,15 +23,28 @@ class YanFieldLabel: public juce::Label
 {
   public:
 
+    class Listener {
+      public:
+        virtual ~Listener() {}
+        virtual void yanFieldClicked(class YanField* f, const juce::MouseEvent& e) = 0;
+    };
+
     // when Drag-and-drop is allowed and initiated, this is the
     // source idtifier prefix put in the description
     constexpr static const char* DragPrefix = "YanField:";
     
     YanFieldLabel(class YanField* parent);
+    void setDisabledColor(bool dis);
+
+
+    void setListener(Listener* l);
 
     void mouseDown(const juce::MouseEvent& e) override;
+    void mouseUp(const juce::MouseEvent& e) override;
     
   private:
+
+    Listener* listener = nullptr;
 
     // the logical parent is the assdociated YanField
     // it is NOT the juce::Component parent
@@ -48,18 +61,22 @@ class YanField : public juce::Component
     YanField(juce::String argLabel);
     virtual ~YanField();
 
+    void setLabelListener(YanFieldLabel::Listener* l);
+
     void setLabel(juce::String s);
     juce::Label* getLabel();
     void setAdjacent(bool b);
     bool isAdjacent();
     virtual bool isSection() {return false;};
-    bool hasLabel(YanFieldLabel* l);
+    //bool hasLabel(YanFieldLabel* l);
     
     int getPreferredWidth(int rowHeight);
     
     virtual int getPreferredComponentWidth() = 0;
 
-
+    virtual void setDisabled(bool b);
+    virtual bool isDisabled();
+    
     // special support for draggable forms
     void setDragDescription(juce::String s);
     juce::String getDragDescription();
@@ -72,7 +89,8 @@ class YanField : public juce::Component
 
     YanFieldLabel label {this};
     bool adjacent = false;
-
+    bool disabled = false;
+    
     juce::String dragDescription;
 
 };
@@ -117,7 +135,10 @@ class YanInput : public YanField, public juce::Label::Listener, public juce::Tex
         virtual void inputEditorHidden(YanInput*) {}
         virtual void inputEditorChanged(YanInput*, juce::String) {}
     };
+    
     void setListener(Listener* l);
+
+    void setDisabled(bool b) override;
     
     int getPreferredComponentWidth() override;
 
@@ -147,6 +168,7 @@ class YanCheckbox : public YanField
     YanCheckbox(juce::String label);
     ~YanCheckbox() {}
 
+    void setDisabled(bool b) override;
     int getPreferredComponentWidth() override;
     
     void setValue(bool b);
@@ -242,6 +264,7 @@ class YanCombo : public YanField, public juce::ComboBox::Listener
     };
     void setListener(Listener* l);
 
+    void setDisabled(bool b) override;
     void setWidthUnits(int units);
     void setItems(juce::StringArray names);
     void setSelection(int index);

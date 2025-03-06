@@ -186,6 +186,8 @@
               file="Source/model/VariableDefinition.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
+        <FILE id="xUDDwi" name="SvgIcons.cpp" compile="1" resource="0" file="Source/ui/SvgIcons.cpp"/>
+        <FILE id="gasp1K" name="SvgIcons.h" compile="0" resource="0" file="Source/ui/SvgIcons.h"/>
         <GROUP id="{D00C350E-B29D-D24C-688C-04027E4FDEE4}" name="parameter">
           <FILE id="oXrWw9" name="DropTreeView.cpp" compile="1" resource="0"
                 file="Source/ui/parameter/DropTreeView.cpp"/>

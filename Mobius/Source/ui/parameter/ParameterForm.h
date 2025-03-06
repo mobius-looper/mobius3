@@ -18,10 +18,13 @@
 
 #include <JuceHeader.h>
 
+#include "../common/YanField.h"
 #include "../common/YanForm.h"
 #include "../common/YanParameter.h"
 
-class ParameterForm : public juce::Component, public juce::DragAndDropTarget
+class ParameterForm : public juce::Component,
+                      public juce::DragAndDropTarget,
+                      public YanFieldLabel::Listener
                       //public juce::DragAndDropContainer
 {
   public:
@@ -33,6 +36,9 @@ class ParameterForm : public juce::Component, public juce::DragAndDropTarget
       public:
         virtual ~Listener() {}
         virtual void parameterFormDrop(ParameterForm* src, juce::String desc) = 0;
+        virtual void parameterFormClick(ParameterForm* src, YanParameter* p, const juce::MouseEvent& e) {
+            (void)src; (void)p; (void)e;
+        }
     };
     void setListener(Listener* l);
     
@@ -52,6 +58,11 @@ class ParameterForm : public juce::Component, public juce::DragAndDropTarget
      * True if the symbol fields can be dragged out.
      */
     void setDraggable(bool b);
+
+    /**
+     * True if fields can be locked and unlocked
+     */
+    void setLocking(bool b);
 
     /**
      * Add a list of editing fields for parameter symbols.
@@ -88,11 +99,13 @@ class ParameterForm : public juce::Component, public juce::DragAndDropTarget
     /**
      * Strange interface for dynamic parameter forms.
      */
-    void add(class Provider* p, class Symbol* s, class ValueSet* values);
+    class YanParameter* add(class Provider* p, class Symbol* s, class ValueSet* values);
 
-    class YanParameter* findFieldWithLabel(class YanFieldLabel* l);
+    //class YanParameter* findFieldWithLabel(class YanFieldLabel* l);
     void remove(class YanParameter* p);
     bool remove(class Symbol* s);
+
+    void yanFieldClicked(YanField* f, const juce::MouseEvent& e) override;
 
     //
     // Juce
@@ -110,6 +123,7 @@ class ParameterForm : public juce::Component, public juce::DragAndDropTarget
 
     Listener* listener = nullptr;
     bool draggable = false;
+    bool locking = false;
     
     juce::String title;
 

@@ -60,6 +60,17 @@ void YanParameter::init(Symbol* s)
     }
 }
 
+void YanParameter::setDisabled(bool b)
+{
+    if (isCombo)
+      combo.setDisabled(b);
+    else if (isCheckbox)
+      checkbox.setDisabled(b);
+    else
+      input.setDisabled(b);
+    YanField::setDisabled(b);
+}
+
 int YanParameter::getPreferredComponentWidth()
 {
     int width = 0;

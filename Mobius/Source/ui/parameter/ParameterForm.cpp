@@ -24,6 +24,11 @@ void ParameterForm::setDraggable(bool b)
     draggable = b;
 }
 
+void ParameterForm::setLocking(bool b)
+{
+    locking = b;
+}
+
 void ParameterForm::setTitle(juce::String s)
 {
     title = s;
@@ -100,8 +105,9 @@ void ParameterForm::paint(juce::Graphics& g)
  * If we already have this symbol in the form, ignore it, otherwise add it.
  * Weird interface, a combination of adding and loading.
  */
-void ParameterForm::add(Provider* p, Symbol* s, ValueSet* values)
+YanParameter* ParameterForm::add(Provider* p, Symbol* s, ValueSet* values)
 {
+    YanParameter* result = nullptr;
     YanField* existing = form.find(s->getDisplayName());
     if (existing == nullptr) {
         YanParameter* field = new YanParameter(s->getDisplayName());
@@ -122,10 +128,28 @@ void ParameterForm::add(Provider* p, Symbol* s, ValueSet* values)
         field->load(p, v);
         
         forceResize();
+
+        // hacking: support click callbacks for locking, needs to be more general
+        if (locking)
+          field->setLabelListener(this);
+        
+        result = field;
+    }
+    return result;
+}
+
+void ParameterForm::yanFieldClicked(YanField* f, const juce::MouseEvent& e)
+{
+    if (listener != nullptr) {
+        // dangerous
+        YanParameter* yp = static_cast<YanParameter*>(f);
+        listener->parameterFormClick(this, yp, e);
     }
 }
 
+
 // temporary: remove this
+#if 0
 YanParameter* ParameterForm::findFieldWithLabel(YanFieldLabel* l)
 {
     YanParameter* found = nullptr;
@@ -137,6 +161,7 @@ YanParameter* ParameterForm::findFieldWithLabel(YanFieldLabel* l)
     }
     return found;
 }
+#endif
 
 // temporary: remove this
 void ParameterForm::remove(YanParameter* p)
@@ -257,9 +282,16 @@ void ParameterForm::save(ValueSet* values)
 {
     for (auto field : parameters) {
         Symbol* s = field->getSymbol();
-        MslValue v;
-        field->save(&v);
-        values->set(s->name, v);
+        if (field->isDisabled()) {
+            // this is only used for SessionTrackForms where disabling
+            // a field means to remove this from the value set
+            values->remove(s->name);
+        }
+        else {
+            MslValue v;
+            field->save(&v);
+            values->set(s->name, v);
+        }
     }
 }
 

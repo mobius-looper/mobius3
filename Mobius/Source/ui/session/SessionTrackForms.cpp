@@ -26,9 +26,10 @@ SessionTrackForms::~SessionTrackForms()
 {
 }
 
-void SessionTrackForms::initialize(Provider* p, Session::Track* def)
+void SessionTrackForms::initialize(Provider* p, Session* s, Session::Track* def)
 {
     provider = p;
+    session = s;
     sessionTrack = def;
     values = sessionTrack->ensureParameters();
     
@@ -61,6 +62,9 @@ void SessionTrackForms::save()
 void SessionTrackForms::cancel()
 {
     forms.cancel();
+    session = nullptr;
+    sessionTrack = nullptr;
+    values = nullptr;
 }
 
 void SessionTrackForms::decacheForms()
@@ -98,6 +102,8 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
         form = new ParameterForm();
         // allow fields to gbe dragged out
         form->setDraggable(true);
+        // this is what causes label clicks to be passed up
+        form->setLocking(true);
         // allow symbols to be dragged in
         form->setListener(this);
         
@@ -115,14 +121,67 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
             else {
                 // only add it if we have it
                 // OR if it is flagged as noDefault
-                ParameterProperties* props = s->parameterProperties.get();
-                MslValue* v = values->get(s->name);
-                if (v != nullptr || (props != nullptr && props->noDefault))
-                  form->add(provider, s, values);
+                bool sparse = false;
+                if (sparse) {
+                    ParameterProperties* props = s->parameterProperties.get();
+                    MslValue* v = values->get(s->name);
+                    if (v != nullptr || (props != nullptr && props->noDefault))
+                      (void)form->add(provider, s, values);
+                }
+                else {
+                    MslValue* v = values->get(s->name);
+                    if (v != nullptr) {
+                        // normal overridden value
+                        (void)form->add(provider, s, values);
+                    }
+                    else {
+                        // there is no value but we can show the default
+                        // !! this isn't enough, because the session forms may
+                        // not have been saved, either need to save them when
+                        // tabs change or locate the YanParameter that is holding the edited value
+                        ValueSet* globals = nullptr;
+                        if (session == nullptr)
+                          Trace(1, "SessionTrackForms: Uninitialized Session");
+                        else
+                          globals = session->ensureGlobals();
+                        YanParameter* field = form->add(provider, s, globals);
+                        field->setDisabled(true);
+                    }
+                }
             }
         }
     }
     return form;
+}
+
+void SessionTrackForms::parameterFormClick(ParameterForm* f, YanParameter* p, const juce::MouseEvent& e)
+{
+    (void)f;
+    (void)e;
+    toggleParameterLock(p);
+}
+
+void SessionTrackForms::toggleParameterLock(YanParameter* p)
+{
+    Symbol* s = p->getSymbol();
+    
+    if (p->isDisabled()) {
+        p->setDisabled(false);
+        MslValue* current = values->get(s->name);
+        p->load(provider, current);
+    }
+    else {
+        // if they changed the value can save it so it will be restored if they
+        // decide to immediately re-enable, this does however mean that you must filter
+        // disabled field values on save()
+        MslValue current;
+        p->save(&current);
+        values->set(s->name, current);
+
+        p->setDisabled(true);
+        MslValue* dflt = session->get(s->name);
+        p->load(provider, dflt);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

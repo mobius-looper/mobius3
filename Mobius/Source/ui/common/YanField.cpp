@@ -19,6 +19,15 @@ YanFieldLabel::YanFieldLabel(YanField* p)
     parent = p;
 }
 
+// ugly, YanFIeld controls the initialization color, be consistent
+void YanFieldLabel::setDisabledColor(bool dis)
+{
+    if (dis)
+      setColour (juce::Label::textColourId, juce::Colours::grey);
+    else
+      setColour (juce::Label::textColourId, juce::Colours::orange);
+}
+
 /**
  * Drag is only necessary for ParameterForm and only in a few usages.
  * Is it bad to assume we can always be a drag initiator?
@@ -51,6 +60,21 @@ void YanFieldLabel::mouseDown(const juce::MouseEvent& e)
     }
 }
 
+void YanFieldLabel::setListener(Listener* l)
+{
+    listener = l;
+}
+
+void YanFieldLabel::mouseUp(const juce::MouseEvent& e)
+{
+    (void)e;
+    if (listener != nullptr && parent != nullptr) {
+
+        // !! if dragable need to suppress if we're dragging?
+        listener->yanFieldClicked(parent, e);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Field
@@ -77,10 +101,17 @@ YanField::~YanField()
 {
 }
 
+void YanField::setLabelListener(YanFieldLabel::Listener* l)
+{
+    label.setListener(l);
+}
+
+#if 0
 bool YanField::hasLabel(YanFieldLabel* l)
 {
     return (l == &label);
 }
+#endif
 
 void YanField::setLabel(juce::String s)
 {
@@ -142,6 +173,23 @@ void YanField::setDragDescription(juce::String s)
 juce::String YanField::getDragDescription()
 {
     return dragDescription;
+}
+
+/**
+ * This is normally overridden by the subclass to take the
+ * appropriate action.
+ */
+void YanField::setDisabled(bool b)
+{
+    if (b != disabled) {
+        label.setDisabledColor(b);
+        disabled = b;
+    }
+}
+
+bool YanField::isDisabled()
+{
+    return disabled;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -214,6 +262,13 @@ YanInput::YanInput(juce::String label, int argCharWidth, bool argReadOnly) : Yan
     }
 
     addAndMakeVisible(text);
+}
+
+void YanInput::setDisabled(bool b)
+{
+    text.setEnabled(!b);
+    // keep this in sync so we don't have to overload isDisabled
+    YanField::setDisabled(b);
 }
 
 void YanInput::textEditorTextChanged(juce::TextEditor& ed)
@@ -340,6 +395,13 @@ YanCheckbox::YanCheckbox(juce::String label) : YanField(label)
     checkbox.setSize(YanCheckboxWidth, YanCheckboxHeight);
 
     addAndMakeVisible(checkbox);
+}
+
+void YanCheckbox::setDisabled(bool b)
+{
+    checkbox.setEnabled(!b);
+    // keep this in sync so we don't have to overload isDisabled
+    YanField::setDisabled(b);
 }
 
 int YanCheckbox::getPreferredComponentWidth()
@@ -606,6 +668,13 @@ YanCombo::YanCombo(juce::String label) : YanField(label)
 
 YanCombo::~YanCombo()
 {
+}
+
+void YanCombo::setDisabled(bool b)
+{
+    combobox.setEnabled(!b);
+    // keep this in sync so we don't have to overload isDisabled
+    YanField::setDisabled(b);
 }
 
 void YanCombo::setListener(YanCombo::Listener* l)

@@ -31,7 +31,7 @@ class SessionTrackForms : public ParameterTreeForms,
     SessionTrackForms();
     ~SessionTrackForms();
 
-    void initialize(class Provider* p, class Session::Track* def);
+    void initialize(class Provider* p, class Session* s, class Session::Track* def);
     void save();
     void cancel();
     void decacheForms();
@@ -39,12 +39,17 @@ class SessionTrackForms : public ParameterTreeForms,
     class ParameterForm* parameterFormCollectionCreate(juce::String formid) override;
     
     void parameterFormDrop(class ParameterForm* src, juce::String desc) override;
+    void parameterFormClick(class ParameterForm* src, class YanParameter* p, const juce::MouseEvent& e) override;
 
     void dropTreeViewDrop(DropTreeView* dtv, const juce::DragAndDropTarget::SourceDetails& details) override;
 
   private:
     
     class Provider* provider = nullptr;
+    class Session* session = nullptr;
     class Session::Track* sessionTrack = nullptr;
     ValueSet* values = nullptr;
+
+    void toggleParameterLock(class YanParameter* p);
+    
 };

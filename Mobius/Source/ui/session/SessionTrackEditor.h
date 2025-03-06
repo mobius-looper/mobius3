@@ -58,6 +58,7 @@ class SessionTrackEditor : public juce::Component,
   private:
 
     class Provider* provider = nullptr;
+    class Session* session = nullptr;
     int currentTrack = 0;
     
     std::unique_ptr<class SessionTrackTable> table;

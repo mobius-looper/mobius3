@@ -20,7 +20,8 @@ class YanParameter : public YanField
     ~YanParameter();
 
     void init(class Symbol* s);
-
+    void setDisabled(bool b) override;
+    
     int getPreferredComponentWidth() override;
     void resized() override;
 

@@ -99,6 +99,7 @@ void SessionTrackEditor::resized()
 
 void SessionTrackEditor::load(Session* s)
 {
+    session = s;
     states.clear();
 
     // ownership of the Session::Tracks transfers to the TrackStates
@@ -158,6 +159,7 @@ void SessionTrackEditor::save(Session* dest)
  */
 void SessionTrackEditor::cancel()
 {
+    session = nullptr;
     for (auto state : states) {
         SessionTrackForms* forms = state->getForms();
         if (forms != nullptr)
@@ -383,7 +385,7 @@ void SessionTrackEditor::show(int row)
         if (forms == nullptr) {
             // first time here
             forms = new SessionTrackForms();
-            forms->initialize(provider, state->getTrack());
+            forms->initialize(provider, session, state->getTrack());
             state->setForms(forms);
             addChildComponent(forms);
             // this will need the size of the others
