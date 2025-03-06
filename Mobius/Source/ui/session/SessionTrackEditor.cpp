@@ -19,10 +19,6 @@ SessionTrackEditor::SessionTrackEditor()
 
     addAndMakeVisible(tracks.get());
 
-    // one of these will become visible on the first load
-    addChildComponent(audioForms);
-    addChildComponent(midiForms);
-    
     tracks->setListener(this);
 
     currentTrack = 0;
@@ -39,15 +35,12 @@ void SessionTrackEditor::initialize(Provider* p)
     provider = p;
     
     tracks->initialize(p, this);
-
-    audioForms.initialize(p, juce::String("sessionAudioTrack"));
-    midiForms.initialize(p, juce::String("sessionMidiTrack"));
 }
 
 void SessionTrackEditor::decacheForms()
 {
-    audioForms.decache();
-    midiForms.decache();
+    for (auto form : trackForms)
+      form->decache();
 }
 
 void SessionTrackEditor::resized()
@@ -59,8 +52,8 @@ void SessionTrackEditor::resized()
     // the same size, give it a little extra
     tracks->setBounds(area.removeFromLeft(204));
     
-    audioForms.setBounds(area);
-    midiForms.setBounds(area);
+    for (auto form : trackForms)
+      form->setBounds(area);
 }
 
 void SessionTrackEditor::load(Session* s)
@@ -77,40 +70,20 @@ void SessionTrackEditor::load(Session* s)
 }
 
 /**
- * Save is a problem.
- * 
- * SessionGlobalEditor was able to keep all editing state in the Forms
- * which could then just be dumped into the destination Session.  And you can't edit
- * globals outside the session editor.
+ * Save is complicated.
  *
- * TrackEditor is more complex because it has been dumping intermediate state
- * into the initial loaded Session as it transitions between tracks.  But not all
- * forms were displayed so some of the editing state is in the initial Session and some
- * is in the Forms.
+ * If forms were displayed for a track, they need to be saved to our
+ * edited Session copy.
  *
- * So we have a data merge problem.  You can't just replace the ValueSets in the
- * destination session with the ValueSets in the edited session because not everything
- * in the Session was displayed in the forms and some parameters may have changed
- * outside the SessionEditor, such as in the MixerEditor or something new in the future.
- *
- * The only things we are allowed to touch are the things managed by the forms in use.
- * So the transfer is somewhat awkward:
- *
- *     for each track
- *        load all forms from the initial session
- *        save all forms into the destination session
- *
- * The Track forms effectively perform the filtered merge.
- *
- * Then it gets worse.  Tracks may have been added or deleted so positions
- * of the tracks may not be the same in the edited and destination Session.
- * To match them we have to use the unique track "ids" in the same way that
- * TrackManager does when it incorporates a new session.
+ * After that we need to replace Session::Tracks in the destination session
+ * with ours, adding new ones, and removing ones that were deleted.
  */
+
 void SessionTrackEditor::save(Session* dest)
 {
-    // save editing state for the current track back to the intermediate session
-    saveForms(currentTrack);
+    // get everything out of the forms and back into the Session copy
+    for (auto form : trackForms)
+      form->save();
 
     // bring out the source and destination tracks
     juce::Array<Session::Track*> editedTracks;
@@ -121,8 +94,10 @@ void SessionTrackEditor::save(Session* dest)
 
     juce::Array<Session::Track*> resultTracks;
 
-    // now load the intermediate session back into the forms one at a time
-    // but save them to the destination tracks
+    // could be smarter and avoid some memory churn by only replacing
+    // Session::Tracks that were in fact edited, which we can tell if there
+    // was a SessionTrackForms object instantiated for it
+    
     int srcIndex = 0;
     while (srcIndex < editedTracks.size()) {
         
@@ -138,18 +113,9 @@ void SessionTrackEditor::save(Session* dest)
         else {
             // this is the only thing that isn't in the ValueSet
             destTrack->name = srcTrack->name;
-            
-            ValueSet* srcValues = srcTrack->ensureParameters();
-            ValueSet* destValues = destTrack->ensureParameters();
 
-            if (srcTrack->type == Session::TypeMidi) {
-                midiForms.load(srcValues);
-                midiForms.save(destValues);
-            }
-            else {
-                audioForms.load(srcValues);
-                audioForms.save(destValues);
-            }
+            ValueSet* srcValues = srcTrack->stealParameters();
+            destTrack->replaceParameters(srcValues);
 
             // move the merged destTrack from the original list onto the result
             originalTracks.removeAllInstancesOf(destTrack);
@@ -194,8 +160,8 @@ void SessionTrackEditor::deleteRemaining(juce::Array<Session::Track*>& array)
  */
 void SessionTrackEditor::cancel()
 {
-    audioForms.cancel();
-    midiForms.cancel();
+    for (auto form : trackForms)
+      form->cancel();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -222,11 +188,7 @@ void SessionTrackEditor::typicalTableChanged(TypicalTable* t, int row)
         Trace(1, "SessionTrackEditor: Change alert with no selected track number");
     }
     else if (newRow != currentTrack) {
-        
-        saveForms(currentTrack);
-        
         loadForms(newRow);
-        
         currentTrack = newRow;
     }
 }
@@ -251,13 +213,14 @@ void SessionTrackEditor::typicalTableChanged(TypicalTable* t, int row)
 void SessionTrackEditor::move(int sourceRow, int desiredRow)
 {
     if (sourceRow != desiredRow) {
-        saveForms(currentTrack);
 
         int adjustedRow = desiredRow;
         if (desiredRow > sourceRow)
           adjustedRow--;
 
         // this does the structural changes in the Session
+        // necessary because the table builds itself from the Session rather
+        // than the other way around
         session->move(sourceRow, adjustedRow);
 
         tracks->reload();
@@ -327,30 +290,45 @@ void SessionTrackEditor::bulkReconcile(int audioCount, int midiCount)
 /**
  * Load the current set of editing forms with data from
  * the selected track.
+ *
+ * To avoid an ugly correspondence, I'm just saving the forms directly
+ * in the table rows so we can add/remove/move/ them without having
+ * to maintain order in a parallel array or do id searches.
  */
 void SessionTrackEditor::loadForms(int row)
 {
-    Session::Track* trackdef = session->getTrackByIndex(row);
-    if (trackdef == nullptr) {
-        Trace(1, "SessionTrackEditor: Invalid track index %d", row);
-    }
-    else {
-        ValueSet* values = trackdef->ensureParameters();
+    SessionTrackForms* forms = nullptr;
+    SessionTrackTableRow* row = tracks.getRow(row);
+    if (row != nullptr) {
+        forms = row->forms;
+        if (forms == nullptr) {
+            // first time here
+            Session::Track* trackdef = session->getTrackByIndex(row);
+            if (trackdef == nullptr) {
+                Trace(1, "SessionTrackEditor: Invalid track index %d", row);
+            }
+            else {
+                ValueSet* values = trackdef->ensureParameters();
 
-        // demote the Session::Track::name into the ValueSet so it
-        // can be dealt with through the ParamTrackName parameter like
-        // any of the others
-        values->setJString(SessionTrackName, trackdef->name);
-        
-        if (trackdef->type == Session::TypeMidi) {
-            midiForms.load(values);
-            audioForms.setVisible(false);
-            midiForms.setVisible(true);
+                // demote the Session::Track::name into the ValueSet so it
+                // can be dealt with through the ParamTrackName parameter like
+                // any of the others
+                values->setJString(SessionTrackName, trackdef->name);
+
+                forms = new SessionTrackForms();
+                forms->initialize(provider, trackdef);
+                trackForms.add(forms);
+                addChildComponent(forms);
+            }
         }
-        else {
-            audioForms.load(values);
-            midiForms.setVisible(false);
-            audioForms.setVisible(true);
+    }
+
+    if (forms != nullptr) {
+        for (auto f : trackForms) {
+            if (f == forms)
+              f->setVisible(true);
+            else
+              f->setVisible(false);
         }
     }
 }

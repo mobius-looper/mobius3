@@ -23,6 +23,9 @@ SessionParameterEditor::SessionParameterEditor()
 void SessionParameterEditor::initialize(Provider* p)
 {
     provider = p;
+
+    // exclude parameters that can't have default session values
+    tree.setFilterNoDefault(true);
     
     tree.initializeDynamic(provider);
     // get clicks from the tree

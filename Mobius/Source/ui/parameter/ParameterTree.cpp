@@ -33,6 +33,24 @@ void ParameterTree::setDraggable(bool b)
     draggable = b;
 }
 
+/**
+ * Set this if you want the tree builder to eliminate symbols flagged with the noDefault
+ * option.
+ */
+void ParameterTree::setFilterNoDefault(bool b)
+{
+    filterNoDefault = b;
+}
+
+/**
+ * Set this if the tree builder needs to exclude symbols that only apply to
+ * specific track types.
+ */
+void ParameterTree::setTrackType(SymbolTrackType t)
+{
+    trackType = t;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Common Interface
@@ -185,30 +203,55 @@ void ParameterTree::initializeDynamic(Provider* p)
 
     for (auto s : p->getSymbols()->getSymbols()) {
 
-        if (s->parameterProperties != nullptr && s->treePath.length() > 0) {
+        ParameterProperties* props = s->parameterProperties.get();
 
-            juce::StringArray path = parsePath(s->treePath);
-            SymbolTreeItem* parent = internPath(&root, path);
+        if (props != nullptr && s->treePath.length() > 0) {
+
+            if (!isFiltered(s, props)) {
+
+                juce::StringArray path = parsePath(s->treePath);
+                SymbolTreeItem* parent = internPath(&root, path);
             
-            parent->setAnnotation(s->treePath);
-            parent->setNoSelect(false);
+                parent->setAnnotation(s->treePath);
+                parent->setNoSelect(false);
 
-            juce::String nodename = s->name;
-            if (s->parameterProperties != nullptr)
-              nodename = s->parameterProperties->displayName;
+                juce::String nodename = s->name;
+                if (props->displayName.length() > 0)
+                  nodename = props->displayName;
             
-            SymbolTreeItem* neu = new SymbolTreeItem(nodename);
-            neu->setSymbol(s);
+                SymbolTreeItem* neu = new SymbolTreeItem(nodename);
+                neu->setSymbol(s);
 
-            if (draggable) {
-                // for the description, use a prefix so the receiver
-                // knows where it came from followed by the canonical symbol name
-                neu->setDragDescription(juce::String(DragPrefix) + s->name);
+                if (draggable) {
+                    // for the description, use a prefix so the receiver
+                    // knows where it came from followed by the canonical symbol name
+                    neu->setDragDescription(juce::String(DragPrefix) + s->name);
+                }
+            
+                parent->addSubItemSorted(comparator, neu);
             }
-            
-            parent->addSubItemSorted(comparator, neu);
         }
     }
+}
+
+/**
+ * Before adding a parameter Symbol to the tree, check for various filtering options.
+ */
+bool ParameterTree::isFiltered(Symbol* s, ParameterProperties* props)
+{
+    bool filtered = false;
+
+    // first the noDefault option
+    if (filterNoDefault)
+      filtered = props->noDefault;
+
+    // then track types
+    if (!filtered && trackType != TrackTypeNone) {
+        if (s->trackTypes.size() > 0) {
+            filtered = !s->trackTypes.contains(trackType);
+        }
+    }
+    return filtered;
 }
 
 /**
@@ -217,7 +260,7 @@ void ParameterTree::initializeDynamic(Provider* p)
  */
 void ParameterTree::internCategories()
 {
-    juce::StringArray categories ("Functions", "Sync", "Mixer", "Quantize", "Switch", "Effects", "General", "Advanced");
+    juce::StringArray categories ("General", "Sync", "Follow", "Mixer", "Functions", "Quantize", "Switch", "Effects", "Advanced");
 
     for (auto cat : categories) {
         SymbolTreeItem* item = root.internChild(cat);

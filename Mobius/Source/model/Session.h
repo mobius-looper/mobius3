@@ -73,6 +73,10 @@ class Session
 
         juce::OwnedArray<class SessionMidiDevice> devices;
 
+        // for the session editor
+        ValueSet* stealParameters();
+        void replaceParameters(ValueSet* src);
+
       private:
 
         Session* session = nullptr;

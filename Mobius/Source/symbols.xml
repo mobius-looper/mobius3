@@ -207,13 +207,13 @@ Once those models are fully converted, these symbols can be removed.
 
   <ParameterScope name='preset' query='true'>
      
-    <Parameter name='subcycles' low='1' high='128' tree='General'/>
+    <Parameter name='subcycles' low='1' high='128' tree='Quantize'/>
 
     <Parameter name='multiplyMode' values='normal,simple' tree='Functions'/>
 
     <Parameter name='shuffleMode' values='reverse,shift,swap,random' tree='Functions'/>
 
-    <Parameter name='altFeedbackEnable' type='bool' tree='General'/>
+    <Parameter name='altFeedbackEnable' type='bool' tree='Mixer'/>
 
     <Parameter name='emptyLoopAction'
                values='none,record,copy,copyTime'
@@ -292,10 +292,10 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='switchVelocity' type='bool' tree='Switch'/>
 
     <!-- these are more like loopCount and don't need to be queryable -->
-    <Parameter name='maxUndo' options='noBinding' tree='General'/>
-    <Parameter name='maxRedo' options='noBinding' tree='General'/>
+    <Parameter name='maxUndo' options='noBinding' tree='Functions'/>
+    <Parameter name='maxRedo' options='noBinding' tree='Functions'/>
     
-    <Parameter name='noFeedbackUndo' type='bool' options='noBinding' tree='General'/>
+    <Parameter name='noFeedbackUndo' type='bool' options='noBinding' tree='Advanced'/>
     <Parameter name='noLayerFlattening' type='bool' options='noBinding' tree='Advanced'
                query='false'/>
     
@@ -504,6 +504,27 @@ Once those models are fully converted, these symbols can be removed.
 
   <ParameterScope name='track' query='true'>
 
+    <!-- The first few are the noDefault parameters, they may not have a session default value
+         and must be specified for each track individually
+    -->
+
+    <!-- The name is not actually stored in the ValueSet, it will be a top-level
+         property of the Session::Track object.  But it can be trreated as if
+         it were a normal parameter.  -->
+    <Parameter name='trackName' type='string' options='noBinding,noDefault' tree='General'/>
+
+    <Parameter name='trackGroup' tree='General'
+               options='noBinding,noDefault,dynamic,resetRetain'
+               displayType='combo' displayHelper='trackGroup'/>
+
+    <Parameter name='focus' type='bool' options='resetRetain,noBinding,noDefault' tree='General'/>
+    
+    <Parameter name='trackOverlay' tree='General'
+               type='structure' 
+               displayType='combo' displayHelper='parameterSet'
+               options='noBinding,noDefault'>
+    </Parameter>
+
     <!-- the replacement for oldSyncSource defined SyncSource in SyncConstants.h -->
     <Parameter name='syncSource' values='none,transport,track,host,midi,master'
                tree='Sync'/>
@@ -512,79 +533,71 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='syncSourceAlternate' values='track,transport'/>
     
     <!-- the replacements for slaveSyncUnit, used for all except track -->
-    <Parameter name='syncUnit' values='beat,bar,loop'
-               tree='Sync'/>
+    <Parameter name='syncUnit' values='beat,bar,loop' tree='Sync'/>
     
     <!-- the replacement for oldTrackSyncUnit -->
-    <Parameter name='trackSyncUnit' values='subcycle,cycle,loop'
-               tree='Sync'/>
+    <Parameter name='trackSyncUnit' values='subcycle,cycle,loop' tree='Sync'/>
 
     <!-- these apply only to Midi tracks ATM -->
     
-    <Parameter name='leaderType' options='noBinding'
+    <Parameter name='leaderType' tree='Follow' track='midi' options='noBinding'
                values='none,track,trackSyncMaster, transportMaster,focused,host,midi,transport'
-               valueLabels='None,Track Number,Track Sync Master,Transport Master,Focused,Host,MIDI In'
-               />
+               valueLabels='None,Track Number,Track Sync Master,Transport Master,Focused,Host,MIDI In'/>
 
-    <Parameter name='leaderSwitchLocation' options='noBinding'
-               values='none,loop,cycle,subcycle'
-               />
+    <Parameter name='leaderSwitchLocation' options='noBinding' tree='Follow' track='midi'
+               values='none,loop,cycle,subcycle'/>
     
-    <Parameter name='leaderTrack' type='int'  options='noBinding'/>
-    <Parameter name='followRecord' type='bool'  options='noBinding'/>
-    <Parameter name='followRecordEnd' type='bool'  options='noBinding'/>
-    <Parameter name='followSize' type='bool'  options='noBinding'/>
-    <Parameter name='followLocation' type='bool'  options='noBinding'/>
-    <Parameter name='followMute' type='bool'  options='noBinding'/>
-    <Parameter name='followStartPoint' type='bool'  options='noBinding'/>
-    <Parameter name='followRate' type='bool'  options='noBinding'/>
-    <Parameter name='followDirection' type='bool'  options='noBinding'/>
-    <Parameter name='followSwitch' type='bool'  options='noBinding'/>
-    <Parameter name='followCut' type='bool'  options='noBinding'/>
-    <Parameter name='followQuantizeLocation' type='bool'  options='noBinding'/>
-    <Parameter name='followerMuteStart' type='bool'  options='noBinding'/>
+    <Parameter name='leaderTrack' type='int'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followRecord' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followRecordEnd' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followSize' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followLocation' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followMute' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followStartPoint' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followRate' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followDirection' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followSwitch' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followCut' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followQuantizeLocation' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <Parameter name='followerMuteStart' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+
+    <!-- experiments that never finished -->
     <Parameter name='noReset' type='bool'  options='noBinding'/>
     <Parameter name='noEdit' type='bool'  options='noBinding'/>
-    <Parameter name='midiChannelOverride'
+    
+    <Parameter name='midiInput' track='midi' tree='Midi'
+               displayType='combo' displayHelper='midiInput' options='noBinding'/>
+    <Parameter name='midiOutput' track='midi' tree='Midi'
+               displayType='combo' displayHelper='midiOutput' options='noBinding'/>
+    <Parameter name='midiThru' track='midi' tree='Midi'
+               type='bool' options='noBinding'/>
+    
+    <Parameter name='midiChannelOverride' track='midi' tree='Midi'
                values='off,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16'  options='noBinding'/>
 
-    <!-- new way to specify groups for both audio and MIDI -->
-
-    <Parameter name='trackGroup' displayType='combo' displayHelper='trackGroup'
-               options='noBinding,dynamic,resetRetain'/>
-
-    <!-- for MIDI tracks only -->
-    
-    <Parameter name='midiInput' displayType='combo' displayHelper='midiInput' options='noBinding'/>
-    <Parameter name='midiOutput' displayType='combo' displayHelper='midiOutput' options='noBinding'/>
-    <Parameter name='midiThru' type='bool' options='noBinding'/>
-    
     <!-- these are the ones from SetupTrack that we still use -->
 
-    <!-- The name is not actually stored in the ValueSet, it will be a top-level
-         property of the Session::Track object.  But it can be trreated as if
-         it were a normal parameter.  -->
-    <Parameter name='trackName' type='string' options='noBinding'/>
-
-    <Parameter name='trackOverlay'
-               type='structure' 
-               displayType='combo' displayHelper='parameterSet'
-               options='noBinding'>
-    </Parameter>
-
-    <Parameter name='focus' type='bool' options='resetRetain,noBinding'/>
-    <Parameter name='mono' type='bool' options='noBinding'/>
-    <Parameter name='input' high='127' defaultValue='127'
-               options='control,resetRetain,mayFocus'
-               tree='Mixer'/>
-    <Parameter name='output' high='127' defaultValue='127'
-               options='control,resetRetain,mayFocus' tree='Mixer'/>
-    <Parameter name='feedback' high='127' defaultValue='127'
-               options='control,resetRetain,mayFocus' tree='Mixer'/>
-    <Parameter name='altFeedback' high='127'defaultValue='127'
-               options='control,resetRetain,mayFocus' tree='Mixer'/>
-    <Parameter name='pan' high='127' defaultValue='64'
-               options='control,resetRetain,mayFocus' tree='Mixer'/>
+    <Parameter name='mono' type='bool' options='noBinding' tree='Ports' track='audio'/>
+    
+    <Parameter name='input' tree='Mixer' track='audio'
+               high='127' defaultValue='127'
+               options='control,resetRetain,mayFocus'/>
+    
+    <Parameter name='output' tree='Mixer' track='audio'
+               high='127' defaultValue='127'
+               options='control,resetRetain,mayFocus'/>
+    
+    <Parameter name='feedback' tree='Mixer' track='audio'
+               high='127' defaultValue='127'
+               options='control,resetRetain,mayFocus'/>
+    
+    <Parameter name='altFeedback' tree='Mixer' track='audio'
+               high='127'defaultValue='127'
+               options='control,resetRetain,mayFocus'/>
+    
+    <Parameter name='pan' tree='Mixer' track='audio'
+               high='127' defaultValue='64'
+               options='control,resetRetain,mayFocus'/>
 
     <!-- Ports are unusual
          The port numbers can be different for standalone or plugin operation since
@@ -592,10 +605,14 @@ Once those models are fully converted, these symbols can be removed.
          by the SessionEditor during configuration editing so both may be adjusted.
          At runtime, always use the unqualified names and the appropriate set will be selected.
     -->
-    <Parameter name='audioInputPort' low='0' high='31' displayBase='1' options='noBinding' query='false'/>
-    <Parameter name='audioOutputPort' low='0' high='31' displayBase='1' options='noBinding' query='false'/>
-    <Parameter name='pluginInputPort' low='0' high='31' displayBase='1'options='noBinding' query='false'/>
-    <Parameter name='pluginOutputPort' low='0' high='31' displayBase='1' options='noBinding' query='false'/>
+    <Parameter name='audioInputPort' tree='Ports' track='audio'
+               low='0' high='31' displayBase='1' options='noBinding' query='false'/>
+    <Parameter name='audioOutputPort' tree='Ports' track='audio'
+               low='0' high='31' displayBase='1' options='noBinding' query='false'/>
+    <Parameter name='pluginInputPort' tree='Ports' track='audio'
+               low='0' high='31' displayBase='1'options='noBinding' query='false'/>
+    <Parameter name='pluginOutputPort' tree='Ports' track='audio'
+               low='0' high='31' displayBase='1' options='noBinding' query='false'/>
 
     <Parameter name='inputPort' low='0' high='31' displayBase='1' options='noBinding'/>
     <Parameter name='outputPort' low='0' high='31' displayBase='1' options='noBinding'/>

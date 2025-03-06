@@ -39,7 +39,8 @@ class SessionTrackEditor : public juce::Component,
     int currentTrack = 0;
     
     std::unique_ptr<class SessionTrackTable> tracks;
-
+    juce::OwnedArray<class SessionTrackForms> trackForms;
+    
     SessionTreeForms audioForms;
     SessionTreeForms midiForms;
 

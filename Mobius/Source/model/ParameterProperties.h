@@ -121,7 +121,13 @@ class ParameterProperties
      * Indicates that this parameter cannot be bound to MIDI or host parameters
      * so keep it out of the operation selection UI.
      */
-    bool noBinding;
+    bool noBinding = false;
+
+    /**
+     * Indicates that this parameter cannot have a common session default value.
+     * It must be given an explicit value in the SessionTrack if the track wants one.
+     */
+    bool noDefault = false;
 
     /**
      * When true, this may be added to Focus Lock Parameters in the GroupDefinition.

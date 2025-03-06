@@ -80,6 +80,16 @@ void SessionTrackTable::initialize(Provider* p, SessionTrackEditor* e)
     TypicalTable::initialize();
 }
 
+SessionTrackTableRow* SessionTrackTable::getRow(int index)
+{
+    SessionTrackTableRow* row = nullptr;
+    if (index >= 0 && index < tracks.size())
+      row = tracks[index];
+    else
+      Trace(1, "SessionTrackTable: Index out of range %d", index);
+    return row;
+}
+
 void SessionTrackTable::load(Provider* p, Session* s)
 {
     (void)p;

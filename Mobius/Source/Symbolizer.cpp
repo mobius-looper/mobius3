@@ -332,14 +332,14 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
 
 void Symbolizer::parseTrackTypes(juce::XmlElement* el, Symbol* s)
 {
-    juce::String trackTypes = el->getStringAttribute("trackTypes");
+    juce::String trackTypes = el->getStringAttribute("track");
     if (trackTypes.length() > 0) {
         juce::StringArray types = juce::StringArray::fromTokens(trackTypes, ",", "");
         for (auto type : types) {
-            if (type == "Audio") {
+            if (type == "Audio" || type == "audio") {
                 s->trackTypes.add(TrackTypeAudio);
             }
-            else if (type == "Midi") {
+            else if (type == "Midi" || type == "midi") {
                 s->trackTypes.add(TrackTypeMidi);
             }
             else {
@@ -469,6 +469,7 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope, bo
         props->transient = options.contains("transient");
         props->juceValues = options.contains("juceValues");
         props->noBinding = options.contains("noBinding");
+        props->noDefault = options.contains("noDefault");
         props->displayBase = el->getIntAttribute("displayBase");
         props->displayType = el->getStringAttribute("displayType");
         props->displayHelper = el->getStringAttribute("displayHelper");

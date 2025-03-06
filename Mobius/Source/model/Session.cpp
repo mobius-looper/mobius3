@@ -489,6 +489,16 @@ ValueSet* Session::Track::getParameters()
     return parameters.get();
 }
 
+ValueSet* Session::Track::stealParameters()
+{
+    return parameters.release();
+}
+
+void Session::Track::replaceParameters(ValueSet* neu)
+{
+    parameters.reset(neu);
+}
+
 ValueSet* Session::Track::ensureParameters()
 {
     if (parameters == nullptr)

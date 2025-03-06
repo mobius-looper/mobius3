@@ -560,6 +560,10 @@
                 file="Source/ui/session/SessionTrackEditor.cpp"/>
           <FILE id="bxa5u6" name="SessionTrackEditor.h" compile="0" resource="0"
                 file="Source/ui/session/SessionTrackEditor.h"/>
+          <FILE id="pdNS8N" name="SessionTrackForms.cpp" compile="1" resource="0"
+                file="Source/ui/session/SessionTrackForms.cpp"/>
+          <FILE id="kSHiLN" name="SessionTrackForms.h" compile="0" resource="0"
+                file="Source/ui/session/SessionTrackForms.h"/>
           <FILE id="yWWva8" name="SessionTrackTable.cpp" compile="1" resource="0"
                 file="Source/ui/session/SessionTrackTable.cpp"/>
           <FILE id="jADQbN" name="SessionTrackTable.h" compile="0" resource="0"

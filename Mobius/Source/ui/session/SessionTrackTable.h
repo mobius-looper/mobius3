@@ -21,6 +21,7 @@ class SessionTrackTableRow
 
     juce::String name;
     bool midi = false;
+    class SessionTrackForms* forms = nullptr;
 
 };
 
@@ -38,6 +39,8 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
     void initialize(class Provider* p, class SessionTrackEditor* e);
     void load(class Provider* p, class Session* s);
     void reload();
+
+    SessionTrackTableRow* getRow(int index);
     
     bool isMidi(int row);
 

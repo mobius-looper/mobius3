@@ -27,6 +27,8 @@
 
 #include <JuceHeader.h>
 
+#include "../../model/Symbol.h"
+
 #include "SymbolTree.h"
 
 class ParameterTree : public SymbolTree
@@ -41,6 +43,8 @@ class ParameterTree : public SymbolTree
     void initializeStatic(class Provider* p, juce::String treeName);
     void initializeDynamic(class Provider* p);
     void setDraggable(bool b);
+    void setFilterNoDefault(bool b);
+    void setTrackType(SymbolTrackType t);
 
     class SymbolTreeItem* getFirst();
     void selectFirst();
@@ -48,7 +52,9 @@ class ParameterTree : public SymbolTree
   private:
 
     bool draggable = false;
-
+    bool filterNoDefault = false;
+    SymbolTrackType trackType = TrackTypeNone;
+    
     // static building
     void intern(class Provider* p, class StaticConfig* scon, class SymbolTreeItem* parent,
                 juce::String treepath, class TreeNode* node);
@@ -58,5 +64,6 @@ class ParameterTree : public SymbolTree
     // dynamic building
     void internCategories();
     void initializeSparse(class Provider* p, class ValueSet* set);
+    bool isFiltered(class Symbol* s, class ParameterProperties* props);
     
 };
