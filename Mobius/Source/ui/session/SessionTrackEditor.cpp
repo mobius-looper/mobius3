@@ -51,8 +51,9 @@ void SessionTrackEditor::TrackState::setForms(SessionTrackForms* f)
 //
 //////////////////////////////////////////////////////////////////////
 
-SessionTrackEditor::SessionTrackEditor()
+SessionTrackEditor::SessionTrackEditor(SessionEditor* se)
 {
+    sessionEditor = se;
     table.reset(new SessionTrackTable());
 
     addAndMakeVisible(table.get());

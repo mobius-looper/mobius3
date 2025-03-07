@@ -213,6 +213,55 @@ void SessionTrackForms::toggleParameterLock(YanParameter* p)
     }
 }
 
+/**
+ * Refresh handler for ParameterForms in this track.
+ */
+#if 0
+void SessionTrackForms::parameterFormRefresh(YanParametet* p)
+{
+    if (!lockingStyle) {
+        // a drag and drop form, nothing fancy 
+        MslValue* v = values->get(p->getSymbol()->name);
+        p->load(provider, v);
+
+        if (isOverlayed(p)) {
+            p->setLabelColor(juce::Colours::yellow);
+            p->setDisabled(true);
+        }
+        else {
+            p->setLabelColor(juce::Colours::orange);
+            p->setDisabled(false);
+        }
+    }
+    else {
+        // !! yes, here is the problem
+        // if you use the disabled flag to mean "locked and defaulted"
+        // then when an overlay locks it we don't know which value set to use
+        // since it looks the same as a non-overlay lock
+        // need two flags
+        //   isDefaulted - there is no value and should be disabled
+        //   isOverlain - there may or may not be a value or a default value
+        //    should also be disabled
+        if (p->isDisabled()) {
+            // a locked parameter, already knows it's color
+            
+        }
+        else {
+        }
+    }
+
+    // whatever style this is
+    if (p->isOccluded()) {
+        // load the value but disable it
+    }
+
+    if (p->isDefaulted()) {
+        // disable it and make it grey
+    }
+    
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////
 //
 // Drag and Drop

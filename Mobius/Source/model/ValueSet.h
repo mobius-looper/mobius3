@@ -134,7 +134,7 @@ class ValueSet
     bool getBool(juce::String name);
     void setBool(juce::String name, bool bval);
 
-    juce::StringArray getKeys();
+    void getKeys(juce::StringArray& keys);
 
     void assimilate(ValueSet* src);
 

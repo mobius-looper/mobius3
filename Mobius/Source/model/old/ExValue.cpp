@@ -748,8 +748,15 @@ int ExValue::compareString(ExValue *other)
 	}
 	else if (oval == nullptr)
 	  retval = 1;
-	else
-	  retval = strcmp(myval, oval);
+	else {
+        // new: for use with mode = "Foo"
+        // it is EXTREMELY common to use upcase but the
+        // mode name is lower
+        if (StringEqualNoCase(myval, oval))
+          retval = 0;
+        else
+          retval = strcmp(myval, oval);
+    }
 
 	return retval;
 }

@@ -33,6 +33,7 @@ class SessionEditor : public ConfigEditor, public BasicTabs::Listener
     // because we build forms dynamically, inner components need
     // to get to the Session being edited
     class Session* getEditingSession();
+    juce::Array<Symbol*>& getOverlaySymbols();
 
     class Provider* getProvider();
 
@@ -41,12 +42,15 @@ class SessionEditor : public ConfigEditor, public BasicTabs::Listener
   private:
 
     void loadSession();
+    void refreshOverlaySymbols();
     void saveSession(class Session* master);
     void invalidateSession();
     int getPortValue(class ValueSet* set, const char* name, int max);
 
     std::unique_ptr<class Session> session;
     std::unique_ptr<class Session> revertSession;
+    juce::String sessionOverlayName;
+    juce::Array<Symbol*> overlaySymbols;
 
     BasicTabs tabs;
     

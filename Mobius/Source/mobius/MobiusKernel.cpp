@@ -1282,15 +1282,9 @@ void MobiusKernel::doActionFromCore(UIAction* action)
         // should not have made it this far without a symbol
         Trace(1, "MobiusKernel: Core action without symbol!\n");
     }
-    else if (symbol->level == LevelKernel) {
-        (void)doKernelAction(action);
-    }
     else {
-        // pass it up to the shell
-        KernelMessage* msg = communicator->kernelAlloc();
-        msg->type = MsgAction;
-        msg->object.action = action;
-        communicator->kernelSend(msg);
+        // this handles the levels right and reclaims it
+        doAction(action);
     }
 }
 

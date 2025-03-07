@@ -2459,7 +2459,7 @@ Symbol* Mobius::findSymbol(SymbolId sid)
 }
 
 /**
- * Assignment formerly used an internal Action passed through
+ * Script assignment formerly used an internal Action passed through
  * the old Parameter.
  *
  * We can do pretty much the same thing with UIAction but forwarding
@@ -2467,34 +2467,24 @@ Symbol* Mobius::findSymbol(SymbolId sid)
  */
 void Mobius::setParameter(Symbol* s, Track* t, ExValue* value)
 {
-    Trace(1, "Mobius::setParameter Not implemented");
-    (void)s;
-    (void)t;
-    (void)value;
-#if 0    
-    // can resuse this unless it schedules
-    Action* action = si->getAction();
-    if (mParameter->scheduled)
-      action = si->getMobius()->cloneAction(action);
+    UIAction* a = mKernel->newUIAction();
+    a->symbol = s;
+    ExType type = value->getType();
+    if (type == EX_INT || type == EX_BOOL)
+      a->value = value->getInt();
+    else if (type == EX_STRING)
+      CopyString(value->getString(), a->arguments, sizeof(a->arguments));
+    else
+      Trace(1, "Mobius::setParameter Unhandled value type %d", type);
 
-    action->arg.set(value);
-
-    if (mParameter->scope == PARAM_SCOPE_GLOBAL) {
-        Trace(2, "Script %s: setting global parameter %s = %s\n",
-              si->getTraceName(), name, traceval);
-        action->setResolvedTrack(nullptr);
-        mParameter->setValue(action);
+    // if this used track scope with "for x" this needs to be converted
+    // to the LogicalTrack number to live in a UIAction
+    if (t != nullptr) {
+        LogicalTrack* lt = t->getLogicalTrack();
+        a->setScopeTrack(lt->getNumber());
     }
-    else {
-        Trace(2, "Script %s: setting track parameter %s = %s\n", 
-              si->getTraceName(), name, traceval);
-        action->setResolvedTrack(si->getTargetTrack());
-        mParameter->setValue(action);
-    }
-
-    if (mParameter->scheduled)
-      si->getMobius()->completeAction(action);
-#endif
+    
+    mKernel->doActionFromCore(a);
 }
 
 /****************************************************************************/

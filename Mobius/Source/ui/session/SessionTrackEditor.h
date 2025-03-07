@@ -35,7 +35,7 @@ class SessionTrackEditor : public juce::Component,
         std::unique_ptr<class SessionTrackForms> forms;
     };
 
-    SessionTrackEditor();
+    SessionTrackEditor(class SessionEditor* se);
     ~SessionTrackEditor();
 
     void initialize(class Provider* p);
@@ -59,6 +59,7 @@ class SessionTrackEditor : public juce::Component,
   private:
 
     class Provider* provider = nullptr;
+    class SessionEditor* sessionEditor = nullptr;
     class Session* session = nullptr;
     int currentTrack = 0;
     

@@ -7,6 +7,7 @@
 #include "../../util/Trace.h"
 #include "../../model/Session.h"
 #include "../../model/DeviceConfig.h"
+#include "../../model/ParameterSets.h"
 #include "../../Supervisor.h"
 #include "../../Provider.h"
 
@@ -25,7 +26,7 @@ SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
 {
     setName("SessionEditor");
 
-    trackEditor.reset(new SessionTrackEditor());
+    trackEditor.reset(new SessionTrackEditor(this));
     tabs.add("Tracks", trackEditor.get());
     
     parameterEditor.reset(new SessionParameterEditor());
@@ -183,6 +184,7 @@ void SessionEditor::basicTabsChanged(int oldIndex, int newIndex)
         // formerly on the globals tab, on the off chance they changed
         // the session overlay refresh the track forms
         globalEditor->save(session->ensureGlobals());
+        refreshOverlaySymbols();
         trackEditor->reload();
     }
     else if (oldIndex == 1) {
@@ -205,15 +207,55 @@ void SessionEditor::basicTabsChanged(int oldIndex, int newIndex)
 void SessionEditor::loadSession()
 {
     ValueSet* globals = session->ensureGlobals();
-    
+
     globalEditor->load(globals);
     parameterEditor->load(globals);
 
+    // SessionTrackForms need this
+    refreshOverlaySymbols();
+    
     // NOTE: Because TrackEditor needs access to all of the
     // ValueSets for every Session::Track, it is allowed to retain
     // a pointer to the initial intermediate Session
-    
     trackEditor->load(session.get());
+}
+
+/**
+ * On initial load and after displaying the parameter editor, derive
+ * the symbols that are in the sessionOverlay if any.
+ * Used by SessionTrackForms to show when track parameters will be hidden
+ * by overlays.
+ */
+void SessionEditor::refreshOverlaySymbols()
+{
+    SymbolTable* symbols = supervisor->getSymbols();
+    Symbol* ovsym = symbols->getSymbol(ParamSessionOverlay);
+    juce::String ovname = juce::String(session->getString(ovsym->name));
+    if (ovname != sessionOverlayName) {
+        sessionOverlayName = ovname;
+        overlaySymbols.clear();
+        
+        if (ovname.length() > 0) {
+            ParameterSets* sets = supervisor->getParameterSets();
+            if (sets != nullptr) {
+                ValueSet* overlay = sets->find(ovname);
+                if (overlay != nullptr) {
+                    juce::StringArray keys;
+                    overlay->getKeys(keys);
+                    for (auto key : keys) {
+                        Symbol* s = symbols->find(key);
+                        if (s != nullptr)
+                          overlaySymbols.add(s);
+                    }
+                }
+            }
+        }
+    }
+}
+
+juce::Array<Symbol*>& SessionEditor::getOverlaySymbols()
+{
+    return overlaySymbols;
 }
 
 /**

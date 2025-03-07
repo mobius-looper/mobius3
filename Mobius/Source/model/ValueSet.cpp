@@ -20,7 +20,8 @@ ValueSet::ValueSet(ValueSet* src)
 {
     name = src->name;
 
-    juce::StringArray keys = src->getKeys();
+    juce::StringArray keys;
+    src->getKeys(keys);
     for (auto key : keys)
       set(key, *(src->get(key)));
 
@@ -32,12 +33,10 @@ ValueSet::ValueSet(ValueSet* src)
 /**
  * Only here for the copy constructor, could have a better way to do this.
  */
-juce::StringArray ValueSet::getKeys()
+void ValueSet::getKeys(juce::StringArray& keys)
 {
-    juce::StringArray keys;
     for (juce::HashMap<juce::String,MslValue*>::Iterator i(map) ; i.next();)
       keys.add(i.getKey());
-    return keys;
 }
 
 juce::OwnedArray<ValueSet>& ValueSet::getSubsets()
@@ -226,7 +225,8 @@ void ValueSet::assimilate(ValueSet* src)
 {
     // faster ways to do this, but it's an unusual operation
     if (src != nullptr) {
-        juce::StringArray keys = src->getKeys();
+        juce::StringArray keys;
+        src->getKeys(keys);
         for (auto key : keys) {
             MslValue* v = src->get(key);
             set(key, *v);

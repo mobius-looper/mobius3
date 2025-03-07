@@ -311,7 +311,8 @@ void ParameterTree::initializeSparse(Provider* p, ValueSet* set)
 
     internCategories();
     
-    juce::StringArray keys = set->getKeys();
+    juce::StringArray keys;
+    set->getKeys(keys);
     for (auto key : keys) {
         Symbol* s = p->getSymbols()->find(key);
         if (s == nullptr) {

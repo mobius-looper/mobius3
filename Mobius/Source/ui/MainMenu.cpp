@@ -163,7 +163,6 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     {
         menu.addItem(EditSession, "Edit Session...");
         menu.addItem(SessionManager, "Manage Sessions...");
-        menu.addItem(Overlays, "Parameter Overlays...");
         menu.addSeparator();
         
         Provider* provider = mainWindow->getProvider();
@@ -184,6 +183,9 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     }
     else if (menuIndex == menuIndexOverlay)
     {
+        menu.addItem(Overlays, "Edit Overlays...");
+        menu.addSeparator();
+        
         Provider* provider = mainWindow->getProvider();
         // assuming Supervisor is stcking "none" at the top so we don't
         // have to worry about ordinal shifting or toggling

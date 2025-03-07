@@ -54,6 +54,7 @@ LogicalTrack::LogicalTrack(TrackManager* tm)
 LogicalTrack::~LogicalTrack()
 {
     // track unique_ptr deletes itself
+    clearBindings(false);
 }
 
 /**

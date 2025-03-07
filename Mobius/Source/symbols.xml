@@ -498,8 +498,10 @@ Once those models are fully converted, these symbols can be removed.
     -->
     <Parameter name='activeSession' type='structure' options='noBinding,transient'/>
 
-    <!-- Replacement for defaultPreset -->
-
+    <!-- This looks  like it would be Session::defaultPreset but it isn't.
+         There is no equivalent in the Setup model since defaultPreset is OVERRIDDEEND
+         by trackPreset, they don't combine.
+         -->
     <Parameter name='sessionOverlay'
                type='structure' 
                displayType='combo' displayHelper='parameterSet'
@@ -528,12 +530,15 @@ Once those models are fully converted, these symbols can be removed.
                displayType='combo' displayHelper='trackGroup'/>
 
     <Parameter name='focus' type='bool' options='resetRetain,noBinding,noDefault' tree='General'/>
-    
+
+    <!-- started with noDefault but that isn't accurate.  There needs to be a default trackOverlay
+         that means the same thing as the old Setup::defaultPreset.  If a track overrides this
+         it is the same as SetupTrack::trackPreset
+         -->
     <Parameter name='trackOverlay' tree='General'
                type='structure' 
                displayType='combo' displayHelper='parameterSet'
-               options='noBinding,noDefault'>
-    </Parameter>
+               options='noBinding'/>
 
     <!-- the replacement for oldSyncSource defined SyncSource in SyncConstants.h -->
     <Parameter name='syncSource' values='none,transport,track,host,midi,master'

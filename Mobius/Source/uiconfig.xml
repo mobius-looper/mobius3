@@ -146,6 +146,7 @@
     <Button action="Overdub" scope="A"/>
     <Button action="Record/OverDub/Reset"/>
     <Button action="Global Stop"/>
+    <Button action="testmos"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>
