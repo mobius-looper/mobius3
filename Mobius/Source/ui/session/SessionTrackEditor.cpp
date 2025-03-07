@@ -120,6 +120,15 @@ void SessionTrackEditor::load(Session* s)
     show(currentTrack);
 }
 
+void SessionTrackEditor::reload()
+{
+    for (auto state : states) {
+        SessionTrackForms* stf = state->getForms();
+        if (stf != nullptr)
+          stf->reload();
+    }
+}
+
 /**
  * The editing copy of the Session had all of the Session::Tracks removed
  * and transferred to the TrackState list.  Some of those may have been

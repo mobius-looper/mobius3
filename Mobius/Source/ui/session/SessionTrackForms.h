@@ -32,6 +32,7 @@ class SessionTrackForms : public ParameterTreeForms,
     ~SessionTrackForms();
 
     void initialize(class Provider* p, class Session* s, class Session::Track* def);
+    void reload();
     void save();
     void cancel();
     void decacheForms();

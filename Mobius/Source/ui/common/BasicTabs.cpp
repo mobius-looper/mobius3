@@ -87,6 +87,11 @@ BasicTabs::~BasicTabs()
 {
 }
 
+void BasicTabs::setListener(Listener* l)
+{
+    listener = l;
+}
+
 void BasicTabs::add(juce::String name, juce::Component* content)
 {
     // tabBackgroundColour applies to the background of the tab button
@@ -109,7 +114,8 @@ void BasicTabs::show(int index)
 
 void BasicTabs::currentTabChanged(int newIndex, const juce::String& newName)
 {
-    // here we could set the background colors
-    (void)newIndex;
     (void)newName;
+    if (listener != nullptr)
+      listener->basicTabsChanged(tabIndex, newIndex);
+    tabIndex = newIndex;
 }

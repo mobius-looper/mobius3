@@ -12,7 +12,7 @@
 #include "../common/BasicTabs.h"
 #include "../config/ConfigEditor.h"
 
-class SessionEditor : public ConfigEditor
+class SessionEditor : public ConfigEditor, public BasicTabs::Listener
 {
   public:
     
@@ -35,6 +35,8 @@ class SessionEditor : public ConfigEditor
     class Session* getEditingSession();
 
     class Provider* getProvider();
+
+    void basicTabsChanged(int oldIndex, int newIndex);
     
   private:
 

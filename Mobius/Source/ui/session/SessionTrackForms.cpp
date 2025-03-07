@@ -55,6 +55,11 @@ void SessionTrackForms::initialize(Provider* p, Session* s, Session::Track* def)
     forms.load(values);
 }
 
+void SessionTrackForms::reload()
+{
+    forms.load(values);
+}
+
 void SessionTrackForms::save()
 {
     forms.save(values);

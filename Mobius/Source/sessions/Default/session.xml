@@ -232,13 +232,13 @@
     <Value name="noLayerFlattening" value="false" type="bool"/>
     <Value name="noiseFloor" value="50" type="int"/>
     <Value name="outputLatency" value="0" type="int"/>
-    <Value name="overdubQuantized" value="false" type="bool"/>
+    <Value name="overdubQuantized" value="true" type="bool"/>
     <Value name="overdubTransfer" value="off" type="enum" ordinal="0"/>
     <Value name="pitchBendRange" value="12" type="int"/>
     <Value name="pitchShiftRestart" value="false" type="bool"/>
     <Value name="pitchStepRange" value="24" type="int"/>
     <Value name="pitchTransfer" value="off" type="enum" ordinal="0"/>
-    <Value name="quantize" value="off" type="enum" ordinal="0"/>
+    <Value name="quantize" value="subCycle" type="enum" ordinal="1"/>
     <Value name="quickSave" value="mobiusloop"/>
     <Value name="recordResetsFeedback" value="false" type="bool"/>
     <Value name="recordTransfer" value="off" type="enum" ordinal="0"/>

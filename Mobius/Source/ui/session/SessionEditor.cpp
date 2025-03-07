@@ -39,6 +39,7 @@ SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
     trackEditor->initialize(s);
 
     addAndMakeVisible(tabs);
+    tabs.setListener(this);
 }
 
 SessionEditor::~SessionEditor()
@@ -169,6 +170,27 @@ void SessionEditor::invalidateSession()
     trackEditor->cancel();
 
     session.reset(nullptr);
+}
+
+/**
+ * Called by BasicTabs whenever tabs change.
+ */
+void SessionEditor::basicTabsChanged(int oldIndex, int newIndex)
+{
+    (void)newIndex;
+    //Trace(2, "SessionEditor: Tabs changed from %d to %d", oldIndex, newIndex);
+    if (oldIndex == 2) {
+        // formerly on the globals tab, on the off chance they changed
+        // the session overlay refresh the track forms
+        globalEditor->save(session->ensureGlobals());
+        trackEditor->reload();
+    }
+    else if (oldIndex == 1) {
+        // formerly on the defaults tab, also save to pick up parameter
+        // changes and refresh the track forms
+        parameterEditor->save(session->ensureGlobals());
+        trackEditor->reload();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -715,7 +715,8 @@ void YanCombo::setItems(juce::StringArray names)
 
     setSize((maxChars * charWidth) + arrowWidth, YanForm::RowHeight);
 
-    combobox.setSelectedId(1, juce::NotificationType::dontSendNotification);
+    //combobox.setSelectedId(1, juce::NotificationType::dontSendNotification);
+    combobox.setSelectedId(1, juce::NotificationType::sendNotification);
 }
 
 // having trouble getting the setItems size to stick
