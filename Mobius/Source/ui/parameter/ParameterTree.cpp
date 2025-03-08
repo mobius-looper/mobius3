@@ -141,7 +141,7 @@ void ParameterTree::intern(Provider* p, StaticConfig* scon, SymbolTreeItem* pare
 
         juce::String formName = item->getAnnotation();
         if (formName.length() > 0) {
-            TreeForm* formdef = scon->getForm(formName);
+            TreeForm* formdef = scon->getTreeForm(formName);
             if (formdef != nullptr) {
                 for (auto sname : formdef->symbols) {
                     // ignore special rendering symbols
@@ -217,7 +217,7 @@ void ParameterTree::initializeDynamic(Provider* p)
 
                 // so much string slinging, could cache these
                 juce::String formName = juce::String("sessionCategory") + s->treePath;
-                TreeForm* form = scon->getForm(formName);
+                TreeForm* form = scon->getTreeForm(formName);
                 ParameterTreeComparator comparator (form);
                 
                 juce::String nodename = s->name;

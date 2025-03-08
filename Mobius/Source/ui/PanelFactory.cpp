@@ -146,6 +146,7 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case Session: panel = new SessionPanel(super); break;
         case SessionManager: panel = new SessionManagerPanel(super); break;
         case Overlay: panel = new OverlayPanel(super); break;
+        case System: panel = new SystemPanel(super); break;
             
         case Audio: panel = new AudioPanel(super); break;
         case MidiDevice: panel = new MidiDevicePanel(super); break;

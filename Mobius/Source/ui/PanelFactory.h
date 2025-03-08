@@ -50,6 +50,7 @@ class PanelFactory
         Session,
         SessionManager,
         Overlay,
+        System,
 
         // Devices
         Audio,

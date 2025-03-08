@@ -105,6 +105,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         AudioDevices,
         Properties,
         Groups,
+        System,
 
         // Sessions
         EditSession,

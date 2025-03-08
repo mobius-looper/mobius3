@@ -29,12 +29,12 @@ juce::String SystemConfig::toXml()
 
 juce::String SystemConfig::getStartupSession()
 {
-    return values.getJString("startupSession");
+    return values.getJString(StartupSession);
 }
 
 void SystemConfig::setStartupSession(juce::String name)
 {
-    values.setJString("startupSession", name);
+    values.setJString(StartupSession, name);
 }
 
 /****************************************************************************/

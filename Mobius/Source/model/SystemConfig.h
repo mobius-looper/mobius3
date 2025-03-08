@@ -22,6 +22,10 @@ class SystemConfig
 
     constexpr static const char* XmlElementName = "SystemConfig";
 
+    constexpr static const char* StartupSession = "startupSession";
+    constexpr static const char* QuicksaveFile = "quicksaveFile";
+    constexpr static const char* UserFileFolder = "userFileFolder";
+
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);
     juce::String toXml();
 
@@ -31,6 +35,10 @@ class SystemConfig
      */
     juce::String getStartupSession();
     void setStartupSession(juce::String s);
+
+    ValueSet* getValues() {
+        return &values;
+    }
     
   private:
 

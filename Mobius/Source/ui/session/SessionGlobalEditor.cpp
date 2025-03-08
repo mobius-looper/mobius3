@@ -79,7 +79,7 @@ ParameterForm* SessionGlobalEditor::parameterFormCollectionCreate(juce::String f
     ParameterForm* form = nullptr;
     
     StaticConfig* scon = provider->getStaticConfig();
-    TreeForm* formdef = scon->getForm(formName);
+    TreeForm* formdef = scon->getTreeForm(formName);
     if (formdef == nullptr) {
         Trace(1, "SessionGlobalEditor: Unknown form %s", formName.toUTF8());
     }

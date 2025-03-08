@@ -404,13 +404,13 @@ Once those models are fully converted, these symbols can be removed.
        -->
   <ParameterScope name='global'>
     
-    <Parameter name='userFileFolder' type='string'/>
+    <Parameter name='userFileFolder' type='string'>
       Temporary prototype for allowing file paths specified in in various objects
       to be fragments relative to a user specified folder.  Currently used only
       when loading MIDI files.
     </Parameter>
     
-    <Parameter name='quickSave' type='string'/>
+    <Parameter name='quickSave' type='string'>
       The base name of the quick save file.
       Need more flexibility here including what folders these go in.
     </Parameter>
@@ -449,12 +449,12 @@ Once those models are fully converted, these symbols can be removed.
       Continue support for awhile.
     </Parameter>
     
-    <Parameter name='noiseFloor' type='int' options='noBinding'>
+    <Parameter name='noiseFloor' type='int' options='noBinding' defaultValue='13'>
       Used by Loop to determine whether a layer can be suppressed because it
       has no significant new content.  Has a code default to 13 if zero.
     </Parameter>
 
-    <Parameter name='longPress' low='250' high='10000' options='noBinding' query='true'>
+    <Parameter name='longPress' low='250' high='10000' options='noBinding' query='true' defaultValue='500'>
       The amount of time in milliseconds a trigger can be held before activating long-press behavior.
       Belongs in UIConfig with other Binding parameters.
     </Parameter>
@@ -468,7 +468,7 @@ Once those models are fully converted, these symbols can be removed.
       Used by Track to enable through monitoring.  Should move this up.
     </Parameter>
     
-    <Parameter name='spreadRange' low='1' high='128' options='noBinding'>
+    <Parameter name='spreadRange' low='1' high='128' options='noBinding' defaultValue='12'>
       The amount to spread the binding range over adjacent values.
       Belongs in UIConfig with the other BInding parameters.
     </Parameter>

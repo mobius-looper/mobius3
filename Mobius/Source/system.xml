@@ -2,6 +2,8 @@
 
 <SystemConfig>
   <ValueSet>
+    <Value name="quicksaveFile" value="bar"/>
     <Value name="startupSession" value="Default"/>
+    <Value name="userFileFolder" value="foo"/>
   </ValueSet>
 </SystemConfig>

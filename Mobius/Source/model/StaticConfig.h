@@ -22,6 +22,7 @@
 #pragma once
 
 #include "TreeForm.h"
+#include "Form.h"
 
 class StaticConfig
 {
@@ -32,14 +33,16 @@ class StaticConfig
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);
 
     TreeNode* getTree(juce::String name);
-    TreeForm* getForm(juce::String name);
+    TreeForm* getTreeForm(juce::String name);
+    Form* getForm(juce::String name);
     
   private:
 
     juce::OwnedArray<TreeNode> trees;
-    juce::OwnedArray<TreeForm> forms;
+    juce::OwnedArray<TreeForm> treeForms;
+    juce::OwnedArray<Form> forms;
     
     juce::HashMap<juce::String,TreeNode*> treeMap;
-    juce::HashMap<juce::String,TreeForm*> formMap;
+    juce::HashMap<juce::String,TreeForm*> treeFormMap;
 
 };

@@ -110,6 +110,8 @@
         <FILE id="W4myih" name="DeviceConfig.h" compile="0" resource="0" file="Source/model/DeviceConfig.h"/>
         <FILE id="cObUhB" name="Enumerator.cpp" compile="1" resource="0" file="Source/model/Enumerator.cpp"/>
         <FILE id="z4eQpK" name="Enumerator.h" compile="0" resource="0" file="Source/model/Enumerator.h"/>
+        <FILE id="iPNaYW" name="Form.cpp" compile="1" resource="0" file="Source/model/Form.cpp"/>
+        <FILE id="MsZmnz" name="Form.h" compile="0" resource="0" file="Source/model/Form.h"/>
         <FILE id="am0Lis" name="FunctionProperties.cpp" compile="1" resource="0"
               file="Source/model/FunctionProperties.cpp"/>
         <FILE id="VOgufo" name="FunctionProperties.h" compile="0" resource="0"
@@ -262,6 +264,12 @@
                 file="Source/ui/common/SimpleTabPanel.cpp"/>
           <FILE id="ywZEOE" name="SimpleTabPanel.h" compile="0" resource="0"
                 file="Source/ui/common/SimpleTabPanel.h"/>
+          <FILE id="NGRCPj" name="ValueSetField.cpp" compile="1" resource="0"
+                file="Source/ui/common/ValueSetField.cpp"/>
+          <FILE id="YwdNoi" name="ValueSetField.h" compile="0" resource="0" file="Source/ui/common/ValueSetField.h"/>
+          <FILE id="RhR1yl" name="ValueSetForm.cpp" compile="1" resource="0"
+                file="Source/ui/common/ValueSetForm.cpp"/>
+          <FILE id="H3WzFN" name="ValueSetForm.h" compile="0" resource="0" file="Source/ui/common/ValueSetForm.h"/>
           <FILE id="WA7Qza" name="YanAlert.cpp" compile="1" resource="0" file="Source/ui/common/YanAlert.cpp"/>
           <FILE id="u0ZIvP" name="YanAlert.h" compile="0" resource="0" file="Source/ui/common/YanAlert.h"/>
           <FILE id="SrDTKr" name="YanDialog.cpp" compile="1" resource="0" file="Source/ui/common/YanDialog.cpp"/>
@@ -353,6 +361,9 @@
                 file="Source/ui/config/ScriptSymbolTable.cpp"/>
           <FILE id="sJ7xu7" name="ScriptSymbolTable.h" compile="0" resource="0"
                 file="Source/ui/config/ScriptSymbolTable.h"/>
+          <FILE id="xfj2bn" name="SystemEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/SystemEditor.cpp"/>
+          <FILE id="puG9K6" name="SystemEditor.h" compile="0" resource="0" file="Source/ui/config/SystemEditor.h"/>
           <FILE id="ImU9ao" name="TargetSelectorWrapper.cpp" compile="1" resource="0"
                 file="Source/ui/config/TargetSelectorWrapper.cpp"/>
           <FILE id="MuAGqD" name="TargetSelectorWrapper.h" compile="0" resource="0"

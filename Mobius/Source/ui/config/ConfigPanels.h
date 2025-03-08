@@ -24,6 +24,7 @@
 #include "DisplayEditor.h"
 #include "PropertiesEditor.h"
 #include "GroupEditor.h"
+#include "SystemEditor.h"
 #include "../session/SessionEditor.h"
 #include "../parameter/OverlayEditor.h"
 
@@ -194,4 +195,17 @@ class OverlayPanel : public ConfigPanel
  
   private:
     OverlayEditor editor;
+};
+
+class SystemPanel : public ConfigPanel
+{
+  public:
+    SystemPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
+        setName("Parameter Systems");
+        setEditor(&editor);
+    }
+    ~SystemPanel() {}
+ 
+  private:
+    SystemEditor editor;
 };
