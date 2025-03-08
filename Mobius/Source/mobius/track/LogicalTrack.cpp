@@ -462,20 +462,33 @@ ValueSet* LogicalTrack::resolveOverlay(ValueSet* referenceSet,
     return findOverlay(ovname);
 }
 
+/**
+ * There are two places this can come from.
+ * If the SessionTrack has it, use it.  If not, then the default trackOverlay
+ * for all tracks comes from the Session.
+ */
 ValueSet* LogicalTrack::resolveTrackOverlay()
 {
-    return resolveOverlay(sessionTrack->ensureParameters(), "trackOverlay");
+    ValueSet* overlay = resolveOverlay(sessionTrack->ensureParameters(), "trackOverlay");
+    if (overlay == nullptr) {
+        Session* s = sessionTrack->getSession();
+        if (s == nullptr)
+          Trace(1, "LogicalTrack: Session::Track without Session");
+        else
+          overlay = resolveOverlay(s->ensureGlobals(), "trackOverlay");
+    }
+    return overlay;
 }
 
 ValueSet* LogicalTrack::resolveSessionOverlay()
 {
-    ValueSet* values = nullptr;
+    ValueSet* overlay = nullptr;
     Session* s = sessionTrack->getSession();
     if (s == nullptr)
       Trace(1, "LogicalTrack: Session::Track without Session");
     else
-      values = resolveOverlay(s->ensureGlobals(), "sessionOverlay");
-    return values;
+      overlay = resolveOverlay(s->ensureGlobals(), "sessionOverlay");
+    return overlay;
 }
 
 /**
@@ -1166,7 +1179,7 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
                 if (value == nullptr && sessionOverlay != nullptr)
                   value = sessionOverlay->get(s->name);
 
-                if (value == nullptr && sessionTrack != nullptr)
+                if (value == nullptr)
                   value = sessionTrack->get(s->name);
             
                 if (value == nullptr) {

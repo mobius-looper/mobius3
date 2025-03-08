@@ -30,11 +30,14 @@ class OverlayEditor : public ConfigEditor,
     
     void resized() override;
 
-    class Provider* getProvider();
-
     void typicalTableChanged(class TypicalTable* t, int row) override;
 
     void show(int index);
+
+    void overlayTableNew(juce::String newName);
+    void overlayTableCopy(juce::String newName);
+    void overlayTableRename(juce::String newName);
+    void overlayTableDelete();
     
   private:
 

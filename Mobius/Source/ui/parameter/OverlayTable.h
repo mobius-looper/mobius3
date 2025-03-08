@@ -41,10 +41,11 @@ class OverlayTable : public TypicalTable,
         DialogDelete
     } Dialog;
     
-    OverlayTable(class Supervisor* s);
+    OverlayTable(class OverlayEditor* e);
     ~OverlayTable();
 
     void load(class ParameterSets* sets);
+    void reload();
     void clear();
 
     // TypicalTable overrides
@@ -59,8 +60,7 @@ class OverlayTable : public TypicalTable,
     
   private:
     
-    class Supervisor* supervisor = nullptr;
-    class Producer* producer = nullptr;
+    class OverlayEditor* editor = nullptr;
     class ParameterSets* overlays = nullptr;
     
     juce::OwnedArray<class OverlayTableRow> overlayRows;
@@ -75,7 +75,6 @@ class OverlayTable : public TypicalTable,
     
     YanInput newName {"New Name"};
     
-    void reload();
     juce::String getSelectedName();
     
     void doActivate();

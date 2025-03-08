@@ -20,7 +20,7 @@ OverlayEditor::OverlayEditor(Supervisor* s) : ConfigEditor(s)
 {
     setName("OverlayEditor");
 
-    table.reset(new OverlayTable(s));
+    table.reset(new OverlayTable(this));
     addAndMakeVisible(table.get());
 
     table->setListener(this);
@@ -119,10 +119,16 @@ void OverlayEditor::save()
  */
 void OverlayEditor::cancel()
 {
+    overlays.reset();
+    revertOverlays.reset();
+    table->clear();
+    for (auto tf : treeForms)
+      tf->cancel();
 }
 
 void OverlayEditor::decacheForms()
 {
+    // does this mske sense here?  they're dynamic so no
 }
 
 void OverlayEditor::revert()
@@ -132,7 +138,7 @@ void OverlayEditor::revert()
 
 //////////////////////////////////////////////////////////////////////
 //
-// ParameterSet Table
+// OverlayTable Callbacks
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -149,6 +155,37 @@ void OverlayEditor::typicalTableChanged(TypicalTable* t, int row)
     else {
         show(row);
     }
+}
+
+void OverlayEditor::overlayTableNew(juce::String newName)
+{
+    // todo: check for duplicate names, warn and abort
+    ValueSet* neu = new ValueSet();
+    neu->name = newName;
+    overlays->add(neu);
+    
+    OverlayTreeForms* otf = new OverlayTreeForms();
+    otf->initialize(supervisor);
+    otf->load(neu);
+    treeForms.add(otf);
+    addChildComponent(otf);
+
+    table->reload();
+    int newIndex = overlays->getSets().size() - 1;
+    table->selectRow(newIndex);
+    show(newIndex);
+}
+
+void OverlayEditor::overlayTableCopy(juce::String newName)
+{
+}
+
+void OverlayEditor::overlayTableRename(juce::String newName)
+{
+}
+
+void OverlayEditor::overlayTableDelete()
+{
 }
 
 /****************************************************************************/

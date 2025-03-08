@@ -13,20 +13,24 @@
 #include "../common/YanDialog.h"
 #include "../common/YanField.h"
 
+#include "OverlayEditor.h"
 #include "OverlayTable.h"
 
-OverlayTable::OverlayTable(Supervisor* s)
+OverlayTable::OverlayTable(OverlayEditor* e)
 {
-    supervisor = s;
-    producer = s->getProducer();
+    editor = e;
     setName("OverlayTable");
 
     initialize();
 
     addColumn("Name", ColumnName, 200);
+
+    // activation/deactivation doesn't work yet, you
+    // have to select them as the sessionOverlay or trackOverlay in the
+    // session editor
+    //rowPopup.add("Activate", DialogActivate);
+    //rowPopup.add("Deactivate", DialogDeactivate);
     
-    rowPopup.add("Activate", DialogActivate);
-    rowPopup.add("Deactivate", DialogDeactivate);
     rowPopup.add("Copy...", DialogCopy);
     rowPopup.add("New...", DialogNew);
     rowPopup.add("Rename...", DialogRename);
@@ -34,21 +38,21 @@ OverlayTable::OverlayTable(Supervisor* s)
 
     emptyPopup.add("New...", DialogNew);
 
-    nameDialog.setTitle("New Parameter Set");
+    nameDialog.setTitle("New Overlay");
     nameDialog.setButtons("Ok,Cancel");
     nameDialog.addField(&newName);
 
-    deleteAlert.setTitle("Delete Parameter Set");
+    deleteAlert.setTitle("Delete Overlay");
     deleteAlert.setButtons("Delete,Cancel");
     deleteAlert.setSerious(true);
-    deleteAlert.addMessage("Are you sure you want to delete this session?");
+    deleteAlert.addMessage("Are you sure you want to delete this overlay?");
     deleteAlert.addMessage("This cannot be undone");
     
     confirmDialog.setTitle("Confirm");
     confirmDialog.setButtons("Ok,Cancel");
     confirmDialog.addMessage("Are you sure you want to do that?");
     
-    errorAlert.setTitle("Error Saving Parameter Set");
+    errorAlert.setTitle("Error Saving Overlay");
     errorAlert.addButton("Ok");
     errorAlert.setSerious(true);
 
@@ -84,10 +88,15 @@ void OverlayTable::reload()
     updateContent();
 }
 
-// this doesn't make sense right?
+/**
+ * This is called by the OverlayEditor when it saves or cancels.'
+ * Forget everything you know since the object we've been editing is
+ * no longer stable.
+ */
 void OverlayTable::clear()
 {
-    Trace(1, "OverlayTable::clear Who is calling this?");
+    overlays = nullptr;
+    overlayRows.clear();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -163,15 +172,17 @@ void OverlayTable::yanPopupSelected(YanPopup* src, int id)
 
 void OverlayTable::doActivate()
 {
+    Trace(1, "OverlayTable::doActivate not implemented");
 }
 
 void OverlayTable::doDeactivate()
 {
+    Trace(1, "OverlayTable::doDeactivate not implemented");
 }
 
 void OverlayTable::startNew()
 {
-    nameDialog.setTitle("Create New Parameter Set");
+    nameDialog.setTitle("Create New Overlay");
     nameDialog.setId(DialogNew);
     newName.setValue("");
     nameDialog.show(getParentComponent());
@@ -179,7 +190,7 @@ void OverlayTable::startNew()
 
 void OverlayTable::startCopy()
 {
-    nameDialog.setTitle("Copy Parameter Set");
+    nameDialog.setTitle("Copy Overlay");
     nameDialog.setId(DialogCopy);
     newName.setValue("");
     nameDialog.show(getParentComponent());
@@ -187,7 +198,7 @@ void OverlayTable::startCopy()
 
 void OverlayTable::startRename()
 {
-    nameDialog.setTitle("Rename Parmeter Set");
+    nameDialog.setTitle("Rename Overlay");
     nameDialog.setId(DialogRename);
 
     newName.setValue(getSelectedName());
@@ -223,40 +234,28 @@ juce::String OverlayTable::getSelectedName()
 void OverlayTable::finishNew(int button)
 {
     if (button == 0) {
-        juce::String name = newName.getValue();
-        ValueSet* neu = new ValueSet();
-        neu->name = name;
-        overlays->add(neu);
-        reload();
+        editor->overlayTableNew(newName.getValue());
     }
 }
 
 void OverlayTable::finishCopy(int button)
 {
     if (button == 0) {
-        juce::String name = newName.getValue();
-
-        // actually need to find the source and copy it!!
-        ValueSet* neu = new ValueSet();
-        neu->name = name;
-        overlays->add(neu);
-
-        reload();
+        editor->overlayTableCopy(newName.getValue());
     }
 }
 
 void OverlayTable::finishRename(int button)
 {
     if (button == 0) {
-        juce::String name = newName.getValue();
-        reload();
+        editor->overlayTableRename(newName.getValue());
     }
 }
 
 void OverlayTable::finishDelete(int button)
 {
     if (button == 0) {
-        reload();
+        editor->overlayTableDelete();
     }
 }
 
