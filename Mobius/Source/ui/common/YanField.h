@@ -11,13 +11,18 @@
 #include "ColorPopup.h"
 
 /**
- * Subclass used for Labels within a YanField/YanForm
- * Used to capture mouse events for drag-and-drop.
+ * Subclass used for Labels within a YanField/YanForm.
+ * Used to capture mouse events for drag-and-drop and
+ * special actions like overriding a common value, popup help, etc.
+ *
  * Probably better ways to do this.
  *
  * You can only drag a field by clicking on it's label, which
  * is enough for most forms but for those that use rows of adjacent
  * fields with a common label, that won't work.
+ *
+ * While the mouse listener is on the label, the outside world is
+ * notified with the parent YanField.
  */
 class YanFieldLabel: public juce::Label
 {
@@ -34,8 +39,6 @@ class YanFieldLabel: public juce::Label
     constexpr static const char* DragPrefix = "YanField:";
     
     YanFieldLabel(class YanField* parent);
-    void setDisabledColor(bool dis);
-
 
     void setListener(Listener* l);
 
@@ -61,14 +64,16 @@ class YanField : public juce::Component
     YanField(juce::String argLabel);
     virtual ~YanField();
 
+    void setLabelColor(juce::Colour c);
+    void unsetLabelColor();
     void setLabelListener(YanFieldLabel::Listener* l);
-
+    
     void setLabel(juce::String s);
     juce::Label* getLabel();
+    
     void setAdjacent(bool b);
     bool isAdjacent();
     virtual bool isSection() {return false;};
-    //bool hasLabel(YanFieldLabel* l);
     
     int getPreferredWidth(int rowHeight);
     
@@ -92,7 +97,9 @@ class YanField : public juce::Component
     bool disabled = false;
     
     juce::String dragDescription;
+    juce::Colour explicitLabelColor;
 
+    void setNormalLabelColor();
 };
 
 class YanSpacer : public YanField
@@ -130,10 +137,10 @@ class YanInput : public YanField, public juce::Label::Listener, public juce::Tex
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void inputChanged(YanInput*) {}
-        virtual void inputEditorShown(YanInput*) {}
-        virtual void inputEditorHidden(YanInput*) {}
-        virtual void inputEditorChanged(YanInput*, juce::String) {}
+        virtual void yanInputChanged(YanInput*) {}
+        virtual void yanInputEditorShown(YanInput*) {}
+        virtual void yanInputEditorHidden(YanInput*) {}
+        virtual void yanInputEditorChanged(YanInput*, juce::String) {}
     };
     
     void setListener(Listener* l);
@@ -189,7 +196,7 @@ class YanColorChooser : public YanField, public ColorPopup::Listener
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void colorSelected(int argb) = 0;
+        virtual void yanColorSelected(int argb) = 0;
     };
 
     YanColorChooser(juce::String label);
@@ -226,7 +233,7 @@ class YanRadio : public YanField, public juce::Button::Listener
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void radioSelected(YanRadio* r, int selection) = 0;
+        virtual void yanRadioSelected(YanRadio* r, int selection) = 0;
     };
     void setListener(Listener* l);
 
@@ -260,7 +267,7 @@ class YanCombo : public YanField, public juce::ComboBox::Listener
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void comboSelected(YanCombo* c, int selection) = 0;
+        virtual void yanComboSelected(YanCombo* c, int selection) = 0;
     };
     void setListener(Listener* l);
 
@@ -281,8 +288,11 @@ class YanCombo : public YanField, public juce::ComboBox::Listener
     Listener* listener = nullptr;
     int initialSelection = -1;
     int widthUnits = 0;
+
+    juce::StringArray items;
     juce::ComboBox combobox;
     
+    void setItemNoNotify(int id);
     int calculatePreferredWidth();
 };
 

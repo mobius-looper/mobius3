@@ -298,7 +298,7 @@ GroupDefinition* GroupEditor::getSelectedGroup()
 //
 //////////////////////////////////////////////////////////////////////
 
-void GroupEditor::colorSelected(int argb)
+void GroupEditor::yanColorSelected(int argb)
 {
     (void)argb;
 }

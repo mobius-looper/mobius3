@@ -72,8 +72,8 @@ class BindingEditor : public ConfigEditor,
     void bindingTargetClicked() override;
 
     // YanField Listeners
-    void inputChanged(class YanInput* i) override;
-    void comboSelected(class YanCombo* c, int selection) override;
+    void yanInputChanged(class YanInput* i) override;
+    void yanComboSelected(class YanCombo* c, int selection) override;
     
   protected:
     

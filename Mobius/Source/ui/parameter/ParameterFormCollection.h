@@ -14,6 +14,8 @@
 
 #include <JuceHeader.h>
 
+#include "ParameterForm.h"
+
 class ParameterFormCollection : public juce::Component
 {
   public:
@@ -27,7 +29,7 @@ class ParameterFormCollection : public juce::Component
         virtual class ParameterForm* parameterFormCollectionCreate(juce::String formid) = 0;
     };
 
-    void initialize(class Provider* p, class Factory* f, class ValueSet* values);
+    void initialize(class Factory* f, class ValueSet* values);
 
     void add(juce::String formName, class ParameterForm* form);
     
@@ -36,6 +38,7 @@ class ParameterFormCollection : public juce::Component
     ParameterForm* getCurrentForm();
 
     void load(class ValueSet* src);
+    void refresh(ParameterForm::Refresher* r);
     void save(class ValueSet* dest);
     void cancel();
     void decache();

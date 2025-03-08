@@ -26,7 +26,7 @@ SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
 {
     setName("SessionEditor");
 
-    trackEditor.reset(new SessionTrackEditor(this));
+    trackEditor.reset(new SessionTrackEditor());
     tabs.add("Tracks", trackEditor.get());
     
     parameterEditor.reset(new SessionParameterEditor());
@@ -35,9 +35,9 @@ SessionEditor::SessionEditor(Supervisor* s) : ConfigEditor(s)
     globalEditor.reset(new SessionGlobalEditor());
     tabs.add("Globals", globalEditor.get());
     
-    globalEditor->initialize(s);
-    parameterEditor->initialize(s);
-    trackEditor->initialize(s);
+    globalEditor->initialize(s, this);
+    parameterEditor->initialize(s, this);
+    trackEditor->initialize(s, this);
 
     addAndMakeVisible(tabs);
     tabs.setListener(this);
@@ -116,6 +116,14 @@ void SessionEditor::save()
     revertSession.reset(nullptr);
 }
 
+void SessionEditor::saveSession(Session* dest)
+{
+    ValueSet* globals = dest->ensureGlobals();
+    globalEditor->save(globals);
+    parameterEditor->save(globals);
+    trackEditor->save(dest);
+}
+
 int SessionEditor::getPortValue(ValueSet* set, const char* name, int max)
 {
     int value = set->getInt(name);
@@ -175,24 +183,15 @@ void SessionEditor::invalidateSession()
 
 /**
  * Called by BasicTabs whenever tabs change.
+ * This once was where occllusion lists were refreshed assuming
+ * that leaving tab MIGHT have changed the overlays, but that
+ * is handled by YanParameter field listsners now.
+ * Keep this around in case it's useful, then delete.
  */
 void SessionEditor::basicTabsChanged(int oldIndex, int newIndex)
 {
     (void)newIndex;
-    //Trace(2, "SessionEditor: Tabs changed from %d to %d", oldIndex, newIndex);
-    if (oldIndex == 2) {
-        // formerly on the globals tab, on the off chance they changed
-        // the session overlay refresh the track forms
-        globalEditor->save(session->ensureGlobals());
-        refreshOverlaySymbols();
-        trackEditor->reload();
-    }
-    else if (oldIndex == 1) {
-        // formerly on the defaults tab, also save to pick up parameter
-        // changes and refresh the track forms
-        parameterEditor->save(session->ensureGlobals());
-        trackEditor->reload();
-    }
+    (void)oldIndex;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -212,7 +211,7 @@ void SessionEditor::loadSession()
     parameterEditor->load(globals);
 
     // SessionTrackForms need this
-    refreshOverlaySymbols();
+    refreshLocalOcclusions();
     
     // NOTE: Because TrackEditor needs access to all of the
     // ValueSets for every Session::Track, it is allowed to retain
@@ -221,52 +220,76 @@ void SessionEditor::loadSession()
 }
 
 /**
- * On initial load and after displaying the parameter editor, derive
- * the symbols that are in the sessionOverlay if any.
- * Used by SessionTrackForms to show when track parameters will be hidden
- * by overlays.
+ * Here on the initial load before tracks have been initialized.
  */
-void SessionEditor::refreshOverlaySymbols()
+void SessionEditor::refreshLocalOcclusions()
 {
+    ValueSet* globals = session->ensureGlobals();
+    gatherOcclusions(sessionOcclusions, globals, ParamSessionOverlay);
+    gatherOcclusions(defaultTrackOcclusions, globals, ParamTrackOverlay);
+}
+
+void SessionEditor::gatherOcclusions(juce::Array<Symbol*>& occlusions, ValueSet* values,
+                                     SymbolId sid)
+{
+    occlusions.clear();
+    
+    ParameterSets* sets = supervisor->getParameterSets();
     SymbolTable* symbols = supervisor->getSymbols();
-    Symbol* ovsym = symbols->getSymbol(ParamSessionOverlay);
-    juce::String ovname = juce::String(session->getString(ovsym->name));
-    if (ovname != sessionOverlayName) {
-        sessionOverlayName = ovname;
-        overlaySymbols.clear();
-        
-        if (ovname.length() > 0) {
-            ParameterSets* sets = supervisor->getParameterSets();
-            if (sets != nullptr) {
-                ValueSet* overlay = sets->find(ovname);
-                if (overlay != nullptr) {
-                    juce::StringArray keys;
-                    overlay->getKeys(keys);
-                    for (auto key : keys) {
-                        Symbol* s = symbols->find(key);
-                        if (s != nullptr)
-                          overlaySymbols.add(s);
-                    }
+    Symbol* ovsym = symbols->getSymbol(sid);
+    const char* ovname = values->getString(ovsym->name);
+    if (ovname != nullptr) {
+        if (sets == nullptr) {
+            Trace(1, "SessionEditor: Unresolved overlay name %s", ovname);
+        }
+        else {
+            ValueSet* overlay = sets->find(juce::String(ovname));
+            if (overlay == nullptr) {
+                Trace(1, "SessionEditor: Unresolved overlay name %s", ovname);
+            }
+            else {
+                juce::StringArray keys;
+                overlay->getKeys(keys);
+                for (auto key : keys) {
+                    Symbol* s = symbols->find(key);
+                    if (s != nullptr)
+                      occlusions.add(s);
                 }
             }
         }
     }
 }
 
-juce::Array<Symbol*>& SessionEditor::getOverlaySymbols()
+/**
+ * Here via form field listeners whenever an overlay selection
+ * changes.  Refresh the occlusion lists and tell the tracks about it.
+ */
+void SessionEditor::overlayChanged()
 {
-    return overlaySymbols;
+    refreshLocalOcclusions();
+    trackEditor->sessionOverlayChanged();
 }
 
 /**
- * Deposit field results in this session, NOT the getEditingSession result.
+ * Called by each SessionTrackForms buried under SessionTrackEditor to see if
+ * a symobl is in either in the default track overlay or the session overlay.
+ *
+ * The track's own occlusion list is passed.  If this is not empty use it,
+ * if it is empty then use the default track overlay.
  */
-void SessionEditor::saveSession(Session* dest)
+bool SessionEditor::isOccluded(Symbol* s, juce::Array<Symbol*>& trackOcclusions)
 {
-    ValueSet* globals = dest->ensureGlobals();
-    globalEditor->save(globals);
-    parameterEditor->save(globals);
-    trackEditor->save(dest);
+    bool occluded = false;
+    
+    if (trackOcclusions.size() > 0)
+      occluded = trackOcclusions.contains(s);
+    else
+      occluded = defaultTrackOcclusions.contains(s);
+    
+    if (!occluded)
+      occluded = sessionOcclusions.contains(s);
+    
+    return occluded;
 }
 
 /****************************************************************************/

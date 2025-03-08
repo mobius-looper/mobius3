@@ -130,9 +130,9 @@ class SymbolTree : public juce::Component, public YanInput::Listener
 
     // search
     void disableSearch();
-    void inputEditorShown(YanInput* input) override;
-    void inputEditorChanged(YanInput* input, juce::String text) override;
-    void inputEditorHidden(YanInput* input) override;
+    void yanInputEditorShown(YanInput* input) override;
+    void yanInputEditorChanged(YanInput* input, juce::String text) override;
+    void yanInputEditorHidden(YanInput* input) override;
 
     void resized() override;
 

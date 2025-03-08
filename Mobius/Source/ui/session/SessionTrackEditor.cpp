@@ -51,26 +51,26 @@ void SessionTrackEditor::TrackState::setForms(SessionTrackForms* f)
 //
 //////////////////////////////////////////////////////////////////////
 
-SessionTrackEditor::SessionTrackEditor(SessionEditor* se)
+SessionTrackEditor::SessionTrackEditor()
 {
-    sessionEditor = se;
-    table.reset(new SessionTrackTable());
-
-    addAndMakeVisible(table.get());
-
-    table->setListener(this);
-
-    currentTrack = 0;
 }
 
 SessionTrackEditor::~SessionTrackEditor()
 {
 }
 
-void SessionTrackEditor::initialize(Provider* p)
+void SessionTrackEditor::initialize(Provider* p, SessionEditor* se)
 {
     provider = p;
+    editor = se;
+    
+    table.reset(new SessionTrackTable());
+    addAndMakeVisible(table.get());
+
     table->initialize(this);
+    table->setListener(this);
+
+    currentTrack = 0;
 }
 
 void SessionTrackEditor::decacheForms()
@@ -79,6 +79,15 @@ void SessionTrackEditor::decacheForms()
         SessionTrackForms* forms = state->getForms();
         if (forms != nullptr)
           forms->decacheForms();
+    }
+}
+
+void SessionTrackEditor::sessionOverlayChanged()
+{
+    for (auto state : states) {
+        SessionTrackForms* forms = state->getForms();
+        if (forms != nullptr)
+          forms->sessionOverlayChanged();
     }
 }
 
@@ -395,7 +404,7 @@ void SessionTrackEditor::show(int row)
         if (forms == nullptr) {
             // first time here
             forms = new SessionTrackForms();
-            forms->initialize(provider, session, state->getTrack());
+            forms->initialize(provider, editor, session, state->getTrack());
             state->setForms(forms);
             addChildComponent(forms);
             // this will need the size of the others

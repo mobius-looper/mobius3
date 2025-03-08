@@ -20,9 +20,8 @@ ParameterFormCollection::~ParameterFormCollection()
 {
 }
 
-void ParameterFormCollection::initialize(Provider* p, Factory* f, ValueSet* vs)
+void ParameterFormCollection::initialize(Factory* f, ValueSet* vs)
 {
-    provider = p;
     factory = f;
     valueSet = vs;
 }
@@ -44,7 +43,13 @@ void ParameterFormCollection::load(ValueSet* vs)
 {
     valueSet = vs;
     for (auto form : forms)
-      form->load(provider, valueSet);
+      form->load(valueSet);
+}
+
+void ParameterFormCollection::refresh(ParameterForm::Refresher* r)
+{
+    for (auto form : forms)
+      form->refresh(r);
 }
     
 void ParameterFormCollection::save(ValueSet* dest)
@@ -94,10 +99,6 @@ void ParameterFormCollection::add(juce::String formName, ParameterForm* form)
         forms.add(form);
         formTable.set(formName, form);
         addAndMakeVisible(form);
-
-        if (valueSet != nullptr)
-          form->load(provider, valueSet);
-
         form->setBounds(getLocalBounds());
         // trouble getting this fleshed out dynamically
         form->resized();
@@ -126,6 +127,8 @@ void ParameterFormCollection::show(juce::String formName)
                 Trace(1, "ParameterFormCollection: Unknown form %s", formName.toUTF8());
             }
             else {
+                // note that the form is expected to be in a loaded/refreshed
+                // state after creation, we don't do it for you
                 form = factory->parameterFormCollectionCreate(formName);
                 if (form == nullptr) {
                     Trace(1, "ParameterFormCollection: Factory failed to create form  %s",

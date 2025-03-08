@@ -9,6 +9,7 @@
 
 #include <JuceHeader.h>
 
+#include "../../model/Symbol.h"
 #include "../common/BasicTabs.h"
 #include "../config/ConfigEditor.h"
 
@@ -30,31 +31,32 @@ class SessionEditor : public ConfigEditor, public BasicTabs::Listener
     
     void resized() override;
 
-    // because we build forms dynamically, inner components need
-    // to get to the Session being edited
-    class Session* getEditingSession();
-    juce::Array<Symbol*>& getOverlaySymbols();
-
-    class Provider* getProvider();
-
+    void overlayChanged();
     void basicTabsChanged(int oldIndex, int newIndex);
+
+    // utilities used by SessionTrackForms
+    void gatherOcclusions(juce::Array<Symbol*>& occlusions, class ValueSet* values,
+                          SymbolId sid);
+    
+    bool isOccluded(class Symbol* s, juce::Array<class Symbol*>& trackOcclusions);
     
   private:
 
     void loadSession();
-    void refreshOverlaySymbols();
     void saveSession(class Session* master);
     void invalidateSession();
     int getPortValue(class ValueSet* set, const char* name, int max);
+    void refreshLocalOcclusions();
 
     std::unique_ptr<class Session> session;
     std::unique_ptr<class Session> revertSession;
-    juce::String sessionOverlayName;
-    juce::Array<Symbol*> overlaySymbols;
+    juce::Array<Symbol*> sessionOcclusions;
+    juce::Array<Symbol*> defaultTrackOcclusions;
 
     BasicTabs tabs;
     
     std::unique_ptr<class SessionGlobalEditor> globalEditor;
     std::unique_ptr<class SessionParameterEditor> parameterEditor;
     std::unique_ptr<class SessionTrackEditor> trackEditor;
+    
 };

@@ -19,15 +19,6 @@ YanFieldLabel::YanFieldLabel(YanField* p)
     parent = p;
 }
 
-// ugly, YanFIeld controls the initialization color, be consistent
-void YanFieldLabel::setDisabledColor(bool dis)
-{
-    if (dis)
-      setColour (juce::Label::textColourId, juce::Colours::grey);
-    else
-      setColour (juce::Label::textColourId, juce::Colours::orange);
-}
-
 /**
  * Drag is only necessary for ParameterForm and only in a few usages.
  * Is it bad to assume we can always be a drag initiator?
@@ -36,7 +27,6 @@ void YanFieldLabel::setDisabledColor(bool dis)
  * and where it came from, the convention I'm following is to previx the string
  * with a source identifier followed by an object identifier of some kind.
  * In current use for ParameterForms, the label text is the display name of the Symbol
- * 
  */
 void YanFieldLabel::mouseDown(const juce::MouseEvent& e)
 {
@@ -106,13 +96,6 @@ void YanField::setLabelListener(YanFieldLabel::Listener* l)
     label.setListener(l);
 }
 
-#if 0
-bool YanField::hasLabel(YanFieldLabel* l)
-{
-    return (l == &label);
-}
-#endif
-
 void YanField::setLabel(juce::String s)
 {
     label.setText(s, juce::NotificationType::dontSendNotification);
@@ -176,14 +159,50 @@ juce::String YanField::getDragDescription()
 }
 
 /**
+ * Labels may have three color options: normal, disabled, and explciit.
+ * Most fields have a normal default color.  If a field is disabled
+ * it will automatically be given an alternate color, typically
+ * grey or something dark.
+ *
+ * In a few (one) case, a label may be given an explicit color to indiciate
+ * a special quality of the field.  When a label nas an explicit color
+ * the automatic coloration for enabled/disabled does not apply.
+ */
+void YanField::setLabelColor(juce::Colour c)
+{
+    explicitLabelColor = c;
+
+    // is this a good way to indiciate "unset"?  What if they want it black?
+    if (explicitLabelColor == juce::Colour())
+      setNormalLabelColor();
+    else
+      label.setColour(juce::Label::textColourId, explicitLabelColor);
+}
+
+void YanField::unsetLabelColor()
+{
+    setLabelColor(juce::Colour());
+}
+
+void YanField::setNormalLabelColor()
+{
+    if (disabled)
+      label.setColour (juce::Label::textColourId, juce::Colours::grey);
+    else
+      label.setColour (juce::Label::textColourId, juce::Colours::orange);
+}
+
+/**
  * This is normally overridden by the subclass to take the
- * appropriate action.
+ * appropriate action.  But it needs to call back here to handle
+ * the disable color.
  */
 void YanField::setDisabled(bool b)
 {
     if (b != disabled) {
-        label.setDisabledColor(b);
         disabled = b;
+        if (explicitLabelColor == juce::Colour())
+          setNormalLabelColor();
     }
 }
 
@@ -252,12 +271,12 @@ YanInput::YanInput(juce::String label, int argCharWidth, bool argReadOnly) : Yan
                 ed->addListener(this);
             }
             if (listener != nullptr)
-              listener->inputEditorShown(this);
+              listener->yanInputEditorShown(this);
         };
 
         text.onEditorHide = [this](){
             if (listener != nullptr)
-              listener->inputEditorHidden(this);
+              listener->yanInputEditorHidden(this);
         };
     }
 
@@ -274,7 +293,7 @@ void YanInput::setDisabled(bool b)
 void YanInput::textEditorTextChanged(juce::TextEditor& ed)
 {
     if (listener != nullptr)
-      listener->inputEditorChanged(this, ed.getText());
+      listener->yanInputEditorChanged(this, ed.getText());
 }
 
 void YanInput::setListener(Listener* l)
@@ -334,7 +353,7 @@ void YanInput::labelTextChanged(juce::Label* l)
 {
     (void)l;
     if (listener != nullptr)
-      listener->inputChanged(this);
+      listener->yanInputChanged(this);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -490,7 +509,7 @@ void YanColorChooser::colorSelected(int argb)
     //Trace(2, "YanColorSelector::Color selected %d", argb);
     color = argb;
     if (listener != nullptr)
-      listener->colorSelected(color);
+      listener->yanColorSelected(color);
 
     // until we show a color box change the text color
     text.setColour(juce::Label::textColourId, juce::Colour(argb));
@@ -638,7 +657,7 @@ void YanRadio::buttonClicked(juce::Button* b)
     // ignore notifications of turning a button off
     if (selection >= 0) {
         if (listener != nullptr)
-          listener->radioSelected(this, selection);
+          listener->yanRadioSelected(this, selection);
     }
 }
 
@@ -715,9 +734,18 @@ void YanCombo::setItems(juce::StringArray names)
 
     setSize((maxChars * charWidth) + arrowWidth, YanForm::RowHeight);
 
-    //combobox.setSelectedId(1, juce::NotificationType::dontSendNotification);
-    combobox.setSelectedId(1, juce::NotificationType::sendNotification);
+    setItemNoNotify(1);
 }
+
+/**
+ * Internal item selector that makes damn sure notifications are not sent.
+ * This can cause infinite loops if the Listener on this causes it's value to
+ * be changed again.
+ */
+void YanCombo::setItemNoNotify(int id)
+{
+    combobox.setSelectedId(id, juce::NotificationType::dontSendNotification);
+}    
 
 // having trouble getting the setItems size to stick
 int YanCombo::calculatePreferredWidth()
@@ -753,7 +781,7 @@ int YanCombo::getPreferredComponentWidth()
 
 void YanCombo::setSelection(int index)
 {
-    combobox.setSelectedId(index + 1);
+    setItemNoNotify(index + 1);
 }
 
 int YanCombo::getSelection()
@@ -776,7 +804,7 @@ void YanCombo::comboBoxChanged(juce::ComboBox* box)
     (void)box;
     if (listener != nullptr) {
         int selection = getSelection();
-        listener->comboSelected(this, selection);
+        listener->yanComboSelected(this, selection);
     }
 }
 

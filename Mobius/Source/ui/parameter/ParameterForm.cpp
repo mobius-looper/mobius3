@@ -92,6 +92,34 @@ void ParameterForm::paint(juce::Graphics& g)
 
 }
 
+/**
+ * Here from a YanField/YanFieldLabel if we're interestesed in passing along
+ * clicks on the labels.
+ */
+void ParameterForm::yanFieldClicked(YanField* f, const juce::MouseEvent& e)
+{
+    if (listener != nullptr) {
+        // dangerous
+        YanParameter* yp = static_cast<YanParameter*>(f);
+        listener->parameterFormClick(this, yp, e);
+    }
+}
+
+/**
+ * Find a paraemter within the form that displays a certain Symbol.
+ */
+YanParameter* ParameterForm::find(Symbol* s)
+{
+    YanParameter* found = nullptr;
+    for (auto p : parameters) {
+        if (p->getSymbol() == s) {
+            found = p;
+            break;
+        }
+    }
+    return found;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Field Addition
@@ -111,8 +139,11 @@ YanParameter* ParameterForm::add(Provider* p, Symbol* s, ValueSet* values)
     YanField* existing = form.find(s->getDisplayName());
     if (existing == nullptr) {
         YanParameter* field = new YanParameter(s->getDisplayName());
-        field->init(s);
+        field->init(p, s);
 
+        // be notified of clicks on the label which we pass back to our listener
+        field->setLabelListener(this);
+        
         // if this is a draggable form, the drag scription is the canonical symbol name,
         // not the displayName used for the label
         if (draggable) 
@@ -121,89 +152,32 @@ YanParameter* ParameterForm::add(Provider* p, Symbol* s, ValueSet* values)
         parameters.add(field);
         form.add(field);
 
-        MslValue* v = nullptr;
-        if (values != nullptr)
-          v = values->get(s->name);
-
-        field->load(p, v);
+        // values is optional depending on who is calling this
+        // if the field isn't loaded now, then it needs to be refresh()'d
+        // or load()'d later
+        if (p != nullptr && values != nullptr) {
+            MslValue* v = values->get(s->name);
+            field->load(v);
+        }
         
         forceResize();
 
-        // hacking: support click callbacks for locking, needs to be more general
-        if (locking)
-          field->setLabelListener(this);
-        
         result = field;
     }
     return result;
 }
 
-void ParameterForm::yanFieldClicked(YanField* f, const juce::MouseEvent& e)
-{
-    if (listener != nullptr) {
-        // dangerous
-        YanParameter* yp = static_cast<YanParameter*>(f);
-        listener->parameterFormClick(this, yp, e);
-    }
-}
-
-
-// temporary: remove this
 #if 0
-YanParameter* ParameterForm::findFieldWithLabel(YanFieldLabel* l)
-{
-    YanParameter* found = nullptr;
-    for (auto p : parameters) {
-        if (p->hasLabel(l)) {
-            found = p;
-            break;
-        }
-    }
-    return found;
-}
-#endif
-
-// temporary: remove this
-void ParameterForm::remove(YanParameter* p)
-{
-    if (parameters.contains(p)) {
-        form.remove(p);
-        parameters.removeObject(p, true);
-    }
-    else {
-        Trace(1, "ParameterForm::remove Form does not contain this field");
-    }
-}
-
-bool ParameterForm::remove(Symbol* s)
-{
-    YanParameter* found = nullptr;
-    
-    for (auto p : parameters) {
-        if (p->getSymbol() == s) {
-            found = p;
-            break;
-        }
-    }
-
-    if (found != nullptr) {
-        form.remove(found);
-        parameters.removeObject(found, true);
-    }
-
-    return (found != nullptr);
-}
-                     
-
 void ParameterForm::add(juce::Array<Symbol*>& symbols)
 {
     for (auto s : symbols) {
         YanParameter* field = new YanParameter(s->getDisplayName());
         parameters.add(field);
-        field->init(s);
+        field->init(provider, s);
         form.add(field);
     }
 }
+#endif
 
 void ParameterForm::addSpacer()
 {
@@ -249,20 +223,43 @@ void ParameterForm::build(Provider* p, TreeForm* formdef)
                 
                 YanParameter* field = new YanParameter(label);
                 parameters.add(field);
-                field->init(s);
+                field->init(p, s);
                 form.add(field);
             }
         }
     }
 }
 
+/**
+ * After dragging a field out a form the drag watcher may ask to remove
+ * the field entirely.
+ */
+bool ParameterForm::remove(Symbol* s)
+{
+    YanParameter* found = nullptr;
+    
+    for (auto p : parameters) {
+        if (p->getSymbol() == s) {
+            found = p;
+            break;
+        }
+    }
+
+    if (found != nullptr) {
+        form.remove(found);
+        parameters.removeObject(found, true);
+    }
+
+    return (found != nullptr);
+}
+                     
 //////////////////////////////////////////////////////////////////////
 //
 // Value Transfer
 //
 //////////////////////////////////////////////////////////////////////
 
-void ParameterForm::load(Provider* p, ValueSet* values)
+void ParameterForm::load(ValueSet* values)
 {
     for (auto field : parameters) {
         Symbol* s = field->getSymbol();
@@ -270,7 +267,7 @@ void ParameterForm::load(Provider* p, ValueSet* values)
         if (values != nullptr)
           v = values->get(s->name);
 
-        field->load(p, v);
+        field->load(v);
     }
 
     // force it to resize, important for combo boxes that may change
@@ -282,9 +279,9 @@ void ParameterForm::save(ValueSet* values)
 {
     for (auto field : parameters) {
         Symbol* s = field->getSymbol();
-        if (field->isDisabled()) {
-            // this is only used for SessionTrackForms where disabling
-            // a field means to remove this from the value set
+        // if the field is marked defaulted, any prior
+        // value it had in the ValueSet must be removed
+        if (field->isDefaulted()) {
             values->remove(s->name);
         }
         else {
@@ -295,6 +292,16 @@ void ParameterForm::save(ValueSet* values)
     }
 }
 
+/**
+ * Iterate the Refresher over all of the YanParameter fields.
+ */
+void ParameterForm::refresh(Refresher* r)
+{
+    for (auto field : parameters) {
+        r->parameterFormRefresh(this, field);
+    }
+}
+ 
 //////////////////////////////////////////////////////////////////////
 //
 // Drag and Drop

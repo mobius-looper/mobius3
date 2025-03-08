@@ -277,10 +277,6 @@
           <FILE id="bZ5HFu" name="YanParameter.cpp" compile="1" resource="0"
                 file="Source/ui/common/YanParameter.cpp"/>
           <FILE id="M0KOLA" name="YanParameter.h" compile="0" resource="0" file="Source/ui/common/YanParameter.h"/>
-          <FILE id="YH3ixI" name="YanParameterForm.cpp" compile="1" resource="0"
-                file="Source/ui/common/YanParameterForm.cpp"/>
-          <FILE id="erADRG" name="YanParameterForm.h" compile="0" resource="0"
-                file="Source/ui/common/YanParameterForm.h"/>
           <FILE id="dwke1e" name="YanPopup.cpp" compile="1" resource="0" file="Source/ui/common/YanPopup.cpp"/>
           <FILE id="B6k2jT" name="YanPopup.h" compile="0" resource="0" file="Source/ui/common/YanPopup.h"/>
         </GROUP>

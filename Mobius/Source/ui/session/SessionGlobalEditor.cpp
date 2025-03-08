@@ -16,16 +16,18 @@
 #include "../parameter/ParameterTree.h"
 #include "../parameter/ParameterFormCollection.h"
 
+#include "SessionEditor.h"
 #include "SessionGlobalEditor.h"
 
 SessionGlobalEditor::SessionGlobalEditor()
 {
 }
 
-void SessionGlobalEditor::initialize(Provider* p)
+void SessionGlobalEditor::initialize(Provider* p, SessionEditor* se)
 {
     provider = p;
-
+    editor = se;
+    
     // this is used by the inherited symbolTreeClicked method
     // to generate form names when the tree is clicked if the clicked
     // node didn't specify one
@@ -34,11 +36,12 @@ void SessionGlobalEditor::initialize(Provider* p)
     tree.initializeStatic(provider, treeName);
 
     // this wants a ValueSet but we don't get that until load
-    forms.initialize(p, this, nullptr);
+    forms.initialize(this, nullptr);
 }
 
 void SessionGlobalEditor::load(ValueSet* src)
 {
+    values = src;
     forms.load(src);
 }
 
@@ -78,8 +81,33 @@ ParameterForm* SessionGlobalEditor::parameterFormCollectionCreate(juce::String f
         form->setTitle(title);
 
         form->build(provider, formdef);
+
+        // ugh, this one builds a form from a TreeDefinition so we don't have
+        // a hook into finding the YanParameter for the overlay like the others
+        SymbolTable* symbols = provider->getSymbols();
+        Symbol* s = symbols->getSymbol(ParamSessionOverlay);
+        YanParameter* p = form->find(s);
+        if (p == nullptr)
+          Trace(1, "SessionGlobalEditor: Unable to find field for sessionOverlay");
+        else
+          p->setListener(this);
     }
     return form;
+}
+
+void SessionGlobalEditor::yanParameterChanged(YanParameter* p)
+{
+    // we only put this on one field but make sure
+    Symbol* s = p->getSymbol();
+    if (s->id != ParamSessionOverlay)
+        Trace(1, "SessionTrackForms: Unexpected YanParameter notification");
+    else {
+        // have to move the value from the field back into the set
+        MslValue v;
+        p->save(&v);
+        values->set(s->name, v);
+        editor->overlayChanged();
+    }
 }
 
 /****************************************************************************/

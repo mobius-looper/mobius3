@@ -32,6 +32,12 @@ class ParameterForm : public juce::Component,
     ParameterForm();
     ~ParameterForm() {}
 
+    class Refresher {
+      public:
+        virtual ~Refresher() {}
+        virtual void parameterFormRefresh(ParameterForm* f, YanParameter* p) = 0;
+    };
+
     class Listener {
       public:
         virtual ~Listener() {}
@@ -68,7 +74,7 @@ class ParameterForm : public juce::Component,
      * Add a list of editing fields for parameter symbols.
      * The fields are added in the same order as the array.
      */
-    void add(juce::Array<class Symbol*>& symbols);
+    //void add(juce::Array<class Symbol*>& symbols);
 
     /**
      * Add a random field not necessarily associated with a symbol.
@@ -84,12 +90,27 @@ class ParameterForm : public juce::Component,
      * Add form fields from a form definition.
      */
     void build(class Provider* p, class TreeForm* formdef);
+    class YanParameter* find(class Symbol* s);
+    
+    /**
+     * Strange interface for dynamic parameter forms.
+     */
+    class YanParameter* add(class Provider* p, class Symbol* s, class ValueSet* values);
+
+    // used with drag-and-drop forms with fields dragged out 
+    bool remove(class Symbol* s);
     
     /**
      * Load the values of symbol parameter fields from the value set.
-     * Only fields added with Symbols can be loaded this way.
      */
-    void load(class Provider* p, class ValueSet* values);
+    void load(class ValueSet* values);
+
+    /**
+     * Refresh the values of fields using a refresher.
+     * This is an alternative to using load() with a ValueSet
+     * you normally use one or the other.
+     */
+    void refresh(Refresher* r);
 
     /**
      * Save the values of symbol parameter fields to the value set.
@@ -97,14 +118,8 @@ class ParameterForm : public juce::Component,
     void save(class ValueSet* values);
 
     /**
-     * Strange interface for dynamic parameter forms.
+     * Callback for forms that have label click enabled.
      */
-    class YanParameter* add(class Provider* p, class Symbol* s, class ValueSet* values);
-
-    //class YanParameter* findFieldWithLabel(class YanFieldLabel* l);
-    void remove(class YanParameter* p);
-    bool remove(class Symbol* s);
-
     void yanFieldClicked(YanField* f, const juce::MouseEvent& e) override;
 
     //

@@ -36,7 +36,7 @@ class GroupEditor : public ConfigEditor, public YanColorChooser::Listener
     void resized() override;
 
     // YanColorChooser
-    void colorSelected(int argb) override;
+    void yanColorSelected(int argb) override;
 
   private:
 

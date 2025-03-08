@@ -9,7 +9,8 @@
 #include "../parameter/ParameterTreeForms.h"
 
 class SessionGlobalEditor : public ParameterTreeForms,
-                            public ParameterFormCollection::Factory
+                            public ParameterFormCollection::Factory,
+                            public YanParameter::Listener
 {
   public:
 
@@ -20,7 +21,7 @@ class SessionGlobalEditor : public ParameterTreeForms,
 
     // SessionEditor Interface
 
-    void initialize(class Provider* p);
+    void initialize(class Provider* p, class SessionEditor* se);
     
     void load(class ValueSet* set);
     void save(ValueSet* values);
@@ -28,12 +29,13 @@ class SessionGlobalEditor : public ParameterTreeForms,
     void decacheForms();
 
     class ParameterForm* parameterFormCollectionCreate(juce::String formid) override;
+    void yanParameterChanged(YanParameter* p) override;
     
   private:
 
     class Provider* provider = nullptr;
+    class SessionEditor* editor = nullptr;
     class ValueSet* values = nullptr;
-
 
 };
 

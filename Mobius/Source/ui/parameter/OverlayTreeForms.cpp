@@ -35,7 +35,7 @@ void OverlayTreeForms::initialize(Provider* p)
     // this wants a ValueSet but we don't get that until load
     // rethink this interface, if we never have the ValueSet on
     // initialize then don't pass it
-    forms.initialize(p, this, nullptr);
+    forms.initialize(this, nullptr);
 }
 
 void OverlayTreeForms::load(ValueSet* src)

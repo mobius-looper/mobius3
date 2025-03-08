@@ -14,15 +14,17 @@
 #include "../parameter/ParameterTree.h"
 #include "../parameter/ParameterFormCollection.h"
 
+#include "SessionEditor.h"
 #include "SessionParameterEditor.h"
 
 SessionParameterEditor::SessionParameterEditor()
 {
 }
 
-void SessionParameterEditor::initialize(Provider* p)
+void SessionParameterEditor::initialize(Provider* p, SessionEditor* se)
 {
     provider = p;
+    editor = se;
 
     // exclude parameters that can't have default session values
     tree.setFilterNoDefault(true);
@@ -36,7 +38,7 @@ void SessionParameterEditor::initialize(Provider* p)
     // this wants a ValueSet but we don't get that until load
     // rethink this interface, if we never have the ValueSet on
     // initialize then don't pass it
-    forms.initialize(p, this, nullptr);
+    forms.initialize(this, nullptr);
 }
 
 void SessionParameterEditor::load(ValueSet* src)
@@ -94,11 +96,35 @@ ParameterForm* SessionParameterEditor::parameterFormCollectionCreate(juce::Strin
             if (s == nullptr)
               Trace(1, "SessionParameterEditor: Tree node without symbol %s",
                     item->getName().toUTF8());
-            else
-              form->add(provider, s, values);
+            else {
+                YanParameter* p = form->add(provider, s, values);
+                // watch this
+                if (s->id == ParamTrackOverlay)
+                  p->setListener(this);
+            }
         }
     }
     return form;
+}
+
+/**
+ * We install ourselves as a listener for the YanParameter field that
+ * holds the default track overlay.  Whenever this changes need to refresh the
+ * occlusion list in all the tracks.
+ */
+void SessionParameterEditor::yanParameterChanged(YanParameter* p)
+{
+    // we only put this on one field but make sure
+    Symbol* s = p->getSymbol();
+    if (s->id != ParamTrackOverlay)
+      Trace(1, "SessionParameterEditor: Unexpected YanParameter notification");
+    else {
+        // have to move the value from the field back into the set
+        MslValue v;
+        p->save(&v);
+        values->set(s->name, v);
+        editor->overlayChanged();
+    }
 }
 
 /****************************************************************************/

@@ -548,13 +548,13 @@ void BindingEditor::showCapture(juce::String& s)
       formChanged();
 }
 
-void BindingEditor::inputChanged(YanInput* i)
+void BindingEditor::yanInputChanged(YanInput* i)
 {
     (void)i;
     formChanged();
 }
 
-void BindingEditor::comboSelected(YanCombo* c, int selection)
+void BindingEditor::yanComboSelected(YanCombo* c, int selection)
 {
     (void)c;
     (void)selection;

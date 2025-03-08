@@ -1,5 +1,8 @@
 /**
- * OverlayEditor subcomponent for editing one ValueSet.
+ * SessionEditor subcomponent for editing track overrides.
+ *
+ * This is the more complex use of ParameterForm because it needs to
+ * support the concepts of defaulting and occlusion.  
  */
 
 #include <JuceHeader.h>
@@ -9,6 +12,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/ParameterProperties.h"
 #include "../../model/ValueSet.h"
+#include "../../model/ParameterSets.h"
 #include "../../Provider.h"
 
 #include "../parameter/SymbolTree.h"
@@ -16,6 +20,7 @@
 #include "../parameter/ParameterTree.h"
 #include "../parameter/ParameterFormCollection.h"
 
+#include "SessionEditor.h"
 #include "SessionTrackForms.h"
 
 SessionTrackForms::SessionTrackForms()
@@ -26,9 +31,10 @@ SessionTrackForms::~SessionTrackForms()
 {
 }
 
-void SessionTrackForms::initialize(Provider* p, Session* s, Session::Track* def)
+void SessionTrackForms::initialize(Provider* p, SessionEditor* se, Session* s, Session::Track* def)
 {
     provider = p;
+    editor = se;
     session = s;
     sessionTrack = def;
     values = sessionTrack->ensureParameters();
@@ -44,20 +50,24 @@ void SessionTrackForms::initialize(Provider* p, Session* s, Session::Track* def)
     tree.initializeDynamic(provider);
 
     // we get notifications of drops from the forms back to the tree
+    // todo: this is also dependent on lockingStyle, right?
     tree.setDropListener(this);
-    
-    
-    // this wants a ValueSet but we don't get that until load
-    // rethink this interface, if we never have the ValueSet on
-    // initialize then don't pass it
-    forms.initialize(p, this, nullptr);
 
-    forms.load(values);
+    // before potentially loading forms, calculate the occlusion list
+    // since that influsneces how things are displayed
+    refreshOcclusionList();
+    
+    // this wants a ValueSet but we use a Refresher style so it
+    // isn't needed during initialization
+    forms.initialize(this, nullptr);
+ 
+    // shouldn't have any forms open yet, but just in case
+    forms.refresh(this);
 }
 
 void SessionTrackForms::reload()
 {
-    forms.load(values);
+    forms.refresh(this);
 }
 
 void SessionTrackForms::save()
@@ -79,16 +89,23 @@ void SessionTrackForms::decacheForms()
 }
 
 /**
- * Session Track parameter forms are dynamic, they only show fields for the values
- * that are actually in the overlay.  Drag-and-drop is used to add or remove them.
+ * Session::Track parame ter forms are more complicated than Overlay forms though
+ * the resulting ValueSet is similar.  These were originally designed to work like
+ * overlay forms with drag-and-drop to move fields in and out.  It changed to
+ * use full forms combined with the "defaulted" and "occluded" concepts which looks
+ * better for the user.
  *
- * !! This is the same as OverlayTreeForms, need to share
+ * A field that is defaulted is one that has no value in the track parameter map so
+ * the effective value defaults to what is in the session.  Defaulting can be turned
+ * on and off.
  *
- * Like other tree forms, the fields are limited by the tree nodes
+ * A field that is occluded may have a value or be defaulted, but it is effectively
+ * unused because a track overlay is in place that will hide that parameter.
+ * Occlusion cannot be turned off manually, the user needs to go remove or change
+ * the track overlay in the session.
+ 
+ * Like other tree forms, the fields in each form are limited by the tree nodes
  * that appear within this category.
- *
- * This is a common dance that needs to be factored up to ParameterTreeForms.
- * What we can add here is a filter for the ValueSet.
  */
 ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String formName)
 {
@@ -106,21 +123,19 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
     }
     else {
         form = new ParameterForm();
+
+        // this notifies us of drops into the form which we don't actually need
+        // but also clicks which we do need
         form->setListener(this);
 
-        if (lockingStyle) {
-            // this is what causes label clicks to be passed up
-            form->setLocking(true);
-        }
-        else {
-            // this allows fields to be dragged out
-            form->setDraggable(true);
-        }
+        // if you want DnD ask it to prepare for that
+        if (!lockingStyle)
+          form->setDraggable(true);
         
         // todo: form title
 
-        // so we can iterate over the children, but the parent node should also
-        // have an Array of the child symbols as well, right?
+        // We can get the symbols by iterating over the children, but
+        // won't the parent node already have a nice Array<Symbol> we could use instead?
         for (int i = 0 ; i < parent->getNumSubItems() ; i++) {
             SymbolTreeItem* item = static_cast<SymbolTreeItem*>(parent->getSubItem(i));
             Symbol* s = item->getSymbol();
@@ -130,50 +145,118 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
             }
             else {
                 ParameterProperties* props = s->parameterProperties.get();
-                if (!lockingStyle) {
-                    // sparse mode: only add it if we have it
-                    // OR if it is flagged as noDefault
-                    MslValue* v = values->get(s->name);
-                    if (v != nullptr || (props != nullptr && props->noDefault))
-                      (void)form->add(provider, s, values);
+                if (props == nullptr) {
+                    Trace(1, "SessionTrackForms: Tree node had a non-parameter symbol %s",
+                          s->getName());
                 }
                 else {
-                    // locking mode: it will always be added, but may be disabled if not in the
-                    // value set
-                    bool noDefault = (props != nullptr && props->noDefault);
                     MslValue* v = values->get(s->name);
-                    if (v != nullptr || noDefault) {
-                        // normal overridden value or one that has no default
-                        YanParameter* field = form->add(provider, s, values);
-                        // if this is a noDefault field it can't be unlocked
-                        // actually rather than set yet another flag, can just check
-                        // for it in the click handler
-                        //field->setNoLocking(true);
-                        (void)field;
+                    bool addIt = true;
+                    if (!lockingStyle) {
+                        // sparse mode: only add it if we have it
+                        // OR if it is flagged as noDefault
+                        addIt = (v != nullptr || props->noDefault);
                     }
-                    else {
-                        // there is no value but we can show the default
-                        // !! this isn't enough, because the session forms may
-                        // not have been saved, either need to save them when
-                        // tabs change or locate the YanParameter that is holding the edited value
-                        ValueSet* globals = nullptr;
-                        if (session == nullptr)
-                          Trace(1, "SessionTrackForms: Uninitialized Session");
-                        else
-                          globals = session->ensureGlobals();
-                        YanParameter* field = form->add(provider, s, globals);
-                        field->setDisabled(true);
+                    if (addIt) {
+                        // just add the field, values will be handled during refresh
+                        YanParameter* p = form->add(provider, s, nullptr);
+                        if (lockingStyle && v == nullptr)
+                          p->setDefaulted(true);
+
+                        // if this is the track overlay parameter, be informed when it
+                        // changes
+                        if (s->id == ParamTrackOverlay)
+                          p->setListener(this);
                     }
                 }
             }
         }
+        // the form was not loaded during the build phase
+        // since we have complex refresh processing so
+        // need another refresh pass
+        form->refresh(this);
     }
     return form;
 }
 
 /**
- * This should be called only if we're in locking style which
- * caused field label listeners to be installed.
+ * Here is where the magic happens...
+ *
+ * ParameterForm has been asked to refresh the field values and it
+ * calls back here.  This can happen during the Create phase above
+ * or randomly as various things happen in the session editor after creation.
+ */
+void SessionTrackForms::parameterFormRefresh(ParameterForm* f, YanParameter* p)
+{
+    (void)f;
+    // determine where the value comes from
+    ValueSet* src = values;
+    if (lockingStyle && p->isDefaulted())
+      src = session->ensureGlobals();
+
+    MslValue* v = src->get(p->getSymbol()->name);
+    p->load(v);
+
+    // however the value was loaded, occlusion may impact the
+    // label color and editability
+    // SessionEditor has the tool for this, and is the only reason we
+    // have to pass that all the way down here
+    p->setOccluded(editor->isOccluded(p->getSymbol(), occlusions));
+}
+
+/**
+ * Calculate the occlusion list for this track.
+ */
+void SessionTrackForms::refreshOcclusionList()
+{
+    occlusions.clear();
+    // top-level editor has tools for this
+    editor->gatherOcclusions(occlusions, values, ParamTrackOverlay);
+}
+
+/**
+ * Here when the SessionEditor detected a change to either
+ * the session overlay or the default track overlay.
+ * Refresh the forms to pick up the changes.
+ */
+void SessionTrackForms::sessionOverlayChanged()
+{
+    forms.refresh(this);
+}
+
+/**
+ * We install ourselves as a listener for the YanParameter field that
+ * holds the track overlay.  Whenever this changes need to refresh the
+ * occlusion list.
+ *
+ * NOTE WELL: You need to be very careful with this to avoid an infinite loop.
+ * Refreshing the forms will cause them to have values placed in all
+ * of the internal YanFields, if those fields trigger a Juce notification
+ * when set programatically you'll end up back here, refresh the forms again
+ * and it goes on forever.  YanInput in particular must NOT send notifications
+ * when it has a value loaded, only when the user actually touches it.
+ */
+void SessionTrackForms::yanParameterChanged(YanParameter* p)
+{
+    // we only put this on one field but make sure
+    Symbol* s = p->getSymbol();
+    if (s->id != ParamTrackOverlay) {
+        Trace(1, "SessionTrackForms: Unexpected YanParameter notification");
+    }
+    else {
+        // have to move the value from the field back into the set
+        MslValue v;
+        p->save(&v);
+        values->set(s->name, v);
+        
+        refreshOcclusionList();
+        forms.refresh(this);
+    }
+}
+
+/**
+ * This will be called whenever the user clicks on a YanParameter field label.
+ * If this is not lockingStyle we can ignore it.
  *
  * Simple toggle works well enough, but you could use the MouseEvent to
  * popup a selection menu on right click.
@@ -182,22 +265,24 @@ void SessionTrackForms::parameterFormClick(ParameterForm* f, YanParameter* p, co
 {
     (void)f;
     (void)e;
-    // if this field has the noDefault flag set, then it can't be unlocked
-    Symbol* s = p->getSymbol();
-    ParameterProperties* props = s->parameterProperties.get();
-    bool noLocking = (props != nullptr && props->noDefault);
-    if (!noLocking)
-      toggleParameterLock(p);
+    if (lockingStyle) {
+        // if this field has the noDefault flag set, then it can't be unlocked
+        Symbol* s = p->getSymbol();
+        ParameterProperties* props = s->parameterProperties.get();
+        bool noLocking = (props != nullptr && props->noDefault);
+        if (!noLocking)
+          toggleParameterDefault(p);
+    }
 }
 
-void SessionTrackForms::toggleParameterLock(YanParameter* p)
+void SessionTrackForms::toggleParameterDefault(YanParameter* p)
 {
     Symbol* s = p->getSymbol();
     
-    if (p->isDisabled()) {
-        p->setDisabled(false);
-        MslValue* current = values->get(s->name);
-        p->load(provider, current);
+    if (p->isDefaulted()) {
+        p->setDefaulted(false);
+        // occlusion doesn't change, but may as well re-use this
+        parameterFormRefresh(nullptr, p);
     }
     else {
         // if they changed the value can save it so it will be restored if they
@@ -207,60 +292,10 @@ void SessionTrackForms::toggleParameterLock(YanParameter* p)
         p->save(&current);
         values->set(s->name, current);
 
-        p->setDisabled(true);
-        MslValue* dflt = session->get(s->name);
-        p->load(provider, dflt);
+        p->setDefaulted(true);
+        parameterFormRefresh(nullptr, p);
     }
 }
-
-/**
- * Refresh handler for ParameterForms in this track.
- */
-#if 0
-void SessionTrackForms::parameterFormRefresh(YanParametet* p)
-{
-    if (!lockingStyle) {
-        // a drag and drop form, nothing fancy 
-        MslValue* v = values->get(p->getSymbol()->name);
-        p->load(provider, v);
-
-        if (isOverlayed(p)) {
-            p->setLabelColor(juce::Colours::yellow);
-            p->setDisabled(true);
-        }
-        else {
-            p->setLabelColor(juce::Colours::orange);
-            p->setDisabled(false);
-        }
-    }
-    else {
-        // !! yes, here is the problem
-        // if you use the disabled flag to mean "locked and defaulted"
-        // then when an overlay locks it we don't know which value set to use
-        // since it looks the same as a non-overlay lock
-        // need two flags
-        //   isDefaulted - there is no value and should be disabled
-        //   isOverlain - there may or may not be a value or a default value
-        //    should also be disabled
-        if (p->isDisabled()) {
-            // a locked parameter, already knows it's color
-            
-        }
-        else {
-        }
-    }
-
-    // whatever style this is
-    if (p->isOccluded()) {
-        // load the value but disable it
-    }
-
-    if (p->isDefaulted()) {
-        // disable it and make it grey
-    }
-    
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //

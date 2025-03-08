@@ -14,25 +14,25 @@ class YanFieldHelpers
   public:
 
 
-    static void comboInit(class Provider* p, class YanCombo* combo, juce::String type, juce::String value);
+    static void comboInit(class Provider* p, class YanCombo* combo, juce::String type, juce::StringArray& values);
 
     static juce::String comboSave(class YanCombo* combo, juce::String type);
 
   private:
 
-    static void initMidiInput(class Provider* p, class YanCombo* combo, juce::String value);
+    static void initMidiInput(class Provider* p, class YanCombo* combo, juce::StringArray& values);
     static juce::String saveMidiInput(YanCombo* combo);
     
-    static void initMidiOutput(class Provider* p, class YanCombo* combo, juce::String value);
+    static void initMidiOutput(class Provider* p, class YanCombo* combo, juce::StringArray& values);
     static juce::String saveMidiOutput(YanCombo* combo);
     
-    static void initTrackGroup(class Provider* p, class YanCombo* combo, juce::String value);
+    static void initTrackGroup(class Provider* p, class YanCombo* combo, juce::StringArray& values);
     static juce::String saveTrackGroup(class YanCombo* combo);
     
-    static void initTrackPreset(class Provider* p, class YanCombo* combo, juce::String value);
+    static void initTrackPreset(class Provider* p, class YanCombo* combo, juce::StringArray& values);
     static juce::String saveTrackPreset(class YanCombo* combo);
     
-    static void initParameterSet(class Provider* p, class YanCombo* combo, juce::String value);
+    static void initParameterSet(class Provider* p, class YanCombo* combo, juce::StringArray& values);
     static juce::String saveParameterSet(class YanCombo* combo);
     
 

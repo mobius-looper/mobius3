@@ -262,19 +262,19 @@ void SymbolTree::disableSearch()
     searchDisabled = true;
 }
 
-void SymbolTree::inputEditorShown(YanInput*)
+void SymbolTree::yanInputEditorShown(YanInput*)
 {
     startSearch();
 }
 
-void SymbolTree::inputEditorChanged(YanInput* input, juce::String text)
+void SymbolTree::yanInputEditorChanged(YanInput* input, juce::String text)
 {
     (void)input;
     //Trace(2, "%s", text.toUTF8());
     searchTree(text, &root);
 }
 
-void SymbolTree::inputEditorHidden(YanInput*)
+void SymbolTree::yanInputEditorHidden(YanInput*)
 {
     endSearch();
 }

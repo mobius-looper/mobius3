@@ -18,7 +18,12 @@ YanParameter::~YanParameter()
 {
 }
 
-void YanParameter::init(Symbol* s)
+void YanParameter::setListener(Listener* l)
+{
+    listener = l;
+}
+
+void YanParameter::init(Provider* p, Symbol* s)
 {
     symbol = s;
     isText = false;
@@ -37,29 +42,98 @@ void YanParameter::init(Symbol* s)
         // TypeEnum doesn't seem to be set reliably, look for a value list
         //nelse if (props->type == TypeEnum) {
         else if (props->values.size() > 0 || props->displayType == "combo") {
-            isCombo = true;
-            if (props->valueLabels.size() > 0)
-              combo.setItems(props->valueLabels);
-            else
-              combo.setItems(props->values);
-            
-            addAndMakeVisible(&combo);
+            initCombo(p, s);
+        }
+        else if (props->type == TypeStructure) {
+            initCombo(p, s);
         }
         else if (props->type == TypeBool) {
             isCheckbox = true;
             addAndMakeVisible(&checkbox);
-        }
-        else if (props->type == TypeStructure) {
-            isCombo = true;
-            // this must have displayHelper specified
+            // yuno have one?
+            // checkbox.setListener(this);
         }
         else {
             isText = true;
             addAndMakeVisible(&input);
+            input.setListener(this);
         }
     }
 }
 
+void YanParameter::initCombo(Provider* p, Symbol* s)
+{
+    isCombo = true;
+    addAndMakeVisible(&combo);
+    combo.setListener(this);
+
+    ParameterProperties* props = s->parameterProperties.get();
+            
+    if (props->displayHelper.length() > 0) {
+        YanFieldHelpers::comboInit(p, &combo, props->displayHelper, structureNames);
+    }
+    else {
+        // Structure fields are supposed to have helpers, I can't think
+        // of a reason to let them specifiy a fixed set of names
+        if (props->type == TypeStructure)
+          Trace(1, "YanParameter: Structure symbol without a parameterHelper");
+        
+        if (props->valueLabels.size() > 0)
+          combo.setItems(props->valueLabels);
+        else
+          combo.setItems(props->values);
+    }
+}
+
+/**
+ * When a field is marked defaulted it means that there is no editable value
+ * and that the parameter will have an effective value that comes from somewhere else.
+ * This happens in the SessionTrackEditor when forms are displayed for parameters that
+ * do not have track overrides.  The field shows the shared value from the session
+ * but it cannot be changed without manual intervention.  Also called "unlocking"
+ * the parameter.
+ *
+ * When a field is defaulted/locked the internal component is disabled, and the label
+ * color turns grey.
+ */
+void YanParameter::setDefaulted(bool b)
+{
+    defaulted = b;
+    setDisabled(b);
+}
+
+bool YanParameter::isDefaulted()
+{
+    return defaulted;
+}
+
+/**
+ * When a field is marked occluded it means that there is an overlay in place that
+ * overrides the value of this parameter.  Like being defaulted, the parameter may
+ * not be edited, but the color of the label is different.
+ *
+ * The parameter may ALSO be defaulted, they are independent states.
+ */
+void YanParameter::setOccluded(bool b)
+{
+    occluded = b;
+    setDisabled(b);
+    // disabled has it's own color but we want to override that
+    if (b)
+      setLabelColor(juce::Colours::yellow);
+    else
+      unsetLabelColor();
+}
+
+bool YanParameter::isOccluded()
+{
+    return occluded;
+}
+
+/**
+ * Inner handler for disabling editing for defaulted and occluded.
+ * Can also be called directly though in current use it won't be.
+ */
 void YanParameter::setDisabled(bool b)
 {
     if (isCombo)
@@ -94,20 +168,28 @@ void YanParameter::resized()
       input.setBounds(remainder);
 }
 
-void YanParameter::load(Provider* p, MslValue* v)
+void YanParameter::load(MslValue* v)
 {
     ParameterProperties* props = symbol->parameterProperties.get();
-    bool hasHelper = (props->displayHelper.length() > 0);
     
     if (isCombo) {
-        if (hasHelper) {
-            if (p == nullptr) {
-                Trace(1, "YanParameter: Parameter has a display helper but Provider not supplied");
+        if (structureNames.size() > 0) {
+            // we had a parameterHelper that found the allowed values
+            if (v == nullptr) {
+                // this is usually "None" or other placeholder at the beginning
+                combo.setSelection(0);
             }
             else {
-                juce::String svalue;
-                if (v != nullptr) svalue = juce::String(v->getString());
-                YanFieldHelpers::comboInit(p, &combo, props->displayHelper, svalue);
+                int ordinal = structureNames.indexOf(juce::String(v->getString()));
+                if (ordinal >= 0)
+                  combo.setSelection(ordinal);
+                else {
+                    // this is relatively common for things like MIDI devices
+                    // when you move between machines
+                    Trace(1, "YanParameter: Desired combo value not in range %s",
+                          v->getString());
+                    combo.setSelection(0);
+                }
             }
         }
         else if (v == nullptr) {
@@ -152,7 +234,7 @@ void YanParameter::load(Provider* p, MslValue* v)
     }
     else if (props->type == TypeInt) {
         if (v == nullptr) {
-            input.setValue(juce::String(symbol->parameterProperties->defaultValue));
+            input.setValue(juce::String(props->defaultValue));
         }
         else {
             // it will be an input field, but allow a value offset
@@ -207,6 +289,27 @@ void YanParameter::save(MslValue* v)
         v->setJString(input.getValue());
     }
     
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Change Notification
+//
+//////////////////////////////////////////////////////////////////////
+
+void YanParameter::yanComboSelected(YanCombo* c, int selection)
+{
+    (void)c;
+    (void)selection;
+    if (listener != nullptr)
+      listener->yanParameterChanged(this);
+}
+
+void YanParameter::yanInputChanged(YanInput* i)
+{
+    (void)i;
+    if (listener != nullptr)
+      listener->yanParameterChanged(this);
 }
 
 /****************************************************************************/

@@ -16,21 +16,22 @@
 #include "YanFieldHelpers.h"
 
 /**
- * Condition a combo box for a MIDI input device.
+ * Initialize a combo box with values pulled from the system config
+ * and return those values.
  */
-void YanFieldHelpers::comboInit(Provider* p, YanCombo* combo, juce::String type, juce::String value)
+void YanFieldHelpers::comboInit(Provider* p, YanCombo* combo, juce::String type, juce::StringArray& values)
 {
     if (type == "midiInput") {
-        initMidiInput(p, combo, value);
+        initMidiInput(p, combo, values);
     }
     else if (type == "midiOutput") {
-        initMidiOutput(p, combo, value);
+        initMidiOutput(p, combo, values);
     }
     else if (type == "trackGroup") {
-        initTrackGroup(p, combo, value);
+        initTrackGroup(p, combo, values);
     }
     else if (type == "parameterSet") {
-        initParameterSet(p, combo, value);
+        initParameterSet(p, combo, values);
     }
     else {
         Trace(1, "YanFieldHelpers: Unknown helper type %s", type.toUTF8());
@@ -62,30 +63,20 @@ juce::String YanFieldHelpers::comboSave(YanCombo* combo, juce::String type)
 // MIDI Input
 /////////////////////////////////////////////////////////////////////
 
-void YanFieldHelpers::initMidiInput(Provider* p, YanCombo* combo, juce::String value)
+void YanFieldHelpers::initMidiInput(Provider* p, YanCombo* combo, juce::StringArray& values)
 {
     MidiManager* mm = p->getMidiManager();
     juce::StringArray names = mm->getOpenInputDevices();
-    if (p->isPlugin())
-      names.insert(0, "Host");
-    else
-      names.insert(0, "Any");
-    
-    combo->setItems(names);
 
-    int index = 0;
-    if (value.length() > 0) {
-        index = names.indexOf(value);   
-        if (index < 0) {
-            // soften the level since this can hit the trace breakpoint
-            // every time the window comes up
-            // todo: should show something in the editor so they know
-            Trace(2, "YanFieldHelper: Warning: Saved MIDI input device not available %s",
-                  value.toUTF8());
-            index = 0;
-        }
-    }
-    combo->setSelection(index);
+    values.clear();
+    if (p->isPlugin())
+      values.insert(0, "Host");
+    else
+      values.insert(0, "Any");
+    
+    values.addArray(names);
+    
+    combo->setItems(values);
 }
 
 juce::String YanFieldHelpers::saveMidiInput(YanCombo* combo)
@@ -102,25 +93,17 @@ juce::String YanFieldHelpers::saveMidiInput(YanCombo* combo)
 // MIDI Output
 /////////////////////////////////////////////////////////////////////
 
-void YanFieldHelpers::initMidiOutput(Provider* p, YanCombo* combo, juce::String value)
+void YanFieldHelpers::initMidiOutput(Provider* p, YanCombo* combo, juce::StringArray& values)
 {
     MidiManager* mm = p->getMidiManager();
     juce::StringArray names = mm->getOpenOutputDevices();
+
+    values.clear();
     if (p->isPlugin())
-      names.insert(0, "Host");
-    // output device defaults to the first one
+      values.insert(0, "Host");
+
+    values.addArray(names);
     combo->setItems(names);
-    
-    int index = 0;
-    if (value.length() > 0) {
-        index = names.indexOf(value);   
-        if (index < 0) {
-            Trace(2, "YanFieldHelper: Warning: Saved MIDI output device not available %s",
-                  value.toUTF8());
-            index = 0;
-        }
-    }
-    combo->setSelection(index);
 }
 
 juce::String YanFieldHelpers::saveMidiOutput(YanCombo* combo)
@@ -133,20 +116,16 @@ juce::String YanFieldHelpers::saveMidiOutput(YanCombo* combo)
 // Track Group
 //////////////////////////////////////////////////////////////////////
 
-void YanFieldHelpers::initTrackGroup(Provider* p, YanCombo* combo, juce::String value)
+void YanFieldHelpers::initTrackGroup(Provider* p, YanCombo* combo, juce::StringArray& values)
 {
     Grouper* gp = p->getGrouper();
 
-    juce::StringArray names;
-    gp->getGroupNames(names);
+    values.clear();
+    gp->getGroupNames(values);
 
-    names.insert(0, "[None]");
+    values.insert(0, "[None]");
     
-    combo->setItems(names);
-
-    int ordinal = gp->getGroupOrdinal(value);
-    // ordinal is -1 if not found, which matches [None]
-    combo->setSelection(ordinal + 1);
+    combo->setItems(values);
 }
 
 juce::String YanFieldHelpers::saveTrackGroup(YanCombo* combo)
@@ -165,29 +144,17 @@ juce::String YanFieldHelpers::saveTrackGroup(YanCombo* combo)
 // Parameter Sets
 //////////////////////////////////////////////////////////////////////
 
-void YanFieldHelpers::initParameterSet(Provider* p, YanCombo* combo, juce::String value)
+void YanFieldHelpers::initParameterSet(Provider* p, YanCombo* combo, juce::StringArray& values)
 {
     ParameterSets* ps = p->getParameterSets();
-    
-    juce::StringArray names;
-    // assuming we always want a "no selection" option 
-    names.add("[None]");
-    for (auto set : ps->getSets()) {
-        names.add(set->name);
-    }
-    combo->setItems(names);
 
-    int index = 0;
-    if (value.length() > 0) {
-        index = names.indexOf(value);   
-        if (index < 0) {
-            Trace(2, "YanFieldHelper: Warning: Saved ParameterSet not available %s",
-                  value.toUTF8());
-            index = 0;
-        }
+    values.clear();
+    // assuming we always want a "no selection" option 
+    values.add("[None]");
+    for (auto set : ps->getSets()) {
+        values.add(set->name);
     }
-    
-    combo->setSelection(index);
+    combo->setItems(values);
 }
 
 juce::String YanFieldHelpers::saveParameterSet(YanCombo* combo)
