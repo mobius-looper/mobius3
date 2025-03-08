@@ -393,6 +393,47 @@ Once those models are fully converted, these symbols can be removed.
   </ParameterScope>
 
   <!-- =======================================================================
+       System Global
+       ============================================================================ -->
+  
+  <!-- A few things that live outside the session in the system.xml file.
+       May want more of the session globals in here too.
+       Ugh, some of these must live in the session gecause they're settable from
+       scripts and that's where the kernel gets them.  If you move them outside
+       then the doAction handlers in the kernel need to go there to set them
+       -->
+  <ParameterScope name='global'>
+    
+    <Parameter name='userFileFolder' type='string'/>
+      Temporary prototype for allowing file paths specified in in various objects
+      to be fragments relative to a user specified folder.  Currently used only
+      when loading MIDI files.
+    </Parameter>
+    
+    <Parameter name='quickSave' type='string'/>
+      The base name of the quick save file.
+      Need more flexibility here including what folders these go in.
+    </Parameter>
+
+    <Parameter name='inputLatency' options='noBinding' query='true'>
+      The number of samples to use for input latency adjustments.  Overrides
+      what is reported by the container for the selected audio device.
+      This arguably belongs in devices.xml since it is related to the audio devices
+      and/or host application.
+    </Parameter>
+    
+    <Parameter name='outputLatency' options='noBinding' query='true'>
+      The number of samples to use for output latency adjustments.  Overrides
+      what is reported by the container for the selected audio device.
+    </Parameter>
+    
+    <Parameter name='saveLayers' type='bool' options='noBinding'>
+      Another project option, move to UI
+    </Parameter>
+
+  </ParameterScope>    
+
+  <!-- =======================================================================
        Session Global
        ============================================================================ -->
 
@@ -406,22 +447,6 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='eventScript' type='string'>
       Temporary prototype for injecting event scripts into the kernel.
       Continue support for awhile.
-    </Parameter>
-    
-    <Parameter name='userFileFolder' type='string'>
-      Temporary prototype for allowing file paths specified in in various objects
-      to be fragments relative to a user specified folder.  Currently used only
-      when loading MIDI files.
-    </Parameter>
-    
-    <Parameter name='inputLatency' options='noBinding' query='true'>
-      The number of samples to use for input latency adjustments.  Overrides
-      what is reported by the container for the selected audio device.
-    </Parameter>
-    
-    <Parameter name='outputLatency' options='noBinding' query='true'>
-      The number of samples to use for output latency adjustments.  Overrides
-      what is reported by the container for the selected audio device.
     </Parameter>
     
     <Parameter name='noiseFloor' type='int' options='noBinding'>
@@ -443,11 +468,6 @@ Once those models are fully converted, these symbols can be removed.
       Used by Track to enable through monitoring.  Should move this up.
     </Parameter>
     
-    <Parameter name='quickSave' type='string' options='noBinding'>
-      The base name fo the quick save file.
-      Move to UI
-    </Parameter>
-
     <Parameter name='spreadRange' low='1' high='128' options='noBinding'>
       The amount to spread the binding range over adjacent values.
       Belongs in UIConfig with the other BInding parameters.
@@ -478,10 +498,6 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='isolateOverdubs' type='bool' options='noBinding'>
       Formerly shown as "No Layer Flattening".  Considered experimental and hasnt
       been exposed in a long time.  Still potentially useful but hidden.
-    </Parameter>
-
-    <Parameter name='saveLayers' type='bool' options='noBinding'>
-      Another project option, move to UI
     </Parameter>
 
     <!-- These aren't actually in the Session, they're in the DeviceConfig but

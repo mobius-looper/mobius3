@@ -125,6 +125,7 @@ void SessionTrackEditor::load(Session* s)
         states.add(state);
     }
     table->load(states);
+    table->selectRow(0);
     
     // forms show the selected track
     show(currentTrack);

@@ -61,8 +61,11 @@ void SessionTrackForms::initialize(Provider* p, SessionEditor* se, Session* s, S
     // isn't needed during initialization
     forms.initialize(this, nullptr);
  
-    // shouldn't have any forms open yet, but just in case
-    forms.refresh(this);
+    // auto select the first tree node
+    tree.selectFirst();
+
+    // selecting the first node will load the first form
+    //forms.refresh(this);
 }
 
 void SessionTrackForms::reload()
@@ -150,24 +153,24 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
                           s->getName());
                 }
                 else {
+                    YanParameter* p = nullptr;
                     MslValue* v = values->get(s->name);
-                    bool addIt = true;
                     if (!lockingStyle) {
                         // sparse mode: only add it if we have it
                         // OR if it is flagged as noDefault
-                        addIt = (v != nullptr || props->noDefault);
+                        if (v != nullptr || props->noDefault)
+                          p = form->add(provider, s, nullptr);
                     }
-                    if (addIt) {
-                        // just add the field, values will be handled during refresh
-                        YanParameter* p = form->add(provider, s, nullptr);
-                        if (lockingStyle && v == nullptr)
+                    else {
+                        p = form->add(provider, s, nullptr);
+                        if (v == nullptr && !props->noDefault)
                           p->setDefaulted(true);
-
-                        // if this is the track overlay parameter, be informed when it
-                        // changes
-                        if (s->id == ParamTrackOverlay)
-                          p->setListener(this);
                     }
+
+                    // if this is the track overlay parameter,
+                    // be informed when it changes
+                    if (p != nullptr && s->id == ParamTrackOverlay)
+                      p->setListener(this);
                 }
             }
         }
@@ -278,8 +281,15 @@ void SessionTrackForms::parameterFormClick(ParameterForm* f, YanParameter* p, co
 void SessionTrackForms::toggleParameterDefault(YanParameter* p)
 {
     Symbol* s = p->getSymbol();
-    
-    if (p->isDefaulted()) {
+
+    if (p->isOccluded()) {
+        // toggling is disabled while occluded, in part because
+        // the occlusion color hides whether or not this is defaulted
+        // or an override so nothing obvious happens besides making the
+        // field editable, and it gives the impression that the field
+        // can be meaningfully changed which it can't
+    }
+    else if (p->isDefaulted()) {
         p->setDefaulted(false);
         // occlusion doesn't change, but may as well re-use this
         parameterFormRefresh(nullptr, p);

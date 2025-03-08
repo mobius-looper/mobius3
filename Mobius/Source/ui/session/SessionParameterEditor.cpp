@@ -44,6 +44,7 @@ void SessionParameterEditor::initialize(Provider* p, SessionEditor* se)
 void SessionParameterEditor::load(ValueSet* src)
 {
     forms.load(src);
+    tree.selectFirst();
 }
 
 void SessionParameterEditor::save(ValueSet* dest)
@@ -103,6 +104,8 @@ ParameterForm* SessionParameterEditor::parameterFormCollectionCreate(juce::Strin
                   p->setListener(this);
             }
         }
+
+        form->load(values);
     }
     return form;
 }

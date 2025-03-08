@@ -10,6 +10,7 @@
 #include "../../model/TreeForm.h"
 #include "../../model/ValueSet.h"
 #include "../../Provider.h"
+#include "../JuceUtil.h"
 
 #include "../parameter/SymbolTree.h"
 #include "../parameter/ParameterForm.h"
@@ -37,12 +38,22 @@ void SessionGlobalEditor::initialize(Provider* p, SessionEditor* se)
 
     // this wants a ValueSet but we don't get that until load
     forms.initialize(this, nullptr);
+
+    // this actually doesn't do anything since cancel() will be called
+    // soon after construction as part of the load() process to remove
+    // lingering state from the last use
+    //tree.selectFirst();
 }
 
 void SessionGlobalEditor::load(ValueSet* src)
 {
     values = src;
     forms.load(src);
+
+    // the load process will first cancel everything which
+    // dumps any cached forms that may have been created
+    // so have to wait until now to select the first one
+    tree.selectFirst();
 }
 
 void SessionGlobalEditor::save(ValueSet* dest)
@@ -91,6 +102,8 @@ ParameterForm* SessionGlobalEditor::parameterFormCollectionCreate(juce::String f
           Trace(1, "SessionGlobalEditor: Unable to find field for sessionOverlay");
         else
           p->setListener(this);
+
+        form->load(values);
     }
     return form;
 }

@@ -99,7 +99,11 @@ void YanParameter::initCombo(Provider* p, Symbol* s)
 void YanParameter::setDefaulted(bool b)
 {
     defaulted = b;
-    setDisabled(b);
+
+    // this can always turn on, but it only
+    // turns off if the field is not also occluded
+    if (b || !occluded)
+      setDisabled(b);
 }
 
 bool YanParameter::isDefaulted()
@@ -117,12 +121,18 @@ bool YanParameter::isDefaulted()
 void YanParameter::setOccluded(bool b)
 {
     occluded = b;
-    setDisabled(b);
-    // disabled has it's own color but we want to override that
-    if (b)
-      setLabelColor(juce::Colours::yellow);
-    else
-      unsetLabelColor();
+
+    if (occluded) {
+        setDisabled(true);
+        // straignt up yellow looks too bright, tone it down
+        setLabelColor(juce::Colours::beige);
+    }
+    else {
+        // don't enable if it is also defaulted
+        if (!defaulted)
+          setDisabled(false);
+        unsetLabelColor();
+    }
 }
 
 bool YanParameter::isOccluded()
@@ -233,16 +243,12 @@ void YanParameter::load(MslValue* v)
           checkbox.setValue(v->getBool());
     }
     else if (props->type == TypeInt) {
-        if (v == nullptr) {
-            input.setValue(juce::String(props->defaultValue));
-        }
-        else {
-            // it will be an input field, but allow a value offset
-            // todo: for integers within a small range need to allow a slider
-            int val = v->getInt();
-            val += props->displayBase;
-            input.setValue(juce::String(val));
-        }
+        // note that defaultValue still has displayBase applied to it
+        int value = props->defaultValue;
+        if (v != nullptr)
+          value = v->getInt();
+        value += props->displayBase;
+        input.setValue(juce::String(value));
     }
     else {
         if (v == nullptr)

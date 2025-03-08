@@ -445,7 +445,7 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope, bo
           props->displayName = formatDisplayName(name);
         
         props->scope = scope;
-        
+
         props->type = parseType(el->getStringAttribute("type"));
         // todo: structureClass?
         props->multi = el->getBoolAttribute("multi");
