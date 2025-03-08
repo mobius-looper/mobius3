@@ -8,6 +8,7 @@
 
 #include "../../model/Symbol.h"
 #include "../../model/ValueSet.h"
+#include "../../model/TreeForm.h"
 #include "../../Provider.h"
 
 #include "SymbolTree.h"
@@ -85,6 +86,13 @@ ParameterForm* OverlayTreeForms::parameterFormCollectionCreate(juce::String form
     }
     else {
         form = new ParameterForm();
+        
+        // to get the title, have to get the TreeForm
+        // see method comments for why this sucks
+        TreeForm* formdef = getTreeForm(provider, formName);
+        if (formdef != nullptr)
+          form->setTitle(formdef->title);
+        
         // allow fields to gbe dragged out
         form->setDraggable(true);
         // allow symbols to be dragged in

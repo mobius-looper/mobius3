@@ -308,6 +308,9 @@ class MobiusViewTrack {
 	bool transportMaster = false;
     bool window = false;
 
+    // new
+    float rate = 0.0f;
+
     // consolidations for coloring
     bool anySpeed = false;
     bool anyPitch = false;

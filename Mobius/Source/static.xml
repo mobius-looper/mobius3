@@ -8,7 +8,6 @@
 <StaticConfig>
 
   <Tree name='sessionGlobal'>
-    <Tree name='Includes'/>
     <Tree name='Ports'/>
     <Tree name='Sync' form='none'>
       <Tree name='Transport'/>
@@ -16,10 +15,11 @@
       <Tree name='Host'/>
       <Tree name='AutoRecord'/>
     </Tree>
-     <Tree name='Miscellany'/>
+    <Tree name='Miscellany'/>
+    <Tree name='Overlay'/>
   </Tree>
   
-  <Form name='sessionGlobalIncludes' title='Objects to Include'
+  <Form name='sessionGlobalOverlay' title='Objects to Include'
         symbols='sessionOverlay'/>
 
   <Form name='sessionGlobalMiscellany' title='Obscure Things for Advanced Users'
@@ -46,38 +46,40 @@
        from the ordered list will be appended in random order.
   -->
 
-  <Form name='sessionCategoryGeneral'
-        symbols='trackName,trackGroup,focus,trackOverlay'/>
+  <Form name='sessionCategoryGeneral' title='Track Identity'
+        symbols='trackName,trackGroup,focus'/>
+
+  <Form name='sessionCategoryPorts' title='IO Ports'/>
   
-  <Form name='sessionCategorySync'
+  <Form name='sessionCategoryOverlay' title='Objects to Include'
+        symbols='trackOverlay'/>
+  
+  <Form name='sessionCategorySync' title='Synchronization'
         symbols='syncSource,syncUnit,trackSyncUnit'/>
   
-  <Form name='sessionCategoryMixer'
+  <Form name='sessionCategoryMixer' title='Mixer'
         symbols='input,output,feedback,altFeedback,altFeedbackEnable,pan'/>
   
-  <Form name='sessionCategoryMidi'
+  <Form name='sessionCategoryMidi' title='MIDI Devices'
         symbols='midiInput,midiOutput,midiChannelOverride,midiThru'/>
   
-  <Form name='sessionCategoryFollow'
+  <Form name='sessionCategoryFollow' title='MIDI Follower Options'
         symbols='leaderType,leaderTrack,leaderSwitchLocation,followRecord,followRecordEnd,followSize,followMute,followQuantizeLocation'/>
   
-  <Form name='sessionCategoryFunctions'
+  <Form name='sessionCategoryFunctions' title='Miscellaneous Function Options'
         symbols='maxUndo,maxRedo,muteMode,muteCancel,multiplyMode,recordResetsFeedback,roundingOverdub,shuffleMode,slipMode,slipTime,speedRecord,windowEdgeUnit,windowEdgeAmount,windowSlideUnit,windowSlideAmount'/>
   
-  <Form name='sessionCategoryQuantize'
+  <Form name='sessionCategoryQuantize' title='Quantization Control'
         symbols='quantize,subcycles,switchQuantize,overdubQuantized,bounceQuantize'/>
   
-  <Form name='sessionCategorySwitch'
+  <Form name='sessionCategorySwitch' title='Loop and Track Change Options'
         symbols='switchDuration,switchLocation,switchVelocity,returnLocation,timeCopyMode,soundCopyMode,emptyLoopAction,emptyTrackAction,trackLeaveAction'/>
   
-  <Form name='sessionCategoryEffects'
+  <Form name='sessionCategoryEffects' title='Speed and Pitch Effects'
         symbols=''/>
   
-  <Form name='sessionCategoryAdvanced'
+  <Form name='sessionCategoryAdvanced' title="Things You Probably Don't Need"
         symbols=''/>
-
-  <Form name='sessionCategoryAdvanced'
-        symbols='audioInputPort,audioOutputPort,pluginInputPort,pluginOutputPort,mono'/>
 
   <!-- =========================================================================
        ValueSet Forms

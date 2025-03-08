@@ -137,6 +137,8 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testmos.mos" name="testmos"
             added="2147483647"/>
+      <File path="C:\dev\mobius3\Mobius\Source\scripts\midi-halfspeed.msl"
+            name="midi-halfspeed" added="0"/>
     </Files>
   </Machine>
   <Machine name="frigg.lan">

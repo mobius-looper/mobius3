@@ -551,7 +551,7 @@ Once those models are fully converted, these symbols can be removed.
          that means the same thing as the old Setup::defaultPreset.  If a track overrides this
          it is the same as SetupTrack::trackPreset
          -->
-    <Parameter name='trackOverlay' tree='General'
+    <Parameter name='trackOverlay' tree='Overlay'
                type='structure' 
                displayType='combo' displayHelper='parameterSet'
                options='noBinding'/>

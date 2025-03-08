@@ -13,6 +13,7 @@
 #include "../../model/ParameterProperties.h"
 #include "../../model/ValueSet.h"
 #include "../../model/ParameterSets.h"
+#include "../../model/TreeForm.h"
 #include "../../Provider.h"
 
 #include "../parameter/SymbolTree.h"
@@ -126,6 +127,12 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
     }
     else {
         form = new ParameterForm();
+        
+        // to get the title, have to get the TreeForm
+        // see method comments for why this sucks
+        TreeForm* formdef = getTreeForm(provider, formName);
+        if (formdef != nullptr)
+          form->setTitle(formdef->title);
 
         // this notifies us of drops into the form which we don't actually need
         // but also clicks which we do need

@@ -280,6 +280,9 @@ class TrackState
     // seems to be unused
     bool modified = false;
 
+    // more general version of Halfspeed, which seems to have been lost
+    float rate = 0.0f;
+    
     // from OldMobiusState
     // these shouldn't be booleans, need integer amounts of shift
     bool speed = false;

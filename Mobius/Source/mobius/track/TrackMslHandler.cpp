@@ -176,8 +176,16 @@ bool TrackMslHandler::mslWait(LogicalTrack* ltrack, MslWait* wait, MslContextErr
                 if (subframes == 0)
                   Trace(1, "MSL: Wait duration Subcycle is not evailable in an empty loop");
                 else if (wait->number == 0) {
-                    // todo: find the subcycle we're in, then advance to the next one
-                    // for repeats add the subcycle frame length
+                    // find the subcycle we're in, then advance to the next one
+                    // TrackEvent has a tool for this
+                    int frame = TrackEvent::getQuantizedFrame(track->getFrames(),
+                                                              track->getCycleFrames(),
+                                                              track->getFrame(),
+                                                              track->getSubcycles(),
+                                                              QUANTIZE_SUBCYCLE, true);
+                    // this is unusual for relative waits but it's allowed
+                    if (wait->repeats > 0) frame += (subframes * wait->repeats);
+                    success = track->scheduleWaitFrame(wait, frame);
                 }
                 else {
                     int multiplier = wait->number - 1;
@@ -193,10 +201,17 @@ bool TrackMslHandler::mslWait(LogicalTrack* ltrack, MslWait* wait, MslContextErr
             case MslWaitCycle: {
                 int cycframes = track->getCycleFrames();
                 if (cycframes == 0)
-                  Trace(1, "MSL: Wait duration Subcycle is not evailable in an empty loop");
+                  Trace(1, "MSL: Wait duration Cycle is not evailable in an empty loop");
                 else if (wait->number == 0) {
-                    // todo: find the cycle we're in, then advance to the next one
-                    // for repeats add the cycle frame length
+                    // find the cycle we're in, then advance to the next one
+                    int frame = TrackEvent::getQuantizedFrame(track->getFrames(),
+                                                              cycframes,
+                                                              track->getFrame(),
+                                                              track->getSubcycles(),
+                                                              QUANTIZE_CYCLE, true);
+                    // this is unusual for relative waits but it's allowed
+                    if (wait->repeats > 0) frame += (cycframes * wait->repeats);
+                    success = track->scheduleWaitFrame(wait, frame);
                 }
                 else {
                     int multiplier = wait->number - 1;

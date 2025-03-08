@@ -59,7 +59,6 @@ class ParameterTree : public SymbolTree
     void setFilterNoDefault(bool b);
     void setTrackType(SymbolTrackType t);
 
-    class SymbolTreeItem* getFirst();
     void selectFirst();
 
   private:

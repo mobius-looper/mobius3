@@ -7,7 +7,7 @@
 #include "../../util/Trace.h"
 
 #include "../../model/ValueSet.h"
-#include "../../Provider.h"
+#include "../../model/TreeForm.h"
 
 #include "../parameter/SymbolTree.h"
 #include "../parameter/ParameterForm.h"
@@ -43,6 +43,7 @@ void SessionParameterEditor::initialize(Provider* p, SessionEditor* se)
 
 void SessionParameterEditor::load(ValueSet* src)
 {
+    values = src;
     forms.load(src);
     tree.selectFirst();
 }
@@ -50,11 +51,13 @@ void SessionParameterEditor::load(ValueSet* src)
 void SessionParameterEditor::save(ValueSet* dest)
 {
     forms.save(dest);
+    values = nullptr;
 }
 
 void SessionParameterEditor::cancel()
 {
     forms.cancel();
+    values = nullptr;
 }
 
 void SessionParameterEditor::decacheForms()
@@ -72,6 +75,11 @@ void SessionParameterEditor::decacheForms()
  * for symbols in this category.
  *
  * Since the tree might do filtering, let the tree decide.
+ *
+ * To get the form title and possibly other things we have to get the TreeForm
+ * from the StaticConfig, which the ParameterTree has already done to build the ordered
+ * tree items, but it didn't save it anywhere.  Must follow the same naming convention
+ * it used to find the form.  Would be better if this were remembered on the item.
  */
 ParameterForm* SessionParameterEditor::parameterFormCollectionCreate(juce::String formName)
 {
@@ -87,7 +95,11 @@ ParameterForm* SessionParameterEditor::parameterFormCollectionCreate(juce::Strin
     else {
         form = new ParameterForm();
         
-        // todo: form title
+        // to get the title, have to get the TreeForm
+        // see method comments for why this sucks
+        TreeForm* formdef = getTreeForm(provider, formName);
+        if (formdef != nullptr)
+          form->setTitle(formdef->title);
 
         // so we can iterate over the children, but the parent node should also
         // have an Array of the child symbols as well, right?

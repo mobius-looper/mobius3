@@ -870,6 +870,7 @@ void BaseScheduler::doEvent(TrackEvent* e)
         case TrackEvent::EventWait: {
             // no side effects
             // finishWaitAndDispose will inform the manager
+            handled = true;
         }
             break;
 

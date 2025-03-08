@@ -838,6 +838,10 @@ void MidiTrack::refreshState(TrackState* state)
     state->activeLayer = layerCount - 1;
     state->layerCount = layerCount + loop->getRedoCount();
 
+    // halfspeed/doublespeed have issues
+    // see comments in MidiLooper::doHalfspeed
+    state->rate = rate;
+
     // this also handles state->nextLoop since it needs to look at events
     scheduler.refreshState(state);
 }

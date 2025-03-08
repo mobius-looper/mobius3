@@ -910,6 +910,17 @@ void MidiTrack::doInstantDivide(int n)
  * the playback rate, they do not modify the structure of the MidiSequence.
  * The later is possibly interesting if you always want it to be twice the size
  * it is from a file, but there can be other non-live ways to do that.
+ *
+ * !! todo: For the user to see what's going on, we need to distinguish between
+ * a requested rate change like MidiHalfspeed or MidiDoublespeed and the follower
+ * rate adjustment.  The effective rate is the follower rate times the user rate
+ * but the only thing they expect to see is the user rate or "Halfspeed" in the UI.
+ * SpeedShift if you ever get there is similar.  If we just display the effective rate
+ * with follow active, then there will almost always be a rate displayed which isn't bad
+ * but they don't think of it as something they did, it's just automatic.
+ *
+ * User Halfspeed would also effectively be canceled if we reach a point where the
+ * follow rate needs to be recalculated and they should be independent.
  */
 void MidiTrack::doHalfspeed()
 {

@@ -147,6 +147,8 @@
     <Button action="Record/OverDub/Reset"/>
     <Button action="Global Stop"/>
     <Button action="testmos"/>
+    <Button action="midi-halfspeed"/>
+    <Button action="MidiDoublespeed"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

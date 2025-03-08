@@ -21,6 +21,9 @@ class ParameterTreeForms : public juce::Component, public SymbolTree::Listener
     void symbolTreeClicked(class SymbolTreeItem* item);
     
     void resized() override;
+
+    // utillity provided for subclasses to locate the form definition
+    class TreeForm* getTreeForm(class Provider* p, juce::String formName);
     
   protected:
 

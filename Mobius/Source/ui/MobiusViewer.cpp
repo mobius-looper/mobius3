@@ -552,8 +552,16 @@ void MobiusViewer::refreshMinorModes(SystemState* state, TrackState* tstate, Mob
         tview->pitchBend = tstate->pitchBend;
         refresh = true;
     }
-     if (tstate->timeStretch != tview->timeStretch) {
+    if (tstate->timeStretch != tview->timeStretch) {
         tview->timeStretch = tstate->timeStretch;
+        refresh = true;
+    }
+
+    // new variant of the speed shit for MIDI
+    if (tstate->rate != tview->rate) {
+        tview->rate = tstate->rate;
+        // is this necessary?
+        //tview->anySpeed = true;
         refresh = true;
     }
 
@@ -613,6 +621,9 @@ void MobiusViewer::assembleMinorModes(MobiusViewTrack* tview)
     // space for a knob that's too fine grained
     // to use from the UI anyway.
     if (tview->speedBend != 0) addMinorMode(tview, "SpeedBend", tview->speedBend);
+
+    if (tview->rate != 0.0f && tview->rate != 1.0f)
+      tview->minorModes.add(juce::String("Rate ") + juce::String(tview->rate));
     
     if (tview->pitchOctave != 0) addMinorMode(tview, "PitchOctave", tview->pitchOctave);
     if (tview->pitchStep != 0) addMinorMode(tview, "PitchStep", tview->pitchStep);

@@ -110,9 +110,15 @@ void ObjectPool::checkin(PooledObject* obj)
         }
         else {
             // these aren't bad but can be useful to track pool corruption
-            if (obj->getPool() == nullptr)
-              Trace(2, "ObjectPool: Warning: Checking in object without a pool");
-            else if (obj->getPool() != this)
+
+            // this one happens normally when you load a MIDI sequence from a file
+            // in the UI and then pass it down to the kernel where it is reclaimed
+            // need to give it a pool on the transition or find another way to track
+            // this to avoid dumping fear into the logs
+            //if (obj->getPool() == nullptr)
+            //Trace(2, "ObjectPool: Warning: Checking in object without a pool");
+            
+            if (obj->getPool() != this)
               Trace(2, "ObjectPool: Warning: Checking in object from another pool");
 
             juce::ScopedLock lock (criticalSection);

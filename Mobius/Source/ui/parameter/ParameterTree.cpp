@@ -57,15 +57,19 @@ void ParameterTree::setTrackType(SymbolTrackType t)
 //
 //////////////////////////////////////////////////////////////////////
 
-SymbolTreeItem* ParameterTree::getFirst()
-{
-    SymbolTreeItem* first = static_cast<SymbolTreeItem*>(root.getSubItem(0));
-    return first;
-}
-
 void ParameterTree::selectFirst()
 {
-    juce::TreeViewItem* first = root.getSubItem(0);
+    // If the tree is dynamic and contains hidden items with no children
+    // the first one may not actually be visible
+    SymbolTreeItem* first = nullptr;
+    for (int i = 0 ; i < root.getNumSubItems() ; i++) {
+        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(root.getSubItem(i));
+        if (!item->isHidden()) {
+            first = item;
+            break;
+        }
+    }
+    
     if (first != nullptr) {
         // asking for sendNotification means it will call
         // juce::TreeViewItem::itemSelectionChanged which SymbolTreeItem doesn't overload
@@ -73,9 +77,7 @@ void ParameterTree::selectFirst()
         // to itemClicked which is what usually happens
         // just do it manually by calling itemClicked
         first->setSelected(true, false, juce::NotificationType::sendNotification);
-        
-        SymbolTreeItem* sti = static_cast<SymbolTreeItem*>(first);
-        itemClicked(sti);
+        itemClicked(first);
     }
 }
 
@@ -267,7 +269,7 @@ bool ParameterTree::isFiltered(Symbol* s, ParameterProperties* props)
  */
 void ParameterTree::internCategories()
 {
-    juce::StringArray categories ("General", "Sync", "Mixer", "Midi", "Follow", "Functions", "Quantize", "Switch", "Effects", "Advanced");
+    juce::StringArray categories ("General", "Ports", "Midi", "Sync", "Mixer", "Follow", "Quantize", "Switch", "Functions", "Effects", "Advanced","Overlay");
 
     for (auto cat : categories) {
         SymbolTreeItem* item = root.internChild(cat);
@@ -275,6 +277,8 @@ void ParameterTree::internCategories()
         // for dynamic trees, we follow the same convention but since this is just
         // the name we don't need it
         item->setAnnotation(cat);
+        // all nodes can be clicked
+        item->setNoSelect(false);
     }
 }
 

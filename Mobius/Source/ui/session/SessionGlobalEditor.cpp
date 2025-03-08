@@ -64,6 +64,7 @@ void SessionGlobalEditor::save(ValueSet* dest)
 void SessionGlobalEditor::cancel()
 {
     forms.cancel();
+    values = nullptr;
 }
 
 void SessionGlobalEditor::decacheForms()
@@ -95,12 +96,11 @@ ParameterForm* SessionGlobalEditor::parameterFormCollectionCreate(juce::String f
 
         // ugh, this one builds a form from a TreeDefinition so we don't have
         // a hook into finding the YanParameter for the overlay like the others
+        // look for in in each form we build
         SymbolTable* symbols = provider->getSymbols();
         Symbol* s = symbols->getSymbol(ParamSessionOverlay);
         YanParameter* p = form->find(s);
-        if (p == nullptr)
-          Trace(1, "SessionGlobalEditor: Unable to find field for sessionOverlay");
-        else
+        if (p != nullptr)
           p->setListener(this);
 
         form->load(values);
