@@ -36,6 +36,7 @@ class Field
   private:
     
     UIParameterType parseType(juce::String name);
+    juce::String formatDisplayName(juce::String xmlName);
 };
 
 class Form

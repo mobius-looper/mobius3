@@ -19,6 +19,9 @@ void Field::parseXml(juce::XmlElement* root, juce::StringArray& errors)
     (void)errors;
     name = root->getStringAttribute("name");
     displayName = root->getStringAttribute("displayName");
+    if (displayName.length() == 0)
+      displayName = formatDisplayName(name);
+    
     type = parseType(root->getStringAttribute("type"));
 }
 
@@ -42,6 +45,31 @@ UIParameterType Field::parseType(juce::String value)
       ptype = TypeStructure;
 
     return ptype;
+}
+
+/**
+ * Display name rules are initial capital followed by space
+ * delimited words for each capital in the internal name.
+ *
+ * Also in Symbolizer
+ */
+juce::String Field::formatDisplayName(juce::String xmlName)
+{
+    juce::String dispName;
+
+    for (int i = 0 ; i < xmlName.length() ; i++) {
+        juce::juce_wchar ch = xmlName[i];
+        
+        if (i == 0) {
+            ch = juce::CharacterFunctions::toUpperCase(ch);
+        }
+        else if (juce::CharacterFunctions::isUpperCase(ch)) {
+            dispName += " ";
+        }
+        dispName += ch;
+    }
+
+    return dispName;
 }
 
 //////////////////////////////////////////////////////////////////////
