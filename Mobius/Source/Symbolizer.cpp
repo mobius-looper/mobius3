@@ -301,10 +301,14 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         func->argumentHelp = root->getStringAttribute("argumentHelp");
         func->sustainHelp = root->getStringAttribute("sustainHelp");
         func->mayQuantize = root->getBoolAttribute("mayQuantize");
-        // todo: generalize this into a track type specifier, possibly a csv
-        func->midiOnly = root->getBoolAttribute("midi");
         
-        // todo: need mayFocus, mayConfirm, and mayMuteCancel in here too!
+        // todo: generalize this into a track type specifier, possibly a csv
+        // !! see how parameters do this with track='audio,midi'
+        func->midiOnly = root->getBoolAttribute("midi");
+
+        // this is how parameters have been doing it, move the others to this
+        juce::String options = root->getStringAttribute("options");
+        func->noBinding = options.contains("noBinding");
 
         Symbol* s = provider->getSymbols()->intern(name);
         s->functionProperties.reset(func);

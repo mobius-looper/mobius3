@@ -18,7 +18,8 @@ Once those models are fully converted, these symbols can be removed.
             mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="Backward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="Bounce" tree='Utility'/>
-  <Function name="Checkpoint" mayFocus='true' mayCancelMute='true' tree='Utility'/>
+  <Function name="Checkpoint" mayFocus='true' mayCancelMute='true' tree='Utility'
+            options='noBinding'/>
   <Function name="Clear" mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="Confirm" mayFocus='true' tree='Switch'/>
   <Function name="Divide" mayFocus='true' mayCancelMute='true' tree='Recording'/>
@@ -134,9 +135,9 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="WindowEndBackward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="WindowEndForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
 
-  <Function name="UpCycle" mayFocus='true' tree='MIDI'/>
-  <Function name="DownCycle" mayFocus='true' tree='MIDI'/>
-  <Function name="SetCycles" tree='MIDI'/>
+  <Function name="UpCycle" mayFocus='true' tree='MIDI' options='noBinding'/>
+  <Function name="DownCycle" mayFocus='true' tree='MIDI' options='noBinding'/>
+  <Function name="SetCycles" tree='MIDI' options='noBinding'/>
   <Function name="Start" tree='Movement' mayQuantize='true'/>
   <Function name="Stop" tree='Movement' mayQuantize='true'/>
 
@@ -190,7 +191,7 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="ReloadSamples" level='ui'/>
     
   <Function name="ShowPanel" level='ui'/>
-  <Function name="Message" level='ui'/>
+  <Function name="Message" level='ui' options='noBinding'/>
     
   <Function name="AddButton" level='ui' hidden='true'/>
   <Function name="Listen" level='ui' hidden='true'/>
@@ -555,7 +556,8 @@ Once those models are fully converted, these symbols can be removed.
                tree='Sync'/>
 
     <!-- the SyncSource to use when syncSource is Master and there is already a master -->
-    <Parameter name='syncSourceAlternate' values='track,transport'/>
+    <Parameter name='syncSourceAlternate' values='track,transport'
+               options='noBinding'/>
     
     <!-- the replacements for slaveSyncUnit, used for all except track -->
     <Parameter name='syncUnit' values='beat,bar,loop' tree='Sync'/>
@@ -730,7 +732,9 @@ Once those models are fully converted, these symbols can be removed.
 
     <Parameter name='activeLayout' level='UI' type='structure'/>
     <Parameter name='activeButtons' level='UI' type='structure'/>
-    <Parameter name='bindingOverlays' level='UI' type='structure'/>
+
+    <!-- wtf is this?  wouldn't this be multi-valued? -->
+    <Parameter name='bindingOverlays' level='UI' type='structure' options='noBinding'/>
     
   </ParameterScope>
   
@@ -802,8 +806,10 @@ Once those models are fully converted, these symbols can be removed.
          editing pages
     -->
     
-    <Parameter name='oldSyncSource' values='default,none,track,out,host,midi,transport' options='noBinding'/>
-    <Parameter name='oldTrackSyncUnit' values='default,subcycle,cycle,loop' />
+    <Parameter name='oldSyncSource' values='default,none,track,out,host,midi,transport'
+               options='noBinding'/>
+    <Parameter name='oldTrackSyncUnit' values='default,subcycle,cycle,loop'
+               options='noBinding'/>
 
     <!-- this was used for the group name in the Setup days, but trackGroup above should take it's place    -->
     

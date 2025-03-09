@@ -100,6 +100,11 @@ class FunctionProperties
      */
     juce::String longHelp;
 
+    /**
+     * Flag indiciating this should not appear in binding windows
+     */
+    bool noBinding = false;
+
     //
     // User configurable properties
     //

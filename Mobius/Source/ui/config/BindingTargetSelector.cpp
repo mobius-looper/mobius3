@@ -18,6 +18,7 @@
 #include "../../model/old/Binding.h"
 #include "../../model/Symbol.h"
 #include "../../model/ParameterProperties.h"
+#include "../../model/FunctionProperties.h"
 #include "../../Supervisor.h"
 
 #include "BindingTargetSelector.h"
@@ -86,25 +87,39 @@ void BindingTargetSelector::load()
         if (symbol->behavior == BehaviorFunction) {
             // only allow bindings to functions that have fleshed out definitions
             // this hides some of the few remaining missing and hidden core functions
-            if ((symbol->functionProperties != nullptr || symbol->id > 0)
-                && !symbol->hidden) {
-                functions.add(symbol->getName());
+
+            // parameters don't have a hidden flag, need to start doing those the same
+            if (!symbol->hidden) {
+                if (symbol->functionProperties != nullptr) {
+                    if (!symbol->functionProperties->noBinding) {
+                        functions.add(symbol->getName());
+                    }
+                }
+                else if (symbol->id > 0) {
+                    // where do these come from?  should always be having
+                    // properties
+                    Trace(1, "BindingTargetSelector: BehaviorFunction with no properties");
+                    functions.add(symbol->getName());
+                }
             }
         }
         else if (symbol->parameterProperties != nullptr) {
-            // divided into two tabs to put the ones used most in a smaller list
-            // these may have display names
-            // todo: should be copying the display name to the Symbol
-            // NO: can't use display names because those end up in the Binding
-            // and we can't search for symbols on that
-            // either need some sort of display/name mapping here
-            // or store the Symbol in the BindingTable
-            if (symbol->parameterProperties->control)
-              // controls.add(p->getDisplayableName());
-              controls.add(symbol->getName());
-            else
-              // parameters.add(p->getDisplayableName());
-              parameters.add(symbol->getName());
+
+            if (!symbol->parameterProperties->noBinding) {
+                // divided into two tabs to put the ones used most in a smaller list
+                // these may have display names
+                // todo: should be copying the display name to the Symbol
+                // NO: can't use display names because those end up in the Binding
+                // and we can't search for symbols on that
+                // either need some sort of display/name mapping here
+                // or store the Symbol in the BindingTable
+                if (symbol->parameterProperties->control)
+                  // controls.add(p->getDisplayableName());
+                  controls.add(symbol->getName());
+                else
+                  // parameters.add(p->getDisplayableName());
+                  parameters.add(symbol->getName());
+            }
         }
         else if (symbol->behavior == BehaviorScript) {
             scripts.add(symbol->getName());
