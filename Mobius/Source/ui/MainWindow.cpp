@@ -21,6 +21,7 @@
 #include "../Supervisor.h"
 #include "../Symbolizer.h"
 #include "../Producer.h"
+#include "../Prompter.h"
 
 #include "JuceUtil.h"
 #include "MainMenu.h"
@@ -253,6 +254,11 @@ void MainWindow::mainMenuSelection(int id)
                 break;
             case MainMenu::AnalyzeMidi: {
                 supervisor->menuLoadMidi(true);
+            }
+                break;
+            case MainMenu::RunMcl: {
+                Prompter* p = supervisor->getPrompter();
+                p->runMcl();
             }
                 break;
             case MainMenu::Exit: {

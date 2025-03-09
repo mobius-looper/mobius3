@@ -6,6 +6,7 @@
 #include "Provider.h"
 #include "Pathfinder.h"
 #include "script/ScriptClerk.h"
+#include "mcl/MclEnvironment.h"
 
 #include "Prompter.h"
 
@@ -41,7 +42,6 @@ void Prompter::startScriptImport()
 
     juce::String title = "Select an MSL or MOS script file to import...";
 
-    // a form of smart pointer
     chooser = std::make_unique<juce::FileChooser> (title, startPath, "*.msl;*.mos");
 
     auto chooserFlags = juce::FileBrowserComponent::openMode |
@@ -112,6 +112,68 @@ void Prompter::deleteScript(juce::String path)
             clerk->deleteLibraryFile(path);
         }
     });
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MCL Script Evaluation
+//
+//////////////////////////////////////////////////////////////////////
+
+void Prompter::runMcl()
+{
+    // todo: this might want to use ParamUserFileFolder to start with
+    // Pathfinder can do that
+    juce::String purpose("runMcl");
+    
+    Pathfinder* pf = provider->getPathfinder();
+    juce::File startPath(pf->getLastFolder(purpose));
+
+    juce::String title = "Select an MCL script file to run...";
+
+    chooser = std::make_unique<juce::FileChooser> (title, startPath, "*.mcl");
+
+    // I think not multiple items for this one
+    auto chooserFlags = juce::FileBrowserComponent::openMode |
+        juce::FileBrowserComponent::canSelectFiles;
+    
+    chooser->launchAsync (chooserFlags, [this,purpose] (const juce::FileChooser& fc)
+    {
+        juce::Array<juce::File> result = fc.getResults();
+        if (result.size() > 0) {
+            finishRunMcl(result);
+            juce::File file = result[0];
+            Pathfinder* pf = provider->getPathfinder();
+            pf->saveLastFolder(purpose, file.getParentDirectory().getFullPathName());
+        }
+        
+    });
+}
+
+/**
+ * Okay, what the hell thread are we running in right now?  UI?
+ * This is going to mess with the live Session so may need some controls
+ * around when that happens.  Safest to queue it for the maintenance thread.
+ */
+void Prompter::finishRunMcl(juce::Array<juce::File> files)
+{
+    MclEnvironment mcl (provider);
+    
+    // should only have one but I guess support multiple, order is undefined
+    for (auto file : files) {
+        Trace(2, "Prompter: Running MCL %s", file.getFullPathName().toUTF8());
+
+        MclResult res = mcl.eval(file);
+        if (res.hasErrors()) {
+            provider->alert(res.errors);
+            break;
+        }
+        else if (res.hasMessages()) {
+            // don't have a way to distinguish visually between results and errors
+            // may want a different border or something
+            provider->alert(res.messages);
+        }
+    }
 }
 
 /****************************************************************************/

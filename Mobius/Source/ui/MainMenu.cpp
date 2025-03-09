@@ -152,6 +152,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(LoadSamples, "Reload Samples");
         menu.addItem(LoadMidi, "Load MIDI File");
         menu.addItem(AnalyzeMidi, "Analyze MIDI File");
+        menu.addItem(RunMcl, "Run MCL Script");
         if (!mainWindow->getProvider()->isPlugin()) {
             menu.addSeparator();
             menu.addItem(Exit, "Exit");

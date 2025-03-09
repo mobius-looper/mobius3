@@ -7,6 +7,19 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <GROUP id="{F23CE5FF-6226-362A-F16D-EAEDC716A0D0}" name="mcl">
+        <FILE id="Nobe5P" name="MclEnvironment.cpp" compile="1" resource="0"
+              file="Source/mcl/MclEnvironment.cpp"/>
+        <FILE id="ERZZti" name="MclEnvironment.h" compile="0" resource="0"
+              file="Source/mcl/MclEnvironment.h"/>
+        <FILE id="PEub8h" name="MclEvaluator.cpp" compile="1" resource="0"
+              file="Source/mcl/MclEvaluator.cpp"/>
+        <FILE id="QzGA3F" name="MclEvaluator.h" compile="0" resource="0" file="Source/mcl/MclEvaluator.h"/>
+        <FILE id="dqgQaR" name="MclModel.h" compile="0" resource="0" file="Source/mcl/MclModel.h"/>
+        <FILE id="NL2L7C" name="MclParser.cpp" compile="1" resource="0" file="Source/mcl/MclParser.cpp"/>
+        <FILE id="LXtblH" name="MclParser.h" compile="0" resource="0" file="Source/mcl/MclParser.h"/>
+        <FILE id="QcRoJ6" name="MclResult.h" compile="0" resource="0" file="Source/mcl/MclResult.h"/>
+      </GROUP>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>

@@ -140,6 +140,25 @@ void ParameterSets::transfer(ParameterSets* src)
     ordinate();
 }
 
+/**
+ * todo: The way this is working, it will move the modified set
+ * to the end which is semantically okay, but makes the file diffs larger.
+ * would be nicer for development to replace it preserving the current location.
+ */
+void ParameterSets::replace(ValueSet* neu)
+{
+    if (neu->name.length() == 0) {
+        Trace(1, "ParameterSets::replace Refusing set without name");
+        delete neu;
+    }
+    else {
+        ValueSet* existing = find(neu->name);
+        if (existing != nullptr)
+          remove(existing);
+        add(neu);
+    }
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -213,7 +213,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void loadSession(class Session* neu);
 
     class ParameterSets* getParameterSets() override;
-    void updateParameterSets();
+    void updateParameterSets() override;
     
     class StaticConfig* getStaticConfig() override;
     class HelpCatalog* getHelpCatalog();
@@ -222,7 +222,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // propagate an action to either MobiusInterface or MainWindow
     void doAction(class UIAction*) override;
     void alert(juce::String message);
-    void alert(juce::StringArray& messages);
+    void alert(juce::StringArray& messages) override;
     void message(juce::String message);
     
     // find the value of a parameter or variable

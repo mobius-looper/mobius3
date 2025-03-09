@@ -27,6 +27,8 @@ class Prompter
     void importScripts();
     void deleteScript(juce::String path);
 
+    void runMcl();
+
   private:
 
     class Provider* provider = nullptr;
@@ -37,6 +39,7 @@ class Prompter
 
     void startScriptImport();
     void finishScriptImport(juce::Array<juce::File> files);
+    void finishRunMcl(juce::Array<juce::File> files);
 
 };    
 

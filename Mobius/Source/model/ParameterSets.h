@@ -28,6 +28,7 @@ class ParameterSets
     void add(ValueSet* set);
     bool remove(ValueSet* set);
     void transfer(ParameterSets* src);
+    void replace(ValueSet* set);
     
     // dangerous, should make this const or something
     juce::OwnedArray<class ValueSet>& getSets();

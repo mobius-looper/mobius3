@@ -72,6 +72,7 @@ class Provider
     virtual class MobiusConfig* getOldMobiusConfig() = 0;
     virtual class BindingSet* getBindingSets() = 0;
     virtual class ParameterSets* getParameterSets() = 0;
+    virtual void updateParameterSets() = 0;
     
     virtual class UIConfig* getUIConfig() = 0;
     virtual void updateUIConfig() = 0;
@@ -110,5 +111,8 @@ class Provider
     // obscure things for Parametizer
     virtual class VariableManager* getVariableManager() = 0;
     virtual juce::AudioProcessor* getAudioProcessor() = 0;
+
+
+    virtual void alert(juce::StringArray& messages) = 0;
     
 };
