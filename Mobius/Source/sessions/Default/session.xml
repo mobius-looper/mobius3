@@ -35,6 +35,7 @@
       <Value name="beatsPerBar" value="7"/>
       <Value name="durationMode" value="1" type="int"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
+      <Value name="focus" value="false" type="bool"/>
       <Value name="followLocation" value="1" type="int"/>
       <Value name="followMute" value="true" type="bool"/>
       <Value name="followQuantizeLocation" value="true" type="bool"/>
@@ -59,7 +60,6 @@
       <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
       <Value name="syncUnit" value="beat" type="enum" ordinal="0"/>
-      <Value name="trackGroup" value="Groupuu"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
@@ -76,9 +76,7 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="master" type="enum" ordinal="5"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
-      <Value name="trackOverlay" value="testlevels"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
@@ -198,6 +196,8 @@
   <ValueSet>
     <Value name="activeSetup" value="Default"/>
     <Value name="altFeedbackEnable" value="true" type="bool"/>
+    <Value name="audioInputPort" value="0" type="int"/>
+    <Value name="audioOutputPort" value="0" type="int"/>
     <Value name="autoFeedbackReduction" value="0" type="int"/>
     <Value name="bounceQuantize" value="off" type="enum" ordinal="0"/>
     <Value name="controllerActionThreshold" value="64" type="int"/>
@@ -221,6 +221,7 @@
     <Value name="midiBeatsPerBar" value="4" type="int"/>
     <Value name="midiRecordMode" value="average" type="enum" ordinal="0"/>
     <Value name="monitorAudio" value="false" type="bool"/>
+    <Value name="mono" value="false" type="bool"/>
     <Value name="multiplyMode" value="normal" type="enum" ordinal="0"/>
     <Value name="muteCancel" value="never" type="enum" ordinal="0"/>
     <Value name="muteMode" value="continue" type="enum" ordinal="0"/>
@@ -234,6 +235,8 @@
     <Value name="pitchShiftRestart" value="false" type="bool"/>
     <Value name="pitchStepRange" value="24" type="int"/>
     <Value name="pitchTransfer" value="off" type="enum" ordinal="0"/>
+    <Value name="pluginInputPort" value="0" type="int"/>
+    <Value name="pluginOutputPort" value="0" type="int"/>
     <Value name="quantize" value="subCycle" type="enum" ordinal="1"/>
     <Value name="quickSave" value="mobiusloop"/>
     <Value name="recordResetsFeedback" value="false" type="bool"/>

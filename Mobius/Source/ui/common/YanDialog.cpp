@@ -274,7 +274,18 @@ void YanDialog::buttonClicked(juce::Button* b)
     if (listener != nullptr)
       listener->yanDialogClosed(this, ordinal);
 
-    setVisible(false);
+    // just hiding it isn't good, if the window reorganizes
+    // while it is hidden it can mess up the z-order making the dialog
+    // invisible
+    //setVisible(false);
+    getParentComponent()->removeChildComponent(this);
+}
+
+void YanDialog::cancel()
+{
+    juce::Component* parent = getParentComponent();
+    if (parent != nullptr)
+      parent->removeChildComponent(this);
 }
 
 /****************************************************************************/

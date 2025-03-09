@@ -7,6 +7,7 @@
 #include <JuceHeader.h>
 
 #include "ConfigEditor.h"
+#include "../common/BasicTabs.h"
 #include "../common/ValueSetForm.h"
 
 class SystemEditor : public ConfigEditor
@@ -26,5 +27,16 @@ class SystemEditor : public ConfigEditor
 
   private:
 
-    std::unique_ptr<ValueSetForm> form;
+    std::unique_ptr<ValueSet> values;
+
+    BasicTabs tabs;
+    
+    ValueSetForm plugin;
+    ValueSetForm files;
+    
+    void initForm(ValueSetForm& form, const char* defname);
+    void loadPluginValues();
+    void savePluginValues();
+    int getPortValue(const char* name, int max);
+
 };

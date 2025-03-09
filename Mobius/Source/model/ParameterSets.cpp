@@ -68,6 +68,14 @@ ValueSet* ParameterSets::getByOrdinal(int number)
     return found;
 }
 
+ValueSet* ParameterSets::getByIndex(int index)
+{
+    ValueSet* found = nullptr;
+    if (index >= 0 && index < sets.size())
+      found = sets[index];
+    return found;
+}
+
 ValueSet* ParameterSets::find(juce::String name)
 {
     ValueSet* found = nullptr;
@@ -105,6 +113,16 @@ void ParameterSets::add(ValueSet* set)
 {
     sets.add(set);
     ordinate();
+}
+
+bool ParameterSets::remove(ValueSet* set)
+{
+    bool removed = false;
+    if (sets.contains(set)) {
+        sets.removeObject(set, true);
+        removed = true;
+    }
+    return removed;
 }
 
 void ParameterSets::clear()

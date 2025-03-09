@@ -22,9 +22,11 @@ class ParameterSets
 
     class ValueSet* find(juce::String name);
     class ValueSet* getByOrdinal(int ordinal);
-
+    class ValueSet* getByIndex(int index);
+    
     void clear();
     void add(ValueSet* set);
+    bool remove(ValueSet* set);
     void transfer(ParameterSets* src);
     
     // dangerous, should make this const or something

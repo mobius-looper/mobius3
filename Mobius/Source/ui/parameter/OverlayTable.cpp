@@ -99,6 +99,17 @@ void OverlayTable::clear()
     overlayRows.clear();
 }
 
+void OverlayTable::cancel()
+{
+    // make sure all of the dialogs are gone
+    nameDialog.cancel();
+    deleteAlert.cancel();
+    confirmDialog.cancel();
+    errorAlert.cancel();
+
+    // popups too?
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // TypicalTable Overrides
@@ -234,28 +245,47 @@ juce::String OverlayTable::getSelectedName()
 void OverlayTable::finishNew(int button)
 {
     if (button == 0) {
-        editor->overlayTableNew(newName.getValue());
+        juce::StringArray errors;
+        editor->overlayTableNew(newName.getValue(), errors);
+        showResult(errors);
     }
 }
 
 void OverlayTable::finishCopy(int button)
 {
     if (button == 0) {
-        editor->overlayTableCopy(newName.getValue());
+        juce::StringArray errors;
+        editor->overlayTableCopy(newName.getValue(), errors);
+        showResult(errors);
     }
 }
 
 void OverlayTable::finishRename(int button)
 {
     if (button == 0) {
-        editor->overlayTableRename(newName.getValue());
+        juce::StringArray errors;
+        editor->overlayTableRename(newName.getValue(), errors);
+        showResult(errors);
     }
 }
 
 void OverlayTable::finishDelete(int button)
 {
     if (button == 0) {
-        editor->overlayTableDelete();
+        juce::StringArray errors;
+        editor->overlayTableDelete(errors);
+        showResult(errors);
+    }
+}
+
+void OverlayTable::showResult(juce::StringArray& errors)
+{
+    // obviously lots more we could do here
+    if (errors.size() > 0) {
+        errorAlert.clearMessages();
+        for (auto e : errors)
+          errorAlert.addMessage(e);
+        errorAlert.show(getParentComponent());
     }
 }
 

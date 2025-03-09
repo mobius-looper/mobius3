@@ -470,6 +470,7 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope, bo
         props->juceValues = options.contains("juceValues");
         props->noBinding = options.contains("noBinding");
         props->noDefault = options.contains("noDefault");
+        props->noOverlay = options.contains("noOverlay");
         props->displayBase = el->getIntAttribute("displayBase");
         props->displayType = el->getStringAttribute("displayType");
         props->displayHelper = el->getStringAttribute("displayHelper");

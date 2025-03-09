@@ -6,7 +6,6 @@
 
 #include "../../util/Trace.h"
 #include "../../model/Session.h"
-#include "../../model/DeviceConfig.h"
 #include "../../model/ParameterSets.h"
 #include "../../Supervisor.h"
 #include "../../Provider.h"
@@ -71,15 +70,6 @@ void SessionEditor::load()
     session.reset(new Session(src));
     revertSession.reset(new Session(src));
 
-    // these are in the DeviceConfig but since there is no UI for that
-    // show them as if they were session globals
-    // hacky, needs thought
-    DeviceConfig* dc = supervisor->getDeviceConfig();
-    // the +1 is because the value is actually the number of "aux" pins and
-    // there is always 1 "main" pin, but to the user it looks like they're combined
-    session->setInt("pluginInputs", dc->pluginConfig.defaultAuxInputs + 1);
-    session->setInt("pluginOutputs", dc->pluginConfig.defaultAuxOutputs + 1);
-    
     loadSession();
 }
 
@@ -93,24 +83,9 @@ void SessionEditor::save()
     Session* master = supervisor->getSession();
     saveSession(master);
 
-    // reverse the silly plugin pins thing
-    // note that we have to get this from the master since that's
-    // where we just committed the form changes
-    ValueSet* globals = master->ensureGlobals();
-    int newPluginInputs = getPortValue(globals, "pluginInputs", 8) - 1;
-    int newPluginOutputs = getPortValue(globals, "pluginOutputs", 8) - 1;
-    globals->remove("pluginInputs");
-    globals->remove("pluginOutputs");
-    
     // note that we don't call udateSession which will eventually go away
     // entirely, this will do track number normalization
     supervisor->sessionEditorSave();
-
-    // convert the plugin pins back to the DeviceConfig
-    DeviceConfig* dc = supervisor->getDeviceConfig();
-    dc->pluginConfig.defaultAuxInputs = newPluginInputs;
-    dc->pluginConfig.defaultAuxOutputs = newPluginOutputs;
-    supervisor->updateDeviceConfig();
 
     invalidateSession();
     revertSession.reset(nullptr);
@@ -122,16 +97,6 @@ void SessionEditor::saveSession(Session* dest)
     globalEditor->save(globals);
     parameterEditor->save(globals);
     trackEditor->save(dest);
-}
-
-int SessionEditor::getPortValue(ValueSet* set, const char* name, int max)
-{
-    int value = set->getInt(name);
-    if (value < 1)
-      value = 1;
-    else if (max > 0 && value > max)
-      value = max;
-    return value;
 }
 
 /**

@@ -589,7 +589,8 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
 
     b->addAttribute(ATT_VERSION, c->getVersion());
 
-    render(b, ParamQuickSave, c->getQuickSave());
+    // this isn't a parqameter any more, ignore and make them set it again
+    //render(b, ParamQuickSave, c->getQuickSave());
     render(b, ParamNoiseFloor, c->getNoiseFloor());
 
     render(b, ParamInputLatency, c->getInputLatency());
@@ -682,7 +683,7 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
     // this is part of OldBinding, get rid of this?
     // c->setSelectedMidiConfig(e->getAttribute(ATT_MIDI_CONFIG));
     
-	c->setQuickSave(parseString(e, ParamQuickSave));
+	//c->setQuickSave(parseString(e, ParamQuickSave));
 
 	c->setNoiseFloor(parse(e, ParamNoiseFloor));
 	c->setInputLatency(parse(e, ParamInputLatency));

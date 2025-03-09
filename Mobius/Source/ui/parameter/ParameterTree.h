@@ -57,6 +57,7 @@ class ParameterTree : public SymbolTree
     void initializeDynamic(class Provider* p);
     void setDraggable(bool b);
     void setFilterNoDefault(bool b);
+    void setFilterNoOverlay(bool b);
     void setTrackType(SymbolTrackType t);
 
     void selectFirst();
@@ -65,6 +66,7 @@ class ParameterTree : public SymbolTree
 
     bool draggable = false;
     bool filterNoDefault = false;
+    bool filterNoOverlay = false;
     SymbolTrackType trackType = TrackTypeNone;
     
     // static building

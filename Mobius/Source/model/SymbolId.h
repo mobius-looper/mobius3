@@ -46,7 +46,6 @@ typedef enum {
     ParamLongPress,
     ParamLongDisable,
     ParamMonitorAudio,
-    ParamQuickSave,
     ParamSpreadRange,
     ParamFadeFrames,
     ParamMaxSyncDrift,
@@ -150,9 +149,6 @@ typedef enum {
     ParamNoReset,
     ParamNoEdit,
     ParamEventScript,
-    ParamUserFileFolder,
-    ParamPluginInputs,
-    ParamPluginOutputs,
     
     //
     // Preset Parameters

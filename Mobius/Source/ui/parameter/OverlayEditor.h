@@ -34,10 +34,10 @@ class OverlayEditor : public ConfigEditor,
 
     void show(int index);
 
-    void overlayTableNew(juce::String newName);
-    void overlayTableCopy(juce::String newName);
-    void overlayTableRename(juce::String newName);
-    void overlayTableDelete();
+    void overlayTableNew(juce::String newName, juce::StringArray& errors);
+    void overlayTableCopy(juce::String newName, juce::StringArray& errors);
+    void overlayTableRename(juce::String newName, juce::StringArray& errors);
+    void overlayTableDelete(juce::StringArray& errors);
     
   private:
 
@@ -49,4 +49,8 @@ class OverlayEditor : public ConfigEditor,
 
     juce::OwnedArray<class OverlayTreeForms> treeForms;
 
+    bool checkName(juce::String newName, juce::StringArray& errors);
+    class ValueSet* getSourceOverlay(juce::String action, juce::StringArray& errors);
+    void addNew(class ValueSet* set);
+    
 };

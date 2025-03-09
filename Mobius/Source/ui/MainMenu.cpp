@@ -325,10 +325,10 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         //menu.addItem(MidiControl, "MIDI Control");
         //menu.addItem(KeyboardControl, "Keyboard Control");
         //menu.addSeparator();
-        menu.addItem(Properties, "Function Properties");
+        menu.addItem(Properties, "Function Behavior");
         menu.addItem(Groups, "Track Groups");
         menu.addItem(HostParameters, "Plugin Parameters");
-        menu.addItem(System, "System Parameters");
+        menu.addItem(System, "System Configuration");
         menu.addSeparator();
         menu.addItem(Samples, "Samples");
         menu.addItem(LoadSamples, "Reload Samples");

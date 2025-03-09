@@ -404,17 +404,6 @@ Once those models are fully converted, these symbols can be removed.
        -->
   <ParameterScope name='global'>
     
-    <Parameter name='userFileFolder' type='string'>
-      Temporary prototype for allowing file paths specified in in various objects
-      to be fragments relative to a user specified folder.  Currently used only
-      when loading MIDI files.
-    </Parameter>
-    
-    <Parameter name='quickSave' type='string'>
-      The base name of the quick save file.
-      Need more flexibility here including what folders these go in.
-    </Parameter>
-
     <Parameter name='inputLatency' options='noBinding' query='true'>
       The number of samples to use for input latency adjustments.  Overrides
       what is reported by the container for the selected audio device.
@@ -500,12 +489,6 @@ Once those models are fully converted, these symbols can be removed.
       been exposed in a long time.  Still potentially useful but hidden.
     </Parameter>
 
-    <!-- These aren't actually in the Session, they're in the DeviceConfig but
-         we make it look like they are for the SessionEditor -->
-
-    <Parameter name='pluginInputs' type='int' options='noBinding'/>
-    <Parameter name='pluginOutputs' type='int' options='noBinding'/>
-
     <!-- These were once defined in the Setup but they are effectively global -->
 
     <!-- Unclear if we need this, it would take the place of activeSetup and
@@ -539,7 +522,7 @@ Once those models are fully converted, these symbols can be removed.
     <!-- The name is not actually stored in the ValueSet, it will be a top-level
          property of the Session::Track object.  But it can be trreated as if
          it were a normal parameter.  -->
-    <Parameter name='trackName' type='string' options='noBinding,noDefault' tree='General'/>
+    <Parameter name='trackName' type='string' options='noBinding,noDefault,noOverlay' tree='General'/>
 
     <Parameter name='trackGroup' tree='General'
                options='noBinding,noDefault,dynamic,resetRetain'
@@ -554,7 +537,7 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='trackOverlay' tree='Overlay'
                type='structure' 
                displayType='combo' displayHelper='parameterSet'
-               options='noBinding'/>
+               options='noBinding,noOverlay,resetRetain'/>
 
     <!-- the replacement for oldSyncSource defined SyncSource in SyncConstants.h -->
     <Parameter name='syncSource' values='none,transport,track,host,midi,master'

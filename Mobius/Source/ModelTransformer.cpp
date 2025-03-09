@@ -293,8 +293,8 @@ void ModelTransformer::transform(MobiusConfig* src, Session* dest)
     transform(ParamLongPress, src->getLongPress(), values);
     transformBool(ParamMonitorAudio, src->isMonitorAudio(), values);
 
-    // should be redesigned
-    transform(ParamQuickSave, src->getQuickSave(), values);
+    // this was moved to SystemConfig
+    //transform(ParamQuickSave, src->getQuickSave(), values);
 
     // has to do with how Action values are donverted to speed and pitch
     // adjustments
@@ -341,7 +341,7 @@ void ModelTransformer::transform(Session* src, MobiusConfig* dest)
     // does core do this or Kernel?
     dest->setMonitorAudio(getBool(ParamMonitorAudio, values));
     
-    dest->setQuickSave(getString(ParamQuickSave,  values));
+    //dest->setQuickSave(getString(ParamQuickSave,  values));
 
     // this shouldn't be necessary, only for bindings
     dest->setSpreadRange(getInt(ParamSpreadRange, values));

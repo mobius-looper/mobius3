@@ -47,7 +47,8 @@ class OverlayTable : public TypicalTable,
     void load(class ParameterSets* sets);
     void reload();
     void clear();
-
+    void cancel();
+                
     // TypicalTable overrides
     int getRowCount() override;
     juce::String getCellText(int rowNumber, int columnId) override;
@@ -88,6 +89,8 @@ class OverlayTable : public TypicalTable,
     void finishCopy(int button);
     void finishRename(int button);
     void finishDelete(int button);
+
+    void showResult(juce::StringArray& errors);
 
 };
     

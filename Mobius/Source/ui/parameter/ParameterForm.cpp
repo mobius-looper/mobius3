@@ -281,6 +281,9 @@ void ParameterForm::save(ValueSet* values)
         Symbol* s = field->getSymbol();
         // if the field is marked defaulted, any prior
         // value it had in the ValueSet must be removed
+        // ugh, this magic only works for SessionTrackForms that use this flag
+        // OverlayTreeForms doesn't use this, it actually deletes the field when
+        // it is dragged off
         if (field->isDefaulted()) {
             values->remove(s->name);
         }

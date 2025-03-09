@@ -43,6 +43,15 @@ void ParameterTree::setFilterNoDefault(bool b)
 }
 
 /**
+ * Set this if you want the tree builder to eliminate symbols flagged with the noOverlay
+ * option.
+ */
+void ParameterTree::setFilterNoOverlay(bool b)
+{
+    filterNoOverlay = b;
+}
+
+/**
  * Set this if the tree builder needs to exclude symbols that only apply to
  * specific track types.
  */
@@ -253,6 +262,9 @@ bool ParameterTree::isFiltered(Symbol* s, ParameterProperties* props)
     // first the noDefault option
     if (filterNoDefault)
       filtered = props->noDefault;
+
+    if (!filtered && filterNoOverlay)
+      filtered = props->noOverlay;
 
     // then track types
     if (!filtered && trackType != TrackTypeNone) {

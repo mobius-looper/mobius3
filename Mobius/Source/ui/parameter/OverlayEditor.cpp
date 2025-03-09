@@ -54,6 +54,7 @@ void OverlayEditor::load()
     ParameterSets* master = supervisor->getParameterSets();
     overlays.reset(new ParameterSets(master));
     revertOverlays.reset(new ParameterSets(master));
+    treeForms.clear();
 
     table->load(overlays.get());
 
@@ -77,8 +78,9 @@ void OverlayEditor::show(int index)
             OverlayTreeForms* existing = treeForms[currentSet];
             existing->setVisible(false);
         }
-        OverlayTreeForms* neu = treeForms[index];
-        if (neu != nullptr) {
+
+        if (index >= 0 && index < treeForms.size()) {
+            OverlayTreeForms* neu = treeForms[index];
             neu->setVisible(true);
             currentSet = index;
         }
@@ -112,6 +114,9 @@ void OverlayEditor::save()
     master->transfer(overlays.get());
 
     supervisor->updateParameterSets();
+
+    // make sure dialogs are clean
+    table->cancel();
 }
 
 /**
@@ -124,6 +129,7 @@ void OverlayEditor::cancel()
     table->clear();
     for (auto tf : treeForms)
       tf->cancel();
+    table->cancel();
 }
 
 void OverlayEditor::decacheForms()
@@ -157,11 +163,39 @@ void OverlayEditor::typicalTableChanged(TypicalTable* t, int row)
     }
 }
 
-void OverlayEditor::overlayTableNew(juce::String newName)
+bool OverlayEditor::checkName(juce::String newName, juce::StringArray& errors)
 {
-    // todo: check for duplicate names, warn and abort
-    ValueSet* neu = new ValueSet();
-    neu->name = newName;
+    bool ok = false;
+
+    // todo: do some validation on the name
+    bool validName = true;
+    
+    if (!validName) {
+        errors.add(juce::String("Overlay name ") + newName + " contains illegal characters");
+    }
+    else {
+        ValueSet* existing = overlays->find(newName);
+        if (existing != nullptr) {
+            errors.add(juce::String("Overlay name ") + newName + " is already in use");
+        }
+        else {
+            ok = true;
+        }
+    }
+    return ok;
+}
+
+void OverlayEditor::overlayTableNew(juce::String newName, juce::StringArray& errors)
+{
+    if (checkName(newName, errors)) {
+        ValueSet* neu = new ValueSet();
+        neu->name = newName;
+        addNew(neu);
+    }
+}
+
+void OverlayEditor::addNew(ValueSet* neu)
+{
     overlays->add(neu);
     
     OverlayTreeForms* otf = new OverlayTreeForms();
@@ -169,6 +203,7 @@ void OverlayEditor::overlayTableNew(juce::String newName)
     otf->load(neu);
     treeForms.add(otf);
     addChildComponent(otf);
+    resized();
 
     table->reload();
     int newIndex = overlays->getSets().size() - 1;
@@ -176,16 +211,77 @@ void OverlayEditor::overlayTableNew(juce::String newName)
     show(newIndex);
 }
 
-void OverlayEditor::overlayTableCopy(juce::String newName)
+ValueSet* OverlayEditor::getSourceOverlay(juce::String action, juce::StringArray& errors)
 {
+    ValueSet* set = nullptr;
+    if (currentSet < 0) {
+        errors.add(juce::String("No overlay selected for ") + action);
+    }
+    else {
+        set = overlays->getByIndex(currentSet);
+        if (set == nullptr) {
+            Trace(1, "OverlayEditor: Overlay ordinals are messed up");
+            errors.add(juce::String("Internal error"));
+        }
+    }
+    return set;
 }
 
-void OverlayEditor::overlayTableRename(juce::String newName)
+void OverlayEditor::overlayTableCopy(juce::String newName, juce::StringArray& errors)
 {
+    if (checkName(newName, errors)) {
+        ValueSet* set = getSourceOverlay("Copy", errors);
+        if (set != nullptr) {
+            ValueSet* copy = new ValueSet(set);
+            copy->name = newName;
+            addNew(copy);
+        }
+    }
 }
 
-void OverlayEditor::overlayTableDelete()
+void OverlayEditor::overlayTableRename(juce::String newName, juce::StringArray& errors)
 {
+    if (checkName(newName, errors)) {
+        ValueSet* set = getSourceOverlay("Rename", errors);
+        if (set != nullptr) {
+            set->name = newName;
+            table->reload();
+        }
+    }
+}
+
+/**
+ * Deletion is complex since this overlay may be referenced in saved sessions
+ * and we're not going to walk over all of them removing the reference.
+ * Could at least make a stab at checking the loaded session though.
+ * When a session with a state reference is loaded, it must adapt well.
+ */
+void OverlayEditor::overlayTableDelete(juce::StringArray& errors)
+{
+    ValueSet* set = getSourceOverlay("Delete", errors);
+    if (set != nullptr) {
+        if (!overlays->remove(set)) {
+            Trace(1, "OverlayEditor: Problem removing overlay");
+            errors.add("Internal error");
+        }
+        else {
+            OverlayTreeForms* otf = treeForms[currentSet];
+            removeChildComponent(otf);
+            treeForms.removeObject(otf, true);
+
+            // stay on the same table row with the ones
+            // below shifted up, show() won't know about the OTF
+            // we just deleted, to clear currentSet before calling it
+            int newIndex = currentSet;
+            if (newIndex >= treeForms.size())
+              newIndex = treeForms.size() - 1;
+            currentSet = -1;
+
+            table->reload();
+            table->selectRow(newIndex);
+            show(newIndex);
+        }
+    }
 }
 
 /****************************************************************************/

@@ -689,8 +689,12 @@ void TestDriver::mobiusSaveAudio(Audio* content, juce::String fileName)
 {
     bool normalMode = false;
     if (normalMode) {
-        SessionHelper helper(supervisor);
-        const char* quickfile = helper.getString(ParamQuickSave);
+
+        // QuickSave is no longer a parameter, get it from SystemConfig now if you care
+        //SessionHelper helper(supervisor);
+        //const char* quickfile = helper.getString(ParamQuickSave);
+        const char* quickfile = nullptr;
+        
         if (quickfile == nullptr) {
             // this is what old code used, better name might
             // just be "quicksave" to show where it came from

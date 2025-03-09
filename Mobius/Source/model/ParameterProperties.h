@@ -128,6 +128,14 @@ class ParameterProperties
      * It must be given an explicit value in the SessionTrack if the track wants one.
      */
     bool noDefault = false;
+    
+    /**
+     * Indicates that this parameter cannot be included in an overlay.
+     * This and the previous flag are only used by the session editor,
+     * kind of a shame to clutter up the model with these.  Maybe just have a string
+     * of editorOptions or something that's easier to extend.
+     */
+    bool noOverlay = false;
 
     /**
      * When true, this may be added to Focus Lock Parameters in the GroupDefinition.

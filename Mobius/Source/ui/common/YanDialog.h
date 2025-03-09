@@ -66,7 +66,8 @@ class YanDialog : public juce::Component, public juce::Button::Listener
 
     void show();
     void show(juce::Component* parent);
-
+    void cancel();
+    
     void resized();
     void paint(juce::Graphics& g);
     void buttonClicked(juce::Button* b);

@@ -7,6 +7,7 @@
 #include "../../Supervisor.h"
 #include "../../model/SystemConfig.h"
 #include "../../model/StaticConfig.h"
+#include "../../model/DeviceConfig.h"
 
 #include "SystemEditor.h"
 
@@ -14,7 +15,10 @@ SystemEditor::SystemEditor(Supervisor* s) : ConfigEditor(s)
 {
     setName("SystemEditor");
 
-    // todo: form
+    tabs.add("Plugin", &plugin);
+    tabs.add("Files", &files);
+                 
+    addAndMakeVisible(&tabs);
 }
 
 SystemEditor::~SystemEditor()
@@ -24,53 +28,93 @@ SystemEditor::~SystemEditor()
 void SystemEditor::load()
 {
     SystemConfig* config = supervisor->getSystemConfig();
-    if (form == nullptr) {
+    ValueSet* master = config->getValues();
+    values.reset(new ValueSet(master));
+    
+    // data driven form definition is more complex than I like
+    // for the constructor, do it on the first load
+    initForm(plugin, "systemPlugin");
+    initForm(files, "systemFiles");
+
+    // plugin ports are not actually in system.xml, pretend
+    loadPluginValues();
+    
+    plugin.load(values.get());
+    files.load(values.get());
+}
+
+void SystemEditor::loadPluginValues()
+{
+    // these are in the DeviceConfig but since there is no UI for that
+    // show them as if they were session globals
+    // hacky, needs thought
+    DeviceConfig* dc = supervisor->getDeviceConfig();
+    // the +1 is because the value is actually the number of "aux" pins and
+    // there is always 1 "main" pin, but to the user it looks like they're combined
+    values->setInt("pluginInputs", dc->pluginConfig.defaultAuxInputs + 1);
+    values->setInt("pluginOutputs", dc->pluginConfig.defaultAuxOutputs + 1);
+}
+
+void SystemEditor::initForm(ValueSetForm& form, const char* defname)
+{
+    if (form.isEmpty()) {
         StaticConfig* scon = supervisor->getStaticConfig();
-        Form* formdef = scon->getForm("globals");
+        Form* formdef = scon->getForm(defname);
         if (formdef == nullptr) {
-            Trace(1, "SystemEditor: Missing form definition");
+            Trace(1, "SystemEditor: Missing form definition %s", defname);
         }
         else {
-            form.reset(new ValueSetForm());
-            form->build(supervisor, formdef);
-            addAndMakeVisible(form.get());
-            // this happens late
-            resized();
+            form.build(supervisor, formdef);
         }
-    }
-
-    if (form != nullptr) {
-        form->load(config->getValues());
     }
 }
 
 void SystemEditor::save()
 {
-    if (form != nullptr) {
-        SystemConfig* config = supervisor->getSystemConfig();
-        form->save(config->getValues());
-        supervisor->updateSystemConfig();
-    }
+    SystemConfig* config = supervisor->getSystemConfig();
+    ValueSet* master = config->getValues();
+
+    files.save(master);
+    // this one is weird
+    plugin.save(values.get());
+    savePluginValues();
+    
+    supervisor->updateSystemConfig();
+}
+
+void SystemEditor::savePluginValues()
+{
+    // reverse the silly plugin pins thing
+    // note that we have to get this from the master since that's
+    // where we just committed the form changes
+    int newPluginInputs = getPortValue("pluginInputs", 8) - 1;
+    int newPluginOutputs = getPortValue("pluginOutputs", 8) - 1;
+
+    DeviceConfig* dc = supervisor->getDeviceConfig();
+    dc->pluginConfig.defaultAuxInputs = newPluginInputs;
+    dc->pluginConfig.defaultAuxOutputs = newPluginOutputs;
+    supervisor->updateDeviceConfig();
+}
+
+int SystemEditor::getPortValue(const char* name, int max)
+{
+    int value = values->getInt(name);
+    if (value < 1)
+      value = 1;
+    else if (max > 0 && value > max)
+      value = max;
+    return value;
 }
 
 void SystemEditor::cancel()
 {
-    // todo: don't have a clear for this...
+    values.reset();
 }
 
 void SystemEditor::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-
-    // leave some padding
-    area.removeFromTop(20);
-    // there seems to be some weird extra padding on the left
-    // or maybe the table is forcing itself wider on the right
-    area.removeFromLeft(10);
-    area.removeFromRight(20);
-
-    if (form != nullptr)
-      form->setBounds(area);
+    tabs.setBounds(area);
 }    
 
 /****************************************************************************/

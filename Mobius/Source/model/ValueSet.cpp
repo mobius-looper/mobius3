@@ -78,9 +78,21 @@ MslValue* ValueSet::get(SymbolTable* symbols, SymbolId id)
 void ValueSet::set(juce::String key, MslValue& src)
 {
     MslValue* value = map[key];
-    if (value == nullptr)
-      value = alloc(key);
-    value->copy(&src);
+    if (src.isNull()) {
+        // setting something to null is the same as removing it
+        // this is important for the Session/Overlay editors that may be
+        // cleaning up invalid values, the way YanParameter works they will
+        // often be left Null, rather than making everything deal with it
+        // we can catch it consistently down here
+        // this is a relatively new 3/8/25 change, watch for side effects
+        if (value != nullptr)
+          remove(key);
+    }
+    else {
+        if (value == nullptr)
+          value = alloc(key);
+        value->copy(&src);
+    }
 }
 
 MslValue* ValueSet::alloc(juce::String key)
@@ -151,16 +163,28 @@ juce::String ValueSet::getJString(juce::String key)
     return jval;
 }
 
+/**
+ * 3/8/25 SessionEditor can sometimes deal with null or empty strings
+ * which set() above considers a removal of the MslValue rather than
+ * leaving it behind empty.
+ * Start forwarding to that to handle it consistently
+ */
 void ValueSet::setString(juce::String key, const char* charval)
 {
+#if 0    
     MslValue* value = map[key];
     if (value == nullptr)
       value = alloc(key);
     value->setString(charval);
+#endif
+    MslValue v;
+    v.setString(charval);
+    set(key, v);
 }
 
 void ValueSet::setJString(juce::String key, juce::String jvalue)
 {
+#if 0    
     MslValue* value = map[key];
     if (value == nullptr)
       value = alloc(key);
@@ -169,6 +193,10 @@ void ValueSet::setJString(juce::String key, juce::String jvalue)
       value->setString(jvalue.toUTF8());
     else
       value->setNull();
+#endif
+    MslValue v;
+    v.setJString(jvalue);
+    set(key, v);
 }
 
 /**

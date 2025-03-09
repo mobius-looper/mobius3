@@ -26,6 +26,8 @@ void OverlayTreeForms::initialize(Provider* p)
 {
     provider = p;
 
+    // exclude parameters that can't be in an overlay
+    tree.setFilterNoOverlay(true);
     tree.setDraggable(true);
     tree.initializeDynamic(provider);
 
@@ -43,6 +45,7 @@ void OverlayTreeForms::load(ValueSet* src)
 {
     values = src;
     forms.load(src);
+    tree.selectFirst();
 }
 
 void OverlayTreeForms::save(ValueSet* dest)
@@ -185,6 +188,15 @@ void OverlayTreeForms::dropTreeViewDrop(DropTreeView* srctree, const juce::DragA
             else {
                 if (!form->remove(s))
                   Trace(1, "OverlayTreeForms: Problem removing symbol from form %s", s->getName());
+
+                // The SessionEditor uses "locking" fields that are setDefaulted to indiciate
+                // that they are no longer used by this form.  ParameterForm tests that to see
+                // whether to remove the value from the ValueSet on save
+                // since DnD style tree forms remove the ParameterField it can't use the
+                // same mechanism.  You have to remove the value now
+                // this does however mean that if you drag the field back onto the form the
+                // previous value is lost
+                values->remove(s->name);
             }
         }
     }

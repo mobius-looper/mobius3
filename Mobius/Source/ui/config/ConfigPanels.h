@@ -201,7 +201,7 @@ class SystemPanel : public ConfigPanel
 {
   public:
     SystemPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
-        setName("Parameter Systems");
+        setName("System Configuration");
         setEditor(&editor);
     }
     ~SystemPanel() {}

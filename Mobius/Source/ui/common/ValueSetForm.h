@@ -26,6 +26,8 @@ class ValueSetForm : public juce::Component
     void setTitleInset(int x);
     void setFormInset(int x);
 
+    bool isEmpty();
+
     /**
      * Build the form from a static definition
      */

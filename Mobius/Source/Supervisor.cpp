@@ -2971,7 +2971,7 @@ void Supervisor::loadMidi(MslValue* arguments)
 
 /**
  * Given a file path fragment from a script or binding, try to load an actual file.
- * If this is a relative path, look at the global parameter defaultUserFileFolder and
+ * If this is a relative path, look at the SystemConfig::UserFileFolder and
  * if set use that as the parent directory.  If not found there, use the installation
  * directory as the parent.
  */
@@ -2988,7 +2988,8 @@ juce::File Supervisor::findUserFile(const char* fragment)
     }
     else {
         bool found = false;
-        const char* userdir = session->getString("userFileFolder");
+        SystemConfig* config = getSystemConfig();
+        const char* userdir = config->getString(SystemConfig::UserFileFolder);
         if (userdir != nullptr) {
             juce::File folder (userdir);
             if (!folder.isDirectory()) {

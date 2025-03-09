@@ -81,6 +81,11 @@ void ValueSetForm::paint(juce::Graphics& g)
 //
 //////////////////////////////////////////////////////////////////////
 
+bool ValueSetForm::isEmpty()
+{
+    return (fields.size() == 0);
+}
+
 /**
  * Build a form from a TreeForm
  */

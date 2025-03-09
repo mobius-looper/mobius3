@@ -335,4 +335,13 @@
     <Value name="multiplyMode" value="normal" type="enum" ordinal="0"/>
     <Value name="output" value="64" type="int"/>
   </ValueSet>
+  <ValueSet name="sessiontest">
+    <Value name="subcycles" value="1" type="int"/>
+  </ValueSet>
+  <ValueSet name="tracktest">
+    <Value name="subcycles" value="2" type="int"/>
+  </ValueSet>
+  <ValueSet name="tracktest2">
+    <Value name="subcycles" value="3" type="int"/>
+  </ValueSet>
 </ParameterSets>

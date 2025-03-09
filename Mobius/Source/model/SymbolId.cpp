@@ -29,7 +29,6 @@ const char* ParamNameAutoFeedbackReduction = "autoFeedbackReduction";
 const char* ParamNameIsolateOverdubs = "isolateOverdubs";
 const char* ParamNameMonitorAudio = "monitorAudio";
 const char* ParamNameSaveLayers = "saveLayers";
-const char* ParamNameQuickSave = "quickSave";
 const char* ParamNameIntegerWaveFile = "integerWaveFile";
 const char* ParamNameGroupFocusLock = "groupFocusLock";
 const char* ParamNameTrackCount = "trackCount";
@@ -141,7 +140,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameLongPress, ParamLongPress},
     {"longDisable", ParamLongDisable},
     {ParamNameMonitorAudio, ParamMonitorAudio},
-    {ParamNameQuickSave, ParamQuickSave},
     {ParamNameSpreadRange, ParamSpreadRange},
     {ParamNameFadeFrames, ParamFadeFrames},
     {ParamNameMaxSyncDrift, ParamMaxSyncDrift},
@@ -225,9 +223,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {"trackNoReset", ParamNoReset},
     {"trackNoEdit", ParamNoEdit},
     {"eventScript", ParamEventScript},
-    {"userFileFolder", ParamUserFileFolder},
-    {"pluginInputs", ParamPluginInputs},
-    {"pluginOutputs", ParamPluginOutputs},
     
     {ParamNameSubcycles, ParamSubcycles},
     {ParamNameMultiplyMode, ParamMultiplyMode},

@@ -23,7 +23,7 @@
         symbols='sessionOverlay'/>
 
   <Form name='sessionGlobalMiscellany' title='Obscure Things for Advanced Users'
-        symbols='longDisable,longPress,noiseFloor,monitorAudio,spreadRange,fadeFrames,maxSyncDrift,eventScript,userFileFolder'/>
+        symbols='longDisable,longPress,noiseFloor,monitorAudio,spreadRange,fadeFrames,maxSyncDrift,eventScript/>
 
   <Form name='sessionGlobalPorts' title='IO Ports'
         symbols='pluginInputs,pluginOutputs,inputLatency,outputLatency'/>
@@ -85,7 +85,12 @@
        ValueSet Forms
        ========================================================================= -->
 
-  <VForm name='globals'>
+  <VForm name='systemPlugin'>
+    <Field name='pluginInputs' type='string'/>
+    <Field name='pluginOutputs' type='string'/>
+  </VForm>
+
+  <VForm name='systemFiles'>
     <Field name='userFileFolder' type='string'/>
     <Field name='quicksaveFile' type='string'/>
   </VForm>

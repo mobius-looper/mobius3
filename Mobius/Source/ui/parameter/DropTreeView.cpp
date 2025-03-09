@@ -25,7 +25,7 @@ void DropTreeView::itemDropped (const juce::DragAndDropTarget::SourceDetails& de
 {
     (void)details;
 
-    Trace(2, "DropTreeView::itemDropped");
+    //Trace(2, "DropTreeView::itemDropped");
     if (listener != nullptr)
       listener->dropTreeViewDrop(this, details);
 }
