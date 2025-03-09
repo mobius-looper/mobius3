@@ -65,7 +65,7 @@
 #endif
 
 #include "Util.h"
-#include "TraceClient.h"
+//#include "TraceClient.h"
 #include "TraceFile.h"
 #include "Trace.h"
 

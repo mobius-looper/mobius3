@@ -44,10 +44,8 @@ class Function : public SystemConstant {
 
 	const char* alias1;			// optional names for scripts
 	const char* alias2;			// optional names for scripts
-	bool externalName;			// true if name is external (no key)
     int ordinal;				// internal number for indexing
 	bool global;				// true for non-track specific functions
-    bool outsideInterrupt;      // true if this can run in the UI thread
 	int index;					// for replicated functions
 	void* object;				// for replicated functions
 
@@ -179,12 +177,6 @@ class Function : public SystemConstant {
     //////////////////////////////////////////////////////////////////////
     // Virtual Behavior Methods
     //////////////////////////////////////////////////////////////////////
-
-    /**
-     * Localize the function name.
-     * Overloaded by ReplicatedFunction so it can add a number suffix.
-     */
-	//virtual void localize(class MessageCatalog* cat);
 
     /**
      * True if the name matches the function name.

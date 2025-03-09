@@ -348,10 +348,8 @@ void Function::init()
 {
 	alias1 = nullptr;
 	alias2 = nullptr;
-	externalName = false;
 	ordinal = 0;
     global = false;
-    outsideInterrupt = false;
 	index = 0;
 	object = nullptr;
 
@@ -404,34 +402,6 @@ bool Function::isScript()
     // hmm, is the best we have?
     return (eventType == RunScriptEvent);
 }
-
-/**
- * Refresh the cached display names from the message catalog.
- * Overload the one in SystemConstant so we can avoid warnings
- * about some function types that don't need display names.
- */
-#if 0
-void Function::localize(MessageCatalog* cat)
-{
-    int key = getKey();
-	if (key == 0) {
-		if (!externalName && !scriptOnly)
-		  Trace(1, "No catalog key for function %s\n", getName());
-		// don't trash previously built display names for RunScriptFunction
-        if (getDisplayName() == nullptr)
-		  setDisplayName(getName());
-	}
-	else {
-		const char* msg = cat->get(key);
-		if (msg != nullptr)
-		  setDisplayName(msg);
-		else {
-			Trace(1, "No localization for function %s\n", getName());
-			setDisplayName(getName());
-		}
-	}
-}
-#endif
 
 /**
  * This is true if the function can do something meaningful with
@@ -1246,22 +1216,6 @@ ReplicatedFunction::ReplicatedFunction()
 {
 	replicated = false;
 }
-
-#if 0
-void ReplicatedFunction::localize(MessageCatalog* cat)
-{
-	Function::localize(cat);
-	if (replicated) {
-		const char* pattern = cat->get(getKey());
-		if (pattern == nullptr) {
-			Trace(1, "No localization for function %s\n", getName());
-			pattern = getName();
-		}
-		sprintf(fullDisplayName, pattern, index + 1);
-		setDisplayName(fullDisplayName);
-	}
-}
-#endif
 
 /****************************************************************************
  *                                                                          *

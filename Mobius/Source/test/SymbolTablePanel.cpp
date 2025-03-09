@@ -75,9 +75,6 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
         else if (s->parameterProperties != nullptr) {
             cell = "Parameter";
         }
-        else if (s->structure != nullptr) {
-            cell = "Structure";
-        }
         else if (s->script != nullptr) {
             cell = "Script";
         }

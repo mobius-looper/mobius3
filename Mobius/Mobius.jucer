@@ -32,8 +32,6 @@
       <GROUP id="{AA148867-8C9E-F915-82DD-CBE33D79A966}" name="util">
         <FILE id="Zkkfco" name="DataModel.cpp" compile="1" resource="0" file="Source/util/DataModel.cpp"/>
         <FILE id="wDfiXs" name="DataModel.h" compile="0" resource="0" file="Source/util/DataModel.h"/>
-        <FILE id="MCgODr" name="FileUtil.cpp" compile="1" resource="0" file="Source/util/FileUtil.cpp"/>
-        <FILE id="hbiDF8" name="FileUtil.h" compile="0" resource="0" file="Source/util/FileUtil.h"/>
         <FILE id="M50Qiq" name="List.cpp" compile="1" resource="0" file="Source/util/List.cpp"/>
         <FILE id="aLSQtU" name="List.h" compile="0" resource="0" file="Source/util/List.h"/>
         <FILE id="gEdMSH" name="MidiUtil.cpp" compile="1" resource="0" file="Source/util/MidiUtil.cpp"/>
@@ -46,8 +44,6 @@
               file="Source/util/StructureDumper.h"/>
         <FILE id="kxfasO" name="Trace.cpp" compile="1" resource="0" file="Source/util/Trace.cpp"/>
         <FILE id="JZyodG" name="Trace.h" compile="0" resource="0" file="Source/util/Trace.h"/>
-        <FILE id="dba9iS" name="TraceClient.cpp" compile="1" resource="0" file="Source/util/TraceClient.cpp"/>
-        <FILE id="O72iMF" name="TraceClient.h" compile="0" resource="0" file="Source/util/TraceClient.h"/>
         <FILE id="I7g2J4" name="TraceFile.cpp" compile="1" resource="0" file="Source/util/TraceFile.cpp"/>
         <FILE id="erMiE5" name="TraceFile.h" compile="0" resource="0" file="Source/util/TraceFile.h"/>
         <FILE id="yz3ePc" name="Util.cpp" compile="1" resource="0" file="Source/util/Util.cpp"/>
@@ -1019,10 +1015,6 @@
             file="Source/CustomLookAndFeel.cpp"/>
       <FILE id="tM1zxN" name="CustomLookAndFeel.h" compile="0" resource="0"
             file="Source/CustomLookAndFeel.h"/>
-      <FILE id="NNPAXk" name="DiagnosticWindow.cpp" compile="1" resource="0"
-            file="Source/DiagnosticWindow.cpp"/>
-      <FILE id="Hk9F8Y" name="DiagnosticWindow.h" compile="0" resource="0"
-            file="Source/DiagnosticWindow.h"/>
       <FILE id="rjWkvK" name="FileManager.cpp" compile="1" resource="0" file="Source/FileManager.cpp"/>
       <FILE id="IggUul" name="FileManager.h" compile="0" resource="0" file="Source/FileManager.h"/>
       <FILE id="Bgk3zj" name="Grouper.cpp" compile="1" resource="0" file="Source/Grouper.cpp"/>

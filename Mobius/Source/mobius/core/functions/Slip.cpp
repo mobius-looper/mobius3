@@ -99,7 +99,6 @@ SlipFunction::SlipFunction(int direction)
 
 	if (direction == 0) { 
 		setName("Slip");
-		externalName = true;
 		scriptOnly = true;
 	}
 	else if (direction > 0) {

@@ -251,42 +251,40 @@
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
         <GROUP id="{4D9FCDBF-4B09-3827-C66D-3CD74CEDBAD0}" name="parameter">
-          <FILE id="Y9SuM8" name="ParameterEditor.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/parameter/ParameterEditor.cpp"/>
-          <FILE id="XY9xQ8" name="ParameterEditor.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/parameter/ParameterEditor.h"/>
-          <FILE id="BFgOqa" name="ParameterSetTable.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/parameter/ParameterSetTable.cpp"/>
-          <FILE id="EdLFOh" name="ParameterSetTable.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/parameter/ParameterSetTable.h"/>
+          <FILE id="QnaH1f" name="DropTreeView.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/parameter/DropTreeView.cpp"/>
+          <FILE id="McPpJt" name="DropTreeView.h" compile="0" resource="0" file="../Mobius/Source/ui/parameter/DropTreeView.h"/>
+          <FILE id="ilIYkN" name="OverlayEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/parameter/OverlayEditor.cpp"/>
+          <FILE id="v4kfj7" name="OverlayEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/parameter/OverlayEditor.h"/>
+          <FILE id="hPwXLR" name="OverlayTable.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/parameter/OverlayTable.cpp"/>
+          <FILE id="Mnsbix" name="OverlayTable.h" compile="0" resource="0" file="../Mobius/Source/ui/parameter/OverlayTable.h"/>
+          <FILE id="eNDV6x" name="OverlayTreeForms.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/parameter/OverlayTreeForms.cpp"/>
+          <FILE id="n2bwqz" name="OverlayTreeForms.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/parameter/OverlayTreeForms.h"/>
+          <FILE id="Lm3kIZ" name="ParameterForm.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/parameter/ParameterForm.cpp"/>
+          <FILE id="g2Neuk" name="ParameterForm.h" compile="0" resource="0" file="../Mobius/Source/ui/parameter/ParameterForm.h"/>
+          <FILE id="cQG8hS" name="ParameterFormCollection.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/parameter/ParameterFormCollection.cpp"/>
+          <FILE id="nPYjKK" name="ParameterFormCollection.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/parameter/ParameterFormCollection.h"/>
+          <FILE id="uvCLG3" name="ParameterTree.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/parameter/ParameterTree.cpp"/>
+          <FILE id="EKwrcY" name="ParameterTree.h" compile="0" resource="0" file="../Mobius/Source/ui/parameter/ParameterTree.h"/>
+          <FILE id="CxUFu1" name="ParameterTreeForms.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/parameter/ParameterTreeForms.cpp"/>
+          <FILE id="mKng2A" name="ParameterTreeForms.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/parameter/ParameterTreeForms.h"/>
+          <FILE id="GxEiC7" name="SymbolTree.cpp" compile="1" resource="0" file="../Mobius/Source/ui/parameter/SymbolTree.cpp"/>
+          <FILE id="Xh9Vge" name="SymbolTree.h" compile="0" resource="0" file="../Mobius/Source/ui/parameter/SymbolTree.h"/>
         </GROUP>
         <GROUP id="{A5CDC4BF-E6C3-CD3B-AF36-A965B7BA0834}" name="session">
-          <FILE id="JSZG8w" name="DynamicFormCollection.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/session/DynamicFormCollection.cpp"/>
-          <FILE id="dO3rSB" name="DynamicFormCollection.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/session/DynamicFormCollection.h"/>
-          <FILE id="hOcVkR" name="DynamicParameterTree.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/session/DynamicParameterTree.cpp"/>
-          <FILE id="ujJmum" name="DynamicParameterTree.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/session/DynamicParameterTree.h"/>
-          <FILE id="JQKo8v" name="DynamicTreeForms.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/session/DynamicTreeForms.cpp"/>
-          <FILE id="NGDVsn" name="DynamicTreeForms.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/session/DynamicTreeForms.h"/>
-          <FILE id="YSf8Hz" name="ParameterForm.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/session/ParameterForm.cpp"/>
-          <FILE id="jmh6gM" name="ParameterForm.h" compile="0" resource="0" file="../Mobius/Source/ui/session/ParameterForm.h"/>
           <FILE id="VF2JAF" name="SessionEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/session/SessionEditor.cpp"/>
           <FILE id="CIivw9" name="SessionEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/session/SessionEditor.h"/>
-          <FILE id="Pf8mM6" name="SessionEditorTree.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/session/SessionEditorTree.cpp"/>
-          <FILE id="fJ39Up" name="SessionEditorTree.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/session/SessionEditorTree.h"/>
-          <FILE id="zThvD1" name="SessionFormCollection.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/session/SessionFormCollection.cpp"/>
-          <FILE id="QxWsSb" name="SessionFormCollection.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/session/SessionFormCollection.h"/>
           <FILE id="jRFxFe" name="SessionGlobalEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/session/SessionGlobalEditor.cpp"/>
           <FILE id="L1Knl5" name="SessionGlobalEditor.h" compile="0" resource="0"
@@ -317,8 +315,6 @@
                 file="../Mobius/Source/ui/session/SessionTreeForms.cpp"/>
           <FILE id="dfNwmB" name="SessionTreeForms.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/session/SessionTreeForms.h"/>
-          <FILE id="aGwJ6N" name="SymbolTree.cpp" compile="1" resource="0" file="../Mobius/Source/ui/session/SymbolTree.cpp"/>
-          <FILE id="jFKyCn" name="SymbolTree.h" compile="0" resource="0" file="../Mobius/Source/ui/session/SymbolTree.h"/>
         </GROUP>
         <GROUP id="{219AC869-1E28-1A98-D3E3-341109F451EB}" name="script">
           <FILE id="GtKEOC" name="Console.cpp" compile="1" resource="0" file="../Mobius/Source/ui/script/Console.cpp"/>

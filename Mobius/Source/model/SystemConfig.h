@@ -36,9 +36,9 @@ class SystemConfig
     juce::String getStartupSession();
     void setStartupSession(juce::String s);
 
-    ValueSet* getValues() {
-        return &values;
-    }
+    ValueSet* getValues();
+    const char* getString(juce::String name);
+    int getInt(juce::String name);
     
   private:
 

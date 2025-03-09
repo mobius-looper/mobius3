@@ -156,13 +156,6 @@ DebugStatusFunction::DebugStatusFunction() :
     Function("TraceStatus")
 {
     global = true;
-
-    // no, if we're going to dump loop/layer/segment structure
-    // it needs to be stable
-    //outsideInterrupt = true;
-
-	// this keeps localize from complaining about a missing key
-	externalName = true;
 }
 
 void DebugStatusFunction::invoke(Action* action, Mobius* m)

@@ -370,8 +370,6 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(SymbolTable, "Symbol Table");
         menu.addItem(TraceLog, "Trace Log");
         menu.addItem(DecacheForms, "Decache Forms");
-        // this never did work right
-        //menu.addItem(DiagnosticWindow, "Diagnostic Window");
     }
 
     return menu;

@@ -158,12 +158,12 @@ class Symbol
      * Prefixes added to symbol names representing structure activations.
      */
     constexpr static const char* ActivationPrefixSession = "Session:";
-    constexpr static const char* ActivationPrefixParameter = "Parameter:";
+    constexpr static const char* ActivationPrefixOverlay = "Overlay:";
     
     // if we see these in old bindings treat it like session activation
     constexpr static const char* ActivationPrefixSetup = "Setup:";
 
-    // if we see this in old bindings convert it to a Parameter: activation
+    // if we see this in old bindings convert it to a Overlay: activation
     constexpr static const char* ActivationPrefixPreset = "Preset:";
 
     juce::String getDisplayName();
@@ -226,28 +226,22 @@ class Symbol
      */
     SymbolBehavior behavior = BehaviorNone;
 
+    std::unique_ptr<class FunctionProperties> functionProperties;
+    std::unique_ptr<class ParameterProperties> parameterProperties;
+    std::unique_ptr<class ScriptProperties> script;
+    std::unique_ptr<class SampleProperties> sample;
+
     /**
-     * Pointers to various objects that define more about what this symbol does.
+     * An old experiment for user defined variables.
+     * Should be mostly irrelevant now that MSL can export symbols.
      */
     class VariableDefinition* variable = nullptr;
     
-    std::unique_ptr<class FunctionProperties> functionProperties;
-
-    std::unique_ptr<class ParameterProperties> parameterProperties;
-    
-    // don't seem to be using this!?
-    // probably makes sense since Preset/Setup can be deleted at any time
-    // !! replace this with ActivationProperties or StructureProperties if
-    // this is the way you want to go
-    class Structure* structure = nullptr;
-    
-    std::unique_ptr<class ScriptProperties> script;
-    std::unique_ptr<class SampleProperties> sample;
-    
     /**
-     * Pointers to internal core objects defined as void* so we don't
-     * drag in dependencies.  Probably could just "class" these as long as they're
-     * not dereferenced.
+     * Pointer to the internal core Function object.
+     * This will be annotated by Mobius during initialization.
+     * Started using a void* to avoid compiler dependencies, but could just use
+     * "class" these as long as they're not dereferenced.
      */
     void* coreFunction = nullptr;
     
@@ -256,6 +250,7 @@ class Symbol
      */
     bool hidden = false;
 
+    // visualization properties for the SessionEditor
     juce::String treePath;
     juce::String treeInclude;
     

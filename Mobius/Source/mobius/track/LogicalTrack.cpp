@@ -693,8 +693,8 @@ void LogicalTrack::doAction(UIAction* a)
     else if (a->symbol->behavior == BehaviorActivation) {
         // Activation used to be for both Setup and Preset but now it only
         // applies to parameter sets at this level
-        if (a->symbol->name.startsWith(Symbol::ActivationPrefixParameter)) {
-            juce::String pname = a->symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixParameter, false, false);
+        if (a->symbol->name.startsWith(Symbol::ActivationPrefixOverlay)) {
+            juce::String pname = a->symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixOverlay, false, false);
 
             ValueSet* overlay = findOverlay(pname.toUTF8());
             if (overlay != nullptr)

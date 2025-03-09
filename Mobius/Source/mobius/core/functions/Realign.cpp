@@ -270,12 +270,6 @@ DriftCorrectFunction::DriftCorrectFunction() :
     Function("DriftCorrect")
 {
     global = true;
-    // This is one of the few functions we allow outside the interrupt
-    // it is safe because Synchronizer::forceDriftCorrect just sets a flag
-    // to do correction on the next interrupt.  But now that we do most
-    // global functions in the interrupt we don't need this level of
-    // indirection.
-    outsideInterrupt = true;
 	noFocusLock = true;
     scriptOnly = true;
 }

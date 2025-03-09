@@ -680,19 +680,7 @@ void TrackManager::sendActions(UIAction* actions, ActionResult& result)
 void TrackManager::doActivation(UIAction* src)
 {
     juce::String name = src->symbol->name;
-    if (name.startsWith(Symbol::ActivationPrefixSetup)) {
-        // should no longer see these
-        // Session activations should be handled at a higher level
-        Trace(1, "TrackManager: Received Setup Activation action");
-        // it doesn't matter what track this goes to
-        //audioEngine->doAction(src);
-        //actionPool->checkin(src);
-    }
-    else if (name.startsWith(Symbol::ActivationPrefixPreset)) {
-        // these should have been converted to Paraqmeter activations
-        Trace(1, "TrackManager: Received Preset Activation action");
-    }
-    else if (name.startsWith(Symbol::ActivationPrefixParameter)) {
+    if (name.startsWith(Symbol::ActivationPrefixOverlay)) {
         UIAction* actions = replicateAction(src);
         // don't need results on these
         ActionResult results;

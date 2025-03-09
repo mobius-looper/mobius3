@@ -369,12 +369,6 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::Upgrade);
                 break;
                 
-            case MainMenu::DiagnosticWindow: {
-                // never did work
-                //DiagnosticWindow::launch();
-            }
-                break;
-
             case MainMenu::About: {
                 panelFactory.show(PanelFactory::About);
             }

@@ -177,9 +177,6 @@ RunScriptFunction::RunScriptFunction(Script* s)
 
     // removed from SystemConstant
     //setDisplayName(mScriptName);
-    
-	// this tells the localizer that it is ok we don't have a key
-	externalName = true;
 }
 
 /**
@@ -269,7 +266,6 @@ ReloadScriptsFunction::ReloadScriptsFunction() :
     global = true;
 	noFocusLock = true;
     runsWithoutAudio = true;
-    outsideInterrupt = true;
 }
 
 void ReloadScriptsFunction::invoke(Action* action, Mobius* m)

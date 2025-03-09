@@ -346,7 +346,7 @@ void Mobius::installSymbols()
             }
             else {
                 // these are more serious
-                //Trace(1, "Mobius: Interned missing symbol for %s", f->getName());
+                Trace(1, "Mobius: Interned missing symbol for %s", f->getName());
             }
 
             props = new FunctionProperties();
@@ -398,27 +398,6 @@ void Mobius::installSymbols()
             //props->quantized = true;
         }
     }
-
-    #if 0
-    for (int i = 0 ; Parameters[i] != nullptr ; i++) {
-        Parameter* p = Parameters[i];
-        const char* name = p->getName();
-        Symbol* s = symbols->find(name);
-
-        // these are supposed to be entirely defined in symbols.xml now
-        // so we don't need to copy any of the old definition
-        if (s == nullptr) {
-            s = symbols->intern(name);
-            //Trace(2, "Mobius: Interned missing symbol for %s", p->getName());
-            // todo: could bootstrap a ParameterProperties for these too,
-            // but not supposed to see them
-        }
-        s->level = LevelTrack;
-        s->coreParameter = p;
-        s->behavior = BehaviorParameter;
-    }
-    #endif
-    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -671,15 +650,6 @@ void Mobius::propagateSymbolProperties()
                 f->confirms = symbol->functionProperties->confirmation;
             }
         }
-#if 0        
-        else if (symbol->coreParameter != nullptr && symbol->parameterProperties != nullptr) {
-            Parameter* p = (Parameter*)symbol->coreParameter;
-
-            // don't have a mayResetRetain on these
-            p->resetRetain = symbol->parameterProperties->resetRetain;
-        }
-#endif
-        
     }
 }
 
@@ -888,59 +858,6 @@ void Mobius::beginAudioBlockAfterActions()
     // should these be before or after old scripts?
     mKernel->runExternalScripts();
 }
-
-/**
- * Called by Kernel when everything is reaady to start receiving audio
- * block content.
- *
- * update: no longer used, TimeSlicer handles ordering and track advance
- */
-#if 0
-void Mobius::processAudioStream(MobiusAudioStream* stream)
-{
-    // ugly transition between here and beginAudioBlock, make sure it's the same
-    if (stream != mStream) {
-        Trace(1, "Mobius: Audio stream mismatch");
-        mStream = stream;
-    }
-    
-    // let Actionator fire off any long-press actions since it
-    // controls the LongWatcher
-    // no: this is handled by TrackManager, no more long anything in
-    //mActionator->advanceLongWatcher(stream->getInterruptFrames());
-
-    // advance the tracks
-    //
-    // if we have a TrackSync master, process it first
-    // in the old Recorder model this used RecorderTrack::isPriority
-    // to process those tracks first, it supported more than one for
-    // SampleTrack, but I don't think more than one Track can have priority
-    
-    Track* master = nullptr;
-	for (int i = 0 ; i < mTrackCount ; i++) {
-		Track* t = mTracks[i];
-        if (t->isPriority()) {
-            if (master != nullptr) {
-                Trace(1, "Mobius: More than one priority track!\n");
-            }
-            else {
-                master = t;
-            }
-        }
-    }
-
-    if (master != nullptr)
-      master->processAudioStream(stream);
-
-	for (int i = 0 ; i < mTrackCount ; i++) {
-		Track* t = mTracks[i];
-        if (t != master) {
-            t->processAudioStream(stream);
-        }
-    }
-
-}
-#endif
 
 void Mobius::finishAudioBlock(MobiusAudioStream* stream)
 {
@@ -1652,10 +1569,6 @@ void Mobius::kernelEventCompleted(KernelEvent* e)
     }
 }
 
-/**
- * The loop frame we're currently "on"
- */
-  
 long Mobius::getFrame()
 {
 	return mTrack->getFrame();
@@ -1706,19 +1619,6 @@ int Mobius::getActiveTrack()
 {
     return (mTrack != nullptr) ? mTrack->getRawNumber() : 0;
 }
-
-/**
- * Used only during Script linkage to find a Parameter
- * referenced by name.
- *
- * todo: should be able to get rid of this and use SymbolTable instead
- */
-#if 0
-Parameter* Mobius::getParameter(const char* name)
-{
-    return Parameter::getParameter(name);
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -2155,21 +2055,6 @@ void Mobius::loadProject(Project* p)
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * This should only be called by TrackManager with a query scope that
- * is within the range of audio tracks. And only for internal variables.
- * Symbol queries are to be converted to a Query and passed in the
- * normal way.
- */
-#if 0
-bool Mobius::mslQuery(MslQuery* query)
-{
-    (void)query;
-    //return mslHandler.mslQuery(query);
-    return false;
-}
-#endif
-
 bool Mobius::mslScheduleWaitFrame(MslWait* wait, int frame)
 {
     return mslHandler.scheduleWaitFrame(wait, frame);
@@ -2386,7 +2271,7 @@ void Mobius::followerEvent(Loop* l, Event* e)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Script Paraqmeter Access
+// Script Parameter Access
 //
 //////////////////////////////////////////////////////////////////////
 

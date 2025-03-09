@@ -530,6 +530,17 @@ Once those models are fully converted, these symbols can be removed.
 
     <Parameter name='focus' type='bool' options='resetRetain,noBinding,noDefault' tree='General'/>
 
+    <!-- hide these for now, they were a MIDI experiment that will become more interesting
+         once sessions can contain content, maybe just a "locked" flag -->
+    
+    <!-- prevents the track from being included in GlobalReset -->
+    <Parameter name='trackNoReset' type='bool' track='Midi' 
+               options='noBinding,noDefault'/>
+    
+    <!-- prevents the track from being modified -->
+    <Parameter name='trackNoModify' type='bool' track='Midi'
+               options='noBinding,noDefault'/>
+    
     <!-- started with noDefault but that isn't accurate.  There needs to be a default trackOverlay
          that means the same thing as the old Setup::defaultPreset.  If a track overrides this
          it is the same as SetupTrack::trackPreset
@@ -577,13 +588,6 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='followSwitch' type='bool'  options='noBinding' track='midi'/>
     <!-- wtf is the difference between this and followMute? -->
     <Parameter name='followerMuteStart' type='bool'  options='noBinding' track='midi' tree='Follow'/>
-
-
-    
-
-    <!-- experiments that never finished -->
-    <Parameter name='noReset' type='bool'  options='noBinding'/>
-    <Parameter name='noEdit' type='bool'  options='noBinding'/>
     
     <Parameter name='midiInput' track='midi' tree='Midi'
                displayType='combo' displayHelper='midiInput' options='noBinding'/>

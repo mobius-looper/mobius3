@@ -12,7 +12,6 @@
 
 #include "util/Trace.h"
 #include "util/TraceFile.h"
-#include "util/FileUtil.h"
 #include "util/Util.h"
 #include "util/List.h"
 
@@ -2242,6 +2241,13 @@ bool Supervisor::doUILevelAction(UIAction* action)
     else if (s->behavior == BehaviorScript) {
         ActionAdapter aa;
         aa.doAction(&scriptenv, this, action);
+        handled = true;
+    }
+    else if (s->behavior == BehaviorActivation) {
+        // will get here if we allow Session: activations
+        // not hard but unclear if we want those changing this easily
+        Trace(1, "Supervisor: Unhandled activation request %s",
+              s->getName());
         handled = true;
     }
     

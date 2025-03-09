@@ -37,6 +37,21 @@ void SystemConfig::setStartupSession(juce::String name)
     values.setJString(StartupSession, name);
 }
 
+ValueSet* SystemConfig::getValues()
+{
+    return &values;
+}
+
+const char* SystemConfig::getString(juce::String name)
+{
+    return values.getString(name);
+}
+
+int SystemConfig::getInt(juce::String name)
+{
+    return values.getInt(name);
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

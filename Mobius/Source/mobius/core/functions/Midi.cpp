@@ -114,6 +114,10 @@ MidiStartFunction::MidiStartFunction(bool isMute, bool isClip)
         // don't have MuteClipStart yet but could
 		setName("ClipStart");
         //eventType = ClipStartEvent;
+
+        // not sure what the status of this is, was never finished
+        // keep it hidden
+        scriptOnly = true;
 	}
 	else if (mute) {
 		setName("MuteMidiStart");

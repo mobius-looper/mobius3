@@ -743,24 +743,12 @@ void Symbolizer::installActivationSymbols()
         }
     }
 
-    #if 0
-    Preset* presets = provider->getPresets();
-    while (presets != nullptr) {
-        juce::String name = juce::String(Symbol::ActivationPrefixPreset) + presets->getName();
-        Symbol* s = symbols->intern(name);
-        s->behavior = BehaviorActivation;
-        s->level = LevelCore;
-        s->hidden = false;
-        presets = presets->getNextPreset();
-    }
-    #endif
-
     // this replaces Preset activations
     ParameterSets* sets = provider->getParameterSets();
     if (sets != nullptr) {
         for (auto set : sets->getSets()) {
-            juce::String name = juce::String(Symbol::ActivationPrefixParameter) + set->name;
-            Symbol* s = symbols->intern(name);
+            juce::String activationName = juce::String(Symbol::ActivationPrefixOverlay) + set->name;
+            Symbol* s = symbols->intern(activationName);
             s->behavior = BehaviorActivation;
             s->level = LevelKernel;
             s->hidden = false;
@@ -777,8 +765,8 @@ void Symbolizer::installActivationSymbols()
     juce::StringArray sessionNames;
     producer->getSessionNames(sessionNames);
     for (auto name : sessionNames) {
-        juce::String symbolName = juce::String(Symbol::ActivationPrefixSession) + name;
-        Symbol* s = symbols->intern(name);
+        juce::String activationName = juce::String(Symbol::ActivationPrefixSession) + name;
+        Symbol* s = symbols->intern(activationName);
         s->behavior = BehaviorActivation;
         s->level = LevelUI;
         s->hidden = false;

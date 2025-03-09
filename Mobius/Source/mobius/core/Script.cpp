@@ -53,7 +53,6 @@
 
 #include "Expr.h"
 #include "../../util/Trace.h"
-#include "../../util/TraceClient.h"
 #include "../../util/List.h"
 #include "../../util/Util.h"
 

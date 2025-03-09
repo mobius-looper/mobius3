@@ -129,7 +129,6 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         TestInfo,
         TestMode,
         SymbolTable,
-        DiagnosticWindow,
         UpgradeConfig,
         TraceLog,
         DecacheForms
