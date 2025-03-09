@@ -69,7 +69,8 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="Realign" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Track'/>
   <Function name="Record" sustainable='true' longPressable='true' longHelp='Long press becomes Reset' mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="Redo" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Track'/>
-  <Function name="Rehearse" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Rehearse" sustainable='true' mayFocus='true' mayCancelMute='true'
+            tree='Recording' options='noBinding'/>
   <Function name="Replace" sustainable='true' mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Recording'/>
   <!-- core has this as mayConfirm, why? -->
   <Function name="Reset" mayFocus='true' tree='Track'/>
