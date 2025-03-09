@@ -99,8 +99,6 @@
       <GROUP id="{3B7BFE95-950A-511A-F815-8A2E6614CEB5}" name="util">
         <FILE id="cGaj8S" name="DataModel.cpp" compile="1" resource="0" file="../Mobius/Source/util/DataModel.cpp"/>
         <FILE id="aFSpXC" name="DataModel.h" compile="0" resource="0" file="../Mobius/Source/util/DataModel.h"/>
-        <FILE id="jY7zl4" name="FileUtil.cpp" compile="1" resource="0" file="../Mobius/Source/util/FileUtil.cpp"/>
-        <FILE id="o8KHXH" name="FileUtil.h" compile="0" resource="0" file="../Mobius/Source/util/FileUtil.h"/>
         <FILE id="Hxh3Is" name="List.cpp" compile="1" resource="0" file="../Mobius/Source/util/List.cpp"/>
         <FILE id="wVXGwm" name="List.h" compile="0" resource="0" file="../Mobius/Source/util/List.h"/>
         <FILE id="yrQqCY" name="MidiUtil.cpp" compile="1" resource="0" file="../Mobius/Source/util/MidiUtil.cpp"/>
@@ -113,8 +111,6 @@
               file="../Mobius/Source/util/StructureDumper.h"/>
         <FILE id="bytykK" name="Trace.cpp" compile="1" resource="0" file="../Mobius/Source/util/Trace.cpp"/>
         <FILE id="gvccyb" name="Trace.h" compile="0" resource="0" file="../Mobius/Source/util/Trace.h"/>
-        <FILE id="a0xmfU" name="TraceClient.cpp" compile="1" resource="0" file="../Mobius/Source/util/TraceClient.cpp"/>
-        <FILE id="zLFvCf" name="TraceClient.h" compile="0" resource="0" file="../Mobius/Source/util/TraceClient.h"/>
         <FILE id="fEM3yD" name="TraceFile.cpp" compile="1" resource="0" file="../Mobius/Source/util/TraceFile.cpp"/>
         <FILE id="o3mpP7" name="TraceFile.h" compile="0" resource="0" file="../Mobius/Source/util/TraceFile.h"/>
         <FILE id="ZIFpKD" name="Util.cpp" compile="1" resource="0" file="../Mobius/Source/util/Util.cpp"/>
@@ -157,8 +153,6 @@
                 file="../Mobius/Source/model/old/ModeDefinition.cpp"/>
           <FILE id="mUsDlz" name="ModeDefinition.h" compile="0" resource="0"
                 file="../Mobius/Source/model/old/ModeDefinition.h"/>
-          <FILE id="kCJFMP" name="OscConfig.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/OscConfig.cpp"/>
-          <FILE id="p7QhpN" name="OscConfig.h" compile="0" resource="0" file="../Mobius/Source/model/old/OscConfig.h"/>
           <FILE id="qX8Z2f" name="Preset.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Preset.cpp"/>
           <FILE id="ZPgyop" name="Preset.h" compile="0" resource="0" file="../Mobius/Source/model/old/Preset.h"/>
           <FILE id="bbBoGl" name="Setup.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Setup.cpp"/>
@@ -180,6 +174,8 @@
         <FILE id="Cd2npa" name="DeviceConfig.h" compile="0" resource="0" file="../Mobius/Source/model/DeviceConfig.h"/>
         <FILE id="m1sYs0" name="Enumerator.cpp" compile="1" resource="0" file="../Mobius/Source/model/Enumerator.cpp"/>
         <FILE id="cYaKES" name="Enumerator.h" compile="0" resource="0" file="../Mobius/Source/model/Enumerator.h"/>
+        <FILE id="xmVt4Y" name="Form.cpp" compile="1" resource="0" file="../Mobius/Source/model/Form.cpp"/>
+        <FILE id="MX6Z5Q" name="Form.h" compile="0" resource="0" file="../Mobius/Source/model/Form.h"/>
         <FILE id="WT58wO" name="GroupDefinition.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/GroupDefinition.cpp"/>
         <FILE id="YlB31N" name="GroupDefinition.h" compile="0" resource="0"
@@ -226,6 +222,9 @@
         <FILE id="nKSjQf" name="StaticConfig.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/StaticConfig.cpp"/>
         <FILE id="rHwo7u" name="StaticConfig.h" compile="0" resource="0" file="../Mobius/Source/model/StaticConfig.h"/>
+        <FILE id="OTjlex" name="StepSequence.cpp" compile="1" resource="0"
+              file="../Mobius/Source/model/StepSequence.cpp"/>
+        <FILE id="yXEEO7" name="StepSequence.h" compile="0" resource="0" file="../Mobius/Source/model/StepSequence.h"/>
         <FILE id="WEigo3" name="Symbol.cpp" compile="1" resource="0" file="../Mobius/Source/model/Symbol.cpp"/>
         <FILE id="bWMkbO" name="Symbol.h" compile="0" resource="0" file="../Mobius/Source/model/Symbol.h"/>
         <FILE id="AyjBao" name="SymbolId.cpp" compile="1" resource="0" file="../Mobius/Source/model/SymbolId.cpp"/>
@@ -307,14 +306,14 @@
                 file="../Mobius/Source/ui/session/SessionTrackEditor.cpp"/>
           <FILE id="dlDKV6" name="SessionTrackEditor.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/session/SessionTrackEditor.h"/>
+          <FILE id="BcvipO" name="SessionTrackForms.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/session/SessionTrackForms.cpp"/>
+          <FILE id="vIxRt6" name="SessionTrackForms.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/session/SessionTrackForms.h"/>
           <FILE id="kRfdix" name="SessionTrackTable.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/session/SessionTrackTable.cpp"/>
           <FILE id="dCOCU8" name="SessionTrackTable.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/session/SessionTrackTable.h"/>
-          <FILE id="dBjBsl" name="SessionTreeForms.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/session/SessionTreeForms.cpp"/>
-          <FILE id="dfNwmB" name="SessionTreeForms.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/session/SessionTreeForms.h"/>
         </GROUP>
         <GROUP id="{219AC869-1E28-1A98-D3E3-341109F451EB}" name="script">
           <FILE id="GtKEOC" name="Console.cpp" compile="1" resource="0" file="../Mobius/Source/ui/script/Console.cpp"/>
@@ -402,13 +401,6 @@
                 file="../Mobius/Source/ui/config/ObjectSelector.cpp"/>
           <FILE id="YyjtUA" name="ObjectSelector.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/config/ObjectSelector.h"/>
-          <FILE id="Iujc9f" name="ParameterField.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/ParameterField.cpp"/>
-          <FILE id="usIHNW" name="ParameterField.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/config/ParameterField.h"/>
-          <FILE id="pjB2It" name="PresetEditor.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/PresetEditor.cpp"/>
-          <FILE id="sJpDbg" name="PresetEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/PresetEditor.h"/>
           <FILE id="kGRFA6" name="PropertiesEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/PropertiesEditor.cpp"/>
           <FILE id="lwrafw" name="PropertiesEditor.h" compile="0" resource="0"
@@ -438,6 +430,9 @@
                 file="../Mobius/Source/ui/config/ScriptSymbolTable.cpp"/>
           <FILE id="kaeCC3" name="ScriptSymbolTable.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/config/ScriptSymbolTable.h"/>
+          <FILE id="oNTpme" name="SystemEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/SystemEditor.cpp"/>
+          <FILE id="q6EU3P" name="SystemEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SystemEditor.h"/>
           <FILE id="gF7eQT" name="TargetSelectorWrapper.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/TargetSelectorWrapper.cpp"/>
           <FILE id="XB06G1" name="TargetSelectorWrapper.h" compile="0" resource="0"
@@ -569,10 +564,6 @@
                 file="../Mobius/Source/ui/common/BasicButtonRow.cpp"/>
           <FILE id="hsyJlq" name="BasicButtonRow.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/common/BasicButtonRow.h"/>
-          <FILE id="Sik6aD" name="BasicForm.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/BasicForm.cpp"/>
-          <FILE id="ihH12w" name="BasicForm.h" compile="0" resource="0" file="../Mobius/Source/ui/common/BasicForm.h"/>
-          <FILE id="q5sEWn" name="BasicInput.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/BasicInput.cpp"/>
-          <FILE id="dDJr4U" name="BasicInput.h" compile="0" resource="0" file="../Mobius/Source/ui/common/BasicInput.h"/>
           <FILE id="cQTr8g" name="BasicLog.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/BasicLog.cpp"/>
           <FILE id="SAp3h7" name="BasicLog.h" compile="0" resource="0" file="../Mobius/Source/ui/common/BasicLog.h"/>
           <FILE id="lm2k1v" name="BasicTable.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/BasicTable.cpp"/>
@@ -611,6 +602,12 @@
                 file="../Mobius/Source/ui/common/SimpleTabPanel.cpp"/>
           <FILE id="HWEAPD" name="SimpleTabPanel.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/common/SimpleTabPanel.h"/>
+          <FILE id="v1qIdn" name="ValueSetField.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/common/ValueSetField.cpp"/>
+          <FILE id="vRg8Tw" name="ValueSetField.h" compile="0" resource="0" file="../Mobius/Source/ui/common/ValueSetField.h"/>
+          <FILE id="Vcbo4a" name="ValueSetForm.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/common/ValueSetForm.cpp"/>
+          <FILE id="d7XQzE" name="ValueSetForm.h" compile="0" resource="0" file="../Mobius/Source/ui/common/ValueSetForm.h"/>
           <FILE id="XtJJ5N" name="YanDialog.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/YanDialog.cpp"/>
           <FILE id="bSIWGA" name="YanDialog.h" compile="0" resource="0" file="../Mobius/Source/ui/common/YanDialog.h"/>
           <FILE id="Nwk594" name="YanField.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/YanField.cpp"/>
@@ -803,7 +800,6 @@
             <FILE id="wfKRcm" name="Coverage.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/Coverage.cpp"/>
             <FILE id="TCKk6D" name="Debug.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/Debug.cpp"/>
             <FILE id="SVNUYd" name="Divide.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/Divide.cpp"/>
-            <FILE id="MIR389" name="FocusLock.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/FocusLock.cpp"/>
             <FILE id="Q47K5s" name="FunctionUtil.cpp" compile="1" resource="0"
                   file="../Mobius/Source/mobius/core/functions/FunctionUtil.cpp"/>
             <FILE id="jhWT7w" name="FunctionUtil.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/functions/FunctionUtil.h"/>
@@ -834,7 +830,6 @@
             <FILE id="weVIVk" name="Stutter.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/Stutter.cpp"/>
             <FILE id="UCifp8" name="Substitute.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/Substitute.cpp"/>
             <FILE id="W3EKV4" name="TrackCopy.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/TrackCopy.cpp"/>
-            <FILE id="ZRlNKC" name="TrackGroup.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/TrackGroup.cpp"/>
             <FILE id="f8rAew" name="TrackSelect.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/TrackSelect.cpp"/>
             <FILE id="I742pq" name="Trim.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/Trim.cpp"/>
             <FILE id="LMqEFG" name="UndoRedo.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/UndoRedo.cpp"/>
@@ -851,8 +846,6 @@
           <FILE id="gvGExa" name="EventManager.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/core/EventManager.cpp"/>
           <FILE id="JPsjXe" name="EventManager.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/EventManager.h"/>
-          <FILE id="AOd0WU" name="Export.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Export.cpp"/>
-          <FILE id="eIj43L" name="Export.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Export.h"/>
           <FILE id="VJxbJ3" name="Expr.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Expr.cpp"/>
           <FILE id="S6H0AS" name="Expr.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Expr.h"/>
           <FILE id="EXX0Q7" name="FadeTail.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/FadeTail.cpp"/>
@@ -866,8 +859,6 @@
           <FILE id="qYTfjh" name="Loader.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Loader.h"/>
           <FILE id="lDooof" name="Loop.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Loop.cpp"/>
           <FILE id="BVYgkV" name="Loop.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Loop.h"/>
-          <FILE id="Sl0ILl" name="Mapper.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Mapper.cpp"/>
-          <FILE id="Lk81p5" name="Mapper.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Mapper.h"/>
           <FILE id="YAY0nj" name="Mem.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Mem.cpp"/>
           <FILE id="pAhso6" name="Mem.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Mem.h"/>
           <FILE id="fEgNgD" name="Mobius.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Mobius.cpp"/>
@@ -878,20 +869,10 @@
                 file="../Mobius/Source/mobius/core/MobiusMslHandler.h"/>
           <FILE id="YayO54" name="Mode.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Mode.cpp"/>
           <FILE id="if2nuD" name="Mode.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Mode.h"/>
-          <FILE id="JbUf7U" name="Parameter.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Parameter.cpp"/>
-          <FILE id="Q63iIk" name="Parameter.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Parameter.h"/>
-          <FILE id="FGlkHW" name="ParameterGlobal.cpp" compile="1" resource="0"
-                file="../Mobius/Source/mobius/core/ParameterGlobal.cpp"/>
-          <FILE id="Xdt3D6" name="ParameterPreset.cpp" compile="1" resource="0"
-                file="../Mobius/Source/mobius/core/ParameterPreset.cpp"/>
-          <FILE id="HJ3Kmm" name="ParameterSetup.cpp" compile="1" resource="0"
-                file="../Mobius/Source/mobius/core/ParameterSetup.cpp"/>
           <FILE id="KgBaRZ" name="ParameterSource.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/core/ParameterSource.cpp"/>
           <FILE id="piXhFv" name="ParameterSource.h" compile="0" resource="0"
                 file="../Mobius/Source/mobius/core/ParameterSource.h"/>
-          <FILE id="MddO7b" name="ParameterTrack.cpp" compile="1" resource="0"
-                file="../Mobius/Source/mobius/core/ParameterTrack.cpp"/>
           <FILE id="d32CTL" name="PitchPlugin.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/PitchPlugin.cpp"/>
           <FILE id="C7C8OZ" name="Project.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Project.cpp"/>
           <FILE id="R26pwU" name="Project.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Project.h"/>
@@ -1009,10 +990,6 @@
       <FILE id="eHrGZn" name="BlueSphere-10.png" compile="0" resource="1"
             file="../Mobius/Source/BlueSphere-10.png"/>
       <FILE id="TNAr8n" name="Conditionals.h" compile="0" resource="0" file="../Mobius/Source/Conditionals.h"/>
-      <FILE id="EzbU9D" name="DiagnosticWindow.cpp" compile="1" resource="0"
-            file="../Mobius/Source/DiagnosticWindow.cpp"/>
-      <FILE id="Nus1rb" name="DiagnosticWindow.h" compile="0" resource="0"
-            file="../Mobius/Source/DiagnosticWindow.h"/>
       <FILE id="PmhEch" name="FileManager.cpp" compile="1" resource="0" file="../Mobius/Source/FileManager.cpp"/>
       <FILE id="KYoNB2" name="FileManager.h" compile="0" resource="0" file="../Mobius/Source/FileManager.h"/>
       <FILE id="r2JK3T" name="Grouper.cpp" compile="1" resource="0" file="../Mobius/Source/Grouper.cpp"/>
