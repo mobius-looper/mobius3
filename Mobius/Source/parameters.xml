@@ -342,6 +342,6 @@
     <Value name="subcycles" value="2" type="int"/>
   </ValueSet>
   <ValueSet name="tracktest2">
-    <Value name="subcycles" value="3" type="int"/>
+    <Value name="subcycles" value="4" type="int"/>
   </ValueSet>
 </ParameterSets>

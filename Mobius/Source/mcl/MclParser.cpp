@@ -40,7 +40,13 @@ MclScript* MclParser::parse(juce::String src, MclResult& userResult)
 
 void MclParser::parseLine(juce::String line)
 {
-    juce::StringArray tokens = juce::StringArray::fromTokens(line, " :", "\"");
+    // it is extremely common to write foo=bar like MSL scripts
+    // do rather than "foo bar" without the equals
+    // make tokenizing easier by just converting them to spaces
+    // actually I like this approach for : scope prefixes as well
+    // since you're not actually parsing the :
+    line = line.replaceCharacters("=:", "  ");
+    juce::StringArray tokens = juce::StringArray::fromTokens(line, " ", "\"");
 
     bool traceit = false;
     if (traceit) {
@@ -54,7 +60,7 @@ void MclParser::parseLine(juce::String line)
         juce::String keyword = tokens[0];
         if (keyword == "session") {
             if (tokens.size() > 2) {
-                addError("Too many tokens");
+                addError(line, "Too many tokens");
             }
             else {
                 MclObjectScope* obj = new MclObjectScope();
@@ -65,18 +71,22 @@ void MclParser::parseLine(juce::String line)
         else if (keyword == "overlay") {
             // todo: need to support the "memory" and "temporary" qualifiers
             if (tokens.size() > 2) {
-                addError("Too many tokens");
+                addError(line, "Too many tokens");
+            }
+            else if (tokens.size() < 2) {
+                addError(line, "Missing overlay name");
             }
             else {
                 MclObjectScope* obj = new MclObjectScope();
                 obj->type = MclObjectScope::Overlay;
+                obj->name = tokens[1];
                 script->add(obj);
                 currentObject = obj;
             }
         }
         else if (keyword == "scope") {
             if (tokens.size() != 2) {
-                addError("Missing scope identifier");
+                addError(line, "Missing scope identifier");
             }
             else {
                 MclRunningScope* s = new MclRunningScope();
@@ -85,36 +95,78 @@ void MclParser::parseLine(juce::String line)
                 oscope->add(s);
             }
         }
-        else {
-            // must be an assignment
-            if (tokens.size() == 2) {
-                Symbol* s = provider->getSymbols()->find(keyword);
-                if (s == nullptr) {
-                    addError("Unknown symbol " + keyword);
-                }
-                else {
-                    MclRunningScope* rscope = getScope();
-                    MclAssignment* ass = new MclAssignment();
-                    ass->name = keyword;
-                    ass->symbol = s;
-                    ass->svalue = tokens[1];
-                    rscope->add(ass);
-                }
-            }
-            else if (tokens.size() == 3) {
-                // todo: scoped assignment
-                addError("Syntax error");
+        else if (keyword == "remove" || keyword == "unset") {
+            if (tokens.size() == 1) {
+                addError(line, "Missing parameter name");
             }
             else {
-                addError("Syntax error");
+                // todo: might want to prevent some things from being removed?
+                MclRunningScope* rscope = getScope();
+                MclAssignment* ass = new MclAssignment();
+                ass->name = tokens[1];
+                ass->remove = true;
+                rscope->add(ass);
+            }
+        }
+        else {
+            juce::String scopeId;
+            juce::String sname;
+            juce::String svalue;
+            int trackNumber = 0;
+
+            if (tokens.size() == 1) {
+                addError(line, "Missing tokens");
+            }
+            else if (tokens.size() == 2) {
+                sname = tokens[0];
+                svalue = tokens[1];
+            }
+            else if (tokens.size() == 3) {
+                scopeId = tokens[0];
+                sname = tokens[1];
+                svalue = tokens[2];
+            }
+            else {
+                addError(line, "Too many tokens");
+            }
+
+            if (sname.length() > 0) {
+                Symbol* s = provider->getSymbols()->find(sname);
+                if (s == nullptr) {
+                    addError(line, "Unknown symbol " + sname);
+                }
+                else {
+                    if (scopeId.length() > 0) {
+                        trackNumber = scopeId.getIntValue();
+                        if (trackNumber == 0)
+                          addError(line, "Invalid track number");
+                    }
+                    
+                    if (!hasErrors()) {
+                        MclRunningScope* rscope = getScope();
+                        MclAssignment* ass = new MclAssignment();
+                        ass->name = sname;
+                        ass->symbol = s;
+                        ass->svalue = svalue;
+                        ass->scopeId = scopeId;
+                        ass->scope = trackNumber;
+                        rscope->add(ass);
+                    }
+                }
             }
         }
     }
 }
 
-void MclParser::addError(juce::String err)
+void MclParser::addError(juce::String line, juce::String err)
 {
-    result->errors.add(juce::String("Line ") + juce::String(lineNumber) + ": " + err);
+    result->errors.add(juce::String("Line ") + juce::String(lineNumber) + ": " + line);
+    result->errors.add(err);
+}
+
+bool MclParser::hasErrors()
+{
+    return result->errors.size() > 0;
 }
 
 MclObjectScope* MclParser::getObject()

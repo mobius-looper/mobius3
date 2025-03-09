@@ -28,7 +28,6 @@ void MclEvaluator::eval(MclScript* script, MclResult& userResult)
     // todo: here is where we could try to be smart about merging multiple
     // units for the same object into one, but it doesn't really matter
     // might save some file updates but not much
-
     for (auto obj : script->objects) {
         
         if (obj->type == MclObjectScope::Session)
@@ -36,8 +35,22 @@ void MclEvaluator::eval(MclScript* script, MclResult& userResult)
         else
           evalOverlay(obj);
 
-        if (hasErrors()) break;
+        if (!hasErrors())
+          addResult(obj);
+        else
+          break;
     }
+}
+
+void MclEvaluator::addResult(MclObjectScope* obj)
+{
+    juce::String msg = "Updated ";
+    if (obj->type == MclObjectScope::Overlay)
+      msg += "overlay ";
+    else
+      msg += "session ";
+    msg += obj->name;
+    result->messages.add(msg);
 }
 
 void MclEvaluator::addError(juce::String err)
@@ -87,12 +100,19 @@ void MclEvaluator::evalOverlay(MclObjectScope* obj)
         overlays->replace(target);
         provider->updateParameterSets();
     }
+    else {
+        delete target;
+    }
 }
 
 void MclEvaluator::evalAssignment(MclAssignment* ass, ValueSet* dest)
 {
-    // parser should have caught these but we're the last line of defense
-    if (ass->symbol == nullptr) {
+    if (ass->remove) {
+        // !! if this is trackName it won't work since that isn't in the ValueSet
+        // will need to pass down the Session::Track
+        dest->remove(ass->name);
+    }
+    else if (ass->symbol == nullptr) {
         addError("Missing symbol for " + ass->name);
     }
     else if (ass->symbol->parameterProperties == nullptr) {
@@ -122,10 +142,9 @@ void MclEvaluator::evalAssignment(MclAssignment* ass, ValueSet* dest)
             v.setJString(ass->svalue);
         }
         else if (props->type == TypeEnum) {
-
             int ordinal = props->getEnumOrdinal(ass->svalue.toUTF8());
             if (ordinal < 0)
-              addError("Invalid enumeration value " + ass->svalue);
+              addError("Invalid enumeration value for " + ass->name + ": " + ass->svalue);
             else
               v.setEnum(ass->svalue.toUTF8(), ordinal);
         }
@@ -134,7 +153,7 @@ void MclEvaluator::evalAssignment(MclAssignment* ass, ValueSet* dest)
             addError("Unsupported parameter type on " + ass->symbol->name);
         }
 
-        if (v.isNull())
+        if (!v.isNull())
           dest->set(ass->symbol->name, v);
     }
 }

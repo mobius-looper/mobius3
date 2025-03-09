@@ -97,6 +97,7 @@ class MclAssignment
     class Symbol* symbol = nullptr;
     MslValue value;
     int scope = 0;
+    bool remove = false;
     
 };
 

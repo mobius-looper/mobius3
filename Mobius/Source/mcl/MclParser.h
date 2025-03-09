@@ -27,7 +27,8 @@ class MclParser
     void parseLine(juce::String line);
     class MclObjectScope* getObject();
     class MclRunningScope* getScope();
-    void addError(juce::String err);
+    void addError(juce::String line, juce::String err);
+    bool hasErrors();
     
 };
 
