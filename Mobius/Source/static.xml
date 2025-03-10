@@ -8,13 +8,13 @@
 <StaticConfig>
 
   <Tree name='sessionGlobal'>
-    <Tree name='Ports'/>
     <Tree name='Sync' form='none'>
       <Tree name='Transport'/>
       <Tree name='MIDI'/>
       <Tree name='Host'/>
       <Tree name='AutoRecord'/>
     </Tree>
+    <Tree name='Latency'/>
     <Tree name='Miscellany'/>
     <Tree name='Overlay'/>
   </Tree>
@@ -23,10 +23,10 @@
         symbols='sessionOverlay'/>
 
   <Form name='sessionGlobalMiscellany' title='Obscure Things for Advanced Users'
-        symbols='longDisable,longPress,noiseFloor,monitorAudio,spreadRange,fadeFrames,maxSyncDrift,eventScript/>
+        symbols='longDisable,longPress,noiseFloor,monitorAudio,spreadRange,fadeFrames,maxSyncDrift,eventScript'/>
 
-  <Form name='sessionGlobalPorts' title='IO Ports'
-        symbols='pluginInputs,pluginOutputs,inputLatency,outputLatency'/>
+  <Form name='sessionGlobalLatency' title='Latency Overrides'
+        symbols='inputLatency,outputLatency'/>
 
   <Form name='sessionGlobalSyncTransport' title='Transport Parameters' suppressPrefix='Transport'
         symbols='transportTempo,transportBeatsPerBar,transportBarsPerLoop,transportMidi,transportClocks,transportManualStart,transportMinTempo,transportMaxTempo,transportMetronome'/>
@@ -49,7 +49,8 @@
   <Form name='sessionCategoryGeneral' title='Track Identity'
         symbols='trackName,trackGroup,focus'/>
 
-  <Form name='sessionCategoryPorts' title='IO Ports'/>
+  <Form name='sessionCategoryPorts' title='IO Ports'
+        symbols='audioInputPort,audioOutputPort,pluginInputPort,pluginOutputPort,mono'/>
   
   <Form name='sessionCategoryOverlay' title='Objects to Include'
         symbols='trackOverlay'/>
