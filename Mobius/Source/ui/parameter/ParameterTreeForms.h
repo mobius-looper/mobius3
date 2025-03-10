@@ -18,7 +18,7 @@ class ParameterTreeForms : public juce::Component, public SymbolTree::Listener
     ParameterTreeForms();
     ~ParameterTreeForms();
 
-    void symbolTreeClicked(class SymbolTreeItem* item);
+    void symbolTreeClicked(class SymbolTreeItem* item) override;
     
     void resized() override;
 

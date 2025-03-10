@@ -104,7 +104,7 @@ class XmlRenderer {
     const char* getSymbolName(SymbolId sid);
 
 
-    const char* XmlRenderer::render(OldSyncSource src);
+    const char* render(OldSyncSource src);
     OldSyncSource parseOldSyncSource(const char* value);
     const char* render(OldSyncUnit unit);
     const char* render(SyncTrackUnit unit);

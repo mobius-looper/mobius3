@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <Juceheader.h>
+#include <JuceHeader.h>
 
 #include "../../model/Session.h"
 

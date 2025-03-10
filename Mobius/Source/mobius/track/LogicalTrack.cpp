@@ -1211,9 +1211,9 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
                     // be here after the session has been edited snad saved once
                     ParameterProperties* props = s->parameterProperties.get();
                     if (props != nullptr &&
-                        props->type == TypeInt ||
-                        props->type == TypeBool ||
-                        props->type == TypeEnum) {
+                        (props->type == TypeInt ||
+                         props->type == TypeBool ||
+                         props->type == TypeEnum)) {
                         ordinal = props->defaultValue;
                     }
                 }

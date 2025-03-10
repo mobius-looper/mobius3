@@ -32,7 +32,7 @@ class SessionEditor : public ConfigEditor, public BasicTabs::Listener
     void resized() override;
 
     void overlayChanged();
-    void basicTabsChanged(int oldIndex, int newIndex);
+    void basicTabsChanged(int oldIndex, int newIndex) override;
 
     // utilities used by SessionTrackForms
     void gatherOcclusions(juce::Array<Symbol*>& occlusions, class ValueSet* values,

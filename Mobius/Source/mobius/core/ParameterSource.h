@@ -74,7 +74,7 @@ class ParameterSource
     static EmptyLoopAction getEmptyLoopAction(class Track* t);
 
     static bool isEdpisms(class Loop* l);
-    static int ParameterSource::getSpreadRange(class Loop* l);
+    static int getSpreadRange(class Loop* l);
 
     // this isn't a parameter but it wraps a macro that lived in MobiusConfig
     // which was wrong and needs to take the actual sample rate into account
