@@ -203,6 +203,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     // old configuration editor interfaces
     void bindingEditorSave(class BindingSet* newList);
+    // temporary variant for MCL that edits the MobiusConfig in place
+    void mclMobiusConfigUpdated() override;
+    void mclSessionUpdated() override;
+    
     void groupEditorSave(juce::Array<class GroupDefinition*>& newList);
     void sampleEditorSave(class SampleConfig* newConfig);
     void upgradePanelSave();

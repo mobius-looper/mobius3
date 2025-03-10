@@ -1,6 +1,5 @@
 <MobiusConfig
   version='1'
-  quickSave='mobiusloop'
   noiseFloor='13'
   maxSyncDrift='2048'
   trackCount='8'
@@ -8,7 +7,6 @@
   maxLoops='4'
   longPress='250'
   spreadRange='48'
-  driftCheckPoint='loop'
   setup='20090814_1-4Sync_5-8Unsync'
   controllerActionThreshold='127'>
   <Preset
@@ -281,11 +279,7 @@
     name='Default'
     active='0'
     defaultSyncSource='track'
-    defaultTrackSyncUnit='loop'
-    realignTime='start'
-    resizeSyncAdjust='none'
-    slaveSyncUnit='beat'
-    speedSyncAdjust='none'>
+    defaultTrackSyncUnit='loop'>
     <SetupTrack
       input='127'
       output='127'
@@ -355,11 +349,7 @@
     name='Default Setup'
     active='0'
     defaultSyncSource='track'
-    defaultTrackSyncUnit='loop'
-    realignTime='start'
-    resizeSyncAdjust='none'
-    slaveSyncUnit='beat'
-    speedSyncAdjust='none'>
+    defaultTrackSyncUnit='loop'>
     <SetupTrack
       input='127'
       output='110'
@@ -429,11 +419,7 @@
     name='2007_novation'
     active='0'
     defaultSyncSource='track'
-    defaultTrackSyncUnit='loop'
-    realignTime='start'
-    resizeSyncAdjust='none'
-    slaveSyncUnit='beat'
-    speedSyncAdjust='none'>
+    defaultTrackSyncUnit='loop'>
     <SetupTrack
       input='127'
       output='110'
@@ -503,11 +489,7 @@
     name='20090814_1-4Sync_5-8Unsync'
     active='0'
     defaultSyncSource='track'
-    defaultTrackSyncUnit='loop'
-    realignTime='start'
-    resizeSyncAdjust='none'
-    slaveSyncUnit='beat'
-    speedSyncAdjust='none'>
+    defaultTrackSyncUnit='loop'>
     <SetupTrack
       input='127'
       output='110'
@@ -578,11 +560,7 @@
     name='Setup_2010_Sync'
     active='0'
     defaultSyncSource='track'
-    defaultTrackSyncUnit='loop'
-    realignTime='start'
-    resizeSyncAdjust='none'
-    slaveSyncUnit='beat'
-    speedSyncAdjust='none'>
+    defaultTrackSyncUnit='loop'>
     <SetupTrack
       input='127'
       output='110'
@@ -652,11 +630,7 @@
     name='No sync'
     active='0'
     defaultSyncSource='none'
-    defaultTrackSyncUnit='loop'
-    realignTime='start'
-    resizeSyncAdjust='none'
-    slaveSyncUnit='beat'
-    speedSyncAdjust='none'>
+    defaultTrackSyncUnit='loop'>
     <SetupTrack
       input='127'
       output='110'
@@ -742,11 +716,7 @@
     name='Sync to previous track'
     active='0'
     defaultSyncSource='track'
-    defaultTrackSyncUnit='loop'
-    realignTime='start'
-    resizeSyncAdjust='none'
-    slaveSyncUnit='beat'
-    speedSyncAdjust='none'>
+    defaultTrackSyncUnit='loop'>
     <SetupTrack
       input='127'
       output='110'
@@ -834,11 +804,7 @@
     name='[New]'
     active='0'
     defaultSyncSource='track'
-    defaultTrackSyncUnit='subcycle'
-    realignTime='start'
-    resizeSyncAdjust='none'
-    slaveSyncUnit='beat'
-    speedSyncAdjust='none'>
+    defaultTrackSyncUnit='subcycle'>
     <SetupTrack
       input='127'
       output='127'
@@ -884,6 +850,8 @@
     <Binding name='SelectLoop' trigger='key' value='54' args='6'/>
     <Binding name='SelectLoop' trigger='key' value='55' args='7'/>
     <Binding name='SelectLoop' trigger='key' value='56' args='8'/>
+    <Binding name='Record' trigger='note' value='10' channel='4'/>
+    <Binding name='Overdub' trigger='note' value='11' channel='4'/>
   </BindingSet>
   <BindingSet name='midi1'>
     <Binding name='Overdub' trigger='note' value='50' channel='1'/>

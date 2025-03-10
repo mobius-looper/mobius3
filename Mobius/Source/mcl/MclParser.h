@@ -48,6 +48,7 @@ class MclParser
     
     class MclSection* getSection();
     class MclScope* getScope();
+    bool isKeyword(juce::String token, const char* keyword);
     void parseLine();
     
     void parseSession(juce::StringArray& tokens);

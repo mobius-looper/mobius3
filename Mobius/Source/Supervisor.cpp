@@ -1200,6 +1200,21 @@ void Supervisor::bindingEditorSave(BindingSet* newList)
     updateMobiusConfig();
 }
 
+/**
+ * Temporary variant for MclEvaluator that edits the BindingSets
+ * in place after calling getOldMobiusConfig
+ */
+void Supervisor::mclMobiusConfigUpdated()
+{
+    updateMobiusConfig();
+}
+
+void Supervisor::mclSessionUpdated()
+{
+    // same as session editor
+    sessionEditorSave();
+}
+
 void Supervisor::groupEditorSave(juce::Array<GroupDefinition*>& newList)
 {
     // this one is weird because it was newer and doesn't use linked lists

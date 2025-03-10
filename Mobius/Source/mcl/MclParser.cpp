@@ -61,6 +61,9 @@ MclSection* MclParser::getSection()
 {
     if (currentSection == nullptr) {
         // defaults to Session
+        // hmm no, now that there can be several things in here
+        // it causes confusing error messages if you do things
+        // without any section context?
         MclSection* obj = new MclSection();
         script->add(obj);
         currentSection = obj;
@@ -79,7 +82,44 @@ MclScope* MclParser::getScope()
     }
     return currentScope;
 }
-            
+
+/**
+ * Things to ponder...
+ * String literals are messy.  You have to quote them which is reasonably
+ * well understood and easy to deal with for assignment values but for track
+ * names it's harder if you allow them as a line scope.
+ *
+ *      foo bar:subcycles 4
+ *
+ * It's easy enouugh to require this
+ *
+ *      "foo bar":subcycles 4
+ *
+ * But it's likely to be a common error, especially when you allow group names
+ * as line scopes.  They think that : divides the two worlds when it actually doesn't
+ * it's just converted to a space which will make it parse all wonky with "too many tokens".
+ * Should just look for : and deal with each side individually.
+ *
+ * It's also likely with assignments to want to do this:
+ *
+ *    trackName=Foo Bar
+ *
+ * Which looks like it would work, and since assignments can't have extra keywords
+ * following the value it might be expected to treat everything after the = or
+ * space between the parameter name as a string.
+ *
+ * This works to quote single words:
+ *
+ *     trackname ""foo""
+ *
+ * But this doesn't because the tokenizer breaks on all spaces and the quoting
+ * handled by StringArray isn't doing what I expected.
+ *
+ *    trackName ""foo bar""
+ *
+ * Not a big deal since users don't really need scare quotes around track names,
+ * but I love irony so fix it.
+ */
 void MclParser::parseLine()
 {
     // it is extremely common to write foo=bar like MSL scripts
@@ -106,7 +146,8 @@ void MclParser::parseLine()
         else if (keyword == MclSection::KeywordOverlay)
           parseOverlay(tokens);
 
-        else if (keyword == MclSection::KeywordBinding)
+        else if (keyword == MclSection::KeywordBinding ||
+                 keyword == MclSection::KeywordBindings)
           parseBinding(tokens);
 
         else {
@@ -238,6 +279,7 @@ void MclParser::parseScope(juce::StringArray& tokens)
             s->scope = trackNumber;
             MclSection* section = getSection();
             section->add(s);
+            currentScope = s;
         }
     }
 }
@@ -245,6 +287,10 @@ void MclParser::parseScope(juce::StringArray& tokens)
 int MclParser::parseScopeId(juce::String token)
 {
     int trackNumber = 0;
+
+    // once these are allowed to be track names will need to trim quotes
+    juce::String trackId = token.unquoted();
+    
     // not supporting track names right now, must be a number
     if (!IsInteger(token.toUTF8())) {
         addError("Scope identifier not a track number");
@@ -291,6 +337,12 @@ void MclParser::parseAssignment(juce::StringArray& tokens)
                 sname = svalue;
                 svalue = "";
             }
+            else {
+                // for the few parameters that are TypeString the "tokenizer" will have
+                // left the surrounding quotes, remove them
+                if (svalue.isQuotedString())
+                  svalue = svalue.unquoted();
+            }
             
             Symbol* s = provider->getSymbols()->find(sname);
             if (s == nullptr) {
@@ -302,17 +354,38 @@ void MclParser::parseAssignment(juce::StringArray& tokens)
                     addError(juce::String("Symbol is not a parameter: " + s->name));
                 }
                 else {
+
+                    // detect some nonsensical usages
+                    MclScope* rscope = getScope();
+                    if (!hasErrors()) {
+                        // what about LevelShell?
+                        if (s->level == LevelUI)
+                          addError(juce::String("UI parameter cannot be set this way: ") + sname);
+                        else if (s->treePath.length() == 0) {
+                            // this is a bad way of detecting this but if a symbol doesn't
+                            // have a treePath then it is considered global and won't be displayed
+                            // in the parameter trees in the session/overlay editor
+                            // if this symbol is used in mcl track scope, it is wrong since tracks
+                            // can't overrode transportTempo or things like that
+                            // would be better to be explicit about this with a scope='global'
+                            // or level='track' but those aren't being defined accurately right now
+                            if (rscope->scope > 0 || trackNumber > 0)
+                              addError(juce::String("Global parameter cannot have a track override: ") + sname);
+                        }
+                    }
+
                     int ordinal = 0;
-                    if (!isRemove) {
-                        if (props->type == TypeStructure)
-                          validateStructureReference(s, props, svalue);
+                    if (!hasErrors()) {
+                        if (!isRemove) {
+                            if (props->type == TypeStructure)
+                              validateStructureReference(s, props, svalue);
                     
-                        else if (props->type != TypeString)
-                          ordinal = parseParameterOrdinal(s, props, svalue, isRemove);
+                            else if (props->type != TypeString)
+                              ordinal = parseParameterOrdinal(s, props, svalue, isRemove);
+                        }
                     }
                     
                     if (!hasErrors()) {
-                        MclScope* rscope = getScope();
                         MclAssignment* ass = new MclAssignment();
                         ass->name = sname;
                         ass->symbol = s;
@@ -405,7 +478,7 @@ void MclParser::validateStructureReference(Symbol* s, ParameterProperties* props
           addError(juce::String("Inivalid overlay name: ") + svalue);
     }
     else {
-        addError(juce::String("Unable to deal with structure class %s: ") + svalue);
+        addError(juce::String("Unable to deal with structure class: ") + svalue);
     }
 }
 
@@ -417,12 +490,75 @@ void MclParser::validateStructureReference(Symbol* s, ParameterProperties* props
 // necessary until something besides Binding objects comes along,
 // and the result would be larger and harder to understand.
 //
+// things to ponder:
+//
+// Export should have all columns, don't need to be smart about
+// compressed columns with defaults.  This means everything needs to be
+// doable with columns which make boolean options like release, toggle, etc.
+// awkward since they require a true/false column and are rare.
+// More concise to have a single "options" column that is a csv of option flags
+//
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * todo: add case insensitivy on this.
+ */
+bool MclParser::isKeyword(juce::String token, const char* keyword)
+{
+    return (token == keyword);
+}
+
+/**
+ * Syntax: bindings <name> [replace|merge] [overlay|noOverlay]
+ *
+ * Merge assumes there is a unique way to identify source/target bindings.
+ * The trigger is usually enough, but not if you allow multiple bindings per trigger.
+ * trigger+symol handles that but doesn't get scope.
+ * trigger+symbol+scope is always unique
+ *
+ * But if the purpose is to change the symbol associated with a binding then
+ * you would match using only the trigger.  Evaluator will sort this out.
+ * What's harder is merging partial Bindings into an existing one.  If all you wanted
+ * to do is add arguments to a binding you still need to fully specify it in MCL.
+ */
 void MclParser::parseBinding(juce::StringArray& tokens)
 {
-    (void)tokens;
-    addError(juce::String("Bindging sections not supported"));
+    if (tokens.size() < 2) {
+        addError("Missing BindingSet name");
+    }
+    else {
+        juce::String oname = tokens[1];
+        bool replace = false;
+        // what we need here is a tri-state value for on/off/unspecified
+        bool overlay = false;
+        bool noOverlay = false;
+
+        for (int i = 2 ; i < tokens.size() ; i++) {
+            juce::String token = tokens[i];
+            if (isKeyword(token, "replace"))
+              replace = true;
+            else if (isKeyword(token, "merge"))
+              replace = false;
+            else if (isKeyword(token, "overlay"))
+              overlay = true;
+            else if (isKeyword(token, "noOverlay"))
+              noOverlay = true;
+            else
+              addError(juce::String("Invalid binding keyword: ") + token);
+        }
+        
+        if (!hasErrors()) {
+            MclSection* obj = new MclSection();
+            obj->type = MclSection::Binding;
+            obj->name = oname;
+            obj->replace = replace;
+            // to make this general could have a Map<String,String> 
+            obj->bindingOverlay = overlay;
+            obj->bindingNoOverlay = noOverlay;
+            script->add(obj);
+            currentSection = obj;
+        }
+    }
 }
 
 void MclParser::parseBindingLine(juce::StringArray& tokens)
@@ -460,6 +596,9 @@ void MclParser::parseBindingDefault(juce::StringArray& tokens)
                   bindingScope = value;
             }
             else {
+                // error message is confusing if they spell somthing wrong
+                // there needs to be a distinction between "allowed but no default"
+                // and "unrecongizied property"
                 addError(juce::String("Property ") + name + " may not have a default");
             }
             index += 2;

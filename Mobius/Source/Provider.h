@@ -68,6 +68,12 @@ class Provider
     virtual class MobiusInterface* getMobius() = 0;
     virtual int getSampleRate() = 0;
 
+    // temporary until we work through how bindings are saved
+    // and whether MCL should be dealing with Provider instead
+    // of Supervisor
+    virtual void mclMobiusConfigUpdated() = 0;
+    virtual void mclSessionUpdated() = 0;
+
     // controlled access to MobiusConfig
     virtual class MobiusConfig* getOldMobiusConfig() = 0;
     virtual class BindingSet* getBindingSets() = 0;

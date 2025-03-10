@@ -136,6 +136,7 @@ class MclSection
     constexpr static const char* KeywordSession = "session";
     constexpr static const char* KeywordOverlay = "overlay";
     constexpr static const char* KeywordBinding = "binding";
+    constexpr static const char* KeywordBindings = "bindings";
 
     // reserved names
     constexpr static const char* NameActive = "active";
@@ -160,12 +161,21 @@ class MclSection
     juce::String name;
     Type type = Session;
     Duration duration = Permanent;
+    bool replace = false;
 
     // content for Sessions and overlays
     juce::OwnedArray<MclScope> scopes;
 
     // content for BindingSets
     juce::OwnedArray<class Binding> bindings;
+    bool bindingOverlay = false;
+    bool bindingNoOverlay = false;
+
+    // update statistics
+    int additions = 0;
+    int modifications = 0;
+    int removals = 0;
+    int ignores = 0;
     
     void add(MclScope* s) {
         scopes.add(s);

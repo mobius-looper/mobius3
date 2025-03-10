@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Session name="asdf" audioTracks="8">
-  <Track id="1" type="audio" name="Chords">
+  <Track id="1" type="audio" name="foo bar">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
       <Value name="feedback" value="127" type="int"/>
-      <Value name="focus" value="false" type="bool"/>
+      <Value name="focus" value="true" type="bool"/>
       <Value name="input" value="127" type="int"/>
       <Value name="loopCount" value="0" type="int"/>
       <Value name="mono" value="false" type="bool"/>
@@ -15,9 +15,9 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="quantize" value="cycle" type="enum" ordinal="2"/>
       <Value name="syncSource" value="none" type="enum" ordinal="0"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
-      <Value name="trackGroup" value="A"/>
       <Value name="trackOverlay" value="Basic Looping"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
@@ -40,6 +40,7 @@
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="trackGroup" value="A"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
+      <Value name="transportTempo" value="100" type="int"/>
     </ValueSet>
   </Track>
   <Track id="3" type="audio">
@@ -164,7 +165,7 @@
       <Value name="midiOutput" value="Bome MIDI Translator 1"/>
       <Value name="midiThru" value="false" type="bool"/>
       <Value name="quantize" value="off" type="enum" ordinal="0"/>
-      <Value name="subcycles" value="0" type="int"/>
+      <Value name="subcycles" value="4" type="int"/>
     </ValueSet>
   </Track>
   <ValueSet>
@@ -221,7 +222,7 @@
     <Value name="speedStepRange" value="24" type="int"/>
     <Value name="speedTransfer" value="off" type="enum" ordinal="0"/>
     <Value name="spreadRange" value="48" type="int"/>
-    <Value name="subcycles" value="4" type="int"/>
+    <Value name="subcycles" value="6" type="int"/>
     <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
     <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
     <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
@@ -237,7 +238,7 @@
     <Value name="transportMetronome" value="false" type="bool"/>
     <Value name="transportMidi" value="true" type="bool"/>
     <Value name="transportMinTempo" value="30" type="int"/>
-    <Value name="transportTempo" value="120" type="int"/>
+    <Value name="transportTempo" value="100" type="int"/>
     <Value name="upgraded" value="true" type="bool"/>
     <Value name="windowEdgeAmount" value="1" type="int"/>
     <Value name="windowEdgeUnit" value="loop" type="enum" ordinal="0"/>
