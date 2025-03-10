@@ -232,10 +232,10 @@ Once those models are fully converted, these symbols can be removed.
                valueLabels='None,Cancel Current Mode,Cancel and Wait'
                tree='Switch'/>
 
-    <!-- this one actually needs to go away, it's more a more of a track configuration
-         parameter like ports that shouldn't jump around -->
-    <Parameter name='loopCount' options='dynamic,noBinding'
+    <Parameter name='loopCount' type='int' options='dynamic,noBinding'
                low='1' high='32'
+               defaultValue='4'
+               tree='General'
                query='false'/>
     
     <Parameter name='muteMode' values='continue,start,pause'

@@ -47,7 +47,7 @@
   -->
 
   <Form name='sessionCategoryGeneral' title='Track Identity'
-        symbols='trackName,trackGroup,focus'/>
+        symbols='trackName,trackGroup,focus,loopCount'/>
 
   <Form name='sessionCategoryPorts' title='IO Ports'
         symbols='audioInputPort,audioOutputPort,pluginInputPort,pluginOutputPort,mono'/>

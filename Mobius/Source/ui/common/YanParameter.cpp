@@ -125,7 +125,8 @@ void YanParameter::setOccluded(bool b)
     if (occluded) {
         setDisabled(true);
         // straignt up yellow looks too bright, tone it down
-        setLabelColor(juce::Colours::beige);
+        // beige looks too much like defaulted grey
+        setLabelColor(juce::Colours::lightpink);
     }
     else {
         // don't enable if it is also defaulted

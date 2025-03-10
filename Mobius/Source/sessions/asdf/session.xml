@@ -9,7 +9,6 @@
       <Value name="feedback" value="127" type="int"/>
       <Value name="focus" value="true" type="bool"/>
       <Value name="input" value="127" type="int"/>
-      <Value name="loopCount" value="0" type="int"/>
       <Value name="mono" value="false" type="bool"/>
       <Value name="output" value="127" type="int"/>
       <Value name="pan" value="64" type="int"/>
@@ -18,7 +17,6 @@
       <Value name="quantize" value="cycle" type="enum" ordinal="2"/>
       <Value name="syncSource" value="none" type="enum" ordinal="0"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
-      <Value name="trackOverlay" value="Basic Looping"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
@@ -30,7 +28,6 @@
       <Value name="feedback" value="127" type="int"/>
       <Value name="focus" value="false" type="bool"/>
       <Value name="input" value="127" type="int"/>
-      <Value name="loopCount" value="0" type="int"/>
       <Value name="mono" value="false" type="bool"/>
       <Value name="output" value="127" type="int"/>
       <Value name="pan" value="64" type="int"/>
