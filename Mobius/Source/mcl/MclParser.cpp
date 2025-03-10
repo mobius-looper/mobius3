@@ -445,7 +445,7 @@ void MclParser::parseBindingDefault(juce::StringArray& tokens)
       addError("Uneven number of default name/value tokens");
     else {
         int index = 1;
-        while (index < tokens.size()) {
+        while (index < tokens.size() && !hasErrors()) {
             juce::String name = tokens[index];
             juce::String value = tokens[index+1];
             
@@ -463,7 +463,6 @@ void MclParser::parseBindingDefault(juce::StringArray& tokens)
                 addError(juce::String("Property ") + name + " may not have a default");
             }
             index += 2;
-            if (hasErrors()) break;
         }
     }
 }
@@ -535,7 +534,7 @@ void MclParser::parseBindingObject(juce::StringArray& tokens)
     b->midiChannel = bindingChannel;
 
     int index = 0;
-    while (index < tokens.size()) {
+    while (index < tokens.size() && !hasErrors()) {
         juce::String token = tokens[index];
         int column = index + 1;
         
@@ -560,23 +559,21 @@ void MclParser::parseBindingObject(juce::StringArray& tokens)
             // run out of specified columns
             break;
         }
-
-        if (hasErrors()) break;
         index++;
     }
     
     // what remains come in pairs except for release
-    while (index < tokens.size()) {
+    while (index < tokens.size() && !hasErrors()) {
         juce::String token = tokens[index];
         if (token == "release") {
             b->release = true;
             index++;
         }
         else {
-            // the reset must be in pairs
             int next = index + 1;
-            if (next >= tokens.size())
-              addError(juce::String("Missing value for: ") + token);
+            if (next >= tokens.size()) {
+                addError(juce::String("Missing value for: ") + token);
+            }
             else {
                 juce::String value = tokens[next];
                 if (token == "arguments" || token == "args") {
@@ -605,15 +602,15 @@ void MclParser::parseBindingObject(juce::StringArray& tokens)
             }
             index += 2;
         }
-        if (hasErrors()) break;
     }
 
     if (!hasErrors()) {
         MclSection* section = getSection();
         section->bindings.add(b);
     }
-    else
-      delete b;
+    else {
+        delete b;
+    }
 }
 
 bool MclParser::validateSymbol(juce::String name)
@@ -629,13 +626,13 @@ bool MclParser::validateSymbol(juce::String name)
 
 bool MclParser::validateBindingScope(juce::String name)
 {
+    (void)name;
     // if it is an integer, trust it as long as it is positive
     // if it is a name, could check agains the defined group names
     // but may want to allow bindings with unresolved groups to go in anyway
     // and add the group later
     return true;
 }
-
 
 /****************************************************************************/
 /****************************************************************************/
