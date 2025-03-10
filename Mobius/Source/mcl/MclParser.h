@@ -20,15 +20,33 @@ class MclParser
     class Provider* provider = nullptr;
     std::unique_ptr<class MclScript> script;
     class MclResult* result = nullptr;
+    
     int lineNumber = 1;
-    class MclObjectScope* currentObject = nullptr;
-    class MclRunningScope* currentScope = nullptr;
+    juce::String line;
+    
+    class MclSection* currentSection = nullptr;
+    class MclScope* currentScope = nullptr;
 
-    void parseLine(juce::String line);
-    class MclObjectScope* getObject();
-    class MclRunningScope* getScope();
-    void addError(juce::String line, juce::String err);
+    void addError(juce::String err);
     bool hasErrors();
+    
+    class MclSection* getSection();
+    class MclScope* getScope();
+    void parseLine();
+    
+    void parseSession(juce::StringArray& tokens);
+    void parseOverlay(juce::StringArray& tokens);
+    void parseSessionLine(juce::StringArray& tokens, bool isOverlay);
+    void parseScope(juce::StringArray& tokens);
+    int parseScopeId(juce::String token);
+    void parseAssignment(juce::StringArray& tokens);
+    int parseParameterOrdinal(class Symbol* s, class ParameterProperties* props,
+                              juce::String svalue, bool& isRemove);
+    void validateStructureReference(class Symbol* s, class ParameterProperties* props,
+                                    juce::String svalue);
+    
+    void parseBinding(juce::StringArray& tokens);
+    void parseBindingLine(juce::StringArray& tokens);
     
 };
 

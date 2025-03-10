@@ -12,11 +12,19 @@
               pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
-      <FILE id="KBDzgh" name="BusBoy.cpp" compile="1" resource="0" file="Source/BusBoy.cpp"/>
-      <FILE id="Q3TtUF" name="BusBoy.h" compile="0" resource="0" file="Source/BusBoy.h"/>
-      <FILE id="vH9ipF" name="PortAuthority.cpp" compile="1" resource="0"
-            file="../Mobius/Source/PortAuthority.cpp"/>
-      <FILE id="OcWY51" name="PortAuthority.h" compile="0" resource="0" file="../Mobius/Source/PortAuthority.h"/>
+      <GROUP id="{4CEB93C1-89DE-9EAF-78A0-EF5EAAE7BF4F}" name="mcl">
+        <FILE id="FL6ZTR" name="MclEnvironment.cpp" compile="1" resource="0"
+              file="../Mobius/Source/mcl/MclEnvironment.cpp"/>
+        <FILE id="wYTxA1" name="MclEnvironment.h" compile="0" resource="0"
+              file="../Mobius/Source/mcl/MclEnvironment.h"/>
+        <FILE id="KwDbQh" name="MclEvaluator.cpp" compile="1" resource="0"
+              file="../Mobius/Source/mcl/MclEvaluator.cpp"/>
+        <FILE id="BeO8ZS" name="MclEvaluator.h" compile="0" resource="0" file="../Mobius/Source/mcl/MclEvaluator.h"/>
+        <FILE id="IFJPdo" name="MclModel.h" compile="0" resource="0" file="../Mobius/Source/mcl/MclModel.h"/>
+        <FILE id="ZBtA2a" name="MclParser.cpp" compile="1" resource="0" file="../Mobius/Source/mcl/MclParser.cpp"/>
+        <FILE id="lGnrLz" name="MclParser.h" compile="0" resource="0" file="../Mobius/Source/mcl/MclParser.h"/>
+        <FILE id="yzNuVL" name="MclResult.h" compile="0" resource="0" file="../Mobius/Source/mcl/MclResult.h"/>
+      </GROUP>
       <GROUP id="{488A10F9-CEDB-CDD4-A066-7B71391B0EFE}" name="script">
         <FILE id="SEvMQT" name="ActionAdapter.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/ActionAdapter.cpp"/>
@@ -989,6 +997,8 @@
       <FILE id="WpCvNh" name="Binderator.h" compile="0" resource="0" file="../Mobius/Source/Binderator.h"/>
       <FILE id="eHrGZn" name="BlueSphere-10.png" compile="0" resource="1"
             file="../Mobius/Source/BlueSphere-10.png"/>
+      <FILE id="KBDzgh" name="BusBoy.cpp" compile="1" resource="0" file="Source/BusBoy.cpp"/>
+      <FILE id="Q3TtUF" name="BusBoy.h" compile="0" resource="0" file="Source/BusBoy.h"/>
       <FILE id="TNAr8n" name="Conditionals.h" compile="0" resource="0" file="../Mobius/Source/Conditionals.h"/>
       <FILE id="PmhEch" name="FileManager.cpp" compile="1" resource="0" file="../Mobius/Source/FileManager.cpp"/>
       <FILE id="KYoNB2" name="FileManager.h" compile="0" resource="0" file="../Mobius/Source/FileManager.h"/>
@@ -1025,6 +1035,9 @@
             file="Source/PluginProcessor.cpp"/>
       <FILE id="OgdMaK" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
+      <FILE id="vH9ipF" name="PortAuthority.cpp" compile="1" resource="0"
+            file="../Mobius/Source/PortAuthority.cpp"/>
+      <FILE id="OcWY51" name="PortAuthority.h" compile="0" resource="0" file="../Mobius/Source/PortAuthority.h"/>
       <FILE id="xeZJBx" name="Producer.cpp" compile="1" resource="0" file="../Mobius/Source/Producer.cpp"/>
       <FILE id="IjMxn0" name="Producer.h" compile="0" resource="0" file="../Mobius/Source/Producer.h"/>
       <FILE id="Gck82d" name="ProjectFiler.cpp" compile="1" resource="0"

@@ -497,14 +497,15 @@ Once those models are fully converted, these symbols can be removed.
          make it accessible to Instant Parameters, but I'm not liking reinforcing
          the notion that you can swap sessions easily.
     -->
-    <Parameter name='activeSession' type='structure' options='noBinding,transient'/>
+    <Parameter name='activeSession' type='structure' structure='Session'
+               options='noBinding,transient'/>
 
     <!-- This looks  like it would be Session::defaultPreset but it isn't.
          There is no equivalent in the Setup model since defaultPreset is OVERRIDDEEND
          by trackPreset, they don't combine.
          -->
     <Parameter name='sessionOverlay'
-               type='structure' 
+               type='structure' structure='Overlay'
                displayType='combo' displayHelper='parameterSet'
                options='noBinding'>
     </Parameter>
@@ -548,7 +549,7 @@ Once those models are fully converted, these symbols can be removed.
          it is the same as SetupTrack::trackPreset
          -->
     <Parameter name='trackOverlay' tree='Overlay'
-               type='structure' 
+               type='structure' structure='Overlay'
                displayType='combo' displayHelper='parameterSet'
                options='noBinding,noOverlay,resetRetain'/>
 
@@ -731,11 +732,12 @@ Once those models are fully converted, these symbols can be removed.
   
   <ParameterScope name='UI'>
 
-    <Parameter name='activeLayout' level='UI' type='structure'/>
-    <Parameter name='activeButtons' level='UI' type='structure'/>
+    <Parameter name='activeLayout' level='UI' type='structure' structure='Layout'/>
+    <Parameter name='activeButtons' level='UI' type='structure' structure='Buttons'/>
 
     <!-- wtf is this?  wouldn't this be multi-valued? -->
-    <Parameter name='bindingOverlays' level='UI' type='structure' options='noBinding'/>
+    <Parameter name='bindingOverlays' level='UI' type='structure' structure='Bindings'
+               options='noBinding'/>
     
   </ParameterScope>
   

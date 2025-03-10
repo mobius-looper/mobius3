@@ -325,7 +325,6 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         }
 
         parseTrackTypes(root, s);
-
         s->treePath = root->getStringAttribute("tree");
         s->treeInclude = root->getStringAttribute("treeInclude");
         s->hidden = root->getBoolAttribute("hidden");
@@ -451,7 +450,15 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope, bo
         props->scope = scope;
 
         props->type = parseType(el->getStringAttribute("type"));
-        // todo: structureClass?
+        // this is new, what's a better name: structure, class, structureClass
+        props->structureClass = el->getStringAttribute("structure");
+        if (props->structureClass.length() > 0 && props->type != TypeStructure)
+          Trace(1, "Symbolizer: Symbol has structure class but isn't TypeStructure %s",
+                name.toUTF8());
+        else if (props->type == TypeStructure && props->structureClass.length() == 0)
+          Trace(1, "Symbolizer: Symbol has TypeStructure but no structure class name %s",
+                name.toUTF8());
+        
         props->multi = el->getBoolAttribute("multi");
         props->values = parseStringList(el->getStringAttribute("values"));
         props->valueLabels = parseLabels(el->getStringAttribute("valueLabels"), props->values);

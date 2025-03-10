@@ -19,10 +19,11 @@ class MclEvaluator
     
     void addError(juce::String err);
     bool hasErrors();
-    void addResult(MclObjectScope* obj);
-    void evalSession(class MclObjectScope* obj);
-    void evalOverlay(class MclObjectScope* obj);
+    void addResult(class MclSection* section);
+    void evalSession(class MclSection* section);
+    void evalOverlay(class MclSection* section);
     void evalAssignment(class MclAssignment* ass, class ValueSet* dest);
 
+    void evalBinding(class MclSection* section);
 };
     

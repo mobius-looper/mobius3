@@ -56,6 +56,12 @@ class ParameterProperties
     bool multi = false;
 
     /**
+     * Set only for TypeStructure, used only by tools like the MCL evaluator
+     * that need to do reference validation.
+     */
+    juce::String structureClass;
+
+    /**
      * For TypeEnum, the  set of allowed values.
      */
     juce::StringArray values;

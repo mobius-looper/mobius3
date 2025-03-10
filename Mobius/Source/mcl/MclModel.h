@@ -25,15 +25,17 @@
  * object-name ::= string
  * lifespan ::= temporary | stable | permanent
  *
+ * Section Headers:
+ *
+ * session
  * session active
  *   - modifies the active session
  *   - active is the default if not specified
  *   - the changes are permanent
- *   = the modified session is loaded
+ *   - the modified session is loaded
  * 
  * session foo
  *   - modifies the session named "foo"
- *   - the name may contain spaces, but the keywords have to come first
  *   - if the session is also active the session is loaded
  * 
  * session memory
@@ -45,15 +47,16 @@
  *
  * overlay foo
  *   - modifies the overlay with a name
- *   - I don't think we need "overlay active" since it is ambiguous
  *
- * overlay memory foo
+ * overlay foo memory
  *   - when modifying overlays in memory you must specify a name since
  *     there is no single active overlay
  *
- * overlay temporary foo
+ * overlay foo temporary
  *   - effectively the same as a bunch of active track action bindings
  *
+ * Assignments:
+ 
  * syncMode master
  *   - sets the syncMode parameter to SyncMaster in the current running scope
  *   - if the running scope is session, this sets the session defaults
@@ -104,10 +107,12 @@ class MclAssignment
 /**
  * Runnimg scope within an object.
  */
-class MclRunningScope
+class MclScope
 {
   public:
 
+    constexpr static const char* Keyword = "scope";
+    
     juce::String scopeId;
 
     // track number or 0 for global
@@ -124,26 +129,42 @@ class MclRunningScope
 /**
  * Object scope
  */
-class MclObjectScope
+class MclSection
 {
   public:
 
+    constexpr static const char* KeywordSession = "session";
+    constexpr static const char* KeywordOverlay = "overlay";
+    constexpr static const char* KeywordBinding = "binding";
+
+    // reserved names
+    constexpr static const char* NameActive = "active";
+    
+    // evaluation options
+    constexpr static const char* EvalPermanent = "permanent";
+    constexpr static const char* EvalMemory = "memory";
+    constexpr static const char* EvalTemporary = "temporary";
+    
     typedef enum {
         Session,
-        Overlay
+        Overlay,
+        Binding
     } Type;
 
+    typedef enum {
+        Permanent,
+        Memory,
+        Temporary
+    } Duration;
+    
     juce::String name;
     Type type = Session;
-    juce::OwnedArray<MclRunningScope> scopedAssignments;
+    Duration duration = Permanent;
+    
+    juce::OwnedArray<MclScope> scopes;
 
-    // special session names
-    constexpr static const char* Active = "active";
-    constexpr static const char* Memory = "memory";
-    constexpr static const char* Temporary = "temporary";
-
-    void add(MclRunningScope* s) {
-        scopedAssignments.add(s);
+    void add(MclScope* s) {
+        scopes.add(s);
     }
     
 };
@@ -156,12 +177,14 @@ class MclScript
 {
   public:
     
-    juce::OwnedArray<MclObjectScope> objects;
+    juce::OwnedArray<MclSection> sections;
 
-    void add(MclObjectScope* os) {
-        objects.add(os);
+    void add(MclSection* s) {
+        sections.add(s);
     }
 
 };
-
     
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
