@@ -7,6 +7,7 @@
 #include "../model/ParameterProperties.h"
 #include "../model/ParameterSets.h"
 #include "../model/ValueSet.h"
+#include "../model/old/Binding.h"
 #include "../Provider.h"
 #include "../Producer.h"
 
@@ -412,6 +413,10 @@ void MclParser::validateStructureReference(Symbol* s, ParameterProperties* props
 //
 // Bindings
 //
+// This is all rather brute force, but generalizing it isn't really
+// necessary until something besides Binding objects comes along,
+// and the result would be larger and harder to understand.
+//
 //////////////////////////////////////////////////////////////////////
 
 void MclParser::parseBinding(juce::StringArray& tokens)
@@ -422,9 +427,215 @@ void MclParser::parseBinding(juce::StringArray& tokens)
 
 void MclParser::parseBindingLine(juce::StringArray& tokens)
 {
-    (void)tokens;
-    addError(juce::String("Bindging lines not supported"));
+    if (tokens.size() > 0) {
+        juce::String keyword = tokens[0];
+        if (keyword == "default")
+          parseBindingDefault(tokens);
+        else if (keyword == "columns" || keyword == "format")
+          parseBindingColumns(tokens);
+        else
+          parseBindingObject(tokens);
+    }
 }
+
+void MclParser::parseBindingDefault(juce::StringArray& tokens)
+{
+    int remainder = tokens.size() - 1;
+    if ((remainder % 2) != 0)
+      addError("Uneven number of default name/value tokens");
+    else {
+        int index = 1;
+        while (index < tokens.size()) {
+            juce::String name = tokens[index];
+            juce::String value = tokens[index+1];
+            
+            if (name == "type") {
+                bindingTrigger = parseTrigger(value);
+            }
+            else if (name == "channel") {
+                bindingChannel = parseChannel(value);
+            }
+            else if (name == "scope") {
+                if (validateBindingScope(value))
+                  bindingScope = value;
+            }
+            else {
+                addError(juce::String("Property ") + name + " may not have a default");
+            }
+            index += 2;
+            if (hasErrors()) break;
+        }
+    }
+}
+
+void MclParser::parseBindingColumns(juce::StringArray& tokens)
+{
+    int column = 1;
+    for (int i = 1 ; i < tokens.size() ; i++) {
+        juce::String name = tokens[i];
+        if (name == "type")
+          typeColumn = column;
+        else if (name == "channel")
+          channelColumn = column;
+        else if (name == "value")
+          valueColumn = column;
+        else if (name == "symbol")
+          symbolColumn = column;
+        else if (name == "scope")
+          scopeColumn = column;
+        else
+          addError(juce::String("Invalid column name: ") + name);
+        column++;
+        if (hasErrors()) break;
+    }
+}
+
+int MclParser::parseChannel(juce::String s)
+{
+    int channel = ToInt(s.toUTF8());
+    if (channel < 1 || channel > 16) {
+        addError(juce::String("Channel out of range: ") + s);
+        channel = 0;
+    }
+    return channel;
+}
+
+Trigger* MclParser::parseTrigger(juce::String s)
+{
+    Trigger* trigger = nullptr;
+    if (s == "note")
+      trigger = TriggerNote;
+    else if (s == "control" || s == "cc")
+      trigger = TriggerControl;
+    else if (s == "program" || s == "pgm")
+      trigger = TriggerProgram;
+    else if (s == "host")
+      trigger = TriggerHost;
+    else if (s == "key")
+      trigger = TriggerKey;
+    else
+      addError(juce::String("Invalid trigger type: ") + s);
+    return trigger;
+}
+
+int MclParser::parseMidiValue(juce::String s)
+{
+    int value = ToInt(s.toUTF8());
+    if (value < 1 || value > 127) {
+        addError(juce::String("Value out of range: ") + s);
+        value = 0;
+    }
+    return value;
+}
+
+void MclParser::parseBindingObject(juce::StringArray& tokens)
+{
+    Binding* b = new Binding();
+    b->trigger = bindingTrigger;
+    b->midiChannel = bindingChannel;
+
+    int index = 0;
+    while (index < tokens.size()) {
+        juce::String token = tokens[index];
+        int column = index + 1;
+        
+        if (column == typeColumn) {
+            b->trigger = parseTrigger(token);
+        }
+        else if (column == channelColumn) {
+            b->midiChannel = parseChannel(token);
+        }
+        else if (column == valueColumn) {
+            b->triggerValue = parseMidiValue(token);
+        }
+        else if (column == symbolColumn) {
+            if (validateSymbol(token))
+              b->setSymbolName(token.toUTF8());
+        }
+        else if (column == scopeColumn) {
+            if (validateBindingScope(token))
+              b->setScope(token.toUTF8());
+        }
+        else {
+            // run out of specified columns
+            break;
+        }
+
+        if (hasErrors()) break;
+        index++;
+    }
+    
+    // what remains come in pairs except for release
+    while (index < tokens.size()) {
+        juce::String token = tokens[index];
+        if (token == "release") {
+            b->release = true;
+            index++;
+        }
+        else {
+            // the reset must be in pairs
+            int next = index + 1;
+            if (next >= tokens.size())
+              addError(juce::String("Missing value for: ") + token);
+            else {
+                juce::String value = tokens[next];
+                if (token == "arguments" || token == "args") {
+                    b->setArguments(value.toUTF8());
+                }
+                else if (token == "type") {
+                    b->trigger = parseTrigger(value);
+                }
+                else if (token == "channel") {
+                    b->midiChannel = parseChannel(value);
+                }
+                else if (token == "value") {
+                    b->triggerValue = parseMidiValue(value);
+                }
+                else if (token == "symbol") {
+                    if (validateSymbol(value))
+                      b->setSymbolName(value.toUTF8());
+                }
+                else if (token == "scope") {
+                    if (validateBindingScope(value))
+                      b->setScope(value.toUTF8());
+                }
+                else {
+                    addError(juce::String("Token not allowed: ") + token);
+                }
+            }
+            index += 2;
+        }
+        if (hasErrors()) break;
+    }
+
+    if (!hasErrors()) {
+        MclSection* section = getSection();
+        section->bindings.add(b);
+    }
+    else
+      delete b;
+}
+
+bool MclParser::validateSymbol(juce::String name)
+{
+    bool valid = false;
+    Symbol* s = provider->getSymbols()->find(name);
+    if (s != nullptr)
+      valid = true;
+    else
+      addError(juce::String("Invalid symbol name: ") + name);
+    return valid;
+}
+
+bool MclParser::validateBindingScope(juce::String name)
+{
+    // if it is an integer, trust it as long as it is positive
+    // if it is a name, could check agains the defined group names
+    // but may want to allow bindings with unresolved groups to go in anyway
+    // and add the group later
+    return true;
+}
+
 
 /****************************************************************************/
 /****************************************************************************/

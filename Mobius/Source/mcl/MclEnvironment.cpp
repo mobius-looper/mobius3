@@ -3,6 +3,8 @@
 
 #include "../util/Trace.h"
 #include "../Provider.h"
+// so we can delete MslParser
+#include "../model/old/Binding.h"
 
 #include "MclModel.h"
 #include "MclParser.h"

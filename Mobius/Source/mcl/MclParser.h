@@ -25,8 +25,24 @@ class MclParser
     juce::String line;
     
     class MclSection* currentSection = nullptr;
+
+    // parse state for sessions and overlays
     class MclScope* currentScope = nullptr;
 
+    // parse state for bindings
+
+    // defaults
+    class Trigger* bindingTrigger = nullptr;
+    int bindingChannel = 0;
+    juce::String bindingScope;
+
+    // positional columns
+    int typeColumn = 0;
+    int channelColumn = 0;
+    int valueColumn = 0;
+    int symbolColumn = 0;
+    int scopeColumn = 0;
+    
     void addError(juce::String err);
     bool hasErrors();
     
@@ -47,7 +63,14 @@ class MclParser
     
     void parseBinding(juce::StringArray& tokens);
     void parseBindingLine(juce::StringArray& tokens);
-    
+    void parseBindingDefault(juce::StringArray& tokens);
+    void parseBindingColumns(juce::StringArray& tokens);
+    int parseChannel(juce::String s);
+    class Trigger* parseTrigger(juce::String s);
+    int parseMidiValue(juce::String s);
+    void parseBindingObject(juce::StringArray& tokens);
+    bool validateSymbol(juce::String name);
+    bool validateBindingScope(juce::String name);
 };
 
         

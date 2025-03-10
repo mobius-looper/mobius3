@@ -160,9 +160,13 @@ class MclSection
     juce::String name;
     Type type = Session;
     Duration duration = Permanent;
-    
+
+    // content for Sessions and overlays
     juce::OwnedArray<MclScope> scopes;
 
+    // content for BindingSets
+    juce::OwnedArray<class Binding> bindings;
+    
     void add(MclScope* s) {
         scopes.add(s);
     }
