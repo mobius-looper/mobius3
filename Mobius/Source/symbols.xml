@@ -235,8 +235,7 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='loopCount' type='int' options='dynamic,noBinding'
                low='1' high='32'
                defaultValue='4'
-               tree='General'
-               query='false'/>
+               tree='General'/>
     
     <Parameter name='muteMode' values='continue,start,pause'
                tree='Functions'/>
@@ -293,7 +292,6 @@ Once those models are fully converted, these symbols can be removed.
 
     <Parameter name='switchVelocity' type='bool' tree='Switch' track='audio'/>
 
-    <!-- these are more like loopCount and don't need to be queryable -->
     <Parameter name='maxUndo' options='noBinding' tree='Functions'/>
     <Parameter name='maxRedo' options='noBinding' tree='Functions'/>
     
