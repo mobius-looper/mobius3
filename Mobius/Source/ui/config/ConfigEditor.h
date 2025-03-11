@@ -69,6 +69,8 @@ class ConfigEditorContext {
     //
     //////////////////////////////////////////////////////////////////////
 
+    virtual void setWindowTitle(juce::String s) = 0;
+
     // instructs the context to display an object selector 
     virtual void enableObjectSelector() = 0;
 

@@ -108,6 +108,12 @@ void ConfigPanel::setEditor(ConfigEditor* editor)
     setSize (900, 600);
 }
 
+void ConfigPanel::setWindowTitle(juce::String s)
+{
+    // inherited from BasePanel
+    setTitle(s);
+}
+
 //
 // ConfigEditor callbacks to adjust the display
 //

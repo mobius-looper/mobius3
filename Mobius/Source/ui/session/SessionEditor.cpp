@@ -70,6 +70,8 @@ void SessionEditor::load()
     session.reset(new Session(src));
     revertSession.reset(new Session(src));
 
+    context->setWindowTitle(juce::String("Session: ") + src->getName());
+
     loadSession();
 }
 
