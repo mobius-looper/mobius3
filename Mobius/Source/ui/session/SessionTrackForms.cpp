@@ -204,14 +204,19 @@ void SessionTrackForms::parameterFormRefresh(ParameterForm* f, YanParameter* p)
     if (lockingStyle && p->isDefaulted())
       src = session->ensureGlobals();
 
-    MslValue* v = src->get(p->getSymbol()->name);
-    p->load(v);
-
-    // however the value was loaded, occlusion may impact the
-    // label color and editability
-    // SessionEditor has the tool for this, and is the only reason we
-    // have to pass that all the way down here
-    p->setOccluded(editor->isOccluded(p->getSymbol(), occlusions));
+    // editor combines our occlusion table with the two others
+    SessionOcclusions::Occlusion* o = editor->getOcclusion(p->getSymbol(), occlusions);
+    if (o != nullptr) {
+        p->load(&(o->value));
+        p->setOccluded(true);
+        juce::String tooltip = juce::String("Occluded by overlay ") + o->source;
+        p->setOcclusionSource(tooltip);
+    }
+    else {
+        MslValue* v = src->get(p->getSymbol()->name);
+        p->load(v);
+        p->setOccluded(false);
+    }
 }
 
 /**

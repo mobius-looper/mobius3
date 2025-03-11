@@ -85,6 +85,8 @@ class YanField : public juce::Component
     // special support for draggable forms
     void setDragDescription(juce::String s);
     juce::String getDragDescription();
+
+    void setTooltip(juce::String tt);
     
   protected:
     

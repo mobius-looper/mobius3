@@ -40,7 +40,8 @@ class YanParameter : public YanField,
     bool isDefaulted();
     void setOccluded(bool b);
     bool isOccluded();
-
+    void setOcclusionSource(juce::String src);
+    
     // overrides the handler from YanField
     // ordinally should not be called directly
     void setDisabled(bool b) override;
@@ -70,6 +71,7 @@ class YanParameter : public YanField,
     bool isCheckbox = false;
     bool defaulted = false;
     bool occluded = false;
+    juce::String occlusionSource;
     
     // various renderings
     YanCombo combo {""};

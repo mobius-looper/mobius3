@@ -12,6 +12,7 @@
 #include "../../model/Symbol.h"
 #include "../common/BasicTabs.h"
 #include "../config/ConfigEditor.h"
+#include "SessionOcclusions.h"
 
 class SessionEditor : public ConfigEditor, public BasicTabs::Listener
 {
@@ -35,10 +36,9 @@ class SessionEditor : public ConfigEditor, public BasicTabs::Listener
     void basicTabsChanged(int oldIndex, int newIndex) override;
 
     // utilities used by SessionTrackForms
-    void gatherOcclusions(juce::Array<Symbol*>& occlusions, class ValueSet* values,
-                          SymbolId sid);
+    void gatherOcclusions(SessionOcclusions& occlusions, class ValueSet* values, SymbolId sid);
     
-    bool isOccluded(class Symbol* s, juce::Array<class Symbol*>& trackOcclusions);
+    SessionOcclusions::Occlusion* getOcclusion(class Symbol* s, SessionOcclusions& trackOcclusions);
     
   private:
 
@@ -50,8 +50,8 @@ class SessionEditor : public ConfigEditor, public BasicTabs::Listener
 
     std::unique_ptr<class Session> session;
     std::unique_ptr<class Session> revertSession;
-    juce::Array<Symbol*> sessionOcclusions;
-    juce::Array<Symbol*> defaultTrackOcclusions;
+    SessionOcclusions sessionOcclusions;
+    SessionOcclusions defaultTrackOcclusions;
 
     BasicTabs tabs;
     
