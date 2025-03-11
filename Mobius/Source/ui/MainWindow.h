@@ -81,6 +81,8 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
     
   private:
 
+    juce::TooltipWindow tooltipWindow {this, 100};
+
     class Supervisor* supervisor = nullptr;
 
     MainMenu menu {this};

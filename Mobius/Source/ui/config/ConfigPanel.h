@@ -120,7 +120,7 @@ class ConfigPanel : public BasePanel, public ConfigEditorContext
 
     // ConfigEditorContext methods called by the ConfigEditor
     // during construction
-
+    void setWindowTitle(juce::String s) override;
     void enableObjectSelector() override;
     void enableHelp(int height) override;
     void enableRevert() override;

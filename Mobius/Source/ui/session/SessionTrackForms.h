@@ -14,6 +14,7 @@
 #include "../parameter/ParameterForm.h"
 #include "../parameter/ParameterTreeForms.h"
 #include "../parameter/ParameterFormCollection.h"
+#include "SessionOcclusions.h"
 
 class SessionTrackForms : public ParameterTreeForms,
                           public ParameterFormCollection::Factory,
@@ -61,7 +62,7 @@ class SessionTrackForms : public ParameterTreeForms,
     class Session* session = nullptr;
     class Session::Track* sessionTrack = nullptr;
     ValueSet* values = nullptr;
-    juce::Array<class Symbol*> occlusions;
+    SessionOcclusions occlusions;
 
     // this determines the style of form population
     // when true, the form will be fully populated with unlockable fields

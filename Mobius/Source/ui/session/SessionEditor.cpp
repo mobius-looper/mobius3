@@ -70,6 +70,8 @@ void SessionEditor::load()
     session.reset(new Session(src));
     revertSession.reset(new Session(src));
 
+    context->setWindowTitle(juce::String("Session: ") + src->getName());
+
     loadSession();
 }
 
@@ -185,6 +187,22 @@ void SessionEditor::loadSession()
 }
 
 /**
+ * Here via form field listeners whenever an overlay selection
+ * changes.  Refresh the occlusion lists and tell the tracks about it.
+ */
+void SessionEditor::overlayChanged()
+{
+    refreshLocalOcclusions();
+    trackEditor->sessionOverlayChanged();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Occlusions
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
  * Here on the initial load before tracks have been initialized.
  */
 void SessionEditor::refreshLocalOcclusions()
@@ -194,7 +212,7 @@ void SessionEditor::refreshLocalOcclusions()
     gatherOcclusions(defaultTrackOcclusions, globals, ParamTrackOverlay);
 }
 
-void SessionEditor::gatherOcclusions(juce::Array<Symbol*>& occlusions, ValueSet* values,
+void SessionEditor::gatherOcclusions(SessionOcclusions& occlusions, ValueSet* values,
                                      SymbolId sid)
 {
     occlusions.clear();
@@ -208,7 +226,8 @@ void SessionEditor::gatherOcclusions(juce::Array<Symbol*>& occlusions, ValueSet*
             Trace(1, "SessionEditor: Unresolved overlay name %s", ovname);
         }
         else {
-            ValueSet* overlay = sets->find(juce::String(ovname));
+            juce::String jovname = juce::String(ovname);
+            ValueSet* overlay = sets->find(jovname);
             if (overlay == nullptr) {
                 Trace(1, "SessionEditor: Unresolved overlay name %s", ovname);
             }
@@ -216,23 +235,12 @@ void SessionEditor::gatherOcclusions(juce::Array<Symbol*>& occlusions, ValueSet*
                 juce::StringArray keys;
                 overlay->getKeys(keys);
                 for (auto key : keys) {
-                    Symbol* s = symbols->find(key);
-                    if (s != nullptr)
-                      occlusions.add(s);
+                    MslValue* v = overlay->get(key);
+                    occlusions.add(jovname, key, v);
                 }
             }
         }
     }
-}
-
-/**
- * Here via form field listeners whenever an overlay selection
- * changes.  Refresh the occlusion lists and tell the tracks about it.
- */
-void SessionEditor::overlayChanged()
-{
-    refreshLocalOcclusions();
-    trackEditor->sessionOverlayChanged();
 }
 
 /**
@@ -242,19 +250,17 @@ void SessionEditor::overlayChanged()
  * The track's own occlusion list is passed.  If this is not empty use it,
  * if it is empty then use the default track overlay.
  */
-bool SessionEditor::isOccluded(Symbol* s, juce::Array<Symbol*>& trackOcclusions)
+SessionOcclusions::Occlusion* SessionEditor::getOcclusion(Symbol* s, SessionOcclusions& trackOcclusions)
 {
-    bool occluded = false;
+    SessionOcclusions::Occlusion* occlusion = trackOcclusions.get(s->name);
+
+    if (occlusion == nullptr)
+      occlusion = defaultTrackOcclusions.get(s->name);
     
-    if (trackOcclusions.size() > 0)
-      occluded = trackOcclusions.contains(s);
-    else
-      occluded = defaultTrackOcclusions.contains(s);
+    if (occlusion == nullptr)
+      occlusion = sessionOcclusions.get(s->name);
     
-    if (!occluded)
-      occluded = sessionOcclusions.contains(s);
-    
-    return occluded;
+    return occlusion;
 }
 
 /****************************************************************************/

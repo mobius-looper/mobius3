@@ -3,7 +3,7 @@
 <SystemConfig>
   <ValueSet>
     <Value name="quicksaveFile" value="bar"/>
-    <Value name="startupSession" value="20090814_1-4Sync_5-8Unsync"/>
+    <Value name="startupSession" value="Session of Destiny"/>
     <Value name="userFileFolder" value="foo"/>
   </ValueSet>
 </SystemConfig>

@@ -60,6 +60,7 @@ void BasePanel::followContentMouse()
 void BasePanel::setTitle(juce::String argTitle)
 {
     title = argTitle;
+    repaint();
 }
 
 void BasePanel::setBorderColor(juce::Colour c)

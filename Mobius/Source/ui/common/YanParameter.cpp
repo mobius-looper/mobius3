@@ -133,12 +133,19 @@ void YanParameter::setOccluded(bool b)
         if (!defaulted)
           setDisabled(false);
         unsetLabelColor();
+        setOcclusionSource("");
     }
 }
 
 bool YanParameter::isOccluded()
 {
     return occluded;
+}
+
+void YanParameter::setOcclusionSource(juce::String src)
+{
+    occlusionSource = src;
+    setTooltip(src);
 }
 
 /**

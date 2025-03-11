@@ -96,6 +96,11 @@ void YanField::setLabelListener(YanFieldLabel::Listener* l)
     label.setListener(l);
 }
 
+void YanField::setTooltip(juce::String tt)
+{
+    label.setTooltip(tt);
+}
+
 void YanField::setLabel(juce::String s)
 {
     label.setText(s, juce::NotificationType::dontSendNotification);

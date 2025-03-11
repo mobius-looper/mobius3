@@ -8,7 +8,7 @@ A **Session** is a collection of configuration settings that is saved on the fil
 
 Most audio applications have a similar concept, usually also called *sessions* or *projects* or *templates*.
 
-If you are familar with Mobius 2.5, the Session is essentially a replacement for the **Setup**.  It also includes some of what was once defined in **Presets**.
+If you are familar with Mobius 2.5, the Session is a replacement for the **Track Setup**, the **Preset**, and most of what were formerly called **Global Parameters**.  
 
 Though not available yet, the Session is also where you will store audio and MIDI track content, replacing the Mobius 2.5 concept of the **Project**.
 
@@ -31,20 +31,18 @@ Within each session directory there will always be a single file named "session.
 In future relases, when sessions are allowed to contain audio and Midi content, the .wav or .mid
 files with that content will also be found here.
 
-Other supporting files such as session-specific scripts and bindings may appear here as well.
+Other supporting files such as session-specific scripts and bindings will also be stored here.
 
 ## Session Management
 
-Sessions are accessed from the main menu item named unsurprisingly "Sessions".   There are two sub-items "Edit Session" and "Manage Sessions".  *Edit Session* is where you make changes to the currently loaded session.  *Manage Sessions* is where you can view and organize your collection of sessions.
-
-These are both very new features and the user interface is not entirely to my liking, so I'm avoiding screen shots here since I expect this to evolve.  Feel free to offer suggestions on the forum.  As usual, I go for functionality first, and worry about making it pretty later.
+Sessions are accessed from the main menu item named unsurprisingly **Sessions**   There are two sub-items **Edit Session** and **Manage Sessions**.  *Edit Session* is where you make changes to the currently active session.  *Manage Sessions* is where you can view and organize your collection of sessions.
 
 ### Edit Session
 
 The *Edit Session* window is organized into two tabs: *Globals* and *Tracks*.  
 The *Globals* tab is where you will find configuration parameters that apply to the entire application rather than individual tracks.  It takes the place of what used to be called the *Global Parameters* window and contains new options for the [Transport](transport).  
 
-![Edit Session Window](/docs/images/session-globals.png)
+![Edit Session Window](/docs/images/session-overview.png)
 
 A session contains a large number of parameters that are located using the *parameter tree* and modified using *parameter forms*.  
 
