@@ -306,6 +306,8 @@
                 file="../Mobius/Source/ui/session/SessionManagerTable.cpp"/>
           <FILE id="MmnctL" name="SessionManagerTable.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/session/SessionManagerTable.h"/>
+          <FILE id="RSLbFI" name="SessionOcclusions.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/session/SessionOcclusions.h"/>
           <FILE id="u20QTF" name="SessionParameterEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/session/SessionParameterEditor.cpp"/>
           <FILE id="m04UN3" name="SessionParameterEditor.h" compile="0" resource="0"
