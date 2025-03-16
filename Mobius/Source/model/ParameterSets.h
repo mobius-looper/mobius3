@@ -32,8 +32,22 @@ class ParameterSets
     
     // dangerous, should make this const or something
     juce::OwnedArray<class ValueSet>& getSets();
+
+    // stupid flag
+    bool isUpgraded();
+    void setUpgraded(bool b);
     
   private:
+
+    // kludge: there isn't a good way to detedt whether the upgrade has
+    // been performed once, but all the old preset conversions were deleted
+    // if Upgrader just looks at the sets size being zero it means as soon
+    // as you delete all the converted sets, the conversion will be triggered
+    // again and put them back
+    // testing for the existance of parameters.xml isn't reliable because that
+    // leaked out in earlier releases, they would be empty or incomplete and
+    // need to be upgraded
+    bool upgraded = false;
 
     juce::OwnedArray<class ValueSet> sets;
     

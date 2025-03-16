@@ -16,7 +16,13 @@
 
 ParameterForm::ParameterForm()
 {
-    addAndMakeVisible(form);
+    if (useViewport) {
+        addAndMakeVisible(viewport);
+        viewport.setViewedComponent(&form, false);
+    }
+    else {
+        addAndMakeVisible(form);
+    }
 }
 
 void ParameterForm::setDraggable(bool b)
@@ -52,7 +58,17 @@ void ParameterForm::resized()
       area = area.reduced(titleInset);
     
     juce::Rectangle<int> center = area.reduced(formInset);
-    form.setBounds(center);
+
+    if (useViewport) {
+        viewport.setBounds(center);
+        // back width enough to tolerate the vertical scroll bar so it
+        // won't add a horizontal bar
+        int width = center.getWidth() - 12;
+        form.setBounds(0, 0, width, form.getPreferredHeight());
+    }
+    else {
+        form.setBounds(center);
+    }
     
     // fields that have dynamic widths depending on what is loaded
     // into them, such as YanCombos with YanParameterHelpers often need
@@ -182,6 +198,13 @@ void ParameterForm::add(juce::Array<Symbol*>& symbols)
 void ParameterForm::addSpacer()
 {
     YanSpacer* s = new YanSpacer();
+    others.add(s);
+    form.add(s);
+}
+
+void ParameterForm::addSection(juce::String text)
+{
+    YanSection* s = new YanSection(text);
     others.add(s);
     form.add(s);
 }

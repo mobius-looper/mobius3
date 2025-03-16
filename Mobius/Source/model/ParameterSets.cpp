@@ -20,8 +20,20 @@ ParameterSets::ParameterSets(ParameterSets* src)
     ordinate();
 }
 
+void ParameterSets::setUpgraded(bool b)
+{
+    upgraded = b;
+}
+
+bool ParameterSets::isUpgraded()
+{
+    return upgraded;
+}
+
 void ParameterSets::parseXml(juce::XmlElement* root, juce::StringArray& errors)
 {
+    upgraded = root->getBoolAttribute("upgraded");
+    
     for (auto* el : root->getChildIterator()) {
         if (el->hasTagName("ValueSet")) {
             ValueSet* set = new ValueSet();
@@ -39,6 +51,9 @@ void ParameterSets::parseXml(juce::XmlElement* root, juce::StringArray& errors)
 juce::String ParameterSets::toXml()
 {
     juce::XmlElement root ("ParameterSets");
+
+    if (upgraded)
+      root.setAttribute("upgraded", "true");
 
     for (auto set : sets)
       set->render(&root);

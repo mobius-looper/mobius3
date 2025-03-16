@@ -1,0 +1,31 @@
+See this article for how to do image captions:
+
+https://sebastiandedeyne.com/captioned-images-with-markdown-render-hooks-in-hugo/
+
+
+Within the Spectral template I was using I added this file:
+
+   themes/spectral/layouts/_default/_markup/render-image.html
+
+That looks like this:
+
+{{ if .Title }}
+<figure>
+  <img src="{{ .Destination | safeURL }}" alt="{{ .Text }}">
+  <figcaption><i>{{ .Title }}</i></figcaption>
+</figure>
+{{ else }}
+  <img src="{{ .Destination | safeURL }}" alt="{{ .Text }}">
+{{ end }}
+  
+
+
+
+Without that you can add a caption like this normally:
+
+![Transport Parameters](/docs/images/transport-parameters.png "Here we have a transport")
+
+
+But the "Here..." text only appears as a popup when you hover the mouse over
+the image.  With the markup hook it appears under the image.  From the
+article example I added <i> to give it italics.

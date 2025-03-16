@@ -31,6 +31,7 @@ class TypicalTable : public juce::Component,
     
     // defer most initialization till the subclass has control
     void initialize();
+    void selectFirst();
 
     // subclass overloads
     virtual int getRowCount() = 0;

@@ -149,6 +149,7 @@
     <Button action="testmos"/>
     <Button action="midi-halfspeed"/>
     <Button action="MidiDoublespeed"/>
+    <Button action="nexttrack"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

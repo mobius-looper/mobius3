@@ -77,14 +77,10 @@ class ParameterForm : public juce::Component,
     //void add(juce::Array<class Symbol*>& symbols);
 
     /**
-     * Add a random field not necessarily associated with a symbol.
-     */
-    void add(class YanField* f);
-
-    /**
-     * Add a spacer.
+     * Add a spacer or section header.
      */
     void addSpacer();
+    void addSection(juce::String title);
 
     /**
      * Add form fields from a form definition.
@@ -150,6 +146,9 @@ class ParameterForm : public juce::Component,
     int formInset = 42;
     
     YanForm form;
+    juce::Viewport viewport;
+    bool useViewport = true;
+    
     juce::OwnedArray<class YanParameter> parameters;
     juce::OwnedArray<class YanField> others;
     

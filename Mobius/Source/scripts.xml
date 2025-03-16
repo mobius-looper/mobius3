@@ -81,6 +81,7 @@
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\pubvar.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\trackvar.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testmos.mos"/>
+      <External path="c:\dev\mobius3\Mobius\Source\nexttrack.mos"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
@@ -139,6 +140,8 @@
             added="2147483647"/>
       <File path="C:\dev\mobius3\Mobius\Source\scripts\midi-halfspeed.msl"
             name="midi-halfspeed" added="0"/>
+      <File path="c:\dev\mobius3\Mobius\Source\nexttrack.mos" name="nexttrack"
+            added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="frigg.lan">

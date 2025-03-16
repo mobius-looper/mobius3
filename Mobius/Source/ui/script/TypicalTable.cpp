@@ -22,7 +22,14 @@ void TypicalTable::initialize()
 {
     initTable();
     addAndMakeVisible(table);
-}    
+}
+
+void TypicalTable::selectFirst()
+{
+    selectRow(0);
+    if (listener != nullptr)
+      listener->typicalTableChanged(this, 0);
+}
 
 void TypicalTable::updateContent()
 {

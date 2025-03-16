@@ -1,6 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<ParameterSets>
+<ParameterSets upgraded="true">
+  <ValueSet name="I was a Preset">
+    <Value name="maxRedo" value="0" type="int"/>
+    <Value name="maxUndo" value="0" type="int"/>
+    <Value name="multiplyMode" value="normal" type="enum" ordinal="0"/>
+    <Value name="muteCancel" value="never" type="enum" ordinal="0"/>
+    <Value name="muteMode" value="continue" type="enum" ordinal="0"/>
+    <Value name="recordResetsFeedback" value="false" type="bool"/>
+    <Value name="roundingOverdub" value="false" type="bool"/>
+    <Value name="shuffleMode" value="reverse" type="enum" ordinal="0"/>
+    <Value name="slipMode" value="subCycle" type="enum" ordinal="0"/>
+    <Value name="slipTime" value="0" type="int"/>
+    <Value name="speedRecord" value="false" type="bool"/>
+    <Value name="windowEdgeAmount" value="0" type="int"/>
+    <Value name="windowEdgeUnit" value="loop" type="enum" ordinal="0"/>
+    <Value name="windowSlideAmount" value="0" type="int"/>
+    <Value name="windowSlideUnit" value="loop" type="enum" ordinal="0"/>
+  </ValueSet>
+  <ValueSet name="Port-o-rama">
+    <Value name="audioInputPort" value="0" type="int"/>
+    <Value name="audioOutputPort" value="1" type="int"/>
+  </ValueSet>
+  <ValueSet name="Loop Quantize">
+    <Value name="quantize" value="loop" type="enum" ordinal="3"/>
+    <Value name="subcycles" value="4" type="int"/>
+    <Value name="switchQuantize" value="loop" type="enum" ordinal="3"/>
+  </ValueSet>
   <ValueSet name="Default">
     <Value name="altFeedbackEnable" value="true" type="bool"/>
     <Value name="bounceQuantize" value="off" type="enum" ordinal="0"/>
@@ -329,19 +355,5 @@
     <Value name="windowEdgeUnit" value="subcycle" type="enum" ordinal="2"/>
     <Value name="windowSlideAmount" value="1" type="int"/>
     <Value name="windowSlideUnit" value="loop" type="enum" ordinal="0"/>
-  </ValueSet>
-  <ValueSet name="testlevels">
-    <Value name="input" value="90" type="int"/>
-    <Value name="multiplyMode" value="normal" type="enum" ordinal="0"/>
-    <Value name="output" value="64" type="int"/>
-  </ValueSet>
-  <ValueSet name="sessiontest">
-    <Value name="subcycles" value="1" type="int"/>
-  </ValueSet>
-  <ValueSet name="tracktest">
-    <Value name="subcycles" value="2" type="int"/>
-  </ValueSet>
-  <ValueSet name="tracktest2">
-    <Value name="subcycles" value="4" type="int"/>
   </ValueSet>
 </ParameterSets>

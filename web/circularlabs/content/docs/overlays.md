@@ -68,4 +68,36 @@ Again, if you are wondering why or when you would use overlays, the chances are 
 
 ### Defining Overlays
 
-Overlays are created 
+Overlays are created and managed from the *Parameter Overlays* window which is displayed by selecting *Edit Overlays* from the *Overlays* menu.  If this is a fresh installation, the overlays window will be mostly empty, if you have upgraded from a previous version, you should see entries in the overlay table on the left with names that correspond to your old Preset names.
+
+To create a new overlay right click over the table on the left and select *New*.
+
+![Empty Overlay Window](/docs/images/overlays-first.png "An empty overlay window, waiting to be filled")
+
+A dialog pops up where you enter a name for the overlay.  Like presets, all overlays must have unique names.
+
+Once youu have defined some overlays, clicking on the name of one of them in the table will display a *parameter tree* in the center and a *parameter form* on the right.
+
+[image - simple overlays]
+
+Like the *Edit Session* window, clicking on a cataetory name in the parameter tree will display a form containing parameters in that category, but only if they are installed in the overlay.  If you do not see a category form, it means the overlay does not contain any parameters from that category.  To add parameters click and drag parameter names from the tree onto the form area.  You then see fields being added to the form for each parameter you drag over.  Once the form contains parameter fields you can change their values.
+
+If you decide you no longer want to include a parameter in an overlay, click on the parameter label in the form and drag it onto the tree area.  The parameter will be removed from the form.
+
+As you click on overlay names in the table on the left, the forms will change to show only those parameters found in the selected overlay.  If you right click on an overlay name, a menu is displayed allowing you to copy, rename, or delete the overlay.
+
+[image overlay action menu]
+
+#### Overlays converted from Presets
+
+Overlays that were created by converting presets from a previous installation will have many parameters in them.
+
+[image overlay preset]
+
+It is likely you do not need all of the parameters that are contained in these
+converted overlays.  You can remove parameters by clicking on their label and dragging them over to the tree area.
+
+### Activating Overlays
+
+Read this article for an example of having markdown images with captions
+https://sebastiandedeyne.com/captioned-images-with-markdown-render-hooks-in-hugo/

@@ -66,8 +66,7 @@ void OverlayEditor::load()
         addChildComponent(otf);
     }
 
-    table->selectRow(0);
-    show(0);
+    table->selectFirst();
     resized();
 }
 
@@ -81,6 +80,7 @@ void OverlayEditor::show(int index)
 
         if (index >= 0 && index < treeForms.size()) {
             OverlayTreeForms* neu = treeForms[index];
+            neu->show();
             neu->setVisible(true);
             currentSet = index;
         }

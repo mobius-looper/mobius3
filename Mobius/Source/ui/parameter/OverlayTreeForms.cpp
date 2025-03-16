@@ -39,13 +39,30 @@ void OverlayTreeForms::initialize(Provider* p)
     // rethink this interface, if we never have the ValueSet on
     // initialize then don't pass it
     forms.initialize(this, nullptr);
+    forms.setFlatStyle(true);
 }
 
 void OverlayTreeForms::load(ValueSet* src)
 {
     values = src;
     forms.load(src);
+    // no, wait for the table to select something
+//    tree.selectFirst();
+}
+
+void OverlayTreeForms::selectFirst()
+{
+    // only want to do this on first display
     tree.selectFirst();
+}
+
+void OverlayTreeForms::show()
+{
+    setVisible(true);
+    if (!shownOnce) {
+        selectFirst();
+        shownOnce = true;
+    }
 }
 
 void OverlayTreeForms::save(ValueSet* dest)
@@ -56,11 +73,13 @@ void OverlayTreeForms::save(ValueSet* dest)
 void OverlayTreeForms::cancel()
 {
     forms.cancel();
+    shownOnce = false;
 }
 
 void OverlayTreeForms::decacheForms()
 {
     forms.decache();
+    shownOnce = false;
 }
 
 /**
@@ -121,6 +140,56 @@ ParameterForm* OverlayTreeForms::parameterFormCollectionCreate(juce::String form
         }
     }
     return form;
+}
+
+/**
+ * Build a flat parameter form for all parameters in the overlay.
+ * Tree is used to guide order and section headers.
+ */
+ParameterForm* OverlayTreeForms::parameterFormCollectionCreateFlat()
+{
+    ParameterForm* form = new ParameterForm();
+    
+    // Each outer category becomes a section header
+    SymbolTreeItem* root = tree.getRoot();
+    for (int i = 0 ; i < root->getNumSubItems() ; i++) {
+        SymbolTreeItem* cat = static_cast<SymbolTreeItem*>(root->getSubItem(i));
+        juce::Array<Symbol*> catsymbols;
+        gatherFields(cat, catsymbols);
+
+        if (catsymbols.size() > 0) {
+            form->addSection(cat->getName());
+            for (auto sym : catsymbols) {
+                form->add(provider, sym, values);
+            }
+        }
+    }
+    
+    // allow fields to gbe dragged out
+    form->setDraggable(true);
+    // allow symbols to be dragged in
+    form->setListener(this);
+        
+    return form;
+}
+
+void OverlayTreeForms::gatherFields(SymbolTreeItem* node, juce::Array<Symbol*>& symbols)
+{
+    if (node->getNumSubItems() == 0) {
+        // a leaf
+        Symbol* s = node->getSymbol();
+        if (s != nullptr) {
+            if (values->get(s->name) != nullptr) {
+                symbols.add(s);
+            }
+        }
+    }
+    else {
+        for (int i = 0 ; i < node->getNumSubItems() ; i++) {
+            SymbolTreeItem* sub = static_cast<SymbolTreeItem*>(node->getSubItem(i));
+            gatherFields(sub, symbols);
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

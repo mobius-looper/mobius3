@@ -27,10 +27,12 @@ class ParameterFormCollection : public juce::Component
       public:
         virtual ~Factory() {}
         virtual class ParameterForm* parameterFormCollectionCreate(juce::String formid) = 0;
+        virtual class ParameterForm* parameterFormCollectionCreateFlat() {return nullptr;}
     };
 
     void initialize(class Factory* f, class ValueSet* values);
-
+    void setFlatStyle(bool b);
+    
     void add(juce::String formName, class ParameterForm* form);
     
     // may call back to the factory if the form was not found
@@ -51,7 +53,9 @@ class ParameterFormCollection : public juce::Component
     class Provider* provider = nullptr;
     Factory* factory = nullptr;
     class ValueSet* valueSet = nullptr;
+    bool flatStyle = false;
 
+    std::unique_ptr<class ParameterForm> flatForm;
     juce::OwnedArray<class ParameterForm> forms;
     juce::HashMap<juce::String,class ParameterForm*> formTable;
     class ParameterForm* currentForm = nullptr;

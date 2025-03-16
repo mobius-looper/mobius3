@@ -214,7 +214,10 @@ bool Upgrader::upgradePresets(MobiusConfig* config)
     
     ParameterSets* sets = supervisor->getParameterSets();
 
-    if (sets->getSets().size() == 0 || forceUpgrade) {
+    // testing sets size is unreliable if they happen to delete
+    // all of them after upgrading
+    //if (sets->getSets().size() == 0 || forceUpgrade) {
+    if (!sets->isUpgraded() || forceUpgrade) {
     
         ModelTransformer transformer(supervisor);
 
@@ -238,6 +241,11 @@ bool Upgrader::upgradePresets(MobiusConfig* config)
                 transformer.transform(p, set);
                 updated = true;
             }
+        }
+
+        if (!sets->isUpgraded()) {
+            sets->setUpgraded(true);
+            updated = true;
         }
 
         if (updated) {

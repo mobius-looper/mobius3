@@ -31,11 +31,14 @@ class OverlayTreeForms : public ParameterTreeForms,
     void initialize(class Provider* p);
     
     void load(class ValueSet* set);
+    void show();
+    void selectFirst();
     void save(ValueSet* values);
     void cancel();
     void decacheForms();
 
     class ParameterForm* parameterFormCollectionCreate(juce::String formid) override;
+    class ParameterForm* parameterFormCollectionCreateFlat() override;
 
     void parameterFormDrop(class ParameterForm* src, juce::String desc) override;
 
@@ -45,7 +48,11 @@ class OverlayTreeForms : public ParameterTreeForms,
 
     class Provider* provider = nullptr;
     class ValueSet* values = nullptr;
+    bool shownOnce = false;
 
+    class ParameterForm* buildFlatForm();
+    void gatherFields(SymbolTreeItem* node, juce::Array<Symbol*>& symbols);
+    
 };
 
 

@@ -26,11 +26,41 @@ void ParameterFormCollection::initialize(Factory* f, ValueSet* vs)
     valueSet = vs;
 }
 
+void ParameterFormCollection::setFlatStyle(bool b)
+{
+    if (flatStyle != b) {
+        if (flatStyle) {
+            if (flatForm != nullptr) {
+                save(nullptr);
+                flatForm->setVisible(false);
+            }
+            // supposed to have at least one by now, but if we don't
+            // we don't know what to ask for
+            if (forms.size() > 0) {
+                currentForm = forms[0];
+                currentForm->setVisible(true);
+                load(nullptr);
+            }
+        }
+        else {
+            if (currentForm != nullptr) {
+                currentForm->setVisible(false);
+                currentForm = nullptr;
+            }
+            if (flatForm != nullptr)
+              flatForm->setVisible(true);
+        }
+        flatStyle = b;
+    }
+}
+
 void ParameterFormCollection::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     for (auto form : forms)
       form->setBounds(area);
+    if (flatForm != nullptr)
+      flatForm->setBounds(area);
 }
 
 void ParameterFormCollection::paint(juce::Graphics& g)
@@ -41,15 +71,30 @@ void ParameterFormCollection::paint(juce::Graphics& g)
 
 void ParameterFormCollection::load(ValueSet* vs)
 {
-    valueSet = vs;
-    for (auto form : forms)
-      form->load(valueSet);
+    if (vs != nullptr)
+      valueSet = vs;
+
+    if (flatStyle) {
+        if (flatForm != nullptr)
+          flatForm->load(valueSet);
+    }
+    else {
+        for (auto form : forms)
+          form->load(valueSet);
+    }
+    
 }
 
 void ParameterFormCollection::refresh(ParameterForm::Refresher* r)
 {
-    for (auto form : forms)
-      form->refresh(r);
+    if (flatStyle) {
+        if (flatForm != nullptr)
+          flatForm->refresh(r);
+    }
+    else {
+        for (auto form : forms)
+          form->refresh(r);
+    }
 }
     
 void ParameterFormCollection::save(ValueSet* dest)
@@ -63,8 +108,14 @@ void ParameterFormCollection::save(ValueSet* dest)
     if (dest == nullptr)
       Trace(1, "ParameterFormCollection: Save without a ValueSet");
     else {
-        for (auto form : forms)
-          form->save(dest);
+        if (flatStyle) {
+            if (flatForm != nullptr)
+              flatForm->save(dest);
+        }
+        else {
+            for (auto form : forms)
+              form->save(dest);
+        }
     }
 }
 
@@ -77,6 +128,7 @@ void ParameterFormCollection::cancel()
     forms.clear();
     formTable.clear();
     currentForm = nullptr;
+    flatForm.reset();
 }
 
 void ParameterFormCollection::decache()
@@ -88,6 +140,7 @@ void ParameterFormCollection::decache()
     formTable.clear();
     forms.clear();
     currentForm = nullptr;
+    flatForm.reset();
 }
 
 void ParameterFormCollection::add(juce::String formName, ParameterForm* form)
@@ -98,10 +151,14 @@ void ParameterFormCollection::add(juce::String formName, ParameterForm* form)
     else {
         forms.add(form);
         formTable.set(formName, form);
-        addAndMakeVisible(form);
+        addChildComponent(form);
         form->setBounds(getLocalBounds());
         // trouble getting this fleshed out dynamically
         form->resized();
+
+        if (!flatStyle)
+          form->setVisible(true);
+        
     }
 }
 
@@ -112,7 +169,20 @@ ParameterForm* ParameterFormCollection::getCurrentForm()
 
 void ParameterFormCollection::show(juce::String formName)
 {
-    if (formName == "none") {
+    if (flatStyle) {
+        if (flatForm == nullptr) {
+            ParameterForm* form = factory->parameterFormCollectionCreateFlat();
+            if (form == nullptr)
+              Trace(1, "ParameterFormCollection: Flat form not created");
+            else {
+                addChildComponent(form);
+                flatForm.reset(form);
+            }
+        }
+        if (flatForm != nullptr)
+          flatForm->setVisible(true);
+    }
+    else if (formName == "none") {
         // common for interior nodes in trees that won't have forms
         // ideally this could auto-expand down to the first child node that has a form
     }
