@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Session name="asdf" audioTracks="8">
-  <Track id="1" type="audio" name="foo bar">
+  <Track id="1" type="audio" name="Chords">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>

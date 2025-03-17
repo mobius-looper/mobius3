@@ -19,11 +19,16 @@ you can stop using them and instead just use some of the new features built into
 
 #### Parameter Layers
 
+The concept of *parameter layers* was introduced in the [Using Sessions](../sessions) document.
 To understand how parameter overlays work, it is helpful to think
 of parameters as being organized into several **layers**.  Each layer may have any number of parameter values in it.   When a function or script needs the value of a parameter it searches through
 each layer from top to bottom until it finds a value.  If a value does
 not exist in one layer, it moves to the layer below it, and continues
-until it finds a value.    
+until it finds a value.
+
+The complete set of layers including overlays is shown in this diagram.
+
+![Parameter Layers](/docs/images/parameter-layers-2.svg)
 
 There is always one layer at the bottom called the *session defaults layer*.  These are the parameters you set in the *Edit Session* window under the *Default Parameters* tab.  For many uses of Mobius, this is the only layer you need.  All of the parameters you want to use are set as session defaults and shared by all tracks.  There are no other layers to think about.
 
@@ -78,26 +83,62 @@ A dialog pops up where you enter a name for the overlay.  Like presets, all over
 
 Once youu have defined some overlays, clicking on the name of one of them in the table will display a *parameter tree* in the center and a *parameter form* on the right.
 
-[image - simple overlays]
+![Full Overlay Window](/docs/images/overlays-full.png "A whole bunch of overlays")
 
-Like the *Edit Session* window, clicking on a cataetory name in the parameter tree will display a form containing parameters in that category, but only if they are installed in the overlay.  If you do not see a category form, it means the overlay does not contain any parameters from that category.  To add parameters click and drag parameter names from the tree onto the form area.  You then see fields being added to the form for each parameter you drag over.  Once the form contains parameter fields you can change their values.
+Like the *Edit Session* window, clicking on a category name in the parameter tree will display a form containing parameters in that category, but only if they are included in the overlay.  If you do not see a category form, it means the overlay does not contain any parameters from that category.
+
+**NOTE WELL:** Parameter forms in overlays do not behave the same as parameter forms in the session editor.  Overlay forms are "sparse" meaning they will only show the parameters included in the overlay.  This is becaues they exist independently of any sessions, and to not know how they are going to be used so they won't show darkened parameter labels for defaulted parameters.  Initially all parameter forms in a new overlay will be empty.
+
+To add parameters to an overlay, click and drag parameter names from the tree onto the form area.  You then see fields being added to the form for each parameter you drag over.  Once the form contains parameter fields you can change their values.
 
 If you decide you no longer want to include a parameter in an overlay, click on the parameter label in the form and drag it onto the tree area.  The parameter will be removed from the form.
 
-As you click on overlay names in the table on the left, the forms will change to show only those parameters found in the selected overlay.  If you right click on an overlay name, a menu is displayed allowing you to copy, rename, or delete the overlay.
+As you click on overlay names in the table on the left, the forms will change to show only those parameters found in the selected overlay.
 
-[image overlay action menu]
+### Overlay Table Menu
 
-#### Overlays converted from Presets
+If you right click on an overlay name, a menu is displayed allowing you to copy, rename, or delete the overlay.
 
-Overlays that were created by converting presets from a previous installation will have many parameters in them.
-
-[image overlay preset]
-
-It is likely you do not need all of the parameters that are contained in these
-converted overlays.  You can remove parameters by clicking on their label and dragging them over to the tree area.
+![Overlays Menu](/docs/images/overlays-menu.png)
 
 ### Activating Overlays
 
-Read this article for an example of having markdown images with captions
-https://sebastiandedeyne.com/captioned-images-with-markdown-render-hooks-in-hugo/
+In order to use overlays, they must be *activated*.  There are two ways to do this, either by selecting
+them in the session editor which makes them permanent, or by selecting them at runtime using the main
+menu or with bindings.
+
+To specify a track overlay in the session, select a track from the track table and click on the *Overlay* category in the tree view.
+
+![Track Overlay](/docs/images/overlays-session-track.png)
+
+The *Track Overlay* label will start out with dark text meaning this track does not override the
+session default.  Click on it so that it turns bright, and select an overlay.
+
+For older Mobius users, what is happening here is equivalent to what previous versions of Mobius
+did in the *Track Setup* window by selecting a *Track Preset*.
+
+If you want all tracks to share the same overlay, a similar thing can be done in the *Default Parameters*
+tab of the session editor.  The track overlay you select here will be used by all tracks unless
+they have a track-specific override.  This is equivalent to what previous versions of Mobius
+did in the *Track Setup* window by selecting a *Default Preset*.
+
+Temporary track overlays can be selected from the main menu.
+
+![Overlays Menu](/docs/images/overlays-main-menu.png)
+
+When you select an overlay from the menu, it will only be sent to the track that currently has focus,
+the track with the white box around it in the UI.  Note that unlike the old Preset menu, there is an item
+at the top named "[None]".  When you select this item, it removes any overlay that was previously selected
+for this track.  Unlike Presets, it is permissible for a track to use *NO* overlays.
+
+Finally a temporary track overlay can be activated using bindings.   In the bindings window select
+the tab named *Configurations*.  You will see the names of all defined overlays and sessions in the
+list box.  Select an overlay and set the trigger you would like to associate with it as usual.
+
+![Overlays Menu](/docs/images/overlays-bindings.png)
+
+Once you have created a binding to an overlay, it can be activated with one MIDI or keyboard button press
+rather than interacting with the UI menus or session editor windows.
+
+**NOTE WELL:**  Overlays selected from the main menu or with bindings are **temporary** and will be removed
+when the track is reset using either the *Track Reset* or *Global Reset* functions.   After the track is reset, the track will revert to using using the overlay defined in the session (if any).
