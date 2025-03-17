@@ -149,7 +149,13 @@ ParameterForm* OverlayTreeForms::parameterFormCollectionCreate(juce::String form
 ParameterForm* OverlayTreeForms::parameterFormCollectionCreateFlat()
 {
     ParameterForm* form = new ParameterForm();
-    
+
+    // important to set these before we start adding fields
+    // allow fields to gbe dragged out
+    form->setDraggable(true);
+    // allow symbols to be dragged in
+    form->setListener(this);
+        
     // Each outer category becomes a section header
     SymbolTreeItem* root = tree.getRoot();
     for (int i = 0 ; i < root->getNumSubItems() ; i++) {
@@ -165,11 +171,6 @@ ParameterForm* OverlayTreeForms::parameterFormCollectionCreateFlat()
         }
     }
     
-    // allow fields to gbe dragged out
-    form->setDraggable(true);
-    // allow symbols to be dragged in
-    form->setListener(this);
-        
     return form;
 }
 

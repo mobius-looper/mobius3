@@ -162,9 +162,37 @@ void ParameterFormCollection::add(juce::String formName, ParameterForm* form)
     }
 }
 
+void ParameterFormCollection::addFlat(ParameterForm* form)
+{
+    if (form == nullptr) {
+        Trace(1, "ParameterFormCollection::addFLat Missing form");
+    }
+    else if (form == flatForm.get()) {
+        Trace(1, "ParameterFormCollection::addFLat Already added");
+    }
+    else {
+        if (flatForm != nullptr) {
+            Trace(1, "ParameterFormCollection::addFLat Already have a flat form");
+            removeChildComponent(flatForm.get());
+        }
+        flatForm.reset(form);
+        addChildComponent(form);
+        form->setBounds(getLocalBounds());
+        // trouble getting this fleshed out dynamically
+        form->resized();
+
+        if (!flatStyle)
+          form->setVisible(true);
+        
+    }
+}
+
 ParameterForm* ParameterFormCollection::getCurrentForm()
 {
-    return currentForm;
+    if (flatStyle)
+      return flatForm.get();
+    else
+      return currentForm;
 }
 
 void ParameterFormCollection::show(juce::String formName)
@@ -175,8 +203,7 @@ void ParameterFormCollection::show(juce::String formName)
             if (form == nullptr)
               Trace(1, "ParameterFormCollection: Flat form not created");
             else {
-                addChildComponent(form);
-                flatForm.reset(form);
+                addFlat(form);
             }
         }
         if (flatForm != nullptr)

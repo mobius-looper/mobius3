@@ -33,8 +33,6 @@ class ParameterFormCollection : public juce::Component
     void initialize(class Factory* f, class ValueSet* values);
     void setFlatStyle(bool b);
     
-    void add(juce::String formName, class ParameterForm* form);
-    
     // may call back to the factory if the form was not found
     void show(juce::String formName);
     ParameterForm* getCurrentForm();
@@ -60,5 +58,7 @@ class ParameterFormCollection : public juce::Component
     juce::HashMap<juce::String,class ParameterForm*> formTable;
     class ParameterForm* currentForm = nullptr;
     
+    void add(juce::String formName, class ParameterForm* form);
+    void addFlat(class ParameterForm* form);
 };
 
