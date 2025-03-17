@@ -43,11 +43,8 @@ rclone copy docs mobiuslooper:public_html/docs
 To get the table of contents on the main documentation page
 rclone copy documentation mobiuslooper:public_html/
 
-
-
-
-
-
+For the documentation, it is more likely that "clone" is better than "copy" so we can remove
+docs and images as well as add them but still risky.
 
 
 ----------------------------------------------------------------------
