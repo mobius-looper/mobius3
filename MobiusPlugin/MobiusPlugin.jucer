@@ -332,6 +332,9 @@
           <FILE id="wljLAb" name="CustomEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/script/CustomEditor.cpp"/>
           <FILE id="CUY225" name="CustomEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/script/CustomEditor.h"/>
+          <FILE id="EPZVAt" name="MclConsole.cpp" compile="1" resource="0" file="../Mobius/Source/ui/script/MclConsole.cpp"/>
+          <FILE id="yL4QNH" name="MclConsole.h" compile="0" resource="0" file="../Mobius/Source/ui/script/MclConsole.h"/>
+          <FILE id="m4UoDu" name="MclPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/script/MclPanel.h"/>
           <FILE id="bz3F27" name="MobiusConsole.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/script/MobiusConsole.cpp"/>
           <FILE id="mdev24" name="MobiusConsole.h" compile="0" resource="0" file="../Mobius/Source/ui/script/MobiusConsole.h"/>
