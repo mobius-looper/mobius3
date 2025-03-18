@@ -59,6 +59,7 @@
 #include "../../util/List.h"
 #include "../../model/UIConfig.h"
 #include "../../model/Symbol.h"
+#include "../../model/ParameterProperties.h"
 #include "../../Supervisor.h"
 
 #include "DisplayEditor.h"
@@ -343,8 +344,16 @@ void DisplayEditor::initParameterSelector(MultiSelectDrag* multi, UIConfig* conf
     else {
         // fall back to all of them, less easy to navigate but it's a start
         for (auto symbol : supervisor->getSymbols()->getSymbols()) {
-            if (symbol->behavior == BehaviorParameter)
-              allowed.add(symbol->getDisplayName());
+
+            // make it like BindingTargetSelector and only show parameters that
+            // can be bound, there is a lot of noise in here with filtered parameters
+            // and things not meant for direct interactive control
+            //if (symbol->behavior == BehaviorParameter) {
+            if (symbol->parameterProperties != nullptr &&
+                !symbol->parameterProperties->noBinding) {
+
+                allowed.add(symbol->getDisplayName());
+            }
         }
     }
 

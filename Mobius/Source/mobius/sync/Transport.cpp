@@ -379,6 +379,10 @@ bool Transport::doAction(UIAction* a)
             userStart();
             break;
 
+        case FuncTransportTap:
+            userTap();
+            break;
+
         default: handled = false; break;
     }
 
@@ -698,6 +702,64 @@ void Transport::userSetTempoDuration(int millis)
     }
     else {
         Trace(1, "Transport::userSetTempoDuration Duration out of range %d", millis);
+    }
+}
+
+/**
+ * Here via the FuncTransportTap function.
+ * Tap tempo was originally implemented in the TransportElement which measured the
+ * tap distance, calculated a tempo, and then sent that down with an action
+ * on ParamTransportTempo.
+ *
+ * But this really needs to be a bindable function handled down here so the user can
+ * have a tap-tempo MIDI button.
+ */
+void Transport::userTap()
+{
+    if (tapStart == 0) {
+        tapStart = juce::Time::getMillisecondCounter();
+    }
+    else {
+        int tapEnd = juce::Time::getMillisecondCounter();
+
+        bool tempoMethod = false;
+        if (tempoMethod) {
+            float ftempo = 60000.0f / (float)(tapEnd - tapStart);
+
+            // TransportElement would convert this to a 100x int since
+            // UIAction can't do floats and send it down through ParamTransportTempo
+            
+            /*
+            // sigh, UIAtion can't convey a full float yet, have to bump it up
+            // and truncate to two decimal places
+            int itempo = (int)(ftempo * 100);
+
+            UIAction a;
+            a.symbol = provider->getSymbols()->getSymbol(ParamTransportTempo);
+            a.value = itempo;
+            provider->doAction(&a);
+            */
+            userSetTempo(ftempo);
+        }
+        else {
+            // length method
+            // mostly just for testing, though this might be useful?
+            int millis = tapEnd - tapStart;
+
+            // TransportElement would send this down via ParamTransportLength
+            /*
+            UIAction a;
+            a.symbol = provider->getSymbols()->getSymbol(ParamTransportLength);
+            a.value = millis;
+            provider->doAction(&a);
+            */
+
+            // !! if the Transport is locked to a Master track, this should be ignored
+            userSetTempoDuration(millis);
+        }
+
+        // reset this for next time
+        tapStart = 0;
     }
 }
 

@@ -18,6 +18,7 @@ Once those models are fully converted, these symbols can be removed.
             mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="Backward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="Bounce" tree='Utility'/>
+  <!-- this one needs work before it can be visible -->
   <Function name="Checkpoint" mayFocus='true' mayCancelMute='true' tree='Utility'
             options='noBinding'/>
   <Function name="Clear" mayFocus='true' mayCancelMute='true' tree='Recording'/>
@@ -69,6 +70,7 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="Realign" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Track'/>
   <Function name="Record" sustainable='true' longPressable='true' longHelp='Long press becomes Reset' mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="Redo" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Track'/>
+  <!-- this one needs work, either fix it or get rid of it -->
   <Function name="Rehearse" sustainable='true' mayFocus='true' mayCancelMute='true'
             tree='Recording' options='noBinding'/>
   <Function name="Replace" sustainable='true' mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Recording'/>
@@ -136,6 +138,7 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="WindowEndBackward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="WindowEndForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
 
+  <!-- why aren't the next two visible? -->
   <Function name="UpCycle" mayFocus='true' tree='MIDI' options='noBinding'/>
   <Function name="DownCycle" mayFocus='true' tree='MIDI' options='noBinding'/>
   <Function name="SetCycles" tree='MIDI' options='noBinding'/>
@@ -153,6 +156,9 @@ Once those models are fully converted, these symbols can be removed.
   <!-- new one for MIDI structure dumping -->
   <Function name="Dump" tree='Utility'/>
 
+  <!-- not sure where this one should go -->
+  <Function name="SamplePlay" tree='Utility'/>
+
   <!-- MIDI specific -->
 
   <Function name="MidiResize" midi='true' mayFocus='true'  tree='MIDI'/>
@@ -161,6 +167,7 @@ Once those models are fully converted, these symbols can be removed.
 
   <Function name='TransportStart' level='kernel' tree='Transport'/>
   <Function name='TransportStop' level='kernel' tree='Transport'/>
+  <Function name='TransportTap' level='kernel' tree='Transport'/>
   <Function name="SyncMasterTrack" level='kernel' tree='Transport'/>
   <Function name="SyncMasterTransport" level='kernel' tree='Transport'/>
 

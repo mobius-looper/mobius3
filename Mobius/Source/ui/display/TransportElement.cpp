@@ -292,6 +292,23 @@ void TransportElement::paint(juce::Graphics& g)
     //g.fillRect(0, 0, getWidth(), getHeight());
 }
 
+/**
+ * There are two ways this can work.
+ *
+ * 1) measure the tap distance and calculate the tempo in the UI layer
+ *    then send it down with ParamTransportTempo
+ *
+ * 2) send FuncTransportTap and let the engine do the calculations
+ *
+ * FuncTransportTap is what is most likely going to be used in practice since
+ * it can be bound to a MIDI footswitch.  Doing the calculations in the UI
+ * is in theory more accurate because we won't have the latency and quantization 
+ * involved when sending actions from the UI thread to the audio thread.
+ *
+ * It shouldn't make much detectable difference though, tap tempo is already being
+ * rounded down to a 100th but keep the original way around for reference.
+ * sync/Transport does the same calculations.
+ */
 void TransportElement::atomButtonPressed(UIAtomButton* b)
 {
     if (b == &tap) {
@@ -355,6 +372,10 @@ void TransportElement::mouseDown(const juce::MouseEvent& e)
         popup.add("Bars Per Loop...", MenuBars);
         
         popup.show();
+    }
+    else {
+        // forward back to UIElement for drag
+        UIElement::mouseDown(e);
     }
 }
 

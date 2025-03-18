@@ -129,13 +129,16 @@ void StatusElement::mouseExit(const juce::MouseEvent& e)
 
 void StatusElement::mouseDown(const juce::MouseEvent& e)
 {
-    dragger.startDraggingComponent(this, e);
-    dragging = true;
+    if (!e.mods.isRightButtonDown()) {
+        dragger.startDraggingComponent(this, e);
+        dragging = true;
+    }
 }
 
 void StatusElement::mouseDrag(const juce::MouseEvent& e)
 {
-    dragger.dragComponent(this, e, nullptr);
+    if (dragging)
+      dragger.dragComponent(this, e, nullptr);
 }
 
 void StatusElement::mouseUp(const juce::MouseEvent& e)

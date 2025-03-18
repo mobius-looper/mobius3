@@ -447,6 +447,7 @@ typedef enum {
 
     FuncTransportStart,
     FuncTransportStop,
+    FuncTransportTap,
 
     FuncSyncMasterTrack,
     FuncSyncMasterTransport,

@@ -405,11 +405,7 @@ int ParametersElement::getMin(ParameterState* ps)
  */
 void ParametersElement::mouseDown(const juce::MouseEvent& e)
 {
-    if (e.getMouseDownX() < maxNameWidth) {
-        // in the label area, let it drag
-        StatusElement::mouseDown(e);
-    }
-    else {
+    if (!e.mods.isRightButtonDown() && (e.getMouseDownX() >= maxNameWidth)) {
         int row = e.getMouseDownY() / (ParametersRowHeight + ParametersVerticalGap);
         //Trace(2, "Parameter row %d", row);
         cursor = row;
@@ -424,6 +420,10 @@ void ParametersElement::mouseDown(const juce::MouseEvent& e)
         // most have a min of zero, Subcycles is an outlier with a min of 1
         valueDragMin = getMin(ps);
         valueDragMax = getMax(ps);
+    }
+    else {
+        // in the label area, let it drag
+        StatusElement::mouseDown(e);
     }
 }
 
@@ -464,8 +464,9 @@ void ParametersElement::mouseDown(const juce::MouseEvent& e)
  */
 void ParametersElement::mouseDrag(const juce::MouseEvent& e)
 {
-    if (!valueDrag && e.getMouseDownX() < maxNameWidth)
-      StatusElement::mouseDrag(e);
+    if (!valueDrag) {
+        StatusElement::mouseDrag(e);
+    }
     else {
         juce::Point<int> offset = e.getOffsetFromDragStart();
         int unitsY = offset.getY() / 10;
@@ -494,11 +495,10 @@ void ParametersElement::mouseDrag(const juce::MouseEvent& e)
 
 void ParametersElement::mouseUp(const juce::MouseEvent& e)
 {
-    if (e.getMouseDownX() < maxNameWidth)
-      StatusElement::mouseUp(e);
-
     // wherever it is, it cancels value drag
     valueDrag = false;
+    
+    StatusElement::mouseUp(e);
 }
 
 /****************************************************************************/

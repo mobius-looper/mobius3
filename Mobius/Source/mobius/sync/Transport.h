@@ -139,6 +139,9 @@ class Transport : public SyncAnalyzer
     int bar = 0;
     int loop = 0;
 
+    // for FuncTransportTap the time of the last tap
+    int tapStart = 0;
+
     void cacheSessionParameters(bool force);
     void recalculateBeats();
     
@@ -161,6 +164,7 @@ class Transport : public SyncAnalyzer
     void userSetBeatsPerBar(int bpb);
     void userSetTempo(float tempo);
     void userSetTempoDuration(int millis);
+    void userTap();
     void userSetBarsPerLoop(int bpl);
     void userSetMidiEnabled(bool b);
     void userSetMidiClocks(bool b);

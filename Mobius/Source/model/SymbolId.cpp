@@ -434,7 +434,8 @@ SymbolDefinition SymbolDefinitions[] = {
 
     {"TransportStart", FuncTransportStart},
     {"TransportStop", FuncTransportStop},
-
+    {"TransportTap", FuncTransportTap},
+    
     // these are old names, i'd like to change them but then
     // we would need aliases or duplicate SymbolIds
     {"SyncMasterTrack", FuncSyncMasterTrack},
