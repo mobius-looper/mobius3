@@ -27,6 +27,7 @@ class MclEvaluator
     void evalAssignment(class MclSection* section, class MclAssignment* ass, class ValueSet* dest);
     void evalScopedAssignment(class MclSection* section, class Session* session, class MclAssignment* ass);
     void evalTrackName(class MclSection* section, class Session* session, class Session::Track* track, class MclAssignment* ass);
+    void evalTrackType(class MclSection* section, class Session* session, class Session::Track* track, class MclAssignment* ass);
 
     void evalBinding(class MclSection* section);
 };

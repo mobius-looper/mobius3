@@ -250,7 +250,7 @@ void MclParser::parseSessionLine(juce::StringArray& tokens, bool isOverlay)
 {
     if (tokens.size() > 0) {
         juce::String first = tokens[0];
-        if (first == MclScope::Keyword) {
+        if (first == MclScope::Keyword || first == MclScope::AltKeyword) {
             if (isOverlay) {
                 // scopes not possibe in overlays yet
                 addError("Scopes not allowed in Overlay section");
@@ -366,11 +366,17 @@ void MclParser::parseAssignment(juce::StringArray& tokens)
                             // have a treePath then it is considered global and won't be displayed
                             // in the parameter trees in the session/overlay editor
                             // if this symbol is used in mcl track scope, it is wrong since tracks
-                            // can't overrode transportTempo or things like that
+                            // can't override transportTempo or things like that
                             // would be better to be explicit about this with a scope='global'
                             // or level='track' but those aren't being defined accurately right now
-                            if (rscope->scope > 0 || trackNumber > 0)
-                              addError(juce::String("Global parameter cannot have a track override: ") + sname);
+
+                            // yes, it is in fact a bad way of doing this, trackType has no tree path
+                            // but it isn't a global
+                            // kludge it and check the name, need another flag for this or something
+                            if ((rscope->scope > 0 || trackNumber > 0) &&
+                                sname != "trackType") {
+                                addError(juce::String("Global parameter cannot have a track override: ") + sname);
+                            }
                         }
                     }
 

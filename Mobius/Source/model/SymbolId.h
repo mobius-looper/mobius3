@@ -87,9 +87,8 @@ typedef enum {
     ParamFollowCut,
     ParamFollowQuantizeLocation,
 
-    // Formerly in SetupTrack
-    
     ParamTrackName,
+    ParamTrackType,
     ParamTrackOverlay,
     ParamFocus,
     ParamMono,

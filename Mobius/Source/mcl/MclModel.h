@@ -112,6 +112,8 @@ class MclScope
   public:
 
     constexpr static const char* Keyword = "scope";
+    // ugh, scope is too weird for most people, just use this
+    constexpr static const char* AltKeyword = "track";
     
     juce::String scopeId;
 

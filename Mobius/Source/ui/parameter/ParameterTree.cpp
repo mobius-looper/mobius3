@@ -299,13 +299,20 @@ void ParameterTree::internCategories()
  * nothing in them due to exclusion options in the symbols.
  * Technically, this should traverse looking for categories more than one level deep
  * but right now the only ones of concern are at the top.
+ *
+ * Formerly just flagged them as hidden but that gets messed up if you do a search
+ * which clears the flag.  Just take them out.
  */
 void ParameterTree::hideEmptyCategories()
 {
-    for (int i = 0 ; i < root.getNumSubItems() ; i++) {
-        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(root.getSubItem(i));
+    int index = 0;
+    while (index < root.getNumSubItems()) {
+        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(root.getSubItem(index));
         if (item->getNumSubItems() == 0) {
-            item->setHidden(true);
+            root.removeSubItem(index, true);
+        }
+        else {
+            index++;
         }
     }
 }

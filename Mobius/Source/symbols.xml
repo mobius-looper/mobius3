@@ -532,6 +532,13 @@ Once those models are fully converted, these symbols can be removed.
          it were a normal parameter.  -->
     <Parameter name='trackName' type='string' options='noBinding,noDefault,noOverlay' tree='General'/>
 
+    <!-- needs to be defined as a symbol for MclEvaluator and potentially useful for scripts
+         though I don't think you should be able to set it?
+         This is actually interesting and would be a different way to set it rather than the
+         weird way Session Editor does it, but that's sensitive right now
+    -->
+    <Parameter name='trackType' values='audio,midi' options='noBinding,noDefault,noOverlay'/>
+
     <Parameter name='trackGroup' tree='General'
                options='noBinding,noDefault,dynamic,resetRetain'
                displayType='combo' displayHelper='trackGroup'/>

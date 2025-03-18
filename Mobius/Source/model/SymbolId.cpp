@@ -177,6 +177,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {"followQuantizeLocation", ParamFollowQuantizeLocation},
 
     {SessionTrackName, ParamTrackName},
+    {"trackType", ParamTrackType},
     {"trackOverlay", ParamTrackOverlay},
     {ParamNameFocus, ParamFocus},
     {ParamNameMono, ParamMono},
