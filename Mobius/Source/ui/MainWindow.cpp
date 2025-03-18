@@ -357,6 +357,9 @@ void MainWindow::mainMenuSelection(int id)
             case MainMenu::Monitor:
                 panelFactory.show(PanelFactory::Monitor);
                 break;
+            case MainMenu::MclConsole:
+                panelFactory.show(PanelFactory::MclConsole);
+                break;
                 
             case MainMenu::TraceLog:
                 panelFactory.show(PanelFactory::TraceLog);

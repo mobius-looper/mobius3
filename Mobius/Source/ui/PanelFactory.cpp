@@ -16,6 +16,7 @@
 
 #include "script/ConsolePanel.h"
 #include "script/MonitorPanel.h"
+#include "script/MclPanel.h"
 
 #include "session/SessionManagerPanel.h"
 
@@ -155,6 +156,7 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case Upgrade: panel =  new UpgradePanel(super); break;
         case Console: panel = new ConsolePanel(super); break;
         case Monitor: panel = new MonitorPanel(super); break;
+        case MclConsole: panel = new MclPanel(super); break;
         case TraceLog: panel = new TracePanel(super); break;
         default:
             Trace(1, "PanelFactory: Unknown panel id %d\n", id);

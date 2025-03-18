@@ -16,6 +16,7 @@ New documentation will be focused on new features and things that have changed s
 - [Transport](../docs/transport)
 - [Using MIDI Tracks](../docs/using-midi)
 - [Upgrading from 2.5](../docs/upgrading)
+- [Mobius Configuration Language (MCL)](../docs/mcl)
 
 ## Feature Notes
 

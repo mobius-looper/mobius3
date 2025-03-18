@@ -59,6 +59,7 @@ class PanelFactory
         // Scripts
         Console,
         Monitor,
+        MclConsole,
         
         // testing and diagnostic panels
         SymbolTable,

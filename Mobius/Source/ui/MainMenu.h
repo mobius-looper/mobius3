@@ -118,6 +118,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         ScriptEditor,
         Monitor,
         Console,
+        MclConsole,
 
         // Help
         KeyBindings,

@@ -347,7 +347,8 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(Scripts, "Script Library");
         menu.addItem(ScriptEditor, "Script Editor");
         menu.addItem(Monitor, "Script Monitor");
-        menu.addItem(Console, "Console");
+        menu.addItem(Console, "MSL Console");
+        menu.addItem(MclConsole, "MCL Console");
     }
     else if (menuIndex == menuIndexHelp)
     {
