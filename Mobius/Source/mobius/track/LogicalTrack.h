@@ -42,6 +42,9 @@ class LogicalTrack
     void prepareParameters();
     // this causes the session to be fully loaded and the BaseTracks initialized
     void loadSession();
+
+    void markDying();
+    bool isDying();
     
     Session::TrackType getType();
     int getSessionId();

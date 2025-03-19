@@ -34,15 +34,22 @@ Session* Producer::readStartupSession()
     juce::String name = sys->getStartupSession();
 
     if (name.length() > 0) {
-        session = clerk->readSession(name, errors);
-        // clerk does enough trace, don't need to add more
+        if (clerk->sessionExists(name))
+          session = clerk->readSession(name, errors);
+        else {
+            // make it clear what happened
+            supervisor->alert(juce::String("Startup session not found: ") + name);
+            // remove this so it doesn't happen again
+            sys->setStartupSession("");
+            supervisor->updateSystemConfig();
+        }
     }
 
     if (session == nullptr)
       session = clerk->readDefaultSession(errors);
 
-    // Clerk returned a dummy Session if the library was corrupt
-    // do something about startup errors...
+    if (errors.size() > 0)
+      supervisor->alert(errors);
     
     return session;
 }
@@ -229,8 +236,13 @@ Producer::Result Producer::deleteSession(juce::String name)
 Session* Producer::readSession(juce::String name)
 {
     juce::StringArray errors;
-    Session* session = clerk->readSession(name, errors);
+    Session* session = nullptr;
+    if (clerk->sessionExists(name))
+      session = clerk->readSession(name, errors);
+
+    // figure out how results should work
     (void)errors;
+    
     return session;
 }
 
@@ -244,7 +256,12 @@ Producer::Result Producer::validateSessionName(juce::String name)
 Producer::Result Producer::writeSession(Session* s)
 {
     Result result;
-    clerk->saveSession(s, result.errors);
+
+    if (clerk->sessionExists(s->getName()))
+      clerk->saveSession(s, result.errors);
+    else
+      clerk->createSession(s, result.errors);
+    
     return result;
 }
 

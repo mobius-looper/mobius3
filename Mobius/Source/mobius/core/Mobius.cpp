@@ -518,7 +518,10 @@ void Mobius::configureTracks(juce::Array<MobiusLooperTrack*>& trackdefs)
     // this is now how Session changes get propagated to core tracks
     for (int i = 0 ; i < mTrackCount ; i++) {
         Track* t = mTracks[i];
-        t->refreshParameters();
+        // if this is the dummy track created just so we have one, then
+        // don't ask it to refresh since the LogicalTrack won't exist
+        if (t->getLogicalTrack() != nullptr)
+          t->refreshParameters();
     }
 }
 

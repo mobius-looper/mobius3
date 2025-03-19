@@ -156,6 +156,7 @@ void TrackManager::configureTracks(Session* ses)
     while (tracks.size() > 0) {
         LogicalTrack* lt = tracks.removeAndReturn(0);
         oldTracks.add(lt);
+        
     }
 
     bool strictMode = false;    // keep this off unless it becomes interesting
@@ -222,6 +223,11 @@ void TrackManager::configureTracks(Session* ses)
     for (auto track : tracks) {
         track->prepareParameters();
     }
+
+    // remove deleted track numbers before calling Mobius as a signal
+    // that these tracks are no longer valid
+    for (auto lt : oldTracks)
+      lt->markDying();
     
     // this is how core tracks get the session updates
     configureMobiusTracks();

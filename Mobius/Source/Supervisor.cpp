@@ -1724,9 +1724,12 @@ void Supervisor::notifyAlertListeners(juce::String msg)
 
 void Supervisor::alert(juce::String msg)
 {
-    // original style
-    //alerter.alert(mainWindow.get(), msg);
-    mainWindow->alert(msg);
+    if (mainWindow != nullptr)
+      mainWindow->alert(msg);
+    else {
+        // common for early start() errors
+        addAlert(msg);
+    }
 }
 
 /**

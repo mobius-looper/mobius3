@@ -34,6 +34,7 @@
 
 #include "../sync/SyncMaster.h"
 #include "../sync/SyncEvent.h"
+#include "../track/LogicalTrack.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -1171,11 +1172,17 @@ void Synchronizer::loopRecordStop(Loop* l, Event* stop)
  * If this track is the out sync master, turn off MIDI clocks.
  * If this the track sync master, then reassign a new master.
  * This is now done by SyncMaster
+ *
+ * Kludge for track reconfiguration.   If the Logicaltrack is marked "dying"
+ * then we're doing a reset because the track is about to be deleted
+ * and attempting to do anything with it will generate log warnings.
  */
 void Synchronizer::loopReset(Loop* loop)
 {
-    int number = loop->getTrack()->getLogicalNumber();
-    mSyncMaster->notifyTrackReset(number);
+    LogicalTrack* lt = loop->getTrack()->getLogicalTrack();
+    if (lt != nullptr && !lt->isDying()) {
+        mSyncMaster->notifyTrackReset(lt->getNumber());
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

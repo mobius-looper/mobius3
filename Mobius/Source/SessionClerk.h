@@ -44,6 +44,7 @@ class SessionClerk
     void saveSession(Session* s, juce::StringArray& errors);
 
     // Producer Interface
+    bool sessionExists(juce::String name);
     void createSession(Session* neu, juce::StringArray& errors);
     void deleteSession(juce::String name, juce::StringArray& errors);
     void copySession(juce::String name, juce::String newName, juce::StringArray& errors);

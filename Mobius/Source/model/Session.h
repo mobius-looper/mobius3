@@ -46,7 +46,7 @@ class Session
          */
         int id = 0;
 
-        TrackType type;
+        TrackType type = TypeAudio;
 
         // should this be a first-class member or inside the value set?
         juce::String name;

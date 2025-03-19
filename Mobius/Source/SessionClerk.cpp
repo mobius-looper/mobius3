@@ -398,6 +398,12 @@ void SessionClerk::writeSession(Folder* f, Session* s, juce::StringArray& errors
 //
 //////////////////////////////////////////////////////////////////////
 
+bool SessionClerk::sessionExists(juce::String name)
+{
+    Folder* f = findFolder(name);
+    return (f != nullptr);
+}
+
 /**
  * This one is special, we don't bail if it doesn't exist.
  */

@@ -201,6 +201,10 @@ void MclEvaluator::evalSession(MclSection* section)
                     if (ass->name == "trackName") {
                         evalTrackName(section, session, track, ass);
                     }
+                    else if (ass->name == "trackType") {
+                        // also special
+                        evalTrackType(section, session, track, ass);
+                    }
                     else if (ass->scope == 0) {
                         if (ass->remove && scope->scope == 0) {
                             // can't remove a global
@@ -379,6 +383,55 @@ void MclEvaluator::evalTrackName(MclSection* section, Session* session, Session:
             // really need some name constraints enforcement somewhere
             track->name = ass->value.getString();
             section->modifications++;
+        }
+    }
+}
+
+/**
+ * Track type also isn't in the ValueSet.
+ * Changing types is potentially dangerous, may want more safeguards around this.
+ */
+void MclEvaluator::evalTrackType(MclSection* section, Session* session, Session::Track* track, MclAssignment* ass)
+{
+    // woah, scope prefixes seem really weird for track types, I'm starting to hate them
+    if (ass->scope > 0) {
+        track = session->getTrackById(ass->scope);
+        if (track == nullptr) {
+            addError(juce::String("Track number out of range: ") + juce::String(ass->scope));
+        }
+    }
+    else if (track == nullptr) {
+        addError(juce::String("trackName is not a default parameter"));
+    }
+
+    if (track != nullptr) {
+        if (ass->remove) {
+            // you can't take the type away, could error or just ignore it
+            section->ignores++;
+        }
+        else {
+            juce::String typeName = juce::String(ass->value.getString());
+            if (typeName.equalsIgnoreCase("audio")) {
+                if (track->type == Session::TypeAudio)
+                  section->ignores++;
+                else {
+                    // changing from MIDI to Audio can only happen if this was
+                    // an existing track, it is unusual to change types, warn for a bit
+                    Trace(2, "MclEvaluator: Warning: Changing track type");
+                    track->type = Session::TypeAudio;
+                }
+            }
+            else if (typeName.equalsIgnoreCase("midi")) {
+                if (track->type == Session::TypeMidi)
+                  section->ignores++;
+                else {
+                    // since the construction default is Audio we can't really warn here
+                    // about changing types without knowing whether we just now created
+                    // this track or not
+                    track->type = Session::TypeMidi;
+                    section->modifications++;
+                }
+            }
         }
     }
 }

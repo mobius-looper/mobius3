@@ -58,6 +58,20 @@ LogicalTrack::~LogicalTrack()
 }
 
 /**
+ * Stupid flag to prevent Mobius core from trying to do anything
+ * with it while we're in the process of deleting them.
+ */
+void LogicalTrack::markDying()
+{
+    number = 0;
+}
+
+bool LogicalTrack::isDying()
+{
+    return (number == 0);
+}
+
+/**
  * Assigning the session just happens during track organization
  * by TrackManager.  You do not ACT on it yet.  This only happens
  * when tracks are created.
