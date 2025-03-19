@@ -48,7 +48,8 @@ class SessionClerk
     void deleteSession(juce::String name, juce::StringArray& errors);
     void copySession(juce::String name, juce::String newName, juce::StringArray& errors);
     void renameSession(juce::String name, juce::String newName, juce::StringArray& errors);
-    
+    bool validateFileName(juce::String name, juce::StringArray& errors);
+
   private:
 
     class Provider* provider = nullptr;
@@ -71,7 +72,6 @@ class SessionClerk
     
     void addError(juce::StringArray& errors, juce::String msg);
     
-    bool validateFileName(juce::String name, juce::StringArray& errors);
     Folder* createFolder(juce::String name, juce::StringArray& errors);
     void removeFolder(Folder* f);
 

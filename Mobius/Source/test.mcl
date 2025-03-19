@@ -1,6 +1,8 @@
-session
-scope 2
-activeLayout foo
+session gorb
+track 1
+track 2
+trackType midi
+
 
 
 

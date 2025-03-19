@@ -170,6 +170,32 @@
             name="TapTempo" added="2147483647"/>
     </Files>
   </Machine>
+  <Machine name="Baldr">
+    <Files>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\converted.msl" name="MainTap"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\exporttest.msl" name="exporttest"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\inittest.msl" name="inittest"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\jefftest.msl" name="jefftest"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\namespaces.msl" name="test:Namespace Testing"
+            added="2147483647" library="1"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\namespaces2.msl" name="asdf:Namespace2"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\persistence.msl" name="persistence"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\rc505.msl" name="rc505:RC505 Library"
+            added="2147483647" library="1"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\taptempo.msl" name="TapTempo"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\vartest1.msl" name="vartest1"
+            added="2147483647"/>
+    </Files>
+  </Machine>
   <MslState>
     <Unit id="c:\dev\mobius3\Mobius\Source\scripts\persistence.msl">
       <Variable name="pvar" value="10" type="int"/>

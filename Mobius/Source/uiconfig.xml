@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig windowWidth="1248" windowHeight="790" activeButtonSet="Default"
+<UIConfig windowWidth="1101" windowHeight="847" activeButtonSet="Default"
           activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="172" height="40"/>
@@ -10,7 +10,7 @@
     <Element name="FloatingStripElement" x="1120" y="44" width="12" height="12"/>
     <Element name="ParametersElement" x="20" y="22" width="288" height="177"/>
     <Element name="AudioMeterElement" x="456" y="259"/>
-    <Element name="LayerElement" x="448" y="300" width="246" height="63"/>
+    <Element name="LayerElement" x="452" y="259" width="246" height="63"/>
     <Element name="AlertElement" x="384" y="365" width="666" height="46"/>
     <Element name="MinorModesElement" x="437" y="57"/>
     <Element name="TempoElement" x="429" y="31" width="325"/>
@@ -117,7 +117,6 @@
     <Button action="Insert"/>
     <Button action="Undo"/>
     <Button action="Redo"/>
-    <Button action="Checkpoint"/>
     <Button action="Replace"/>
     <Button action="Dump"/>
     <Button action="Mute"/>
@@ -125,39 +124,19 @@
     <Button action="SyncMasterTrack"/>
     <Button action="Start"/>
     <Button action="Stop"/>
-    <Button action="Pause"/>
     <Button action="GlobalMute"/>
     <Button action="GlobalPause"/>
-    <Button action="Release Me"/>
-    <Button action="Repeat Me"/>
-    <Button action="Repeat and Sustain Me"/>
-    <Button action="vartest1"/>
-    <Button action="vartest2"/>
-    <Button action="varquery"/>
-    <Button action="NextTrack"/>
-    <Button action="PrevTrack"/>
     <Button action="MainTap"/>
     <Button action="Play"/>
-    <Button action="TapTempo"/>
-    <Button action="SyncMasterMidi"/>
-    <Button action="Checkpoint"/>
     <Button action="AutoRecord"/>
-    <Button action="TrackCopyTiming"/>
-    <Button action="Overdub" scope="A"/>
-    <Button action="Record/OverDub/Reset"/>
     <Button action="Global Stop"/>
-    <Button action="testmos"/>
-    <Button action="midi-halfspeed"/>
-    <Button action="MidiDoublespeed"/>
-    <Button action="nexttrack"/>
-    <Button action="TransportTap"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>
     <Property name="alertDuration" value="5"/>
     <Property name="alertHeight" value="30"/>
     <Property name="buttonHeight" value="25"/>
-    <Property name="mainWindow" value="0,0,1248,790"/>
+    <Property name="mainWindow" value="0,0,1101,847"/>
     <Property name="radarDiameter" value="40"/>
     <Property name="scriptWindow" value="219,251,740,900"/>
     <Property name="symbolTreeFavorites" value="Record,AutoRecord,SpeedCancel"/>

@@ -40,7 +40,7 @@ class Producer
     void saveSession(class Session* s);
     Session* changeSession(juce::String name);
 
-    // Manu Handlers
+    // Menu Handlers
     void getRecentSessions(juce::StringArray& names);
     Session* changeSession(int ordinal);
 
@@ -54,6 +54,11 @@ class Producer
     Result renameSession(juce::String name, juce::String newName);
     Result deleteSession(juce::String name);
 
+    // MCL Interface
+    class Session* readSession(juce::String name);
+    Result validateSessionName(juce::String name);
+    Result writeSession(Session* s);
+    
   private:
 
     class Supervisor* supervisor = nullptr;

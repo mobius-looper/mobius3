@@ -20,6 +20,7 @@ class MclEvaluator
     class MclResult* result = nullptr;
     
     void addError(juce::String err);
+    void addErrors(juce::StringArray& errors);
     bool hasErrors();
     void addResult(class MclSection* section);
     void evalSession(class MclSection* section);

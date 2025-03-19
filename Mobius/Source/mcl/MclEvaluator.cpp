@@ -11,6 +11,7 @@
 #include "../model/old/Structure.h"
 #include "../model/old/Binding.h"
 #include "../Provider.h"
+#include "../Producer.h"
 
 #include "MclModel.h"
 #include "MclResult.h"
@@ -113,6 +114,12 @@ void MclEvaluator::addError(juce::String err)
     result->errors.add(err);
 }
 
+void MclEvaluator::addErrors(juce::StringArray& errors)
+{
+    for (auto err : errors)
+      result->errors.add(err);
+}
+
 bool MclEvaluator::hasErrors()
 {
     return result->errors.size() > 0;
@@ -126,19 +133,42 @@ bool MclEvaluator::hasErrors()
 
 void MclEvaluator::evalSession(MclSection* section)
 {
-    Session* session = provider->getSession();
+    Session* session = nullptr;
+    bool offline = false;
+    Session* current = provider->getSession();
+    
+    if (section->name.length() == 0 ||
+        section->name == current->getName() ||
+        section->name == "active") {
 
-    // doing this on the live session
-    // what SessionEditor does is save to a copy of the Session then
-    // replace the ValueSets in the master session
-    // since we do have a few failure conditions here, consider that
-
-    if (section->name.length() == 0 || section->name == session->getName()) {
+        // doing this on the live session
+        // what SessionEditor does is save to a copy of the Session then
+        // replace the ValueSets in the master session
+        // since we do have a few failure conditions here, consider that
+        session = current;
 
         // if we defaulted to the active session
         // put the name in the section so the results assembler knows we went there
         section->name = session->getName();
+    }
+    else {
+        offline = true;
+        Producer* pro = provider->getProducer();
+        session = pro->readSession(section->name);
+        if (session == nullptr) {
+            Producer::Result pres = pro->validateSessionName(section->name);
+            if (pres.errors.size() > 0) {
+                addErrors(pres.errors);
+            }
+            else {
+                session = new Session();
+                session->setName(section->name);
+            }
+        }
+    }
 
+    if (session != nullptr) {
+        
         for (auto scope : section->scopes) {
 
             ValueSet* dest = nullptr;
@@ -149,15 +179,19 @@ void MclEvaluator::evalSession(MclSection* section)
             }
             else {
                 track = session->getTrackById(scope->scope);
+                if (track == nullptr) {
+                    // going to need some options to avoid creating new tracks if they
+                    // enter some bonkers numbers
+                    if (scope->scope > (session->getTrackCount() + 1))
+                      addError(juce::String("Track number out of range: ") + juce::String(scope->scope));
+                    else {
+                        // it defaults to audio which may be changed later
+                        track = new Session::Track();
+                        session->add(track);
+                    }
+                }
                 if (track != nullptr)
                   dest = track->ensureParameters();
-                else {
-                    // the number used is not valid
-                    // there isn't a way to define new tracks with MCL
-                    // would be nice but it requires the track type
-                    // explore
-                    addError(juce::String("Track number out of range: ") + juce::String(scope->scope));
-                }
             }
 
             if (dest != nullptr) {
@@ -195,14 +229,21 @@ void MclEvaluator::evalSession(MclSection* section)
             if (hasErrors()) break;
         }
     }
-    else {
-        // offline sessions are handled differently
-        addError("Modification of offline sessions not implemented");
+
+    if (!hasErrors() && session != nullptr && 
+        (section->additions > 0 || section->modifications > 0 || section->removals > 0)) {
+        if (!offline) {
+            provider->mclSessionUpdated();
+        }
+        else {
+            Producer* pro = provider->getProducer();
+            Producer::Result pres = pro->writeSession(session);
+            addErrors(pres.errors);
+        }
     }
 
-    if (section->additions > 0 || section->modifications > 0 || section->removals > 0) {
-        provider->mclSessionUpdated();
-    }
+    if (offline)
+      delete session;
 }
 
 void MclEvaluator::evalOverlay(MclSection* section)

@@ -1,3 +1,8 @@
+// NOT USED
+// This was an aborted attempt at making an interactive MCL interpreter
+// It requires some major distruption to the current batch-oriented parser/evaluator
+// and in retrospect offers very little
+
 /**
  * Parse state for batch and interfactive MCL evaluation.
  */
@@ -13,15 +18,12 @@ class MclSession
     MclSession(class Provider* p);
     ~MclSession();
     
-    MclScript* parse(juce::String src, class MclResult& result);
+    bool eval(juce::String src);
 
   private:
 
     class Provider* provider = nullptr;
     class MclResult* result = nullptr;
-    
-    int lineNumber = 1;
-    juce::String line;
     
     std::unique_ptr<class MclSection> currentSection;
 

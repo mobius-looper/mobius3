@@ -216,6 +216,38 @@ Producer::Result Producer::deleteSession(juce::String name)
     return result;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// MCL Interface
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Potentially need to return errors along with nullness to
+ * indicate it wasn't found?
+ */
+Session* Producer::readSession(juce::String name)
+{
+    juce::StringArray errors;
+    Session* session = clerk->readSession(name, errors);
+    (void)errors;
+    return session;
+}
+
+Producer::Result Producer::validateSessionName(juce::String name)
+{
+    Result result;
+    clerk->validateFileName(name, result.errors);
+    return result;
+}
+
+Producer::Result Producer::writeSession(Session* s)
+{
+    Result result;
+    clerk->saveSession(s, result.errors);
+    return result;
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

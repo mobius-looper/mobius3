@@ -85,9 +85,27 @@
 #include "../script/MslValue.h"
 
 /**
+ * Base class for all MCL statements.
+ */
+class MclStatement
+{
+  public:
+
+    virtual class MclSection* getSection() {return nullptr;}
+    virtual bool isSection() {return getSection() != nullptr;}
+
+    virtual class MclScope* getScope() {return nullptr;}
+    virtual bool isScope() {return getScope() != nullptr;}
+    
+    virtual class MclAssignment* getAssignment() {return nullptr;}
+    virtual bool isAssignment() {return getAssignment() != nullptr;}
+    
+};
+
+/**
  * A single parameter assignment.
  */
-class MclAssignment
+class MclAssignment : public MclStatement
 {
   public:
 
@@ -101,13 +119,14 @@ class MclAssignment
     MslValue value;
     int scope = 0;
     bool remove = false;
-    
+
+    MclAssignment* getAssignment() override {return this;}
 };
 
 /**
  * Runnimg scope within an object.
  */
-class MclScope
+class MclScope : public MclStatement
 {
   public:
 
@@ -126,12 +145,14 @@ class MclScope
         assignments.add(a);
     }
     
+    MclScope* getScope() override {return this;}
+    
 };
 
 /**
  * Object scope
  */
-class MclSection
+class MclSection : public MclStatement
 {
   public:
 
@@ -183,6 +204,7 @@ class MclSection
         scopes.add(s);
     }
     
+    MclSection* getSection() override {return this;}
 };
 
 /**
@@ -200,7 +222,7 @@ class MclScript
     }
 
 };
-    
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
