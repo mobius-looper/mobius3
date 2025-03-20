@@ -80,5 +80,6 @@ class ParameterTree : public SymbolTree
     void hideEmptyCategories();
     void initializeSparse(class Provider* p, class ValueSet* set);
     bool isFiltered(class Symbol* s, class ParameterProperties* props);
-    
+    void ordinate();
+    void ordinate(SymbolTreeItem* node);
 };

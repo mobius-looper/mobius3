@@ -17,6 +17,9 @@ class SymbolTreeItem : public juce::TreeViewItem
     void setName(juce::String s);
     juce::String getName();
 
+    void setOrdinal(int i);
+    int getOrdinal();
+
     void setDragDescription(juce::String s);
     
     void setSymbol(class Symbol* s);
@@ -55,6 +58,9 @@ class SymbolTreeItem : public juce::TreeViewItem
     // but may be abbreviated
     // for interior nodes, this will be the category name
     juce::String name;
+
+    // optional number used for inserting ordered fields
+    int ordinal = 0;
 
     // when used by the Session editor, the name of the form to display
     // when this node is clicked

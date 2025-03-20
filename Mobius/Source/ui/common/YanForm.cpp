@@ -36,44 +36,41 @@ void YanForm::add(class YanField* f)
     fields.add(f);
     addAndMakeVisible(f);
 
-    if (f->isSection()) {
-        juce::Label* label = f->getLabel();
-        //label->addMouseListener(this);
-        label->setJustificationType(juce::Justification::centredLeft);
-
-        label->setFont (JuceUtil::getFontf(16.0f, juce::Font::bold));
-        // should be using this instead
-        //label->setFont (JuceUtil::getFontf(16.0f, juce::Font::bold));
-        label->setColour (juce::Label::textColourId, juce::Colours::yellow);
-
-        if (labelColor != juce::Colour())
-          label->setColour(juce::Label::textColourId, labelColor);
-
-        labels.add(label);
-        addAndMakeVisible(label);
-    }
-    else if (f->isAdjacent() && !firstOne) {
+    if (!f->isSection() && f->isAdjacent() && !firstOne) {
         // this will draw it's own label
     }
     else {
         juce::Label* label = f->getLabel();
-        //label->addMouseListener(this);
-        label->setJustificationType(juce::Justification::centredRight);
-
-        // make them look like the old Form/Fields
-        // notes say bold can make it look too think in smaller forms
-        //label->setFont (juce::Font (16.0f, juce::Font::bold));
-        label->setFont (JuceUtil::getFontf(16.0f, juce::Font::bold));
-        // should be using this instead
-        //label->setFont (JuceUtil::getFontf(16.0f, juce::Font::bold));
-        label->setColour (juce::Label::textColourId, juce::Colours::orange);
-
-        if (labelColor != juce::Colour())
-          label->setColour(juce::Label::textColourId, labelColor);
-
+        adjustLabel(f, label);
         labels.add(label);
         addAndMakeVisible(label);
     }
+}
+
+/**
+ * Set the label color and alignment depending on whether
+ * it is a section header or not.
+ */
+void YanForm::adjustLabel(YanField* field, juce::Label* label)
+{
+    label->setFont (JuceUtil::getFontf(16.0f, juce::Font::bold));
+    
+    juce::Colour color = juce::Colours::orange;
+    
+    if (field->isSection()) {
+        label->setJustificationType(juce::Justification::centredLeft);
+        color = juce::Colours::yellow;
+    }
+    else {
+        label->setJustificationType(juce::Justification::centredRight);
+    }
+    
+    // have historically allowed this to override both sections and normal fields
+    // probably wrong
+    if (labelColor != juce::Colour())
+      color = labelColor;
+    
+    label->setColour(juce::Label::textColourId, color);
 }
 
 void YanForm::addSpacer()
@@ -84,7 +81,7 @@ void YanForm::addSpacer()
 
 /**
  * This will not handle adjacent labels properly AT ALL.
- * Works well enough for current usage with DynamicParameterForm
+ * Works well enough for current usage with ParameterForms
  */
 bool YanForm::remove(YanField* f)
 {
@@ -96,6 +93,7 @@ bool YanForm::remove(YanField* f)
         labels.remove(index);
         fields.remove(index);
         removed = true;
+        forceResize();
     }
     else {
         Trace(1, "YanForm::remove Field not found");
@@ -103,6 +101,26 @@ bool YanForm::remove(YanField* f)
     return removed;
 }
 
+void YanForm::insertAfter(YanField* f, YanField* previous)
+{
+    int insertIndex = 0;
+
+    if (previous != nullptr) {
+        int index = fields.indexOf(previous);
+        if (index >= 0)
+          insertIndex = index + 1;
+    }
+    
+    fields.insert(insertIndex, f);
+    addAndMakeVisible(f);
+
+    juce::Label* label = f->getLabel();
+    adjustLabel(f, label);
+    labels.insert(insertIndex, label);
+    addAndMakeVisible(label);
+    forceResize();
+}
+ 
 int YanForm::getPreferredHeight()
 {
     int rows = 0;

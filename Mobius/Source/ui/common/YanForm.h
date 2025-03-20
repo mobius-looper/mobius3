@@ -38,12 +38,14 @@ class YanForm : public juce::Component
     int getPreferredHeight();
     int getPreferredWidth();
 
+    // surgery
+    bool remove(YanField* f);
+    void insertAfter(YanField* f, YanField* previous);
+
     // Juce 
     void resized() override;
     void forceResize();
 
-    bool remove(YanField* f);
-    
   private:
 
     // fields arranged in a single column unless adjacent
@@ -62,5 +64,6 @@ class YanForm : public juce::Component
     
     int getLabelAreaWidth();
     int getFieldAreaWidth();
+    void adjustLabel(YanField* field, juce::Label* label);
     
 };

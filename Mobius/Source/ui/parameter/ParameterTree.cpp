@@ -243,13 +243,36 @@ void ParameterTree::initializeDynamic(Provider* p)
                     // knows where it came from followed by the canonical symbol name
                     neu->setDragDescription(juce::String(DragPrefix) + s->name);
                 }
-            
+
+                // gak, this is way too ass-backwards
+                // we're letting the TreeForm guide the order of the symbols
+                // should just use that instead of doing a sorted insert
                 parent->addSubItemSorted(comparator, neu);
             }
         }
     }
 
     hideEmptyCategories();
+    ordinate();
+}
+
+/**
+ * After fleshing out the dynamic tree in a stupid way, go through and assign
+ * ordinals to the categories and leaf items for use later when inserting fields
+ * into flat forms.
+ */
+void ParameterTree::ordinate()
+{
+    ordinate(&root);
+}
+
+void ParameterTree::ordinate(SymbolTreeItem* node)
+{
+    for (int i = 0 ; i < node->getNumSubItems() ; i++) {
+        SymbolTreeItem* child = static_cast<SymbolTreeItem*>(node->getSubItem(i));
+        child->setOrdinal(i);
+        ordinate(child);
+    }
 }
 
 /**
@@ -283,6 +306,7 @@ void ParameterTree::internCategories()
 {
     juce::StringArray categories ("General", "Ports", "Midi", "Sync", "Mixer", "Follow", "Quantize", "Switch", "Functions", "Effects", "Advanced","Overlay");
 
+    int ordinal = 0;
     for (auto cat : categories) {
         SymbolTreeItem* item = root.internChild(cat);
         // this is used in static trees to identify the static form definition
@@ -291,6 +315,8 @@ void ParameterTree::internCategories()
         item->setAnnotation(cat);
         // all nodes can be clicked
         item->setNoSelect(false);
+        item->setOrdinal(ordinal);
+        ordinal++;
     }
 }
 

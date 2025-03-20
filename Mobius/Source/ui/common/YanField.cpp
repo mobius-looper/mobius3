@@ -91,6 +91,16 @@ YanField::~YanField()
 {
 }
 
+void YanField::setOrdinal(int i)
+{
+    ordinal = i;
+}
+
+int YanField::getOrdinal()
+{
+    return ordinal;
+}
+
 void YanField::setLabelListener(YanFieldLabel::Listener* l)
 {
     label.setListener(l);

@@ -202,9 +202,10 @@ void ParameterForm::addSpacer()
     form.add(s);
 }
 
-void ParameterForm::addSection(juce::String text)
+void ParameterForm::addSection(juce::String text, int ordinal)
 {
     YanSection* s = new YanSection(text);
+    s->setOrdinal(ordinal);
     others.add(s);
     form.add(s);
 }

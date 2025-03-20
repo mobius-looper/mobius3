@@ -87,6 +87,9 @@ class YanField : public juce::Component
     juce::String getDragDescription();
 
     void setTooltip(juce::String tt);
+
+    void setOrdinal(int i);
+    int getOrdinal();
     
   protected:
     
@@ -97,6 +100,7 @@ class YanField : public juce::Component
     YanFieldLabel label {this};
     bool adjacent = false;
     bool disabled = false;
+    int ordinal = 0;
     
     juce::String dragDescription;
     juce::Colour explicitLabelColor;

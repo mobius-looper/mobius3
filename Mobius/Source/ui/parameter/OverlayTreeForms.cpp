@@ -164,7 +164,7 @@ ParameterForm* OverlayTreeForms::parameterFormCollectionCreateFlat()
         gatherFields(cat, catsymbols);
 
         if (catsymbols.size() > 0) {
-            form->addSection(cat->getName());
+            form->addSection(cat->getName(), cat->getOrdinal());
             for (auto sym : catsymbols) {
                 form->add(provider, sym, values);
             }

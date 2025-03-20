@@ -80,7 +80,7 @@ class ParameterForm : public juce::Component,
      * Add a spacer or section header.
      */
     void addSpacer();
-    void addSection(juce::String title);
+    void addSection(juce::String title, int ordinal = 0);
 
     /**
      * Add form fields from a form definition.

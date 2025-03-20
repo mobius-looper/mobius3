@@ -420,6 +420,16 @@ juce::String SymbolTreeItem::getName()
     return name;
 }
 
+void SymbolTreeItem::setOrdinal(int i)
+{
+    ordinal = i;
+}
+
+int SymbolTreeItem::getOrdinal()
+{
+    return ordinal;
+}
+
 /**
  * Set this only if you want this to be a draggable tree.
  */
