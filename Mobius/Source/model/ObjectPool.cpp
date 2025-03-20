@@ -117,9 +117,12 @@ void ObjectPool::checkin(PooledObject* obj)
             // this to avoid dumping fear into the logs
             //if (obj->getPool() == nullptr)
             //Trace(2, "ObjectPool: Warning: Checking in object without a pool");
-            
-            if (obj->getPool() != this)
-              Trace(2, "ObjectPool: Warning: Checking in object from another pool");
+
+            // sigh, this one happens a lot on shutdown when MidiSequences that have been
+            // loaded into tracks get destructed by Supervisor
+            // 
+            //if (obj->getPool() != this)
+            //Trace(2, "ObjectPool: Warning: Checking in object from another pool");
 
             juce::ScopedLock lock (criticalSection);
             obj->setPoolChain(pool);

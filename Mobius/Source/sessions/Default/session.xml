@@ -44,13 +44,13 @@
       <Value name="followSize" value="true" type="bool"/>
       <Value name="followerMuteStart" value="false" type="bool"/>
       <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
-      <Value name="leaderTrack" value="1" type="int"/>
+      <Value name="leaderTrack" value="3" type="int"/>
       <Value name="leaderType" value="track" type="enum" ordinal="1"/>
       <Value name="loopCount" value="2" type="int"/>
       <Value name="midiBeatsPerBar" value="4" type="int"/>
       <Value name="midiChannelOverride" value="9" type="enum" ordinal="9"/>
       <Value name="midiOutput" value="Bome MIDI Translator 1"/>
-      <Value name="midiThru" value="true" type="bool"/>
+      <Value name="midiThru" value="false" type="bool"/>
       <Value name="outputDevice" value="Bome MIDI Translator 1"/>
       <Value name="quantize" value="off" type="enum" ordinal="0"/>
       <Value name="slaveSyncUnit" value="bar" type="enum" ordinal="1"/>
