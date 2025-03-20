@@ -31,19 +31,6 @@
 
 #include "SymbolTree.h"
 
-class ParameterTreeComparator
-{
-  public:
-
-    ParameterTreeComparator(class TreeForm* tf);
-
-    int compareElements(juce::TreeViewItem* first, juce::TreeViewItem* second);
-
-  private:
-
-    class TreeForm* form = nullptr;
-};
-
 class ParameterTree : public SymbolTree
 {
   public:
@@ -76,10 +63,28 @@ class ParameterTree : public SymbolTree
                    juce::String name, juce::String suppressPrefix);
 
     // dynamic building
-    void internCategories();
-    void hideEmptyCategories();
-    void initializeSparse(class Provider* p, class ValueSet* set);
     bool isFiltered(class Symbol* s, class ParameterProperties* props);
+    void hideEmptyCategories();
     void ordinate();
     void ordinate(SymbolTreeItem* node);
+
+    // temporary older stuff
+    void initializeDynamicOld(class Provider* p);
+    void internCategories();
+    void initializeSparse(class Provider* p, class ValueSet* set);
 };
+
+// this is used by the original dynamic tree builder which is no longer used
+class ParameterTreeComparator
+{
+  public:
+
+    ParameterTreeComparator(class TreeForm* tf);
+
+    int compareElements(juce::TreeViewItem* first, juce::TreeViewItem* second);
+
+  private:
+
+    class TreeForm* form = nullptr;
+};
+

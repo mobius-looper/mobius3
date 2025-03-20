@@ -101,7 +101,7 @@ void ParameterTree::selectFirst()
  *
  * This one requires a Provider because it needs access to the StaticConfig
  * for both the TreeNode definition, and the TreeForms it may reference since
- * the symbols in the tree nodes may come from the forms rather than the tree
+ * the symbols in the tree nodes may come from the TreeForm rather than the tree
  * definition.
  */
 void ParameterTree::initializeStatic(Provider* p, juce::String treeName)
@@ -126,6 +126,7 @@ void ParameterTree::intern(Provider* p, StaticConfig* scon, SymbolTreeItem* pare
     SymbolTreeItem* item = parent->internChild(node->name);
     treePath = treePath + node->name;
 
+    // annotation will either be the full tree path, or the form name from the node
     juce::String nodeForm = node->formName;
     if (nodeForm.length() == 0)
       item->setAnnotation(treePath);
@@ -135,19 +136,19 @@ void ParameterTree::intern(Provider* p, StaticConfig* scon, SymbolTreeItem* pare
     // all nodes can be clicked
     item->setNoSelect(false);
 
-    // first the sub-categories
+    // first the sub-categories from the tree definition
     for (auto child : node->nodes) {
         intern(p, scon, item, treePath, child);
     }
 
     // then symbols at this level
     // this is unusual and used only if you want to limit the included
-    // symbols that would otherwise be defined in the form
+    // symbols that would otherwise be defined in the TreeForm
     for (auto sname : node->symbols) {
         addSymbol(p, item, sname, "");
     }
     
-    // usually the symbol list comes from the form
+    // usually the symbol list comes from the TreeForm
     if (node->symbols.size() == 0) {
 
         juce::String formName = item->getAnnotation();
@@ -195,21 +196,192 @@ void ParameterTree::addSymbol(Provider* p, SymbolTreeItem* parent, juce::String 
 
 //////////////////////////////////////////////////////////////////////
 //
-// Dynamic Trees
+// Dynamic Trees - New Method
+//
+// This uses static TreeNode and TreeForm definitions to guide the construction
+// of each tree category.  It is much simpler than the original method
+// below and therefore better.
+//
+//////////////////////////////////////////////////////////////////////
+
+void ParameterTree::initializeDynamic(Provider* p)
+{
+    StaticConfig* scon = p->getStaticConfig();
+    TreeNode* treedef = scon->getTree("sessionCategory");
+
+    if (treedef == nullptr)
+      Trace(1, "ParameterTree: Missing sessionCategory tree definition");
+    else {
+        for (auto node : treedef->nodes) {
+
+            // category node
+            SymbolTreeItem* category = root.internChild(node->name);
+            // this is used in static trees to identify the static form definition
+            // for dynamic trees, we follow the same convention but since this is just
+            // the name we don't need it
+            category->setAnnotation(node->name);
+            // all nodes can be clicked
+            category->setNoSelect(false);
+
+            juce::String formName = juce::String("sessionCategory") + node->name;
+            TreeForm* form = scon->getTreeForm(formName);
+            if (form == nullptr)
+              Trace(1, "ParameterTree: Missing form definition %s", formName.toUTF8());
+            else {
+                for (auto name : form->symbols) {
+                    Symbol* s = p->getSymbols()->find(name);
+                    if (s == nullptr)
+                      Trace(1, "ParameterTree: Invalid symbol name in tree definition %s",
+                            name.toUTF8());
+                    else {
+                        ParameterProperties* props = s->parameterProperties.get();
+                        if (props == nullptr)
+                          Trace(1, "ParameterTree: Symbol in tree definition not a parameter %s",
+                                name.toUTF8());
+
+                        // might be selectively filtered depending on use
+                        else if (!isFiltered(s, props)) {
+
+                            juce::String nodename = s->name;
+                            if (props->displayName.length() > 0)
+                              nodename = props->displayName;
+            
+                            SymbolTreeItem* param = new SymbolTreeItem(nodename);
+                            param->setSymbol(s);
+
+                            if (draggable) {
+                                // for the description, use a prefix so the receiver
+                                // knows where it came from followed by the canonical symbol name
+                                param->setDragDescription(juce::String(DragPrefix) + s->name);
+                            }
+
+                            category->addSubItem(param);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // could have done these in the loop above but it's less cluttered
+    // to just post-process the tree
+    hideEmptyCategories();
+    ordinate();
+}
+
+/**
+ * Before adding a parameter Symbol to the tree, check for various filtering options.
+ */
+bool ParameterTree::isFiltered(Symbol* s, ParameterProperties* props)
+{
+    bool filtered = false;
+
+    // first the noDefault option
+    if (filterNoDefault)
+      filtered = props->noDefault;
+
+    if (!filtered && filterNoOverlay)
+      filtered = props->noOverlay;
+
+    // then track types
+    if (!filtered && trackType != TrackTypeNone) {
+        if (s->trackTypes.size() > 0) {
+            filtered = !s->trackTypes.contains(trackType);
+        }
+    }
+    return filtered;
+}
+
+/**
+ * After popuplating a dynamic form, remove any catagories that ended up with
+ * nothing in them due to exclusion options in the symbols.
+ * Technically, this should traverse looking for categories more than one level deep
+ * but right now the only ones of concern are at the top.
+ *
+ * Formerly just flagged them as hidden but that gets messed up if you do a search
+ * which clears the flag.  Just take them out.
+ */
+void ParameterTree::hideEmptyCategories()
+{
+    int index = 0;
+    while (index < root.getNumSubItems()) {
+        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(root.getSubItem(index));
+        if (item->getNumSubItems() == 0) {
+            root.removeSubItem(index, true);
+        }
+        else {
+            index++;
+        }
+    }
+}
+
+/**
+ * After fleshing out the dynamic tree, go through and assign
+ * ordinals to the categories and leaf items for use later when inserting fields
+ * into flat forms.
+ */
+void ParameterTree::ordinate()
+{
+    ordinate(&root);
+}
+
+void ParameterTree::ordinate(SymbolTreeItem* node)
+{
+    for (int i = 0 ; i < node->getNumSubItems() ; i++) {
+        SymbolTreeItem* child = static_cast<SymbolTreeItem*>(node->getSubItem(i));
+        child->setOrdinal(i);
+        ordinate(child);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Dynamic Trees - Original Method
+//
+// This started out by iterating over the sybmol table looking for
+// any symbol that had a treePath, then inserting them into the tree
+// categories in alphabetical order.  This turned out to be unusable since
+// alphabetical results in strange ordering for most categories, with
+// seldom used symbols at the top and the ones you want most mixed in
+// randomly.  Later the static "cataeogry form" definitions were added to
+// define a more useful ordering of each symbol.
+//
+// The result worked, but the logic was contorted since we itereated
+// over the symbol table in random order, then had to sort them in
+// form order, when really the category form can simply define what goes
+// into the tree without needing treePath on the symbol, and a tree sorter.
+//
+// The only advantage of this method is that it allowed symbols that were
+// accidentally left out of the category form to be included, but if you
+// let the category form be authoritative then this also eliminates the
+// need for treePath.
+//
+// This also made it awkward to add the newer "ordinal" numbers
+// on each tree node since it had to be done in another pass after the
+// tree was fully constructed (ordinate).
+//
+// Keeping this around for reference, but I think we can abandon this.
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
  * Initialize the tree to contain all symbols from the global symbol table
- * that are marked for inclusion as default session parameters.
+ * that are marked for inclusion in session or overlay trees.
  *
- * Currently defined as any symbol that has a treePath, but may need more
- * restrictions on that.
+ * To be included the symbol must first have a treePath.  Next isFiltered checks
+ * a few flags for more filtering depending on where this tree is being used
+ * (session defaults, track overrides, overlays).
+ *
+ * The order of items in each catagory node comes from a static TreeForm definition.
+ * These aren't actually form definitions, they just hold a symbol name list in the
+ * desired order for the tree, and the form will be built from the tree.
  */
-void ParameterTree::initializeDynamic(Provider* p)
+void ParameterTree::initializeDynamicOld(Provider* p)
 {
     StaticConfig* scon = p->getStaticConfig();
-    
+
+    // category order is fixed in code, could also have a static definition
+    // for this if necessary
     internCategories();
 
     for (auto s : p->getSymbols()->getSymbols()) {
@@ -257,55 +429,13 @@ void ParameterTree::initializeDynamic(Provider* p)
 }
 
 /**
- * After fleshing out the dynamic tree in a stupid way, go through and assign
- * ordinals to the categories and leaf items for use later when inserting fields
- * into flat forms.
- */
-void ParameterTree::ordinate()
-{
-    ordinate(&root);
-}
-
-void ParameterTree::ordinate(SymbolTreeItem* node)
-{
-    for (int i = 0 ; i < node->getNumSubItems() ; i++) {
-        SymbolTreeItem* child = static_cast<SymbolTreeItem*>(node->getSubItem(i));
-        child->setOrdinal(i);
-        ordinate(child);
-    }
-}
-
-/**
- * Before adding a parameter Symbol to the tree, check for various filtering options.
- */
-bool ParameterTree::isFiltered(Symbol* s, ParameterProperties* props)
-{
-    bool filtered = false;
-
-    // first the noDefault option
-    if (filterNoDefault)
-      filtered = props->noDefault;
-
-    if (!filtered && filterNoOverlay)
-      filtered = props->noOverlay;
-
-    // then track types
-    if (!filtered && trackType != TrackTypeNone) {
-        if (s->trackTypes.size() > 0) {
-            filtered = !s->trackTypes.contains(trackType);
-        }
-    }
-    return filtered;
-}
-
-/**
  * Intern the top-level parameter categories in an order that flows
  * better than alphabetical or as randomly encountered in a ValueSet.
  */
 void ParameterTree::internCategories()
 {
-    juce::StringArray categories ("General", "Ports", "Midi", "Sync", "Mixer", "Follow", "Quantize", "Switch", "Functions", "Effects", "Advanced","Overlay");
-
+    juce::StringArray categories ("General", "Ports", "Midi", "Sync", "Mixer", "Follow", "Quantize", "Switch", "Functions", "Effects", "Advanced", "Overlay");
+    
     int ordinal = 0;
     for (auto cat : categories) {
         SymbolTreeItem* item = root.internChild(cat);
@@ -321,39 +451,60 @@ void ParameterTree::internCategories()
 }
 
 /**
- * After popuplating a dynamic form, remove any catagories that ended up with
- * nothing in them due to exclusion options in the symbols.
- * Technically, this should traverse looking for categories more than one level deep
- * but right now the only ones of concern are at the top.
- *
- * Formerly just flagged them as hidden but that gets messed up if you do a search
- * which clears the flag.  Just take them out.
+ * Special node sorter that is guided by a TreeForm definition.
  */
-void ParameterTree::hideEmptyCategories()
+ParameterTreeComparator::ParameterTreeComparator(TreeForm* tf)
 {
-    int index = 0;
-    while (index < root.getNumSubItems()) {
-        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(root.getSubItem(index));
-        if (item->getNumSubItems() == 0) {
-            root.removeSubItem(index, true);
-        }
-        else {
-            index++;
+    form = tf;
+}
+
+int ParameterTreeComparator::compareElements(juce::TreeViewItem* first, juce::TreeViewItem* second)
+{
+    int result = 0;
+    if (form == nullptr || form->symbols.size() == 0) {
+        // same as alphabetic comparator in SymbolTree
+        juce::String name1 = (static_cast<SymbolTreeItem*>(first))->getName();
+        juce::String name2 = (static_cast<SymbolTreeItem*>(second))->getName();
+        result = name1.compareIgnoreCase(name2);
+    }
+    else {
+        Symbol* s1 = (static_cast<SymbolTreeItem*>(first))->getSymbol();
+        Symbol* s2 = (static_cast<SymbolTreeItem*>(second))->getSymbol();
+        // these should NOT be null, but don't die
+        if (s1 != nullptr && s2 != nullptr) {
+            int index1 = form->symbols.indexOf(s1->name);
+            int index2 = form->symbols.indexOf(s2->name);
+            if (index1 < 0) {
+                // not on the list put at the end
+                result = 1;
+            }
+            else if (index1 < index2)
+              result = -1;
+            else if (index1 > index2)
+              result = 1;
         }
     }
+    return result;
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Sparse Trees
+//
+// NOT USED
+// 
+// This was an initial stab at making sparse trees with only those items
+// that corresponded to the values in a ValueSet.  Now that we always use
+// fully populated parameter trees for dynamic form building, this is no
+// longer used, but may come in handy someday.
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Initialize the tree to contain only those values in the provided
  * value set.
- *
- * NOT UESD
- *
- * This was an initial stab at making sparse trees with only those items
- * that corresponded to the values in a ValueSet.  Now that we always use
- * fully populated parameter trees for dynamic form building, this is no
- * longer used, but may come in handy someday.
  */
+#if 0
 void ParameterTree::initializeSparse(Provider* p, ValueSet* set)
 {
     SymbolTreeComparator comparator;
@@ -401,43 +552,7 @@ void ParameterTree::initializeSparse(Provider* p, ValueSet* set)
 
     hideEmptyCategories();
 }
-
-/**
- * Special node sorter that is guided by a TreeForm definition.
- */
-ParameterTreeComparator::ParameterTreeComparator(TreeForm* tf)
-{
-    form = tf;
-}
-
-int ParameterTreeComparator::compareElements(juce::TreeViewItem* first, juce::TreeViewItem* second)
-{
-    int result = 0;
-    if (form == nullptr || form->symbols.size() == 0) {
-        // same as alphabetic comparator in SymbolTree
-        juce::String name1 = (static_cast<SymbolTreeItem*>(first))->getName();
-        juce::String name2 = (static_cast<SymbolTreeItem*>(second))->getName();
-        result = name1.compareIgnoreCase(name2);
-    }
-    else {
-        Symbol* s1 = (static_cast<SymbolTreeItem*>(first))->getSymbol();
-        Symbol* s2 = (static_cast<SymbolTreeItem*>(second))->getSymbol();
-        // these should NOT be null, but don't die
-        if (s1 != nullptr && s2 != nullptr) {
-            int index1 = form->symbols.indexOf(s1->name);
-            int index2 = form->symbols.indexOf(s2->name);
-            if (index1 < 0) {
-                // not on the list put at the end
-                result = 1;
-            }
-            else if (index1 < index2)
-              result = -1;
-            else if (index1 > index2)
-              result = 1;
-        }
-    }
-    return result;
-}
+#endif
 
 /****************************************************************************/
 /****************************************************************************/

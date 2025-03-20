@@ -40,11 +40,34 @@
   <Form name='sessionGlobalSyncAutoRecord' title='Auto Record Parameters'
         symbols='autoRecordUnit,autoRecordUnits,recordThreshold'/>
 
-  <!-- These aren't actually form definitions like the ones for Global parameters,
+  <!-- =========================================================================
+       ParameterTree Forms
+
+       These aren't actually form definitions like the ones for Global parameters,
        they just serve to define a title and to define the order of
-       the possible symbols if they are chosen to be included.  Symbols that are missing
-       from the ordered list will be appended in random order.
-  -->
+       the possible symbols if they are chosen to be included.
+
+       Since TreeNode can also define a symbol list, the only thing this really
+       provides is the form title so this all could be eliminated if we gave
+       TreeNode a title, but keeping it around for awhile in case we need to do
+       other formy things in here that shouldn't clutter up the TreeNode.
+
+       ========================================================================= -->
+
+  <Tree name='sessionCategory'>
+    <Tree name='General'/>
+    <Tree name='Ports'/>
+    <Tree name='Midi'/>
+    <Tree name='Sync'/>
+    <Tree name='Mixer'/>
+    <Tree name='Follow'/>
+    <Tree name='Quantize'/>
+    <Tree name='Switch'/>
+    <Tree name='Functions'/>
+    <Tree name='Effects'/>
+    <Tree name='Advanced'/>
+    <Tree name='Overlay'/>
+  </Tree>    
 
   <Form name='sessionCategoryGeneral' title='Track Identity'
         symbols='trackName,trackGroup,focus,loopCount'/>
@@ -52,23 +75,19 @@
   <Form name='sessionCategoryPorts' title='IO Ports'
         symbols='audioInputPort,audioOutputPort,pluginInputPort,pluginOutputPort,mono'/>
   
-  <Form name='sessionCategoryOverlay' title='Objects to Include'
-        symbols='trackOverlay'/>
+  <Form name='sessionCategoryMidi' title='MIDI Devices'
+        symbols='midiInput,midiOutput,midiChannelOverride,midiThru'/>
   
   <Form name='sessionCategorySync' title='Synchronization'
         symbols='syncSource,syncUnit,trackSyncUnit'/>
   
   <Form name='sessionCategoryMixer' title='Mixer'
         symbols='input,output,feedback,altFeedback,altFeedbackEnable,pan'/>
-  
-  <Form name='sessionCategoryMidi' title='MIDI Devices'
-        symbols='midiInput,midiOutput,midiChannelOverride,midiThru'/>
-  
+
+  <!-- others not included: followSwitch,followLocation,followCut,followRate,
+       followDirection,followStartPoint -->
   <Form name='sessionCategoryFollow' title='MIDI Follower Options'
-        symbols='leaderType,leaderTrack,leaderSwitchLocation,followRecord,followRecordEnd,followSize,followMute,followQuantizeLocation'/>
-  
-  <Form name='sessionCategoryFunctions' title='Miscellaneous Function Options'
-        symbols='maxUndo,maxRedo,muteMode,muteCancel,multiplyMode,recordResetsFeedback,roundingOverdub,shuffleMode,slipMode,slipTime,speedRecord,windowEdgeUnit,windowEdgeAmount,windowSlideUnit,windowSlideAmount'/>
+        symbols='leaderType,leaderTrack,leaderSwitchLocation,followRecord,followRecordEnd,followSize,followMute,followQuantizeLocation,followerMuteStart'/>
   
   <Form name='sessionCategoryQuantize' title='Quantization Control'
         symbols='quantize,subcycles,switchQuantize,overdubQuantized,bounceQuantize'/>
@@ -76,14 +95,24 @@
   <Form name='sessionCategorySwitch' title='Loop and Track Change Options'
         symbols='switchDuration,switchLocation,switchVelocity,returnLocation,timeCopyMode,soundCopyMode,emptyLoopAction,emptyTrackAction,trackLeaveAction'/>
   
+  <Form name='sessionCategoryFunctions' title='Miscellaneous Function Options'
+        symbols='maxUndo,maxRedo,muteMode,muteCancel,multiplyMode,recordResetsFeedback,roundingOverdub,shuffleMode,slipMode,slipTime,speedRecord,windowEdgeUnit,windowEdgeAmount,windowSlideUnit,windowSlideAmount'/>
+
+  <!-- not included: pitchSequence,pitchShiftRestart,pitchStepRange,pitchBendRange,timeStretchRange
+  -->
   <Form name='sessionCategoryEffects' title='Speed and Pitch Effects'
-        symbols=''/>
+        symbols='speedSequence,speedShiftRestart,speedStepRange,speedBendRange'/>
   
   <Form name='sessionCategoryAdvanced' title="Things You Probably Don't Need"
-        symbols=''/>
+        symbols='noFeedbackUndo,noLayerFlattening'/>
 
+  <Form name='sessionCategoryOverlay' title='Objects to Include'
+        symbols='trackOverlay'/>
+  
   <!-- =========================================================================
        ValueSet Forms
+
+       These are used by the System Parameters editor 
        ========================================================================= -->
 
   <VForm name='systemPlugin'>

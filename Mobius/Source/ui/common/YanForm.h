@@ -33,6 +33,7 @@ class YanForm : public juce::Component
     void add(class YanField* f);
     void addSpacer();
     YanField* find(juce::String label);
+    YanField* findSection(juce::String label);
 
     // rendering
     int getPreferredHeight();

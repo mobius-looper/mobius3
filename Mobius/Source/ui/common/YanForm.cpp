@@ -273,7 +273,7 @@ YanField* YanForm::find(juce::String label)
 {
     YanField* found = nullptr;
     for (auto field : fields) {
-        if (field->getLabel()->getText() == label) {
+        if (!field->isSection() && field->getLabel()->getText() == label) {
             found = field;
             break;
         }
@@ -281,12 +281,17 @@ YanField* YanForm::find(juce::String label)
     return found;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// MouseListener for Drag and Drop
-//
-//////////////////////////////////////////////////////////////////////
-
+YanField* YanForm::findSection(juce::String label)
+{
+    YanField* found = nullptr;
+    for (auto field : fields) {
+        if (field->isSection() && field->getLabel()->getText() == label) {
+            found = field;
+            break;
+        }
+    }
+    return found;
+}
 
 /****************************************************************************/
 /****************************************************************************/
