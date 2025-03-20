@@ -51,7 +51,8 @@ class OverlayTreeForms : public ParameterTreeForms,
     bool shownOnce = false;
 
     class ParameterForm* buildFlatForm();
-    void gatherFields(SymbolTreeItem* node, juce::Array<Symbol*>& symbols);
+    void gatherFields(SymbolTreeItem* node, juce::Array<class YanParameter*>& fields);
+    void insertOrderedField(class ParameterForm* form, class YanParameter* field, class Symbol* s);
     
 };
 

@@ -25,16 +25,6 @@ ParameterForm::ParameterForm()
     }
 }
 
-void ParameterForm::setDraggable(bool b)
-{
-    draggable = b;
-}
-
-void ParameterForm::setLocking(bool b)
-{
-    locking = b;
-}
-
 void ParameterForm::setTitle(juce::String s)
 {
     title = s;
@@ -142,13 +132,123 @@ YanParameter* ParameterForm::find(Symbol* s)
 //
 //////////////////////////////////////////////////////////////////////
 
+void ParameterForm::addSpacer()
+{
+    YanSpacer* s = new YanSpacer();
+    others.add(s);
+    form.add(s);
+}
+
+void ParameterForm::addSection(juce::String text, int ordinal)
+{
+    YanSection* s = new YanSection(text);
+    s->setOrdinal(ordinal);
+    others.add(s);
+    form.add(s);
+}
+
+void ParameterForm::add(YanParameter* field)
+{
+    parameters.add(field);
+    form.add(field);
+}
+
+YanSection* ParameterForm::findSection(juce::String name)
+{
+    return form.findSection(name);
+}
+
 /**
+ * Insert an ordered section header.
+ * Requires that the YanFields be tagged with an ordinal
+ * Used by OverlayTreeForms
+ */
+YanSection* ParameterForm::insertOrderedSection(juce::String name, int ordinal)
+{
+    int index = 0;
+    while (index < form.size()) {
+        YanField* f = form.get(index);
+        if (f->isSection()) {
+            if (f->getOrdinal() > ordinal)
+              break;
+        }
+        index++;
+    }
+
+    YanSection* section = new YanSection(name);
+    section->setOrdinal(ordinal);
+    form.insert(index, section);
+    others.add(section);
+    
+    return section;
+}
+
+/**
+ * Insert an ordered field within a section
+ * Requires that the fields be tagged with an ordinal
+ * Used by OverlayTreeForms
+ */
+void ParameterForm::insertOrderedField(YanSection* section, YanParameter* field)
+{
+    // find the first item in this section with an ordinal after this one
+    int index = form.indexOf(section) + 1;
+    while (index < form.size()) {
+        YanField* f = form.get(index);
+        if (f->isSection()) {
+            // hit another section before finding the insertion point,
+            // insert at the end of the previous section
+            break;
+        }
+        else if (f->getOrdinal() > field->getOrdinal()) {
+            // need to go before this one
+            break;
+        }
+        index++;
+    }
+    form.insert(index, field);
+    parameters.add(field);
+}
+
+/**
+ * After dragging a field out a form the drag watcher may ask to remove
+ * the field entirely.
+ *
+ * Also remove the section header if it is now empty.
+ */
+bool ParameterForm::remove(Symbol* s)
+{
+    YanParameter* found = nullptr;
+    
+    for (auto p : parameters) {
+        if (p->getSymbol() == s) {
+            found = p;
+            break;
+        }
+    }
+
+    if (found != nullptr) {
+        YanSection* section = form.findSectionContaining(found);
+        form.remove(found);
+        parameters.removeObject(found, true);
+
+        if (section != nullptr && form.countSectionFields(section) == 0)
+          form.remove(section);
+    }
+
+    return (found != nullptr);
+}
+                     
+/**
+ * Old interface for adding fields.  Now done at the upper levels.
+ * Delete when ready
+ * 
  * This is what eventually happens when you drag a symbol from a ParameterTree
  * onto the form.
  *
  * If we already have this symbol in the form, ignore it, otherwise add it.
  * Weird interface, a combination of adding and loading.
  */
+#if 0
 YanParameter* ParameterForm::add(Provider* p, Symbol* s, ValueSet* values)
 {
     YanParameter* result = nullptr;
@@ -182,33 +282,7 @@ YanParameter* ParameterForm::add(Provider* p, Symbol* s, ValueSet* values)
     }
     return result;
 }
-
-#if 0
-void ParameterForm::add(juce::Array<Symbol*>& symbols)
-{
-    for (auto s : symbols) {
-        YanParameter* field = new YanParameter(s->getDisplayName());
-        parameters.add(field);
-        field->init(provider, s);
-        form.add(field);
-    }
-}
 #endif
-
-void ParameterForm::addSpacer()
-{
-    YanSpacer* s = new YanSpacer();
-    others.add(s);
-    form.add(s);
-}
-
-void ParameterForm::addSection(juce::String text, int ordinal)
-{
-    YanSection* s = new YanSection(text);
-    s->setOrdinal(ordinal);
-    others.add(s);
-    form.add(s);
-}
 
 /**
  * Build a form from a TreeForm
@@ -254,29 +328,6 @@ void ParameterForm::build(Provider* p, TreeForm* formdef)
     }
 }
 
-/**
- * After dragging a field out a form the drag watcher may ask to remove
- * the field entirely.
- */
-bool ParameterForm::remove(Symbol* s)
-{
-    YanParameter* found = nullptr;
-    
-    for (auto p : parameters) {
-        if (p->getSymbol() == s) {
-            found = p;
-            break;
-        }
-    }
-
-    if (found != nullptr) {
-        form.remove(found);
-        parameters.removeObject(found, true);
-    }
-
-    return (found != nullptr);
-}
-                     
 //////////////////////////////////////////////////////////////////////
 //
 // Value Transfer

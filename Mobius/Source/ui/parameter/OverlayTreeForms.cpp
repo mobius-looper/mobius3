@@ -115,8 +115,6 @@ ParameterForm* OverlayTreeForms::parameterFormCollectionCreate(juce::String form
         if (formdef != nullptr)
           form->setTitle(formdef->title);
         
-        // allow fields to gbe dragged out
-        form->setDraggable(true);
         // allow symbols to be dragged in
         form->setListener(this);
         
@@ -134,8 +132,18 @@ ParameterForm* OverlayTreeForms::parameterFormCollectionCreate(juce::String form
             else {
                 // only add it if we have it
                 MslValue* v = values->get(s->name);
-                if (v != nullptr)
-                  form->add(provider, s, values);
+                if (v != nullptr) {
+                    YanParameter* field = new YanParameter(s->getDisplayName());
+                    field->init(provider, s);
+                    field->setDragDescription(s->name);
+                    field->load(v);
+
+                    // weridness now that we moved the field builder out of ParameterForm
+                    // revisit the control flow on the label listener
+                    field->setLabelListener(form);
+                    
+                    form->add(field);
+                }
             }
         }
     }
@@ -145,28 +153,28 @@ ParameterForm* OverlayTreeForms::parameterFormCollectionCreate(juce::String form
 /**
  * Build a flat parameter form for all parameters in the overlay.
  * Tree is used to guide order and section headers.
+ *
+ * This may be altered after construction with drag and drop.
  */
 ParameterForm* OverlayTreeForms::parameterFormCollectionCreateFlat()
 {
     ParameterForm* form = new ParameterForm();
 
-    // important to set these before we start adding fields
-    // allow fields to gbe dragged out
-    form->setDraggable(true);
     // allow symbols to be dragged in
     form->setListener(this);
         
     // Each outer category becomes a section header
     SymbolTreeItem* root = tree.getRoot();
     for (int i = 0 ; i < root->getNumSubItems() ; i++) {
-        SymbolTreeItem* cat = static_cast<SymbolTreeItem*>(root->getSubItem(i));
-        juce::Array<Symbol*> catsymbols;
-        gatherFields(cat, catsymbols);
+        SymbolTreeItem* category = static_cast<SymbolTreeItem*>(root->getSubItem(i));
 
-        if (catsymbols.size() > 0) {
-            form->addSection(cat->getName(), cat->getOrdinal());
-            for (auto sym : catsymbols) {
-                form->add(provider, sym, values);
+        juce::Array<YanParameter*> fields;
+        gatherFields(category, fields);
+
+        if (fields.size() > 0) {
+            form->addSection(category->getName(), category->getOrdinal());
+            for (auto field : fields) {
+                form->add(field);
             }
         }
     }
@@ -174,21 +182,34 @@ ParameterForm* OverlayTreeForms::parameterFormCollectionCreateFlat()
     return form;
 }
 
-void OverlayTreeForms::gatherFields(SymbolTreeItem* node, juce::Array<Symbol*>& symbols)
+void OverlayTreeForms::gatherFields(SymbolTreeItem* node, juce::Array<YanParameter*>& fields)
 {
-    if (node->getNumSubItems() == 0) {
-        // a leaf
-        Symbol* s = node->getSymbol();
-        if (s != nullptr) {
-            if (values->get(s->name) != nullptr) {
-                symbols.add(s);
-            }
+    if (node->getNumSubItems() > 0) {
+        // a sub-category
+        for (int i = 0 ; i < node->getNumSubItems() ; i++) {
+            SymbolTreeItem* sub = static_cast<SymbolTreeItem*>(node->getSubItem(i));
+            gatherFields(sub, fields);
         }
     }
     else {
-        for (int i = 0 ; i < node->getNumSubItems() ; i++) {
-            SymbolTreeItem* sub = static_cast<SymbolTreeItem*>(node->getSubItem(i));
-            gatherFields(sub, symbols);
+        // a leaf
+        Symbol* s = node->getSymbol();
+        if (s != nullptr) {
+            // only include if there is a value in this overlay
+            if (values->get(s->name) != nullptr) {
+
+                YanParameter* field = new YanParameter(s->getDisplayName());
+                field->init(provider, s);
+                field->setDragDescription(s->name);
+                field->load(values->get(s->name));
+                
+                fields.add(field);
+
+                // this is the crucial bit for proper ordering when
+                // a random parameter is dropped into the form later
+                // the tree defines the order
+                field->setOrdinal(node->getOrdinal());
+            }
         }
     }
 }
@@ -214,10 +235,31 @@ void OverlayTreeForms::parameterFormDrop(ParameterForm* form, juce::String drop)
         if (s == nullptr)
           Trace(1, "OverlayTreeForms: Invalid symbol name in drop %s", sname.toUTF8());
         else {
-            // hmm, we don't necessarily need to pass the valueSet here since if this
-            // is a new field, there shouldn't have been a value, but if they take it
-            // out and put it back, this would restore the value
-            form->add(provider, s, values);
+            YanField* existing = form->find(s);
+            if (existing == nullptr) {
+
+                YanParameter* field = new YanParameter(s->getDisplayName());
+                field->init(provider, s);
+                field->setDragDescription(s->name);
+                field->load(values->get(s->name));
+
+                // drop into a flat form is much more complex, though if you ever
+                // want SessionTrackForms to use DnD rather than field locking it
+                // should do the same thing
+
+                // flatStyle is not derfined out here, we unconditionally set it
+                // in initialize(), but if you ever want to have view alternates, then
+                // test it here
+                bool flatStyle = true;
+                if (flatStyle) {
+                    insertOrderedField(form, field, s);
+                }
+                else {
+                    // yeah no, this should the the same tree-guided ordering
+                    // rather than just appending
+                    form->add(field);
+                }
+            }
         }
     }
     else if (drop.startsWith(YanFieldLabel::DragPrefix)) {
@@ -227,6 +269,31 @@ void OverlayTreeForms::parameterFormDrop(ParameterForm* form, juce::String drop)
     }
     else {
         Trace(2, "OverlayTreeForms: Unknown drop identifier %s", drop.toUTF8());
+    }
+}
+
+/**
+ * A Symbol has just been dropped onto a flat form and we need to figure out
+ * where it goes, adding a category if necessary.  Get it working out here
+ * then decide what should be moved down a layer into ParameterForm or YanForm.
+ *
+ * Locate the SymbolTreeNode for this symbol in the tree.
+ * Get the parent category and insert an ordered category section into the form if necessary.
+ * Once the category section exists, insert the field within the category fields in tree order.
+ */
+void OverlayTreeForms::insertOrderedField(ParameterForm* form, YanParameter* field, Symbol* symbol)
+{
+    SymbolTreeItem* item = tree.find(symbol);
+    if (item == nullptr) {
+        Trace(1, "OverlayTreeForms: No tree node for symbol %s", symbol->getName());
+    }
+    else {
+        SymbolTreeItem* category = item->getParent();
+        YanSection* section = form->findSection(category->getName());
+        if (section == nullptr)
+          section = form->insertOrderedSection(category->getName(), category->getOrdinal());
+
+        form->insertOrderedField(section, field);
     }
 }
 
@@ -267,6 +334,9 @@ void OverlayTreeForms::dropTreeViewDrop(DropTreeView* srctree, const juce::DragA
                 // this does however mean that if you drag the field back onto the form the
                 // previous value is lost
                 values->remove(s->name);
+
+                // todo: also remove the section heacer if there is nothing
+                // else in this section
             }
         }
     }

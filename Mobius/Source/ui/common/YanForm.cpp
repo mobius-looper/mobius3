@@ -79,48 +79,6 @@ void YanForm::addSpacer()
     labels.add(spacer.getLabel());
 }
 
-/**
- * This will not handle adjacent labels properly AT ALL.
- * Works well enough for current usage with ParameterForms
- */
-bool YanForm::remove(YanField* f)
-{
-    bool removed = false;
-    int index = fields.indexOf(f);
-    if (index >= 0) {
-        removeChildComponent(f);
-        removeChildComponent(f->getLabel());
-        labels.remove(index);
-        fields.remove(index);
-        removed = true;
-        forceResize();
-    }
-    else {
-        Trace(1, "YanForm::remove Field not found");
-    }
-    return removed;
-}
-
-void YanForm::insertAfter(YanField* f, YanField* previous)
-{
-    int insertIndex = 0;
-
-    if (previous != nullptr) {
-        int index = fields.indexOf(previous);
-        if (index >= 0)
-          insertIndex = index + 1;
-    }
-    
-    fields.insert(insertIndex, f);
-    addAndMakeVisible(f);
-
-    juce::Label* label = f->getLabel();
-    adjustLabel(f, label);
-    labels.insert(insertIndex, label);
-    addAndMakeVisible(label);
-    forceResize();
-}
- 
 int YanForm::getPreferredHeight()
 {
     int rows = 0;
@@ -264,9 +222,20 @@ void YanForm::resized()
     }
 }
 
+/**
+ * Used by the ParameterForm/OverlayTreeForms when doing incremental
+ * drag-and-drop form building.  Fields and/or sections have just
+ * been added or removed, recalculate the desired size, and relayout.
+ */
 void YanForm::forceResize()
 {
+    setSize(getWidth(), getPreferredHeight());
+    // not usually necessary except for when the new size just happens
+    // to have the same rows as before but the fields are different
     resized();
+    // thought I needed this for awhile, but after using setSize
+    // it isn't necessary
+    //repaint();
 }
 
 YanField* YanForm::find(juce::String label)
@@ -281,16 +250,117 @@ YanField* YanForm::find(juce::String label)
     return found;
 }
 
-YanField* YanForm::findSection(juce::String label)
+//////////////////////////////////////////////////////////////////////
+//
+// Dynamic Form Surgery
+//
+// This interface is for OverlayTreeForms that adds and removes
+// fields and sections in response to drag and drop.
+//
+// It makes the assumption that adjacent fields sharing the same
+// label are NOT part of the form.
+//
+//////////////////////////////////////////////////////////////////////
+
+YanSection* YanForm::findSection(juce::String label)
 {
-    YanField* found = nullptr;
+    YanSection* found = nullptr;
     for (auto field : fields) {
         if (field->isSection() && field->getLabel()->getText() == label) {
-            found = field;
+            found = static_cast<YanSection*>(field);
             break;
         }
     }
     return found;
+}
+
+YanSection* YanForm::findSectionContaining(YanField* f)
+{
+    YanSection* found = nullptr;
+    YanSection* last = nullptr;
+    
+    for (auto field : fields) {
+        if (field->isSection()) {
+            last = static_cast<YanSection*>(field);
+        }
+        else if (field == f) {
+            found = last;
+            break;
+        }
+    }
+    return found;
+}
+
+int YanForm::countSectionFields(YanSection* section)
+{
+    int count = 0;
+    int index = fields.indexOf(section);
+    if (index < 0)
+      Trace(1, "YanForm::countSectionFields Invalid section");
+    else {
+        index++;
+        while (index < fields.size()) {
+            YanField* f = fields[index];
+            if (f->isSection())
+              break;
+            index++;
+            count++;
+        }
+    }
+    return count;
+}
+
+int YanForm::size()
+{
+    // only works for flat forms with no adjacent labels
+    return fields.size();
+}
+
+int YanForm::indexOf(YanField* f)
+{
+    return fields.indexOf(f);
+}
+
+YanField* YanForm::get(int index)
+{
+    YanField* found = nullptr;
+    if (index >= 0 && index < fields.size())
+      found = fields[index];
+    return found;
+}
+
+void YanForm::insert(int index, YanField* f)
+{
+    fields.insert(index, f);
+    addAndMakeVisible(f);
+
+    juce::Label* label = f->getLabel();
+    adjustLabel(f, label);
+    labels.insert(index, label);
+    addAndMakeVisible(label);
+    forceResize();
+}
+
+/**
+ * This will not handle adjacent labels properly AT ALL.
+ * Works well enough for current usage with ParameterForms
+ */
+bool YanForm::remove(YanField* f)
+{
+    bool removed = false;
+    int index = fields.indexOf(f);
+    if (index >= 0) {
+        removeChildComponent(f);
+        removeChildComponent(f->getLabel());
+        labels.remove(index);
+        fields.remove(index);
+        removed = true;
+        forceResize();
+    }
+    else {
+        Trace(1, "YanForm::remove Field not found");
+    }
+    return removed;
 }
 
 /****************************************************************************/

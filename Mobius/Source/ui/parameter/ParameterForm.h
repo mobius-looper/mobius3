@@ -61,40 +61,30 @@ class ParameterForm : public juce::Component,
     void setFormInset(int x);
 
     /**
-     * True if the symbol fields can be dragged out.
-     */
-    void setDraggable(bool b);
-
-    /**
-     * True if fields can be locked and unlocked
-     */
-    void setLocking(bool b);
-
-    /**
-     * Add a list of editing fields for parameter symbols.
-     * The fields are added in the same order as the array.
-     */
-    //void add(juce::Array<class Symbol*>& symbols);
-
-    /**
      * Add a spacer or section header.
      */
     void addSpacer();
     void addSection(juce::String title, int ordinal = 0);
 
     /**
+     * Add a pre-constructed field
+     */
+    void add(class YanParameter* field);
+
+    /**
      * Add form fields from a form definition.
      */
     void build(class Provider* p, class TreeForm* formdef);
-    class YanParameter* find(class Symbol* s);
-    
-    /**
-     * Strange interface for dynamic parameter forms.
-     */
-    class YanParameter* add(class Provider* p, class Symbol* s, class ValueSet* values);
 
-    // used with drag-and-drop forms with fields dragged out 
+    /**
+     * Surgery for ordered drag-and-drop forms
+     */
+    class YanSection* findSection(juce::String name);
+    class YanSection* insertOrderedSection(juce::String name, int ordinal);
+    void insertOrderedField(class YanSection* section, class YanParameter* field);
     bool remove(class Symbol* s);
+    
+    class YanParameter* find(class Symbol* s);
     
     /**
      * Load the values of symbol parameter fields from the value set.
@@ -133,7 +123,7 @@ class ParameterForm : public juce::Component,
   private:
 
     Listener* listener = nullptr;
-    bool draggable = false;
+    //bool draggable = false;
     bool locking = false;
     
     juce::String title;

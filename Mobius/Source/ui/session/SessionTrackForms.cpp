@@ -138,10 +138,6 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
         // but also clicks which we do need
         form->setListener(this);
 
-        // if you want DnD ask it to prepare for that
-        if (!lockingStyle)
-          form->setDraggable(true);
-        
         // todo: form title
 
         // We can get the symbols by iterating over the children, but
@@ -160,24 +156,34 @@ ParameterForm* SessionTrackForms::parameterFormCollectionCreate(juce::String for
                           s->getName());
                 }
                 else {
-                    YanParameter* p = nullptr;
+                    YanParameter* field = nullptr;
                     MslValue* v = values->get(s->name);
                     if (!lockingStyle) {
                         // sparse mode: only add it if we have it
                         // OR if it is flagged as noDefault
-                        if (v != nullptr || props->noDefault)
-                          p = form->add(provider, s, nullptr);
+                        if (v != nullptr || props->noDefault) {
+                            field = new YanParameter(s->getDisplayName());
+                            field->setDragDescription(s->name);
+                            field->init(provider, s);
+                            form->add(field);
+                        }
                     }
                     else {
-                        p = form->add(provider, s, nullptr);
+                        field = new YanParameter(s->getDisplayName());
+                        field->init(provider, s);
+                        // this is weird, should move the listener sensitivity
+                        // up here?, or just have a flag that tells the form
+                        // the label is sensitive
+                        field->setLabelListener(form);
+                        form->add(field);
                         if (v == nullptr && !props->noDefault)
-                          p->setDefaulted(true);
+                          field->setDefaulted(true);
                     }
 
                     // if this is the track overlay parameter,
                     // be informed when it changes
-                    if (p != nullptr && s->id == ParamTrackOverlay)
-                      p->setListener(this);
+                    if (field != nullptr && s->id == ParamTrackOverlay)
+                      field->setListener(this);
                 }
             }
         }
@@ -340,10 +346,16 @@ void SessionTrackForms::parameterFormDrop(ParameterForm* form, juce::String drop
         if (s == nullptr)
           Trace(1, "SessionTrackForms: Invalid symbol name in drop %s", sname.toUTF8());
         else {
-            // hmm, we don't necessarily need to pass the valueSet here since if this
-            // is a new field, there shouldn't have been a value, but if they take it
-            // out and put it back, this would restore the value
-            form->add(provider, s, values);
+            YanField* existing = form->find(s);
+            if (existing == nullptr) {
+                YanParameter* field = new YanParameter(s->getDisplayName());
+                field->init(provider, s);
+                field->setDragDescription(s->name);
+                // if this is new there won't be a value here, but if they take
+                // it out and put it back, it will be there
+                field->load(values->get(s->name));
+                form->add(field);
+            }
         }
     }
     else if (drop.startsWith(YanFieldLabel::DragPrefix)) {

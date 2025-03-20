@@ -110,10 +110,14 @@ ParameterForm* SessionParameterEditor::parameterFormCollectionCreate(juce::Strin
               Trace(1, "SessionParameterEditor: Tree node without symbol %s",
                     item->getName().toUTF8());
             else {
-                YanParameter* p = form->add(provider, s, values);
+                YanParameter* field = new YanParameter(s->getDisplayName());
+                field->init(provider, s);
+                field->load(values->get(s->name));
                 // watch this
                 if (s->id == ParamTrackOverlay)
-                  p->setListener(this);
+                  field->setListener(this);
+                
+                form->add(field);
             }
         }
 

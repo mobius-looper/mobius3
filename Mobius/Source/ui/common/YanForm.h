@@ -33,19 +33,24 @@ class YanForm : public juce::Component
     void add(class YanField* f);
     void addSpacer();
     YanField* find(juce::String label);
-    YanField* findSection(juce::String label);
 
     // rendering
     int getPreferredHeight();
     int getPreferredWidth();
 
-    // surgery
-    bool remove(YanField* f);
-    void insertAfter(YanField* f, YanField* previous);
-
     // Juce 
     void resized() override;
     void forceResize();
+
+    // unusual surgery for dynamic overlay forms
+    YanSection* findSection(juce::String label);
+    YanSection* findSectionContaining(YanField* f);
+    int countSectionFields(YanSection* section);
+    int size();
+    int indexOf(YanField* f);
+    YanField* get(int index);
+    void insert(int index, YanField* f);
+    bool remove(YanField* f);
 
   private:
 

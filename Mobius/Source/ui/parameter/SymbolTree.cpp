@@ -150,6 +150,30 @@ SymbolTreeItem* SymbolTree::findAnnotatedItem(SymbolTreeItem* parent, juce::Stri
     return found;
 }
 
+SymbolTreeItem* SymbolTree::find(Symbol* s)
+{
+    return find(&root, s);
+}
+
+SymbolTreeItem* SymbolTree::find(SymbolTreeItem* parent, Symbol* s)
+{
+    SymbolTreeItem* found = nullptr;
+    if (parent != nullptr) {
+        if (parent->getSymbol() == s) {
+            found = parent;
+        }
+        else {
+            for (int i = 0 ; i < parent->getNumSubItems() ; i++) {
+                SymbolTreeItem* item = static_cast<SymbolTreeItem*>(parent->getSubItem(i));
+                found = find(item, s);
+                if (found != nullptr)
+                  break;
+            }
+        }
+    }
+    return found;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Old Load Interface
@@ -428,6 +452,11 @@ void SymbolTreeItem::setOrdinal(int i)
 int SymbolTreeItem::getOrdinal()
 {
     return ordinal;
+}
+
+SymbolTreeItem* SymbolTreeItem::getParent()
+{
+    return static_cast<SymbolTreeItem*>(getParentItem());
 }
 
 /**

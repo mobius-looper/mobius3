@@ -66,6 +66,9 @@ void OverlayEditor::load()
         addChildComponent(otf);
     }
 
+    // reset this to trigger show() during selectFirst()
+    currentSet = -1;
+
     table->selectFirst();
     resized();
 }
@@ -139,6 +142,8 @@ void OverlayEditor::decacheForms()
 
 void OverlayEditor::revert()
 {
+    // yeah, this isn't enough, need to do a full refresh like load() does
+    // there is no revert button though so we're good for now
     overlays.reset(new ParameterSets(revertOverlays.get()));
 }
 

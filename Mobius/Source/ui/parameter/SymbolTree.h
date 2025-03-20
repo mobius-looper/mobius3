@@ -20,6 +20,8 @@ class SymbolTreeItem : public juce::TreeViewItem
     void setOrdinal(int i);
     int getOrdinal();
 
+    SymbolTreeItem* getParent();
+
     void setDragDescription(juce::String s);
     
     void setSymbol(class Symbol* s);
@@ -131,6 +133,7 @@ class SymbolTree : public juce::Component, public YanInput::Listener
 
     // wandering
     SymbolTreeItem* findAnnotatedItem(juce::String annotation);
+    SymbolTreeItem* find(class Symbol* s);
     
     // favorites
     void addFavorite(juce::String name);
@@ -163,6 +166,7 @@ class SymbolTree : public juce::Component, public YanInput::Listener
     SymbolTreeItem* internPath(SymbolTreeItem* parent, juce::StringArray path);
     juce::StringArray parsePath(juce::String s);
     SymbolTreeItem* findAnnotatedItem(SymbolTreeItem* parent, juce::String annotation);
+    SymbolTreeItem* find(SymbolTreeItem* parent, class Symbol* s);
     
     void startSearch();
     int searchTree(juce::String text, SymbolTreeItem* node);
