@@ -130,6 +130,7 @@
     <Button action="Play"/>
     <Button action="AutoRecord"/>
     <Button action="Global Stop"/>
+    <Button action="Confirm"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

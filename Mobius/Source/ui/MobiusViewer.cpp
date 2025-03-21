@@ -415,28 +415,7 @@ void MobiusViewer::refreshTrack(SystemState* state, TrackState* tstate,
         tview->refreshSwitch = true;
     }
 
-    juce::String newMode = TrackState::getModeName(tstate->mode);
-    // MidiTrack does this transformation now too
-    if (tstate->mode == TrackState::ModePlay && tstate->overdub)
-      newMode = "Overdub";
-
-    // !! OldMobiusState did these mode transformations
-    // if (tstate->globalMute) mode = UIGlobalMuteMode;
-    // if (loop->paused) mode = UIPauseMode;
-    // if (tstate->globalPause) mode = UIGlobalPauseMode;
-    //
-    // GlobalPause seems to have been broken for some time
-    // Track::mGlobalMute is set by the Mute function
-    // Solo is wound up in this too
-    //
-    // These need to be maintained above Track, MidiTrack isn't
-    // setting this
-    if (tstate->globalMute)
-      newMode = "Global Mute";
-
-    if (tstate->pause)
-      newMode = "Pause";
-
+    juce::String newMode = deriveMode(tstate);
     if (newMode != tview->mode) {
         tview->mode = newMode;
         tview->refreshMode = true;
@@ -464,6 +443,47 @@ void MobiusViewer::refreshTrack(SystemState* state, TrackState* tstate,
     refreshSync(state, tstate, tview);
     refreshTrackGroups(tstate, tview);
     refreshTrackName(state, tstate, mview, tview);
+}
+
+/**
+ * Derive the display mode.
+ * This starts with the actual operating mode from the loop but
+ * can be modified for display when combined with other state flags.
+ *
+ * We can only show one primary mode so the precendence of these is
+ * debatable but this seems to make the most sense.
+ */
+juce::String MobiusViewer::deriveMode(TrackState* tstate)
+{
+    juce::String mode;
+    
+    if (tstate->pause)
+      mode = "Pause";
+
+    else if (tstate->switchConfirm)
+      mode = "Confirm";
+
+    else if (tstate->nextLoop > 0)
+      mode = "Switch";
+
+    else if (tstate->returnLoop > 0)
+      mode = "Return";
+
+    else if (tstate->globalMute)
+      mode = "Global Mute";
+
+    else if (tstate->mode == TrackState::ModePlay && tstate->overdub)
+      mode = "Overdub";
+    
+    // todo: OldMobiusState also supported GlobalPause
+    // GlobalPause seems to have been broken for some time
+    // Track::mGlobalMute is set by the Mute function
+    // Solo is wound up in this too
+
+    else
+      mode = TrackState::getModeName(tstate->mode);
+
+    return mode;
 }
 
 /**

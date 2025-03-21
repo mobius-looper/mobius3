@@ -60,7 +60,6 @@
   <Property symbol="TrimEnd" name="focus" value="true"/>
   <Property symbol="TrimStart" name="focus" value="true"/>
   <Property symbol="Undo" name="focus" value="true"/>
-  <Property symbol="Undo" name="confirmation" value="true"/>
   <Property symbol="Start" name="quantized" value="true"/>
   <Property symbol="Stop" name="quantized" value="true"/>
 </Properties>

@@ -39,6 +39,7 @@ class MobiusViewer
                       class MobiusView* mview, class MobiusViewTrack* tview);
     void refreshTrackName(class SystemState* state, class TrackState* tstate,
                           class MobiusView* mview, class MobiusViewTrack* tview);
+    juce::String deriveMode(class TrackState* tstate);
     void refreshMinorModes(class SystemState* state, class TrackState* tstate, class MobiusViewTrack* tview);
     void assembleMinorModes(class MobiusViewTrack* tview);
     void addMinorMode(class MobiusViewTrack* tview, const char* mode);

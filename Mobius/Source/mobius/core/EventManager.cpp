@@ -1974,6 +1974,11 @@ void EventManager::cleanReturnEvents()
  */
 void EventManager::refreshEventState(TrackState* state)
 {
+    // do we need to reset these?
+    state->nextLoop = 0;
+    state->returnLoop = 0;
+    state->switchConfirm = false;
+    
 	Event* events = mEvents->getEvents();
     
     for (Event* e = events ; e != nullptr ; e = e->getNext()) {
@@ -1983,8 +1988,11 @@ void EventManager::refreshEventState(TrackState* state)
         if (e->type == ReturnEvent)
           state->returnLoop = nextLoop->getNumber();
         
-        else if (e->type == SwitchEvent)
-          state->nextLoop = nextLoop->getNumber();
+        else if (e->type == SwitchEvent) {
+            state->nextLoop = nextLoop->getNumber();
+            if (e->pending)
+              state->switchConfirm = true;
+        }
     }
 }
 

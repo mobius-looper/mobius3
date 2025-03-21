@@ -239,6 +239,7 @@ class TrackState
     int nextLoop = 0;
     // OldMobiusState has this, don't think we need both this and nextLoop
     int returnLoop = 0;
+    bool switchConfirm = false;
 
     // latching flags set when the loop crosses boundaries
     bool beatLoop = false;
