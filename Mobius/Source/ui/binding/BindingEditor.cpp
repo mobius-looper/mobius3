@@ -6,7 +6,7 @@
 
 #include "../../util/Trace.h"
 #include "../../model/ParameterSets.h"
-#include "../../model/ValueSet.h"
+#include "../../model/BindingSet.h"
 #include "../../Supervisor.h"
 #include "../../Provider.h"
 #include "../JuceUtil.h"
@@ -14,11 +14,11 @@
 #include "OverlayTable.h"
 #include "OverlayTreeForms.h"
 
-#include "OverlayEditor.h"
+#include "BindingEditor.cpp.h"
 
-OverlayEditor::OverlayEditor(Supervisor* s) : ConfigEditor(s)
+BindingEditor.cpp::BindingEditor.cpp(Supervisor* s) : ConfigEditor(s)
 {
-    setName("OverlayEditor");
+    setName("BindingEditor.cpp");
 
     table.reset(new OverlayTable(this));
     addAndMakeVisible(table.get());
@@ -26,21 +26,22 @@ OverlayEditor::OverlayEditor(Supervisor* s) : ConfigEditor(s)
     table->setListener(this);
 }
 
-OverlayEditor::~OverlayEditor()
+BindingEditor.cpp::~BindingEditor.cpp()
 {
 }
 
-void OverlayEditor::prepare()
+void BindingEditor.cpp::prepare()
 {
 }
 
-void OverlayEditor::resized()
+void BindingEditor.cpp::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
 
     table->setBounds(area.removeFromLeft(200));
-    for (auto tf : treeForms)
-      tf->setBounds(area);
+    
+    //for (auto tf : treeForms)
+    //tf->setBounds(area);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -49,22 +50,25 @@ void OverlayEditor::resized()
 //
 //////////////////////////////////////////////////////////////////////
 
-void OverlayEditor::load()
+void BindingEditor.cpp::load()
 {
-    ParameterSets* master = supervisor->getParameterSets();
-    overlays.reset(new ParameterSets(master));
-    revertOverlays.reset(new ParameterSets(master));
-    treeForms.clear();
+    SystemConfig* scon = supervisor->getSystemConfig();
+    BindingSets* master = scon->getBindings();
+    bindingSets.reset(new BindingSets(master));
+    revertOverlays.reset(new BindingSets(master));
+    //treeForms.clear();
 
-    table->load(overlays.get());
+    table->load(bindingSets.get());
 
-    for (auto set : overlays->getSets()) {
+    #if 0
+    for (auto set : bindingSets->getSets()) {
         OverlayTreeForms* otf = new OverlayTreeForms();
         otf->initialize(supervisor);
         otf->load(set);
         treeForms.add(otf);
         addChildComponent(otf);
     }
+    #endif
 
     // reset this to trigger show() during selectFirst()
     currentSet = -1;
@@ -73,9 +77,10 @@ void OverlayEditor::load()
     resized();
 }
 
-void OverlayEditor::show(int index)
+void BindingEditor.cpp::show(int index)
 {
     if (index != currentSet) {
+#if 0        
         if (currentSet >= 0) {
             OverlayTreeForms* existing = treeForms[currentSet];
             existing->setVisible(false);
@@ -90,21 +95,18 @@ void OverlayEditor::show(int index)
         else {
             currentSet = -1;
         }
+#endif        
     }
 }    
 
 /**
  * Called by the Save button in the footer.
- *
- * Save is a little complicated and unlike how Sessions save.
- * Since we had a complete copy of the ParameterSets and don't need to deal with
- * outside modifications to portions of it, we can completely rebuild the ValueSet list
- * and put it in the master ParmaeterSets.
  */
-void OverlayEditor::save()
+void BindingEditor.cpp::save()
 {
     // save any forms that were built and displayed back to the ValueSets
     // in our copied ParameterSets
+#if 0    
     for (auto tf : treeForms) {
         // DynamicTreeForms saved back ot the ValueSet it was created with
         // OverlayTreeForms wants a target, pass null to behave like DTFs
@@ -117,7 +119,8 @@ void OverlayEditor::save()
     master->transfer(overlays.get());
 
     supervisor->updateParameterSets();
-
+#endif
+    
     // make sure dialogs are clean
     table->cancel();
 }
@@ -125,22 +128,22 @@ void OverlayEditor::save()
 /**
  * Throw away all editing state.
  */
-void OverlayEditor::cancel()
+void BindingEditor.cpp::cancel()
 {
     overlays.reset();
     revertOverlays.reset();
     table->clear();
-    for (auto tf : treeForms)
-      tf->cancel();
+    //for (auto tf : treeForms)
+    //tf->cancel();
     table->cancel();
 }
 
-void OverlayEditor::decacheForms()
+void BindingEditor.cpp::decacheForms()
 {
     // does this mske sense here?  they're dynamic so no
 }
 
-void OverlayEditor::revert()
+void BindingEditor.cpp::revert()
 {
     // yeah, this isn't enough, need to do a full refresh like load() does
     // there is no revert button though so we're good for now
@@ -157,7 +160,7 @@ void OverlayEditor::revert()
  * This is called when the selected row changes either by clicking on
  * it or using the keyboard arrow keys after a row has been selected.
  */
-void OverlayEditor::typicalTableChanged(TypicalTable* t, int row)
+void BindingEditor.cpp::typicalTableChanged(TypicalTable* t, int row)
 {
     (void)t;
     if (row < 0) {
@@ -168,7 +171,7 @@ void OverlayEditor::typicalTableChanged(TypicalTable* t, int row)
     }
 }
 
-bool OverlayEditor::checkName(juce::String newName, juce::StringArray& errors)
+bool BindingEditor.cpp::checkName(juce::String newName, juce::StringArray& errors)
 {
     bool ok = false;
 
@@ -179,7 +182,7 @@ bool OverlayEditor::checkName(juce::String newName, juce::StringArray& errors)
         errors.add(juce::String("Overlay name ") + newName + " contains illegal characters");
     }
     else {
-        ValueSet* existing = overlays->find(newName);
+        BindingSet* existing = bindingSets->find(newName);
         if (existing != nullptr) {
             errors.add(juce::String("Overlay name ") + newName + " is already in use");
         }
@@ -190,64 +193,66 @@ bool OverlayEditor::checkName(juce::String newName, juce::StringArray& errors)
     return ok;
 }
 
-void OverlayEditor::overlayTableNew(juce::String newName, juce::StringArray& errors)
+void BindingEditor.cpp::bindingSetTableNew(juce::String newName, juce::StringArray& errors)
 {
     if (checkName(newName, errors)) {
-        ValueSet* neu = new ValueSet();
+        BindingSet* neu = new BindingSet();
         neu->name = newName;
         addNew(neu);
     }
 }
 
-void OverlayEditor::addNew(ValueSet* neu)
+void BindingEditor.cpp::addNew(BindingSet* neu)
 {
-    overlays->add(neu);
-    
+    bindingSets->add(neu);
+
+#if 0    
     OverlayTreeForms* otf = new OverlayTreeForms();
     otf->initialize(supervisor);
     otf->load(neu);
     treeForms.add(otf);
     addChildComponent(otf);
+#endif    
     resized();
 
     table->reload();
-    int newIndex = overlays->getSets().size() - 1;
+    int newIndex = bindingSets->getSets().size() - 1;
     table->selectRow(newIndex);
     show(newIndex);
 }
 
-ValueSet* OverlayEditor::getSourceOverlay(juce::String action, juce::StringArray& errors)
+BindingSet* BindingEditor.cpp::getSourceBindingSet(juce::String action, juce::StringArray& errors)
 {
-    ValueSet* set = nullptr;
+    BindingSet* set = nullptr;
     if (currentSet < 0) {
-        errors.add(juce::String("No overlay selected for ") + action);
+        errors.add(juce::String("No binding set selected for ") + action);
     }
     else {
-        set = overlays->getByIndex(currentSet);
+        set = bindingSets->getByIndex(currentSet);
         if (set == nullptr) {
-            Trace(1, "OverlayEditor: Overlay ordinals are messed up");
+            Trace(1, "BindingEditor.cpp: BindingSet ordinals are messed up");
             errors.add(juce::String("Internal error"));
         }
     }
     return set;
 }
 
-void OverlayEditor::overlayTableCopy(juce::String newName, juce::StringArray& errors)
+void BindingEditor.cpp::bindingSetTableCopy(juce::String newName, juce::StringArray& errors)
 {
     if (checkName(newName, errors)) {
-        ValueSet* set = getSourceOverlay("Copy", errors);
+        BindingSet* set = getSourceBindingSet("Copy", errors);
         if (set != nullptr) {
-            ValueSet* copy = new ValueSet(set);
+            BindingSet* copy = new BindingSet(set);
             copy->name = newName;
             addNew(copy);
         }
     }
 }
 
-void OverlayEditor::overlayTableRename(juce::String newName, juce::StringArray& errors)
+void BindingEditor.cpp::bindingSetTableRename(juce::String newName, juce::StringArray& errors)
 {
     if (checkName(newName, errors)) {
-        ValueSet* set = getSourceOverlay("Rename", errors);
+        BindingSet* set = getSourceBindingSet("Rename", errors);
         if (set != nullptr) {
             set->name = newName;
             table->reload();
@@ -261,12 +266,12 @@ void OverlayEditor::overlayTableRename(juce::String newName, juce::StringArray& 
  * Could at least make a stab at checking the loaded session though.
  * When a session with a state reference is loaded, it must adapt well.
  */
-void OverlayEditor::overlayTableDelete(juce::StringArray& errors)
+void BindingEditor.cpp::bindingSetTableDelete(juce::StringArray& errors)
 {
-    ValueSet* set = getSourceOverlay("Delete", errors);
+    BindingSet* set = getSourceBindingSet("Delete", errors);
     if (set != nullptr) {
-        if (!overlays->remove(set)) {
-            Trace(1, "OverlayEditor: Problem removing overlay");
+        if (!bindingSets->remove(set)) {
+            Trace(1, "BindingEditor.cpp: Problem removing overlay");
             errors.add("Internal error");
         }
         else {

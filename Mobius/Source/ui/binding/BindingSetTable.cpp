@@ -72,16 +72,16 @@ void BindingSetTable::load(BindingSets* argSets)
 
 void BindingSetTable::reload()
 {
-    overlayRows.clear();
+    bindingSetRows.clear();
 
-    for (auto set : overlays->getSets()) {
+    for (auto set : bindingSets->getSets()) {
         if (set->name.length() == 0) {
             Trace(1, "BindingSetTable: ValueSet without a name");
         }
         else {
             BindingSetTableRow* row = new BindingSetTableRow();
             row->name = set->name;
-            overlayRows.add(row);
+            bindingSetRows.add(row);
         }
     }
     
@@ -95,8 +95,8 @@ void BindingSetTable::reload()
  */
 void BindingSetTable::clear()
 {
-    overlays = nullptr;
-    overlayRows.clear();
+    bindingSets = nullptr;
+    bindingSetRows.clear();
 }
 
 void BindingSetTable::cancel()
@@ -118,14 +118,14 @@ void BindingSetTable::cancel()
 
 int BindingSetTable::getRowCount()
 {
-    return overlayRows.size();
+    return bindingSetRows.size();
 }
 
 juce::String BindingSetTable::getCellText(int rowNumber, int columnId)
 {
     juce::String cell;
     
-    BindingSetTableRow* row = overlayRows[rowNumber];
+    BindingSetTableRow* row = bindingSetRows[rowNumber];
 
     if (columnId == ColumnName) {
         cell = row->name;
@@ -238,7 +238,7 @@ void BindingSetTable::yanDialogClosed(YanDialog* d, int button)
 juce::String BindingSetTable::getSelectedName()
 {
     int rownum = getSelectedRow();
-    BindingSetTableRow* row = overlayRows[rownum];
+    BindingSetTableRow* row = bindingSetRows[rownum];
     return row->name;
 }
 
@@ -246,7 +246,7 @@ void BindingSetTable::finishNew(int button)
 {
     if (button == 0) {
         juce::StringArray errors;
-        editor->overlayTableNew(newName.getValue(), errors);
+        editor->bindingSetTableNew(newName.getValue(), errors);
         showResult(errors);
     }
 }
@@ -255,7 +255,7 @@ void BindingSetTable::finishCopy(int button)
 {
     if (button == 0) {
         juce::StringArray errors;
-        editor->overlayTableCopy(newName.getValue(), errors);
+        editor->bindingSetTableCopy(newName.getValue(), errors);
         showResult(errors);
     }
 }
@@ -264,7 +264,7 @@ void BindingSetTable::finishRename(int button)
 {
     if (button == 0) {
         juce::StringArray errors;
-        editor->overlayTableRename(newName.getValue(), errors);
+        editor->bindingSetTableRename(newName.getValue(), errors);
         showResult(errors);
     }
 }
@@ -273,7 +273,7 @@ void BindingSetTable::finishDelete(int button)
 {
     if (button == 0) {
         juce::StringArray errors;
-        editor->overlayTableDelete(errors);
+        editor->bindingSetTableDelete(errors);
         showResult(errors);
     }
 }

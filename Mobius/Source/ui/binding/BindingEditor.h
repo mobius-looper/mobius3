@@ -34,20 +34,20 @@ class BindingEditor : public ConfigEditor,
 
     void show(int index);
 
-    void overlayTableNew(juce::String newName, juce::StringArray& errors);
-    void overlayTableCopy(juce::String newName, juce::StringArray& errors);
-    void overlayTableRename(juce::String newName, juce::StringArray& errors);
-    void overlayTableDelete(juce::StringArray& errors);
+    void bindingSetTableNew(juce::String newName, juce::StringArray& errors);
+    void bindingSetTableCopy(juce::String newName, juce::StringArray& errors);
+    void bindingSetTableRename(juce::String newName, juce::StringArray& errors);
+    void bindingSetTableDelete(juce::StringArray& errors);
     
   private:
 
     int currentSet = -1;
 
-    std::unique_ptr<class ParameterSets> overlays;
-    std::unique_ptr<class ParameterSets> revertBindings;
+    std::unique_ptr<class BindingSets> bindingSets;
+    std::unique_ptr<class BindingSets> revertBindings;
     std::unique_ptr<class BindingTable> table;
 
-    juce::OwnedArray<class BindingTreeForms> treeForms;
+    //juce::OwnedArray<class BindingTreeForms> treeForms;
 
     bool checkName(juce::String newName, juce::StringArray& errors);
     class ValueSet* getSourceBinding(juce::String action, juce::StringArray& errors);

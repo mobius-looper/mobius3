@@ -61,10 +61,10 @@ class BindingSetTable : public TypicalTable,
     
   private:
     
-    class NewBindingEditor* editor = nullptr;
-    class BindingSets* sets = nullptr;
+    class BindingEditor* editor = nullptr;
+    class BindingSets* bindingSets = nullptr;
     
-    juce::OwnedArray<class BindingSetTableRow> overlayRows;
+    juce::OwnedArray<class BindingSetTableRow> bindingSetRows;
     
     YanPopup rowPopup {this};
     YanPopup emptyPopup {this};
