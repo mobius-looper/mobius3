@@ -6,17 +6,19 @@
 
 #include <JuceHeader.h>
 
+#include "BindingSet.h"
+
 class BindingSets
 {
   public:
 
-    constexpr static const char* XmlElementName = "BindingSets";
+    constexpr static const char* XmlName = "BindingSets";
     
-    ParameterSets() {}
-    ParameterSets(ParameterSets* src);
+    BindingSets() {}
+    BindingSets(BindingSets* src);
     
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);
-    juce::String toXml();
+    void toXml(juce::XmlElement* parent);
     
     class BindingSet* find(juce::String name);
     class BindingSet* getByOrdinal(int ordinal);
@@ -25,16 +27,12 @@ class BindingSets
     void clear();
     void add(BindingSet* set);
     bool remove(BindingSet* set);
-    void transfer(ParameterSets* src);
+    void transfer(BindingSets* src);
     void replace(BindingSet* set);
     
     // dangerous, should make this const or something
     juce::OwnedArray<class BindingSet>& getSets();
 
-    // stupid flag
-    bool isUpgraded();
-    void setUpgraded(bool b);
-    
   private:
     
     juce::OwnedArray<class BindingSet> sets;

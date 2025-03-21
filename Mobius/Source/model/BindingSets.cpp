@@ -8,7 +8,8 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
-#include "old/BindingSet.h"
+#include "BindingSet.h"
+#include "Binding.h"
 
 #include "BindingSets.h"
 
@@ -23,10 +24,10 @@ BindingSets::BindingSets(BindingSets* src)
 void BindingSets::parseXml(juce::XmlElement* root, juce::StringArray& errors)
 {
     for (auto* el : root->getChildIterator()) {
-        if (el->hasTagName("BindingSet")) {
+        if (el->hasTagName(BindingSet::XmlName)) {
             BindingSet* set = new BindingSet();
             // todo: make this return errors in the passed array
-            set->parse(el);
+            set->parseXml(el, errors);
             sets.add(set);
         }
         else {
@@ -36,14 +37,13 @@ void BindingSets::parseXml(juce::XmlElement* root, juce::StringArray& errors)
     ordinate();
 }
 
-juce::String BindingSets::toXml()
+void BindingSets::toXml(juce::XmlElement* parent)
 {
-    juce::XmlElement root (XmlElementName);
+    juce::XmlElement* root = new juce::XmlElement(XmlName);
+    parent->addChildElement(root);
 
     for (auto set : sets)
-      set->render(&root);
-
-    return root.toString();
+      set->toXml(root);
 }
 
 juce::OwnedArray<BindingSet>& BindingSets::getSets()

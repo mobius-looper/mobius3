@@ -26,6 +26,7 @@
 
 #include <JuceHeader.h>
 
+#include "../model/SyncConstants.h"
 #include "../model/SyncState.h"
 #include "../model/TrackState.h"
 #include "../model/Session.h"
@@ -279,15 +280,15 @@ class MobiusViewTrack {
     /**
      * Loop window state
      */
-    int    windowOffset;
-    int    windowHistoryFrames;
+    int    windowOffset = 0;
+    int    windowHistoryFrames = 0;
 
     //
     // Synchronization
     //
-    SyncSource syncSource;
-    SyncUnit syncUnit;
-    TrackSyncUnit trackSyncUnit;
+    SyncSource syncSource = SyncSourceNone;
+    SyncUnit syncUnit = SyncUnitBar;
+    TrackSyncUnit trackSyncUnit = TrackUnitCycle;
     float syncTempo = 0.0f;
     int syncBeat = 0;
     int syncBar = 0;

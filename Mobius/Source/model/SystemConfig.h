@@ -15,6 +15,8 @@
 #pragma once
 
 #include "ValueSet.h"
+#include "BindingSets.h"
+#include "GroupDefinition.h"
 
 class SystemConfig
 {
@@ -39,9 +41,16 @@ class SystemConfig
     ValueSet* getValues();
     const char* getString(juce::String name);
     int getInt(juce::String name);
+
+    class BindingSets* getBindings();
+    void setBindings(class BindingSets* sets);
+    
+    class GroupDefinitions* getGroups();
+    void setGroups(class GroupDefinitions* groups);
     
   private:
 
     ValueSet values;
-
+    std::unique_ptr<class BindingSets> bindings;
+    std::unique_ptr<class GroupDefinitions> groups;
 };

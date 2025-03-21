@@ -6,4 +6,59 @@
     <Value name="startupSession" value="Default"/>
     <Value name="userFileFolder" value="foo"/>
   </ValueSet>
+  <BindingSets>
+    <BindingSet name="Base">
+      <Binding symbol="Record" trigger="key" value="82"/>
+      <Binding symbol="Reset" trigger="key" value="27"/>
+      <Binding symbol="NextLoop" trigger="key" value="65576"/>
+      <Binding symbol="PrevLoop" trigger="key" value="65574"/>
+      <Binding symbol="PrevTrack" trigger="key" value="65573"/>
+      <Binding symbol="NextTrack" trigger="key" value="65575"/>
+      <Binding symbol="UIParameterUp" trigger="key" value="327718"/>
+      <Binding symbol="UIParameterDown" trigger="key" value="327720"/>
+      <Binding symbol="UIParameterInc" trigger="key" value="327719"/>
+      <Binding symbol="UIParameterDec" trigger="key" value="327717"/>
+      <Binding symbol="Play" trigger="key" value="32"/>
+      <Binding symbol="Pause" trigger="key" value="80"/>
+      <Binding symbol="Overdub" trigger="key" value="79"/>
+      <Binding symbol="NextTrack" trigger="key" value="39"/>
+      <Binding symbol="PrevTrack" trigger="key" value="37"/>
+      <Binding symbol="Reset" trigger="key" value="112"/>
+      <Binding symbol="TrackReset" trigger="key" value="32"/>
+      <Binding symbol="Multiply" trigger="key" value="77"/>
+      <Binding symbol="Insert" trigger="key" value="73"/>
+      <Binding symbol="Replace" trigger="key" value="80"/>
+      <Binding symbol="Substitute" trigger="key" value="83"/>
+      <Binding symbol="Mute" trigger="key" value="85"/>
+      <Binding symbol="Undo" trigger="key" value="8"/>
+      <Binding symbol="NextLoop" trigger="key" value="40"/>
+      <Binding symbol="PrevLoop" trigger="key" value="38"/>
+      <Binding symbol="SpeedToggle" trigger="key" value="72"/>
+      <Binding symbol="Reverse" trigger="key" value="86"/>
+      <Binding symbol="StartPoint" trigger="key" value="1107"/>
+      <Binding symbol="SelectLoop" trigger="key" value="50" arguments="2"/>
+      <Binding symbol="SelectLoop" trigger="key" value="51" arguments="3"/>
+      <Binding symbol="SelectLoop" trigger="key" value="52" arguments="4"/>
+      <Binding symbol="SelectLoop" trigger="key" value="53" arguments="5"/>
+      <Binding symbol="SelectLoop" trigger="key" value="54" arguments="6"/>
+      <Binding symbol="SelectLoop" trigger="key" value="55" arguments="7"/>
+      <Binding symbol="SelectLoop" trigger="key" value="56" arguments="8"/>
+      <Binding symbol="Record" trigger="note" value="10" channel="4"/>
+      <Binding symbol="Overdub" trigger="note" value="11" channel="4"/>
+    </BindingSet>
+    <BindingSet name="midi1">
+      <Binding symbol="Overdub" trigger="note" value="50" channel="1"/>
+    </BindingSet>
+    <BindingSet name="midi2"/>
+    <BindingSet name="midi3" overlay="true">
+      <Binding symbol="Reset" trigger="note" value="52" channel="1"/>
+    </BindingSet>
+    <BindingSet name="midi4" overlay="true">
+      <Binding symbol="Restart" trigger="note" value="53" channel="1"/>
+    </BindingSet>
+  </BindingSets>
+  <GroupDefinitions>
+    <GroupDefinition name="A" color="-1" replicatedFunctions="Overdub"/>
+    <GroupDefinition name="B"/>
+  </GroupDefinitions>
 </SystemConfig>

@@ -13,6 +13,7 @@
 #include "model/old/MobiusConfig.h"
 #include "model/old/Preset.h"
 #include "model/old/Setup.h"
+#include "model/old/OldBinding.h"
 #include "model/old/XmlRenderer.h"
 #include "model/Session.h"
 #include "model/ValueSet.h"
@@ -21,6 +22,10 @@
 #include "model/FunctionProperties.h"
 #include "model/ParameterProperties.h"
 #include "model/ParameterSets.h"
+#include "model/Binding.h"
+#include "model/BindingSet.h"
+#include "model/BindingSets.h"
+#include "model/SystemConfig.h"
 
 #include "Symbolizer.h"
 #include "ModelTransformer.h"
@@ -56,8 +61,13 @@ bool Upgrader::upgrade(MobiusConfig* config)
     if (upgradeGroups(config))
       updated = true;
 
-    // testing only
     if (upgradePresets(config))
+      updated = true;
+
+    if (upgradeBindings(config))
+      updated = true;
+
+    if (upgradeNewGroups(config))
       updated = true;
 
     return updated;
@@ -274,6 +284,83 @@ bool Upgrader::upgradePresets(MobiusConfig* config)
 #endif
     }
     
+    return updated;
+}
+
+bool Upgrader::upgradeBindings(MobiusConfig* config)
+{
+    bool updated = false;
+
+    // only do this once
+    SystemConfig* scon = supervisor->getSystemConfig();
+    if (scon->getBindings() == nullptr) {
+        BindingSets* sets = new BindingSets();
+        for (OldBindingSet* oldset = config->getBindingSets() ; oldset != nullptr ;
+             oldset = oldset->getNextBindingSet()) {
+
+            BindingSet* set = new BindingSet();
+            set->name = juce::String(oldset->getName());
+            set->overlay = oldset->isOverlay();
+
+            for (OldBinding* oldb = oldset->getBindings() ; oldb != nullptr ;
+                 oldb = oldb->getNext()) {
+
+                Binding* b = new Binding();
+                if (oldb->trigger == TriggerNote)
+                  b->trigger = Binding::TriggerNote;
+                else if (oldb->trigger == TriggerControl)
+                  b->trigger = Binding::TriggerControl;
+                else if (oldb->trigger == TriggerProgram)
+                  b->trigger = Binding::TriggerProgram;
+                else if (oldb->trigger == TriggerKey)
+                  b->trigger = Binding::TriggerKey;
+                else if (oldb->trigger == TriggerHost)
+                  b->trigger = Binding::TriggerHost;
+                else if (oldb->trigger == TriggerUI)
+                  b->trigger = Binding::TriggerUI;
+                else if (oldb->trigger == nullptr)
+                  Trace(1, "Upgrader: Missing trigger type");
+                else 
+                  Trace(1, "Upgrader: Unhandled trigger type %s", oldb->trigger->getName());
+
+                b->triggerValue = oldb->triggerValue;
+                b->midiChannel = oldb->midiChannel;
+                b->release = oldb->release;
+                b->symbol = juce::String(oldb->getSymbolName());
+                b->arguments = juce::String(oldb->getArguments());
+                b->scope = juce::String(oldb->getScope());
+
+                set->add(b);
+            }
+            sets->add(set);
+        }
+        scon->setBindings(sets);
+        supervisor->updateSystemConfig();
+        updated = true;
+    }
+
+    return updated;
+}
+
+bool Upgrader::upgradeNewGroups(MobiusConfig* config)
+{
+    bool updated = false;
+
+    SystemConfig* scon = supervisor->getSystemConfig();
+    if (scon->getGroups() == nullptr) {
+        GroupDefinitions* groups = new GroupDefinitions();
+
+        for (auto oldgroup : config->getGroupDefinitions()) {
+
+            // this has been using the new model for some time, just copy it
+            GroupDefinition* gd = new GroupDefinition(oldgroup);
+            groups->add(gd);
+        }
+
+        scon->setGroups(groups);
+        supervisor->updateSystemConfig();
+        updated = true;
+    }
     return updated;
 }
 

@@ -10,7 +10,7 @@ class GroupDefinition
 {
   public:
 
-    constexpr static const char* XmlElementName = "GroupDefinition";
+    constexpr static const char* XmlName = "GroupDefinition";
     
     GroupDefinition();
     GroupDefinition(GroupDefinition* src);
@@ -67,12 +67,17 @@ class GroupDefinitions
 {
   public:
 
-    constexpr static const char* XmlElementName = "GroupDefinitions";
+    constexpr static const char* XmlName = "GroupDefinitions";
     
     juce::OwnedArray<GroupDefinition> groups;
 
-    juce::String toXml();
+    void add(GroupDefinition* g);
+    
     void toXml(juce::XmlElement* root);
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);
 
 };
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

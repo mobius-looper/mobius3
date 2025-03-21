@@ -35,5 +35,7 @@ class Upgrader
     void upgradeFunctionProperty(class StringList* names, bool focus, bool confirm, bool muteCancel);
     bool upgradeGroups(class MobiusConfig* config);
     bool upgradePresets(class MobiusConfig* config);
+    bool upgradeBindings(class MobiusConfig* config);
+    bool upgradeNewGroups(class MobiusConfig* config);
     
 };

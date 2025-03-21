@@ -114,6 +114,12 @@
           <FILE id="EaQ7Kz" name="XmlRenderer.cpp" compile="1" resource="0" file="Source/model/old/XmlRenderer.cpp"/>
           <FILE id="CyRJqc" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/old/XmlRenderer.h"/>
         </GROUP>
+        <FILE id="By5A9k" name="Binding.cpp" compile="1" resource="0" file="Source/model/Binding.cpp"/>
+        <FILE id="kF5Ka2" name="Binding.h" compile="0" resource="0" file="Source/model/Binding.h"/>
+        <FILE id="jp4sOg" name="BindingSet.cpp" compile="1" resource="0" file="Source/model/BindingSet.cpp"/>
+        <FILE id="a7v21z" name="BindingSet.h" compile="0" resource="0" file="Source/model/BindingSet.h"/>
+        <FILE id="iucxhF" name="BindingSets.cpp" compile="1" resource="0" file="Source/model/BindingSets.cpp"/>
+        <FILE id="GlwHwU" name="BindingSets.h" compile="0" resource="0" file="Source/model/BindingSets.h"/>
         <FILE id="dnNSw0" name="DeviceConfig.cpp" compile="1" resource="0"
               file="Source/model/DeviceConfig.cpp"/>
         <FILE id="W4myih" name="DeviceConfig.h" compile="0" resource="0" file="Source/model/DeviceConfig.h"/>

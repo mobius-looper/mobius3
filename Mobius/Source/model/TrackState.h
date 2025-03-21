@@ -220,12 +220,12 @@ class TrackState
     int outputMonitorLevel = 0;
 
     // most sync info comes from the common SyncState
-    SyncSource syncSource;
-    SyncUnit syncUnit;
-    TrackSyncUnit trackSyncUnit;
+    SyncSource syncSource = SyncSourceNone;
+    SyncUnit syncUnit = SyncUnitBar;
+    TrackSyncUnit trackSyncUnit =  TrackUnitCycle;
     // but tracks may override beatsPerBar
-    int syncBeat;
-    int syncBar;
+    int syncBeat = 0;
+    int syncBar = 0;
     
     // action sensitivity
     bool focus = false;

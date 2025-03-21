@@ -27,22 +27,23 @@ GroupDefinition::~GroupDefinition()
 // GroupDefinitions
 //////////////////////////////////////////////////////////////////////
 
-juce::String GroupDefinitions::toXml()
+void GroupDefinitions::add(GroupDefinition* g)
 {
-    juce::XmlElement root (XmlElementName);
-    toXml(&root);
-    return root.toString();
+    groups.add(g);
 }
 
-void GroupDefinitions::toXml(juce::XmlElement* root)
+void GroupDefinitions::toXml(juce::XmlElement* parent)
 {
+    juce::XmlElement* root = new juce::XmlElement(XmlName);
+    parent->addChildElement(root);
+    
     for (auto group : groups) {
         
-        juce::XmlElement* gel = new juce::XmlElement(GroupDefinition::XmlElementName);
+        juce::XmlElement* gel = new juce::XmlElement(GroupDefinition::XmlName);
         root->addChildElement(gel);
 
         gel->setAttribute("name", group->name);
-        if (group->color > 0) gel->setAttribute("color", group->color);
+        if (group->color != 0) gel->setAttribute("color", group->color);
         if (group->replicationEnabled) gel->setAttribute("replicationEnabled", group->replicationEnabled);
         if (group->replicatedFunctions.size() > 0)
           gel->setAttribute("replicatedFunctions", group->replicatedFunctions.joinIntoString(","));
@@ -54,7 +55,7 @@ void GroupDefinitions::toXml(juce::XmlElement* root)
 void GroupDefinitions::parseXml(juce::XmlElement* root, juce::StringArray& errors)
 {
     for (auto* el : root->getChildIterator()) {
-        if (el->hasTagName(GroupDefinition::XmlElementName)) {
+        if (el->hasTagName(GroupDefinition::XmlName)) {
             GroupDefinition* def = new GroupDefinition();
             groups.add(def);
 
