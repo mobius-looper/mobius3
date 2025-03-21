@@ -87,8 +87,6 @@
         <GROUP id="{7CD675C9-D3B9-988B-1CA6-742F4C8893A1}" name="old">
           <FILE id="fWlQ7a" name="ActionType.cpp" compile="1" resource="0" file="Source/model/old/ActionType.cpp"/>
           <FILE id="VY0IAJ" name="ActionType.h" compile="0" resource="0" file="Source/model/old/ActionType.h"/>
-          <FILE id="PgEScE" name="Binding.cpp" compile="1" resource="0" file="Source/model/old/Binding.cpp"/>
-          <FILE id="rjrpY5" name="Binding.h" compile="0" resource="0" file="Source/model/old/Binding.h"/>
           <FILE id="hNHIV9" name="ExValue.cpp" compile="1" resource="0" file="Source/model/old/ExValue.cpp"/>
           <FILE id="R9xCMa" name="ExValue.h" compile="0" resource="0" file="Source/model/old/ExValue.h"/>
           <FILE id="U7jIzu" name="MobiusConfig.cpp" compile="1" resource="0"
@@ -98,6 +96,8 @@
                 file="Source/model/old/ModeDefinition.cpp"/>
           <FILE id="bpD0UO" name="ModeDefinition.h" compile="0" resource="0"
                 file="Source/model/old/ModeDefinition.h"/>
+          <FILE id="CzOg2V" name="OldBinding.cpp" compile="1" resource="0" file="Source/model/old/OldBinding.cpp"/>
+          <FILE id="XMf8Y4" name="OldBinding.h" compile="0" resource="0" file="Source/model/old/OldBinding.h"/>
           <FILE id="FO5Xh3" name="Preset.cpp" compile="1" resource="0" file="Source/model/old/Preset.cpp"/>
           <FILE id="fd2Dc8" name="Preset.h" compile="0" resource="0" file="Source/model/old/Preset.h"/>
           <FILE id="Bcv6mG" name="Setup.cpp" compile="1" resource="0" file="Source/model/old/Setup.cpp"/>

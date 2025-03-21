@@ -15,7 +15,7 @@
 #include "../../model/old/MobiusConfig.h"
 #include "../../model/old/Preset.h"
 #include "../../model/old/Setup.h"
-#include "../../model/old/Binding.h"
+#include "../../model/old/OldBinding.h"
 #include "../../model/Symbol.h"
 #include "../../model/ParameterProperties.h"
 #include "../../model/FunctionProperties.h"
@@ -297,7 +297,7 @@ bool BindingTargetSelector::isValidTarget(juce::String name)
  * This is much simpler now that all we have to do
  * is find and store the Symbol.
  */
-void BindingTargetSelector::capture(Binding* b)
+void BindingTargetSelector::capture(OldBinding* b)
 {
     juce::String name = getSelectedTarget();
     if (name.length() == 0) {
@@ -315,7 +315,7 @@ void BindingTargetSelector::capture(Binding* b)
  * todo: If this was hidden or unresolved, we may not have
  * anything to show and should display a message.
  */
-void BindingTargetSelector::select(Binding* b)
+void BindingTargetSelector::select(OldBinding* b)
 {
     showSelectedTarget(b->getSymbolName());
 }

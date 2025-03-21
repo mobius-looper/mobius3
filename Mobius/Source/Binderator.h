@@ -104,8 +104,8 @@ class Binderator
                                 class SymbolTable* symbols);
     void installMidiActions(class MobiusConfig* mconfig, class UIConfig* uconfig,
                             class SymbolTable* symbols);
-    void installMidiActions(class SymbolTable* symbols, class BindingSet* set);
-    class UIAction* buildAction(class SymbolTable* symbols, class Binding* b);
+    void installMidiActions(class SymbolTable* symbols, class OldBindingSet* set);
+    class UIAction* buildAction(class SymbolTable* symbols, class OldBinding* b);
     
     class UIAction* getKeyAction(int code, int modifiers, bool release);
     class UIAction* getMidiAction(const class juce::MidiMessage& msg);

@@ -101,9 +101,9 @@ void ValueSetField::load(MslValue* v)
                 combo.setSelection(0);
             }
             else {
-                int ordinal = structureNames.indexOf(juce::String(v->getString()));
-                if (ordinal >= 0)
-                  combo.setSelection(ordinal);
+                int index = structureNames.indexOf(juce::String(v->getString()));
+                if (index >= 0)
+                  combo.setSelection(index);
                 else {
                     // this is relatively common for things like MIDI devices
                     // when you move between machines
@@ -118,31 +118,31 @@ void ValueSetField::load(MslValue* v)
         }
         else {
             if (v->type == MslValue::Enum) {
-                int ordinal = v->getInt();
-                if (ordinal < definition->values.size()) {
-                    combo.setSelection(ordinal);
+                int index = v->getInt();
+                if (index < definition->values.size()) {
+                    combo.setSelection(index);
                 }
                 else {
                     Trace(1, "ValueSetField: Ordinal value did not match enumerated value list %s %d",
-                          definition->name.toUTF8(), ordinal);
+                          definition->name.toUTF8(), index);
                 }
             }
             else {
                 juce::String current(v->getString());
-                int ordinal = -1;
+                int index = -1;
                 for (int i = 0 ; i < definition->values.size() ; i++) {
                     juce::String allowed = definition->values[i];
                     if (allowed == current) {
-                        ordinal = i;
+                        index = i;
                         break;
                     }
                 }
-                if (ordinal < 0) {
+                if (index < 0) {
                     Trace(1, "ValueSetField: Value did not match enumeration %s %s",
                           definition->name.toUTF8(), current.toUTF8());
                 }
                 else {
-                    combo.setSelection(ordinal);
+                    combo.setSelection(index);
                 }
             }
         }
@@ -180,14 +180,14 @@ void ValueSetField::save(MslValue* v)
             v->setString(result.toUTF8());
         }
         else {
-            int ordinal = combo.getSelection();
-            if (ordinal >= 0) {
-                if (ordinal >= definition->values.size()) {
+            int index = combo.getSelection();
+            if (index >= 0) {
+                if (index >= definition->values.size()) {
                     Trace(1, "ValueSetField: Combo selection out of range %s %d",
-                          definition->name.toUTF8(), ordinal);
+                          definition->name.toUTF8(), index);
                 }
                 else {
-                    v->setEnum(definition->values[ordinal].toUTF8(), ordinal);
+                    v->setEnum(definition->values[index].toUTF8(), index);
                 }
             }
         }

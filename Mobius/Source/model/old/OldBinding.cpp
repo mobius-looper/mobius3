@@ -20,7 +20,7 @@
 #include "Structure.h"
 #include "../Scope.h"
 
-#include "Binding.h"
+#include "OldBinding.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -28,7 +28,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-Binding::Binding()
+OldBinding::OldBinding()
 {
     trigger = nullptr;
     triggerMode = nullptr;
@@ -43,9 +43,9 @@ Binding::Binding()
     mSource = nullptr;
 }
 
-Binding::~Binding()
+OldBinding::~OldBinding()
 {
-	Binding *el, *next;
+	OldBinding *el, *next;
 
 	delete mSymbolName;
     delete mArguments;
@@ -59,7 +59,7 @@ Binding::~Binding()
 	}
 }
 
-Binding::Binding(Binding* src)
+OldBinding::OldBinding(OldBinding* src)
 {
 	mNext = nullptr;
     mSymbolName = nullptr;
@@ -85,56 +85,56 @@ Binding::Binding(Binding* src)
     // the InfoPanel and does not need to be copied
 }
 
-void Binding::setNext(Binding* c)
+void OldBinding::setNext(OldBinding* c)
 {
 	mNext = c;
 }
 
-Binding* Binding::getNext()
+OldBinding* OldBinding::getNext()
 {
 	return mNext;
 }
 
-void Binding::setSymbolName(const char *name) 
+void OldBinding::setSymbolName(const char *name) 
 {
 	delete mSymbolName;
 	mSymbolName = CopyString(name);
 }
 
-const char* Binding::getSymbolName()
+const char* OldBinding::getSymbolName()
 {
 	return mSymbolName;
 }
 
-void Binding::setSource(const char *name) 
+void OldBinding::setSource(const char *name) 
 {
 	delete mSource;
 	mSource = CopyString(name);
 }
 
-const char* Binding::getSource()
+const char* OldBinding::getSource()
 {
 	return mSource;
 }
 
-void Binding::setArguments(const char* args) 
+void OldBinding::setArguments(const char* args) 
 {
 	delete mArguments;
 	mArguments = CopyString(args);
 }
 
-const char* Binding::getArguments() 
+const char* OldBinding::getArguments() 
 {
 	return mArguments;
 }
 
-void Binding::setScope(const char* s)
+void OldBinding::setScope(const char* s)
 {
     delete mScope;
     mScope = CopyString(s);
 }
 
-const char* Binding::getScope() 
+const char* OldBinding::getScope() 
 {
     return mScope;
 }
@@ -143,7 +143,7 @@ const char* Binding::getScope()
 // Utilities
 //
 
-bool Binding::isMidi()
+bool OldBinding::isMidi()
 {
 	return (trigger == TriggerNote ||
 			trigger == TriggerProgram ||
@@ -156,15 +156,15 @@ bool Binding::isMidi()
  * Used during serialization to filter partially constructed bindings
  * that were created by the dialog.
  */
-bool Binding::isValid()
+bool OldBinding::isValid()
 {
 	bool valid = false;
 
     if (mSymbolName == nullptr) {
-        Trace(1, "Binding: Filtering binding with no name\n");
+        Trace(1, "OldBinding: Filtering binding with no name\n");
     }
     else if (trigger == nullptr) {
-        Trace(1, "Binding: Filtering binding with no trigger: %s\n", mSymbolName);
+        Trace(1, "OldBinding: Filtering binding with no trigger: %s\n", mSymbolName);
     }
     else {
 		if (trigger == TriggerKey) {
@@ -212,26 +212,26 @@ bool Binding::isValid()
 //
 //////////////////////////////////////////////////////////////////////
 
-BindingSet::BindingSet()
+OldBindingSet::OldBindingSet()
 {
 	mBindings = nullptr;
 }
 
-BindingSet::~BindingSet()
+OldBindingSet::~OldBindingSet()
 {
 	delete mBindings;
 }
 
-BindingSet::BindingSet(BindingSet* src)
+OldBindingSet::OldBindingSet(OldBindingSet* src)
 {
     mBindings = nullptr;
 
     setName(src->getName());
 
-    Binding* last = nullptr;
-    Binding* srcBinding = src->getBindings();
+    OldBinding* last = nullptr;
+    OldBinding* srcBinding = src->getBindings();
     while (srcBinding != nullptr) {
-        Binding* copy = new Binding(srcBinding);
+        OldBinding* copy = new OldBinding(srcBinding);
         if (last == nullptr)
           mBindings = copy;
         else
@@ -252,19 +252,19 @@ BindingSet::BindingSet(BindingSet* src)
     
 }
 
-Structure* BindingSet::clone()
+Structure* OldBindingSet::clone()
 {
-    return new BindingSet(this);
+    return new OldBindingSet(this);
 }
 
-Binding* BindingSet::getBindings()
+OldBinding* OldBindingSet::getBindings()
 {
 	return mBindings;
 }
 
-Binding* BindingSet::stealBindings()
+OldBinding* OldBindingSet::stealBindings()
 {
-    Binding* list = mBindings;
+    OldBinding* list = mBindings;
     mBindings = nullptr;
     return list;
 }
@@ -273,16 +273,16 @@ Binding* BindingSet::stealBindings()
  * !! Does not delete the current bindings
  * this is inconsistent
  */
-void BindingSet::setBindings(Binding* b)
+void OldBindingSet::setBindings(OldBinding* b)
 {
 	mBindings = b;
 }
 
-void BindingSet::addBinding(Binding* b) 
+void OldBindingSet::addBinding(OldBinding* b) 
 {
     if (b != nullptr) {
         // keep them ordered
-        Binding *prev;
+        OldBinding *prev;
         for (prev = mBindings ; prev != nullptr && prev->getNext() != nullptr ; 
              prev = prev->getNext());
         if (prev == nullptr)
@@ -292,11 +292,11 @@ void BindingSet::addBinding(Binding* b)
     }
 }
 
-void BindingSet::removeBinding(Binding* b)
+void OldBindingSet::removeBinding(OldBinding* b)
 {
     if (b != nullptr) {
-        Binding *prev = nullptr;
-        Binding* el = mBindings;
+        OldBinding *prev = nullptr;
+        OldBinding* el = mBindings;
     
         for ( ; el != nullptr && el != b ; el = el->getNext())
           prev = el;
@@ -309,7 +309,7 @@ void BindingSet::removeBinding(Binding* b)
         }
         else {
             // not on the list, should we still nullptr out the next pointer?
-            Trace(1, "BindingSet::removeBinding binding not found!\n");
+            Trace(1, "OldBindingSet::removeBinding binding not found!\n");
         }
 
         b->setNext(nullptr);
@@ -320,12 +320,12 @@ void BindingSet::removeBinding(Binding* b)
  * Added for UpgradePanel
  * See if a Binding already exists before adding another one
  */
-Binding* BindingSet::findBinding(Binding* src)
+OldBinding* OldBindingSet::findBinding(OldBinding* src)
 {
-    Binding* found = nullptr;
+    OldBinding* found = nullptr;
     
     if (src != nullptr) {
-        for (Binding* b = mBindings ; b != nullptr ; b = b->getNext()) {
+        for (OldBinding* b = mBindings ; b != nullptr ; b = b->getNext()) {
             // ignoring triggerMode
             if (b->trigger == src->trigger &&
                 b->release == src->release &&

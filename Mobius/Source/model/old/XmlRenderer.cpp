@@ -50,7 +50,7 @@
 #include "Preset.h"
 #include "Setup.h"
 #include "UserVariable.h"
-#include "Binding.h"
+#include "OldBinding.h"
 
 #include "../ScriptConfig.h"
 #include "../SampleConfig.h"
@@ -643,7 +643,7 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
 	for (Setup* s = c->getSetups() ; s != nullptr ; s = (Setup*)(s->getNext()))
 	  render(b, s);
 
-	for (BindingSet* bs = c->getBindingSets() ; bs != nullptr ; bs = (BindingSet*)(bs->getNext()))
+	for (OldBindingSet* bs = c->getBindingSets() ; bs != nullptr ; bs = (OldBindingSet*)(bs->getNext()))
 	  render(b, bs);
 
 	if (c->getScriptConfigObsolete() != nullptr)
@@ -736,7 +736,7 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 		}
 		else if (child->isName(EL_BINDING_CONFIG) ||
                  child->isName(EL_BINDING_SET)) {
-			BindingSet* bs = new BindingSet();
+			OldBindingSet* bs = new OldBindingSet();
             parse(child, bs);
 			c->addBindingSet(bs);
 		}
@@ -1268,7 +1268,7 @@ void XmlRenderer::parse(XmlElement* e, UserVariables* container)
 #define ATT_TRACK "track"
 #define ATT_GROUP "group"
 
-void XmlRenderer::render(XmlBuffer* b, BindingSet* c)
+void XmlRenderer::render(XmlBuffer* b, OldBindingSet* c)
 {
 	b->addOpenStartTag(EL_BINDING_SET);
 
@@ -1278,7 +1278,7 @@ void XmlRenderer::render(XmlBuffer* b, BindingSet* c)
 	b->add(">\n");
 	b->incIndent();
 
-	for (Binding* binding = c->getBindings() ; binding != nullptr ; binding = binding->getNext()) {
+	for (OldBinding* binding = c->getBindings() ; binding != nullptr ; binding = binding->getNext()) {
         // this was annoying during testing, should be checking validity above
         // so we can at least see what went wrong
         // if (binding->isValid()) {
@@ -1296,7 +1296,7 @@ void XmlRenderer::render(XmlBuffer* b, BindingSet* c)
  * What is now "symbol name" has historically been saved as just "name"
  * which is usually obvious.  Continue with that.
  */
-void XmlRenderer::render(XmlBuffer* b, Binding* binding)
+void XmlRenderer::render(XmlBuffer* b, OldBinding* binding)
 {
     b->addOpenStartTag(EL_BINDING);
 
@@ -1327,7 +1327,7 @@ void XmlRenderer::render(XmlBuffer* b, Binding* binding)
     b->add("/>\n");
 }
 
-void XmlRenderer::parse(XmlElement* e, BindingSet* c)
+void XmlRenderer::parse(XmlElement* e, OldBindingSet* c)
 {
 	parseStructure(e, c);
     c->setOverlay(e->getBoolAttribute("overlay"));
@@ -1336,7 +1336,7 @@ void XmlRenderer::parse(XmlElement* e, BindingSet* c)
 		 child = child->getNextElement()) {
 
 		if (child->isName(EL_BINDING)) {
-			Binding* mb = new Binding();
+			OldBinding* mb = new OldBinding();
 
             parse(child, mb);
             
@@ -1346,7 +1346,7 @@ void XmlRenderer::parse(XmlElement* e, BindingSet* c)
 	}
 }
 
-void XmlRenderer::parse(XmlElement* e, Binding* b)
+void XmlRenderer::parse(XmlElement* e, OldBinding* b)
 {
     // trigger
     b->trigger = Trigger::find(e->getAttribute(ATT_TRIGGER));

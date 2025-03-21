@@ -34,7 +34,7 @@
 #include "../model/Session.h"
 #include "../model/Symbol.h"
 #include "../model/Query.h"
-#include "../model/old/Binding.h"
+#include "../model/old/OldBinding.h"
 
 #include "../Provider.h"
 #include "../Producer.h"
@@ -267,14 +267,14 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         Provider* provider = mainWindow->getProvider();
         MobiusConfig* mconfig = provider->getOldMobiusConfig();
         UIConfig* uiconfig = provider->getUIConfig();
-        BindingSet* sets = mconfig->getBindingSets();
+        OldBindingSet* sets = mconfig->getBindingSets();
         // first one is always active and is not displayed
         if (sets != nullptr) sets = sets->getNextBindingSet();
         if (sets != nullptr) {
             // count the numbers in each category
             int alternates = 0;
             int overlays = 0;
-            for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
+            for (OldBindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
                 if (set->isOverlay())
                   overlays++;
                 else
@@ -289,7 +289,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
             if (alternates > 0) {
                 menu.addSeparator();
                 menu.addSectionHeader(juce::String("Binding Sets"));
-                for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
+                for (OldBindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
                     if (!set->isOverlay()) {
                         juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(set->getName()));
                         int itemId = MenuBindingOffset + index;
@@ -305,7 +305,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
             if (overlays > 0) {
                 menu.addSeparator();
                 menu.addSectionHeader(juce::String("Overlays"));
-                for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
+                for (OldBindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
                     if (set->isOverlay()) {
                         juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(set->getName()));
                         int itemId = MenuBindingOffset + index;

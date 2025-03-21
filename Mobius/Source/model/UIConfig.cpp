@@ -6,7 +6,7 @@
 #include "UIAction.h"
 #include "Scope.h"
 #include "Symbol.h"
-#include "old/Binding.h"
+#include "old/OldBinding.h"
 
 #include "UIConfig.h"
 
@@ -516,7 +516,7 @@ DisplayButton* ButtonSet::getButton(UIAction* action)
 /**
  * Searcher the ActionButton popup that deals with Binding.
  */
-DisplayButton* ButtonSet::getButton(Binding* binding)
+DisplayButton* ButtonSet::getButton(OldBinding* binding)
 {
     DisplayButton* found = nullptr;
     if (binding != nullptr) {

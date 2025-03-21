@@ -76,7 +76,7 @@ class Provider
 
     // controlled access to MobiusConfig
     virtual class MobiusConfig* getOldMobiusConfig() = 0;
-    virtual class BindingSet* getBindingSets() = 0;
+    virtual class OldBindingSet* getBindingSets() = 0;
     virtual class ParameterSets* getParameterSets() = 0;
     virtual void updateParameterSets() = 0;
     

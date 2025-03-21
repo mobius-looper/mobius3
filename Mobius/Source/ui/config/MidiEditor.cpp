@@ -6,7 +6,7 @@
 
 #include "../../util/Trace.h"
 #include "../../util/MidiUtil.h"
-#include "../../model/old/Binding.h"
+#include "../../model/old/OldBinding.h"
 #include "../../model/UIConfig.h"
 
 #include "../../Supervisor.h"
@@ -69,7 +69,7 @@ void MidiEditor::hiding()
  * Called by BindingEditor as it iterates over all the bindings
  * stored in a BindingSet.  Return true if this is for MIDI.
  */
-bool MidiEditor::isRelevant(Binding* b)
+bool MidiEditor::isRelevant(OldBinding* b)
 {
     // TriggerMidi is defined for some reason
     // but I don't think that can be seen in saved bindings
@@ -88,7 +88,7 @@ bool MidiEditor::isRelevant(Binding* b)
  * Channel zero means : any
  * Specific channels are 1-16
  */
-juce::String MidiEditor::renderSubclassTrigger(Binding* b)
+juce::String MidiEditor::renderSubclassTrigger(OldBinding* b)
 {
     juce::String text;
     Trigger* trigger = b->trigger;
@@ -202,7 +202,7 @@ void MidiEditor::addSubclassFields()
  * to have a checkbox to ignore the incomming channel rather
  * than making them set it back to Any after every capture.
  */
-void MidiEditor::refreshSubclassFields(class Binding* b)
+void MidiEditor::refreshSubclassFields(class OldBinding* b)
 {
     Trigger* trigger = b->trigger;
     if (trigger == TriggerNote) {
@@ -229,7 +229,7 @@ void MidiEditor::refreshSubclassFields(class Binding* b)
 /**
  * Put the value of the form fields into the Binding
  */
-void MidiEditor::captureSubclassFields(class Binding* b)
+void MidiEditor::captureSubclassFields(class OldBinding* b)
 {
     int index = messageType.getSelection();
     switch (index) {

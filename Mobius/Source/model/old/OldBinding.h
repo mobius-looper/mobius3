@@ -121,17 +121,17 @@
  * are inside an OscBindingSet.
  * 
  */
-class Binding {
+class OldBinding {
 	
   public:
 	
-	Binding();
-	Binding(Binding* src);
-	virtual ~Binding();
+	OldBinding();
+	OldBinding(OldBinding* src);
+	virtual ~OldBinding();
 
     // keep these on a linked list for now, convert to vector later
-	void setNext(Binding* c);
-	Binding* getNext();
+	void setNext(OldBinding* c);
+	OldBinding* getNext();
 
     // true if the binding is filled out enough to be useful
 	bool isValid();
@@ -200,7 +200,7 @@ class Binding {
 
     void parseScope();
 
-	Binding* mNext = nullptr;
+	OldBinding* mNext = nullptr;
 	char* mSymbolName = nullptr;
     char* mArguments = nullptr;
     char* mScope = nullptr;
@@ -218,32 +218,32 @@ class Binding {
  * An object managing a named collection of Bindings, with convenience
  * methods for searching them.
  */
-class BindingSet : public Structure {
+class OldBindingSet : public Structure {
 
   public:
 
     // the name of the global always-on binding set
     constexpr static const char* GlobalName = "Global";
 
-	BindingSet();
-	BindingSet(BindingSet* src);
-	~BindingSet();
+	OldBindingSet();
+	OldBindingSet(OldBindingSet* src);
+	~OldBindingSet();
 
     // Structure downcast
-    BindingSet* getNextBindingSet() {
-        return (BindingSet*)getNext();
+    OldBindingSet* getNextBindingSet() {
+        return (OldBindingSet*)getNext();
     }
     
     Structure* clone();
 
-    Binding* getBindings();
-	void setBindings(Binding* b);
-    Binding* stealBindings();
+    OldBinding* getBindings();
+	void setBindings(OldBinding* b);
+    OldBinding* stealBindings();
 
-	void addBinding(Binding* c);
-	void removeBinding(Binding* c);
+	void addBinding(OldBinding* c);
+	void removeBinding(OldBinding* c);
 
-    Binding* findBinding(Binding* b);
+    OldBinding* findBinding(OldBinding* b);
 
     void setOverlay(bool b) {
         mOverlay = b;
@@ -258,7 +258,7 @@ class BindingSet : public Structure {
   
   private:
 
-	Binding* mBindings;
+	OldBinding* mBindings;
     bool mOverlay = false;
 	
 };

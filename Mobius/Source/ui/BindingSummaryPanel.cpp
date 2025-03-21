@@ -4,7 +4,7 @@
 #include "../util/Util.h"
 #include "../util/MidiUtil.h"
 #include "../model/old/MobiusConfig.h"
-#include "../model/old/Binding.h"
+#include "../model/old/OldBinding.h"
 #include "../model/UIConfig.h"
 #include "../Supervisor.h"
 #include "JuceUtil.h"
@@ -28,7 +28,7 @@ void BindingSummary::prepare(bool doMidi)
     things.clear();
     MobiusConfig* config = supervisor->getOldMobiusConfig();
     UIConfig* uiconfig = supervisor->getUIConfig();
-    BindingSet* bindingSets = config->getBindingSets();
+    OldBindingSet* bindingSets = config->getBindingSets();
 
     // the first one is always added
     addBindings(bindingSets);
@@ -47,9 +47,9 @@ void BindingSummary::prepare(bool doMidi)
     table.updateContent();
 }
 
-void BindingSummary::addBindings(BindingSet* set)
+void BindingSummary::addBindings(OldBindingSet* set)
 {
-    Binding* bindings = set->getBindings();
+    OldBinding* bindings = set->getBindings();
     while (bindings != nullptr) {
         if ((midi && bindings->isMidi()) ||
             (!midi && bindings->trigger == TriggerKey)) {
@@ -144,7 +144,7 @@ juce::String BindingSummary::getCellText(int row, int columnId)
 {
     juce::String cell;
 
-    Binding* b = things[row];
+    OldBinding* b = things[row];
     if (columnId == BindingSummaryTriggerColumn) {
         if (midi) {
             cell = renderMidiTrigger(b);
@@ -171,7 +171,7 @@ juce::String BindingSummary::getCellText(int row, int columnId)
 }
 
 // need a MidiUtil for this
-juce::String BindingSummary::renderMidiTrigger(Binding* b)
+juce::String BindingSummary::renderMidiTrigger(OldBinding* b)
 {
     juce::String text;
     Trigger* trigger = b->trigger;

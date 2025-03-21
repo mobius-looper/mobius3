@@ -18,7 +18,7 @@
 
 #include "../../util/Trace.h"
 #include "../../model/UIConfig.h"
-#include "../../model/old/Binding.h"
+#include "../../model/old/OldBinding.h"
 #include "../../Supervisor.h"
 #include "../MobiusView.h"
 
@@ -182,7 +182,7 @@ void ButtonEditor::loadButtons(int index)
         // pretend it is a Binding for BindingTable
         // shouldn't have an empty string but filter if we do
         if (button->action.length() > 0) {
-            Binding b;
+            OldBinding b;
             b.id = id;
             b.setSymbolName(button->action.toUTF8());
 
@@ -231,8 +231,8 @@ void ButtonEditor::saveButtons(int index)
     juce::Array<DisplayButton*> newButtons;
     
     // we own this list now
-    Binding* bindingList = bindings.captureBindings();
-    Binding* binding = bindingList;
+    OldBinding* bindingList = bindings.captureBindings();
+    OldBinding* binding = bindingList;
     while (binding != nullptr) {
 
         // find the corresponding DisplayButton
@@ -357,7 +357,7 @@ void ButtonEditor::objectSelectorRename(juce::String newName)
 //
 //////////////////////////////////////////////////////////////////////
 
-bool ButtonEditor::isRelevant(Binding* b)
+bool ButtonEditor::isRelevant(OldBinding* b)
 {
     (void)b;
     return true;
@@ -367,7 +367,7 @@ bool ButtonEditor::isRelevant(Binding* b)
  * Return the string to show in the trigger column for a binding.
  * The trigger column should be suppressed for buttons so we won't get here
  */
-juce::String ButtonEditor::renderSubclassTrigger(Binding* b)
+juce::String ButtonEditor::renderSubclassTrigger(OldBinding* b)
 {
     (void)b;
     return juce::String();
@@ -386,12 +386,12 @@ void ButtonEditor::addSubclassFields()
     form.add(&displayName);
 }
 
-void ButtonEditor::refreshSubclassFields(Binding* b)
+void ButtonEditor::refreshSubclassFields(OldBinding* b)
 {
     displayName.setValue(b->displayName);
 }
 
-void ButtonEditor::captureSubclassFields(class Binding* b)
+void ButtonEditor::captureSubclassFields(class OldBinding* b)
 {
     // not necessary, but continue with this in case something
     // needs a Trigger

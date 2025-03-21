@@ -17,7 +17,7 @@
 
 #include "model/old/MobiusConfig.h"
 #include "model/old/XmlRenderer.h"
-#include "model/old/Binding.h"
+#include "model/old/OldBinding.h"
 
 #include "model/ConfigPayload.h"
 #include "model/Session.h"
@@ -1098,7 +1098,7 @@ MobiusConfig* Supervisor::getOldMobiusConfig()
     return mobiusConfig.get();
 }
 
-BindingSet* Supervisor::getBindingSets()
+OldBindingSet* Supervisor::getBindingSets()
 {
     MobiusConfig* config = getOldMobiusConfig();
     return config->getBindingSets();
@@ -1192,7 +1192,7 @@ void Supervisor::decacheForms()
 //
 //////////////////////////////////////////////////////////////////////
 
-void Supervisor::bindingEditorSave(BindingSet* newList)
+void Supervisor::bindingEditorSave(OldBindingSet* newList)
 {
     MobiusConfig* master = getOldMobiusConfig();
     // this also deletes the current list
@@ -2063,7 +2063,7 @@ void Supervisor::mobiusGlobalReset()
  * Menus don't have state, we set the checkmark if was in the UIConfig
  * and this notification acts as a toggle.
  */
-void Supervisor::menuActivateBindings(BindingSet* set)
+void Supervisor::menuActivateBindings(OldBindingSet* set)
 {
     UIConfig* uiconfig = getUIConfig();
     juce::String setname = juce::String(set->getName());
@@ -2102,7 +2102,7 @@ void Supervisor::mobiusActivateBindings(juce::String name)
         uconfig->activeBindings = "";
     }
     else {
-        BindingSet* set = (BindingSet*)Structure::find(mconfig->getBindingSets(), name.toUTF8());
+        OldBindingSet* set = (OldBindingSet*)Structure::find(mconfig->getBindingSets(), name.toUTF8());
         if (set == nullptr) {
             Trace(1, "Supervisor: Mobius script asked for an invalid binding set %s", name.toUTF8());
         }

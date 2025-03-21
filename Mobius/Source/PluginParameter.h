@@ -18,7 +18,7 @@ class PluginParameter
 {
   public:
 
-    PluginParameter(class Symbol* s, class Binding* b);
+    PluginParameter(class Symbol* s, class OldBinding* b);
     PluginParameter(class Symbol* s, class VariableDefinition* var);
     ~PluginParameter();
 

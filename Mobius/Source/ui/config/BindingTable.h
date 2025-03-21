@@ -27,13 +27,13 @@ class BindingTable : public juce::Component, public juce::TableListBoxModel, pub
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual juce::String renderTriggerCell(class Binding* b) = 0;
-        virtual void bindingSelected(class Binding* b) = 0;
+        virtual juce::String renderTriggerCell(class OldBinding* b) = 0;
+        virtual void bindingSelected(class OldBinding* b) = 0;
         virtual void bindingDeselected() = 0;
-        virtual void bindingUpdate(class Binding* b) = 0;
-        virtual void bindingDelete(class Binding* b) = 0;
-        virtual class Binding* bindingNew() = 0;
-        virtual class Binding* bindingCopy(class Binding* b) = 0;
+        virtual void bindingUpdate(class OldBinding* b) = 0;
+        virtual void bindingDelete(class OldBinding* b) = 0;
+        virtual class OldBinding* bindingNew() = 0;
+        virtual class OldBinding* bindingCopy(class OldBinding* b) = 0;
     };
 
     BindingTable();
@@ -56,24 +56,24 @@ class BindingTable : public juce::Component, public juce::TableListBoxModel, pub
 
     // currently expected to be a linked list from the old model
     // copies the list and ownership is retained by the caller
-    void setBindings(class Binding* bindings);
-    void add(class Binding* binding);
+    void setBindings(class OldBinding* bindings);
+    void add(class OldBinding* binding);
 
     void clear();
     void updateContent();
     void deselect();
 
     // return the edited list, ownership transfers to the caller
-    class Binding* captureBindings();
+    class OldBinding* captureBindings();
 
     // get the Binding that is currently selected
-    class Binding* getSelectedBinding();
+    class OldBinding* getSelectedBinding();
 
     int getPreferredWidth();
     int getPreferredHeight();
 
     // return true if this was creatred as a placeholder row for a new binding
-    bool isNew(Binding* b);
+    bool isNew(OldBinding* b);
 
     // ButtonBar::Listener
     void buttonClicked(juce::String name) override;
@@ -91,7 +91,7 @@ class BindingTable : public juce::Component, public juce::TableListBoxModel, pub
 
   private:
 
-    juce::OwnedArray<class Binding> bindings;
+    juce::OwnedArray<class OldBinding> bindings;
     Listener* listener = nullptr;
     bool ordered = false;
     int targetColumn = 0;
@@ -108,8 +108,8 @@ class BindingTable : public juce::Component, public juce::TableListBoxModel, pub
     void initColumns();
 
     juce::String getCellText(int row, int columnId);
-    juce::String formatTriggerText(class Binding* b);
-    juce::String formatScopeText(class Binding* b);
+    juce::String formatTriggerText(class OldBinding* b);
+    juce::String formatScopeText(class OldBinding* b);
     
 };
     

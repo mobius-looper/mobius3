@@ -4,7 +4,7 @@
 #include "../../util/Trace.h"
 #include "../../util/Util.h"
 #include "../../util/MidiUtil.h"
-#include "../../model/old/Binding.h"
+#include "../../model/old/OldBinding.h"
 #include "../common/ButtonBar.h"
 #include "../JuceUtil.h"
 
@@ -57,11 +57,11 @@ void BindingTable::setOrdered(bool b)
  * The list is copied and ownership is retained by the caller.
  */
 
-void BindingTable::setBindings(class Binding* src)
+void BindingTable::setBindings(class OldBinding* src)
 {
     bindings.clear();
     while (src != nullptr) {
-        Binding* copy = new Binding(src);
+        OldBinding* copy = new OldBinding(src);
         bindings.add(copy);
     }
 
@@ -70,9 +70,9 @@ void BindingTable::setBindings(class Binding* src)
     table.updateContent();
 }
 
-void BindingTable::add(Binding* src)
+void BindingTable::add(OldBinding* src)
 {
-    bindings.add(new Binding(src));
+    bindings.add(new OldBinding(src));
 }
 
 void BindingTable::updateContent()
@@ -90,15 +90,15 @@ void BindingTable::updateContent()
  * and clears internal state.  Ownership of the list passes
  * to the caller.
  */
-Binding* BindingTable::captureBindings()
+OldBinding* BindingTable::captureBindings()
 {
-    Binding* capture = nullptr;
-    Binding* last = nullptr;
+    OldBinding* capture = nullptr;
+    OldBinding* last = nullptr;
 
     //trace("BindingTable::capture %d\n", bindings.size());
 
     while (bindings.size() > 0) {
-        Binding* b = bindings.removeAndReturn(0);
+        OldBinding* b = bindings.removeAndReturn(0);
         // clearing lingering chain pointer for cascaded delete
         b->setNext(nullptr);
         const char* name = b->getSymbolName();
@@ -131,7 +131,7 @@ void BindingTable::clear()
     table.updateContent();
 }
 
-bool BindingTable::isNew(Binding* b)
+bool BindingTable::isNew(OldBinding* b)
 {
     return StringEqual(b->getSymbolName(), NewBindingName);
 }
@@ -147,9 +147,9 @@ void BindingTable::deselect()
     }
 }
 
-Binding* BindingTable::getSelectedBinding()
+OldBinding* BindingTable::getSelectedBinding()
 {
-    Binding* binding = nullptr;
+    OldBinding* binding = nullptr;
     int row = table.getSelectedRow();
     if (row >= 0) {
         binding = bindings[row];
@@ -310,7 +310,7 @@ void BindingTable::buttonClicked(juce::String name)
     // is this the best way to compare them?
     if (name == juce::String("New")) {
         if (listener != nullptr) {
-            Binding* neu = listener->bindingNew();
+            OldBinding* neu = listener->bindingNew();
 
             // formerly treated returning null as meaning
             // to create a placeholder which could be
@@ -320,7 +320,7 @@ void BindingTable::buttonClicked(juce::String name)
 #if 0            
             if (neu == nullptr) {
                 // generate a placeholder
-                neu = new Binding();
+                neu = new OldBinding();
                 neu->setSymbolName(NewBindingName);
             }
 #endif
@@ -344,9 +344,9 @@ void BindingTable::buttonClicked(juce::String name)
     else if (name == juce::String("Copy")) {
         int row = table.getSelectedRow();
         if (row >= 0) {
-            Binding* b = bindings[row];
+            OldBinding* b = bindings[row];
             if (listener != nullptr) {
-                Binding* neu = listener->bindingCopy(b);
+                OldBinding* neu = listener->bindingCopy(b);
                 if (neu != nullptr) {
                     bindings.add(neu);
                     table.updateContent();
@@ -361,7 +361,7 @@ void BindingTable::buttonClicked(juce::String name)
         // shouldn't get here any more now that we have immediate form capture
         int row = table.getSelectedRow();
         if (row >= 0) {
-            Binding* b = bindings[row];
+            OldBinding* b = bindings[row];
             if (listener != nullptr) {
                 // listener updates the binding but we retain ownership
                 listener->bindingUpdate(b);
@@ -375,7 +375,7 @@ void BindingTable::buttonClicked(juce::String name)
     else if (name == juce::String("Delete")) {
         int row = table.getSelectedRow();
         if (row >= 0) {
-            Binding* b = bindings[row];
+            OldBinding* b = bindings[row];
             if (listener != nullptr) {
                 // listener is allowed to respond, but it does not take
                 // ownership of the Binding
@@ -424,7 +424,7 @@ void BindingTable::buttonClicked(juce::String name)
 juce::String BindingTable::getCellText(int row, int columnId)
 {
     juce::String cell;
-    Binding* b = bindings[row];
+    OldBinding* b = bindings[row];
     
     if (columnId == TargetColumn) {
         cell = juce::String(b->getSymbolName());
@@ -454,7 +454,7 @@ juce::String BindingTable::getCellText(int row, int columnId)
  * parsed at runtime into the mTrack and mGroup numbers
  * Need a lot more here as we refine what scopes mean.
  */ 
-juce::String BindingTable::formatScopeText(Binding* b)
+juce::String BindingTable::formatScopeText(OldBinding* b)
 {
     if (b->getScope() == nullptr)
       return juce::String("Global");
@@ -557,7 +557,7 @@ void BindingTable::cellClicked(int rowNumber, int columnId, const juce::MouseEve
                 // trace("Binding row out of range! %d\n", rowNumber);
             }
             else {
-                Binding* b = bindings[rowNumber];
+                OldBinding* b = bindings[rowNumber];
                 listener->bindingSelected(b);
             }
         }

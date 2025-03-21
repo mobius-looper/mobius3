@@ -14,7 +14,7 @@
 #include "../model/old/MobiusConfig.h"
 #include "../model/old/Preset.h"
 #include "../model/old/Setup.h"
-#include "../model/old/Binding.h"
+#include "../model/old/OldBinding.h"
 #include "../model/UIConfig.h"
 #include "../model/ScriptConfig.h"
 
@@ -635,22 +635,22 @@ juce::String UpgradeContent::getScriptName(juce::File file)
 void UpgradeContent::loadBindings()
 {
     // the first one is special, it doesn't requirea name match
-    BindingSet* oldBindings = mobiusConfig->getBindingSets();
+    OldBindingSet* oldBindings = mobiusConfig->getBindingSets();
     if (oldBindings != nullptr) {
         
-        BindingSet* masterBindings = masterConfig->getBindingSets();
+        OldBindingSet* masterBindings = masterConfig->getBindingSets();
         newBindingSets.add(loadBindings(oldBindings, masterBindings));
 
         // the rest require name matching
-        BindingSet* masterOverlays = nullptr;
+        OldBindingSet* masterOverlays = nullptr;
         if (masterBindings != nullptr)
           masterOverlays = masterBindings->getNextBindingSet();
         
         oldBindings = oldBindings->getNextBindingSet();
         while (oldBindings != nullptr) {
             // locate an existing set by name
-            BindingSet* master = nullptr;
-            for (BindingSet* set = masterOverlays ; set != nullptr ; set = set->getNextBindingSet()) {
+            OldBindingSet* master = nullptr;
+            for (OldBindingSet* set = masterOverlays ; set != nullptr ; set = set->getNextBindingSet()) {
                 if (StringEqual(oldBindings->getName(), set->getName())) {
                     master = set;
                     break;
@@ -663,9 +663,9 @@ void UpgradeContent::loadBindings()
     }
 }
 
-BindingSet* UpgradeContent::loadBindings(BindingSet* old, BindingSet* master)
+OldBindingSet* UpgradeContent::loadBindings(OldBindingSet* old, OldBindingSet* master)
 {
-    BindingSet* newBindings = new BindingSet();
+    OldBindingSet* newBindings = new OldBindingSet();
     // if this is the first one, the name doesn't matter
     // it will always be installed in the first master BindingSet
     newBindings->setName(old->getName());
@@ -683,9 +683,9 @@ BindingSet* UpgradeContent::loadBindings(BindingSet* old, BindingSet* master)
     log.add("");
     log.add("Upgrading binding set: " + juce::String(old->getName()));
     
-    Binding* binding = old->getBindings();
+    OldBinding* binding = old->getBindings();
     while (binding != nullptr) {
-        Binding* copy = nullptr;
+        OldBinding* copy = nullptr;
             
         if (binding->trigger == TriggerMidi ||
             binding->isMidi()) {
@@ -737,7 +737,7 @@ BindingSet* UpgradeContent::loadBindings(BindingSet* old, BindingSet* master)
         
         if (copy != nullptr) {
             // it was valid
-            Binding* existing = nullptr;
+            OldBinding* existing = nullptr;
             if (master != nullptr)
               existing = master->findBinding(copy);
 
@@ -789,9 +789,9 @@ BindingSet* UpgradeContent::loadBindings(BindingSet* old, BindingSet* master)
  * will return nullptr if the binding does not resolve
  * to a valid symbol or script name.
  */
-Binding* UpgradeContent::upgradeBinding(Binding* src)
+OldBinding* UpgradeContent::upgradeBinding(OldBinding* src)
 {
-    Binding* copy = new Binding(src);
+    OldBinding* copy = new OldBinding(src);
 
     juce::String name (src->getSymbolName());
     Symbol* symbol = supervisor->getSymbols()->find(name);
@@ -980,11 +980,11 @@ void UpgradeContent::doInstall()
         // these are more complicated
         // they are merged into existing sets with the same name
         if (newBindingSets.size() > 0) {
-            BindingSet* neu = newBindingSets.removeAndReturn(0);
-            BindingSet* masterBindings = masterConfig->getBindingSets();
+            OldBindingSet* neu = newBindingSets.removeAndReturn(0);
+            OldBindingSet* masterBindings = masterConfig->getBindingSets();
             if (masterBindings == nullptr) {
                 // unusual, bootstrap the default set
-                masterBindings = new BindingSet();
+                masterBindings = new OldBindingSet();
                 masterConfig->addBindingSet(masterBindings);
             }
 
@@ -993,11 +993,11 @@ void UpgradeContent::doInstall()
             delete neu;
 
             // the reset are "overlays", they will have been filtered
-            BindingSet* masterOverlays = masterBindings->getNextBindingSet();
+            OldBindingSet* masterOverlays = masterBindings->getNextBindingSet();
             while (newBindingSets.size() > 0) {
                 neu = newBindingSets.removeAndReturn(0);
-                BindingSet* masterDest = nullptr;
- for (BindingSet* set = masterOverlays ; set != nullptr ; set = set->getNextBindingSet()) {
+                OldBindingSet* masterDest = nullptr;
+ for (OldBindingSet* set = masterOverlays ; set != nullptr ; set = set->getNextBindingSet()) {
                     if (StringEqual(neu->getName(), set->getName())) {
                         masterDest = set;
                         break;
@@ -1011,7 +1011,7 @@ void UpgradeContent::doInstall()
                 else {
                     // first time here with a new one
                     // the expectation is that the order is preserved so append it
-                    BindingSet* masterLast = masterBindings;
+                    OldBindingSet* masterLast = masterBindings;
                     while (masterLast->getNext() != nullptr)
                       masterLast = masterLast->getNextBindingSet();
                     masterLast->setNext(neu);
@@ -1045,11 +1045,11 @@ void UpgradeContent::doInstall()
  * We want to move ownership of the objects over to the destination set.
  * Easiest is to do linked list surgery on the destination.
  */
-void UpgradeContent::mergeBindings(BindingSet* src, BindingSet* dest)
+void UpgradeContent::mergeBindings(OldBindingSet* src, OldBindingSet* dest)
 {
-    Binding* list = src->stealBindings();
+    OldBinding* list = src->stealBindings();
 
-    Binding* destLast = dest->getBindings();
+    OldBinding* destLast = dest->getBindings();
     if (destLast == nullptr) {
         dest->setBindings(list);
     }

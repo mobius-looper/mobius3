@@ -20,7 +20,7 @@
 #include "../../util/List.h"
 #include "../../util/MidiUtil.h"
 
-#include "Binding.h"
+#include "OldBinding.h"
 #include "Preset.h"
 #include "Setup.h"
 #include "../ScriptConfig.h"
@@ -746,12 +746,12 @@ Setup* MobiusConfig::getStartingSetup()
  * 
  */
 
-BindingSet* MobiusConfig::getBindingSets()
+OldBindingSet* MobiusConfig::getBindingSets()
 {
 	return mBindingSets;
 }
 
-void MobiusConfig::setBindingSets(BindingSet* list)
+void MobiusConfig::setBindingSets(OldBindingSet* list)
 {
     if (list != mBindingSets) {
 		delete mBindingSets;
@@ -762,9 +762,9 @@ void MobiusConfig::setBindingSets(BindingSet* list)
 // no set function, I guess to enforce that you can't take the
 // first one away, not really necessary
 
-void MobiusConfig::addBindingSet(BindingSet* bs) 
+void MobiusConfig::addBindingSet(OldBindingSet* bs) 
 {
-    mBindingSets = (BindingSet*)Structure::append(mBindingSets, bs);
+    mBindingSets = (OldBindingSet*)Structure::append(mBindingSets, bs);
 }
 
 /****************************************************************************/

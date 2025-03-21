@@ -29,7 +29,7 @@
 
 #include "../../util/Trace.h"
 #include "../../model/old/MobiusConfig.h"
-#include "../../model/old/Binding.h"
+#include "../../model/old/OldBinding.h"
 #include "../../model/Scope.h"
 #include "../JuceUtil.h"
 #include "../MobiusView.h"
@@ -106,24 +106,24 @@ void BindingEditor::load()
     bindingSets.clear();
     revertBindingSets.clear();
 
-    BindingSet* setlist = config->getBindingSets();
+    OldBindingSet* setlist = config->getBindingSets();
     if (setlist == nullptr) {
         // must be a misconfigured install, shouldn't happen
-        setlist = new BindingSet();
+        setlist = new OldBindingSet();
         setlist->setName("Base");
         config->setBindingSets(setlist);
     }
 
     // copy all the BindingSets in the source
     while (setlist != nullptr) {
-        BindingSet* set = new BindingSet(setlist);
+        OldBindingSet* set = new OldBindingSet(setlist);
 
         // first set doesn't always have a name, force one
         if (bindingSets.size() == 0 && set->getName() == nullptr)
           set->setName("Base");
                 
         bindingSets.add(set);
-        revertBindingSets.add(new BindingSet(set));
+        revertBindingSets.add(new OldBindingSet(set));
 
         setlist = setlist->getNextBindingSet();
     }
@@ -180,9 +180,9 @@ void BindingEditor::refreshObjectSelector()
 void BindingEditor::loadBindingSet(int index)
 {
     bindings.clear();
-    BindingSet* set = bindingSets[index];
+    OldBindingSet* set = bindingSets[index];
     if (set != nullptr) {
-        Binding* blist = set->getBindings();
+        OldBinding* blist = set->getBindings();
         while (blist != nullptr) {
             // subclass overload
             if (isRelevant(blist)) {
@@ -216,11 +216,11 @@ void BindingEditor::save()
     saveBindingSet(selectedBindingSet);
         
     // build a new BindingSet linked list
-    BindingSet* setlist = nullptr;
-    BindingSet* last = nullptr;
+    OldBindingSet* setlist = nullptr;
+    OldBindingSet* last = nullptr;
         
     for (int i = 0 ; i < bindingSets.size() ; i++) {
-        BindingSet* set = bindingSets[i];
+        OldBindingSet* set = bindingSets[i];
         if (last == nullptr)
           setlist = set;
         else
@@ -249,7 +249,7 @@ void BindingEditor::save()
  */
 void BindingEditor::saveBindingSet(int index)
 {
-    BindingSet* set = bindingSets[index];
+    OldBindingSet* set = bindingSets[index];
     if (set != nullptr) {
         saveBindingSet(set);
 
@@ -264,7 +264,7 @@ void BindingEditor::saveBindingSet(int index)
             if (set->isActive()) {
                 for (int i = 1 ; i < bindingSets.size() ; i++) {
                     if (i != index) {
-                        BindingSet* other = bindingSets[i];
+                        OldBindingSet* other = bindingSets[i];
                         if (!set->isOverlay() && !other->isOverlay())
                           other->setActive(false);
                     }
@@ -282,21 +282,21 @@ void BindingEditor::saveBindingSet(int index)
  * so everything that wasn't in the table needs to be preserved,
  * and everything that was copied to the table neds to be replaced.
  */
-void BindingEditor::saveBindingSet(BindingSet* dest)
+void BindingEditor::saveBindingSet(OldBindingSet* dest)
 {
     // note well: unlike most object lists, MobiusConfig::setBindingSets does
     // NOT delete the current Binding list, it just takes the pointer
     // so we can reconstruct the list and set it back without worrying
     // about dual ownership.  Deleting a Binding DOES however follow the
     // chain so be careful with that.  Really need model cleanup.
-    juce::Array<Binding*> newBindings;
+    juce::Array<OldBinding*> newBindings;
 
-    Binding* original = dest->getBindings();
+    OldBinding* original = dest->getBindings();
     dest->setBindings(nullptr);
         
     while (original != nullptr) {
         // take it out of the list to prevent cascaded delete
-        Binding* next = original->getNext();
+        OldBinding* next = original->getNext();
         original->setNext(nullptr);
         if (!isRelevant(original))
           newBindings.add(original);
@@ -307,19 +307,19 @@ void BindingEditor::saveBindingSet(BindingSet* dest)
         
     // now add back the edited ones, some may have been deleted
     // and some may be new
-    Binding* edited = bindings.captureBindings();
+    OldBinding* edited = bindings.captureBindings();
     while (edited != nullptr) {
-        Binding* next = edited->getNext();
+        OldBinding* next = edited->getNext();
         edited->setNext(nullptr);
         newBindings.add(edited);
         edited = next;
     }
 
     // link them back up
-    Binding* merged = nullptr;
-    Binding* last = nullptr;
+    OldBinding* merged = nullptr;
+    OldBinding* last = nullptr;
     for (int i = 0 ; i < newBindings.size() ; i++) {
-        Binding* b = newBindings[i];
+        OldBinding* b = newBindings[i];
         // clear any residual chain
         b->setNext(nullptr);
         if (last == nullptr)
@@ -339,7 +339,7 @@ void BindingEditor::saveBindingSet(BindingSet* dest)
 void BindingEditor::cancel()
 {
     // throw away the copies
-    Binding* blist = bindings.captureBindings();
+    OldBinding* blist = bindings.captureBindings();
     delete blist;
     
     // delete the copied sets
@@ -349,9 +349,9 @@ void BindingEditor::cancel()
 
 void BindingEditor::revert()
 {
-    BindingSet* revert = revertBindingSets[selectedBindingSet];
+    OldBindingSet* revert = revertBindingSets[selectedBindingSet];
     if (revert != nullptr) {
-        BindingSet* reverted = new BindingSet(revert);
+        OldBindingSet* reverted = new OldBindingSet(revert);
         bindingSets.set(selectedBindingSet, reverted);
         loadBindingSet(selectedBindingSet);
         // in case the name was edited
@@ -385,12 +385,12 @@ void BindingEditor::objectSelectorSelect(int ordinal)
 void BindingEditor::objectSelectorNew(juce::String name)
 {
     int newOrdinal = bindingSets.size();
-    BindingSet* neu = new BindingSet();
+    OldBindingSet* neu = new OldBindingSet();
     neu->setName("[New]");
 
     bindingSets.add(neu);
     // make another copy for revert
-    BindingSet* revert = new BindingSet(neu);
+    OldBindingSet* revert = new OldBindingSet(neu);
     revertBindingSets.add(revert);
     
     selectedBindingSet = newOrdinal;
@@ -428,7 +428,7 @@ void BindingEditor::objectSelectorDelete()
 
 void BindingEditor::objectSelectorRename(juce::String newName)
 {
-    BindingSet* set = bindingSets[selectedBindingSet];
+    OldBindingSet* set = bindingSets[selectedBindingSet];
     set->setName(newName.toUTF8());
     // this doesn't need to refreshObjectSelector since that's
     // where the name came from
@@ -586,7 +586,7 @@ void BindingEditor::resetFormAndTarget()
  * Binding model represents scopes as a string, then parses
  * that into track or group numbers.  
  */
-void BindingEditor::refreshForm(Binding* b)
+void BindingEditor::refreshForm(OldBinding* b)
 {
     // if anything goes wrong parsing the scope string, leave the
     // selection at "Global"
@@ -636,7 +636,7 @@ void BindingEditor::refreshForm(Binding* b)
  * the two numbers would make it easier to deal with but
  * not as readable in the XML.
  */
-void BindingEditor::captureForm(Binding* b, bool includeTarget)
+void BindingEditor::captureForm(OldBinding* b, bool includeTarget)
 {
     // item 0 is global, then tracks, then groups
     int item = scope.getSelection();
@@ -684,7 +684,7 @@ void BindingEditor::captureForm(Binding* b, bool includeTarget)
  */
 void BindingEditor::formChanged()
 {
-    Binding* current = bindings.getSelectedBinding();
+    OldBinding* current = bindings.getSelectedBinding();
     if (current != nullptr) {
         // target shouldn't have changed, but ask to exclude it anyway
         captureForm(current, false);
@@ -699,7 +699,7 @@ void BindingEditor::formChanged()
  */
 void BindingEditor::targetChanged()
 {
-    Binding* current = bindings.getSelectedBinding();
+    OldBinding* current = bindings.getSelectedBinding();
     if (current != nullptr) {
         targets.capture(current);
         bindings.updateContent();
@@ -715,7 +715,7 @@ void BindingEditor::targetChanged()
 /**
  * Render the cell that represents the binding trigger.
  */
-juce::String BindingEditor::renderTriggerCell(Binding* b)
+juce::String BindingEditor::renderTriggerCell(OldBinding* b)
 {
     // subclass must overload this
     return renderSubclassTrigger(b);
@@ -725,7 +725,7 @@ juce::String BindingEditor::renderTriggerCell(Binding* b)
  * Update the binding info components to show things for the
  * binding selected in the table
  */
-void BindingEditor::bindingSelected(Binding* b)
+void BindingEditor::bindingSelected(OldBinding* b)
 {
     if (bindings.isNew(b)) {
         // uninitialized row, don't modify it but reset the target display
@@ -751,15 +751,15 @@ void BindingEditor::bindingDeselected()
  * 1 is how I started, but Mobius 2 did option 2 which everyone expects
  * and is easier since you don't have to remember to click Update.
  */
-Binding* BindingEditor::bindingNew()
+OldBinding* BindingEditor::bindingNew()
 {
-    Binding* neu = nullptr;
+    OldBinding* neu = nullptr;
     
     // what everyone expects
     bool captureCurrentTarget = true;
 
     if (captureCurrentTarget && targets.isTargetSelected()) {
-        neu = new Binding();
+        neu = new OldBinding();
         captureForm(neu, true);
     }
     else {
@@ -776,22 +776,22 @@ Binding* BindingEditor::bindingNew()
  * This is like bindingNew except we don't capture the form, it makes
  * a copy of the selected binding which is passed.
  */
-Binding* BindingEditor::bindingCopy(Binding* src)
+OldBinding* BindingEditor::bindingCopy(OldBinding* src)
 {
-    Binding* neu = new Binding(src);
+    OldBinding* neu = new OldBinding(src);
     // since this is identical to the other one, don't need to refresh
     // the form and target
     return neu;
 }
 
-void BindingEditor::bindingUpdate(Binding* b)
+void BindingEditor::bindingUpdate(OldBinding* b)
 {
     // was ignoring this if !target.isTargetSelected
     // but I suppose we can go ahead and capture what we have
     captureForm(b, true);
 }
 
-void BindingEditor::bindingDelete(Binding* b)
+void BindingEditor::bindingDelete(OldBinding* b)
 {
     (void)b;
     resetFormAndTarget();

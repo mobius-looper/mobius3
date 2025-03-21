@@ -15,7 +15,7 @@
 
 #include "util/Trace.h"
 #include "model/old/MobiusConfig.h"
-#include "model/old/Binding.h"
+#include "model/old/OldBinding.h"
 #include "model/VariableDefinition.h"
 #include "model/Symbol.h"
 
@@ -40,9 +40,9 @@ void Parametizer::initialize()
     int sustainId = 1;
     
     // start with Bindings
-    BindingSet* bindings = provider->getBindingSets();
+    OldBindingSet* bindings = provider->getBindingSets();
     // bindings can be nullptr on a build with no install
-    Binding* binding = nullptr;
+    OldBinding* binding = nullptr;
     if (bindings != nullptr)
       binding = bindings->getBindings();
     

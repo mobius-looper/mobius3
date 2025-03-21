@@ -9,7 +9,7 @@
 #include "../model/Session.h"
 #include "../model/old/MobiusConfig.h"
 #include "../model/old/Structure.h"
-#include "../model/old/Binding.h"
+#include "../model/old/OldBinding.h"
 #include "../Provider.h"
 #include "../Producer.h"
 
@@ -453,14 +453,14 @@ void MclEvaluator::evalTrackType(MclSection* section, Session* session, Session:
 void MclEvaluator::evalBinding(MclSection* section)
 {
     MobiusConfig* config = provider->getOldMobiusConfig();
-    BindingSet* sets = config->getBindingSets();
+    OldBindingSet* sets = config->getBindingSets();
 
     // fuck it, we'll do it live
-    BindingSet* target = nullptr;
-    BindingSet* existing = (BindingSet*)Structure::find(sets, section->name.toUTF8());
+    OldBindingSet* target = nullptr;
+    OldBindingSet* existing = (OldBindingSet*)Structure::find(sets, section->name.toUTF8());
     if (existing == nullptr) {
         // so there isn't a way to do rename from MCL which should be added at some point
-        target = new BindingSet();
+        target = new OldBindingSet();
         target->setName(section->name.toUTF8());
         target->setOverlay(section->bindingOverlay);
         config->addBindingSet(target);
@@ -474,10 +474,10 @@ void MclEvaluator::evalBinding(MclSection* section)
     }
     
     while (section->bindings.size() > 0) {
-        Binding* neu = section->bindings.removeAndReturn(0);
+        OldBinding* neu = section->bindings.removeAndReturn(0);
 
-        Binding* matching = nullptr;
-        for (Binding* b = target->getBindings() ; b != nullptr ; b = b->getNext()) {
+        OldBinding* matching = nullptr;
+        for (OldBinding* b = target->getBindings() ; b != nullptr ; b = b->getNext()) {
             if (b->trigger == neu->trigger &&
                 b->triggerValue == neu->triggerValue &&
                 b->midiChannel == neu->midiChannel &&

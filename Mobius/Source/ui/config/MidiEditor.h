@@ -26,13 +26,13 @@ class MidiEditor : public BindingEditor, public MidiManager::Monitor
     void showing() override;
     void hiding() override;
 
-    juce::String renderSubclassTrigger(Binding* b) override;
-    bool isRelevant(class Binding* b) override;
+    juce::String renderSubclassTrigger(OldBinding* b) override;
+    bool isRelevant(class OldBinding* b) override;
     void addSubclassFields() override;
     bool wantsCapture() override {return true;} 
     bool wantsPassthrough() override {return true;} 
-    void refreshSubclassFields(class Binding* b) override;
-    void captureSubclassFields(class Binding* b) override;
+    void refreshSubclassFields(class OldBinding* b) override;
+    void captureSubclassFields(class OldBinding* b) override;
     void resetSubclassFields() override;
 
     void midiMonitor(const juce::MidiMessage& message, juce::String& source) override;

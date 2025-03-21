@@ -69,7 +69,7 @@
 #include "util/Trace.h"
 #include "util/Util.h"
 #include "model/old/MobiusConfig.h"
-#include "model/old/Binding.h"
+#include "model/old/OldBinding.h"
 #include "model/Symbol.h"
 #include "model/UIConfig.h"
 #include "model/UIAction.h"
@@ -352,9 +352,9 @@ void Binderator::installKeyboardActions(MobiusConfig* mconfig, UIConfig* uconfig
     (void)uconfig;
     prepareArray(&keyActions);
     
-    BindingSet* baseBindings = mconfig->getBindingSets();
+    OldBindingSet* baseBindings = mconfig->getBindingSets();
     if (baseBindings != nullptr) {
-        Binding* binding = baseBindings->getBindings();
+        OldBinding* binding = baseBindings->getBindings();
         while (binding != nullptr) {
             if (binding->trigger == TriggerKey) {
                 int code = binding->triggerValue;
@@ -400,11 +400,11 @@ void Binderator::installMidiActions(MobiusConfig* mconfig, UIConfig* uconfig, Sy
     prepareArray(&controlActions);
 
     // always add base bindings
-    BindingSet* baseBindings = mconfig->getBindingSets();
+    OldBindingSet* baseBindings = mconfig->getBindingSets();
     if (baseBindings != nullptr) {
         installMidiActions(symbols, baseBindings);
         // plus any active overlays
-        BindingSet* overlay = baseBindings->getNextBindingSet();
+        OldBindingSet* overlay = baseBindings->getNextBindingSet();
         while (overlay != nullptr) {
             if (uconfig->isActiveBindingSet(juce::String(overlay->getName()))) 
               installMidiActions(symbols, overlay);
@@ -413,9 +413,9 @@ void Binderator::installMidiActions(MobiusConfig* mconfig, UIConfig* uconfig, Sy
     }
 }
 
-void Binderator::installMidiActions(SymbolTable* symbols, BindingSet* set)
+void Binderator::installMidiActions(SymbolTable* symbols, OldBindingSet* set)
 {
-    Binding* binding = set->getBindings();
+    OldBinding* binding = set->getBindings();
     while (binding != nullptr) {
 
         juce::OwnedArray<juce::OwnedArray<TableEntry>>* dest = nullptr;
@@ -520,7 +520,7 @@ UIAction* Binderator::getMidiAction(const juce::MidiMessage& message)
  * access to an ActionPool.  Okay since the actions will be allocated
  * once and resused for each trigger.
  */
-UIAction* Binderator::buildAction(SymbolTable* symbols, Binding* b)
+UIAction* Binderator::buildAction(SymbolTable* symbols, OldBinding* b)
 {
     UIAction* action = nullptr;
 

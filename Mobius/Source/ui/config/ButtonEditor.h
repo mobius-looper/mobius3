@@ -31,11 +31,11 @@ class ButtonEditor : public BindingEditor
     void objectSelectorRename(juce::String) override;
     
     // BindingEditor overloads
-    juce::String renderSubclassTrigger(Binding* b) override;
-    bool isRelevant(class Binding* b) override;
+    juce::String renderSubclassTrigger(OldBinding* b) override;
+    bool isRelevant(class OldBinding* b) override;
     void addSubclassFields() override;
-    void refreshSubclassFields(class Binding* b) override;
-    void captureSubclassFields(class Binding* b) override;
+    void refreshSubclassFields(class OldBinding* b) override;
+    void captureSubclassFields(class OldBinding* b) override;
     void resetSubclassFields() override;
     
   private:

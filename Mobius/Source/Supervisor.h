@@ -199,10 +199,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // controlled access to MobiusConfig
     class MobiusConfig* getOldMobiusConfig() override;
-    class BindingSet* getBindingSets() override;
+    class OldBindingSet* getBindingSets() override;
     
     // old configuration editor interfaces
-    void bindingEditorSave(class BindingSet* newList);
+    void bindingEditorSave(class OldBindingSet* newList);
     // temporary variant for MCL that edits the MobiusConfig in place
     void mclMobiusConfigUpdated() override;
     void mclSessionUpdated() override;
@@ -260,7 +260,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void menuLoadLoop();
     void menuSaveLoop();
     void menuQuickSave();
-    void menuActivateBindings(BindingSet* set);
+    void menuActivateBindings(class OldBindingSet* set);
     void menuLoadMidi(bool analyze);
     void menuLoadSession(int ordinal);
     

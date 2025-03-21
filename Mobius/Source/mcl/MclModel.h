@@ -190,7 +190,7 @@ class MclSection : public MclStatement
     juce::OwnedArray<MclScope> scopes;
 
     // content for BindingSets
-    juce::OwnedArray<class Binding> bindings;
+    juce::OwnedArray<class OldBinding> bindings;
     bool bindingOverlay = false;
     bool bindingNoOverlay = false;
 

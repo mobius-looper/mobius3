@@ -35,7 +35,7 @@ class UpgradeContent : public juce::Component, juce::Button::Listener
     juce::OwnedArray<class Setup> newSetups;
     juce::StringArray newScripts;
     juce::Array<juce::String> scriptNames;
-    juce::OwnedArray<class BindingSet> newBindingSets;
+    juce::OwnedArray<class OldBindingSet> newBindingSets;
     class ButtonSet* newButtons = nullptr;
     
     BasicLog log;
@@ -63,19 +63,18 @@ class UpgradeContent : public juce::Component, juce::Button::Listener
     void loadSetups();
     void loadScripts();
     juce::String verifyScript(class ScriptRef* ref);
-    juce::String getScriptNameFromPath(const char* path);
     void registerDirectoryScripts(juce::File dir);
     juce::String getScriptName(juce::File file);
     
     void loadBindings();
-    class BindingSet* loadBindings(class BindingSet* old, class BindingSet* master);
-    class Binding* upgradeBinding(class Binding* src);
+    class OldBindingSet* loadBindings(class OldBindingSet* old, class OldBindingSet* master);
+    class OldBinding* upgradeBinding(class OldBinding* src);
     int getLastDigit(juce::String s);
     bool addUpgradeButton(class DisplayButton* db);
 
     void doInstall();
     void noLoad();
-    void mergeBindings(BindingSet* src, BindingSet* dest);
+    void mergeBindings(class OldBindingSet* src, class OldBindingSet* dest);
     
     void doUndo();
 };

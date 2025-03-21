@@ -76,11 +76,11 @@ class XmlRenderer {
     void render(class XmlBuffer* b, class UserVariables* container);
     void parse(class XmlElement* e, class UserVariables* container);
 
-    void parse(class XmlElement* e, class BindingSet* c);
-    void render(class XmlBuffer* b, class BindingSet* c);
+    void parse(class XmlElement* e, class OldBindingSet* c);
+    void render(class XmlBuffer* b, class OldBindingSet* c);
 
-    void parse(class XmlElement* e, class Binding* c);
-    void render(class XmlBuffer* b, class Binding* c);
+    void parse(class XmlElement* e, class OldBinding* c);
+    void render(class XmlBuffer* b, class OldBinding* c);
 
     void render(class XmlBuffer* b, class ScriptConfig* c);
     void parse(class XmlElement* b, class ScriptConfig* c);

@@ -41,7 +41,7 @@ void TargetSelectorWrapper::reset()
       oldSelector.reset();
 }
 
-void TargetSelectorWrapper::select(class Binding* b)
+void TargetSelectorWrapper::select(class OldBinding* b)
 {
     if (useNew)
       newSelector.select(b);
@@ -49,7 +49,7 @@ void TargetSelectorWrapper::select(class Binding* b)
       oldSelector.select(b);
 }
 
-void TargetSelectorWrapper::capture(class Binding* b)
+void TargetSelectorWrapper::capture(class OldBinding* b)
 {
     if (useNew)
       newSelector.capture(b);

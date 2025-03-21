@@ -5,7 +5,7 @@
 #include "util/Util.h"
 #include "model/Symbol.h"
 #include "model/ParameterProperties.h"
-#include "model/old/Binding.h"
+#include "model/old/OldBinding.h"
 #include "model/VariableDefinition.h"
 
 #include "PluginParameter.h"
@@ -19,7 +19,7 @@ PluginParameter::~PluginParameter()
     }
 }
 
-PluginParameter::PluginParameter(Symbol* s, Binding* binding)
+PluginParameter::PluginParameter(Symbol* s, OldBinding* binding)
 {
     symbol = s;
     

@@ -16,7 +16,7 @@
 #include "../model/UIAction.h"
 #include "../model/Symbol.h"
 #include "../model/old/MobiusConfig.h"
-#include "../model/old/Binding.h"
+#include "../model/old/OldBinding.h"
 
 #include "../Supervisor.h"
 #include "../Symbolizer.h"
@@ -207,9 +207,9 @@ void MainWindow::mainMenuSelection(int id)
         // get the item name here
         // MainMenu left a kludgey transient menu id on the object
         MobiusConfig* mconfig = supervisor->getOldMobiusConfig();
-        BindingSet* sets = mconfig->getBindingSets();
-        BindingSet* selected = nullptr;
-        for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
+        OldBindingSet* sets = mconfig->getBindingSets();
+        OldBindingSet* selected = nullptr;
+        for (OldBindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
             if (set->transientMenuId == id) {
                 selected = set;
                 break;

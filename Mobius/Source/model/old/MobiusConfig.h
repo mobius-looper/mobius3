@@ -277,9 +277,9 @@ class MobiusConfig {
     class Preset* getPreset(int ordinal);
     class Preset* getDefaultPreset();
     
-	class BindingSet* getBindingSets();
-	void addBindingSet(class BindingSet* bs);
-    void setBindingSets(BindingSet* list);
+	class OldBindingSet* getBindingSets();
+	void addBindingSet(class OldBindingSet* bs);
+    void setBindingSets(OldBindingSet* list);
 
     class ScriptConfig* getScriptConfigObsolete();
     void setScriptConfigObsolete(class ScriptConfig* c);
@@ -363,7 +363,7 @@ class MobiusConfig {
 
 	class Preset* mPresets;
 
-	class BindingSet* mBindingSets;
+	class OldBindingSet* mBindingSets;
     char* mBindings;
     char* mBindingOverlays;
 

@@ -7,7 +7,7 @@
 #include "../model/ParameterProperties.h"
 #include "../model/ParameterSets.h"
 #include "../model/ValueSet.h"
-#include "../model/old/Binding.h"
+#include "../model/old/OldBinding.h"
 #include "../Provider.h"
 #include "../Producer.h"
 
@@ -674,7 +674,7 @@ int MclParser::parseMidiValue(juce::String s)
 
 void MclParser::parseBindingObject(juce::StringArray& tokens)
 {
-    Binding* b = new Binding();
+    OldBinding* b = new OldBinding();
     b->trigger = bindingTrigger;
     b->midiChannel = bindingChannel;
 
