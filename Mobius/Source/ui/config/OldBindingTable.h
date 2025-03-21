@@ -13,7 +13,7 @@
 
 #include "../common/ButtonBar.h"
 
-class BindingTable : public juce::Component, public juce::TableListBoxModel, public ButtonBar::Listener
+class OldBindingTable : public juce::Component, public juce::TableListBoxModel, public ButtonBar::Listener
 {
   public:
 
@@ -36,8 +36,8 @@ class BindingTable : public juce::Component, public juce::TableListBoxModel, pub
         virtual class OldBinding* bindingCopy(class OldBinding* b) = 0;
     };
 
-    BindingTable();
-    ~BindingTable();
+    OldBindingTable();
+    ~OldBindingTable();
 
     //
     // Constructor options

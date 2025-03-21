@@ -1,5 +1,5 @@
 /**
- * A table showing ValueSets in a ParameterSet.
+ * A table showing BindingSets in a BindingSets.
  */
 
 #pragma once
@@ -44,7 +44,7 @@ class BindingSetTable : public TypicalTable,
     BindingSetTable(class BindingSetEditor* e);
     ~BindingSetTable();
 
-    void load(class ParameterSets* sets);
+    void load(class BindingSets* sets);
     void reload();
     void clear();
     void cancel();

@@ -2,7 +2,7 @@
 #include <JuceHeader.h>
 
 #include "TargetSelectorWrapper.h"
-#include "BindingTargetSelector.h"
+#include "OldBindingTargetSelector.h"
 
 
 TargetSelectorWrapper::TargetSelectorWrapper(Supervisor* s) : oldSelector(s), newSelector(s)
@@ -71,7 +71,7 @@ void TargetSelectorWrapper::resized()
       oldSelector.setBounds(getLocalBounds());
 }
  
-void TargetSelectorWrapper::bindingTargetClicked(BindingTargetSelector* bts)
+void TargetSelectorWrapper::bindingTargetClicked(OldBindingTargetSelector* bts)
 {
     (void)bts;
     if (listener != nullptr)

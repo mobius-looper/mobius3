@@ -9,9 +9,9 @@
 #include "../common/YanField.h"
 
 
-#include "BindingEditor.h"
+#include "OldBindingEditor.h"
 
-class ButtonEditor : public BindingEditor
+class ButtonEditor : public OldBindingEditor
 {
   public:
     ButtonEditor(class Supervisor* s);

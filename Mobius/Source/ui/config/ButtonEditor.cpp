@@ -24,7 +24,7 @@
 
 #include "ButtonEditor.h"
 
-ButtonEditor::ButtonEditor(Supervisor* s) : BindingEditor(s)
+ButtonEditor::ButtonEditor(Supervisor* s) : OldBindingEditor(s)
 {
     setName("ButtonEditor");
 

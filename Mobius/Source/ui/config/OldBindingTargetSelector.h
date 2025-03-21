@@ -9,7 +9,7 @@
 #include "../common/SimpleTabPanel.h"
 #include "../common/SimpleListBox.h"
 
-class BindingTargetSelector : public SimpleTabPanel,
+class OldBindingTargetSelector : public SimpleTabPanel,
                               public SimpleListBox::Listener,
                               public juce::DragAndDropContainer
 {
@@ -18,11 +18,11 @@ class BindingTargetSelector : public SimpleTabPanel,
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void bindingTargetClicked(BindingTargetSelector* bts) = 0;
+        virtual void bindingTargetClicked(OldBindingTargetSelector* bts) = 0;
     };
 
-    BindingTargetSelector(class Supervisor* s);
-    ~BindingTargetSelector();
+    OldBindingTargetSelector(class Supervisor* s);
+    ~OldBindingTargetSelector();
 
     void setListener(Listener* l) {
         listener = l;

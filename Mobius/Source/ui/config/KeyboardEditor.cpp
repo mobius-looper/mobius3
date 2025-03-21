@@ -9,7 +9,7 @@
 
 #include "KeyboardEditor.h"
 
-KeyboardEditor::KeyboardEditor(Supervisor* s) : BindingEditor(s)
+KeyboardEditor::KeyboardEditor(Supervisor* s) : OldBindingEditor(s)
 {
     setName("KeyboardEditor");
     initForm();

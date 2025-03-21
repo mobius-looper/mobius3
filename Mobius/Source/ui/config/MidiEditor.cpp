@@ -16,7 +16,7 @@
 
 #include "MidiEditor.h"
 
-MidiEditor::MidiEditor(Supervisor* s) : BindingEditor(s)
+MidiEditor::MidiEditor(Supervisor* s) : OldBindingEditor(s)
 {
     setName("MidiEditor");
     initForm();

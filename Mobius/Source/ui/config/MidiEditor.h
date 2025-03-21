@@ -12,9 +12,9 @@
 //#include "../common/Field.h"
 #include "../common/YanField.h"
 
-#include "BindingEditor.h"
+#include "OldBindingEditor.h"
 
-class MidiEditor : public BindingEditor, public MidiManager::Monitor
+class MidiEditor : public OldBindingEditor, public MidiManager::Monitor
 {
   public:
     MidiEditor(class Supervisor* s);

@@ -10,12 +10,12 @@
 #include "../common/YanForm.h"
 #include "../common/BasicButtonRow.h"
 
-#include "BindingTable.h"
+#include "OldBindingTable.h"
 #include "TargetSelectorWrapper.h"
 #include "ConfigEditor.h"
 
-class BindingEditor : public ConfigEditor,
-                      public BindingTable::Listener,
+class OldBindingEditor : public ConfigEditor,
+                      public OldBindingTable::Listener,
                       public TargetSelectorWrapper::Listener,
                       public YanInput::Listener,
                       public YanCombo::Listener
@@ -38,8 +38,8 @@ class BindingEditor : public ConfigEditor,
     // subclass may call this if it wants to append a release checkbox
     void addRelease();
 
-    BindingEditor(class Supervisor* s);
-    virtual ~BindingEditor();
+    OldBindingEditor(class Supervisor* s);
+    virtual ~OldBindingEditor();
 
     bool isCapturing();
     bool isCapturePassthrough();
@@ -77,7 +77,7 @@ class BindingEditor : public ConfigEditor,
     
   protected:
     
-    BindingTable bindings;
+    OldBindingTable bindings;
     TargetSelectorWrapper targets;
     juce::String initialObject;
 

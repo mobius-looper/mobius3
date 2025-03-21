@@ -11,9 +11,9 @@
 #include "../common/ButtonBar.h"
 #include "../common/YanField.h"
 
-#include "BindingEditor.h"
+#include "OldBindingEditor.h"
 
-class KeyboardEditor : public BindingEditor,
+class KeyboardEditor : public OldBindingEditor,
                        public juce::KeyListener,
                        public KeyTracker::Listener
 {

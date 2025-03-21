@@ -3,7 +3,6 @@
 
 #include <JuceHeader.h>
 
-#include "BindingTargetSelector.h"
 #include "../parameter/SymbolTree.h"
 
 class TreeTargetSelector : public juce::Component

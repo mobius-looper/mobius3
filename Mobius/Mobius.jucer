@@ -306,16 +306,6 @@
         <GROUP id="{C154E97D-0CEE-20FA-DFB7-9667274BF918}" name="config">
           <FILE id="Rx6MAi" name="AudioEditor.cpp" compile="1" resource="0" file="Source/ui/config/AudioEditor.cpp"/>
           <FILE id="ByMaOa" name="AudioEditor.h" compile="0" resource="0" file="Source/ui/config/AudioEditor.h"/>
-          <FILE id="L06hsc" name="BindingEditor.cpp" compile="1" resource="0"
-                file="Source/ui/config/BindingEditor.cpp"/>
-          <FILE id="I5PGfx" name="BindingEditor.h" compile="0" resource="0" file="Source/ui/config/BindingEditor.h"/>
-          <FILE id="WsJcLu" name="BindingTable.cpp" compile="1" resource="0"
-                file="Source/ui/config/BindingTable.cpp"/>
-          <FILE id="ucuOsk" name="BindingTable.h" compile="0" resource="0" file="Source/ui/config/BindingTable.h"/>
-          <FILE id="npsgp0" name="BindingTargetSelector.cpp" compile="1" resource="0"
-                file="Source/ui/config/BindingTargetSelector.cpp"/>
-          <FILE id="I1TGlk" name="BindingTargetSelector.h" compile="0" resource="0"
-                file="Source/ui/config/BindingTargetSelector.h"/>
           <FILE id="DRfYUA" name="ButtonEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/ButtonEditor.cpp"/>
           <FILE id="To8mZc" name="ButtonEditor.h" compile="0" resource="0" file="Source/ui/config/ButtonEditor.h"/>
@@ -347,6 +337,18 @@
                 file="Source/ui/config/ObjectSelector.cpp"/>
           <FILE id="IRESL5" name="ObjectSelector.h" compile="0" resource="0"
                 file="Source/ui/config/ObjectSelector.h"/>
+          <FILE id="jpQVFU" name="OldBindingEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/OldBindingEditor.cpp"/>
+          <FILE id="x45JO6" name="OldBindingEditor.h" compile="0" resource="0"
+                file="Source/ui/config/OldBindingEditor.h"/>
+          <FILE id="MU4PcM" name="OldBindingTable.cpp" compile="1" resource="0"
+                file="Source/ui/config/OldBindingTable.cpp"/>
+          <FILE id="VwQ5gW" name="OldBindingTable.h" compile="0" resource="0"
+                file="Source/ui/config/OldBindingTable.h"/>
+          <FILE id="GOYLOn" name="OldBindingTargetSelector.cpp" compile="1" resource="0"
+                file="Source/ui/config/OldBindingTargetSelector.cpp"/>
+          <FILE id="i9W7WY" name="OldBindingTargetSelector.h" compile="0" resource="0"
+                file="Source/ui/config/OldBindingTargetSelector.h"/>
           <FILE id="a1eGSE" name="PropertiesEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/PropertiesEditor.cpp"/>
           <FILE id="emfqEq" name="PropertiesEditor.h" compile="0" resource="0"

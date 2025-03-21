@@ -8,16 +8,16 @@
 #include "../common/ButtonBar.h"
 #include "../JuceUtil.h"
 
-#include "BindingTable.h"
+#include "OldBindingTable.h"
 
 // should put this inside the class but we've got
 // the "static member with in-class initializer must have non-volatile
 // const integral type or be line" folderol to figure out
 const char* NewBindingName = "[New]";
 
-BindingTable::BindingTable()
+OldBindingTable::OldBindingTable()
 {
-    setName("BindingTable");
+    setName("OldBindingTable");
 
     initTable();
     addAndMakeVisible(table);
@@ -32,7 +32,7 @@ BindingTable::BindingTable()
     addAndMakeVisible(commands);
 }
 
-BindingTable::~BindingTable()
+OldBindingTable::~OldBindingTable()
 {
 }
 
@@ -41,7 +41,7 @@ BindingTable::~BindingTable()
  * up/down buttons if you want ordering.  Can't be turned off
  * once set.
  */
-void BindingTable::setOrdered(bool b)
+void OldBindingTable::setOrdered(bool b)
 {
     ordered = b;
     if (ordered) {
@@ -57,7 +57,7 @@ void BindingTable::setOrdered(bool b)
  * The list is copied and ownership is retained by the caller.
  */
 
-void BindingTable::setBindings(class OldBinding* src)
+void OldBindingTable::setBindings(class OldBinding* src)
 {
     bindings.clear();
     while (src != nullptr) {
@@ -70,12 +70,12 @@ void BindingTable::setBindings(class OldBinding* src)
     table.updateContent();
 }
 
-void BindingTable::add(OldBinding* src)
+void OldBindingTable::add(OldBinding* src)
 {
     bindings.add(new OldBinding(src));
 }
 
-void BindingTable::updateContent()
+void OldBindingTable::updateContent()
 {
     table.updateContent();
     // hmm, this isn't doing a refresh when called after BindingEditor
@@ -90,12 +90,12 @@ void BindingTable::updateContent()
  * and clears internal state.  Ownership of the list passes
  * to the caller.
  */
-OldBinding* BindingTable::captureBindings()
+OldBinding* OldBindingTable::captureBindings()
 {
     OldBinding* capture = nullptr;
     OldBinding* last = nullptr;
 
-    //trace("BindingTable::capture %d\n", bindings.size());
+    //trace("OldBindingTable::capture %d\n", bindings.size());
 
     while (bindings.size() > 0) {
         OldBinding* b = bindings.removeAndReturn(0);
@@ -125,18 +125,18 @@ OldBinding* BindingTable::captureBindings()
 /**
  * Delete contained Bindings and prepare for renewal.
  */
-void BindingTable::clear()
+void OldBindingTable::clear()
 {
     bindings.clear();
     table.updateContent();
 }
 
-bool BindingTable::isNew(OldBinding* b)
+bool OldBindingTable::isNew(OldBinding* b)
 {
     return StringEqual(b->getSymbolName(), NewBindingName);
 }
 
-void BindingTable::deselect()
+void OldBindingTable::deselect()
 {
     // easier to use deselectAllRows?
     int row = table.getSelectedRow();
@@ -147,7 +147,7 @@ void BindingTable::deselect()
     }
 }
 
-OldBinding* BindingTable::getSelectedBinding()
+OldBinding* OldBindingTable::getSelectedBinding()
 {
     OldBinding* binding = nullptr;
     int row = table.getSelectedRow();
@@ -169,13 +169,13 @@ OldBinding* BindingTable::getSelectedBinding()
  * to prevent the column from being added since initTable is called in
  * the constructor.
  */
-void BindingTable::removeTrigger()
+void OldBindingTable::removeTrigger()
 {
     juce::TableHeaderComponent& header = table.getHeader();
     header.removeColumn(TriggerColumn);
 }
 
-void BindingTable::addDisplayName()
+void OldBindingTable::addDisplayName()
 {
     juce::TableHeaderComponent& header = table.getHeader();
     header.addColumn(juce::String("Display Name"), DisplayNameColumn,
@@ -186,7 +186,7 @@ void BindingTable::addDisplayName()
 /**
  * Set starting table properties
  */
-void BindingTable::initTable()
+void OldBindingTable::initTable()
 {
     // from the example
     table.setColour (juce::ListBox::outlineColourId, juce::Colours::grey);      // [2]
@@ -220,7 +220,7 @@ void BindingTable::initTable()
  *
  * Pick some reasonable default widths but need to be smarter
  */
-void BindingTable::initColumns()
+void OldBindingTable::initColumns()
 {
     // take sorting out of the default flags until we can implement it correctly
     int columnFlags = juce::TableHeaderComponent::ColumnPropertyFlags::visible |
@@ -262,13 +262,13 @@ void BindingTable::initColumns()
 
 const int CommandButtonGap = 10;
 
-int BindingTable::getPreferredWidth()
+int OldBindingTable::getPreferredWidth()
 {
     // adapt to column configuration
     return 500;
 }
 
-int BindingTable::getPreferredHeight()
+int OldBindingTable::getPreferredHeight()
 {
     int height = 400;
     
@@ -285,7 +285,7 @@ int BindingTable::getPreferredHeight()
  * Always put buttons at the bottom, and let the table
  * be as large as it wants.
  */
-void BindingTable::resized()
+void OldBindingTable::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
 
@@ -305,7 +305,7 @@ void BindingTable::resized()
  * ButtonBar::Listener
  *
  */
-void BindingTable::buttonClicked(juce::String name)
+void OldBindingTable::buttonClicked(juce::String name)
 {
     // is this the best way to compare them?
     if (name == juce::String("New")) {
@@ -421,7 +421,7 @@ void BindingTable::buttonClicked(juce::String name)
  * to map it to the logical column if allowing column reording in the table.
  *
  */
-juce::String BindingTable::getCellText(int row, int columnId)
+juce::String OldBindingTable::getCellText(int row, int columnId)
 {
     juce::String cell;
     OldBinding* b = bindings[row];
@@ -454,7 +454,7 @@ juce::String BindingTable::getCellText(int row, int columnId)
  * parsed at runtime into the mTrack and mGroup numbers
  * Need a lot more here as we refine what scopes mean.
  */ 
-juce::String BindingTable::formatScopeText(OldBinding* b)
+juce::String OldBindingTable::formatScopeText(OldBinding* b)
 {
     if (b->getScope() == nullptr)
       return juce::String("Global");
@@ -472,7 +472,7 @@ juce::String BindingTable::formatScopeText(OldBinding* b)
  * The maximum of all column rows.
  * This is independent of the table size.
  */
-int BindingTable::getNumRows()
+int OldBindingTable::getNumRows()
 {
     return bindings.size();
 }
@@ -487,7 +487,7 @@ int BindingTable::getNumRows()
  * fancier than just filling the entire thing.  Could be useful
  * for borders, though Juce might provide something for selected rows/cells already.
  */
-void BindingTable::paintRowBackground(juce::Graphics& g, int rowNumber,
+void OldBindingTable::paintRowBackground(juce::Graphics& g, int rowNumber,
                                       int /*width*/, int /*height*/,
                                       bool rowIsSelected)
 {
@@ -513,7 +513,7 @@ void BindingTable::paintRowBackground(juce::Graphics& g, int rowNumber,
  * default to 22 but ideally this should be proportional to the row height if it can be changed.
  * 14 is 63% of 22
  */
-void BindingTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
+void OldBindingTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
                              int width, int height, bool rowIsSelected)
 {
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
@@ -546,7 +546,7 @@ void BindingTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
  * Can use ListBox::isRowSelected to get the selected row
  * Don't know if there is tracking of a selected column but we don't need that yet.
  */
-void BindingTable::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+void OldBindingTable::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
     (void)columnId;
     (void)event;

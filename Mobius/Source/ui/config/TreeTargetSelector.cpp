@@ -13,7 +13,7 @@
 #include "../../model/UIConfig.h"
 #include "../../Supervisor.h"
 
-#include "BindingTargetSelector.h"
+#include "OldBindingTargetSelector.h"
 
 #include "TreeTargetSelector.h"
 

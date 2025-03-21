@@ -10,10 +10,10 @@
 
 #include <JuceHeader.h>
 
-#include "BindingTargetSelector.h"
+#include "OldBindingTargetSelector.h"
 #include "TreeTargetSelector.h"
 
-class TargetSelectorWrapper : public juce::Component, BindingTargetSelector::Listener
+class TargetSelectorWrapper : public juce::Component, OldBindingTargetSelector::Listener
 {
   public:
 
@@ -35,7 +35,7 @@ class TargetSelectorWrapper : public juce::Component, BindingTargetSelector::Lis
 
     void resized() override;
 
-    void bindingTargetClicked(BindingTargetSelector* bts) override;
+    void bindingTargetClicked(OldBindingTargetSelector* bts) override;
   
   private:
 
@@ -43,6 +43,6 @@ class TargetSelectorWrapper : public juce::Component, BindingTargetSelector::Lis
 
     bool useNew = false;
     
-    BindingTargetSelector oldSelector;
+    OldBindingTargetSelector oldSelector;
     TreeTargetSelector newSelector;
 };

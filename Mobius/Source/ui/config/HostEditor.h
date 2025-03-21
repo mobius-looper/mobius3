@@ -9,9 +9,9 @@
 
 #include <JuceHeader.h>
 
-#include "BindingEditor.h"
+#include "OldBindingEditor.h"
 
-class HostEditor : public BindingEditor
+class HostEditor : public OldBindingEditor
 {
   public:
     HostEditor(class Supervisor* s);

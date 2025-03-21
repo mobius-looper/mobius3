@@ -21,7 +21,7 @@
 #include "../../model/FunctionProperties.h"
 #include "../../Supervisor.h"
 
-#include "BindingTargetSelector.h"
+#include "OldBindingTargetSelector.h"
 
 /**
  * Build the tabbed component for selecting targets.
@@ -33,11 +33,11 @@
  * With the introduction of Symbols, we can assume all targets will
  * have a unique (and possibly qualfified) name.
  */
-BindingTargetSelector::BindingTargetSelector(Supervisor* s)
+OldBindingTargetSelector::OldBindingTargetSelector(Supervisor* s)
 {
     supervisor = s;
     
-    setName("BindingTargetSelector");
+    setName("OldBindingTargetSelector");
 
     initBox(&functions);
     addTab(juce::String("Functions"), &functions);
@@ -55,14 +55,14 @@ BindingTargetSelector::BindingTargetSelector(Supervisor* s)
     addTab(juce::String("Parameters"), &parameters);
 }
 
-void BindingTargetSelector::initBox(SimpleListBox* box)
+void OldBindingTargetSelector::initBox(SimpleListBox* box)
 {
     box->setMultipleSelectionEnabled(false);
     box->addListener(this);
     boxes.add(box);
 }
 
-BindingTargetSelector::~BindingTargetSelector()
+OldBindingTargetSelector::~OldBindingTargetSelector()
 {
 }
 
@@ -74,7 +74,7 @@ BindingTargetSelector::~BindingTargetSelector()
  * since they're static, but that could change I suppose and
  * this doesn't happen often.
  */
-void BindingTargetSelector::load()
+void OldBindingTargetSelector::load()
 {
     functions.clear();
     scripts.clear();
@@ -98,7 +98,7 @@ void BindingTargetSelector::load()
                 else if (symbol->id > 0) {
                     // where do these come from?  should always be having
                     // properties
-                    Trace(1, "BindingTargetSelector: BehaviorFunction with no properties");
+                    Trace(1, "OldBindingTargetSelector: BehaviorFunction with no properties");
                     functions.add(symbol->getName());
                 }
             }
@@ -145,7 +145,7 @@ void BindingTargetSelector::load()
 /**
  * Return true if there is any item in any tab selected.
  */
-bool BindingTargetSelector::isTargetSelected()
+bool OldBindingTargetSelector::isTargetSelected()
 {
     bool selected = false;
     int tab = tabs.getCurrentTabIndex();
@@ -160,7 +160,7 @@ bool BindingTargetSelector::isTargetSelected()
  * Return the name of the selected target, or empty string
  * if nothing is selected.
  */
-juce::String BindingTargetSelector::getSelectedTarget()
+juce::String OldBindingTargetSelector::getSelectedTarget()
 {
     juce::String target;
     int tab = tabs.getCurrentTabIndex();
@@ -184,7 +184,7 @@ juce::String BindingTargetSelector::getSelectedTarget()
  * BindingEditor uses the listener as a signal to reset the form
  * which we don't want.
  */
-void BindingTargetSelector::selectedRowsChanged(SimpleListBox* box, int lastRow)
+void OldBindingTargetSelector::selectedRowsChanged(SimpleListBox* box, int lastRow)
 {
     (void)lastRow;
     // once a row is selected in one tab's box, the others are deselected
@@ -197,7 +197,7 @@ void BindingTargetSelector::selectedRowsChanged(SimpleListBox* box, int lastRow)
  * a selected state at this point, so the receiver can call back to
  * the SimpleListBox or to us to get the selection.
  */
-void BindingTargetSelector::listBoxItemClicked(SimpleListBox* box, int row)
+void OldBindingTargetSelector::listBoxItemClicked(SimpleListBox* box, int row)
 {
     (void)box;
     (void)row;
@@ -205,7 +205,7 @@ void BindingTargetSelector::listBoxItemClicked(SimpleListBox* box, int row)
       listener->bindingTargetClicked(this);
 }
     
-void BindingTargetSelector::deselectOtherTargets(SimpleListBox* active)
+void OldBindingTargetSelector::deselectOtherTargets(SimpleListBox* active)
 {
     for (int i = 0 ; i < boxes.size() ; i++) {
         SimpleListBox* other = boxes[i];
@@ -214,7 +214,7 @@ void BindingTargetSelector::deselectOtherTargets(SimpleListBox* active)
     }
 }
 
-void BindingTargetSelector::reset()
+void OldBindingTargetSelector::reset()
 {
     deselectOtherTargets(nullptr);
     showTab(0);
@@ -225,7 +225,7 @@ void BindingTargetSelector::reset()
  * desired target.  The format of the name must
  * match what is returned by getSelectedTarget.
  */
-void BindingTargetSelector::showSelectedTarget(juce::String name)
+void OldBindingTargetSelector::showSelectedTarget(juce::String name)
 {
     bool found = false;
 
@@ -272,7 +272,7 @@ void BindingTargetSelector::showSelectedTarget(juce::String name)
  * of Symbols.  We'll intern symbols for invalid bindings
  * but can display them in red as unresolved.
  */
-bool BindingTargetSelector::isValidTarget(juce::String name)
+bool OldBindingTargetSelector::isValidTarget(juce::String name)
 {
     bool valid = false;
 
@@ -297,7 +297,7 @@ bool BindingTargetSelector::isValidTarget(juce::String name)
  * This is much simpler now that all we have to do
  * is find and store the Symbol.
  */
-void BindingTargetSelector::capture(OldBinding* b)
+void OldBindingTargetSelector::capture(OldBinding* b)
 {
     juce::String name = getSelectedTarget();
     if (name.length() == 0) {
@@ -315,7 +315,7 @@ void BindingTargetSelector::capture(OldBinding* b)
  * todo: If this was hidden or unresolved, we may not have
  * anything to show and should display a message.
  */
-void BindingTargetSelector::select(OldBinding* b)
+void OldBindingTargetSelector::select(OldBinding* b)
 {
     showSelectedTarget(b->getSymbolName());
 }
