@@ -105,14 +105,16 @@ void BaseScheduler::refreshParameters()
     // is now the owner of all things realted to sync
 
     leaderType = lt->getLeaderTypeFromSession();
-    leaderTrack = def->getInt("leaderTrack");
+    leaderTrack = def->getInt(ParamLeaderTrack);
+
+    // only reason it uses this is to do enumeration conversion
     leaderSwitchLocation = lt->getLeaderSwitchLocationFromSession();
     
-    followQuantize = def->getBool("followQuantizeLocation");
-    followRecord = def->getBool("followRecord");
-    followRecordEnd = def->getBool("followRecordEnd");
-    followSize = def->getBool("followSize");
-    followMute = def->getBool("followMute");
+    followQuantize = def->getBool(ParamFollowQuantizeLocation);
+    followRecord = def->getBool(ParamFollowRecord);
+    followRecordEnd = def->getBool(ParamFollowRecordEnd);
+    followSize = def->getBool(ParamFollowSize);
+    followMute = def->getBool(ParamFollowMute);
 }
 
 //////////////////////////////////////////////////////////////////////

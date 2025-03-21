@@ -111,7 +111,7 @@ void MidiTrack::refreshParameters()
     
     // tell the player where to go
     Session::Track* def = logicalTrack->getSession();
-    MslValue* v = def->get("outputDevice");
+    MslValue* v = def->get(ParamMidiOutput);
     if (v == nullptr) {
         player.setDeviceId(0);
     }
@@ -124,16 +124,16 @@ void MidiTrack::refreshParameters()
         player.setDeviceId(id);
     }
     
-    midiThru = def->getBool("midiThru");
+    midiThru = def->getBool(ParamMidiThru);
 
     // some leader/follow parameters are in TrackScheduler
     // the flags are only necessary in here
     // !! reconsider this, Scheduler should handle all of them?
-    followerMuteStart = def->getBool("followerMuteStart");
-    followLocation = def->getBool("followLocation");
-    noReset = def->getBool("noReset");
+    followerStartMuted = def->getBool(ParamFollowerStartMuted);
+    followLocation = def->getBool(ParamFollowLocation);
+    noReset = def->getBool(ParamNoReset);
 
-    player.setChannelOverride(def->getInt("midiChannelOverride"));
+    player.setChannelOverride(def->getInt(ParamMidiChannelOverride));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -664,7 +664,7 @@ void MidiTrack::leaderRecordEnd(TrackProperties& props)
         // so we'll be at the beginning of the block at this point
         scheduler.setFollowTrack(props.number);
 
-        if (followerMuteStart) {
+        if (followerStartMuted) {
             // instead of going immediately to Play, allow starting
             // muted so it can be turned on manually
             // I think this is more usable than a non-starting resize option

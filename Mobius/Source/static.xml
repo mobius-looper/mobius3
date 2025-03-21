@@ -87,7 +87,7 @@
   <!-- others not included: followSwitch,followLocation,followCut,followRate,
        followDirection,followStartPoint -->
   <Form name='sessionCategoryFollow' title='MIDI Follower Options'
-        symbols='leaderType,leaderTrack,leaderSwitchLocation,followRecord,followRecordEnd,followSize,followMute,followQuantizeLocation,followerMuteStart'/>
+        symbols='leaderType,leaderTrack,leaderSwitchLocation,followRecord,followRecordEnd,followSize,followMute,followQuantizeLocation,followerStartMuted'/>
   
   <Form name='sessionCategoryQuantize' title='Quantization Control'
         symbols='quantize,subcycles,switchQuantize,overdubQuantized,bounceQuantize'/>

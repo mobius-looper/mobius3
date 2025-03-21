@@ -509,7 +509,7 @@ bool SessionTrackTable::doMove(int sourceRow, int dropRow)
 
     if (dropRow < 0)
       // brain hurting, see comments in SessionTrackTable for why this needs to be one past the end
-      dropRow = session->getTrackCount();
+      dropRow = tracks.size();
 
     if (sourceRow == dropRow) {
         // already there

@@ -180,7 +180,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     LooperScheduler scheduler;
 
     // leader state
-    bool followerMuteStart = false;
+    bool followerStartMuted = false;
     bool followLocation = false;
     bool noReset = false;
     int outputChannel = 0;

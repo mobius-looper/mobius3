@@ -252,8 +252,6 @@ class Track : public TraceContext
     // EventManager
     //
     
-    void enterCriticalSection(const char* reason);
-    void leaveCriticalSection();
     class InputStream* getInputStream();
     class OutputStream* getOutputStream();
 

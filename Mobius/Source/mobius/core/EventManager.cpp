@@ -348,12 +348,8 @@ void EventManager::addEvent(Event* event)
           Trace(mTrack, 2, "EventManager: Add event %s(%s) %ld\n", name, func, event->frame);
     }
 
-	mTrack->enterCriticalSection("addEvent");
-
 	mEvents->add(event);
     event->setTrack(mTrack);
-
-	mTrack->leaveCriticalSection();
 }
 
 /**
@@ -715,10 +711,8 @@ void EventManager::reorderEvent(Event* e)
          child = child->getSibling())
 	  reorderEvent(child);
 
-	mTrack->enterCriticalSection("reorderEvent");
 	mEvents->remove(e);
 	mEvents->add(e);
-	mTrack->leaveCriticalSection();
 }
 
 /**
@@ -903,12 +897,8 @@ long EventManager::reverseFrame(long origin, long newOrigin, long frame)
  */
 void EventManager::removeEvent(Event* e)
 {
-    mTrack->enterCriticalSection("removeEvent");
-
 	mEvents->remove(e);
     e->setTrack(nullptr);
-
-    mTrack->leaveCriticalSection();
 }
 
 /**
@@ -921,15 +911,7 @@ void EventManager::removeEvent(Event* e)
  */
 EventList* EventManager::stealEvents()
 {
-    EventList* copy = nullptr;
-
-	mTrack->enterCriticalSection("stealEvents");
-
-    copy = mEvents->transfer();
-
-    mTrack->leaveCriticalSection();
-
-    return copy;
+    return mEvents->transfer();
 }
 
 /**
@@ -945,8 +927,6 @@ void EventManager::flushAllEvents()
     if (oldWay) {
         // !! to avoid warnings should call ScriptInterpreter::cancelEvent
 
-        mTrack->enterCriticalSection("flushAllEvents");
-
         // Release state for all events or else EventPool will
         // complain
 		for (Event* e = mEvents->getEvents() ; e != nullptr ; e = e->getNext()) {
@@ -958,8 +938,6 @@ void EventManager::flushAllEvents()
         // script wait events after the reset.  I can't think of a reason
         // to have this on except maybe a script that resumes after a reset.
         mEvents->flush(true, false);
-
-        mTrack->leaveCriticalSection();
     }
     else {
         // freeEvent will unwind relationships but since this can also
@@ -978,12 +956,8 @@ void EventManager::flushAllEvents()
  */
 void EventManager::flushEventsExceptScripts()
 {
-	mTrack->enterCriticalSection("flushEventsExceptScripts");
-
 	mEvents->flush(false, false);
 	mSwitch = nullptr;
-
-	mTrack->leaveCriticalSection();
 }
 
 /****************************************************************************
@@ -1002,9 +976,7 @@ void EventManager::freeEvent(Event* event)
 {
     if (event != nullptr) {
 		// remove the event and all of its children
-		mTrack->enterCriticalSection("freeEvent event");
 		removeAll(event);
-		mTrack->leaveCriticalSection();
 
         // let the interpreter know in case it is waiting
         event->cancelScriptWait(mTrack->getMobius());
@@ -1061,9 +1033,7 @@ void EventManager::free(Event* event, bool flush)
                     Trace(1, "EventManager: Leaving unprocessed child event!\n");
                     // splice it out of the list, sibling we found above
                     // will still be valid
-                    mTrack->enterCriticalSection("freeEvent abandon child");
                     event->removeChild(child);
-                    mTrack->leaveCriticalSection();
                 }
             }
         }
@@ -1128,9 +1098,7 @@ bool EventManager::undoLastEvent()
 {
 	Event* undo = nullptr;
 
-	mTrack->enterCriticalSection("undoScheduledEvent");
 	undo = removeUndoEvent();
-	mTrack->leaveCriticalSection();
 
 	if (undo != nullptr)
       undoAndFree(undo);
@@ -1209,9 +1177,7 @@ void EventManager::undoEvent(Event* event)
 	if (event != nullptr) {
 
 		// remove the event and all of its children
-		mTrack->enterCriticalSection("undoScheduledEvent event");
 		removeAll(event);
-		mTrack->leaveCriticalSection();
 
         undoAndFree(event);
     }
@@ -1326,8 +1292,6 @@ void EventManager::scheduleSwitchStack(Event* event)
 
 		event->pending = true;
 
-		mTrack->enterCriticalSection("scheduleSwitchStack");
-
 		if (event->function->switchStackMutex) {
 			// remove all other mutex events
 			Event* next = nullptr;
@@ -1344,8 +1308,6 @@ void EventManager::scheduleSwitchStack(Event* event)
 		}
 
 		switche->addChild(event);
-
-		mTrack->leaveCriticalSection();
 
 		Trace(mTrack, 2, "EventManger: Added switch stack event %s\n", event->type->name);
 	}
@@ -1402,11 +1364,9 @@ bool EventManager::undoSwitchStack()
 
 	if (getUncomittedSwitch() != nullptr) {
 
-		mTrack->enterCriticalSection("undoSwitchStack");
 		// !! add an option to preserve "automatic" events that were
 		// put there to implement transfer modes?
 		Event* undo = mSwitch->removeUndoChild();
-		mTrack->leaveCriticalSection();
 
 		if (undo != nullptr) {
 			Trace(mTrack, 2, "EventManager: Undo switch stack event %s(%s)\n", 
@@ -1424,11 +1384,9 @@ void EventManager::cancelSwitchStack(Event* e)
 		Event* switche = getUncomittedSwitch();
 		if (switche != nullptr) {
 			Trace(mTrack, 2, "EventManager: Canceling switch stack event %s\n", e->type->name);
-			mTrack->enterCriticalSection("cancelSwitchStack");
 			switche->removeChild(e);
 			mEvents->remove(e);
             e->setTrack(nullptr);
-			mTrack->leaveCriticalSection();
 
             // should we call undoEvent here?
             freeEvent(e);
@@ -1443,9 +1401,7 @@ void EventManager::cancelSwitch()
 {
 	if (mSwitch != nullptr) {
 
-		mTrack->enterCriticalSection("cancelSwitch");
 		removeAll(mSwitch);
-		mTrack->leaveCriticalSection();
 
 		// undo handler has the logic we need
         // but have to null mSwitch first!
@@ -1908,11 +1864,9 @@ bool EventManager::cancelReturn()
 	Event* ret = nullptr;
 
 	// remove the event and all of its children
-	mTrack->enterCriticalSection("cancelReturn");
 	ret = findEvent(ReturnEvent);
 	if (ret != nullptr)
 	  removeAll(ret);
-	mTrack->leaveCriticalSection();
 
 	if (ret != nullptr) {
 		returnEventUndo(ret);
@@ -2698,7 +2652,6 @@ Event* EventManager::getRescheduleEvents(Loop* loop, Event* previous)
 		frame = 0;
 
 	// prune out the reschedulable events
-	mTrack->enterCriticalSection("getRescheduleEvents");
 	Event* next = nullptr;
     for (Event* e = mEvents->getEvents() ; e != nullptr ; e = next) {
 		next = e->getNext();
@@ -2725,7 +2678,6 @@ Event* EventManager::getRescheduleEvents(Loop* loop, Event* previous)
 			}
 		}
 	}
-	mTrack->leaveCriticalSection();
 
     return events;
 }

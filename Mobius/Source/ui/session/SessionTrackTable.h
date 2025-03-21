@@ -65,7 +65,6 @@ class SessionTrackTable : public TypicalTable, public YanPopup::Listener,
     
     class Provider* provider = nullptr;
     class SessionTrackEditor* editor = nullptr;
-    class Session* session = nullptr;
     juce::OwnedArray<class SessionTrackTableRow> tracks;
     int audioTracks = 0;
     int midiTracks = 0;

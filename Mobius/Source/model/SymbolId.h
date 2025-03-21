@@ -82,10 +82,10 @@ typedef enum {
     ParamFollowRate,
     ParamFollowDirection,
     ParamFollowStartPoint,
-    ParamFollowerMuteStart,
     ParamFollowSwitch,
     ParamFollowCut,
     ParamFollowQuantizeLocation,
+    ParamFollowerStartMuted,
 
     ParamTrackName,
     ParamTrackType,

@@ -171,10 +171,10 @@ SymbolDefinition SymbolDefinitions[] = {
     {"followRate", ParamFollowRate},
     {"followDirection", ParamFollowDirection},
     {"followStartPoint", ParamFollowStartPoint},
-    {"followerMuteStart", ParamFollowerMuteStart},
     {"followSwitch", ParamFollowSwitch},
     {"followCut", ParamFollowCut},
     {"followQuantizeLocation", ParamFollowQuantizeLocation},
+    {"followerStartMuted", ParamFollowerStartMuted},
 
     {SessionTrackName, ParamTrackName},
     {"trackType", ParamTrackType},

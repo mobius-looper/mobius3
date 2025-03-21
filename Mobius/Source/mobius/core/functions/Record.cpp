@@ -711,7 +711,6 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
             // !! This is all relatively generic and applies to all 
             // stacking events.  Move to EventManager
 
-            Track* track = loop->getTrack();
             Event* nextChild = nullptr;
             for (Event* child = event->getChildren() ; child != nullptr ; 
                  child = nextChild) {
@@ -723,9 +722,7 @@ void RecordFunction::doEvent(Loop* loop, Event* event)
                 }
                 else {
                     // in all cases these are removed from the parent event
-                    track->enterCriticalSection("RecordStopEvent");
                     event->removeChild(child);
-                    track->leaveCriticalSection();
 
                     // only expecting switches right now
                     if (child->type != SwitchEvent)

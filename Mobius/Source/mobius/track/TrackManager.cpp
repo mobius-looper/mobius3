@@ -103,7 +103,7 @@ void TrackManager::loadSession(Session* s)
     longWatcher.initialize(session, kernel->getContainer()->getSampleRate());
 
     // allow this to be disabled during debugging
-    longDisable = session->getBool("longDisable");
+    longDisable = session->getBool(ParamLongDisable);
 
     configureTracks(session);
 

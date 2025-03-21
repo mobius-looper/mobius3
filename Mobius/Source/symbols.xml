@@ -594,16 +594,14 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='followSize' type='bool'  options='noBinding' track='midi' tree='Follow'/>
     <Parameter name='followMute' type='bool'  options='noBinding' track='midi' tree='Follow'/>
     <Parameter name='followQuantizeLocation' type='bool'  options='noBinding' track='midi' tree='Follow'/>
-
-    <!-- keep these out of the tree until they're fully baked -->
     <Parameter name='followLocation' type='bool'  options='noBinding' track='midi'/>
+    <Parameter name='followerStartMuted' type='bool'  options='noBinding' track='midi' tree='Follow'/>
+    <!-- these are not currently in the UI, not fully baked -->
     <Parameter name='followCut' type='bool'  options='noBinding' track='midi'/>
     <Parameter name='followRate' type='bool'  options='noBinding' track='midi'/>
     <Parameter name='followDirection' type='bool'  options='noBinding' track='midi'/>
     <Parameter name='followStartPoint' type='bool'  options='noBinding' track='midi'/>
     <Parameter name='followSwitch' type='bool'  options='noBinding' track='midi'/>
-    <!-- wtf is the difference between this and followMute? -->
-    <Parameter name='followerMuteStart' type='bool'  options='noBinding' track='midi' tree='Follow'/>
     
     <Parameter name='midiInput' track='midi' tree='Midi'
                displayType='combo' displayHelper='midiInput' options='noBinding'/>

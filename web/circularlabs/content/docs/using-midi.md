@@ -66,3 +66,87 @@ Where MIDI tracks start differing substantially from audio tracks is what happen
 
 How the *output level* control behaves is a bit less obvious.  MIDI 1.0 doesn't really have the notion of an output level, at least not the way we think of them in a mixer.  There are two ways you can adjust the percieved volume of a note, using a continuous control (CC) message that is implemented as the Volume controller, or by adjusting the velocity of the note.  The problem with using the Volume CC (if your synth even implements it) is that it applies to all notes on that channel, not just the notes in the Mobius track you are changing.  Mobius attempts to simulate audio track output level by applying a reduction to the velocity of each note that is sent by the track.  This can achieve a similar effect, but it will depend entirely how you have programmed the synth to respond to note velocity.
 
+## MIDI Track Follow Parameters
+
+MIDI Tracks support a number of parameters to help them synchronize with other tracks.  This can
+be useful for pre-recorded backing tracks you want to use with live-recorded audio tracks.
+
+*Following* means that a track will respond to things that happen in another track.  The other
+track is called the *Leader*.
+
+When a leader track does something interesting it sends a *notification* to any follower
+tracks.  If the follower tracks are configured to respond to those notificiations, the
+followers will react.  
+
+### Leader Type
+
+Indiciates whether this track will do any form of following.  The parameter values are:
+
+* None
+* Track Number
+* Track Sync Master
+* Transport Master
+* Focused
+* Host
+* MIDI In
+
+
+*None* means that the track will now do any following.  It will act independently of other
+tracks.
+
+*Track Number* means that the track will follow a specific track identified by number.  This
+number must be entered as the value of the *Leader Track* parameter.
+
+*Track Sync Master* means that the track will follow whichever track is currently
+designated as the Track Sync Master.  This may be used instead of *Track Number* if you want
+more flexibility in specifying which track should be the leader.  You can change
+the Track Sync Master at any time without editing the Session.
+
+*Transport Master* means that the track will follow whichever track is currently
+designated as the Transport Master.  This is similar to using *Track Sync Master*
+except we look for the current Transport Master to determine the leader track.
+
+*Focused* means that the track that currently has focus in the UI will be the leader.
+Focus is indiciated by the white box drawn around the track strip.  This is also similer
+to using *Track Sync Master* except the focused track can be changed more easily.  If you
+use this option you need to remember that whenever you click on a track, or use the track
+selection keys, or do anything else that selects a track, this may be changing a leader.
+
+*Host* and *MIDI In* are special leader options because they don't actually represent
+tracks, they represent *Sync Sources*.  If you use these leader types, only a few of the
+follow options are meaningful.  *Follow Mute* will be used when the sync source is
+stopped and *Follow Record End* will be used when the sync source is stopped.  
+Following sync sources is an evolving concept so if you have ideas around this please share.
+
+### Leader Track
+
+When you set *Leader Type* to *Track Number* you must enter a track number for this parameter.
+The follower track will only respond to events sent by that specific track.
+
+### Leader Switch Location
+
+
+
+
+
+
+### Follow Record
+### Follow Record End
+### Follow Size
+### Follow Mute
+### Follow Quantize Location
+
+### Follower Start Muted
+
+This parameter controls whether a track will be automatically muted as soon as it is
+started after the leader track finishes recording.
+
+Normally, when a track uses *Follow Record End* it will begin playing audibly when the
+leader track finishes recording.  In some cases you might to start the follower playing
+in time with the leader but have it be silent so you can control when the sound is heard.
+With this option on, the follower begins playing along with the leader, but is in *Mute* mode
+which you then turn off with the *Mute* function when you want it to be heard.
+
+
+
+

@@ -862,17 +862,6 @@ OutputStream* Track::getOutputStream()
     return mOutput;
 }
 
-void Track::enterCriticalSection(const char* reason)
-{
-    (void)reason;
-    //mCsect->enter(reason);
-}
-
-void Track::leaveCriticalSection()
-{
-    //mCsect->leave();
-}
-
 /****************************************************************************
  *                                                                          *
  *                                  ACTIONS                                 *
