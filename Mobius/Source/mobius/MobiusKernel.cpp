@@ -44,6 +44,8 @@
 #include "core/Function.h"
 #include "core/Action.h"
 #include "core/Mem.h"
+// stupid dependency for coreTrackChanged
+#include "core/Track.h"
 
 #include "track/TrackManager.h"
 #include "track/LogicalTrack.h"
@@ -1332,6 +1334,27 @@ void MobiusKernel::clipStart(int audioTrack, const char* bindingArgs)
     (void)audioTrack;
     (void)bindingArgs;
     //mMidi->clipStart(audioTrack, bindingArgs);
+}
+
+/**
+ * Wound our way here from the MOS script interpreter after it has
+ * performed an action that may have changed the active track.
+ * Since this happened without our involvement the UI will not be aware of
+ * this and the focused track may be wrong.  Adjust the focused track to
+ * follow whatever the script did.
+ */
+void MobiusKernel::coreTrackChanged()
+{
+    Track* newActive = mCore->getTrack();
+    LogicalTrack* lt = newActive->getLogicalTrack();
+    int focused = container->getFocusedTrackIndex() + 1;
+    if (focused != lt->getNumber()) {
+        // fuck, we ask the container but tell the Listener
+        if (listener != nullptr) {
+            // note that this uses INDEXES not numbers
+            listener->mobiusSetFocusedTrack(lt->getNumber() - 1);
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

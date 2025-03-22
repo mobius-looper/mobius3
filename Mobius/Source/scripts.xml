@@ -171,6 +171,9 @@
     </Files>
   </Machine>
   <Machine name="Baldr">
+    <Externals>
+      <External path="c:\dev\mobius3\Mobius\Source\nexttrack.mos"/>
+    </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\converted.msl" name="MainTap"
             added="2147483647"/>
@@ -193,6 +196,8 @@
       <File path="c:\dev\mobius3\Mobius\Source\scripts\taptempo.msl" name="TapTempo"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\vartest1.msl" name="vartest1"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\nexttrack.mos" name="nexttrack"
             added="2147483647"/>
     </Files>
   </Machine>

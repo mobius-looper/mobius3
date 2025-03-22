@@ -1623,6 +1623,11 @@ int Mobius::getActiveTrack()
     return (mTrack != nullptr) ? mTrack->getRawNumber() : 0;
 }
 
+void Mobius::notifyTrackChanged()
+{
+    mKernel->coreTrackChanged();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MobiusState

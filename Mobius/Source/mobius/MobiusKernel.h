@@ -236,6 +236,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // todo: Need to replace this with a UIAction sent up
     void coreSampleTrigger(int index);
 
+    void coreTrackChanged();
+
     void coreTimeBoundary();
 
     //

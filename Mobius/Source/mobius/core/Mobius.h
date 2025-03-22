@@ -312,6 +312,9 @@ class Mobius
     void setParameter(class Symbol* s, class Track* t, class ExValue* value);
     int getParameterOrdinal(SymbolId sid);
 
+    // kludge for track focus tracking after scripts change tracks
+    void notifyTrackChanged();
+
     //////////////////////////////////////////////////////////////////////
     // Global Function Handlers
     //////////////////////////////////////////////////////////////////////

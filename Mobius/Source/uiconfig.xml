@@ -131,6 +131,7 @@
     <Button action="AutoRecord"/>
     <Button action="Global Stop"/>
     <Button action="Confirm"/>
+    <Button action="nexttrack"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

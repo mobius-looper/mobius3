@@ -1928,7 +1928,7 @@ void EventManager::cleanReturnEvents()
  */
 void EventManager::refreshEventState(TrackState* state)
 {
-    // do we need to reset these?
+    // need to clear these or else they stay on forever
     state->nextLoop = 0;
     state->returnLoop = 0;
     state->switchConfirm = false;

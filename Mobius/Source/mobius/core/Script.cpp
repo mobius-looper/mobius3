@@ -3347,6 +3347,24 @@ ScriptStatement* ScriptFunctionStatement::eval(ScriptInterpreter* si)
         // make it go!
         m->doOldAction(a);
 
+        // kludge: If this was SelectTrack, NextTrack, or PrevTrack
+        // then the UI won't be aware of this since the action originated from
+        // the core rather than from the UI.  The focus box will still be on
+        // the previous track and any new UI inititiated actions will be sent there
+        // rather than the track the user thinks they selected from the .mos script
+        // ideally this should be redirecting the entire action handleing back up
+        // to MobiusKernel or TrackManager so they can handle it consistently, but
+        // I'm afraid of messing up the old EmptyTrackAction and TrackLeaveAction processing
+        // instead, just inform the UI that the core may have changed tracks and have it
+        // adjust focus to match
+        //
+        // really this shold be doing this in the TrackEvent handler bu tthat
+        // would pick up changes that WERE actually made from the UI and we only
+        // care about those coming from scripts, that does mean though that the
+        // track may not have actually changed yet if TrackLeaveAction=Wait
+        if (func != nullptr && func->eventType == TrackEvent)
+          m->notifyTrackChanged();
+
         si->setLastEvents(a);
 
         // we always must be notified what happens to this, even

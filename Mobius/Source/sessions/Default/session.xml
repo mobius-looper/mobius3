@@ -19,6 +19,39 @@
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
+  <Track id="1" type="midi" name="m1">
+    <ValueSet>
+      <Value name="beatsPerBar" value="7"/>
+      <Value name="durationMode" value="1" type="int"/>
+      <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="followLocation" value="1" type="int"/>
+      <Value name="followMute" value="true" type="bool"/>
+      <Value name="followQuantizeLocation" value="true" type="bool"/>
+      <Value name="followRecord" value="true" type="bool"/>
+      <Value name="followRecordEnd" value="true" type="bool"/>
+      <Value name="followSize" value="true" type="bool"/>
+      <Value name="followerMuteStart" value="false" type="bool"/>
+      <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
+      <Value name="leaderTrack" value="3" type="int"/>
+      <Value name="leaderType" value="track" type="enum" ordinal="1"/>
+      <Value name="loopCount" value="2" type="int"/>
+      <Value name="midiBeatsPerBar" value="4" type="int"/>
+      <Value name="midiChannelOverride" value="9" type="enum" ordinal="9"/>
+      <Value name="midiOutput" value="Bome MIDI Translator 1"/>
+      <Value name="midiThru" value="false" type="bool"/>
+      <Value name="outputDevice" value="Bome MIDI Translator 1"/>
+      <Value name="quantize" value="off" type="enum" ordinal="0"/>
+      <Value name="slaveSyncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="subcycles" value="0" type="int"/>
+      <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
+      <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
+      <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
+      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="syncUnit" value="beat" type="enum" ordinal="0"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
+    </ValueSet>
+  </Track>
   <Track id="4" type="audio" name="a2">
     <ValueSet>
       <Value name="altFeedback" value="127" type="int"/>
@@ -32,9 +65,9 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="master"/>
-      <Value name="syncUnit" value="bar"/>
-      <Value name="trackSyncUnit" value="loop"/>
+      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
   <Track id="5" type="audio" name="a3">
@@ -132,39 +165,6 @@
       <Value name="focus" value="false" type="bool"/>
     </ValueSet>
   </Track>
-  <Track id="1" type="midi" name="m1">
-    <ValueSet>
-      <Value name="beatsPerBar" value="7"/>
-      <Value name="durationMode" value="1" type="int"/>
-      <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
-      <Value name="focus" value="false" type="bool"/>
-      <Value name="followLocation" value="1" type="int"/>
-      <Value name="followMute" value="true" type="bool"/>
-      <Value name="followQuantizeLocation" value="true" type="bool"/>
-      <Value name="followRecord" value="true" type="bool"/>
-      <Value name="followRecordEnd" value="true" type="bool"/>
-      <Value name="followSize" value="true" type="bool"/>
-      <Value name="followerMuteStart" value="false" type="bool"/>
-      <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
-      <Value name="leaderTrack" value="3" type="int"/>
-      <Value name="leaderType" value="track" type="enum" ordinal="1"/>
-      <Value name="loopCount" value="2" type="int"/>
-      <Value name="midiBeatsPerBar" value="4" type="int"/>
-      <Value name="midiChannelOverride" value="9" type="enum" ordinal="9"/>
-      <Value name="midiOutput" value="Bome MIDI Translator 1"/>
-      <Value name="midiThru" value="false" type="bool"/>
-      <Value name="outputDevice" value="Bome MIDI Translator 1"/>
-      <Value name="quantize" value="off" type="enum" ordinal="0"/>
-      <Value name="slaveSyncUnit" value="bar" type="enum" ordinal="1"/>
-      <Value name="subcycles" value="0" type="int"/>
-      <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
-      <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
-      <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
-      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
-      <Value name="syncUnit" value="beat" type="enum" ordinal="0"/>
-      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
-    </ValueSet>
-  </Track>
   <Track id="2" type="midi" name="m2">
     <ValueSet>
       <Value name="beatsPerBar" value="2"/>
@@ -249,7 +249,7 @@
     <Value name="shuffleMode" value="reverse" type="enum" ordinal="0"/>
     <Value name="slipMode" value="subCycle" type="enum" ordinal="0"/>
     <Value name="slipTime" value="0" type="int"/>
-    <Value name="soundCopyMode" value="play" type="enum" ordinal="0"/>
+    <Value name="soundCopyMode" value="multiply" type="enum" ordinal="2"/>
     <Value name="speedBendRange" value="12" type="int"/>
     <Value name="speedRecord" value="false" type="bool"/>
     <Value name="speedShiftRestart" value="false" type="bool"/>
@@ -261,7 +261,7 @@
     <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
     <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
     <Value name="switchVelocity" value="false" type="bool"/>
-    <Value name="timeCopyMode" value="play" type="enum" ordinal="0"/>
+    <Value name="timeCopyMode" value="insert" type="enum" ordinal="3"/>
     <Value name="timeStretchRange" value="12" type="int"/>
     <Value name="trackLeaveAction" value="none" type="enum" ordinal="0"/>
     <Value name="transportBarsPerLoop" value="1" type="int"/>
