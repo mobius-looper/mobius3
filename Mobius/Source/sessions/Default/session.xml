@@ -15,6 +15,7 @@
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
       <Value name="switchQuantize" value="confirmLoop" type="enum" ordinal="7"/>
+      <Value name="syncSource" value="host" type="enum" ordinal="3"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>

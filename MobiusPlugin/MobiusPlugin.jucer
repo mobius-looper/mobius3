@@ -11,6 +11,10 @@
               companyName="Circular Labs" companyEmail="jeff@circularlabs.com"
               pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
+    <GROUP id="{17EE400E-3543-2596-AC55-91FEEA3C624D}" name="Source">
+      <FILE id="e4qlZy" name="NosyAudioProcessor.h" compile="0" resource="0"
+            file="Source/NosyAudioProcessor.h"/>
+    </GROUP>
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
       <GROUP id="{4CEB93C1-89DE-9EAF-78A0-EF5EAAE7BF4F}" name="mcl">
         <FILE id="FL6ZTR" name="MclEnvironment.cpp" compile="1" resource="0"
@@ -149,8 +153,6 @@
         <GROUP id="{E9DF28E1-BBE6-8AF0-83CF-26F2FA16DD9F}" name="old">
           <FILE id="PSQfMt" name="ActionType.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/ActionType.cpp"/>
           <FILE id="t8cwi8" name="ActionType.h" compile="0" resource="0" file="../Mobius/Source/model/old/ActionType.h"/>
-          <FILE id="DPLAIR" name="Binding.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Binding.cpp"/>
-          <FILE id="i1TmKb" name="Binding.h" compile="0" resource="0" file="../Mobius/Source/model/old/Binding.h"/>
           <FILE id="lcdxW9" name="ExValue.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/ExValue.cpp"/>
           <FILE id="ywxlxR" name="ExValue.h" compile="0" resource="0" file="../Mobius/Source/model/old/ExValue.h"/>
           <FILE id="twf6rL" name="Messages.h" compile="0" resource="0" file="../Mobius/Source/model/old/Messages.h"/>
@@ -161,6 +163,8 @@
                 file="../Mobius/Source/model/old/ModeDefinition.cpp"/>
           <FILE id="mUsDlz" name="ModeDefinition.h" compile="0" resource="0"
                 file="../Mobius/Source/model/old/ModeDefinition.h"/>
+          <FILE id="xtM6cn" name="OldBinding.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/OldBinding.cpp"/>
+          <FILE id="WM5r2Y" name="OldBinding.h" compile="0" resource="0" file="../Mobius/Source/model/old/OldBinding.h"/>
           <FILE id="qX8Z2f" name="Preset.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Preset.cpp"/>
           <FILE id="ZPgyop" name="Preset.h" compile="0" resource="0" file="../Mobius/Source/model/old/Preset.h"/>
           <FILE id="bbBoGl" name="Setup.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/Setup.cpp"/>
@@ -177,6 +181,12 @@
           <FILE id="lUo8vS" name="XmlRenderer.cpp" compile="1" resource="0" file="../Mobius/Source/model/old/XmlRenderer.cpp"/>
           <FILE id="NWTo9R" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/old/XmlRenderer.h"/>
         </GROUP>
+        <FILE id="jfjMIl" name="Binding.cpp" compile="1" resource="0" file="../Mobius/Source/model/Binding.cpp"/>
+        <FILE id="qO21iq" name="Binding.h" compile="0" resource="0" file="../Mobius/Source/model/Binding.h"/>
+        <FILE id="JThZk4" name="BindingSet.cpp" compile="1" resource="0" file="../Mobius/Source/model/BindingSet.cpp"/>
+        <FILE id="FCLSPu" name="BindingSet.h" compile="0" resource="0" file="../Mobius/Source/model/BindingSet.h"/>
+        <FILE id="MKxZPI" name="BindingSets.cpp" compile="1" resource="0" file="../Mobius/Source/model/BindingSets.cpp"/>
+        <FILE id="Q6zpCT" name="BindingSets.h" compile="0" resource="0" file="../Mobius/Source/model/BindingSets.h"/>
         <FILE id="jvFECp" name="DeviceConfig.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/DeviceConfig.cpp"/>
         <FILE id="Cd2npa" name="DeviceConfig.h" compile="0" resource="0" file="../Mobius/Source/model/DeviceConfig.h"/>
@@ -372,16 +382,6 @@
         <GROUP id="{338E89C6-6E8F-CAD5-C704-F062DEB82EC5}" name="config">
           <FILE id="pkDnOm" name="AudioEditor.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/AudioEditor.cpp"/>
           <FILE id="ZBHbau" name="AudioEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/AudioEditor.h"/>
-          <FILE id="RoOecL" name="BindingEditor.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/BindingEditor.cpp"/>
-          <FILE id="oknzjs" name="BindingEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/BindingEditor.h"/>
-          <FILE id="BOwFhk" name="BindingTable.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/BindingTable.cpp"/>
-          <FILE id="YnUq04" name="BindingTable.h" compile="0" resource="0" file="../Mobius/Source/ui/config/BindingTable.h"/>
-          <FILE id="DMWVti" name="BindingTargetSelector.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/BindingTargetSelector.cpp"/>
-          <FILE id="qq4L8F" name="BindingTargetSelector.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/config/BindingTargetSelector.h"/>
           <FILE id="zgthD3" name="ButtonEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/ButtonEditor.cpp"/>
           <FILE id="ordKTn" name="ButtonEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ButtonEditor.h"/>
@@ -414,6 +414,18 @@
                 file="../Mobius/Source/ui/config/ObjectSelector.cpp"/>
           <FILE id="YyjtUA" name="ObjectSelector.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/config/ObjectSelector.h"/>
+          <FILE id="iuRguI" name="OldBindingEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/OldBindingEditor.cpp"/>
+          <FILE id="N5I6y2" name="OldBindingEditor.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/OldBindingEditor.h"/>
+          <FILE id="ZwgJUJ" name="OldBindingTable.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/OldBindingTable.cpp"/>
+          <FILE id="wfdtKg" name="OldBindingTable.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/OldBindingTable.h"/>
+          <FILE id="p6rQNh" name="OldBindingTargetSelector.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/OldBindingTargetSelector.cpp"/>
+          <FILE id="hDdgmN" name="OldBindingTargetSelector.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/OldBindingTargetSelector.h"/>
           <FILE id="kGRFA6" name="PropertiesEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/PropertiesEditor.cpp"/>
           <FILE id="lwrafw" name="PropertiesEditor.h" compile="0" resource="0"
