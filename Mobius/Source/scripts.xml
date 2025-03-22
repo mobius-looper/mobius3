@@ -199,6 +199,8 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\nexttrack.mos" name="nexttrack"
             added="2147483647"/>
+      <File path="C:\dev\mobius3\Mobius\Source\scripts\globalstop.msl" name="Global Stop"
+            added="0"/>
     </Files>
   </Machine>
   <MslState>

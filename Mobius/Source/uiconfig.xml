@@ -132,6 +132,7 @@
     <Button action="Global Stop"/>
     <Button action="Confirm"/>
     <Button action="nexttrack"/>
+    <Button action="Global Stop"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>
