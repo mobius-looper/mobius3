@@ -977,7 +977,7 @@ void BaseScheduler::getQuantizationEvent(int currentFrame, int frames, Quantizat
                             if (nextSubcycleFrame <= lastFrame) {
                                 e.valid = true;
                                 e.frame = nextSubcycleFrame;
-i                            }
+                            }
                         }
                     }
                 }
