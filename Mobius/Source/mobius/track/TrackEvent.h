@@ -119,6 +119,7 @@ class TrackEventList
     TrackEvent* findLast(SymbolId id);
     TrackEvent* findLast();
     TrackEvent* consumePendingLeader(int frame);
+    TrackEvent* find(int startFrame, int endFrame);
     TrackEvent* remove(TrackEvent::Type type);
 
     bool isScheduled(TrackEvent* e);

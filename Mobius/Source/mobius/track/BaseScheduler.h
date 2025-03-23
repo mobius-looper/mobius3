@@ -26,6 +26,21 @@ class BaseScheduler
 {
   public:
 
+    class QuantizationEvent {
+      public:
+        bool valid = false;
+        bool cycle = false;
+        bool loop = false;
+        int frame = 0;
+
+        void reset() {
+            valid = false;
+            cycle = false;
+            loop = false;
+            frame = 0;
+        }
+    };
+
     BaseScheduler(class TrackManager* tm, class LogicalTrack* lt, class ScheduledTrack* t);
     virtual ~BaseScheduler();
     
@@ -109,7 +124,8 @@ class BaseScheduler
     
     // advance and sync state
     float rateCarryover = 0.0f;
-
+    int framesConsumed = 0;
+    
   private:
 
     class LogicalTrack* logicalTrack = nullptr;
@@ -150,6 +166,8 @@ class BaseScheduler
     void dispose(TrackEvent* e);
     void detectLeaderChange();
     void checkDrift();
+    void getQuantizationEvent(int currentFrame, int frames, QuantizationEvent& e);
+    void doQuantizationEvent(QuantizationEvent& e);
     
 };
 

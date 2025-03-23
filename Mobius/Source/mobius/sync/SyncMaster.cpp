@@ -1498,6 +1498,19 @@ void SyncMaster::notifyRecordStopped(int number)
          
         notifyTrackAvailable(number);
         lt->resetSyncState();
+
+        // also inform any followers
+        // which MIDI tracks use to adjust their size and start playing
+        // if this is from an audio track, due to input latency these will be
+        // a little late so we might want to adjust that so they go ahread
+        // a little, the issue is very similar to to pre-playing the record layer,
+        // but since MidiTrack just follows the record frame we can't do that
+        // reliably yet
+        // !! fuck, the Notifier interface is shit and needs the core Track
+        // to be passed in, have to continue duplicating this in Synchronizer
+        // for audio and LooperScheduler for MIDI until this is sorted out...
+        //Notifier* n = kernel->getNotifier();
+        //n->notify(lt, NotificationRecordEnd);
     }
 }
 

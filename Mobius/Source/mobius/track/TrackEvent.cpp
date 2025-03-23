@@ -312,6 +312,26 @@ TrackEvent* TrackEventList::consume(int startFrame, int endFrame)
 }
 
 /**
+ * For the BaseScheduler event loop that needs to merge QuantizationEvents
+ * with scheduled events, find the next possible event but don't remove it.
+ */
+TrackEvent* TrackEventList::find(int startFrame, int endFrame)
+{
+    TrackEvent* found = nullptr;
+    TrackEvent* e = events;
+    while (e != nullptr) {
+        if (!e->pending && e->frame >= startFrame && e->frame <= endFrame) {
+            found = e;
+            break;
+        }
+        else {
+            e = e->next;
+        }
+    }
+    return found;
+}
+
+/**
  * Shift any events that are not pending down by some amount.
  * This is used in the case of events scheduled AFTER the end of the loop,
  * normally just loopFrames or 1+ the maxFrame calculated by consume()

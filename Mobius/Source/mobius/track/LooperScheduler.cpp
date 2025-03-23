@@ -12,6 +12,7 @@
 #include "../../model/SyncConstants.h"
 
 #include "../sync/SyncMaster.h"
+#include "../Notifier.h"
 
 #include "TrackManager.h"
 #include "TrackProperties.h"
@@ -668,7 +669,7 @@ void LooperScheduler::handleRecordAction(UIAction* src)
         // filter them here, also those that can be handled but don't
         // need to end the recording
 
-        TrackEvent* ending = scheduleRecordEnd();
+        TrackEvent* ending = scheduleRecordEnd(src);
         src->coreEvent = ending;
 
         SymbolId sid = src->symbol->id;
@@ -1196,7 +1197,10 @@ void LooperScheduler::scheduleRecord(UIAction* a)
     // transitions correctly
     track->doReset(false);
 
-    if (isRecordSynced()) {
+    SyncMaster::RequestResult result =
+        syncMaster->requestRecordStart(track->getNumber(), a->noSynchronization);
+
+    if (result.synchronized) {
         TrackEvent* e = addRecordEvent();
         // todo: remember whether this was AutoRecord and save
         // it on the event, don't need to remember the entire action
@@ -1204,24 +1208,43 @@ void LooperScheduler::scheduleRecord(UIAction* a)
         // remember for WaitLast
         a->coreEvent = e;
     }
+    else if (result.threshold > 0) {
+        // this isn't working yet
+        Trace(1, "LooperScheduler: MIDI Threshold recording not implemented");
+        doRecord(nullptr);
+    }
     else {
         doRecord(nullptr);
     }
+
+    // !!!!!!!!!!! hating how SyncMaster needs to be notified of things
+    // and this and Synchronizer have to call both that and Notifier
+    // SyncMaster should be the only thing we need to do, and it should call Notifier
+    // timing isn't critical on this one since followers just use it to activate
+    // a Mute and don't care if it is pending or not, but if something timing
+    // sensitive needs to happen then SyncMaster needs to be in control of this
+    
+    // audio tracks can't follow anything yet, but start getting there
+    Notifier* n = manager->getNotifier();
+    n->notify(track->getLogicalTrack(), NotificationRecordStart);
 }
 
 /**
  * Schedule a record end event if synchronization is enabled, or do it now.
  */
-TrackEvent* LooperScheduler::scheduleRecordEnd()
+TrackEvent* LooperScheduler::scheduleRecordEnd(UIAction* a)
 {
     TrackEvent* ending = nullptr;
-    
-    if (isRecordSynced()) {
-        ending = addRecordEvent();
-    }
-    else {
-        doRecord(nullptr);
-    }
+
+    SyncMaster::RequestResult result =
+        syncMaster->requestRecordStop(track->getNumber(), a->noSynchronization);
+
+    if (result.synchronized)
+      ending = addRecordEvent();
+          
+    else
+      doRecord(nullptr);
+
     return ending;
 }
 
@@ -1240,7 +1263,10 @@ TrackEvent* LooperScheduler::addRecordEvent()
 
 /**
  * Determine whether the start or ending of a recording needs to be synchronized.
+ * udpate: This should no longer be necessary, we now let SyncMaster::requestRecordStart
+ * figure this out
  */
+#if 0
 bool LooperScheduler::isRecordSynced()
 {
     bool doSync = false;
@@ -1274,6 +1300,7 @@ bool LooperScheduler::isRecordSynced()
     }
     return doSync;
 }
+#endif
 
 void LooperScheduler::doRecord(TrackEvent* e)
 {
@@ -1286,10 +1313,23 @@ void LooperScheduler::doRecord(TrackEvent* e)
         // I think we need to reset the rateCarryover?
         rateCarryover = 0.0f;
         followTrack = 0;
+
+        syncMaster->notifyRecordStopped(track->getNumber());
+
+        // SM should be doing this since timing is critical and
+        // it must be done at the same time as the previous call
+        
+        Notifier* n = manager->getNotifier();
+        n->notify(track->getLogicalTrack(), NotificationRecordEnd);
     }
     else {
         //Trace(2, "LooperScheduler::doRecord starting");
         track->startRecord();
+
+        // SM needs to be aware of the official beginnign in order to start the
+        // transport if this is the Transport master
+        // a Notification was sent when the event was scheduled
+        syncMaster->notifyRecordStarted(track->getNumber());
     }
 
     if (e != nullptr) {

@@ -343,6 +343,13 @@ bool MobiusLooperTrack::isMuted()
     return track->getLoop()->isMuteMode();
 }
 
+bool MobiusLooperTrack::isRecorded()
+{
+    // for old audio tracks, it is enough to test the frame lengt
+    // midi tracks don't work that way
+    return (track->getFrames() > 0);
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

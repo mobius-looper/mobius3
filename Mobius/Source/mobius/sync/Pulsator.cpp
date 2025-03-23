@@ -253,9 +253,16 @@ Pulse* Pulsator::getAnyBlockPulse(LogicalTrack* t)
         SyncSource source = t->getSyncSourceNow();
         int leader = 0;
         if (source == SyncSourceTrack) {
-            leader = t->getSyncLeaderNow();
-            if (leader == 0)
-              leader = syncMaster->getTrackSyncMaster();
+
+            // !! originally this factored in MIDI track leader settings
+            // to determine what to synchronize recordings with, but that's wrong
+            // TrackSync should always use the TrackSyncMaster consistently,
+            // what leader/follower does is independent of synchronized recording
+            // the difference between SyncSource and having a Leader track is messy
+            // and needs more thought
+            //leader = t->getSyncLeaderNow();
+            //if (leader == 0)
+            leader = syncMaster->getTrackSyncMaster();
         }
 
         // special case, if the leader is the follower, it means we couldn't find

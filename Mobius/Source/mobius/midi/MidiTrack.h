@@ -67,6 +67,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     int getFrame() override;
     TrackState::Mode getMode() override;
     bool isExtending() override;
+    bool isRecorded() override;
     bool isPaused() override;
     float getRate() override;
     void doActionNow(class UIAction* a) override;

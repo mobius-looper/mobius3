@@ -364,6 +364,11 @@ SyncMaster* TrackManager::getSyncMaster()
     return kernel->getSyncMaster();
 }
 
+Notifier* TrackManager::getNotifier()
+{
+    return kernel->getNotifier();
+}
+
 SymbolTable* TrackManager::getSymbols()
 {
     return kernel->getContainer()->getSymbols();

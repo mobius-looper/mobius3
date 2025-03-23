@@ -87,9 +87,9 @@ class LooperScheduler : public BaseScheduler
     //
 
     void scheduleRecord(class UIAction* a);
-    class TrackEvent* scheduleRecordEnd();
+    class TrackEvent* scheduleRecordEnd(class UIAction* a);
     class TrackEvent* addRecordEvent();
-    bool isRecordSynced();
+    //bool isRecordSynced();
     void doRecord(class TrackEvent* e);
 
     void doInsert(class UIAction* a);

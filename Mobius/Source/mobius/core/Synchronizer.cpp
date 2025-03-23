@@ -886,6 +886,16 @@ void Synchronizer::startRecording(Track* t, SyncEvent* e)
         e->error = true;
 	}
 	else {
+        // NOTE WELL: Rerecording into an existing loop has subtleties
+        // We have not been resetting the loop here, it just activates the
+        // pending Record event near wherever the loop is now and let the Record
+        // function sort out the detailsr, this means the event has to be actated
+        // at the current location rather than zero which is the usual case with
+        // empty loops
+        if (l->getFrames() > 0) {
+            Trace(2, "Synchronizer: Rerecord starting");
+        }
+        
         // NOTE WELL: How latency is handled is extremely subtle.  What we do here
         // when activating the pulsed start event must match what we do when
         // activating the stop event.  For some reason we only added latency
@@ -901,31 +911,46 @@ void Synchronizer::startRecording(Track* t, SyncEvent* e)
         
         SyncSource source = mSyncMaster->getEffectiveSource(t->getLogicalNumber());
         bool doLatency = (source == SyncSourceMidi);
-        
+        int inputLatency = l->getInputLatency();
         long startFrame = l->getFrame();
-        if (startFrame < 0) {
+
+        if (l->getFrames() > 0) {
+            // re-record, historically just added latency to wherever we are now
+            if (doLatency)
+              startFrame += inputLatency;
+        }
+        else if (startFrame < 0) {
+            // in Reset with a latency rewind
+            // basically the same as above but I want to watch this more closely
+            if (-startFrame != inputLatency)
+              Trace(1, "Sync: Record start latency rewind unexpected size %d %d",
+                    startFrame, inputLatency);
+
             if (!doLatency) {
+                // if we decided not to do latency comp, then we need to
+                // take out the latency rewind so we can start immediately
+                // this is unlike old Mobius which I guess would start recording
+                // even though the record frame was negative which feels weird
                 l->setFrame(0);
                 l->setPlayFrame(0);
             }
+            startFrame = 0;
         }
         else {
-            // when in Reset this should always be rewound to the latency buffer zone
-            // try to catch conditions where it might not be
-            Trace(l, 1, "Sync: Loop did not have the latency buffer");
-            // I suppose we could rewind it, but really should not happen
-            // this will make it inconsistent with what activateRecordStop
-            // does but at least we traced something
+            // unclear why we would wake up with a Reset loop but not have
+            // a latency rewind
+            Trace(l, 1, "Sync: Record start without latency rewind %d",
+                  startFrame);
+            if (doLatency)
+              startFrame += inputLatency;
         }
         
         start->pending = false;
-        start->frame = 0;
+        start->frame = startFrame;
 
-        if (l->getFrame() < 0) {
-            // have to pretend we're in play to start counting frames if
-            // we're doing latency compensation at the beginning
-            l->setMode(PlayMode);
-        }
+        // have to pretend we're in play to start counting frames if
+        // we're doing latency compensation at the beginning
+        l->setMode(PlayMode);
         
 		Trace(l, 2, "Sync: RecordEvent scheduled for frame %d starting from %d",
               start->frame, l->getFrame());

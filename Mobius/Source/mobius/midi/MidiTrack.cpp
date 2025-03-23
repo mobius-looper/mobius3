@@ -580,6 +580,20 @@ bool MidiTrack::isPaused()
     return (mode == TrackState::ModePause);
 }
 
+bool MidiTrack::isRecorded()
+{
+    // unlike audio tracks, we can't just test for a positive frame length
+    // since that incrases during recording
+
+    // if we have a pending sync record event, it is effectively the same as being
+    // recorded, this is what triggers the display of "Synchronize" mode
+    // wish there was a more obvious way to do this
+    TrackEvent* e = scheduler.findEvent(TrackEvent::EventRecord);
+    bool synchronizing = (e != nullptr && e->pulsed);
+
+    return (getFrames() > 0 && mode != TrackState::ModeRecord && !synchronizing);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Follower/Leader State

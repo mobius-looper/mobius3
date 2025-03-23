@@ -51,7 +51,8 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     //
     // MslTrack
     //
-    
+
+    bool isRecorded() override;
     int getSubcycleFrames() override;
     int getCycleFrames() override;
     int getFrames() override;

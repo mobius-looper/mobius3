@@ -18,6 +18,12 @@ class MslTrack
 
     virtual ~MslTrack() {}
 
+    // used by BaseScheduler
+    // this one is interesting because getFrames is unreliable as a test
+    // for isRecorded, audio tracks will return a zero frame count until the
+    // recording is committed, midi tracks don't
+    virtual bool isRecorded() = 0;
+    
     // used by TrackMslHandler and SyncMaster
 
     virtual int getSubcycleFrames() = 0;

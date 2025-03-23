@@ -43,6 +43,11 @@ class Notifier
     // newer using a payload, consider replacing the one above with this
     void notify(class Loop* loop, NotificationId id, NotificationPayload& payload);
     void notify(class Track* track, NotificationId id, NotificationPayload& payload);
+
+    //
+    // Newer interface for MIDI tracks
+    //
+    void notify(class LogicalTrack* lt, NotificationId id);
     
     //
     // Old interface used for the initial prototype

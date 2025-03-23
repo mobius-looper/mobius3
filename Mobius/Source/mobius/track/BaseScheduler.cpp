@@ -39,6 +39,7 @@
 #include "TrackEvent.h"
 #include "ScheduledTrack.h"
 #include "LogicalTrack.h"
+#include "MslTrack.h"
 
 #include "BaseScheduler.h"
 
@@ -539,6 +540,7 @@ void BaseScheduler::leaderLoopResize(TrackProperties& props)
 void BaseScheduler::advance(MobiusAudioStream* stream)
 {
     activateBlockWait();
+    framesConsumed = 0;
     
     if (scheduledTrack->isPaused()) {
         pauseAdvance(stream);
@@ -791,13 +793,26 @@ void BaseScheduler::consume(int frames)
 {
     int currentFrame = scheduledTrack->getFrame();
     int lastFrame = currentFrame + frames - 1;
-
     int remainder = frames;
-    TrackEvent* e = events.consume(currentFrame, lastFrame);
-    while (e != nullptr) {
-        
-        int eventAdvance = e->frame - currentFrame;
+    QuantizationEvent qevent;
 
+    getQuantizationEvent(currentFrame, frames, qevent);
+    
+    TrackEvent* e = events.find(currentFrame, lastFrame);
+    
+    while (e != nullptr || qevent.valid) {
+
+        // which one are we going to do?
+        bool doQuantize = false;
+        int eventAdvance = 0;
+        if (qevent.valid && (e == nullptr || qevent.frame <= e->frame)) {
+            doQuantize = true;
+            eventAdvance = qevent.frame - currentFrame;
+        }
+        else if (e != nullptr) {
+            eventAdvance = e->frame - currentFrame;
+        }
+        
         // no, we're advancing within scaled frames if this event
         // was on a frame boundary, the only reason we would need
         // to rescale if is this was a quantized event that
@@ -811,20 +826,152 @@ void BaseScheduler::consume(int frames)
 
         // let track consume a block of frames
         scheduledTrack->advance(eventAdvance);
-
+        framesConsumed += eventAdvance;
+        
         // then we inject event handling
-        doEvent(e);
+        if (doQuantize) {
+            doQuantizationEvent(qevent);
+            // assuming can only have one of these per block
+            qevent.valid = false;
+        }
+        else {
+            events.remove(e);
+            doEvent(e);
+        }
         
         remainder -= eventAdvance;
         currentFrame = scheduledTrack->getFrame();
         lastFrame = currentFrame + remainder - 1;
-        
-        e = events.consume(currentFrame, lastFrame);
+
+        if (!doQuantize) {
+            // the last one was consumed, get another
+            e = events.find(currentFrame, lastFrame);
+        }
     }
 
     // whatever is left over, let the track consume it
     scheduledTrack->advance(remainder);
+    framesConsumed += remainder;
 }
+
+void BaseScheduler::doQuantizationEvent(QuantizationEvent& e)
+{
+    SyncUnit unit = SyncUnitBeat;
+    const char* type = "subcycle";
+    if (e.loop) {
+        type = "loop";
+        unit = SyncUnitLoop;
+    }
+    else if (e.cycle) {
+        type = "cycle";
+        unit = SyncUnitBar;
+    }
+    // Trace(2, "BaseScheduler: Quant %s", type);
+    syncMaster->addLeaderPulse(logicalTrack->getNumber(), unit, framesConsumed);
+}
+
+/**
+ * Manufacture a pseudo-TrackEvent during an advance to represent any non-loop
+ * quantization or sync pulses that will occur within this range of block frames.
+ * These are not scheduled on the event list but injected into the event processing
+ * loop as if they were.
+ *
+ * The loop boundary event is already handled by advance() since it is ultra sensitive.
+ * Here we get the cycle and subcycle events.
+ *
+ * Making it look like an event fits better with normal event processing.
+ * Math mostly the same as TrackEvent::getQuantizedFrame for subcycles.
+ *
+ * !! The following works except in the case where you are in an extension mode like
+ * multiply or insert and when you reach the mode end event, it's supposed to be detected
+ * as a loop but it gets detected as a cycle.  Something weird about the loop boundary,
+ * we've probly advanced to 1+ the end (0) but haven't wrapped yet because we're in
+ * an extension mode.  Doesn't really matter for leader pulses since you don't
+ * sync with a loop that is being actively multipled, but stil...
+ */
+void BaseScheduler::getQuantizationEvent(int currentFrame, int frames, QuantizationEvent& e)
+{
+    e.reset();
+
+    // this is implemented by LogicalTrack
+    int subcycles = logicalTrack->getSubcycles();
+    // sanity check to avoid divide by zero
+    if (subcycles == 0) subcycles = 1;
+
+    // loop details aren't implemented by BaseTrack, have to downcast
+    // awkward
+    int cycleFrames = 0;
+    MslTrack* msl = logicalTrack->getMslTrack();
+    // ignore if the loop is being recorded or when it is paused
+    // and won't advance
+    if (msl != nullptr && msl->isRecorded() && !msl->isPaused()) {
+        cycleFrames = msl->getCycleFrames();
+        if (cycleFrames == 0) {
+            Trace(1, "BaseScheduler::getQuantizationEvent cycleFrames is zero");
+            // could do this and continue but why bother?
+            cycleFrames = msl->getFrames();
+        }
+    }
+
+    if (cycleFrames > 0) {
+
+        int lastFrame = currentFrame + frames - 1;
+
+        // first check for starting exactly on a boundary
+        if (currentFrame == 0) {
+            e.valid = true;
+            e.loop = true;
+        }
+        else {
+            int cycleRemainder = currentFrame % cycleFrames;
+            if (cycleRemainder == 0) {
+                e.valid = true;
+                e.frame = currentFrame;
+                e.cycle = true;
+            }
+            else {
+                // subccles are hard because the laste one may be of a different size
+                int subcycleFrames = cycleFrames / subcycles;
+
+                // determine which cycle we're in
+                int cycle = (int)(currentFrame / cycleFrames);
+                int cycleBase = cycle * cycleFrames;
+                int cycleOffset = currentFrame - cycleBase;
+
+                int subcycleRemainder = cycleOffset % subcycleFrames;
+                if (subcycleRemainder == 0) {
+                    e.valid = true;
+                    e.frame = currentFrame;
+                }
+                else {
+                    // not starting on one, will we reach it in this block?
+                    int nextCycleFrame = (cycle + 1) * cycleFrames;
+                    if (nextCycleFrame <= lastFrame) {
+                        e.valid = true;
+                        e.frame = nextCycleFrame;
+                        e.cycle = true;
+                    }
+                    else {
+                        // subcycle we're in within the current cycle
+                        int subcycle = cycleOffset / subcycleFrames;
+                        // only proceed if we're not in the last subcycle,
+                        // the next boundary will be a cycle and may be a little
+                        // longer than usual, remember we're zero based here
+                        if (subcycle < (subcycles - 1)) {
+                            int nextSubcycle = subcycle + 1;
+                            int nextSubcycleFrame = (nextSubcycle * subcycleFrames) + cycleBase;
+                            if (nextSubcycleFrame <= lastFrame) {
+                                e.valid = true;
+                                e.frame = nextSubcycleFrame;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 /**
  * Process an event that has been reached or activated after a pulse.
