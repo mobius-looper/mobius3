@@ -90,6 +90,7 @@
 class MclStatement
 {
   public:
+    virtual ~MclStatement() {}
 
     virtual class MclSection* getSection() {return nullptr;}
     virtual bool isSection() {return getSection() != nullptr;}

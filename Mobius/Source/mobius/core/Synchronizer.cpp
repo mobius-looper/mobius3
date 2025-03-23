@@ -911,7 +911,7 @@ void Synchronizer::startRecording(Track* t, SyncEvent* e)
         
         SyncSource source = mSyncMaster->getEffectiveSource(t->getLogicalNumber());
         bool doLatency = (source == SyncSourceMidi);
-        int inputLatency = l->getInputLatency();
+        long inputLatency = l->getInputLatency();
         long startFrame = l->getFrame();
 
         if (l->getFrames() > 0) {
