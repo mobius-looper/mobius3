@@ -817,6 +817,7 @@ void BaseScheduler::consume(int frames)
         // was on a frame boundary, the only reason we would need
         // to rescale if is this was a quantized event that
         // CHANGED the scaling factor
+        // well yeah, that can happen so need to deal with it
         //eventAdvance = scaleWithCarry(eventAdvance);
         
         if (eventAdvance > remainder) {
@@ -901,15 +902,17 @@ void BaseScheduler::getQuantizationEvent(int currentFrame, int frames, Quantizat
     // loop details aren't implemented by BaseTrack, have to downcast
     // awkward
     int cycleFrames = 0;
+    int loopFrames = 0;
     MslTrack* msl = logicalTrack->getMslTrack();
     // ignore if the loop is being recorded or when it is paused
     // and won't advance
     if (msl != nullptr && msl->isRecorded() && !msl->isPaused()) {
+        loopFrames = msl->getFrames();
         cycleFrames = msl->getCycleFrames();
         if (cycleFrames == 0) {
             Trace(1, "BaseScheduler::getQuantizationEvent cycleFrames is zero");
             // could do this and continue but why bother?
-            cycleFrames = msl->getFrames();
+            cycleFrames = loopFrames;
         }
     }
 
@@ -918,7 +921,10 @@ void BaseScheduler::getQuantizationEvent(int currentFrame, int frames, Quantizat
         int lastFrame = currentFrame + frames - 1;
 
         // first check for starting exactly on a boundary
-        if (currentFrame == 0) {
+        // when ending Multiply mode (and probably any extension mode) I'm seeing
+        // this reach the loop point without wrapping to zero at this moment,
+        // not sure why, but test for both 0 and loopFrames
+        if (currentFrame == 0 || currentFrame == loopFrames) {
             e.valid = true;
             e.loop = true;
         }
@@ -944,7 +950,14 @@ void BaseScheduler::getQuantizationEvent(int currentFrame, int frames, Quantizat
                     e.frame = currentFrame;
                 }
                 else {
-                    // not starting on one, will we reach it in this block?
+                    // not starting directly on one, will we reach it in this block?
+                    // !! this is probably not handling rate shift, and certinaly
+                    // not rate shift that changes with each scheduled event in this block
+                    // I think we need both the unscaled/scaled advance amount passed down here
+                    // this is the ugly part of trying to do this at this level rather than
+                    // having the inner loop notify us when it happens
+                    // or perpahs just rever what scaleWithCarry did when determining
+                    // how many frames were in the track advance
                     int nextCycleFrame = (cycle + 1) * cycleFrames;
                     if (nextCycleFrame <= lastFrame) {
                         e.valid = true;
@@ -954,16 +967,17 @@ void BaseScheduler::getQuantizationEvent(int currentFrame, int frames, Quantizat
                     else {
                         // subcycle we're in within the current cycle
                         int subcycle = cycleOffset / subcycleFrames;
-                        // only proceed if we're not in the last subcycle,
-                        // the next boundary will be a cycle and may be a little
-                        // longer than usual, remember we're zero based here
+                         // only proceed if we're not in the last subcycle,
+                        // in the last sybcycle the next boundary will be a cycle
+                        // and may be a little longer than usual, it is detected above
+                        // remember we're zero based here
                         if (subcycle < (subcycles - 1)) {
                             int nextSubcycle = subcycle + 1;
                             int nextSubcycleFrame = (nextSubcycle * subcycleFrames) + cycleBase;
                             if (nextSubcycleFrame <= lastFrame) {
                                 e.valid = true;
                                 e.frame = nextSubcycleFrame;
-                            }
+i                            }
                         }
                     }
                 }
