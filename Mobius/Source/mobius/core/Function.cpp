@@ -26,7 +26,6 @@
 #include "../../util/List.h"
 #include "../../util/Util.h"
 #include "../../model/old/SystemConstant.h"
-#include "../../model/old/MobiusConfig.h"
 #include "../../model/old/Trigger.h"
 #include "../../model/old/Structure.h"
 

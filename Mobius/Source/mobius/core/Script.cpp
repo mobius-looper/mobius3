@@ -57,7 +57,6 @@
 #include "../../util/Util.h"
 
 #include "../../model/old/Trigger.h"
-#include "../../model/old/MobiusConfig.h"
 #include "../../model/old/Setup.h"
 #include "../../model/old/Preset.h"
 #include "../../model/old/UserVariable.h"
@@ -2293,6 +2292,10 @@ void ScriptSetupStatement::resolve(Mobius* m)
 
 ScriptStatement* ScriptSetupStatement::eval(ScriptInterpreter* si)
 {
+    (void)si;
+    // no longer relevant
+    Trace(1, "Script: Setup statement no longer implemented");
+#if 0    
 	ExValue v;
 
 	mSetup.get(si, &v);
@@ -2314,7 +2317,8 @@ ScriptStatement* ScriptSetupStatement::eval(ScriptInterpreter* si)
 		//m->setActiveSetup(s->getName());
         Trace(1, "ScriptSetupStatement: Unable to change setups");
 	}
-
+#endif
+    
     return nullptr;
 }
 
@@ -2346,6 +2350,11 @@ void ScriptPresetStatement::resolve(Mobius* m)
 
 ScriptStatement* ScriptPresetStatement::eval(ScriptInterpreter* si)
 {
+    (void)si;
+    // no longer relevant
+    Trace(1, "Script: Preset statement no longer implemented");
+
+#if 0    
 	ExValue v;
 
 	mPreset.get(si, &v);
@@ -2371,7 +2380,8 @@ ScriptStatement* ScriptPresetStatement::eval(ScriptInterpreter* si)
         //t->changePreset(p->ordinal);
         Trace(1, "Script::ScriptPresetStatement Unable to change presets");
     }
-
+#endif
+    
     return nullptr;
 }
 

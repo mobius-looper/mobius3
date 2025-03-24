@@ -34,7 +34,6 @@
 
 #include "../util/Trace.h"
 #include "../util/Util.h"
-#include "../model/old/MobiusConfig.h"
 #include "../model/SampleConfig.h"
 
 #include "MobiusInterface.h"
@@ -562,6 +561,9 @@ int SampleManager::getSampleCount()
  *
  * Probably still want an override but now these should default to
  * comming from the AudioStream.
+ *
+ * !! this isn't being called any more, if you still need latency compensation
+ * something new needs to be done.  Probably only an issue for the old test scripts
  */
 void SampleManager::updateConfiguration(MobiusConfig* config)
 {

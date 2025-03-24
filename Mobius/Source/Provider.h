@@ -64,7 +64,6 @@ class Provider
     virtual class SymbolTable* getSymbols() = 0;
     virtual class MidiManager* getMidiManager() = 0;
     virtual class FileManager* getFileManager() = 0;
-    virtual class Grouper* getGrouper() = 0;
     virtual class MobiusInterface* getMobius() = 0;
     virtual int getSampleRate() = 0;
 
@@ -79,6 +78,7 @@ class Provider
     virtual class OldBindingSet* getBindingSets() = 0;
     virtual class ParameterSets* getParameterSets() = 0;
     virtual void updateParameterSets() = 0;
+    virtual class GroupDefinitions* getGroupDefinitions() = 0;
     
     virtual class UIConfig* getUIConfig() = 0;
     virtual void updateUIConfig() = 0;

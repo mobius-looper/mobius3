@@ -146,7 +146,6 @@ class MobiusShell : public MobiusInterface
     void doSaveCapture(class KernelEvent* e);
     void doSaveLoop(class KernelEvent* e);
     void doSaveProject(class KernelEvent* e);
-    void doSaveConfig(class KernelEvent* e);
     void doLoadLoop(class KernelEvent* e);
     void doDiffAudio(class KernelEvent* e);
     void doDiff(class KernelEvent* e);

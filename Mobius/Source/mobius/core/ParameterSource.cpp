@@ -12,11 +12,7 @@
 #include "../../model/SymbolId.h"
 #include "../../model/StepSequence.h"
 
-// for MSECS_TO_FRAMES
-#include "../../model/old/MobiusConfig.h"
-
 #include "../track/LogicalTrack.h"
-
 
 #include "Loop.h"
 #include "Track.h"
@@ -318,9 +314,6 @@ bool ParameterSource::isEdpisms(Loop* l)
 
 int ParameterSource::getSpreadRange(Loop* l)
 {
-    //Mobius* m = l->getMobius();
-    //MobiusConfig* c = m->getConfiguration();
-    //return c->getSpreadRange();
     LogicalTrack* lt = getLogicalTrack(l);
     return lt->getParameterOrdinal(ParamSpreadRange);
 }
@@ -337,9 +330,6 @@ int ParameterSource::msecToFrames(int msec)
     
 bool ParameterSource::isAutoFeedbackReduction(Loop* l)
 {
-    //Mobius* m = l->getMobius();
-    //MobiusConfig* c = m->getConfiguration();
-    //return c->isAutoFeedbackReduction();
     LogicalTrack* lt = getLogicalTrack(l);
     return (bool)(lt->getParameterOrdinal(ParamAutoFeedbackReduction));
 }

@@ -4,7 +4,7 @@
 
 #include <JuceHeader.h>
 
-#include "../../model/old/MobiusConfig.h"
+#include "../../model/SystemConfig.h"
 #include "../../model/GroupDefinition.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
@@ -82,8 +82,10 @@ void GroupEditor::load()
     juce::Array<juce::String> names;
     groups.clear();
     revertGroups.clear();
-    MobiusConfig* config = supervisor->getOldMobiusConfig();
-    for (auto src : config->dangerousGroups) {
+
+    SystemConfig* config = supervisor->getSystemConfig();
+    GroupDefinitions* container = config->getGroups();
+    for (auto src : container->groups) {
         // Supervisor should have upgraded these by now
         if (src->name.length() == 0) {
             Trace(1, "GroupEditor: GroupDefinition with no name, bad Supervisor");
@@ -135,11 +137,11 @@ void GroupEditor::save()
     // need to also do this when the selected group is changed
     saveGroup(selectedGroup);
 
-    juce::Array<GroupDefinition*> newList;
+    GroupDefinitions* neu = new GroupDefinitions();
     while (groups.size() > 0)
-      newList.add(groups.removeAndReturn(0));
+      neu->add(groups.removeAndReturn(0));
 
-    supervisor->groupEditorSave(newList);
+    supervisor->groupEditorSave(neu);
 }
 
 /**

@@ -815,12 +815,12 @@ void TestDriver::installTestConfiguration()
         else {
 
             // !!!!!!!! this is no longer working after the Session migration
-            
+#if 0            
             MobiusKernel* kernel = shell->getKernel();
             MobiusConfig* kernelConfig = kernel->getMobiusConfigForTestDriver();
-    
             // special Setup and Preset
             installPresetAndSetup(kernelConfig);
+#endif            
         
             MobiusConfig* overlay = readConfigOverlay();
             if (overlay != nullptr) {

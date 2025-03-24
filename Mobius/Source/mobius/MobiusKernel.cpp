@@ -9,7 +9,6 @@
 #include "../util/StructureDumper.h"
 
 #include "../model/ConfigPayload.h"
-#include "../model/old/MobiusConfig.h"
 #include "../model/Session.h"
 #include "../model/ParameterSets.h"
 #include "../model/UIAction.h"
@@ -118,7 +117,6 @@ MobiusKernel::~MobiusKernel()
     // we do not own shell, communicator, or container
     // use a unique_ptr here!!
     delete parameters;
-    delete configuration;
     delete session;
 
     // stop listening
@@ -150,10 +148,10 @@ void MobiusKernel::initialize(MobiusContainer* cont, ConfigPayload* p)
     // ugly
     session = p->session;
     p->session = nullptr;
-    configuration = p->config;
-    p->config = nullptr;
     parameters = p->parameters;
     p->parameters = nullptr;
+    groups = p->groups;
+    p->groups = nullptr;
     delete p;
 
     // immediately give the Session a SymbolTable so it can support the
@@ -161,7 +159,7 @@ void MobiusKernel::initialize(MobiusContainer* cont, ConfigPayload* p)
     session->setSymbols(container->getSymbols());
 
     scriptUtil.initialize(this);
-    scriptUtil.configure(configuration, session);
+    scriptUtil.configure(session, groups);
 
     // register ourselves as the audio listener
     // unclear when things start pumping in, but do this last
@@ -173,16 +171,12 @@ void MobiusKernel::initialize(MobiusContainer* cont, ConfigPayload* p)
     // if core initialization is too expensive to do all the time
     // then need to defer this until the first audio interrupt
     mCore = new Mobius(this);
-    mCore->initialize(configuration);
+    mCore->initialize();
 
     installSymbols();
 
-    // supposed to be the same now
-    if (configuration->getCoreTracksDontUseThis() != session->getAudioTracks())
-      Trace(1, "MobiusKernel: Session audio tracks not right");
-
     mTracks.reset(new TrackManager(this));
-    mTracks->initialize(session, configuration, mCore);
+    mTracks->initialize(session, groups, mCore);
 
     notifier.initialize(this, mTracks.get());
     notifier.configure(session);
@@ -387,14 +381,6 @@ void MobiusKernel::doMessage(KernelMessage* msg)
  * Process a MsgConfigure message containing configuration object
  * changes. This may be sparse.  Take ownership of what was passed
  * but keep the others.  Return the old ones for reclamation.
- *
- * In current usage, this expected to have both a Session and a MobiusConfig
- * when the Session is edited.  The MobiusConfig will have been derived from
- * the Session since we don't directly edit it any more.  This will go away once
- * MobiusConfig dies.
- *
- * The only thing independent is ParameterSets which can come down on it's own.
- *
  */
 void MobiusKernel::reconfigure(KernelMessage* msg)
 {
@@ -404,19 +390,13 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     // ugly
 
     Session* newSession = nullptr;
-    MobiusConfig* newConfig = nullptr;
     ParameterSets* newParams = nullptr;
-
+    GroupDefinitions* newGroups = nullptr;
+    
     if (p->session != nullptr) {
         newSession = p->session;
         p->session = session;
         session = newSession;
-    }
-
-    if (p->config != nullptr) {
-        newConfig = p->config;
-        p->config = configuration;
-        configuration = newConfig;
     }
 
     if (p->parameters != nullptr) {
@@ -425,18 +405,24 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
         parameters = newParams;
     }
 
+    if (p->groups != nullptr) {
+        newGroups = p->groups;
+        p->groups = groups;
+        groups = newGroups;
+    }
+    
     // immediately give the Session a SymbolTable so it can support the
     // SymbolId interfaces everyone wants
     session->setSymbols(container->getSymbols());
 
     // actually doesn't do much any more, sets some Function flags to match the Symbols
-    mCore->reconfigure(configuration);
+    mCore->reconfigure();
         
     // why the hell does this need both?
-    scriptUtil.configure(configuration, session);
+    scriptUtil.configure(session, groups);
 
-    // give TM the new MobiusConfig first to refresh the stupid scope cache
-    mTracks->reconfigure(configuration);
+    // give TM the new GroupDefinitions first so it can parse scope names
+    mTracks->reconfigure(groups);
 
     // this will do the second call to core to configureTracks where
     // most of the excitment happens

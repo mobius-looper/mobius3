@@ -6,7 +6,7 @@
 #include "../../model/FunctionProperties.h"
 #include "../../model/ParameterProperties.h"
 #include "../../model/ScriptProperties.h"
-#include "../../model/old/MobiusConfig.h"
+#include "../../model/GroupDefinition.h"
 #include "../../model/Session.h"
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"
@@ -17,7 +17,6 @@
 #include "../../script/MslExternal.h"
 #include "../../script/MslWait.h"
 #include "../../script/ScriptExternals.h"
-#include "../../Grouper.h"
 
 #include "../MobiusKernel.h"
 #include "../MobiusInterface.h"
@@ -58,14 +57,12 @@ TrackManager::~TrackManager()
  * Startup initialization.  Session here is normally the default
  * session, a different one may come down later via loadSession()
  */
-void TrackManager::initialize(Session* ses, MobiusConfig* config, Mobius* core)
+void TrackManager::initialize(Session* ses, GroupDefinitions* argGroups, Mobius* core)
 {
     session = ses;
     // only thing this is used for is the group list
-    configuration = config;
+    groups = argGroups;
     audioEngine = core;
-
-    scopes.refresh(config);
 
     // start with this here, but should move to Kernel once
     // Mobius can use it too
@@ -78,10 +75,9 @@ void TrackManager::initialize(Session* ses, MobiusConfig* config, Mobius* core)
 /**
  * Have to get this to refresh GroupDefinitions
  */
-void TrackManager::reconfigure(MobiusConfig* config)
+void TrackManager::reconfigure(GroupDefinitions* argGroups)
 {
-    configuration = config;
-    scopes.refresh(config);
+    groups = argGroups;
 }
 
 /**
@@ -334,16 +330,6 @@ UIActionPool* TrackManager::getActionPool()
     return actionPool;
 }
 
-MobiusConfig* TrackManager::getConfigurationForGroups()
-{
-    return configuration;
-}
-
-MobiusConfig* TrackManager::getConfigurationForPresets()
-{
-    return configuration;
-}
-
 Session* TrackManager::getSession()
 {
     return session;
@@ -352,6 +338,11 @@ Session* TrackManager::getSession()
 ParameterSets* TrackManager::getParameterSets()
 {
     return kernel->getParameterSets();
+}
+
+GroupDefinitions* TrackManager::getGroupDefinitions()
+{
+    return kernel->getGroupDefinitions();
 }
 
 MobiusContainer* TrackManager::getContainer()
@@ -790,7 +781,7 @@ UIAction* TrackManager::replicateAction(UIAction* src)
         // for this action,  old Mobius always sent this to the active/focused track
         // I think it makes sense to obey track scope if one was set before falling
         // back to focused track
-        int track = scopes.parseTrackNumber(src->getScope());
+        int track = Scope::parseTrackNumber(src->getScope());
         if (track > 0) {
             // they asked for this track, that's what they'll get
             list = src;
@@ -802,7 +793,7 @@ UIAction* TrackManager::replicateAction(UIAction* src)
         }
     }
     else if (src->hasScope()) {
-        int track = scopes.parseTrackNumber(src->getScope());
+        int track = Scope::parseTrackNumber(src->getScope());
         if (track > 0) {
             // targeting a specific track
             // focus lock does not apply here but group focvus replication might
@@ -814,11 +805,11 @@ UIAction* TrackManager::replicateAction(UIAction* src)
             list = src;
         }
         else {
-            int ordinal = scopes.parseGroupOrdinal(src->getScope());
-            if (ordinal >= 0) {
+            int index = groups->getGroupIndex(src->getScope());
+            if (index >= 0) {
                 // repliicate to all members of this group
                 // on the track group association is by number rather than ordinal
-                list = replicateGroup(src, ordinal + 1);
+                list = replicateGroup(src, index + 1);
             }
             else {
                 Trace(1, "TrackManager: Invalid scope %s", src->getScope());
@@ -886,9 +877,9 @@ UIAction* TrackManager::replicateFocused(UIAction* src)
         focusedGroupNumber = lt->getGroup();
         // get the definition from the number
         if (focusedGroupNumber > 0) {
+            // zero means "no group" 
             int groupIndex = focusedGroupNumber - 1;
-            if (groupIndex < configuration->dangerousGroups.size())
-              groupdef = configuration->dangerousGroups[groupIndex];
+            groupdef = groups->getGroupByIndex(groupIndex);
         }
     }
 
@@ -1234,7 +1225,7 @@ void TrackManager::mutateMslReturn(Symbol* s, int value, MslValue* retval)
         }
         else if (ptype == TypeStructure) {
             // hmm, the understanding of LevelUI symbols that live in
-            // UIConfig and LevelTrack symbols that live in MobiusConfig
+            // UIConfig, and LevelTrack parameters like trackGroup and trackOverlay
             // is in Supervisor right now
             // todo: Need to repackage this
             // todo: this could also be Type::Enum in the value but I don't

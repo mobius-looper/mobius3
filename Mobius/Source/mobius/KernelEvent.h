@@ -44,12 +44,6 @@ typedef enum {
     // this isn't implemented yet, and needs redesign
     EventSaveProject,
     
-    // this was a weird one, it was in response to the UI setting OperatorPermanent
-    // on a Setup action to cause it to be saved permanently in mobius.xml
-    // we shouldn't need that in an Action handler, just do it in the UI if that's
-    // what you want
-    EventSaveConfig,
-    
     // test script wants to load a loop
     // forwards to MobiusListener::mobiusLoadLoop
     EventLoadLoop,

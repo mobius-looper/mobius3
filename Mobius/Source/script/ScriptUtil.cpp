@@ -15,10 +15,10 @@ void ScriptUtil::initialize(MslContext* c)
     context = c;
 }
 
-void ScriptUtil::configure(MobiusConfig* c, Session* s)
+void ScriptUtil::configure(Session* s, GroupDefinitions* g)
 {
-    configuration = c;
     session = s;
+    groups = g;
 }
 
 int ScriptUtil::getMaxScope()
@@ -50,8 +50,8 @@ bool ScriptUtil::isScopeKeyword(const char* cname)
         keyword = true;
     }
     else {
-        int ordinal = configuration->getGroupOrdinal(name);
-        keyword = (ordinal >= 0);
+        int index = groups->getGroupIndex(name);
+        keyword = (index >= 0);
     }
     return keyword;
 }
@@ -68,18 +68,22 @@ bool ScriptUtil::expandScopeKeyword(const char* cname, juce::Array<int>& numbers
         }
     }
     else if (name.equalsIgnoreCase("audio")) {
-        int total = session->getAudioTracks();
-        for (int i = 0 ; i < total ; i++) {
-            numbers.add(i+1);
+        for (int i = 0 ; i < session->getTrackCount() ; i++) {
+            Session::Track* t = session->getTrackByIndex(i);
+            if (t->type == Session::TypeAudio) {
+                numbers.add(i + 1);
+            }
         }
     }
     else if (name.equalsIgnoreCase("midi")) {
-        int base = session->getAudioTracks() + 1;
-        for (int i = 0 ; i < session->getMidiTracks() ; i++) {
-            numbers.add(base + i);
+        for (int i = 0 ; i < session->getTrackCount() ; i++) {
+            Session::Track* t = session->getTrackByIndex(i);
+            if (t->type == Session::TypeMidi) {
+                numbers.add(i + 1);
+            }
         }
     }
-    else if (name.equalsIgnoreCase("outSyncMaster")) {
+    else if (name.equalsIgnoreCase("transportMaster")) {
         // this is the whole reason VarQuery exists, we need access to
         // variable implementations on both sides of the aisle
         // and it's easier to deal with than MslQuery which requires an MslExternal
@@ -114,7 +118,7 @@ bool ScriptUtil::expandScopeKeyword(const char* cname, juce::Array<int>& numbers
     else if (name.equalsIgnoreCase("muted")) {
         // this requires access to kernel track state
         // generally it is safe to cross threads for this except
-        // when track counts are being changed
+        // when a session is being loaded
         // this is a pretty severe change and we can prevent scripts
         // from running while that happens
         valid = false;
@@ -127,18 +131,28 @@ bool ScriptUtil::expandScopeKeyword(const char* cname, juce::Array<int>& numbers
         // MOS has "group" which we don't need if we just
         // assume that anything other than a keyword can
         // be a group name
-        int ordinal = configuration->getGroupOrdinal(name);
-        if (ordinal < 0) {
+        int index = groups->getGroupIndex(name);
+        if (index < 0) {
             // didn't match, invalid keyword
             valid = false;
         }
         else {
-            // groups are defined in the Setup which we have access to here
-            // HOWEVER old MOS scripts can also change the group assignment
-            // on the fly which would requires access to kernel track state
-            valid = false;
+            // we can look in the session for the starting values
+            // HOWVER scripts can change these on the fly so this technically
+            // needs to be doing a query to see what the trackGroup is
+            // bound to at the moment
+            for (int i = 0 ; i < session->getTrackCount() ; i++) {
+                Session::Track* t  = session->getTrackByIndex(i);
+                const char* gname = t->getString(ParamTrackGroup);
+                if (gname != nullptr && juce::String(gname) == name) {
+                    numbers.add(i + 1);
+                }
+            }
         }
     }
     return valid;
 }
 
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

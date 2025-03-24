@@ -9,7 +9,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../../model/Scope.h"
 
 class Actionator
 {
@@ -19,8 +18,6 @@ class Actionator
     ~Actionator();
     void dump();
 
-    void refreshScopeCache(class MobiusConfig* config);
-    
     //////////////////////////////////////////////////////////////////////
     // New Model
     //////////////////////////////////////////////////////////////////////
@@ -59,9 +56,5 @@ class Actionator
     class Action* convertAction(UIAction* src);
     void doFunction(class Action* a);
     void doFunction(class Action* action, class Function* f, class Track* t);
-
-    // scope parsing
-    ScopeCache scopes;
-
 };
 

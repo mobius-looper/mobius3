@@ -27,9 +27,44 @@ GroupDefinition::~GroupDefinition()
 // GroupDefinitions
 //////////////////////////////////////////////////////////////////////
 
+GroupDefinitions::GroupDefinitions(GroupDefinitions* src)
+{
+    for (auto g : src->groups) {
+        add(new GroupDefinition(g));
+    }
+}
+
 void GroupDefinitions::add(GroupDefinition* g)
 {
     groups.add(g);
+}
+
+int GroupDefinitions::getGroupIndex(juce::String name)
+{
+    int index = -1;
+    for (int i = 0 ; i < groups.size() ; i++) {
+        GroupDefinition* def = groups[i];
+        if (def->name == name) {
+            index = i;
+            break;
+        }
+    }
+    return index;
+}
+
+GroupDefinition* GroupDefinitions::getGroupByIndex(int index)
+{
+    GroupDefinition* found = nullptr;
+    if (index >= 0 && index < groups.size())
+      found = groups[index];
+    return found;
+}
+
+void GroupDefinitions::getGroupNames(juce::StringArray& names)
+{
+    for (auto g : groups) {
+        names.add(g->name);
+    }
 }
 
 void GroupDefinitions::toXml(juce::XmlElement* parent)

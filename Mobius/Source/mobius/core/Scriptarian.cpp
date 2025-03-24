@@ -10,7 +10,6 @@
  */
 
 #include "../../util/Trace.h"
-#include "../../model/old/MobiusConfig.h"
 #include "../../model/ScriptConfig.h"
 
 #include "Script.h"

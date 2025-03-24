@@ -18,7 +18,7 @@ class ScriptUtil
     ~ScriptUtil() {}
 
     void initialize(class MslContext* c);
-    void configure(class MobiusConfig* c, class Session* s);
+    void configure(class Session* s, class GroupDefinitions* g);
 
     int getMaxScope();
     bool isScopeKeyword(const char* cname);
@@ -27,8 +27,8 @@ class ScriptUtil
   private:
 
     class MslContext* context = nullptr;
-    class MobiusConfig* configuration = nullptr;
     class Session* session = nullptr;
+    class GroupDefinitions* groups = nullptr;
     int audioTracks = 0;
     int midiTracks = 0;
     

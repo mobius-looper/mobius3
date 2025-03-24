@@ -62,8 +62,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     static int InstanceCount;
     static int MaxInstanceCount;
     
-    static const int BuildNumber = 35;
-
     /**
      * Standalone Supervisor is statically constructed by MainComponent.
      * MainComponent must call start() at a suitable time during
@@ -164,10 +162,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
         return &variableManager;
     }
 
-    class Grouper* getGrouper() override {
-        return grouper.get();
-    }
-    
     // part of Provider for Prompter
     class ScriptClerk* getScriptClerk() override {
         return &scriptClerk;
@@ -207,7 +201,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void mclMobiusConfigUpdated() override;
     void mclSessionUpdated() override;
     
-    void groupEditorSave(juce::Array<class GroupDefinition*>& newList);
+    void groupEditorSave(class GroupDefinitions* groups);
     void sampleEditorSave(class SampleConfig* newConfig);
     void upgradePanelSave();
 
@@ -218,6 +212,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     class ParameterSets* getParameterSets() override;
     void updateParameterSets() override;
+
+    class GroupDefinitions* getGroupDefinitions() override;
     
     class StaticConfig* getStaticConfig() override;
     class HelpCatalog* getHelpCatalog();
@@ -449,9 +445,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // full link every time you touch the header file
     std::unique_ptr<class MidiClerk> midiClerk;
 
-    // new way of gaining group information
-    std::unique_ptr<class Grouper> grouper;
-    
     // internal component listeners
     juce::Array<ActionListener*> actionListeners;
     juce::Array<AlertListener*> alertListeners;
@@ -507,9 +500,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class Session* initializeSession();
     void resizeSystemState(class Session* s);
 
-    void sendInitialMobiusConfig();
-    void sendModifiedMobiusConfig();
-    class MobiusConfig* synthesizeMobiusConfig(class Session* s);
+    void sendInitialConfiguration();
+    void sendModifiedSession();
     
     // Listener notification
     void notifyAlertListeners(juce::String msg);

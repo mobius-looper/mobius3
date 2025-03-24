@@ -31,12 +31,12 @@
 #include "../../model/old/MobiusConfig.h"
 #include "../../model/old/OldBinding.h"
 #include "../../model/Scope.h"
+#include "../../model/GroupDefinition.h"
 #include "../JuceUtil.h"
 #include "../MobiusView.h"
 
 // temporary until we can get the initialization order sorted out
 #include "../../Supervisor.h"
-#include "../../Grouper.h"
 
 #include "OldBindingTable.h"
 #include "OldBindingTargetSelector.h"
@@ -507,8 +507,8 @@ void OldBindingEditor::refreshScopeNames()
       scopeNames.add("Track " + juce::String(i+1));
 
     juce::StringArray gnames;
-    Grouper* g = supervisor->getGrouper();
-    g->getGroupNames(gnames);
+    GroupDefinitions* groups = supervisor->getGroupDefinitions();
+    groups->getGroupNames(gnames);
 
     for (auto gname : gnames) {
         scopeNames.add(juce::String("Group ") + gname);
@@ -605,10 +605,10 @@ void OldBindingEditor::refreshForm(OldBinding* b)
         scope.setSelection(tracknum);
     }
     else {
-        MobiusConfig* config = supervisor->getOldMobiusConfig();
-        int groupOrdinal = Scope::parseGroupOrdinal(config, scopeString);
-        if (groupOrdinal >= 0)
-          scope.setSelection(maxTracks + groupOrdinal);
+        GroupDefinitions* groups = supervisor->getGroupDefinitions();
+        int index = groups->getGroupIndex(scopeString);
+        if (index >= 0)
+          scope.setSelection(maxTracks + index);
         else
           Trace(1, "OldBindingEditor: Binding scope with unresolved group name %s", scopeString);
     }

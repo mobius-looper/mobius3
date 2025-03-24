@@ -4,8 +4,6 @@
 #include "../../util/Trace.h"
 #include "../../util/StructureDumper.h"
 
-#include "../../model/old/MobiusConfig.h"
-
 #include "../../model/ParameterConstants.h"
 #include "../../model/SyncConstants.h"
 #include "../../model/Session.h"
@@ -15,6 +13,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/Enumerator.h"
 #include "../../model/ParameterProperties.h"
+#include "../../model/GroupDefinition.h"
 
 #include "../../script/MslEnvironment.h"
 #include "../../script/MslBinding.h"
@@ -594,14 +593,14 @@ int LogicalTrack::getGroupFromSession()
 
     const char* groupName = sessionTrack->getString(ParamTrackGroup);
     // since we store the name in the session, have to map it back to an ordinal
-    // which requires the MobiusConfig
+    // which requires the GroupDefinitions
     if (groupName != nullptr) {
-        MobiusConfig* config = manager->getConfigurationForGroups();
-        int ordinal = config->getGroupOrdinal(groupName);
-        if (ordinal < 0)
+        GroupDefinitions* groups = manager->getGroupDefinitions();
+        int index = groups->getGroupIndex(groupName);
+        if (index < 0)
           Trace(1, "LogicalTrack: Invalid group name found in session %s", groupName);
         else
-          gnumber = ordinal + 1;
+          gnumber = index + 1;
     }
 
     return gnumber;
@@ -613,8 +612,9 @@ int LogicalTrack::getGroupFromAction(UIAction* a)
 
     // todo: assumign we're dealing with numbers, but should take names
     // in the binding args
-    MobiusConfig* config = manager->getConfigurationForGroups();
-    if (a->value >= 0 && a->value < config->dangerousGroups.size()) {
+    // number is 1 based with 0 meaning "none"
+    GroupDefinitions* groups = manager->getGroupDefinitions();
+    if (a->value >= 0 && a->value <= groups->groups.size()) {
         gnumber = a->value;
     }
     else {
@@ -967,16 +967,16 @@ int LogicalTrack::unbindFeedback()
  */
 void LogicalTrack::doTrackGroup(UIAction* a)
 {
-    MobiusConfig* config = manager->getConfigurationForGroups();
+    GroupDefinitions* groups = manager->getGroupDefinitions();
 
     // default is to revert to no group
     groupNumber = 0;
 
     // if we're still passing binding args here, obey it
     if (strlen(a->arguments) > 0) {
-        groupNumber = parseGroupActionArgument(config, a->arguments);
+        groupNumber = parseGroupActionArgument(groups, a->arguments);
     }
-    else if (a->value >= 0 && a->value <= config->dangerousGroups.size()) {
+    else if (a->value >= 0 && a->value <= groups->groups.size()) {
         groupNumber = a->value;
     }
     else {
@@ -987,14 +987,14 @@ void LogicalTrack::doTrackGroup(UIAction* a)
 /**
  * Here we have a string group specifier from the binding argument.
  */
-int LogicalTrack::parseGroupActionArgument(MobiusConfig* config, const char* s)
+int LogicalTrack::parseGroupActionArgument(GroupDefinitions* groups, const char* s)
 {
     int group = 0;
 
     if (strlen(s) > 0) {
         
         int gnumber = 1;
-        for (auto g : config->dangerousGroups) {
+        for (auto g : groups->groups) {
             // what about case on these?
             if (g->name.equalsIgnoreCase(s)) {
                 group = gnumber;
@@ -1007,7 +1007,7 @@ int LogicalTrack::parseGroupActionArgument(MobiusConfig* config, const char* s)
             // see if it looks like a number in range
             if (IsInteger(s)) {
                 group = ToInt(s);
-                if (group < 1 || group > config->dangerousGroups.size()) {
+                if (group < 1 || group > groups->groups.size()) {
                     Trace(1, "LogicalTrack: Group number out of range %d", group);
                     group = 0;
                 }
@@ -1033,10 +1033,10 @@ int LogicalTrack::parseGroupActionArgument(MobiusConfig* config, const char* s)
 
             if (delta != 0) {
                 group = groupNumber + delta;
-                if (group > config->dangerousGroups.size())
+                if (group > groups->groups.size())
                   group = 0;
                 else if (group < 0)
-                  group = config->dangerousGroups.size();
+                  group = groups->groups.size();
             }
         }
     }

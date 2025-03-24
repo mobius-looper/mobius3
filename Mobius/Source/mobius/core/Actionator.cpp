@@ -27,7 +27,6 @@
 #include "../../model/UIAction.h"
 #include "../../model/Scope.h"
 #include "../../model/Query.h"
-#include "../../model/old/MobiusConfig.h"
 #include "../../model/old/Trigger.h"
 #include "../../model/old/Structure.h"
 
@@ -261,29 +260,16 @@ Action* Actionator::convertAction(UIAction* src)
     // be nice to raise up a level too
 
     const char* scope = src->getScope();
-    int trackNumber = scopes.parseTrackNumber(scope);
+    int trackNumber = Scope::parseTrackNumber(scope);
     if (trackNumber >= 0)
       coreAction->scopeTrack = trackNumber;
     else {
         // groups should have been handled above this, the only
         // scope sent down to core is track numbers
         Trace(1, "Actionator: Received action with group scope");
-        
-        // must be a group name
-        // note that we use group NUMBER here rather than ordinal
-        int groupNumber = scopes.parseGroupNumber(scope);
-        if (groupNumber > 0)
-          coreAction->scopeGroup = groupNumber;
-        else
-          Trace(1, "Actionator: Unresolved scope %s", scope);
     }
     
     return coreAction;
-}
-
-void Actionator::refreshScopeCache(MobiusConfig* config)
-{
-    scopes.refresh(config);
 }
 
 //////////////////////////////////////////////////////////////////////

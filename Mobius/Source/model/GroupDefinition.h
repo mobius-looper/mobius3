@@ -68,6 +68,9 @@ class GroupDefinitions
   public:
 
     constexpr static const char* XmlName = "GroupDefinitions";
+
+    GroupDefinitions() {}
+    GroupDefinitions(GroupDefinitions* src);
     
     juce::OwnedArray<GroupDefinition> groups;
 
@@ -76,6 +79,9 @@ class GroupDefinitions
     void toXml(juce::XmlElement* root);
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);
 
+    int getGroupIndex(juce::String name);
+    GroupDefinition* getGroupByIndex(int index);
+    void getGroupNames(juce::StringArray& names);
 };
 
 /****************************************************************************/

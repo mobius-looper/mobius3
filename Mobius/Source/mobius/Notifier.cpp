@@ -173,6 +173,9 @@ void Notifier::notify(Track* track, NotificationId id, NotificationPayload& payl
 
 void Notifier::notify(LogicalTrack* lt, NotificationId id)
 {
+    (void)lt;
+    (void)id;
+    Trace(1, "Notifier::notify LogicalTrack interface not implemented");
 }
 
 //////////////////////////////////////////////////////////////////////

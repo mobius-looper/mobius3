@@ -19,7 +19,6 @@
 #include "../../util/Trace.h"
 
 #include "Mobius.h"
-#include "../../model/old/MobiusConfig.h"
 #include "Mode.h"
 #include "Function.h"
 
@@ -185,8 +184,10 @@ void MobiusMode::localizeAll(MessageCatalog* cat)
 /**
  * Check the global configuration and update some of the mode options.
  *
- * NOTE: This is currently stubbed out in Mobius.cpp 
+ * No longer used.  MobiusConfig is gone, and this was an obscure option
+ * that needs to be done in a different way if at all.
  */
+#if 0
 void MobiusMode::updateConfiguration(MobiusConfig* config)
 {
 	StringList* names = config->getAltFeedbackDisables();
@@ -203,6 +204,7 @@ void MobiusMode::updateConfiguration(MobiusConfig* config)
 		}
 	}
 }
+#endif
 
 /****************************************************************************
  *                                                                          *

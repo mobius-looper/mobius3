@@ -2,6 +2,7 @@
 #include <JuceHeader.h>
 
 #include "../Supervisor.h"
+#include "../Version.h"
 
 #include "JuceUtil.h"
 #include "EnvironmentPanel.h"
@@ -55,7 +56,7 @@ void EnvironmentContent::showing()
 {
     log.clear();
 
-    log.add("Mobius 3 Build " + juce::String(Supervisor::BuildNumber) +
+    log.add("Mobius 3 Build " + juce::String(Version::BuildNumber) +
             (supervisor->isPlugin() ? " Plugin" : " Standalone"));
 
     log.add("Computer name: " + juce::SystemStats::getComputerName());

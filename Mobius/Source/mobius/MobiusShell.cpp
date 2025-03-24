@@ -40,10 +40,6 @@
 #include "../util/Util.h"
 #include "../util/StructureDumper.h"
 
-// need this for "deletion of pointer to incomplete type" error
-// not sure why, something embedded
-#include "../model/old/MobiusConfig.h"
-
 #include "../model/ConfigPayload.h"
 #include "../model/Session.h"
 #include "../model/ParameterSets.h"
@@ -210,7 +206,8 @@ void MobiusShell::initialize(ConfigPayload* p)
 }
 
 /**
- * Reconfigure the engine after MobiusConfig has been edited.
+ * Reconfigure the engine after one of the configuration
+ * objects has been edited.
  */
 void MobiusShell::reconfigure(ConfigPayload* p)
 {
@@ -464,8 +461,8 @@ UIActionPool* MobiusShell::getActionPool()
 }
 
 /**
- * Send the kernel its copy of the MobiusConfig
- * The object is already a copy
+ * Pass the configuration payload on ot the kernel.
+ * Ownership transfers.
  */
 void MobiusShell::sendKernelConfigure(ConfigPayload* p)
 {
@@ -520,8 +517,8 @@ void MobiusShell::consumeCommunications()
                 ConfigPayload* p = msg->object.payload;
                 if (p != nullptr) {
                     delete p->session;
-                    delete p->config;
                     delete p->parameters;
+                    delete p->groups;
                     delete p;
                 }
             }
@@ -618,9 +615,6 @@ void MobiusShell::doKernelEvent(KernelEvent* e)
 
             case EventSaveProject:
                 doSaveProject(e); break;
-
-            case EventSaveConfig:
-                doSaveConfig(e); break;
 
             case EventLoadLoop:
                 doLoadLoop(e); break;
@@ -815,18 +809,6 @@ void MobiusShell::doSaveLoop(KernelEvent* e)
  * This was also fraught with peril
  */
 void MobiusShell::doSaveProject(KernelEvent* e)
-{
-    (void)e;
-}
-
-/**
- * This was an obscure one used to permanently save
- * the MobiusConfig file if an Action came down to change
- * the setup, and OperatorPermanent was used.
- * Took that out since it probably shouldn't be supported
- * so this handler can go away.
- */
-void MobiusShell::doSaveConfig(KernelEvent* e)
 {
     (void)e;
 }

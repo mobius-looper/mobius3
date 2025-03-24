@@ -7,6 +7,7 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="Hq3Vul" name="Version.h" compile="0" resource="0" file="Source/Version.h"/>
       <GROUP id="{F23CE5FF-6226-362A-F16D-EAEDC716A0D0}" name="mcl">
         <FILE id="Nobe5P" name="MclEnvironment.cpp" compile="1" resource="0"
               file="Source/mcl/MclEnvironment.cpp"/>
@@ -1043,8 +1044,6 @@
             file="Source/CustomLookAndFeel.h"/>
       <FILE id="rjWkvK" name="FileManager.cpp" compile="1" resource="0" file="Source/FileManager.cpp"/>
       <FILE id="IggUul" name="FileManager.h" compile="0" resource="0" file="Source/FileManager.h"/>
-      <FILE id="Bgk3zj" name="Grouper.cpp" compile="1" resource="0" file="Source/Grouper.cpp"/>
-      <FILE id="xD2KN1" name="Grouper.h" compile="0" resource="0" file="Source/Grouper.h"/>
       <FILE id="vM6WFT" name="JuceAudioStream.cpp" compile="1" resource="0"
             file="Source/JuceAudioStream.cpp"/>
       <FILE id="biIlCl" name="JuceAudioStream.h" compile="0" resource="0"

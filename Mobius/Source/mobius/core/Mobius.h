@@ -23,6 +23,23 @@
  */
 #define MAX_CUSTOM_MODE 256
 
+//
+// These used to be in MobiusConfig.h but that's going away
+// Find a better home
+//
+
+/**
+ * Calculate the number of frames in a millisecond range.
+ * NOTE: Can't actually do it this way since sample rate is variable,
+ * need to calculate this at runtime based on the stream and cache it!
+ */
+#define MSEC_TO_FRAMES(msec) (int)(CD_SAMPLE_RATE * ((float)msec / 1000.0f))
+
+/**
+ * Default noise floor.
+ */
+#define DEFAULT_NOISE_FLOOR 13
+
 /****************************************************************************
  *                                                                          *
  *                                   MOBIUS                                 *
@@ -43,7 +60,7 @@ class Mobius
     //////////////////////////////////////////////////////////////////////
 
     /**
-     * Constructred by Kernel, pull MobiusConfig and other things from there.
+     * Constructred by Kernel, pulls other configuration from there.
      */
 	Mobius(class MobiusKernel* kernel);
 	~Mobius();
@@ -52,7 +69,7 @@ class Mobius
      * Called by Kernel at a suitable time after construction to flesh out the
      * internal components.
      */
-    void initialize(class MobiusConfig* config);
+    void initialize();
 
     /**
      * This is the new interface for configuring tracks.
@@ -78,7 +95,7 @@ class Mobius
      * Called by Kernel after initialization and we've been running and
      * the user has edited the configuration.
      */
-    void reconfigure(class MobiusConfig* config);
+    void reconfigure();
 
     void propagateSymbolProperties();
 
@@ -238,22 +255,6 @@ class Mobius
      * Used in a few places to get the stream we are currently processing.
      */
     class MobiusAudioStream* getStream();
-
-    /**
-     * Return the shared MobiusConfig for use by internal components.
-     *
-     * This is shared with Kernel and should have limited modifications.
-     * To support changing runtime parameters from
-     * scripts, each track will be given a copy of the Preset.  Script changes go
-     * into those copies.  On Reset, the original values are restored from this
-     * master config.
-     *
-     * Scripts can also change things in Global config.  This is rare and I don't
-     * know if it's worth making an entire copy of the MobiusConfig.  This does
-     * however mean that Shell/Kernel can go out of sync.  Need to think about
-     * what that would mean.
-     */
-    class MobiusConfig* getConfiguration();
 
 	class Synchronizer* getSynchronizer();
     class AudioPool* getAudioPool();
@@ -433,8 +434,6 @@ class Mobius
     class Track** mTracks;
 	class Track* mTrack;
 	int mTrackCount;
-    
-	class MobiusConfig *mConfig;
     
 	// state related to realtime audio capture
 	Audio* mCaptureAudio;

@@ -46,21 +46,19 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     TrackManager(class MobiusKernel* k);
     ~TrackManager();
 
-    void initialize(class Session* s, class MobiusConfig* c, class Mobius* engine);
-    void reconfigure(class MobiusConfig* config);
+    void initialize(class Session* s, class GroupDefinitions* g, class Mobius* engine);
+    void reconfigure(class GroupDefinitions* g);
     void loadSession(class Session* s);
 
     class LogicalTrack* getLogicalTrack(int number);
 
-    // Trying to limit the use of MobiusConfig
-    // access it through a method that shows intent
-    class MobiusConfig* getConfigurationForGroups();
-    class MobiusConfig* getConfigurationForPresets();
+    //class GroupDefinitions* getGroupDefinitions();
     
     // Services
 
     class Session* getSession();
     class ParameterSets* getParameterSets();
+    class GroupDefinitions* getGroupDefinitions();
     class MidiPools* getMidiPools();
     class TrackEventPool* getTrackEventPool();
     class UIActionPool* getActionPool();
@@ -71,7 +69,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     class MslEnvironment* getMsl();
     class Mobius* getAudioEngine();
     class Notifier* getNotifier();
-
+    
     void alert(const char* msg);
     void writeDump(juce::String file, juce::String content);
     int getTrackCount();
@@ -146,7 +144,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     class Mobius* audioEngine = nullptr;
     class Session* session = nullptr;
     int lastSessionId = 0;
-    class MobiusConfig* configuration = nullptr;
+    class GroupDefinitions* groups = nullptr;
     
     // need a place to hang this, here or in Kernel?
     MidiPools midiPools;
@@ -155,7 +153,6 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     LongWatcher longWatcher;
     bool longDisable = false;
     MidiWatcher watcher;
-    ScopeCache scopes;
     TrackMslHandler mslHandler;
     
     juce::OwnedArray<class LogicalTrack> tracks;

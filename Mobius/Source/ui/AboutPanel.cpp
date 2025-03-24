@@ -6,6 +6,7 @@
 #include <JuceHeader.h>
 
 #include "../Supervisor.h"
+#include "../Version.h"
 
 #include "JuceUtil.h"
 #include "BasePanel.h"
@@ -30,7 +31,7 @@ AboutContent::AboutContent(Supervisor* s)
     addAndMakeVisible(copyright);
         
     juce::String buildText ("Build: ");
-    buildText += juce::String(Supervisor::BuildNumber);
+    buildText += juce::String(Version::BuildNumber);
     build.setText(buildText, juce::NotificationType::dontSendNotification);
     addAndMakeVisible(build);
     

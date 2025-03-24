@@ -60,7 +60,6 @@
 #include "ProjectFiler.h"
 #include "MidiClerk.h"
 #include "ModelTransformer.h"
-#include "Grouper.h"
 
 #include "script/ScriptClerk.h"
 #include "script/MslEnvironment.h"
@@ -285,9 +284,6 @@ bool Supervisor::start()
     // install activation symbols
     symbolizer.installActivationSymbols();
 
-    // random utility classes
-    grouper.reset(new Grouper(this));
-    
     meter("MainWindow");
 
     // this hasn't been static initialized, don't remember why
@@ -351,7 +347,8 @@ bool Supervisor::start()
 
     scriptUtil.initialize(this);
     // supreme hate for how this is working
-    scriptUtil.configure(mobiusConfig.get(), session.get());
+    SystemConfig* scon = getSystemConfig();
+    scriptUtil.configure(session.get(), scon->getGroups());
 
     // open MIDI devices before Mobius so MidiTracks can resolve device
     // names in the session to device ids
@@ -372,7 +369,7 @@ bool Supervisor::start()
     // this is where the bulk of the engine initialization happens
     // it will call MobiusContainer to register callbacks for
     // audio and midi streams
-    sendInitialMobiusConfig();
+    sendInitialConfiguration();
 
     // force a synchronous refresh of SystemState to reflect up the
     // state after initialization, don't need to use the normal async state
@@ -1215,15 +1212,20 @@ void Supervisor::mclSessionUpdated()
     sessionEditorSave();
 }
 
-void Supervisor::groupEditorSave(juce::Array<GroupDefinition*>& newList)
+void Supervisor::groupEditorSave(GroupDefinitions* neu)
 {
-    // this one is weird because it was newer and doesn't use linked lists
-    // the objects in the Array are unowned
-    MobiusConfig* master = getOldMobiusConfig();
-    master->dangerousGroups.clear();
-    for (auto group : newList)
-      master->dangerousGroups.add(group);
-    updateMobiusConfig();
+    SystemConfig* scon = getSystemConfig();
+    // we take ownership of this
+    scon->setGroups(neu);
+    updateSystemConfig();
+
+    // UI doesn't currently care, but this does
+    scriptUtil.configure(session.get(), neu);
+
+    // and send a copy down to the kernel
+    ConfigPayload* payload = new ConfigPayload();
+    payload->groups = new GroupDefinitions(neu);
+    mobius->reconfigure(payload);
 }
 
 void Supervisor::sampleEditorSave(SampleConfig* newConfig)
@@ -1269,23 +1271,21 @@ void Supervisor::updateMobiusConfig()
         // propagate config changes to other components
         propagateConfiguration();
 
-        // send it down to the engine
-        sendModifiedMobiusConfig();
-
         // bindings may have been edited
         configureBindings();
+
+        // no longer need to send this to the kernel
     }
 }
 
 /**
  * When Mobius is initialized for the first time, it needs
  * the same sort of MobiusConfig synthesis as is done when editing
- * using the old config editors.  This must match sendModifiedMobiusConfig.
+ * using the old config editors.
  */
-void Supervisor::sendInitialMobiusConfig()
+void Supervisor::sendInitialConfiguration()
 {
     Session* ses = getSession();
-    MobiusConfig* synth = synthesizeMobiusConfig(ses);
 
     // bump the session version to trigger a full refresh of the view
     // when the engine finally gets around to dealing with it
@@ -1295,75 +1295,34 @@ void Supervisor::sendInitialMobiusConfig()
     // everything in it is a copy that can be owned by the engine
     ConfigPayload* payload = new ConfigPayload();
     payload->session = new Session(ses);
-    payload->config = synth;
     payload->parameters = new ParameterSets(getParameterSets());
+
+    SystemConfig* scon = getSystemConfig();
+    payload->groups = new GroupDefinitions(scon->getGroups());
 
     mobius->initialize(payload);
 }
 
 /**
- * This is called by the old configuration editors after a modification
- * was made to MobiusConfig.
+ * Called whenever a change to the session is made in the UI layer
+ * and needs to be sent down.
  *
- * Synthesize the merged MobiusConfig and send it down.
- * !! synthesis is temporary and goes away after Preset and MobiusConfig die
+ * Don't need to include ParameterSets and GroupDefinitions, those
+ * are sent independently.
  */
-void Supervisor::sendModifiedMobiusConfig()
+void Supervisor::sendModifiedSession()
 {
     Session* ses = getSession();
-    MobiusConfig* synth = synthesizeMobiusConfig(ses);
 
     // bump the session version to trigger a full refresh of the view
     // when the engine finally gets around to dealing with it
     ses->setVersion(++sessionVersion);
 
     // make a payload
-    // everything in it is a copy that can be owned by the engine
-    // for changes to the Presets and GroupDefinitions don't really
-    // need to send down a new Session, but they're expected to go together
     ConfigPayload* payload = new ConfigPayload();
     payload->session = new Session(ses);
-    payload->config = synth;
     
     mobius->reconfigure(payload);
-}
-
-/*
- * When MobiusConfig is sent down to the core it does not get the one
- * managed in mobius.xml.  The globals now come from the Session.
- * The full Preset list is preserved.  The Setup list is synthesized
- * to contain only one Setup representing the current session.
- *
- * This is reducing to almost nothing now and eventually can
- * go away entirely.  Everything should be pulled from the Session.
- *
- * Unfortunately this is still used as the container for GroupDefinitions
- * which still has to be sent down.
- */
-MobiusConfig* Supervisor::synthesizeMobiusConfig(Session* src)
-{
-    ModelTransformer transformer(this);
-    
-    MobiusConfig* config = getOldMobiusConfig();
-    MobiusConfig* synth = config->clone(getSymbols());
-
-    // this copies globals from the session and adds
-    // a single Setup for the session itself
-    // try life without this
-    (void)src;
-    //transformer.sessionToConfig(src, synth);
-
-    bool logit = false;
-    if (logit) {
-        XmlRenderer xr (getSymbols());
-        char* xml = xr.render(synth);
-        const char* name = "synth.xml";
-        juce::File file = getRoot().getChildFile(name);
-        file.replaceWithText(juce::String(xml));
-        delete xml;
-    }
-
-    return synth;
 }
 
 /**
@@ -1404,8 +1363,6 @@ void Supervisor::reloadOldMobiusConfig()
     
     propagateConfiguration();
 
-    sendModifiedMobiusConfig();
-        
     configureBindings();
 }
 
@@ -1445,13 +1402,8 @@ void Supervisor::updateDeviceConfig()
  */
 void Supervisor::propagateConfiguration()
 {
-    // this isn't a UI component, but it needs to reference the
-    // major config objects
-    scriptUtil.configure(mobiusConfig.get(), session.get());
-    
     mainWindow->configure();
 }
-
 
 ParameterSets* Supervisor::getParameterSets()
 {
@@ -1486,6 +1438,12 @@ void Supervisor::updateParameterSets()
         // todo: if sets were deleted this could make references
         // in the Session obsolete, could clean them up now
     }
+}
+
+GroupDefinitions* Supervisor::getGroupDefinitions()
+{
+    SystemConfig* scon = getSystemConfig();
+    return scon->getGroups();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1579,7 +1537,7 @@ void Supervisor::loadSession(Session* neu)
     propagateConfiguration();
 
     // send it down to the engine
-    sendModifiedMobiusConfig();
+    sendModifiedSession();
 }
 
 /**
@@ -1680,7 +1638,7 @@ void Supervisor::sessionEditorSave()
     propagateConfiguration();
 
     // send it down to the engine
-    sendModifiedMobiusConfig();
+    sendModifiedSession();
 
     // don't need to do this since bindings haven't changed
     //configureBindings();
@@ -2669,12 +2627,6 @@ void Supervisor::mutateMslReturn(Symbol* s, int value, MslValue* retval)
             retval->setBool(value == 1);
         }
         else if (ptype == TypeStructure) {
-            // hmm, the understanding of LevelUI symbols that live in
-            // UIConfig and LevelCore symbols that live in MobiusConfig
-            // is in Supervisor right now
-            // todo: Need to repackage this
-            // todo: this could also be Type::Enum in the value but I don't
-            // think anything cares?
             retval->setJString(ParameterHelper::getStructureName(this, s, value));
         }
         else {

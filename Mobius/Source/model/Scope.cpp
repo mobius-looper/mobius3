@@ -5,7 +5,6 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
-#include "old/MobiusConfig.h"
 #include "GroupDefinition.h"
 #include "Scope.h"
 
@@ -44,75 +43,6 @@ int Scope::parseTrackNumber(const char* scope)
         }
     }
     return trackNumber;
-}
-
-/**
- * Parse a scope string into a group ordinal.
- * Group names come from the list in MobiusConfig.
- */
-int Scope::parseGroupOrdinal(MobiusConfig* config, const char* scope)
-{
-    int ordinal = -1;
-
-    int index = 0;
-    if (config != nullptr) {
-        for (auto group : config->dangerousGroups) {
-            if (group->name == scope) {
-                ordinal = index;
-                break;
-            }
-            index++;
-        }
-    }
-    return ordinal;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// ScopeCache
-//
-//////////////////////////////////////////////////////////////////////
-        
-ScopeCache::ScopeCache()
-{
-    GroupNameCount = 0;
-}
-
-ScopeCache::~ScopeCache()
-{
-}
-
-/**
- * Copy group names from the MobiusConfig/GroupDefinition model into the cache.
- */
-void ScopeCache::refresh(MobiusConfig* config)
-{
-    int index = 0;
-    if (config != nullptr) {
-        for (auto group : config->dangerousGroups) {
-            const char* gname = group->name.toUTF8();
-            strncpy(GroupNames[index], gname, MaxGroupName-1);
-            index++;
-            if (index >= MaxGroupNames) {
-                if (config->dangerousGroups.size() > MaxGroupNames)
-                  Trace(1, "ScopeCache: Group name cache overflow");
-                break;
-            }
-        }
-    }
-    GroupNameCount = index;
-}
-
-int ScopeCache::parseGroupOrdinal(const char* scope)
-{
-    int ordinal = -1;
-    for (int index = 0 ; index < GroupNameCount ; index++) {
-        if (strcmp(scope, GroupNames[index]) == 0) {
-            ordinal = index;
-            break;
-        }
-    }
-    return ordinal;
 }
 
 //////////////////////////////////////////////////////////////////////

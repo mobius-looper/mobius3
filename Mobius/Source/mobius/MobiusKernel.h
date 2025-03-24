@@ -122,13 +122,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
         return audioPool;
     }
 
-    // the ONLY reason this is exposed is for TestDriver that wants
-    // to inject some special objects into the MobiusConfig
-    // this is probably broken now that it doesn't use a Setup any more
-    class MobiusConfig* getMobiusConfigForTestDriver() {
-        return configuration;
-    }
-    
     class Session* getSession() {
         return session;
     }
@@ -136,7 +129,11 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     class ParameterSets* getParameterSets() {
         return parameters;
     }
-    
+
+    class GroupDefinitions* getGroupDefinitions() {
+        return groups;
+    }
+        
     // for a small number of things that live dangerously
     class Mobius* getCore() {
         return mCore;
@@ -161,7 +158,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     long getLastSampleFrames();
 
     // for NoExternalAudioVariable
-    // this is not in MobiusConfig, it can only be set from a script
+    // this is not in the session, it can only be set from a script
     void setNoExternalInput(bool b);
     bool isNoExternalInput();
 
@@ -272,8 +269,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     class KernelCommunicator* communicator = nullptr;
     class MobiusContainer* container = nullptr;
     class Session* session = nullptr;
-    class MobiusConfig* configuration = nullptr;
     class ParameterSets* parameters = nullptr;
+    class GroupDefinitions* groups = nullptr;
     class AudioPool* audioPool = nullptr;
     class UIActionPool* actionPool = nullptr;
 

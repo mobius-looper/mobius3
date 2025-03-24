@@ -24,7 +24,6 @@
 #include "../../util/List.h"
 #include "../../util/StructureDumper.h"
 
-#include "../../model/old/MobiusConfig.h"
 #include "../../model/old/UserVariable.h"
 
 #include "../../model/UIAction.h"
@@ -88,10 +87,6 @@ Mobius::Mobius(MobiusKernel* kernel)
     mPools = kernel->getPools();
     mNotifier = kernel->getNotifier();
     
-    // Kernel may not have a MobiusConfig yet so have to wait
-    // to do anything until initialize() is called
-    mConfig = nullptr;
-
     mLayerPool = new LayerPool(mAudioPool);
     mEventPool = new EventPool();
 
@@ -141,7 +136,7 @@ Mobius::~Mobius()
     }
 
     // things owned by Kernel that can't be deleted
-    // mContainer, mAudioPool, mConfig, mSetup
+    // mContainer, mAudioPool
 
     delete mCaptureAudio;
     delete mScriptarian;
@@ -262,11 +257,9 @@ void Mobius::freeStaticObjects()
 /**
  * Phase 2 of initialization after the constructor.
  */
-void Mobius::initialize(MobiusConfig* config)
+void Mobius::initialize()
 {
     Trace(2, "Mobius::initialize");
-    // can save this until the next call to reconfigure()
-    mConfig = config;
 
     // will need a way for this to get MIDI
     mSynchronizer = new Synchronizer(this);
@@ -591,35 +584,15 @@ void Mobius::installScripts(Scriptarian* neu)
 }
 
 /**
- * Assimilate selective changes to a MobiusConfig after we've been running.
- * Called by Kernel in the audio thread before sending buffers so we can
- * set up a stable state before processAudioStream is called.
- * 
- * We formerly allowed a lot in here, like recompiling scrdipts and rebuilding
- * the Track array for changes in the Setup's track count. Now this is only allowed
- * to propagate parameter changes without doing anything expensive or dangerous.
- *
- * mConfig and mSetup will be changed.  Internal components are not allowed
- * to maintain pointers into those two objects.
- *
- * There is some ambiguity between what should be done here and what should
- * be done soon after in beginAudioInterrupt.  Old code deferred a lot of
- * configuration propagation to the equivalent of beginAudioInterrupt. Anything
- * related to MobiusConfig changes should be done here, and beginAudioInterrupt
- * only needs to concern itself with audio consumption.
- *
- * update: I dont't think this paranoia was warranted.  Configuration and actions
- * can come down in any order and we need to accept that.  We do need to get configuration
- * out of the way before block processing, but the order of configuration updates,
- * track restructuring, action scheduling, and MIDI processing should not really matter.
+ * Assimilate configuration changges after we've been running.
+ * This used to pull things from MobiusConfig but that's gone now.
+ * What remains is propagating group definitions through to Actionator
+ * and an old FadeFrames parameter that was never used.
  */
-void Mobius::reconfigure(class MobiusConfig* config)
+void Mobius::reconfigure()
 {
     Trace(2, "Mobius::reconfigure");
-    mConfig = config;
 
-    // new: formerly had some logic here to look for a Setup with the same
-    // name of the currently active setup, now there is only one
     propagateConfiguration();
 }
 
@@ -659,13 +632,15 @@ void Mobius::propagateSymbolProperties()
 /**
  * Propagate non-structural configuration to internal components that
  * cache things from MobiusConfig.
- * 
- * mConfig and mSetup will be have been set before this.
+ *
+ * This used to pull things from MobiusConfig but that's gone now.
+ * Actionator no longer needs to deal with the scope cache
+ * and you can't set the fade range.
  */
 void Mobius::propagateConfiguration()
 {
+#if 0    
     // let Actionator cache the group names
-    // !! it should not need this any more
     mActionator->refreshScopeCache(mConfig);
 
     // Modes track altFeedbackDisables
@@ -675,6 +650,7 @@ void Mobius::propagateConfiguration()
 
     // used to configure fade length in AudioCursor/AudioFade
 	AudioFade::setRange(mConfig->getFadeFrames());
+#endif    
 }
 
 /**
@@ -1434,14 +1410,6 @@ MobiusAudioStream* Mobius::getStream()
     return mStream;
 }
 
-/**
- * Return the read-only configuration for internal components to use.
- */
-MobiusConfig* Mobius::getConfiguration()
-{
-	return mConfig;
-}
-
 Synchronizer* Mobius::getSynchronizer()
 {
 	return mSynchronizer;
@@ -1476,7 +1444,7 @@ bool Mobius::isPlugin() {
 
 /**
  * Return the sample rate.  This always comes from the container
- * and unlike latencies is not overridden by MobiusConfig.
+ * and unlike latencies is not overridden by SystemConfig.
  */
 int Mobius::getSampleRate()
 {
@@ -1959,24 +1927,6 @@ void Mobius::loadProject(Project* p)
         // propagateConfiguration?
 		globalReset(nullptr);
 
-        // change the selected binding overlay
-        // this is an unusual case where we're in an interrupt but we
-        // must set the master MobiusConfig object to change the
-        // binding overlay since that is not used inside the interrupt
-        // !! this will override what was in the Setup which I guess
-        // is okay if you changed it before saving the project, but most
-        // of the time this will already have been set during setSetupInternal
-
-        // new: ignoring this, bindings need to be handled at a higher level
-#if 0        
-		name = p->getBindings();
-		if (name != nullptr) {
-			BindingConfig* bindings = mConfig->getBindingConfig(name);
-			if (bindings != nullptr)
-			  setOverlayBindings(bindings);
-		}
-#endif        
-        
         // should we let the project determine the track count
         // or force the project to fit the configured tracks?
         // !! this will need much more involvment with the TrackManager

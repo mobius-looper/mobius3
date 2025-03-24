@@ -247,7 +247,7 @@ class LogicalTrack
     void clearBindings(bool reset);
     
     void doTrackGroup(class UIAction* a);
-    int parseGroupActionArgument(class MobiusConfig* config, const char* s);
+    int parseGroupActionArgument(class GroupDefinitions* groups, const char* s);
     void changeOverlay(class ValueSet* neu);
     
 };

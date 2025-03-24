@@ -7,10 +7,10 @@
 
 #include "../../util/Trace.h"
 #include "../../model/ParameterSets.h"
+#include "../../model/GroupDefinition.h"
 #include "../../model/ValueSet.h"
 #include "../../Provider.h"
 #include "../../MidiManager.h"
-#include "../../Grouper.h"
 
 #include "YanField.h"
 #include "YanFieldHelpers.h"
@@ -118,10 +118,10 @@ juce::String YanFieldHelpers::saveMidiOutput(YanCombo* combo)
 
 void YanFieldHelpers::initTrackGroup(Provider* p, YanCombo* combo, juce::StringArray& values)
 {
-    Grouper* gp = p->getGrouper();
+    GroupDefinitions* groups = p->getGroupDefinitions();
 
     values.clear();
-    gp->getGroupNames(values);
+    groups->getGroupNames(values);
 
     values.insert(0, "[None]");
     
