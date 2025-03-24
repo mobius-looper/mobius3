@@ -8,7 +8,8 @@
 //#include <sstream>
 
 #include "../../Supervisor.h"
-#include "../../model/old/MobiusConfig.h"
+#include "../../model/SystemConfig.h"
+#include "../../model/SampleConfig.h"
 
 #include "SampleEditor.h"
 
@@ -24,8 +25,8 @@ SampleEditor::~SampleEditor()
 
 void SampleEditor::load()
 {
-    MobiusConfig* config = supervisor->getOldMobiusConfig();
-    SampleConfig* sconfig = config->getSampleConfig();
+    SystemConfig* scon = supervisor->getSystemConfig();
+    SampleConfig* sconfig = scon->getSamples();
     if (sconfig != nullptr) {
         // this makes it's own copy
         table.setSamples(sconfig);

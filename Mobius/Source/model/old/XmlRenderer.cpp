@@ -1435,14 +1435,15 @@ void XmlRenderer::render(XmlBuffer* b, SampleConfig* c)
 	b->addStartTag(EL_SAMPLE_CONFIG);
 	b->incIndent();
 
-    for (Sample* s = c->getSamples() ; s != nullptr ; s = s->getNext()) {
+    for (auto s : c->getSamples()) {
 
         b->addOpenStartTag(EL_SAMPLE);
-        b->addAttribute(ATT_PATH, s->getFilename());
-        b->addAttribute(ATT_SUSTAIN, s->isSustain());
-        b->addAttribute(ATT_LOOP, s->isLoop());
-        b->addAttribute(ATT_CONCURRENT, s->isConcurrent());
-        b->addAttribute(ATT_SAMPLE_BUTTON, s->isButton());
+        const char* path = s->file.toUTF8();
+        b->addAttribute(ATT_PATH, path);
+        b->addAttribute(ATT_SUSTAIN, s->sustain);
+        b->addAttribute(ATT_LOOP, s->loop);
+        b->addAttribute(ATT_CONCURRENT, s->concurrent);
+        b->addAttribute(ATT_SAMPLE_BUTTON, s->button);
         // note that the data block is NOT serialized or parsed
         b->add("/>\n");
     }
@@ -1453,28 +1454,19 @@ void XmlRenderer::render(XmlBuffer* b, SampleConfig* c)
 
 void XmlRenderer::parse(XmlElement* e, SampleConfig* c)
 {
-    Sample* samples = nullptr;
-	Sample* last = nullptr;
-
 	for (XmlElement* child = e->getChildElement() ; child != nullptr ; 
 		 child = child->getNextElement()) {
-
+        
 		Sample* s = new Sample();
 
-        s->setFilename(child->getAttribute(ATT_PATH));
-        s->setSustain(child->getBoolAttribute(ATT_SUSTAIN));
-        s->setLoop(child->getBoolAttribute(ATT_LOOP));
-        s->setConcurrent(child->getBoolAttribute(ATT_CONCURRENT));
-        s->setButton(child->getBoolAttribute(ATT_SAMPLE_BUTTON));
-        
-        if (last == nullptr)
-		  samples = s;
-		else
-		  last->setNext(s);
-		last = s;
-	}
+        s->file = juce::String(child->getAttribute(ATT_PATH));
+        s->sustain = child->getBoolAttribute(ATT_SUSTAIN);
+        s->loop = child->getBoolAttribute(ATT_LOOP);
+        s->concurrent = child->getBoolAttribute(ATT_CONCURRENT);
+        s->button = child->getBoolAttribute(ATT_SAMPLE_BUTTON);
 
-    c->setSamples(samples);
+        c->add(s);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////

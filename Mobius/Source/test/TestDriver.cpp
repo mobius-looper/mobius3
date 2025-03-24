@@ -936,9 +936,8 @@ MobiusConfig* TestDriver::readConfigOverlay()
         // resolve sample paths
         SampleConfig* samples = overlay->getSampleConfig();
         if (samples != nullptr) {
-            Sample* sample = samples->getSamples();
-            while (sample != nullptr) {
-                const char* path = sample->getFilename();
+            for (auto sample : samples->getSamples()) {
+                juce::String path = sample->file;
                 // these are expected to be relative to UnitTestRoot
                 // could be smarter about absolute paths or $ references
                 // but don't really need that yet
@@ -948,9 +947,8 @@ MobiusConfig* TestDriver::readConfigOverlay()
                           file.getFullPathName().toUTF8());
                 }
                 else {
-                    sample->setFilename(file.getFullPathName().toUTF8());
+                    sample->file = file.getFullPathName();
                 }
-                sample = sample->getNext();
             }
         }
 

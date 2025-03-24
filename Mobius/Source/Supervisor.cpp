@@ -1230,9 +1230,9 @@ void Supervisor::groupEditorSave(GroupDefinitions* neu)
 
 void Supervisor::sampleEditorSave(SampleConfig* newConfig)
 {
-    MobiusConfig* master = getOldMobiusConfig();
-    master->setSampleConfig(newConfig);
-    updateMobiusConfig();
+    SystemConfig* scon = getSystemConfig();
+    scon->setSamples(newConfig);
+    updateSystemConfig();
 
     // you almost always want scripts reloaded after editing
     // so force that now, samples are another story...

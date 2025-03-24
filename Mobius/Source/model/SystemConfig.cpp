@@ -3,6 +3,7 @@
 
 #include "BindingSets.h"
 #include "GroupDefinition.h"
+#include "SampleConfig.h"
 
 #include "SystemConfig.h"
 
@@ -23,6 +24,10 @@ void SystemConfig::parseXml(juce::XmlElement* root, juce::StringArray& errors)
             groups.reset(new GroupDefinitions());
             groups->parseXml(el, errors);
         }
+        else if (el->hasTagName(SampleConfig::XmlName)) {
+            samples.reset(new SampleConfig());
+            samples->parseXml(el, errors);
+        }
         else {
             errors.add(juce::String("SystemConfig: Invalid child element ") + el->getTagName());
         }
@@ -40,6 +45,9 @@ juce::String SystemConfig::toXml()
 
     if (groups != nullptr)
       groups->toXml(&root);
+
+    if (samples != nullptr)
+      samples->toXml(&root);
 
     return root.toString();
 }
@@ -87,6 +95,16 @@ GroupDefinitions* SystemConfig::getGroups()
 void SystemConfig::setGroups(GroupDefinitions* newGroups)
 {
     groups.reset(newGroups);
+}
+
+SampleConfig* SystemConfig::getSamples()
+{
+    return samples.get();
+}
+
+void SystemConfig::setSamples(SampleConfig* newSamples)
+{
+    samples.reset(newSamples);
 }
 
 /****************************************************************************/

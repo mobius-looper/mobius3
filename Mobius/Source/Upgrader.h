@@ -37,5 +37,6 @@ class Upgrader
     bool upgradePresets(class MobiusConfig* config);
     bool upgradeBindings(class MobiusConfig* config);
     bool upgradeNewGroups(class MobiusConfig* config);
+    bool moveSamples(class MobiusConfig* config);
     
 };

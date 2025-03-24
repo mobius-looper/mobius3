@@ -3,6 +3,8 @@
  * for playback.
  */
 
+#include <JuceHeader.h>
+
 #include "../util/Util.h"
 
 #include "SampleConfig.h"
@@ -15,41 +17,71 @@
 
 SampleConfig::SampleConfig()
 {
-	mSamples = nullptr;
+}
+
+SampleConfig::SampleConfig(SampleConfig* src)
+{
+    for (auto s : src->getSamples())
+      add(new Sample(s));
 }
 
 SampleConfig::~SampleConfig()
 {
-	delete mSamples;
-}
-
-Sample* SampleConfig::getSamples()
-{
-	return mSamples;
-}
-
-void SampleConfig::setSamples(Sample* list)
-{
-    delete mSamples;
-    mSamples = list;
 }
 
 void SampleConfig::clear()
 {
-	delete mSamples;
-	mSamples = nullptr;
+    samples.clear();
 }
 
 void SampleConfig::add(Sample* neu)
 {
-	Sample* last = nullptr;
-	for (Sample* s = mSamples ; s != nullptr ; s = s->getNext())
-	  last = s;
+    samples.add(neu);
+}
 
-	if (last == nullptr)
-	  mSamples = neu;
-	else
-	  last->setNext(neu);
+juce::OwnedArray<Sample>& SampleConfig::getSamples()
+{
+    return samples;
+}
+
+void SampleConfig::toXml(juce::XmlElement* parent)
+{
+    juce::XmlElement* root = new juce::XmlElement(XmlName);
+    parent->addChildElement(root);
+    
+    for (auto s : samples) {
+        
+        juce::XmlElement* sel = new juce::XmlElement(Sample::XmlName);
+        root->addChildElement(sel);
+
+        sel->setAttribute("file", s->file);
+
+        // only one used is button, but keep them going for awhile
+        if (s->sustain) sel->setAttribute("sustain", "true");
+        if (s->loop) sel->setAttribute("loop", "true");
+        if (s->concurrent) sel->setAttribute("concurrent", "true");
+        if (s->button) sel->setAttribute("button", "true");
+    }
+}
+
+void SampleConfig::parseXml(juce::XmlElement* root, juce::StringArray& errors)
+{
+    for (auto* el : root->getChildIterator()) {
+        if (el->hasTagName(Sample::XmlName)) {
+            Sample* def = new Sample();
+            samples.add(def);
+
+            def->file = el->getStringAttribute("file");
+            def->sustain = el->getBoolAttribute("sutain");
+            def->loop = el->getBoolAttribute("loop");
+            def->concurrent = el->getBoolAttribute("concurrent");
+            def->button = el->getBoolAttribute("button");
+        }
+        else {
+            errors.add(juce::String("SampleConfig: Unexpected XML tag name: " +
+                                    el->getTagName()));
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -60,117 +92,43 @@ void SampleConfig::add(Sample* neu)
 
 Sample::Sample()
 {
-	init();
 }
 
-Sample::Sample(const char* file)
+Sample::Sample(juce::String argFile)
 {
-	init();
-	setFilename(file);
+    file = argFile;
 }
 
-// new interface that preserves the flags
 Sample::Sample(Sample* src)
 {
-	init();
-	mFilename = CopyString(src->getFilename());
-	mSustain = src->isSustain();
-	mLoop = src->isLoop();
-	mConcurrent = src->isConcurrent();
-    mButton = src->isButton();
-}
-
-void Sample::init()
-{
-	mNext = nullptr;
-	mFilename = nullptr;
-	mSustain = false;
-	mLoop = false;
-	mConcurrent = false;
-    mData =  nullptr;
-    mFrames = 0;
-    mButton = false;
+    file = src->file;
+	sustain = src->sustain;
+	loop = src->loop;
+	concurrent = src->concurrent;
+    button = src->button;
+    // we have not historically copied the loaded data
 }
 
 Sample::~Sample()
 {
-	delete mFilename;
-    delete mData;
-	
-    Sample* next = nullptr;
-    for (Sample* s = mNext ; s != nullptr ; s = next) {
-        next = s->getNext();
-		s->setNext(nullptr);
-        delete s;
-    }
+    delete data;
 }
 
-void Sample::setNext(Sample* s) 
+void Sample::setData(float* argData, int argFrames)
 {
-	mNext = s;
-}
-
-Sample* Sample::getNext()
-{
-	return mNext;
-}
-
-void Sample::setFilename(const char* s)
-{
-	delete mFilename;
-	mFilename = CopyString(s);
-}
-
-const char* Sample::getFilename()
-{
-	return mFilename;
-}
-
-void Sample::setSustain(bool b)
-{
-	mSustain = b;
-}
-
-bool Sample::isSustain()
-{
-	return mSustain;
-}
-
-void Sample::setLoop(bool b)
-{
-	mLoop = b;
-}
-
-bool Sample::isLoop()
-{
-	return mLoop;
-}
-
-void Sample::setConcurrent(bool b)
-{
-	mConcurrent = b;
-}
-
-bool Sample::isConcurrent()
-{
-	return mConcurrent;
+    delete data;
+    data = argData;
+    frames = argFrames;
 }
 
 float* Sample::getData()
 {
-    return mData;
+    return data;
 }
 
 int Sample::getFrames()
 {
-    return mFrames;
-}
-
-void Sample::setData(float* data, int frames)
-{
-    delete mData;
-    mData = data;
-    mFrames = frames;
+    return frames;
 }
 
 /****************************************************************************/

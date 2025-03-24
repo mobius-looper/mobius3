@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig windowWidth="1229" windowHeight="847" activeButtonSet="Default"
+<UIConfig windowWidth="1229" windowHeight="857" activeButtonSet="Default"
           activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="172" height="40"/>
@@ -133,13 +133,15 @@
     <Button action="Confirm"/>
     <Button action="nexttrack"/>
     <Button action="Global Stop"/>
+    <Button action="TrackGroup" arguments="next"/>
+    <Button action="Record" scope="A"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>
     <Property name="alertDuration" value="5"/>
     <Property name="alertHeight" value="30"/>
     <Property name="buttonHeight" value="25"/>
-    <Property name="mainWindow" value="0,0,1229,847"/>
+    <Property name="mainWindow" value="0,0,1229,857"/>
     <Property name="radarDiameter" value="40"/>
     <Property name="scriptWindow" value="219,251,740,900"/>
     <Property name="symbolTreeFavorites" value="Record,AutoRecord,SpeedCancel"/>

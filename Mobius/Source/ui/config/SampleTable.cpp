@@ -40,9 +40,9 @@ void SampleTable::setSamples(SampleConfig* config)
 {
     files.clear();
 
-    Sample* sample = config->getSamples();
-    while (sample != nullptr) {
-        juce::String path = juce::String(sample->getFilename());
+    for (auto sample : config->getSamples()) {
+
+        juce::String path = sample->file;
         SampleFile* sf = new SampleFile(path);
         files.add(sf);
         // color it red if it doesn't exist
@@ -63,8 +63,6 @@ void SampleTable::setSamples(SampleConfig* config)
             if (!file.existsAsFile())
               sf->missing = true;
         }
-        
-        sample = sample->getNext();
     }
     table.updateContent();
 }

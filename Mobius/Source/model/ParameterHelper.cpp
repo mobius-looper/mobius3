@@ -5,7 +5,7 @@
 
 #include "Symbol.h"
 #include "ParameterProperties.h"
-#include "old/MobiusConfig.h"
+#include "GroupDefinition.h"
 #include "UIConfig.h"
 
 #include "../Provider.h"
@@ -34,9 +34,11 @@ void ParameterHelper::getStructureNames(Provider* p, Symbol* s, juce::StringArra
         }
     }
     else if (s->id == ParamTrackGroup) {
-        MobiusConfig* config = p->getOldMobiusConfig();
-        for (auto group : config->dangerousGroups) {
-            result.add(group->name);
+        GroupDefinitions* groups = p->getGroupDefinitions();
+        if (groups != nullptr) {
+            for (auto group : groups->groups) {
+                result.add(group->name);
+            }
         }
     }
     else if (s->id == ParamTrackOverlay) {
@@ -77,10 +79,11 @@ juce::String ParameterHelper::getStructureName(Provider* p, Symbol* s, int ordin
         }
     }
     else if (s->id == ParamTrackGroup) {
-        MobiusConfig* config = p->getOldMobiusConfig();
-        if (ordinal >= 0 && ordinal < config->dangerousGroups.size()) {
-            GroupDefinition* def = config->dangerousGroups[ordinal];
-            name = def->name;
+        GroupDefinitions* groups = p->getGroupDefinitions();
+        if (groups != nullptr) {
+            GroupDefinition* def = groups->getGroupByIndex(ordinal);
+            if (def != nullptr)
+              name = def->name;
         }
     }
     else if (s->id == ParamTrackOverlay) {
@@ -126,8 +129,9 @@ int ParameterHelper::getParameterMax(Provider* p, Symbol* s)
         }
     }
     else if (s->id == ParamTrackGroup) {
-        MobiusConfig* config = p->getOldMobiusConfig();
-        max = config->dangerousGroups.size();
+        GroupDefinitions* groups = p->getGroupDefinitions();
+        if (groups != nullptr)
+          max = groups->groups.size();
         handled = true;
     }
     else if (s->id == ParamTrackOverlay) {

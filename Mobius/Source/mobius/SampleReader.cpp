@@ -23,13 +23,12 @@ SampleConfig* SampleReader::loadSamples(SampleConfig* src)
 {
     SampleConfig* loaded = new SampleConfig();
     if (src != nullptr) {
-        Sample *srcSample = src->getSamples();
-        while (srcSample != nullptr) {
-            const char* filename = srcSample->getFilename();
-            if (filename != nullptr) {
-                juce::File file(filename);
+        for (auto srcSample : src->getSamples()) {
+            if (srcSample->file.length() > 0) {
+
+                juce::File file(srcSample->file);
                 if (!file.exists()) {
-                    Trace(1, "Sample file not found: %s\n", filename);
+                    Trace(1, "Sample file not found: %s", srcSample->file.toUTF8());
                 }
                 else {
                     Sample* copySample = new Sample(srcSample);
@@ -38,7 +37,6 @@ SampleConfig* SampleReader::loadSamples(SampleConfig* src)
                       loaded->add(copySample);
                 }
             }
-            srcSample = srcSample->getNext();
         }
     }
 

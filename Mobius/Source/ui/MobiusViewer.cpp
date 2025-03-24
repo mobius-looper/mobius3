@@ -52,10 +52,9 @@
 
 #include "../model/SystemState.h"
 #include "../model/TrackState.h"
-
-//#include "../model/ModeDefinition.h"
-#include "../model/old/MobiusConfig.h"
 #include "../model/Session.h"
+#include "../model/SystemConfig.h"
+#include "../model/GroupDefinition.h"
 
 #include "MobiusView.h"
 #include "MobiusViewer.h"
@@ -913,15 +912,18 @@ void MobiusViewer::refreshTrackGroups(TrackState* tstate,  MobiusViewTrack* tvie
         tview->groupName = "";
         tview->groupColor = 0;
 
-        MobiusConfig* config = provider->getOldMobiusConfig();
-        
-        // ignore if out of range
-        if (newNumber > 0 && newNumber <= config->dangerousGroups.size()) {
-            GroupDefinition* group = config->dangerousGroups[newNumber - 1];
-            tview->groupName = group->name;
-            tview->groupColor = group->color;
+        if (newNumber > 0) {
+            SystemConfig* config = provider->getSystemConfig();
+            GroupDefinitions* groups = config->getGroups();
+            if (groups != nullptr) {
+                GroupDefinition* group = groups->getGroupByIndex(newNumber - 1);
+                if (group != nullptr) {
+                    tview->groupName = group->name;
+                    tview->groupColor = group->color;
+                }
+            }
         }
-
+        
         tview->refreshGroup = true;
     }
 }

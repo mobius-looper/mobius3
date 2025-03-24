@@ -11,6 +11,7 @@
 #include "../model/ConfigPayload.h"
 #include "../model/Session.h"
 #include "../model/ParameterSets.h"
+#include "../model/GroupDefinition.h"
 #include "../model/UIAction.h"
 #include "../model/Scope.h"
 #include "../model/Query.h"
@@ -116,6 +117,7 @@ MobiusKernel::~MobiusKernel()
 
     // we do not own shell, communicator, or container
     // use a unique_ptr here!!
+    delete groups;
     delete parameters;
     delete session;
 

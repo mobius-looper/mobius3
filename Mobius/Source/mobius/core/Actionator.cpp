@@ -554,6 +554,9 @@ void Actionator::doFunction(Action* action, Function* f, Track* t)
 
     if (action->down) { 
         if (action->longPress) {
+            // shouldn't be seeing these any more
+            Trace(1, "Actionator: Action with longPress set, not supposed to get here");
+            
             // Here via TriggerState when we detect a long-press,
             // call a different invocation method.
             // TODO: Think about just having Funcion::invoke check for the

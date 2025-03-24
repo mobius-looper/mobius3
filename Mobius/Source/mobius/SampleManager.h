@@ -291,7 +291,7 @@ class SampleManager
     // this was an optimization when we didn't have a more granular
     // way to update the sub-parts of the MobiusConfig, should
     // no longer be necessary and could have been done by the UI
-    bool isDifference(class SampleConfig* samples);
+    //bool isDifference(class SampleConfig* samples);
 
     int getSampleCount();
 

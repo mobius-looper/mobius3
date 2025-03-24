@@ -126,7 +126,9 @@ Once those models are fully converted, these symbols can be removed.
   
   <Function name="TrackCopy" tree='Track'/>
   <Function name="TrackCopyTiming" tree='Track'/>
-  <Function name="TrackGroup" sustainable='true' mayFocus='true' tree='Track'/>
+  <!-- this was marked sustainable for awhile, I think at one time a longPress of this
+       would remove the group assignment, it doesn't any more but that's interesting  -->
+  <Function name="TrackGroup" mayFocus='true' tree='Track'/>
   <Function name="TrackReset" mayFocus='true' tree='Editing'/>
   <Function name="TrimEnd" mayFocus='true' mayCancelMute='true' tree='Editing'/>
   <Function name="TrimStart" mayFocus='true' mayCancelMute='true' tree='Editing'/>

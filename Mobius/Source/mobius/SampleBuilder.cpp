@@ -8,6 +8,8 @@
  * All of the construction code runs in the UI thread and does not
  * need any of the runtime code.
  *
+ * ugh, this was an early port and is a mess...
+ *
  * All of the runtime code must not touch anything in the construction code.
  *
  * A SampleManager is built by MobiusShell when it is sent a ScriptConfig
@@ -20,6 +22,8 @@
  * in the Sample objects.  This "loaded" config is then given to MobiusShell
  * and converted to a SampleManager.
  */
+
+#include <JuceHeader.h>
 
 #include "../util/Trace.h"
 #include "../util/Util.h"
@@ -63,7 +67,8 @@ SampleManager::SampleManager(AudioPool* pool, SampleConfig* samples)
     // build the list of SamplePlayers
     SamplePlayer* last = nullptr;
     if (samples != nullptr) {
-        for (Sample* s = samples->getSamples() ; s != nullptr ; s = s->getNext()) {
+
+        for (auto s : samples->getSamples()) {
             SamplePlayer* p = NEW2(SamplePlayer, pool, s);
             if (last == nullptr)
               mPlayerList = p;
@@ -127,6 +132,7 @@ SampleManager::~SampleManager()
  * than the new Sample list.
  *
  */
+#if 0
 bool SampleManager::isDifference(SampleConfig* samples)
 {
     bool difference = false;
@@ -169,6 +175,7 @@ bool SampleManager::isDifference(SampleConfig* samples)
 
     return difference;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -181,11 +188,12 @@ SamplePlayer::SamplePlayer(AudioPool* pool, Sample* src)
 	init();
 	
     // necessary only for isDifference, could remove when that goes
-    mFilename = MemCopyString("SamplePlayer::mFileName", src->getFilename());
-	mSustain = src->isSustain();
-	mLoop = src->isLoop();
-	mConcurrent = src->isConcurrent();
-    mButton = src->isButton();
+    // gak, old/juce model differences
+    mFilename = MemCopyString("SamplePlayer::mFileName", src->file.toUTF8());
+	mSustain = src->sustain;
+	mLoop = src->loop;
+	mConcurrent = src->concurrent;
+    mButton = src->button;
     
     // this is the interesting part
     // create an Audio and fill it with the Sample data

@@ -17,6 +17,7 @@
 #include "ValueSet.h"
 #include "BindingSets.h"
 #include "GroupDefinition.h"
+#include "SampleConfig.h"
 
 class SystemConfig
 {
@@ -48,9 +49,13 @@ class SystemConfig
     class GroupDefinitions* getGroups();
     void setGroups(class GroupDefinitions* groups);
     
+    class SampleConfig* getSamples();
+    void setSamples(class SampleConfig* samples);
+    
   private:
 
     ValueSet values;
     std::unique_ptr<class BindingSets> bindings;
     std::unique_ptr<class GroupDefinitions> groups;
+    std::unique_ptr<class SampleConfig> samples;
 };

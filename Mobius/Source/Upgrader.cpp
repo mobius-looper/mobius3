@@ -22,6 +22,7 @@
 #include "model/FunctionProperties.h"
 #include "model/ParameterProperties.h"
 #include "model/ParameterSets.h"
+#include "model/SampleConfig.h"
 #include "model/Binding.h"
 #include "model/BindingSet.h"
 #include "model/BindingSets.h"
@@ -68,6 +69,9 @@ bool Upgrader::upgrade(MobiusConfig* config)
       updated = true;
 
     if (upgradeNewGroups(config))
+      updated = true;
+    
+    if (moveSamples(config))
       updated = true;
 
     return updated;
@@ -358,6 +362,24 @@ bool Upgrader::upgradeNewGroups(MobiusConfig* config)
         }
 
         scon->setGroups(groups);
+        supervisor->updateSystemConfig();
+        updated = true;
+    }
+    return updated;
+}
+
+bool Upgrader::moveSamples(MobiusConfig* config)
+{
+    bool updated = false;
+
+    SystemConfig* scon = supervisor->getSystemConfig();
+    if (scon->getSamples() == nullptr) {
+
+        // these can just copy over without any changes
+        SampleConfig* old = config->getSampleConfig();
+        SampleConfig* copy = new SampleConfig(old);
+        
+        scon->setSamples(copy);
         supervisor->updateSystemConfig();
         updated = true;
     }

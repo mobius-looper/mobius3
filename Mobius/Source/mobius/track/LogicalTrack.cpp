@@ -967,20 +967,23 @@ int LogicalTrack::unbindFeedback()
  */
 void LogicalTrack::doTrackGroup(UIAction* a)
 {
-    GroupDefinitions* groups = manager->getGroupDefinitions();
+    // this was sustainable='true' for a time, I vaguely remember longPress
+    // being used to remove the group assignment, not supported at the moment
+    // but if you bring that back, need to ignore up transitions here
+    if (!a->sustainEnd) {
+        // to allow longPress
+        GroupDefinitions* groups = manager->getGroupDefinitions();
 
-    // default is to revert to no group
-    groupNumber = 0;
-
-    // if we're still passing binding args here, obey it
-    if (strlen(a->arguments) > 0) {
-        groupNumber = parseGroupActionArgument(groups, a->arguments);
-    }
-    else if (a->value >= 0 && a->value <= groups->groups.size()) {
-        groupNumber = a->value;
-    }
-    else {
-        Trace(1, "LogicalTrack: Group number out of range %d", a->value);
+        // binding args can be used for special commands as well as names
+        if (strlen(a->arguments) > 0) {
+            groupNumber = parseGroupActionArgument(groups, a->arguments);
+        }
+        else if (a->value >= 0 && a->value <= groups->groups.size()) {
+            groupNumber = a->value;
+        }
+        else {
+            Trace(1, "LogicalTrack: Group number out of range %d", a->value);
+        }
     }
 }
 

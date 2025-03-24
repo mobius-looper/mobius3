@@ -43,6 +43,7 @@
 #include "../model/ConfigPayload.h"
 #include "../model/Session.h"
 #include "../model/ParameterSets.h"
+#include "../model/GroupDefinition.h"
 #include "../model/UIAction.h"
 #include "../model/Query.h"
 #include "../model/ScriptConfig.h"
@@ -939,11 +940,9 @@ SampleConfig* MobiusShell::expandPaths(SampleConfig* src)
     juce::File root = container->getRoot();
     
     if (src != nullptr) {
-        Sample *srcSample = src->getSamples();
-        while (srcSample != nullptr) {
-            const char* filename = srcSample->getFilename();
-            if (filename != nullptr) {
-                juce::String jname = juce::String(filename);
+        for (auto srcSample : src->getSamples()) {
+            juce::String jname = srcSample->file;
+            if (jname.length() > 0) {
                 if (jname.startsWith(InstallationPathPrefix)) {
                     jname = jname.fromFirstOccurrenceOf(InstallationPathPrefix, false, false);
                     // if there is a leading / Juce thinks it is absolute and throws an assertion
@@ -953,13 +952,13 @@ SampleConfig* MobiusShell::expandPaths(SampleConfig* src)
                     Trace(2, "MobiusShell: Expanded %s\n", full.getFullPathName().toUTF8());
                     if (full.existsAsFile()) {
                         Sample* copySample = new Sample(srcSample);
-                        copySample->setFilename(full.getFullPathName().toUTF8());
+                        copySample->file = full.getFullPathName();
                         expanded->add(copySample);
                     }
                     else {
                         // don't bother including this one
                         Trace(1, "MobiusShell: Sample path with relative prefix not found: %s %s\n",
-                              filename,
+                              jname.toUTF8(),
                               full.getFullPathName().toUTF8());
                     }
                 }
@@ -969,7 +968,6 @@ SampleConfig* MobiusShell::expandPaths(SampleConfig* src)
                     expanded->add(copySample);
                 }
             }
-            srcSample = srcSample->getNext();
         }
     }
     return expanded;

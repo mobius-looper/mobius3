@@ -58,7 +58,10 @@
     </BindingSet>
   </BindingSets>
   <GroupDefinitions>
-    <GroupDefinition name="A" color="-1" replicatedFunctions="Overdub"/>
-    <GroupDefinition name="B"/>
+    <GroupDefinition name="A" color="-2208178" replicatedFunctions="Overdub"/>
+    <GroupDefinition name="Bx" color="-6964104"/>
   </GroupDefinitions>
+  <SampleConfig>
+    <Sample file="$INSTALL/test/samples/gcloop.wav" button="true"/>
+  </SampleConfig>
 </SystemConfig>
