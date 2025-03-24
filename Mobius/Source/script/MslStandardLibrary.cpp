@@ -1,6 +1,12 @@
 
 #include <JuceHeader.h>
 
+// dependency on the Random utility
+// rather not have this, but it's somewhat important that you
+// don't seed this often, maybe move this to MslContext and let it deal with
+// the containing application environment
+#incluce "../util/Util.h"
+
 #include "MslValue.h"
 #include "MslEnvironment.h"
 #include "MslSession.h"
@@ -69,18 +75,13 @@ MslValue* MslStandardLibrary::Time(MslSession* s, MslValue* arguments)
  *    Rand(x,y) - random between x and y
  *
  * If low >= high the result is low
+ * Core implementation is in util/Util so it can be used outside
+ * MSL without contention on seeding.
  */
 MslValue* MslStandardLibrary::Rand(MslSession* s, MslValue* arguments)
 {
-    // todo: contention on this since it's shared with the host
-    if (!RandSeeded) {
-        srand((int)(time(nullptr)));
-        RandSeeded = true;
-    }
-
     int low = 0;
     int high = 127;
-    int value = 0;
 
     if (arguments != nullptr) {
         MslValue* second = arguments->next;
@@ -91,14 +92,8 @@ MslValue* MslStandardLibrary::Rand(MslSession* s, MslValue* arguments)
             high = second->getInt();
         }
     }
-    
-    if (low >= high) {
-        value = low;
-    }
-    else {
-        int range = high - low + 1;
-        value = (rand() % range) + low;
-    }
+
+    int value = Random(low, high);
 
     MslValue* v = s->getEnvironment()->allocValue();
     v->setInt(value);
