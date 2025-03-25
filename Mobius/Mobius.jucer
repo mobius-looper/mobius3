@@ -80,9 +80,6 @@
         <FILE id="GQqoeU" name="MidiSequence.cpp" compile="1" resource="0"
               file="Source/midi/MidiSequence.cpp"/>
         <FILE id="hZQULr" name="MidiSequence.h" compile="0" resource="0" file="Source/midi/MidiSequence.h"/>
-        <FILE id="RkyeW9" name="OldMidiEvent.cpp" compile="1" resource="0"
-              file="Source/midi/OldMidiEvent.cpp"/>
-        <FILE id="uzPNcj" name="OldMidiEvent.h" compile="0" resource="0" file="Source/midi/OldMidiEvent.h"/>
       </GROUP>
       <GROUP id="{35F5BDA4-4F12-7FE6-B25F-7B2965D913CF}" name="model">
         <GROUP id="{7CD675C9-D3B9-988B-1CA6-742F4C8893A1}" name="old">

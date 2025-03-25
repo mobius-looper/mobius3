@@ -16,6 +16,7 @@
             file="Source/NosyAudioProcessor.h"/>
     </GROUP>
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
+      <FILE id="XMWt0t" name="Version.h" compile="0" resource="0" file="../Mobius/Source/Version.h"/>
       <GROUP id="{4CEB93C1-89DE-9EAF-78A0-EF5EAAE7BF4F}" name="mcl">
         <FILE id="FL6ZTR" name="MclEnvironment.cpp" compile="1" resource="0"
               file="../Mobius/Source/mcl/MclEnvironment.cpp"/>
@@ -145,9 +146,6 @@
         <FILE id="IMAmeP" name="MidiSequence.cpp" compile="1" resource="0"
               file="../Mobius/Source/midi/MidiSequence.cpp"/>
         <FILE id="s6nRsU" name="MidiSequence.h" compile="0" resource="0" file="../Mobius/Source/midi/MidiSequence.h"/>
-        <FILE id="QkdIKh" name="OldMidiEvent.cpp" compile="1" resource="0"
-              file="../Mobius/Source/midi/OldMidiEvent.cpp"/>
-        <FILE id="AEg2h2" name="OldMidiEvent.h" compile="0" resource="0" file="../Mobius/Source/midi/OldMidiEvent.h"/>
       </GROUP>
       <GROUP id="{71A3EEC9-3DF0-DFE8-960A-08DD491090C6}" name="model">
         <GROUP id="{E9DF28E1-BBE6-8AF0-83CF-26F2FA16DD9F}" name="old">
@@ -1019,8 +1017,6 @@
       <FILE id="TNAr8n" name="Conditionals.h" compile="0" resource="0" file="../Mobius/Source/Conditionals.h"/>
       <FILE id="PmhEch" name="FileManager.cpp" compile="1" resource="0" file="../Mobius/Source/FileManager.cpp"/>
       <FILE id="KYoNB2" name="FileManager.h" compile="0" resource="0" file="../Mobius/Source/FileManager.h"/>
-      <FILE id="r2JK3T" name="Grouper.cpp" compile="1" resource="0" file="../Mobius/Source/Grouper.cpp"/>
-      <FILE id="fnNJUm" name="Grouper.h" compile="0" resource="0" file="../Mobius/Source/Grouper.h"/>
       <FILE id="OXPWIi" name="JuceAudioStream.cpp" compile="1" resource="0"
             file="../Mobius/Source/JuceAudioStream.cpp"/>
       <FILE id="W6Xhso" name="JuceAudioStream.h" compile="0" resource="0"

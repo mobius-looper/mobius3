@@ -3,6 +3,7 @@
 
 #include "../util/Trace.h"
 #include "../model/Session.h"
+#include "../model/GroupDefinition.h"
 
 #include "MslContext.h"
 #include "ScriptExternals.h"
