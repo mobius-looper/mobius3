@@ -48,6 +48,10 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     int getSyncLength() override;
     int getSyncLocation() override;
     int scheduleFollowerEvent(QuantizeMode q, int follower, int eventId) override;
+
+    bool scheduleWait(class TrackWait& wait) override;
+    void cancelWait(class TrackWait& wait) override;
+    void finishWait(class TrackWait& wait) override;
     
     //
     // MslTrack

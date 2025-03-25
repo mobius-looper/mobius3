@@ -64,6 +64,10 @@ class LogicalTrack
     bool scheduleWait(class MslWait* wait);
     int scheduleFollowerEvent(QuantizeMode q, int followerTrack, int eventId);
 
+    bool scheduleWait(class TrackWait& wait);
+    void cancelWait(class TrackWait& wait);
+    void finishWait(class TrackWait& wait);
+
     void refreshState(class TrackState* state);
     void refreshPriorityState(class PriorityState* state);
     void refreshFocusedState(class FocusedTrackState* state);

@@ -803,6 +803,7 @@
                 file="Source/mobius/track/TrackMslVariableHandler.h"/>
           <FILE id="L1fq9V" name="TrackProperties.h" compile="0" resource="0"
                 file="Source/mobius/track/TrackProperties.h"/>
+          <FILE id="yR3Eor" name="TrackWait.h" compile="0" resource="0" file="Source/mobius/track/TrackWait.h"/>
         </GROUP>
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
           <FILE id="N2rO6u" name="MidiEngine.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiEngine.cpp"/>

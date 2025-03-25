@@ -180,6 +180,21 @@ int MobiusLooperTrack::scheduleFollowerEvent(QuantizeMode q, int follower, int e
     return mobius->scheduleFollowerEvent(track->getDisplayNumber(), q, follower, eventId);
 }
 
+bool MobiusLooperTrack::scheduleWait(TrackWait& wait)
+{
+    return mobius->scheduleWait(wait);
+}
+
+void MobiusLooperTrack::cancelWait(TrackWait& wait)
+{
+    mobius->cancelWait(wait);
+}
+
+void MobiusLooperTrack::finishWait(TrackWait& wait)
+{
+    mobius->finishWait(wait);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MslTrack Waits

@@ -2129,6 +2129,31 @@ void Mobius::cancelMslWait(class Event* e)
 
 //////////////////////////////////////////////////////////////////////
 //
+// TrackWaits
+//
+//////////////////////////////////////////////////////////////////////
+
+bool Mobius::scheduleWait(TrackWait& wait)
+{
+    (void)wait;
+    Trace(1, "Mobius::scheduleWait not implemented");
+    return false;
+}
+
+void Mobius::cancelWait(TrackWait& wait)
+{
+    (void)wait;
+    Trace(1, "Mobius::cancelWait not implemented");
+}
+
+void Mobius::finishWait(TrackWait& wait)
+{
+    (void)wait;
+    Trace(1, "Mobius::finishWait not implemented");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Clips
 //
 //////////////////////////////////////////////////////////////////////

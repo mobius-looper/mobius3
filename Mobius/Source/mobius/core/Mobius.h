@@ -371,6 +371,11 @@ class Mobius
     void rescheduleMslWait(class Event* e, class Event* neu);
     void cancelMslWait(class Event* e);
     void handleMslWait(class Loop* l, class Event* e);
+
+    // similar interface for track waits
+    bool scheduleWait(class TrackWait& wait);
+    void cancelWait(class TrackWait& wait);
+    void finishWait(class TrackWait& wait);
     
     //////////////////////////////////////////////////////////////////////
     // New public accessors for events to deal with clips

@@ -256,8 +256,36 @@ MslTrack* MidiTrack::getMslTrack()
 
 int MidiTrack::scheduleFollowerEvent(QuantizeMode q, int followerTrack, int eventId) 
 {
+    (void)q;
+    (void)followerTrack;
+    (void)eventId;
     Trace(1, "MidiTrack::scheduleFollowerEvent not implemented");
-    return 0;
+    return -1;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// TrackWaits
+//
+//////////////////////////////////////////////////////////////////////
+
+bool MidiTrack::scheduleWait(TrackWait& wait)
+{
+    (void)wait;
+    Trace(1, "MidiTrack::scheduleWait not implemented");
+    return false;
+}
+
+void MidiTrack::cancelWait(TrackWait& wait)
+{
+    (void)wait;
+    Trace(1, "MidiTrack::cancelWait not implemented");
+}
+
+void MidiTrack::finishWait(TrackWait& wait)
+{
+    (void)wait;
+    Trace(1, "MidiTrack::finishWait not implemented");
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -77,6 +77,11 @@ class BaseTrack
 
     // and we can watch what it does
     virtual int scheduleFollowerEvent(QuantizeMode q, int follower, int eventId) = 0;
+
+    // replacement for follower events
+    virtual bool scheduleWait(class TrackWait& wait) = 0;
+    virtual void cancelWait(class TrackWait& wait) = 0;
+    virtual void finishWait(class TrackWait& wait) = 0;
     
   protected:
 

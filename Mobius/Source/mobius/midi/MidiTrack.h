@@ -60,6 +60,10 @@ class MidiTrack : public LooperTrack, public MslTrack
     int getSyncLocation() override;
     int scheduleFollowerEvent(QuantizeMode q, int followerTrack, int eventId) override;
     
+    bool scheduleWait(class TrackWait& wait) override;
+    void cancelWait(class TrackWait& wait) override;
+    void finishWait(class TrackWait& wait) override;
+    
     //
     // ScheduledTrack
     //

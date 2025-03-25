@@ -266,6 +266,21 @@ int LogicalTrack::scheduleFollowerEvent(QuantizeMode q, int followerTrack, int e
     return track->scheduleFollowerEvent(q, followerTrack, eventId);
 }
 
+bool LogicalTrack::scheduleWait(TrackWait& wait)
+{
+    return track->scheduleWait(wait);
+}
+
+void LogicalTrack::cancelWait(TrackWait& wait)
+{
+    track->cancelWait(wait);
+}
+
+void LogicalTrack::finishWait(TrackWait& wait)
+{
+    track->finishWait(wait);
+}
+
 void LogicalTrack::dump(StructureDumper& d)
 {
     track->dump(d);
