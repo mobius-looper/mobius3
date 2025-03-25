@@ -1095,10 +1095,11 @@ MobiusConfig* Supervisor::getOldMobiusConfig()
     return mobiusConfig.get();
 }
 
-OldBindingSet* Supervisor::getBindingSets()
+BindingSets* Supervisor::getBindingSets()
 {
-    MobiusConfig* config = getOldMobiusConfig();
-    return config->getBindingSets();
+    SystemConfig* scon = getSystemConfig();
+    // this bootstraps if empty
+    return scon->getBindings();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1189,21 +1190,26 @@ void Supervisor::decacheForms()
 //
 //////////////////////////////////////////////////////////////////////
 
-void Supervisor::bindingEditorSave(OldBindingSet* newList)
+void Supervisor::bindingEditorSave(BindingSets* neu)
 {
-    MobiusConfig* master = getOldMobiusConfig();
-    // this also deletes the current list
-    master->setBindingSets(newList);
-    updateMobiusConfig();
+    SystemConfig* scon = getSystemConfig();
+    scon->setBindings(neu);
+    updateSystemConfig();
+
+    configureBindings();
 }
 
 /**
  * Temporary variant for MclEvaluator that edits the BindingSets
  * in place after calling getOldMobiusConfig
  */
-void Supervisor::mclMobiusConfigUpdated()
+void Supervisor::mclBindingsUpdated()
 {
-    updateMobiusConfig();
+    updateSystemConfig();
+
+    // bindings may have been edited?
+    // actually MCL shouldn't be touching the MobiusConfig any more
+    configureBindings();
 }
 
 void Supervisor::mclSessionUpdated()
@@ -1270,9 +1276,6 @@ void Supervisor::updateMobiusConfig()
 
         // propagate config changes to other components
         propagateConfiguration();
-
-        // bindings may have been edited
-        configureBindings();
 
         // no longer need to send this to the kernel
     }

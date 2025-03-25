@@ -26,12 +26,12 @@ class KeyboardEditor : public OldBindingEditor,
     void showing() override;
     void hiding() override;
 
-    juce::String renderSubclassTrigger(OldBinding* b) override;
-    bool isRelevant(class OldBinding* b) override;
+    juce::String renderSubclassTrigger(Binding* b) override;
+    bool isRelevant(class Binding* b) override;
     void addSubclassFields() override;
     bool wantsCapture() override {return true;} 
-    void refreshSubclassFields(class OldBinding* b) override;
-    void captureSubclassFields(class OldBinding* b) override;
+    void refreshSubclassFields(class Binding* b) override;
+    void captureSubclassFields(class Binding* b) override;
     void resetSubclassFields() override;
 
     bool keyPressed(const juce::KeyPress& key, juce::Component* originator) override;

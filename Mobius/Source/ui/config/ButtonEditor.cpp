@@ -1,6 +1,6 @@
 /**
  * This one is more complicated than KeyboardEditor and MidiEditor
- * since we're not working from the BindingSet model inside the MobiusConfig.
+ * since we're not working from the BindingSet model inside the SystemConfig.
  * Instead we load/save from the UIConfig/ButtonSet model and do a runtime
  * conversion of that to make it look like BindingSet for the BindingTable.
  *
@@ -18,7 +18,7 @@
 
 #include "../../util/Trace.h"
 #include "../../model/UIConfig.h"
-#include "../../model/old/OldBinding.h"
+#include "../../model/Binding.h"
 #include "../../Supervisor.h"
 #include "../MobiusView.h"
 
@@ -182,17 +182,12 @@ void ButtonEditor::loadButtons(int index)
         // pretend it is a Binding for BindingTable
         // shouldn't have an empty string but filter if we do
         if (button->action.length() > 0) {
-            OldBinding b;
+            Binding b;
             b.id = id;
-            b.setSymbolName(button->action.toUTF8());
+            b.symbol = button->action;
 
-            // Binding wants "global" scope represented
-            // as a nullptr, not an empty string
-            if (button->scope.length() > 0)
-              b.setScope(button->scope.toUTF8());
-                
-            if (button->arguments.length() > 0)
-              b.setArguments(button->arguments.toUTF8());
+            b.scope = button->scope;
+            b.arguments = button->arguments;
 
             // transient field just for the display name
             // since this uses juce::String it will be copied
@@ -231,9 +226,10 @@ void ButtonEditor::saveButtons(int index)
     juce::Array<DisplayButton*> newButtons;
     
     // we own this list now
-    OldBinding* bindingList = bindings.captureBindings();
-    OldBinding* binding = bindingList;
-    while (binding != nullptr) {
+    juce::Array<Binding*> bindingList;
+    bindings.captureBindings(bindingList);
+
+    for (auto binding : bindingList) {
 
         // find the corresponding DisplayButton
         DisplayButton* match = nullptr;
@@ -254,15 +250,16 @@ void ButtonEditor::saveButtons(int index)
         }
         newButtons.add(match);
         
-        match->action = binding->getSymbolName();
-        match->arguments = binding->getArguments();
-        match->scope = binding->getScope();
+        match->action = binding->symbol;
+        match->arguments = binding->arguments;
+        match->scope = binding->scope;
         match->name = binding->displayName;
-
-        binding = binding->getNext();
     }
     // delete the captured list
-    delete bindingList;
+    while (bindingList.size() > 0) {
+        Binding* b = bindingList.removeAndReturn(0);
+        delete b;
+    }
 
     // at this point, newButtons has the ones we want to keep
     // and what remains in set->buttons were deleted
@@ -357,7 +354,7 @@ void ButtonEditor::objectSelectorRename(juce::String newName)
 //
 //////////////////////////////////////////////////////////////////////
 
-bool ButtonEditor::isRelevant(OldBinding* b)
+bool ButtonEditor::isRelevant(Binding* b)
 {
     (void)b;
     return true;
@@ -367,7 +364,7 @@ bool ButtonEditor::isRelevant(OldBinding* b)
  * Return the string to show in the trigger column for a binding.
  * The trigger column should be suppressed for buttons so we won't get here
  */
-juce::String ButtonEditor::renderSubclassTrigger(OldBinding* b)
+juce::String ButtonEditor::renderSubclassTrigger(Binding* b)
 {
     (void)b;
     return juce::String();
@@ -386,16 +383,16 @@ void ButtonEditor::addSubclassFields()
     form.add(&displayName);
 }
 
-void ButtonEditor::refreshSubclassFields(OldBinding* b)
+void ButtonEditor::refreshSubclassFields(Binding* b)
 {
     displayName.setValue(b->displayName);
 }
 
-void ButtonEditor::captureSubclassFields(class OldBinding* b)
+void ButtonEditor::captureSubclassFields(class Binding* b)
 {
     // not necessary, but continue with this in case something
     // needs a Trigger
-    b->trigger = TriggerUI;
+    b->trigger = Binding::TriggerUI;
     
     b->displayName = displayName.getValue();
 }

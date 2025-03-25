@@ -7,7 +7,7 @@
 #include "../model/ParameterProperties.h"
 #include "../model/ParameterSets.h"
 #include "../model/ValueSet.h"
-#include "../model/old/OldBinding.h"
+#include "../model/Binding.h"
 #include "../Provider.h"
 #include "../Producer.h"
 
@@ -644,19 +644,19 @@ int MclParser::parseChannel(juce::String s)
     return channel;
 }
 
-Trigger* MclParser::parseTrigger(juce::String s)
+Binding::Trigger MclParser::parseTrigger(juce::String s)
 {
-    Trigger* trigger = nullptr;
+    Binding::Trigger trigger = Binding::TriggerUnknown;
     if (s == "note")
-      trigger = TriggerNote;
+      trigger = Binding::TriggerNote;
     else if (s == "control" || s == "cc")
-      trigger = TriggerControl;
+      trigger = Binding::TriggerControl;
     else if (s == "program" || s == "pgm")
-      trigger = TriggerProgram;
+      trigger = Binding::TriggerProgram;
     else if (s == "host")
-      trigger = TriggerHost;
+      trigger = Binding::TriggerHost;
     else if (s == "key")
-      trigger = TriggerKey;
+      trigger = Binding::TriggerKey;
     else
       addError(juce::String("Invalid trigger type: ") + s);
     return trigger;
@@ -674,7 +674,7 @@ int MclParser::parseMidiValue(juce::String s)
 
 void MclParser::parseBindingObject(juce::StringArray& tokens)
 {
-    OldBinding* b = new OldBinding();
+    Binding* b = new Binding();
     b->trigger = bindingTrigger;
     b->midiChannel = bindingChannel;
 
@@ -694,11 +694,11 @@ void MclParser::parseBindingObject(juce::StringArray& tokens)
         }
         else if (column == symbolColumn) {
             if (validateSymbol(token))
-              b->setSymbolName(token.toUTF8());
+              b->symbol = token;
         }
         else if (column == scopeColumn) {
             if (validateBindingScope(token))
-              b->setScope(token.toUTF8());
+              b->scope = token;
         }
         else {
             // run out of specified columns
@@ -722,7 +722,7 @@ void MclParser::parseBindingObject(juce::StringArray& tokens)
             else {
                 juce::String value = tokens[next];
                 if (token == "arguments" || token == "args") {
-                    b->setArguments(value.toUTF8());
+                    b->arguments = value.toUTF8();
                 }
                 else if (token == "type") {
                     b->trigger = parseTrigger(value);
@@ -735,11 +735,11 @@ void MclParser::parseBindingObject(juce::StringArray& tokens)
                 }
                 else if (token == "symbol") {
                     if (validateSymbol(value))
-                      b->setSymbolName(value.toUTF8());
+                      b->symbol = value;
                 }
                 else if (token == "scope") {
                     if (validateBindingScope(value))
-                      b->setScope(value.toUTF8());
+                      b->scope = value;
                 }
                 else {
                     addError(juce::String("Token not allowed: ") + token);

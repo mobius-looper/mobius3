@@ -5,10 +5,9 @@
 #include "../../util/List.h"
 
 #include "../../model/old/ActionType.h"
-#include "../../model/old/MobiusConfig.h"
 #include "../../model/old/Preset.h"
 #include "../../model/old/Setup.h"
-#include "../../model/old/OldBinding.h"
+#include "../../model/Binding.h"
 #include "../../model/Symbol.h"
 #include "../../model/UIConfig.h"
 #include "../../Supervisor.h"
@@ -44,12 +43,12 @@ void TreeTargetSelector::reset()
 {
 }
 
-void TreeTargetSelector::select(class OldBinding* b)
+void TreeTargetSelector::select(class Binding* b)
 {
     (void)b;
 }
 
-void TreeTargetSelector::capture(class OldBinding* b)
+void TreeTargetSelector::capture(class Binding* b)
 {
     (void)b;
 }

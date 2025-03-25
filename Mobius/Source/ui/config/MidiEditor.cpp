@@ -6,7 +6,7 @@
 
 #include "../../util/Trace.h"
 #include "../../util/MidiUtil.h"
-#include "../../model/old/OldBinding.h"
+#include "../../model/Binding.h"
 #include "../../model/UIConfig.h"
 
 #include "../../Supervisor.h"
@@ -69,13 +69,13 @@ void MidiEditor::hiding()
  * Called by BindingEditor as it iterates over all the bindings
  * stored in a BindingSet.  Return true if this is for MIDI.
  */
-bool MidiEditor::isRelevant(OldBinding* b)
+bool MidiEditor::isRelevant(Binding* b)
 {
     // TriggerMidi is defined for some reason
     // but I don't think that can be seen in saved bindings
-    return (b->trigger == TriggerNote ||
-            b->trigger == TriggerProgram ||
-            b->trigger == TriggerControl);
+    return (b->trigger == Binding::TriggerNote ||
+            b->trigger == Binding::TriggerProgram ||
+            b->trigger == Binding::TriggerControl);
 
     // don't support these yet, and probably won't
     // b->trigger == TriggerPitch);
@@ -88,10 +88,10 @@ bool MidiEditor::isRelevant(OldBinding* b)
  * Channel zero means : any
  * Specific channels are 1-16
  */
-juce::String MidiEditor::renderSubclassTrigger(OldBinding* b)
+juce::String MidiEditor::renderSubclassTrigger(Binding* b)
 {
     juce::String text;
-    Trigger* trigger = b->trigger;
+    Binding::Trigger trigger = b->trigger;
 
     // the menu displays channels as one based, not sure what
     // most people expect
@@ -99,7 +99,7 @@ juce::String MidiEditor::renderSubclassTrigger(OldBinding* b)
     if (b->midiChannel > 0)
       channel = juce::String(b->midiChannel) + ":";
     
-    if (trigger == TriggerNote) {
+    if (trigger == Binding::TriggerNote) {
         // old utility
         char buf[32];
         MidiNoteName(b->triggerValue, buf);
@@ -107,20 +107,14 @@ juce::String MidiEditor::renderSubclassTrigger(OldBinding* b)
         text += buf;
         // not interested in velocity
     }
-    else if (trigger == TriggerProgram) {
+    else if (trigger == Binding::TriggerProgram) {
         text += channel;
         text += "Pgm ";
         text += juce::String(b->triggerValue);
     }
-    else if (trigger == TriggerControl) {
+    else if (trigger == Binding::TriggerControl) {
         text += channel;
         text += "CC ";
-        text += juce::String(b->triggerValue);
-    }
-    else if (trigger == TriggerPitch) {
-        // did anyone really use this?
-        text += channel;
-        text += "Pitch ";
         text += juce::String(b->triggerValue);
     }
     return text;
@@ -141,7 +135,6 @@ void MidiEditor::addSubclassFields()
     typeNames.add("Note");
     typeNames.add("Control");
     typeNames.add("Program");
-    // typeNames.add("Pitch");
     messageType->setAllowedValues(typeNames);
     messageType->addListener(this);
     form.add(messageType);
@@ -171,7 +164,6 @@ void MidiEditor::addSubclassFields()
     typeNames.add("Note");
     typeNames.add("Control");
     typeNames.add("Program");
-    // typeNames.add("Pitch");
     messageType.setItems(typeNames);
     messageType.setListener(this);
     form.add(&messageType);
@@ -202,20 +194,17 @@ void MidiEditor::addSubclassFields()
  * to have a checkbox to ignore the incomming channel rather
  * than making them set it back to Any after every capture.
  */
-void MidiEditor::refreshSubclassFields(class OldBinding* b)
+void MidiEditor::refreshSubclassFields(class Binding* b)
 {
-    Trigger* trigger = b->trigger;
-    if (trigger == TriggerNote) {
+    Binding::Trigger trigger = b->trigger;
+    if (trigger == Binding::TriggerNote) {
         messageType.setSelection(0);
     }
-    else if (trigger == TriggerControl) {
+    else if (trigger == Binding::TriggerControl) {
         messageType.setSelection(1);
     }
-    else if (trigger == TriggerProgram) {
+    else if (trigger == Binding::TriggerProgram) {
         messageType.setSelection(2);
-    }
-    else if (trigger == TriggerPitch) {
-        messageType.setSelection(3);
     }
     else {
         // shouldn't be here, go back to Note
@@ -229,14 +218,13 @@ void MidiEditor::refreshSubclassFields(class OldBinding* b)
 /**
  * Put the value of the form fields into the Binding
  */
-void MidiEditor::captureSubclassFields(class OldBinding* b)
+void MidiEditor::captureSubclassFields(class Binding* b)
 {
     int index = messageType.getSelection();
     switch (index) {
-        case 0: b->trigger = TriggerNote; break;
-        case 1: b->trigger = TriggerControl; break;
-        case 2: b->trigger = TriggerProgram; break;
-        case 3: b->trigger = TriggerPitch; break;
+        case 0: b->trigger = Binding::TriggerNote; break;
+        case 1: b->trigger = Binding::TriggerControl; break;
+        case 2: b->trigger = Binding::TriggerProgram; break;
     }
 
     b->midiChannel = messageChannel.getSelection();

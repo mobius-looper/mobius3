@@ -15,8 +15,8 @@ class TreeTargetSelector : public juce::Component
     void load();
     void save();
     void reset();
-    void select(class OldBinding* b);
-    void capture(class OldBinding* b);
+    void select(class Binding* b);
+    void capture(class Binding* b);
     bool isTargetSelected();
 
     void resized() override;

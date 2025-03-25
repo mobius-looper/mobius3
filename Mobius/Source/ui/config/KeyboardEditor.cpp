@@ -5,7 +5,7 @@
 #include "../../KeyTracker.h"
 #include "../../Binderator.h"
 #include "../../util/Trace.h"
-#include "../../model/old/OldBinding.h"
+#include "../../model/Binding.h"
 
 #include "KeyboardEditor.h"
 
@@ -50,16 +50,16 @@ void KeyboardEditor::hiding()
  * Called by BindingEditor as it iterates over all the bindings
  * stored in a BindingSet.  Return true if this is for keys.
  */
-bool KeyboardEditor::isRelevant(OldBinding* b)
+bool KeyboardEditor::isRelevant(Binding* b)
 {
-    return (b->trigger == TriggerKey);
+    return (b->trigger == Binding::TriggerKey);
 }
 
 /**
  * Return the string to show in the trigger column for a binding.
  * The Binding has a key code but we want to show a nice symbolic name.
  */
-juce::String KeyboardEditor::renderSubclassTrigger(OldBinding* b)
+juce::String KeyboardEditor::renderSubclassTrigger(Binding* b)
 {
     // unpack our compressed code/modifiers value
     int code;
@@ -96,7 +96,7 @@ void KeyboardEditor::addSubclassFields()
  * Refresh the key field to show the selected binding
  * Uses the same rendering as the table cell
  */
-void KeyboardEditor::refreshSubclassFields(class OldBinding* b)
+void KeyboardEditor::refreshSubclassFields(class Binding* b)
 {
     key.setValue(renderTriggerCell(b));
 }
@@ -107,9 +107,9 @@ void KeyboardEditor::refreshSubclassFields(class OldBinding* b)
  * initialize everything so it won't be filtered later
  * in XML rendering.
  */
-void KeyboardEditor::captureSubclassFields(class OldBinding* b)
+void KeyboardEditor::captureSubclassFields(class Binding* b)
 {
-    b->trigger = TriggerKey;
+    b->trigger = Binding::TriggerKey;
 
     // undo the text transformation that was captured or typed in
     int code = 0;

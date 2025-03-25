@@ -43,6 +43,7 @@ class SystemConfig
     const char* getString(juce::String name);
     int getInt(juce::String name);
 
+    bool hasBindings();
     class BindingSets* getBindings();
     void setBindings(class BindingSets* sets);
     

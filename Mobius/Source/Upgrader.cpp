@@ -297,7 +297,7 @@ bool Upgrader::upgradeBindings(MobiusConfig* config)
 
     // only do this once
     SystemConfig* scon = supervisor->getSystemConfig();
-    if (scon->getBindings() == nullptr) {
+    if (!scon->hasBindings()) {
         BindingSets* sets = new BindingSets();
         for (OldBindingSet* oldset = config->getBindingSets() ; oldset != nullptr ;
              oldset = oldset->getNextBindingSet()) {

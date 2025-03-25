@@ -2,7 +2,7 @@
  * Panel to edit plugin host parameter bidings.
  * These aren't really bindings because they don't have a trigger
  * but we rely on the same internal components to display them
- * and they're stored in the MobiusConfig Binding list.
+ * and they're stored in the SystemConfig Binding list.
  */
 
 #pragma once
@@ -19,11 +19,11 @@ class HostEditor : public OldBindingEditor
 
     juce::String getTitle() override {return "Plugin Parameters";}
 
-    juce::String renderSubclassTrigger(OldBinding* b) override;
-    bool isRelevant(class OldBinding* b) override;
+    juce::String renderSubclassTrigger(Binding* b) override;
+    bool isRelevant(class Binding* b) override;
     void addSubclassFields() override;
-    void refreshSubclassFields(class OldBinding* b) override;
-    void captureSubclassFields(class OldBinding* b) override;
+    void refreshSubclassFields(class Binding* b) override;
+    void captureSubclassFields(class Binding* b) override;
     void resetSubclassFields() override;
 
   private:

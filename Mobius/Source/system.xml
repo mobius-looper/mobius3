@@ -8,6 +8,8 @@
   </ValueSet>
   <BindingSets>
     <BindingSet name="Base">
+      <Binding symbol="Record" trigger="note" value="10" channel="4"/>
+      <Binding symbol="Overdub" trigger="note" value="11" channel="4"/>
       <Binding symbol="Record" trigger="key" value="82"/>
       <Binding symbol="Reset" trigger="key" value="27"/>
       <Binding symbol="NextLoop" trigger="key" value="65576"/>
@@ -43,8 +45,8 @@
       <Binding symbol="SelectLoop" trigger="key" value="54" arguments="6"/>
       <Binding symbol="SelectLoop" trigger="key" value="55" arguments="7"/>
       <Binding symbol="SelectLoop" trigger="key" value="56" arguments="8"/>
-      <Binding symbol="Record" trigger="note" value="10" channel="4"/>
-      <Binding symbol="Overdub" trigger="note" value="11" channel="4"/>
+      <Binding symbol="SelectLoop" trigger="key" value="49" arguments="1"/>
+      <Binding symbol="Divide4" trigger="host"/>
     </BindingSet>
     <BindingSet name="midi1">
       <Binding symbol="Overdub" trigger="note" value="50" channel="1"/>

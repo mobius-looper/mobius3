@@ -6,7 +6,7 @@
 #include "UIAction.h"
 #include "Scope.h"
 #include "Symbol.h"
-#include "old/OldBinding.h"
+#include "Binding.h"
 
 #include "UIConfig.h"
 
@@ -516,16 +516,11 @@ DisplayButton* ButtonSet::getButton(UIAction* action)
 /**
  * Searcher the ActionButton popup that deals with Binding.
  */
-DisplayButton* ButtonSet::getButton(OldBinding* binding)
+DisplayButton* ButtonSet::getButton(Binding* binding)
 {
     DisplayButton* found = nullptr;
     if (binding != nullptr) {
-        const char* symbolName = binding->getSymbolName();
-        // can be null for new empty bindings
-        if (symbolName != nullptr) {
-            const char* scope = binding->getScope();
-            found = getButton(juce::String(symbolName), juce::String(scope), juce::String(binding->getArguments()));
-        }
+        found = getButton(binding->symbol, binding->scope, binding->arguments);
     }
     return found;
 }

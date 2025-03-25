@@ -23,6 +23,7 @@ class BindingSets
     class BindingSet* find(juce::String name);
     class BindingSet* getByOrdinal(int ordinal);
     class BindingSet* getByIndex(int index);
+    class BindingSet* getBase();
     
     void clear();
     void add(BindingSet* set);

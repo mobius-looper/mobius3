@@ -14,8 +14,9 @@
 #include <JuceHeader.h>
 
 #include "util/Trace.h"
-#include "model/old/MobiusConfig.h"
-#include "model/old/OldBinding.h"
+#include "model/BindingSets.h"
+#include "model/BindingSet.h"
+#include "model/Binding.h"
 #include "model/VariableDefinition.h"
 #include "model/Symbol.h"
 
@@ -40,15 +41,13 @@ void Parametizer::initialize()
     int sustainId = 1;
     
     // start with Bindings
-    OldBindingSet* bindings = provider->getBindingSets();
-    // bindings can be nullptr on a build with no install
-    OldBinding* binding = nullptr;
-    if (bindings != nullptr)
-      binding = bindings->getBindings();
-    
-    while (binding != nullptr) {
-        if (binding->trigger == TriggerHost) {
-            Symbol* s = provider->getSymbols()->intern(binding->getSymbolName());
+    BindingSets* container = provider->getBindingSets();
+    BindingSet* base = container->getBase();
+
+    for (auto binding : base->getBindings()) {
+
+        if (binding->trigger == Binding::TriggerHost) {
+            Symbol* s = provider->getSymbols()->intern(binding->symbol);
             PluginParameter* p = new PluginParameter(s, binding);
             // we work top down from the PluginParameter to the Symbol
             // so we don't need to hang the PluginParameter on the Symbol
@@ -68,7 +67,6 @@ void Parametizer::initialize()
                 parameters.add(p);
             }
         }
-        binding = binding->getNext();
     }
 
     // for testing I like to allow VariableDefinitions with automatable=true

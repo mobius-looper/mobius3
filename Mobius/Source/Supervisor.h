@@ -176,7 +176,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     class MidiClerk* getMidiClerk();
 
-	    class SystemConfig* getSystemConfig() override;
+    class SystemConfig* getSystemConfig() override;
     void updateSystemConfig() override;
     class DeviceConfig* getDeviceConfig();
     void updateDeviceConfig();
@@ -193,12 +193,11 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // controlled access to MobiusConfig
     class MobiusConfig* getOldMobiusConfig() override;
-    class OldBindingSet* getBindingSets() override;
     
     // old configuration editor interfaces
-    void bindingEditorSave(class OldBindingSet* newList);
+    void bindingEditorSave(class BindingSets* neu);
     // temporary variant for MCL that edits the MobiusConfig in place
-    void mclMobiusConfigUpdated() override;
+    void mclBindingsUpdated() override;
     void mclSessionUpdated() override;
     
     void groupEditorSave(class GroupDefinitions* groups);
@@ -212,7 +211,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     class ParameterSets* getParameterSets() override;
     void updateParameterSets() override;
-
+    class BindingSets* getBindingSets() override;
     class GroupDefinitions* getGroupDefinitions() override;
     
     class StaticConfig* getStaticConfig() override;

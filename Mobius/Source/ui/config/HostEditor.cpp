@@ -7,7 +7,7 @@
 
 #include "../../util/Trace.h"
 #include "../../model/UIConfig.h"
-#include "../../model/old/OldBinding.h"
+#include "../../model/Binding.h"
 
 #include "HostEditor.h"
 
@@ -27,16 +27,16 @@ HostEditor::~HostEditor()
  * Called by BindingEditor as it iterates over all the bindings
  * stored in a BindingSet.  Return true if this is for host parameters.
  */
-bool HostEditor::isRelevant(OldBinding* b)
+bool HostEditor::isRelevant(Binding* b)
 {
-    return (b->trigger == TriggerHost);
+    return (b->trigger == Binding::TriggerHost);
 }
 
 /**
  * Return the string to show in the trigger column for a binding.
  * The trigger column should be suppressed for buttons so we won't get here
  */
-juce::String HostEditor::renderSubclassTrigger(OldBinding* b)
+juce::String HostEditor::renderSubclassTrigger(Binding* b)
 {
     (void)b;
     return juce::String();
@@ -52,7 +52,7 @@ void HostEditor::addSubclassFields()
 /**
  * Refresh local fields to reflect the selected binding.
  */
-void HostEditor::refreshSubclassFields(OldBinding* b)
+void HostEditor::refreshSubclassFields(Binding* b)
 {
     (void)b;
 }
@@ -65,9 +65,9 @@ void HostEditor::refreshSubclassFields(OldBinding* b)
  *
  * Host bindings do not have a value, only an operation.
  */
-void HostEditor::captureSubclassFields(class OldBinding* b)
+void HostEditor::captureSubclassFields(class Binding* b)
 {
-    b->trigger = TriggerHost;
+    b->trigger = Binding::TriggerHost;
 }
 
 void HostEditor::resetSubclassFields()

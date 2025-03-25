@@ -6,6 +6,8 @@
 
 #include <JuceHeader.h>
 
+#include "../model/Binding.h"
+
 class MclParser
 {
   public:
@@ -32,7 +34,7 @@ class MclParser
     // parse state for bindings
 
     // defaults
-    class Trigger* bindingTrigger = nullptr;
+    Binding::Trigger bindingTrigger = Binding::TriggerUnknown;
     int bindingChannel = 0;
     juce::String bindingScope;
 
@@ -67,7 +69,7 @@ class MclParser
     void parseBindingDefault(juce::StringArray& tokens);
     void parseBindingColumns(juce::StringArray& tokens);
     int parseChannel(juce::String s);
-    class Trigger* parseTrigger(juce::String s);
+    Binding::Trigger parseTrigger(juce::String s);
     int parseMidiValue(juce::String s);
     void parseBindingObject(juce::StringArray& tokens);
     bool validateSymbol(juce::String name);

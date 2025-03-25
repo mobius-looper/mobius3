@@ -18,7 +18,7 @@ class PluginParameter
 {
   public:
 
-    PluginParameter(class Symbol* s, class OldBinding* b);
+    PluginParameter(class Symbol* s, class Binding* b);
     PluginParameter(class Symbol* s, class VariableDefinition* var);
     ~PluginParameter();
 
@@ -34,7 +34,7 @@ class PluginParameter
     
     Symbol* symbol = nullptr;
 
-    void setScope(const char* s);
+    void setScope(juce::String s);
     const char* getScope();
 
     // unique identifier used when the parameter is bound to a sustainable function

@@ -4,7 +4,8 @@
 #include "../../util/Trace.h"
 #include "../../util/Util.h"
 #include "../../util/MidiUtil.h"
-#include "../../model/old/OldBinding.h"
+#include "../../model/BindingSet.h"
+#include "../../model/Binding.h"
 #include "../common/ButtonBar.h"
 #include "../JuceUtil.h"
 
@@ -51,28 +52,9 @@ void OldBindingTable::setOrdered(bool b)
     }
 }
 
-/**
- * Populate internal state with a list of Bindings
- * from a configuration object.
- * The list is copied and ownership is retained by the caller.
- */
-
-void OldBindingTable::setBindings(class OldBinding* src)
+void OldBindingTable::add(Binding* src)
 {
-    bindings.clear();
-    while (src != nullptr) {
-        OldBinding* copy = new OldBinding(src);
-        bindings.add(copy);
-    }
-
-    // should only be doing this once but I suppose we could
-    // trigger a repaint if it comes in later
-    table.updateContent();
-}
-
-void OldBindingTable::add(OldBinding* src)
-{
-    bindings.add(new OldBinding(src));
+    bindings.add(new Binding(src));
 }
 
 void OldBindingTable::updateContent()
@@ -90,36 +72,20 @@ void OldBindingTable::updateContent()
  * and clears internal state.  Ownership of the list passes
  * to the caller.
  */
-OldBinding* OldBindingTable::captureBindings()
+void OldBindingTable::captureBindings(juce::Array<Binding*>& dest)
 {
-    OldBinding* capture = nullptr;
-    OldBinding* last = nullptr;
-
-    //trace("OldBindingTable::capture %d\n", bindings.size());
-
     while (bindings.size() > 0) {
-        OldBinding* b = bindings.removeAndReturn(0);
-        // clearing lingering chain pointer for cascaded delete
-        b->setNext(nullptr);
-        const char* name = b->getSymbolName();
-        //trace("%s\n", name);
-        // filter out uninitialized rows
-        if (StringEqual(name, NewBindingName)) {
-            //trace("filtering %s\n", name);
+        Binding* b = bindings.removeAndReturn(0);
+        if (b->symbol == NewBindingName) {
+            // never got around to defining this, filter it
             delete b;
         }
         else {
-            if (last == nullptr)
-              capture = b;
-            else
-              last->setNext(b);
-            last = b;
+            dest.add(b);
         }
     }
     
     table.updateContent();
-
-    return capture;
 }
 
 /**
@@ -131,9 +97,9 @@ void OldBindingTable::clear()
     table.updateContent();
 }
 
-bool OldBindingTable::isNew(OldBinding* b)
+bool OldBindingTable::isNew(Binding* b)
 {
-    return StringEqual(b->getSymbolName(), NewBindingName);
+    return (b->symbol == NewBindingName);
 }
 
 void OldBindingTable::deselect()
@@ -147,9 +113,9 @@ void OldBindingTable::deselect()
     }
 }
 
-OldBinding* OldBindingTable::getSelectedBinding()
+Binding* OldBindingTable::getSelectedBinding()
 {
-    OldBinding* binding = nullptr;
+    Binding* binding = nullptr;
     int row = table.getSelectedRow();
     if (row >= 0) {
         binding = bindings[row];
@@ -310,7 +276,7 @@ void OldBindingTable::buttonClicked(juce::String name)
     // is this the best way to compare them?
     if (name == juce::String("New")) {
         if (listener != nullptr) {
-            OldBinding* neu = listener->bindingNew();
+            Binding* neu = listener->bindingNew();
 
             // formerly treated returning null as meaning
             // to create a placeholder which could be
@@ -344,9 +310,9 @@ void OldBindingTable::buttonClicked(juce::String name)
     else if (name == juce::String("Copy")) {
         int row = table.getSelectedRow();
         if (row >= 0) {
-            OldBinding* b = bindings[row];
+            Binding* b = bindings[row];
             if (listener != nullptr) {
-                OldBinding* neu = listener->bindingCopy(b);
+                Binding* neu = listener->bindingCopy(b);
                 if (neu != nullptr) {
                     bindings.add(neu);
                     table.updateContent();
@@ -361,7 +327,7 @@ void OldBindingTable::buttonClicked(juce::String name)
         // shouldn't get here any more now that we have immediate form capture
         int row = table.getSelectedRow();
         if (row >= 0) {
-            OldBinding* b = bindings[row];
+            Binding* b = bindings[row];
             if (listener != nullptr) {
                 // listener updates the binding but we retain ownership
                 listener->bindingUpdate(b);
@@ -375,7 +341,7 @@ void OldBindingTable::buttonClicked(juce::String name)
     else if (name == juce::String("Delete")) {
         int row = table.getSelectedRow();
         if (row >= 0) {
-            OldBinding* b = bindings[row];
+            Binding* b = bindings[row];
             if (listener != nullptr) {
                 // listener is allowed to respond, but it does not take
                 // ownership of the Binding
@@ -424,10 +390,10 @@ void OldBindingTable::buttonClicked(juce::String name)
 juce::String OldBindingTable::getCellText(int row, int columnId)
 {
     juce::String cell;
-    OldBinding* b = bindings[row];
+    Binding* b = bindings[row];
     
     if (columnId == TargetColumn) {
-        cell = juce::String(b->getSymbolName());
+        cell = b->symbol;
     }
     else if (columnId == TriggerColumn) {
         if (listener != nullptr)
@@ -440,7 +406,7 @@ juce::String OldBindingTable::getCellText(int row, int columnId)
         cell = formatScopeText(b);
     }
     else if (columnId == ArgumentsColumn) {
-        cell = juce::String(b->getArguments());
+        cell = b->arguments;
     }
     else if (columnId == DisplayNameColumn) {
         cell = b->displayName;
@@ -454,12 +420,12 @@ juce::String OldBindingTable::getCellText(int row, int columnId)
  * parsed at runtime into the mTrack and mGroup numbers
  * Need a lot more here as we refine what scopes mean.
  */ 
-juce::String OldBindingTable::formatScopeText(OldBinding* b)
+juce::String OldBindingTable::formatScopeText(Binding* b)
 {
-    if (b->getScope() == nullptr)
+    if (b->scope == "")
       return juce::String("Global");
     else
-      return juce::String(b->getScope());
+      return b->scope;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -488,8 +454,8 @@ int OldBindingTable::getNumRows()
  * for borders, though Juce might provide something for selected rows/cells already.
  */
 void OldBindingTable::paintRowBackground(juce::Graphics& g, int rowNumber,
-                                      int /*width*/, int /*height*/,
-                                      bool rowIsSelected)
+                                         int /*width*/, int /*height*/,
+                                         bool rowIsSelected)
 {
     // I guess this makes an alternate color that is a variant of the existing background
     // color rather than having a hard coded unrelated color
@@ -514,7 +480,7 @@ void OldBindingTable::paintRowBackground(juce::Graphics& g, int rowNumber,
  * 14 is 63% of 22
  */
 void OldBindingTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
-                             int width, int height, bool rowIsSelected)
+                                int width, int height, bool rowIsSelected)
 {
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
     
@@ -557,7 +523,7 @@ void OldBindingTable::cellClicked(int rowNumber, int columnId, const juce::Mouse
                 // trace("Binding row out of range! %d\n", rowNumber);
             }
             else {
-                OldBinding* b = bindings[rowNumber];
+                Binding* b = bindings[rowNumber];
                 listener->bindingSelected(b);
             }
         }

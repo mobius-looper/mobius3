@@ -23,13 +23,13 @@ class OldBindingEditor : public ConfigEditor,
   public:
 
     // Subclasses must implement these
-    virtual juce::String renderSubclassTrigger(class OldBinding* b) = 0;
-    virtual bool isRelevant(class OldBinding* b) = 0;
+    virtual juce::String renderSubclassTrigger(class Binding* b) = 0;
+    virtual bool isRelevant(class Binding* b) = 0;
     virtual void addSubclassFields() = 0;
     virtual bool wantsCapture() {return false;}
     virtual bool wantsPassthrough() {return false;}
-    virtual void refreshSubclassFields(class OldBinding* b) = 0;
-    virtual void captureSubclassFields(class OldBinding* b) = 0;
+    virtual void refreshSubclassFields(class Binding* b) = 0;
+    virtual void captureSubclassFields(class Binding* b) = 0;
     virtual void resetSubclassFields() = 0;
 
     // subclass may call this if it wants an object selector
@@ -60,13 +60,13 @@ class OldBindingEditor : public ConfigEditor,
     void objectSelectorRename(juce::String) override;
     
     // BindingTable::Listener
-    juce::String renderTriggerCell(class OldBinding* b) override;
-    void bindingSelected(class OldBinding* b) override;
+    juce::String renderTriggerCell(class Binding* b) override;
+    void bindingSelected(class Binding* b) override;
     void bindingDeselected() override;
-    void bindingUpdate(class OldBinding* b) override;
-    void bindingDelete(class OldBinding* b) override;
-    class OldBinding* bindingNew() override;
-    class OldBinding* bindingCopy(class OldBinding* b) override;
+    void bindingUpdate(class Binding* b) override;
+    void bindingDelete(class Binding* b) override;
+    class Binding* bindingNew() override;
+    class Binding* bindingCopy(class Binding* b) override;
 
     // BindingTargetSelector::Listener
     void bindingTargetClicked() override;
@@ -109,17 +109,17 @@ class OldBindingEditor : public ConfigEditor,
     void render();
     void rebuildTable();
 
-    void refreshForm(class OldBinding* b);
-    void captureForm(class OldBinding* b, bool includeTarget);
+    void refreshForm(class Binding* b);
+    void captureForm(class Binding* b, bool includeTarget);
     
     // start making this more like Preset and other multi-object panels
-    juce::OwnedArray<class OldBindingSet> bindingSets;
-    juce::OwnedArray<class OldBindingSet> revertBindingSets;
+    juce::OwnedArray<class BindingSet> bindingSets;
+    juce::OwnedArray<class BindingSet> revertBindingSets;
     int selectedBindingSet = 0;
 
     void loadBindingSet(int index);
     void saveBindingSet(int index);
-    void saveBindingSet(class OldBindingSet* dest);
+    void saveBindingSet(class BindingSet* dest);
 
 
 };

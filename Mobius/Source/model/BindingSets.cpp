@@ -51,6 +51,26 @@ juce::OwnedArray<BindingSet>& BindingSets::getSets()
     return sets;
 }
 
+/**
+ * The base set by convention is the first one.
+ */
+BindingSet* BindingSets::getBase()
+{
+    BindingSet* base = nullptr;
+    if (sets.size() == 0) {
+        base = new BindingSet();
+        base->name = "Base";
+        sets.add(base);
+    }
+    else {
+        base = sets[0];
+        // older upgraded sets may have a missing name
+        if (base->name.length() == 0)
+          base->name = "Base";
+    }
+    return base;
+}
+
 BindingSet* BindingSets::getByOrdinal(int number)
 {
     BindingSet* found = nullptr;

@@ -70,13 +70,13 @@ class Provider
     // temporary until we work through how bindings are saved
     // and whether MCL should be dealing with Provider instead
     // of Supervisor
-    virtual void mclMobiusConfigUpdated() = 0;
+    virtual void mclBindingsUpdated() = 0;
     virtual void mclSessionUpdated() = 0;
 
     // controlled access to MobiusConfig
     virtual class MobiusConfig* getOldMobiusConfig() = 0;
-    virtual class OldBindingSet* getBindingSets() = 0;
     virtual class ParameterSets* getParameterSets() = 0;
+    virtual class BindingSets* getBindingSets() = 0;
     virtual void updateParameterSets() = 0;
     virtual class GroupDefinitions* getGroupDefinitions() = 0;
     

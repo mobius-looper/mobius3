@@ -11,11 +11,7 @@
 #include "../../util/Trace.h"
 #include "../../util/List.h"
 
-#include "../../model/old/ActionType.h"
-#include "../../model/old/MobiusConfig.h"
-#include "../../model/old/Preset.h"
-#include "../../model/old/Setup.h"
-#include "../../model/old/OldBinding.h"
+#include "../../model/Binding.h"
 #include "../../model/Symbol.h"
 #include "../../model/ParameterProperties.h"
 #include "../../model/FunctionProperties.h"
@@ -294,17 +290,15 @@ bool OldBindingTargetSelector::isValidTarget(juce::String name)
 
 /**
  * Capture the selected target into a binding.
- * This is much simpler now that all we have to do
- * is find and store the Symbol.
  */
-void OldBindingTargetSelector::capture(OldBinding* b)
+void OldBindingTargetSelector::capture(Binding* b)
 {
     juce::String name = getSelectedTarget();
     if (name.length() == 0) {
         // nothing selected, it keeps whatever it had
     }
     else {
-        b->setSymbolName(name.toUTF8());
+        b->symbol = name;
     }
 }
 
@@ -315,9 +309,9 @@ void OldBindingTargetSelector::capture(OldBinding* b)
  * todo: If this was hidden or unresolved, we may not have
  * anything to show and should display a message.
  */
-void OldBindingTargetSelector::select(OldBinding* b)
+void OldBindingTargetSelector::select(Binding* b)
 {
-    showSelectedTarget(b->getSymbolName());
+    showSelectedTarget(b->symbol);
 }
 
 /****************************************************************************/

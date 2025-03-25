@@ -77,8 +77,21 @@ int SystemConfig::getInt(juce::String name)
     return values.getInt(name);
 }
 
+bool SystemConfig::hasBindings()
+{
+    // used by the Upgrader to see if there are any bindings without
+    // bootstrapping an empty container
+    return (bindings != nullptr);
+}
+
 BindingSets* SystemConfig::getBindings()
 {
+    // it's convenient not to have to make callers test for nullptr
+    // which almost never happens, bootstrap an empty one in this
+    // fringe case
+    if (bindings == nullptr)
+      bindings.reset(new BindingSets());
+    
     return bindings.get();
 }
 
@@ -89,6 +102,7 @@ void SystemConfig::setBindings(BindingSets* sets)
 
 GroupDefinitions* SystemConfig::getGroups()
 {
+    // should do the same thing here as we do for BindingSets
     return groups.get();
 }
 

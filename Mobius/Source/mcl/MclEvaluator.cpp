@@ -7,9 +7,10 @@
 #include "../model/ParameterSets.h"
 #include "../model/ValueSet.h"
 #include "../model/Session.h"
-#include "../model/old/MobiusConfig.h"
-#include "../model/old/Structure.h"
-#include "../model/old/OldBinding.h"
+#include "../model/SystemConfig.h"
+#include "../model/BindingSets.h"
+#include "../model/BindingSet.h"
+#include "../model/Binding.h"
 #include "../Provider.h"
 #include "../Producer.h"
 
@@ -452,32 +453,32 @@ void MclEvaluator::evalTrackType(MclSection* section, Session* session, Session:
  */
 void MclEvaluator::evalBinding(MclSection* section)
 {
-    MobiusConfig* config = provider->getOldMobiusConfig();
-    OldBindingSet* sets = config->getBindingSets();
+    SystemConfig* scon = provider->getSystemConfig();
+    BindingSets* container = scon->getBindings();
 
     // fuck it, we'll do it live
-    OldBindingSet* target = nullptr;
-    OldBindingSet* existing = (OldBindingSet*)Structure::find(sets, section->name.toUTF8());
+    BindingSet* target = nullptr;
+    BindingSet* existing = container->find(section->name);
     if (existing == nullptr) {
         // so there isn't a way to do rename from MCL which should be added at some point
-        target = new OldBindingSet();
-        target->setName(section->name.toUTF8());
-        target->setOverlay(section->bindingOverlay);
-        config->addBindingSet(target);
+        target = new BindingSet();
+        target->name = section->name;
+        target->overlay = section->bindingOverlay;
+        container->add(target);
     }
     else {
         target = existing;
         if (section->bindingOverlay)
-          target->setOverlay(true);
+          target->overlay = true;
         else if (section->bindingNoOverlay)
-          target->setOverlay(false);
+          target->overlay = false;
     }
     
     while (section->bindings.size() > 0) {
-        OldBinding* neu = section->bindings.removeAndReturn(0);
+        Binding* neu = section->bindings.removeAndReturn(0);
 
-        OldBinding* matching = nullptr;
-        for (OldBinding* b = target->getBindings() ; b != nullptr ; b = b->getNext()) {
+        Binding* matching = nullptr;
+        for (auto b : target->getBindings()) {
             if (b->trigger == neu->trigger &&
                 b->triggerValue == neu->triggerValue &&
                 b->midiChannel == neu->midiChannel &&
@@ -491,34 +492,23 @@ void MclEvaluator::evalBinding(MclSection* section)
         // without replacing the entire BindingSet, would be nice
         
         if (matching != nullptr) {
-            matching->setSymbolName(neu->getSymbolName());
-            matching->setArguments(neu->getArguments());
-            matching->setScope(neu->getScope());
+            matching->symbol = neu->symbol;
+            matching->arguments = neu->arguments;
+            matching->scope = neu->scope;
             delete neu;
             // I guess technically we should see if there were in fact any changes
             // and bump the ignore count
             section->modifications++;
         }
         else {
-            // insert it at the beginning of the list or append it
-            // if you insert at the beginning this on BindingSet::setBindings NOT
-            // to delete the existing list, which it does but is inconsistent with the way most
-            // of the old list setters work
-            bool append = true;
-            if (!append) {
-                neu->setNext(target->getBindings());
-                target->setBindings(neu);
-            }
-            else {
-                target->addBinding(neu);
-            }
+            target->add(neu);
             section->additions++;
         }
     }
 
     // bindingEditorSave requires a new list and will delete the old one
     // need to get this shit out of MobiusConfig
-    provider->mclMobiusConfigUpdated();
+    provider->mclBindingsUpdated();
 }
 
 /****************************************************************************/

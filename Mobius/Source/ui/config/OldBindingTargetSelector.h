@@ -10,8 +10,8 @@
 #include "../common/SimpleListBox.h"
 
 class OldBindingTargetSelector : public SimpleTabPanel,
-                              public SimpleListBox::Listener,
-                              public juce::DragAndDropContainer
+                                 public SimpleListBox::Listener,
+                                 public juce::DragAndDropContainer
 {
   public:
 
@@ -29,8 +29,8 @@ class OldBindingTargetSelector : public SimpleTabPanel,
     }
 
     void load();
-    void capture(class OldBinding* b);
-    void select(class OldBinding* b);
+    void capture(class Binding* b);
+    void select(class Binding* b);
     void reset();
     
     bool isTargetSelected();

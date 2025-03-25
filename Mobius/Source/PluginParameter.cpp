@@ -5,7 +5,7 @@
 #include "util/Util.h"
 #include "model/Symbol.h"
 #include "model/ParameterProperties.h"
-#include "model/old/OldBinding.h"
+#include "model/Binding.h"
 #include "model/VariableDefinition.h"
 
 #include "PluginParameter.h"
@@ -19,13 +19,13 @@ PluginParameter::~PluginParameter()
     }
 }
 
-PluginParameter::PluginParameter(Symbol* s, OldBinding* binding)
+PluginParameter::PluginParameter(Symbol* s, Binding* binding)
 {
     symbol = s;
     
     // capture binding args
     // todo: get the complex arg string too
-    setScope(binding->getScope());
+    setScope(binding->scope);
 
     ParameterProperties* props = s->parameterProperties.get();
     
@@ -174,9 +174,11 @@ const char* PluginParameter::getScope()
     return scope;
 }
 
-void PluginParameter::setScope(const char* s)
+// we've been representing this as a char array for the kernel, though
+// juce::String should be fine since it is never extended
+void PluginParameter::setScope(juce::String s)
 {
-    CopyString(s, scope, sizeof(scope));
+    CopyString(s.toUTF8(), scope, sizeof(scope));
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -29,8 +29,8 @@ class TargetSelectorWrapper : public juce::Component, OldBindingTargetSelector::
     void setListener(Listener* l);
     void load();
     void reset();
-    void select(class OldBinding* b);
-    void capture(class OldBinding* b);
+    void select(class Binding* b);
+    void capture(class Binding* b);
     bool isTargetSelected();
 
     void resized() override;
