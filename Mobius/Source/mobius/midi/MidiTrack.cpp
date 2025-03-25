@@ -254,6 +254,12 @@ MslTrack* MidiTrack::getMslTrack()
     return this;
 }
 
+int MidiTrack::scheduleFollowerEvent(QuantizeMode q, int followerTrack, int eventId) 
+{
+    Trace(1, "MidiTrack::scheduleFollowerEvent not implemented");
+    return 0;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MslTrack

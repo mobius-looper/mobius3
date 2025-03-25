@@ -47,6 +47,7 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     void syncEvent(class SyncEvent* e) override;
     int getSyncLength() override;
     int getSyncLocation() override;
+    int scheduleFollowerEvent(QuantizeMode q, int follower, int eventId) override;
     
     //
     // MslTrack

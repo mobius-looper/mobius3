@@ -244,10 +244,7 @@ void LogicalTrack::midiEvent(MidiEvent* e)
 
 void LogicalTrack::trackNotification(NotificationId notification, TrackProperties& props)
 {
-    // only MIDI tracks support notifications
-    if (trackType == Session::TypeMidi) {
-        track->trackNotification(notification, props);
-    }
+    track->trackNotification(notification, props);
 }
 
 /**
@@ -262,6 +259,11 @@ bool LogicalTrack::scheduleWait(MslWait* w)
     // todo: create an EventWait with this wait object
     // mark it pending, have beginAudioBlock look for it
     return false;
+}
+
+int LogicalTrack::scheduleFollowerEvent(QuantizeMode q, int followerTrack, int eventId)
+{
+    return track->scheduleFollowerEvent(q, followerTrack, eventId);
 }
 
 void LogicalTrack::dump(StructureDumper& d)

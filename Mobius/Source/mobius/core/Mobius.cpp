@@ -2227,6 +2227,13 @@ void Mobius::followerEvent(Loop* l, Event* e)
     
 }
 
+void Mobius::trackNotification(NotificationId id, TrackProperties& props)
+{
+    (void)id;
+    (void)props;
+    Trace(1, "Mobius::trackNotification not implemented");
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Script Parameter Access

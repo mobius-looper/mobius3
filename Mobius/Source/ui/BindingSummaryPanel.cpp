@@ -3,8 +3,10 @@
 
 #include "../util/Util.h"
 #include "../util/MidiUtil.h"
-#include "../model/old/MobiusConfig.h"
-#include "../model/old/OldBinding.h"
+#include "../model/SystemConfig.h"
+#include "../model/BindingSets.h"
+#include "../model/BindingSet.h"
+#include "../model/Binding.h"
 #include "../model/UIConfig.h"
 #include "../Supervisor.h"
 #include "JuceUtil.h"
@@ -26,41 +28,43 @@ void BindingSummary::prepare(bool doMidi)
 {
     midi = doMidi;
     things.clear();
-    MobiusConfig* config = supervisor->getOldMobiusConfig();
+    SystemConfig* scon = supervisor->getSystemConfig();
     UIConfig* uiconfig = supervisor->getUIConfig();
-    OldBindingSet* bindingSets = config->getBindingSets();
+    BindingSets* bindingSets = scon->getBindings();
 
-    // the first one is always added
-    addBindings(bindingSets);
+    if (bindingSets != nullptr) {
+        juce::OwnedArray<BindingSet>& sets = bindingSets->getSets();
+        // the first one is always added
+        if (sets.size() > 0) {
+            addBindings(sets[0]);
 
-    // the rest are added if they are active, this only applies to MIDI
-    // it would be more reliable if this were driven from what is actually
-    // installed in Binderator, which may filter conflicts or do other
-    // things
-    bindingSets = bindingSets->getNextBindingSet();
-    while (bindingSets != nullptr) {
-        if (uiconfig->isActiveBindingSet(juce::String(bindingSets->getName())))
-          addBindings(bindingSets);
-        bindingSets = bindingSets->getNextBindingSet();
+            // the rest are added if they are active, this only applies to MIDI
+            // it would be more reliable if this were driven from what is actually
+            // installed in Binderator, which may filter conflicts or do other
+            // things
+            for (int i = 1 ; i < sets.size() ; i++) {
+                BindingSet* set = sets[i];
+                if (uiconfig->isActiveBindingSet(set->name))
+                  addBindings(set);
+            }
+        }
     }
-    
     table.updateContent();
 }
 
-void BindingSummary::addBindings(OldBindingSet* set)
+void BindingSummary::addBindings(BindingSet* set)
 {
-    OldBinding* bindings = set->getBindings();
-    while (bindings != nullptr) {
-        if ((midi && bindings->isMidi()) ||
-            (!midi && bindings->trigger == TriggerKey)) {
+    for (auto binding : set->getBindings()) {
+
+        if ((midi && binding->isMidi()) ||
+            (!midi && binding->trigger == Binding::TriggerKey)) {
 
             // just for this panel, set the source binding set
             // name so they can see where it came from
-            bindings->setSource(set->getName());
+            binding->source = set->name;
 
-            things.add(bindings);
+            things.add(binding);
         }
-        bindings = bindings->getNext();
     }
 }
 
@@ -144,7 +148,7 @@ juce::String BindingSummary::getCellText(int row, int columnId)
 {
     juce::String cell;
 
-    OldBinding* b = things[row];
+    Binding* b = things[row];
     if (columnId == BindingSummaryTriggerColumn) {
         if (midi) {
             cell = renderMidiTrigger(b);
@@ -155,28 +159,28 @@ juce::String BindingSummary::getCellText(int row, int columnId)
         }
     }
     else if (columnId == BindingSummaryTargetColumn) {
-        cell = juce::String(b->getSymbolName());
+        cell = b->symbol;
     }
     else if (columnId == BindingSummaryScopeColumn) {
-        cell = juce::String(b->getScope());
+        cell = b->scope;
     }
     else if (columnId == BindingSummaryArgumentsColumn) {
-        cell = juce::String(b->getArguments());
+        cell = b->arguments;
     }
     else if (columnId == BindingSummarySourceColumn) {
-        cell = juce::String(b->getSource());
+        cell = b->source;
     }
     
     return cell;
 }
 
 // need a MidiUtil for this
-juce::String BindingSummary::renderMidiTrigger(OldBinding* b)
+juce::String BindingSummary::renderMidiTrigger(Binding* b)
 {
     juce::String text;
-    Trigger* trigger = b->trigger;
+    Binding::Trigger trigger = b->trigger;
     
-    if (trigger == TriggerNote) {
+    if (trigger == Binding::TriggerNote) {
         // old utility
         char buf[32];
         MidiNoteName(b->triggerValue, buf);
@@ -186,23 +190,16 @@ juce::String BindingSummary::renderMidiTrigger(OldBinding* b)
         text += buf;
         // not interested in velocity
     }
-    else if (trigger == TriggerProgram) {
+    else if (trigger == Binding::TriggerProgram) {
         text += juce::String(b->midiChannel);
         text += ":";
         text += "Pgm ";
         text += juce::String(b->triggerValue);
     }
-    else if (trigger == TriggerControl) {
+    else if (trigger == Binding::TriggerControl) {
         text += juce::String(b->midiChannel);
         text += ":";
         text += "CC ";
-        text += juce::String(b->triggerValue);
-    }
-    else if (trigger == TriggerPitch) {
-        // did anyone really use this?
-        text += juce::String(b->midiChannel);
-        text += ":";
-        text += "Pitch ";
         text += juce::String(b->triggerValue);
     }
     return text;

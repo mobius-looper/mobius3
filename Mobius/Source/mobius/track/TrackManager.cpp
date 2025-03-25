@@ -497,9 +497,13 @@ void TrackManager::writeDump(juce::String file, juce::String content)
  * Only need to support following of audio tracks right now so can go
  * directly to Mobius.
  */
-int TrackManager::scheduleFollowerEvent(int audioTrack, QuantizeMode q, int followerTrack, int eventId)
+int TrackManager::scheduleFollowerEvent(int leaderTrack, QuantizeMode q, int followerTrack, int eventId)
 {
-    return audioEngine->scheduleFollowerEvent(audioTrack, q, followerTrack, eventId);
+    int eventFrame = -1;
+    LogicalTrack* lt = getLogicalTrack(leaderTrack);
+    if (lt != nullptr)
+      eventFrame = lt->scheduleFollowerEvent(q, followerTrack, eventId);
+    return eventFrame;
 }
 
 //////////////////////////////////////////////////////////////////////

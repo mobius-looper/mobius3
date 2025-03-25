@@ -256,7 +256,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void menuLoadLoop();
     void menuSaveLoop();
     void menuQuickSave();
-    void menuActivateBindings(class OldBindingSet* set);
+    void menuActivateBindings(class BindingSet* set);
     void menuLoadMidi(bool analyze);
     void menuLoadSession(int ordinal);
     

@@ -126,8 +126,7 @@ void MobiusLooperTrack::getTrackProperties(TrackProperties& props)
 
 void MobiusLooperTrack::trackNotification(NotificationId notification, TrackProperties& props)
 {
-    (void)notification;
-    (void)props;
+    mobius->trackNotification(notification, props);
 }
 
 void MobiusLooperTrack::refreshState(TrackState* state)
@@ -173,6 +172,12 @@ int MobiusLooperTrack::getSyncLength()
 int MobiusLooperTrack::getSyncLocation()
 {
     return track->getSyncLocation();
+}
+
+int MobiusLooperTrack::scheduleFollowerEvent(QuantizeMode q, int follower, int eventId)
+{
+    // should rewrite this to go directy to Track
+    return mobius->scheduleFollowerEvent(track->getDisplayNumber(), q, follower, eventId);
 }
 
 //////////////////////////////////////////////////////////////////////

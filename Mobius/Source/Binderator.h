@@ -64,17 +64,17 @@ class Binderator
     /**
      * Construct mapping tables for both keyboard and MIDI events.
      */
-    void configure(class MobiusConfig* mc, class UIConfig* uc, class SymbolTable* st);
+    void configure(class SystemConfig* mc, class UIConfig* uc, class SymbolTable* st);
     
     /**
      * Construct mapping tables for only MIDI events.
      */
-    void configureMidi(class MobiusConfig* mc, class UIConfig* uc, class SymbolTable* st);
+    void configureMidi(class SystemConfig* mc, class UIConfig* uc, class SymbolTable* st);
 
     /**
      * Construct mapping tables for only keyboard events.
      */
-    void configureKeyboard(class MobiusConfig* mc, class UIConfig* uc, class SymbolTable* st);
+    void configureKeyboard(class SystemConfig* mc, class UIConfig* uc, class SymbolTable* st);
 
     /**
      * Map a MidiMessage to an action if one is defined and relevant.
@@ -100,12 +100,12 @@ class Binderator
     UIAction* getAction(juce::OwnedArray<juce::OwnedArray<TableEntry>>* table,
                         int hashKey, unsigned int qualifier, bool release, bool wildZero);
 
-    void installKeyboardActions(class MobiusConfig* mconfig, class UIConfig* uconfig,
+    void installKeyboardActions(class SystemConfig* sconfig, class UIConfig* uconfig,
                                 class SymbolTable* symbols);
-    void installMidiActions(class MobiusConfig* mconfig, class UIConfig* uconfig,
+    void installMidiActions(class SystemConfig* sconfig, class UIConfig* uconfig,
                             class SymbolTable* symbols);
-    void installMidiActions(class SymbolTable* symbols, class OldBindingSet* set);
-    class UIAction* buildAction(class SymbolTable* symbols, class OldBinding* b);
+    void installMidiActions(class SymbolTable* symbols, class BindingSet* set);
+    class UIAction* buildAction(class SymbolTable* symbols, class Binding* b);
     
     class UIAction* getKeyAction(int code, int modifiers, bool release);
     class UIAction* getMidiAction(const class juce::MidiMessage& msg);
@@ -125,8 +125,8 @@ class ApplicationBinderator : public KeyTracker::Listener,
     ApplicationBinderator(class Supervisor* super);
     ~ApplicationBinderator();
 
-    void configure(class MobiusConfig* mc, class UIConfig* uc, class SymbolTable* st);
-    void configureKeyboard(class MobiusConfig* mc, class UIConfig* uc, class SymbolTable* st);
+    void configure(class SystemConfig* sc, class UIConfig* uc, class SymbolTable* st);
+    void configureKeyboard(class SystemConfig* sc, class UIConfig* uc, class SymbolTable* st);
     void start();
     void stop();
     

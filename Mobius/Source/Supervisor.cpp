@@ -711,7 +711,7 @@ void Supervisor::getOverlayNames(juce::StringArray& names)
  */
 void Supervisor::configureBindings()
 {
-    binderator.configure(getOldMobiusConfig(), getUIConfig(), &symbols);
+    binderator.configure(getSystemConfig(), getUIConfig(), &symbols);
     binderator.start();
 
     // also build one and send it down to the kernel
@@ -719,7 +719,7 @@ void Supervisor::configureBindings()
         Binderator* coreBinderator = new Binderator();
         // this now requires UIConfig and pulls it from Supervisor
         // so we don't need to be passing in config objects any more
-        coreBinderator->configureMidi(getOldMobiusConfig(), getUIConfig(), &symbols);
+        coreBinderator->configureMidi(getSystemConfig(), getUIConfig(), &symbols);
 
         mobius->installBindings(coreBinderator);
     }
@@ -2021,12 +2021,12 @@ void Supervisor::mobiusGlobalReset()
  * Menus don't have state, we set the checkmark if was in the UIConfig
  * and this notification acts as a toggle.
  */
-void Supervisor::menuActivateBindings(OldBindingSet* set)
+void Supervisor::menuActivateBindings(BindingSet* set)
 {
     UIConfig* uiconfig = getUIConfig();
-    juce::String setname = juce::String(set->getName());
+    juce::String setname = set->name;
     
-    if (set->isOverlay()) {
+    if (set->overlay) {
         if (uiconfig->activeOverlays.contains(setname))
           uiconfig->activeOverlays.removeString(setname);
         else

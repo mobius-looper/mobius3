@@ -53,6 +53,13 @@ void Binding::toXml(juce::XmlElement* parent)
     parent->addChildElement(root);
 }
 
+bool Binding::isMidi()
+{
+	return (trigger == Binding::TriggerNote ||
+			trigger == Binding::TriggerProgram ||
+			trigger == Binding::TriggerControl);
+}
+    
 Binding::Trigger Binding::triggerFromString(juce::String s)
 {
     Trigger t = TriggerUnknown;

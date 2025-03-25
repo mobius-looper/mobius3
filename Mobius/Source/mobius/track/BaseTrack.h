@@ -74,6 +74,9 @@ class BaseTrack
     virtual void syncEvent(class SyncEvent* e) = 0;
     virtual int getSyncLength() = 0;
     virtual int getSyncLocation() = 0;
+
+    // and we can watch what it does
+    virtual int scheduleFollowerEvent(QuantizeMode q, int follower, int eventId) = 0;
     
   protected:
 

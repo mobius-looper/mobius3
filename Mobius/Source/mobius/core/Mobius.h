@@ -15,6 +15,7 @@
 #include "../../model/ParameterConstants.h"
 #include "../../model/SymbolId.h"
 #include "../track/TrackProperties.h"
+#include "../Notification.h"
 #include "Loader.h"
 #include "MobiusMslHandler.h"
 
@@ -379,6 +380,8 @@ class Mobius
 
     int scheduleFollowerEvent(int trackNumber, QuantizeMode quantPoint,
                               int followerNumber, int eventId);
+
+    void trackNotification(NotificationId id, TrackProperties& props);
     
     void followerEvent(class Loop* l, class Event* e);
 

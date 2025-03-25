@@ -62,6 +62,7 @@ class LogicalTrack
 
     void trackNotification(NotificationId notification, TrackProperties& props);
     bool scheduleWait(class MslWait* wait);
+    int scheduleFollowerEvent(QuantizeMode q, int followerTrack, int eventId);
 
     void refreshState(class TrackState* state);
     void refreshPriorityState(class PriorityState* state);

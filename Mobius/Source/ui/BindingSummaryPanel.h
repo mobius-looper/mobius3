@@ -27,14 +27,14 @@ class BindingSummary : public juce::Component, public juce::TableListBoxModel
 
     class Supervisor* supervisor = nullptr;
     bool midi = false;
-    juce::Array<class OldBinding*> things;
+    juce::Array<class Binding*> things;
     juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};
 
-    void addBindings(class OldBindingSet* set);
+    void addBindings(class BindingSet* set);
     void initTable();
     void initColumns();
     juce::String getCellText(int row, int columnId);
-    juce::String renderMidiTrigger(class OldBinding* b);
+    juce::String renderMidiTrigger(class Binding* b);
 };
 
 class MidiSummaryPanel : public BasePanel

@@ -27,8 +27,7 @@ class Binding
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);
     void toXml(juce::XmlElement* parent);
 
-    void setSource(juce::String name);
-    juce::String getSource();
+    bool isMidi();
 
     // trigger
     Trigger trigger = TriggerUnknown;

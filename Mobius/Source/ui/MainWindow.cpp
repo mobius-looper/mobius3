@@ -15,8 +15,9 @@
 #include "../model/UIConfig.h"
 #include "../model/UIAction.h"
 #include "../model/Symbol.h"
-#include "../model/old/MobiusConfig.h"
-#include "../model/old/OldBinding.h"
+#include "../model/SystemConfig.h"
+#include "../model/BindingSets.h"
+#include "../model/BindingSet.h"
 
 #include "../Supervisor.h"
 #include "../Symbolizer.h"
@@ -206,20 +207,22 @@ void MainWindow::mainMenuSelection(int id)
         // map this back into a particular BindingSet, sure would be nice to just
         // get the item name here
         // MainMenu left a kludgey transient menu id on the object
-        MobiusConfig* mconfig = supervisor->getOldMobiusConfig();
-        OldBindingSet* sets = mconfig->getBindingSets();
-        OldBindingSet* selected = nullptr;
-        for (OldBindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
-            if (set->transientMenuId == id) {
-                selected = set;
-                break;
+        SystemConfig* scon = supervisor->getSystemConfig();
+        BindingSets* sets = scon->getBindings();
+        if (sets != nullptr) {
+            BindingSet* selected = nullptr;
+            for (auto set : sets->getSets()) {
+                if (set->transientMenuId == id) {
+                    selected = set;
+                    break;
+                }
             }
+            // now we've worked our way back to a BindingSet, punt to Supervisor
+            if (selected == nullptr)
+              Trace(1, "MainWindow: BindingSet resolution failed, and so have you");
+            else
+              supervisor->menuActivateBindings(selected);
         }
-        // now we've worked our way back to a BindingSet, punt to Supervisor
-        if (selected == nullptr)
-          Trace(1, "MainWindow: BindingSet resolution failed, and so have you");
-        else
-          supervisor->menuActivateBindings(selected);
     }
     else {
         switch (id) {

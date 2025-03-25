@@ -68,8 +68,10 @@
 
 #include "util/Trace.h"
 #include "util/Util.h"
-#include "model/old/MobiusConfig.h"
-#include "model/old/OldBinding.h"
+#include "model/SystemConfig.h"
+#include "model/BindingSets.h"
+#include "model/BindingSet.h"
+#include "model/Binding.h"
 #include "model/Symbol.h"
 #include "model/UIConfig.h"
 #include "model/UIAction.h"
@@ -109,24 +111,25 @@ Binderator::~Binderator()
 /**
  * Build out binding tables for both keyboard and MIDI events.
  */
-void Binderator::configure(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
+void Binderator::configure(SystemConfig* sconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
-    installKeyboardActions(mconfig, uconfig, symbols);
-    installMidiActions(mconfig, uconfig, symbols);
+    installKeyboardActions(sconfig, uconfig, symbols);
+    installMidiActions(sconfig, uconfig, symbols);
 
-    controllerThreshold = mconfig->mControllerActionThreshold;
-    if (controllerThreshold == 0)
-      controllerThreshold = 127;
+    // skip this for now
+    //controllerThreshold = mconfig->mControllerActionThreshold;
+    //if (controllerThreshold == 0)
+    controllerThreshold = 127;
 }
 
-void Binderator::configureKeyboard(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
+void Binderator::configureKeyboard(SystemConfig* sconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
-    installKeyboardActions(mconfig, uconfig, symbols);
+    installKeyboardActions(sconfig, uconfig, symbols);
 }
 
-void Binderator::configureMidi(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
+void Binderator::configureMidi(SystemConfig* sconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
-    installMidiActions(mconfig, uconfig, symbols);
+    installMidiActions(sconfig, uconfig, symbols);
 }
 
 /**
@@ -347,33 +350,36 @@ unsigned int Binderator::getMidiQualifier(const juce::MidiMessage& msg)
  *
  * We don't support swapping BindingSets yet, just take the default set.
  */
-void Binderator::installKeyboardActions(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
+void Binderator::installKeyboardActions(SystemConfig* sconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
     (void)uconfig;
     prepareArray(&keyActions);
-    
-    OldBindingSet* baseBindings = mconfig->getBindingSets();
-    if (baseBindings != nullptr) {
-        OldBinding* binding = baseBindings->getBindings();
-        while (binding != nullptr) {
-            if (binding->trigger == TriggerKey) {
-                int code = binding->triggerValue;
-                // could check the upper range too
-                if (code <= 0) {
-                    Trace(1, "Binderator: Ignoring Binding for %s with invalid value %ld\n",
-                          binding->getSymbolName(), (long)code);
-                }
-                else {
-                    // code is the full qualifier returned by getKeyQualifier
-                    // mask off the bottom byte for the array index
-                    UIAction* action = buildAction(symbols, binding);
-                    if (action != nullptr) {
-                        int index = code & 0xFF;
-                        addEntry(&keyActions, index, code, binding->release, action);
+
+    BindingSets* container = sconfig->getBindings();
+    if (container != nullptr) {
+        juce::OwnedArray<BindingSet>& sets = container->getSets();
+        if (sets.size() > 0) {
+            BindingSet* baseBindings = sets[0];
+            for (auto binding : baseBindings->getBindings()) {
+
+                if (binding->trigger == Binding::TriggerKey) {
+                    int code = binding->triggerValue;
+                    // could check the upper range too
+                    if (code <= 0) {
+                        Trace(1, "Binderator: Ignoring Binding for %s with invalid value %ld\n",
+                              binding->symbol.toUTF8(), code);
+                    }
+                    else {
+                        // code is the full qualifier returned by getKeyQualifier
+                        // mask off the bottom byte for the array index
+                        UIAction* action = buildAction(symbols, binding);
+                        if (action != nullptr) {
+                            int index = code & 0xFF;
+                            addEntry(&keyActions, index, code, binding->release, action);
+                        }
                     }
                 }
             }
-            binding = binding->getNext();
         }
     }
 }
@@ -393,45 +399,47 @@ void Binderator::installKeyboardActions(MobiusConfig* mconfig, UIConfig* uconfig
  *    ignore - install only bindings for a specific channel (or all of them?)
  *       and ignore the trigger channel, matching only on the note number
  */
-void Binderator::installMidiActions(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
+void Binderator::installMidiActions(SystemConfig* sconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
     prepareArray(&noteActions);
     prepareArray(&programActions);
     prepareArray(&controlActions);
-
-    // always add base bindings
-    OldBindingSet* baseBindings = mconfig->getBindingSets();
-    if (baseBindings != nullptr) {
-        installMidiActions(symbols, baseBindings);
-        // plus any active overlays
-        OldBindingSet* overlay = baseBindings->getNextBindingSet();
-        while (overlay != nullptr) {
-            if (uconfig->isActiveBindingSet(juce::String(overlay->getName()))) 
-              installMidiActions(symbols, overlay);
-            overlay = overlay->getNextBindingSet();
+    
+    BindingSets* container = sconfig->getBindings();
+    if (container != nullptr) {
+        juce::OwnedArray<BindingSet>& sets = container->getSets();
+        if (sets.size() > 0) {
+            BindingSet* baseBindings = sets[0];
+            installMidiActions(symbols, baseBindings);
+    
+            // plus any active overlays
+            for (int i = 1 ; i < sets.size() ; i++) {
+                BindingSet* overlay = sets[i];
+                if (uconfig->isActiveBindingSet(juce::String(overlay->name))) 
+                  installMidiActions(symbols, overlay);
+            }
         }
     }
 }
 
-void Binderator::installMidiActions(SymbolTable* symbols, OldBindingSet* set)
+void Binderator::installMidiActions(SymbolTable* symbols, BindingSet* set)
 {
-    OldBinding* binding = set->getBindings();
-    while (binding != nullptr) {
+    for (auto binding : set->getBindings()) {
 
         juce::OwnedArray<juce::OwnedArray<TableEntry>>* dest = nullptr;
-        Trigger* trigger = binding->trigger;
-        if (trigger == TriggerNote)
+        Binding::Trigger trigger = binding->trigger;
+        if (trigger == Binding::TriggerNote)
           dest = &noteActions;
-        else if (trigger == TriggerProgram)
+        else if (trigger == Binding::TriggerProgram)
           dest = &programActions;
-        else if (trigger == TriggerControl)
+        else if (trigger == Binding::TriggerControl)
           dest = &controlActions;
 
         if (dest != nullptr) {
 
             int index = binding->triggerValue;
             if (index < 0 ||  index >= BinderatorMaxIndex) {
-                Trace(1, "Binderator: Invalid MIDI note %s\n", binding->getSymbolName());
+                Trace(1, "Binderator: Invalid MIDI note %s\n", binding->symbol.toUTF8());
             }
             else {
                 // todo: here is where we could be sensitive to a global option
@@ -447,7 +455,6 @@ void Binderator::installMidiActions(SymbolTable* symbols, OldBindingSet* set)
                 }
             }
         }
-        binding = binding->getNext();
     }
 }
 
@@ -520,16 +527,15 @@ UIAction* Binderator::getMidiAction(const juce::MidiMessage& message)
  * access to an ActionPool.  Okay since the actions will be allocated
  * once and resused for each trigger.
  */
-UIAction* Binderator::buildAction(SymbolTable* symbols, OldBinding* b)
+UIAction* Binderator::buildAction(SymbolTable* symbols, Binding* b)
 {
     UIAction* action = nullptr;
 
-    const char* name = b->getSymbolName();
-    if (name == nullptr) {
-        Trace(1, "Binderator: Ignoring Binding with no name\n");
+    if (b->symbol.length() == 0) {
+        Trace(1, "Binderator: Ignoring Binding with no symbol name");
     }
     else {
-        Symbol* symbol =  symbols->intern(name);
+        Symbol* symbol =  symbols->intern(b->symbol);
         if (!looksResolved(symbol)) {
             Trace(1, "Binderator: Binding to unresolved symbol %s\n",
                   symbol->getName());
@@ -539,16 +545,16 @@ UIAction* Binderator::buildAction(SymbolTable* symbols, OldBinding* b)
         action = new UIAction();
         action->symbol = symbol;
 
-        action->setScope(b->getScope());
+        action->setScope(b->scope.toUTF8());
         
         // if the binding has a simple numeric argument, promote that
         // to the action value
-        const char* args = b->getArguments();
+        const char* args = b->arguments.toUTF8();
         if (args != nullptr && IsInteger(args))
           action->value = ToInt(args);
 
         // also copy the entire string for a few things that pass names
-        CopyString(b->getArguments(), action->arguments, sizeof(action->arguments));
+        CopyString(args, action->arguments, sizeof(action->arguments));
 
         // new hack to disable quantization, ideally we would have any parameter
         // override here but only noQuantize is in the UIAction model
@@ -562,12 +568,8 @@ UIAction* Binderator::buildAction(SymbolTable* symbols, OldBinding* b)
         // to be sustainable it must have a unique id
         // so don't just blindly follow TriggerMode
 
-        Trigger* trigger = b->trigger;
-        TriggerMode* mode = b->triggerMode;
-        // note: ignore this, was having an uninitialized pointer problem
-        // but even if it was set, need to work out whether we want this
-        // at all and if it should be something else
-        mode = nullptr;
+        Binding::Trigger trigger = b->trigger;
+        // todo: for a time tried to support trigger "modes"
         int sustainId = -1;
 
         if (b->release) {
@@ -576,28 +578,28 @@ UIAction* Binderator::buildAction(SymbolTable* symbols, OldBinding* b)
             // sustain options so those need to be corrected when this one is 
             // added to the entry table
         }
-        else if (trigger == TriggerKey) {
+        else if (trigger == Binding::TriggerKey) {
             // these are implicitly sustainable, but I suppose you might
             // want to turn that OFF in some cases, so look at the mode if specified
             // in practice, this would be done by setting mode to Once
-            if (mode == nullptr || mode == TriggerModeMomentary)
-              sustainId = UIActionSustainBaseKey + b->triggerValue;
+            // if (mode == nullptr || mode == TriggerModeMomentary)
+            sustainId = UIActionSustainBaseKey + b->triggerValue;
         }
-        else if (trigger == TriggerNote) {
-            if (mode == nullptr || mode == TriggerModeMomentary)
-              sustainId = UIActionSustainBaseNote + b->triggerValue;
+        else if (trigger == Binding::TriggerNote) {
+            // if (mode == nullptr || mode == TriggerModeMomentary)
+            sustainId = UIActionSustainBaseNote + b->triggerValue;
         }
-        else if (trigger == TriggerControl) {
+        else if (trigger == Binding::TriggerControl) {
             // CC's can behave as sustainable if you adopt a value threshold
             // e.g. 0 for off and 127 for on or >64 for on, etc.
             // update: I used to require TriggerModeMomentary but setting that
             // is unreliable, and broke sus/long for almost everyone
             // TriggerMode isn't baked yet and you can't set it in the binding
             // windows so always assume sustainable
-            if (mode == nullptr || mode == TriggerModeMomentary)
-              sustainId = UIActionSustainBaseControl + b->triggerValue;
+            // if (mode == nullptr || mode == TriggerModeMomentary)
+            sustainId = UIActionSustainBaseControl + b->triggerValue;
         }
-        else if (trigger == TriggerHost) {
+        else if (trigger == Binding::TriggerHost) {
             // not sure how we're going to do this, they're similar
             // to TriggerControl
             // wait on those
@@ -884,14 +886,14 @@ void ApplicationBinderator::stop()
     }
 }
 
-void ApplicationBinderator::configure(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
+void ApplicationBinderator::configure(SystemConfig* sconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
-    binderator.configure(mconfig, uconfig, symbols);
+    binderator.configure(sconfig, uconfig, symbols);
 }
 
-void ApplicationBinderator::configureKeyboard(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
+void ApplicationBinderator::configureKeyboard(SystemConfig* sconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
-    binderator.configureKeyboard(mconfig, uconfig, symbols);
+    binderator.configureKeyboard(sconfig, uconfig, symbols);
 }
 
 /**
