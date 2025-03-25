@@ -79,7 +79,7 @@
         symbols='midiInput,midiOutput,midiChannelOverride,midiThru'/>
   
   <Form name='sessionCategorySync' title='Synchronization'
-        symbols='syncSource,syncUnit,trackSyncUnit'/>
+        symbols='syncSource,syncUnit,trackSyncUnit,trackMasterReset,trackMasterSelect'/>
   
   <Form name='sessionCategoryMixer' title='Mixer'
         symbols='input,output,feedback,altFeedback,altFeedbackEnable,pan'/>
@@ -90,7 +90,7 @@
         symbols='leaderType,leaderTrack,leaderSwitchLocation,followRecord,followRecordEnd,followSize,followMute,followQuantizeLocation,followerStartMuted'/>
   
   <Form name='sessionCategoryQuantize' title='Quantization Control'
-        symbols='quantize,subcycles,switchQuantize,overdubQuantized,bounceQuantize'/>
+        symbols='quantize,subcycles,switchQuantize,emptySwitchQuantize,overdubQuantized,bounceQuantize'/>
   
   <Form name='sessionCategorySwitch' title='Loop and Track Change Options'
         symbols='switchDuration,switchLocation,switchVelocity,returnLocation,timeCopyMode,soundCopyMode,emptyLoopAction,emptyTrackAction,trackLeaveAction'/>

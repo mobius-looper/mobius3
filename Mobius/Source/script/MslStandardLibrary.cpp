@@ -5,7 +5,7 @@
 // rather not have this, but it's somewhat important that you
 // don't seed this often, maybe move this to MslContext and let it deal with
 // the containing application environment
-#incluce "../util/Util.h"
+#include "../util/Util.h"
 
 #include "MslValue.h"
 #include "MslEnvironment.h"

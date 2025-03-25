@@ -203,38 +203,83 @@ void StripMaster::update(MobiusView* view)
 
 void StripMaster::paint(juce::Graphics& g)
 {
+
     int textHeight = 12;
     juce::Font font(JuceUtil::getFont(textHeight));
     g.setFont(font);
+        
+    int method = 2;
+   
+    if (method == 1) {
+        // first attempt
+        // Master: Track Transport
+        // with each of those two words visible and highlighted
+        // in theory each word could be clickable to turn it on and off
 
-    // something weird going on with left, need to push it to get past the border
-    // and even after the normal border width it still truncates on the left
-    // 12 is the absoute minimum
-    int left = 18;
-    int fieldWidth = 50;
-    g.setColour(juce::Colour(MobiusGreen));
-    g.drawText("Master:", left, 0, fieldWidth, getHeight(), juce::Justification::centredRight);
+        // something weird going on with left, need to push it to get past the border
+        // and even after the normal border width it still truncates on the left
+        // 12 is the absoute minimum
+        int left = 18;
+        int fieldWidth = 50;
+        g.setColour(juce::Colour(MobiusGreen));
+        g.drawText("Master:", left, 0, fieldWidth, getHeight(), juce::Justification::centredRight);
 
-    left += (fieldWidth + 4);
+        left += (fieldWidth + 4);
 
-    if (trackSyncMaster)
-      g.setColour(juce::Colour(MobiusYellow));
-    else
-      g.setColour(juce::Colour(MobiusBlue));
+        if (trackSyncMaster)
+          g.setColour(juce::Colour(MobiusYellow));
+        else
+          g.setColour(juce::Colour(MobiusBlue));
     
-    fieldWidth = 30;
+        fieldWidth = 30;
 
-    g.drawText("Track", left, 0, fieldWidth, getHeight(), juce::Justification::centredLeft);
+        g.drawText("Track", left, 0, fieldWidth, getHeight(), juce::Justification::centredLeft);
     
-    left += (fieldWidth + 4);
+        left += (fieldWidth + 4);
     
-    if (transportMaster)
-      g.setColour(juce::Colour(MobiusYellow));
-    else
-      g.setColour(juce::Colour(MobiusBlue));
+        if (transportMaster)
+          g.setColour(juce::Colour(MobiusYellow));
+        else
+          g.setColour(juce::Colour(MobiusBlue));
 
-    fieldWidth = 50;
-    g.drawText("Transport", left, 0, fieldWidth, getHeight(), juce::Justification::centredLeft);
+        fieldWidth = 50;
+        g.drawText("Transport", left, 0, fieldWidth, getHeight(), juce::Justification::centredLeft);
+    }
+    else {
+        // method two
+        // Track Master | Transport Master | Track+Trans Master
+        // single word that shows when enabled and invisible when disabled
+        // not clickable
+        juce::String status;
+        if (trackSyncMaster && transportMaster)
+          status = "Track/Trans Master";
+        else if (trackSyncMaster)
+          status = "Track Master";
+        else if (transportMaster)
+          status = "Transport Master";
+
+        // clearing the ful width trashes the focus border
+        // need to be insetting the entire strip at a higher level!
+        juce::Rectangle<int> area = getLocalBounds();
+        // something really weird is going on here with the strip width
+        // the inset needs to be abnormally large to prevent clipping the edges
+        // of the focus box, this is doing sizing all wrong, each strip needs to have
+        // a size with clipping within it, and things are extending outside those bounds
+        // or better yet, let the strips be of their preferred width and put them
+        // in a Viewport that can scroll horizontally
+        int inset = 32;
+        area = area.withTrimmedLeft(inset);
+        area = area.withTrimmedRight(inset);
+        g.setColour(juce::Colours::black);
+        g.fillRect(area);
+        //g.setColour(juce::Colours::white);
+        //g.drawRect(area);
+
+        if (status.length() > 0) {
+            g.setColour(juce::Colour(MobiusYellow));
+            g.drawText(status, area, juce::Justification::centred);
+ }
+    }
 }
 
 void StripMaster::mouseDown(const class juce::MouseEvent& event)

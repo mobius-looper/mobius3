@@ -347,7 +347,7 @@ void ShuffleFunction::shuffle(Loop* loop, Layer* layer,
 			}
 			break;
 		}
-        
+
         // Original algorithm numbered granules from zero and I didn't
         // want to mess with that. The new segmentize expects them
         // to be numbered from 1 so adjust.
@@ -371,9 +371,12 @@ void ShuffleFunction::segmentize(Loop* loop, Layer* layer,
 	Segment* original = layer->getSegments();
     int i;
 
-    for (i = 0 ; i < resultGranules ; i++)
-      Trace(loop, 2, "Segmentize %d %d\n", (long)i, (long)pattern[i]);
-
+    bool traceIt = false;
+    if (traceIt) {
+        for (i = 0 ; i < resultGranules ; i++)
+          Trace(loop, 2, "Segmentize %d %d\n", (long)i, (long)pattern[i]);
+    }
+    
     // Step 1: determine range of the source granules
 	// Assuming sizes are all the same, if we wanted to use cue points here
 	// it really complicates how these correspond to the cube points

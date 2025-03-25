@@ -70,6 +70,7 @@
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="trackGroup" value="A"/>
+      <Value name="trackMasterSelect" value="accept" type="enum" ordinal="1"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
@@ -86,9 +87,10 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="none"/>
-      <Value name="syncUnit" value="bar"/>
-      <Value name="trackSyncUnit" value="loop"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackMasterSelect" value="preferred" type="enum" ordinal="2"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
   <Track id="6" type="audio" name="a4">
@@ -249,7 +251,7 @@
     <Value name="reverseTransfer" value="off" type="enum" ordinal="0"/>
     <Value name="roundingOverdub" value="true" type="bool"/>
     <Value name="saveLayers" value="0" type="int"/>
-    <Value name="shuffleMode" value="reverse" type="enum" ordinal="0"/>
+    <Value name="shuffleMode" value="random" type="enum" ordinal="3"/>
     <Value name="slipMode" value="subCycle" type="enum" ordinal="0"/>
     <Value name="slipTime" value="0" type="int"/>
     <Value name="soundCopyMode" value="multiply" type="enum" ordinal="2"/>
@@ -264,9 +266,14 @@
     <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
     <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
     <Value name="switchVelocity" value="false" type="bool"/>
+    <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+    <Value name="syncUnit" value="beat" type="enum" ordinal="0"/>
     <Value name="timeCopyMode" value="insert" type="enum" ordinal="3"/>
     <Value name="timeStretchRange" value="12" type="int"/>
     <Value name="trackLeaveAction" value="none" type="enum" ordinal="0"/>
+    <Value name="trackMasterReset" value="move" type="enum" ordinal="1"/>
+    <Value name="trackMasterSelect" value="manual" type="enum" ordinal="0"/>
+    <Value name="trackSyncUnit" value="subcycle" type="enum" ordinal="0"/>
     <Value name="transportBarsPerLoop" value="1" type="int"/>
     <Value name="transportBeatsPerBar" value="4" type="int"/>
     <Value name="transportClocks" value="true" type="bool"/>

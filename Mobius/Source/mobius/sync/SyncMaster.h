@@ -19,6 +19,7 @@
 
 #include <JuceHeader.h>
 
+#include "../../model/ParameterConstants.h"
 #include "../../model/SyncConstants.h"
 #include "../../model/SessionHelper.h"
 #include "SyncEvent.h"
@@ -223,7 +224,8 @@ class SyncMaster
     int blockCount = 0;
     int blockSize = 0;
     int trackSyncMaster = 0;
-
+    TrackMasterReset trackMasterReset = TrackMasterStay;
+    
     SessionHelper sessionHelper;
 
     // cached session parameters
@@ -245,6 +247,7 @@ class SyncMaster
 
     void setTrackSyncMaster(class UIAction* a);
     void setTransportMaster(class UIAction* a);
+    void assignTrackSyncMaster(int former);
     
     void connectTransport(int id);
 

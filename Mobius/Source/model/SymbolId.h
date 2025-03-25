@@ -204,6 +204,11 @@ typedef enum {
     ParamSpeedSequence,
     ParamPitchSequence,
 
+    // newer things
+    ParamTrackMasterReset,
+    ParamTrackMasterSelect,
+    ParamEmptySwitchQuantize,
+    
     //////////////////////////////////////////////////////////////////////
     //
     // Obsolete Parameters

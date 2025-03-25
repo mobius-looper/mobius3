@@ -47,6 +47,8 @@ void SessionTrackForms::initialize(Provider* p, SessionEditor* se, Session* s, S
       tree.setTrackType(TrackTypeAudio);
     else if (def->type == Session::TypeMidi)
       tree.setTrackType(TrackTypeMidi);
+
+    tree.setFilterNoOverride(true);
     
     tree.initializeDynamic(provider);
 

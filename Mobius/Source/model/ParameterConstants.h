@@ -386,6 +386,18 @@ typedef enum {
     LeaderLocationSubcycle
 } LeaderLocation;
 
+typedef enum {
+    TrackMasterStay,
+    TrackMasterMove
+} TrackMasterReset;
+
+typedef enum {
+    TrackMasterManual,
+    TrackMasterAccept,
+    TrackMasterPriority,
+    TrackMasterNever
+} TrackMasterSelect;
+
 //////////////////////////////////////////////////////////////////////
 //
 // Obsolete

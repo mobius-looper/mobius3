@@ -42,6 +42,11 @@ void ParameterTree::setFilterNoDefault(bool b)
     filterNoDefault = b;
 }
 
+void ParameterTree::setFilterNoOverride(bool b)
+{
+    filterNoOverride = b;
+}
+
 /**
  * Set this if you want the tree builder to eliminate symbols flagged with the noOverlay
  * option.
@@ -279,6 +284,9 @@ bool ParameterTree::isFiltered(Symbol* s, ParameterProperties* props)
     // first the noDefault option
     if (filterNoDefault)
       filtered = props->noDefault;
+
+    if (!filtered && filterNoOverride)
+      filtered = props->noOverride;
 
     if (!filtered && filterNoOverlay)
       filtered = props->noOverlay;

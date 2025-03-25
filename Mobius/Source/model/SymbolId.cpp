@@ -272,6 +272,9 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameWindowEdgeAmount, ParamWindowEdgeAmount},
     {"speedSequence", ParamSpeedSequence},
     {"pitchSequence", ParamPitchSequence},
+    {"trackMasterReset", ParamTrackMasterReset},
+    {"trackMasterSelect", ParamTrackMasterSelect},
+    {"emptySwitchQuantize", ParamEmptySwitchQuantize},
     
     //////////////////////////////////////////////////////////////////////
     // Functions

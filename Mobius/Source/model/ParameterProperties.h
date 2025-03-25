@@ -134,6 +134,13 @@ class ParameterProperties
      * It must be given an explicit value in the SessionTrack if the track wants one.
      */
     bool noDefault = false;
+
+    /**
+     * Indiciates this parameter can ONLY have a common session default value
+     * and cannot be overridden by a track.  Technically that makes it a global,
+     * but we show it in the Default Parameters tree with the other track parameters.
+     */
+    bool noOverride = false;
     
     /**
      * Indicates that this parameter cannot be included in an overlay.

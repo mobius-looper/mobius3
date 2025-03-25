@@ -11,6 +11,7 @@
 #include "../../model/SyncState.h"
 #include "../../model/TrackState.h"
 #include "../../model/PriorityState.h"
+#include "../../model/Enumerator.h"
 
 // for some of the old sync related modes
 #include "../../model/ParameterConstants.h"
@@ -106,9 +107,14 @@ void SyncMaster::loadSession(Session* s)
     
     autoRecordUnits = sessionHelper.getInt(s, ParamAutoRecordUnits);
     recordThreshold = sessionHelper.getInt(s, ParamRecordThreshold);
-    
+
     // trackSyncMaster and transportMaster could also be session parameters
     // but they'r really more transient performance-oriented parameters
+
+    trackMasterReset = (TrackMasterReset)Enumerator::getOrdinal(container->getSymbols(),
+                                                                ParamTrackMasterReset,
+                                                                s->ensureGlobals(),
+                                                                TrackMasterStay);
 }
 
 /**
@@ -166,9 +172,9 @@ int SyncMaster::getTrackSyncMaster()
 }
 
 /**
- * Action handler for FuncSyncMasterTrack
- * Formerly implemented as a Mobius core function.
- * This took no arguments and made the active track the master.
+ * Action handler for FuncSyncMasterTrack and ParamTrackSyncMaster
+ * Formerly implemented as a Mobius core function that took no arguments and
+ * made the active track the master.
  *
  * Now this makes the focused track the master which may include MIDI tracks.
  * To allow more control, the action may have an argument with a track number.
@@ -177,26 +183,47 @@ int SyncMaster::getTrackSyncMaster()
  * The action may specify FuncSyncMasterTrack or ParamTrackSyncMaster
  * The parameter action does not allow jumping to the focused track with
  * a zero value so it is predictable as a sweepable host parameter. Value
- * zero means "no master".  There isn't a way to cause a "no master" situation
- * with the function, but it isn't that useful.
+ * zero means "no master".
  *
+ * For FuncSyncMasterTrack, this behaves as a toggle, and if you turn it off
+ * it is subject to automatic master reassign if configured.
  */
 void SyncMaster::setTrackSyncMaster(UIAction* a)
 {
-    int number = a->value;
-    if (number == 0 && a->symbol->functionProperties != nullptr) {
-        // todo: not liking how track focus is passed around and where it lives
-        number = container->getFocusedTrackIndex() + 1;
+    int newMaster = 0;
+    bool autoAssign = false;
+    
+    if (a->symbol->parameterProperties != nullptr) {
+        // number is specified as the action value and does not toggle
+        newMaster = a->value;
     }
-
-    if (number == 0)
-      setTrackSyncMaster(0);
     else {
-        LogicalTrack* lt = trackManager->getLogicalTrack(number);
-        if (lt == nullptr)
-          Trace(1, "SyncMaster: Invalid track id in TransportMaster action");
+        int target = a->value;
+        if (target == 0)
+          target = container->getFocusedTrackIndex() + 1;
+
+        if (target != trackSyncMaster) {
+            // turn it on
+            newMaster = target;
+        }
         else {
-            setTrackSyncMaster(number);
+            // turn it off
+            setTrackSyncMaster(0);
+            assignTrackSyncMaster(target);
+            autoAssign = true;
+        }
+    }
+    
+    if (!autoAssign) {
+        if (newMaster == 0)
+          setTrackSyncMaster(0);
+        else {
+            LogicalTrack* lt = trackManager->getLogicalTrack(newMaster);
+            if (lt == nullptr)
+              Trace(1, "SyncMaster: Invalid track number in TransportMaster action");
+            else {
+                setTrackSyncMaster(newMaster);
+            }
         }
     }
 }
@@ -751,7 +778,7 @@ bool SyncMaster::isRecordSynchronized(int number)
  * schedule an internal event that will be activated on the next startUnit pulse.
  *  
  * The ending of the recording will be quantized to the pulseUnit.
- * xxx
+ *
  * a SyncEvent will be sent on each , pulseUnit pulses will be sent to the track
  * to do things like increment cycle counts or other state related to the increasing
  * length of the loop.
@@ -1587,7 +1614,9 @@ void SyncMaster::notifyTrackReset(int number)
         // Synchronizer used to choose a different one automatically
         // It looks like of confusing to see this still show as TrackSyncMaster in the UI
         // so reset it, but don't pick a new one
-        trackSyncMaster = 0;
+        setTrackSyncMaster(0);
+        if (trackMasterReset == TrackMasterMove)
+          assignTrackSyncMaster(number);
     }
 
     if (number == transport->getMaster()) {
@@ -1603,6 +1632,60 @@ void SyncMaster::notifyTrackReset(int number)
     LogicalTrack* lt = trackManager->getLogicalTrack(number);
     if (lt != nullptr)
       lt->resetSyncState();
+}
+
+/**
+ * Here when the TSM has been reset and TrackMasterReset=Move
+ * Look for another track to automatically become the TSM.
+ *
+ * The expectataion of many is that these go in a particular direction
+ * relative to the track that was just reset.  Until it is requested, look
+ * to the right.
+ */
+void SyncMaster::assignTrackSyncMaster(int former)
+{
+    int first = 0;
+    int priority = 0;
+
+    int max = trackManager->getTrackCount();
+    
+    for (int i = former + 1 ; i <= max ; i++) {
+        LogicalTrack* lt = trackManager->getLogicalTrack(i);
+        if (lt != nullptr && lt->getSyncLength() > 0) {
+            TrackMasterSelect tms = (TrackMasterSelect)lt->getParameterOrdinal(ParamTrackMasterSelect);
+            if (tms == TrackMasterPriority) {
+                priority = i;
+                break;
+            }
+            else if (tms == TrackMasterAccept) {
+                if (first == 0)
+                  first = i;
+            }
+        }
+    }
+    
+    if (priority == 0) {
+        // keep looking from the front
+        for (int i = 1 ; i < former ; i++) {
+            LogicalTrack* lt = trackManager->getLogicalTrack(i);
+            if (lt != nullptr && lt->getSyncLength() > 0) {
+                TrackMasterSelect tms = (TrackMasterSelect)lt->getParameterOrdinal(ParamTrackMasterSelect);
+                if (tms == TrackMasterPriority) {
+                    priority = i;
+                    break;
+                }
+                else if (tms == TrackMasterAccept) {
+                    if (first == 0)
+                      first = i;
+                }
+            }
+        }
+    }
+    
+    if (priority != 0)
+      setTrackSyncMaster(priority);
+    else if (first != 0)
+      setTrackSyncMaster(first);
 }
 
 /**

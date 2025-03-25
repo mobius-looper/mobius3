@@ -17,6 +17,12 @@ class Enumerator
 
     static int getOrdinal(class SymbolTable* symbols, SymbolId id, class ValueSet* set, int dflt);
 
+    // never went anywhere
+    //static int checkOrdinal(class SymbolTable* symbols, SymbolId id, int ordinal);
+
+  private:
+    
+    static int getOrdinal(class Symbol* s, class MslValue* value, int dflt);
 };
     
     

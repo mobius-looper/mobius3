@@ -32,7 +32,6 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="GlobalPause" global='true' tree='Movement'/>
   <Function name="GlobalReset" global='true' tree='Recording'/>
   <Function name="Halfspeed" mayFocus='true' mayCancelMute='true' tree='Speed'/>
-  <!-- this was not sustainable at first, but it is in core, what does it mean? -->
   <Function name="Insert" mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="InstantMultiply" mayFocus='true' tree='Recording'/>
   <!--
@@ -49,15 +48,15 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="MidiStart" tree='Sync'/>
   <Function name="MidiStop" tree='Sync'/>
   <Function name="Move" mayFocus='true' mayCancelMute='true' tree='Movement'/>
-  <Function name="Multiply" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Recording'/>
-  <Function name="Mute" sustainable='true' mayFocus='true' tree='Track'/>
+  <Function name="Multiply" mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Mute" mayFocus='true' tree='Track'/>
   <!-- core has this as a mayCancelMute, why? -->
   <Function name="MuteRealign" mayFocus='true' tree='Track'/>
   <Function name="MuteMidiStart" tree='MIDI'/>
   <Function name="NextLoop" mayFocus='true' mayCancelMute='true' tree='Track'/>
   <Function name="NextTrack" tree='Track'/>
-  <Function name="Overdub" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Recording'/>
-  <Function name="Pause" sustainable='true' mayFocus='true' tree='Track' mayQuantize='true'/>
+  <Function name="Overdub" mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Pause" mayFocus='true' tree='Track' mayQuantize='true'/>
   <Function name="PitchDown" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
   <Function name="PitchNext" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
   <Function name="PitchCancel" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
@@ -71,14 +70,14 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="Record" sustainable='true' longPressable='true' longHelp='Long press becomes Reset' mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="Redo" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Track'/>
   <!-- this one needs work, either fix it or get rid of it -->
-  <Function name="Rehearse" sustainable='true' mayFocus='true' mayCancelMute='true'
+  <Function name="Rehearse" mayFocus='true' mayCancelMute='true'
             tree='Recording' options='noBinding'/>
-  <Function name="Replace" sustainable='true' mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Recording'/>
+  <Function name="Replace" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Recording'/>
   <!-- core has this as mayConfirm, why? -->
   <Function name="Reset" mayFocus='true' tree='Track'/>
   <Function name="Restart" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Movement'/>
   <Function name="RestartOnce" mayFocus='true' mayCancelMute='true' tree='Movement'/>
-  <Function name="Reverse" sustainable='true' mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Movement'/>
+  <Function name="Reverse" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Movement'/>
   <!-- core has this as mayFocus, don't think that's relevant -->
   <Function name="SaveCapture" tree='Utility'/>
   <Function name="SaveLoop" tree='Utility'/>
@@ -92,15 +91,14 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="SpeedPrev" mayFocus='true' mayCancelMute='true' tree='Speed'/>
   <Function name="SpeedStep" mayFocus='true' mayCancelMute='true' tree='Speed'/>
   <Function name="SpeedUp" mayFocus='true' mayCancelMute='true' tree='Speed'/>
-  <!-- why is this sustainable? -->
-  <Function name="SpeedToggle" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Speed'/>
+  <Function name="SpeedToggle" mayFocus='true' mayCancelMute='true' tree='Speed'/>
   <!-- core has this mayFocus -->
   <Function name="StartCapture" tree='Utility'/>
   <Function name="StartPoint" mayFocus='true' mayCancelMute='true' tree='Editing'/>
   <!-- core has this mayFocus -->
   <Function name="StopCapture" tree='Utility'/>
-  <Function name="Stutter" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Editing'/>
-  <Function name="Substitute" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Editing'/>
+  <Function name="Stutter" mayFocus='true' mayCancelMute='true' tree='Editing'/>
+  <Function name="Substitute" mayFocus='true' mayCancelMute='true' tree='Editing'/>
 
   <Function name="SUSInsert" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
 />
@@ -361,6 +359,10 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='windowSlideAmount' low='1' high='128' tree='Functions' />
     <Parameter name='windowEdgeAmount' low='1' high='128' tree='Functions'/>
 
+    <!-- Newer things -->
+    <Parameter name='trackMasterSelect' values='manual,accept,preferred,never' tree='Sync' />
+    <Parameter name='emptySwitchQuantize' values='syncSource,none' tree='Sync' />
+
     <!-- DEPRECATED: keep these for temporary documentation but once we're sure
          core code no longer needs them they can be deleted
          -->
@@ -516,6 +518,16 @@ Once those models are fully converted, these symbols can be removed.
                displayType='combo' displayHelper='parameterSet'
                options='noBinding'>
     </Parameter>
+
+    <!-- this is a weird one, it is technically a global since tracks can't
+         overrides for it, but it's nicer to have this under the Default Parameters
+         tab next to trackMasterSelect rather than over in the Globals tab
+         so this will be included in the dynamic parameter tree, but it needs a special
+         flag to prevent it from being included in track trees
+         noOverride is like the reverse of noDefault
+         -->
+         
+    <Parameter name='trackMasterReset' values='stay,move' tree='Sync' options='noOverride'/>
     
   </ParameterScope>
 
