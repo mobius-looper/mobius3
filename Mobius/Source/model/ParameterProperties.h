@@ -118,10 +118,9 @@ class ParameterProperties
 
     /**
      * Indiciates that this parameter may use juce::var for value access.
-     * Since we're redesigning this model just for the UI, this can
-     * eventually be the default and we can remove ExValue
+     * don't think this i sused any more
      */
-    bool juceValues = false;
+    //bool juceValues = false;
 
     /**
      * Indicates that this parameter cannot be bound to MIDI or host parameters

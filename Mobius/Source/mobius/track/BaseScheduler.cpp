@@ -315,7 +315,7 @@ void BaseScheduler::setFollowTrack(int number)
  * it's actually going to do.  It would be nice if it could say "Follower Multiply" or
  * "Follower Switch".  This however requires that we allocate and pass strings around and
  * the Event and EventType in the old audio model doesn't have a place for that.  A SymbolId
- * would be more convenient but this also requires some retooling of the OldMobiusState model and
+ * would be more convenient but this also requires some retooling of the MobiusState model and
  * how it passes back event types for the UI.
  */
 TrackEvent* BaseScheduler::scheduleLeaderQuantization(int leader, QuantizeMode q, TrackEvent::Type type)

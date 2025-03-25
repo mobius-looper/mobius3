@@ -6,7 +6,6 @@
 
 #include <JuceHeader.h>
 
-#include "model/old/MobiusConfig.h"
 #include "model/DeviceConfig.h"
 #include "Supervisor.h"
 #include "PortAuthority.h"

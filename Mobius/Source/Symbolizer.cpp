@@ -11,7 +11,6 @@
 #include "model/SymbolId.h"
 #include "model/FunctionProperties.h"
 #include "model/ParameterProperties.h"
-#include "model/old/MobiusConfig.h"
 #include "model/Session.h"
 #include "model/ParameterSets.h"
 
@@ -478,7 +477,6 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope, bo
         props->zeroCenter = options.contains("zeroCenter");
         props->control = options.contains("control");
         props->transient = options.contains("transient");
-        props->juceValues = options.contains("juceValues");
         props->noBinding = options.contains("noBinding");
         props->noDefault = options.contains("noDefault");
         props->noOverride = options.contains("noOverride");

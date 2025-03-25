@@ -16,9 +16,6 @@
 #include "util/List.h"
 
 #include "model/old/MobiusConfig.h"
-#include "model/old/XmlRenderer.h"
-#include "model/old/OldBinding.h"
-
 #include "model/ConfigPayload.h"
 #include "model/Session.h"
 #include "model/UIConfig.h"
@@ -45,8 +42,6 @@
 #include "mobius/SampleReader.h"
 // for mobiusSaveCapture
 #include "mobius/AudioFile.h"
-// temporary for MobiusContainer::midiSend
-#include "midi/OldMidiEvent.h"
 #include "test/TestDriver.h"
 
 #include "MainComponent.h"
@@ -1082,15 +1077,6 @@ MobiusConfig* Supervisor::getOldMobiusConfig()
         }
 
         mobiusConfig.reset(neu);
-#if 0
-        // testing XML transformation after UIParameter rip
-        XmlRenderer xr (getSymbols());
-        char* xml = xr.render(neu);
-        const char* name = "hack.xml";
-        juce::File file = getRoot().getChildFile(name);
-        file.replaceWithText(juce::String(xml));
-        delete xml;
-#endif        
     }
     return mobiusConfig.get();
 }
@@ -2056,18 +2042,18 @@ void Supervisor::menuActivateBindings(BindingSet* set)
  */
 void Supervisor::mobiusActivateBindings(juce::String name)
 {
-    MobiusConfig* mconfig = getOldMobiusConfig();
+    BindingSets* container = getBindingSets();
     UIConfig* uconfig = getUIConfig();
 
     if (name.length() == 0) {
         uconfig->activeBindings = "";
     }
     else {
-        OldBindingSet* set = (OldBindingSet*)Structure::find(mconfig->getBindingSets(), name.toUTF8());
+        BindingSet* set = container->find(name);
         if (set == nullptr) {
             Trace(1, "Supervisor: Mobius script asked for an invalid binding set %s", name.toUTF8());
         }
-        else if (set->isOverlay()) {
+        else if (set->overlay) {
             // hmm, I suppose we could allow this for activation but you
             // can't deactivate it so don't muddy the waters
         }

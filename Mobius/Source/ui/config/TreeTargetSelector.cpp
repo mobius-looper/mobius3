@@ -4,9 +4,6 @@
 #include "../../util/Trace.h"
 #include "../../util/List.h"
 
-#include "../../model/old/ActionType.h"
-#include "../../model/old/Preset.h"
-#include "../../model/old/Setup.h"
 #include "../../model/Binding.h"
 #include "../../model/Symbol.h"
 #include "../../model/UIConfig.h"

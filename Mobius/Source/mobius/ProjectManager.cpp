@@ -24,8 +24,6 @@
 #include "../util/XomParser.h"
 #include "../util/List.h"
 
-#include "../model/old/Setup.h"
-
 #include "core/Project.h"
 #include "core/Mobius.h"
 #include "core/Track.h"
