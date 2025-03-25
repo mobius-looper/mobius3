@@ -2229,9 +2229,12 @@ void Mobius::followerEvent(Loop* l, Event* e)
 
 void Mobius::trackNotification(NotificationId id, TrackProperties& props)
 {
-    (void)id;
     (void)props;
-    Trace(1, "Mobius::trackNotification not implemented");
+    // this is the only thing we follow right now, and it is usually from
+    // another audio track
+    if (id == NotificationFollower) {
+        Trace(1, "Mobius::trackNotification not implemented");
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

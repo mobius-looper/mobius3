@@ -85,6 +85,8 @@ class ParameterSource
     static bool isIsolateOverdubs(class Track* t);
     static bool isSaveLayers(class Track* t);
 
+    static EmptySwitchQuantize getEmptySwitchQuantize(class Track* t);
+
   private:
 
     static class LogicalTrack* getLogicalTrack(class Loop* l);

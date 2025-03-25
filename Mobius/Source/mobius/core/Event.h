@@ -528,6 +528,7 @@ class Event {
             long nextFrame;
             bool recordCanceled;
             bool upTransition;
+            bool synchronizing;
         } loopSwitch;
 
         /**

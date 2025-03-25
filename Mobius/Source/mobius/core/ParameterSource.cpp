@@ -355,6 +355,12 @@ bool ParameterSource::isSaveLayers(Track* t)
     return (bool)(lt->getParameterOrdinal(ParamSaveLayers));
 }
 
+EmptySwitchQuantize ParameterSource::getEmptySwitchQuantize(class Track* t)
+{
+    LogicalTrack* lt = t->getLogicalTrack();
+    return (EmptySwitchQuantize)lt->getParameterOrdinal(ParamEmptySwitchQuantize);
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

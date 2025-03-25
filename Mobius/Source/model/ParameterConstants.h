@@ -386,17 +386,31 @@ typedef enum {
     LeaderLocationSubcycle
 } LeaderLocation;
 
+/**
+ * For ParamTrackMasterReset
+ */
 typedef enum {
     TrackMasterStay,
     TrackMasterMove
 } TrackMasterReset;
 
+/**
+ * For ParamTrackMasterSelect
+ */
 typedef enum {
     TrackMasterManual,
     TrackMasterAccept,
     TrackMasterPriority,
     TrackMasterNever
 } TrackMasterSelect;
+
+/**
+ * For ParamEmptySwitchQuantize
+ */
+typedef enum {
+    EmptySwitchSyncSource,
+    EmptySwitchNone
+} EmptySwitchQuantize;
 
 //////////////////////////////////////////////////////////////////////
 //
