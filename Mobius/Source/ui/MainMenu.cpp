@@ -29,12 +29,14 @@
 
 #include "../util/Trace.h"
 #include "../util/Util.h"
-#include "../model/old/MobiusConfig.h"
+#include "../model/SystemConfig.h"
+#include "../model/BindingSets.h"
+#include "../model/BindingSet.h"
+#include "../model/Binding.h"
 #include "../model/UIConfig.h"
 #include "../model/Session.h"
 #include "../model/Symbol.h"
 #include "../model/Query.h"
-#include "../model/old/OldBinding.h"
 
 #include "../Provider.h"
 #include "../Producer.h"
@@ -265,22 +267,24 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addSeparator();
         
         Provider* provider = mainWindow->getProvider();
-        MobiusConfig* mconfig = provider->getOldMobiusConfig();
         UIConfig* uiconfig = provider->getUIConfig();
-        OldBindingSet* sets = mconfig->getBindingSets();
-        // first one is always active and is not displayed
-        if (sets != nullptr) sets = sets->getNextBindingSet();
-        if (sets != nullptr) {
+        SystemConfig* sconfig = provider->getSystemConfig();
+        BindingSets* container = sconfig->getBindings();
+        if (container != nullptr) {
+            juce::OwnedArray<BindingSet>& sets = container->getSets();
+
             // count the numbers in each category
             int alternates = 0;
             int overlays = 0;
-            for (OldBindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
-                if (set->isOverlay())
+            // first one is always active and is not displayed
+            for (int i = 1 ; i < sets.size() ; i++) {
+                BindingSet* set = sets[i];
+                if (set->overlay)
                   overlays++;
                 else
                   alternates++;
             }
-
+            
             // ugh, since we want to split the list we can't use the menu id as
             // the structure ordinal, save it on the object so we can correlate, ugly
             // would be nice if we could just get the damn menu item name from the id
@@ -289,13 +293,14 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
             if (alternates > 0) {
                 menu.addSeparator();
                 menu.addSectionHeader(juce::String("Binding Sets"));
-                for (OldBindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
-                    if (!set->isOverlay()) {
-                        juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(set->getName()));
+                for (int i = 1 ; i < sets.size() ; i++) {
+                    BindingSet* set = sets[i];
+                    if (!set->overlay) {
+                        juce::PopupMenu::Item item = juce::PopupMenu::Item(set->name);
                         int itemId = MenuBindingOffset + index;
                         item.setID(itemId);
                         set->transientMenuId = itemId;
-                        if (uiconfig->isActiveBindingSet(juce::String(set->getName())))
+                        if (uiconfig->isActiveBindingSet(set->name))
                           item.setTicked(true);
                         menu.addItem(item);
                         index++;
@@ -305,13 +310,14 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
             if (overlays > 0) {
                 menu.addSeparator();
                 menu.addSectionHeader(juce::String("Overlays"));
-                for (OldBindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
-                    if (set->isOverlay()) {
-                        juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(set->getName()));
+                for (int i = 1 ; i < sets.size() ; i++) {
+                    BindingSet* set = sets[i];
+                    if (set->overlay) {
+                        juce::PopupMenu::Item item = juce::PopupMenu::Item(set->name);
                         int itemId = MenuBindingOffset + index;
                         item.setID(itemId);
                         set->transientMenuId = itemId;
-                        if (uiconfig->isActiveBindingSet(juce::String(set->getName())))
+                        if (uiconfig->isActiveBindingSet(set->name))
                           item.setTicked(true);
                         menu.addItem(item);
                         index++;
