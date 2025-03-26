@@ -1,4 +1,5 @@
 
+#include "../util/Util.h"
 #include "ParameterProperties.h"
 
 /**
@@ -8,6 +9,10 @@
  *
  * This cannot be used for type=string.
  * For type=structure you must use getDynamicEnumOrdinal
+ *
+ * Note the use of StringEqualNoCase.  This became necessary
+ * to make the transition from "subCycle" to "subcycle" easier,
+ * but it isn't terrible for other enumerations.  
  */
 int ParameterProperties::getEnumOrdinal(const char* value)
 {
@@ -15,7 +20,7 @@ int ParameterProperties::getEnumOrdinal(const char* value)
 
 	if (value != nullptr) {
 		for (int i = 0 ; i < values.size() ; i++) {
-            if (values[i] == value) {
+            if (values[i].equalsIgnoreCase(value)) {
 				enumOrdinal = i;
 				break;
 			}
@@ -33,7 +38,9 @@ int ParameterProperties::getEnumOrdinal(const char* value)
  * Standardize on one or the other.  Since symbolc names are
  * only used at the shell level, could just use juce::String and
  * be done with it.
- * 
+ *
+ * update: well not really
+ * TrackManager uses getEnumName in mutateMslReturn.
  */ 
 const char* ParameterProperties::getEnumName(int enumOrdinal)
 {
@@ -54,8 +61,8 @@ const char* ParameterProperties::getEnumName(int enumOrdinal)
  * Labels are usually what is displayed in the UI.
  * getEnumName is what would be in an XML file.
  *
- * !! these could just be returning the juce::String now
- * the UI just converts it to one
+ * This can be called in the Kernel so I've been avoiding the
+ * use of juce::String here.
  */ 
 const char* ParameterProperties::getEnumLabel(int enumOrdinal)
 {

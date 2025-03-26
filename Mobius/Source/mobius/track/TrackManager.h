@@ -171,8 +171,5 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void doScript(UIAction* src);
     void doTrackSelectAction(class UIAction* a);
 
-    // MSL support
-    void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
-    
     int getLatency(SymbolId sid);
 };

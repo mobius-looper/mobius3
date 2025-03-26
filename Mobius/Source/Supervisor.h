@@ -52,8 +52,10 @@
 #include "ui/MobiusViewer.h"
 
 #include "Provider.h"
+#include "MslUtil.h"
 
-class Supervisor : public Provider, public MobiusContainer, public MobiusListener, public MslContext,
+class Supervisor : public Provider, public MobiusContainer, public MobiusListener,
+                   public MslContext, public MslUtil::Provider,
                    juce::Timer
 {
   public:
@@ -226,6 +228,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     // find the value of a parameter or variable
     bool doQuery(class Query* q) override;
+
+    // this is in two places, MobiusInterface and MslUtil::Provider
+    // and it probably only needs to be in the second one
     juce::String getStructureName(class Symbol* s, int value) override;
     
     // special accessors for things deep within the engine
