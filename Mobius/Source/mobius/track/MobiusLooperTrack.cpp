@@ -182,17 +182,17 @@ int MobiusLooperTrack::scheduleFollowerEvent(QuantizeMode q, int follower, int e
 
 bool MobiusLooperTrack::scheduleWait(TrackWait& wait)
 {
-    return mobius->scheduleWait(wait);
+    return mobius->scheduleWait(wait, track);
 }
 
 void MobiusLooperTrack::cancelWait(TrackWait& wait)
 {
-    mobius->cancelWait(wait);
+    mobius->cancelWait(wait, track);
 }
 
 void MobiusLooperTrack::finishWait(TrackWait& wait)
 {
-    mobius->finishWait(wait);
+    mobius->finishWait(wait, track);
 }
 
 //////////////////////////////////////////////////////////////////////

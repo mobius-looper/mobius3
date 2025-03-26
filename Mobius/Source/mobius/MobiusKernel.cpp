@@ -449,6 +449,11 @@ TrackManager* MobiusKernel::getTrackManager()
     return mTracks.get();
 }
 
+LogicalTrack* MobiusKernel::getLogicalTrack(int number)
+{
+    return mTracks->getLogicalTrack(number);
+}
+
 /**
  * Used by internal components that want to show a message in the UI.
  */

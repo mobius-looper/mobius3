@@ -40,6 +40,8 @@
 #include "../track/TrackProperties.h"
 #include "../track/MobiusLooperTrack.h"
 #include "../track/LogicalTrack.h"
+#include "../track/TrackWait.h"
+#include "../track/TrackEvent.h"
 #include "../sync/SyncMaster.h"
 
 #include "Action.h"
@@ -2133,23 +2135,97 @@ void Mobius::cancelMslWait(class Event* e)
 //
 //////////////////////////////////////////////////////////////////////
 
-bool Mobius::scheduleWait(TrackWait& wait)
+/**
+ * No real reason this can't be directly implemented on Track but I want
+ * to keep it isolated for awhile.
+ */
+bool Mobius::scheduleWait(TrackWait& wait, Track* track)
 {
-    (void)wait;
-    Trace(1, "Mobius::scheduleWait not implemented");
-    return false;
+    bool success = false;
+    int frame = getWaitFrame(wait, track);
+    if (frame >= 0) {
+        EventManager* em = track->getEventManager();
+        Event* e = em->newEvent();
+        
+        e->type = WaitEvent;
+        e->frame = frame;
+        e->fields.wait.follower = wait.follower;
+        e->fields.wait.requestPayload = wait.requestPayload;
+        
+        em->addEvent(e);
+
+        // caller may use this to correlate finishWait calls
+        wait.responsePayload = e;
+
+        success = true;
+    }
+    
+    return success;
 }
 
-void Mobius::cancelWait(TrackWait& wait)
+void Mobius::cancelWait(TrackWait& wait, Track* track)
 {
-    (void)wait;
-    Trace(1, "Mobius::cancelWait not implemented");
+    Event* event = (Event*)wait.responsePayload;
+    EventManager* em = track->getEventManager();
+    em->removeEvent(event);
 }
 
-void Mobius::finishWait(TrackWait& wait)
+void Mobius::finishWait(TrackWait& wait, Track* track)
 {
     (void)wait;
+    (void)track;
     Trace(1, "Mobius::finishWait not implemented");
+
+    // requestPayload from the call to scheduleWait has been included
+    // use that to find a pending event and activate it
+}
+
+/**
+ * Here when the scheduler reaches a scheduled wait event.
+ * Inform the follower.
+ */
+void Mobius::waitEvent(Loop* loop, Event* event)
+{
+    (void)loop;
+    LogicalTrack* follower = mKernel->getLogicalTrack(event->fields.wait.follower);
+    if (follower != nullptr) {
+        TrackWait wait;
+        wait.requestPayload = event->fields.wait.requestPayload;
+        follower->finishWait(wait);
+    }
+}
+
+/**
+ * Calculate the wait frame for a TrackWait.
+ *
+ * This same shit happens in several places now.  TrackMslHandler does this
+ * but it uses the MSL model.  TrackEvent is where the important bits live.
+ */
+int Mobius::getWaitFrame(TrackWait& wait, Track* track)
+{
+    int frame = -1;
+
+    switch (wait.quantizationPoint) {
+        case QUANTIZE_OFF: break;
+        case QUANTIZE_SUBCYCLE:
+        case QUANTIZE_CYCLE: {
+            // subcycles are now managed by the LogicalTrack
+            // for whatever reason, Track has methods for most of these
+            // but for cycleFrames have to get the Loop
+            frame = TrackEvent::getQuantizedFrame(track->getFrames(),
+                                                  track->getLoop()->getCycleFrames(),
+                                                  track->getFrame(),
+                                                  track->getLogicalTrack()->getSubcycles(),
+                                                  wait.quantizationPoint, true);
+        }
+            break;
+        case QUANTIZE_LOOP: {
+            // todo: have the usual before/after the loop point issue
+            frame = 0;
+        }
+            break;
+    }
+    return frame;
 }
 
 //////////////////////////////////////////////////////////////////////

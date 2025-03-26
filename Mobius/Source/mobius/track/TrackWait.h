@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "../../model/ParameterConstants.h"
+
 class TrackWait
 {
   public:
@@ -17,7 +19,7 @@ class TrackWait
     /**
      * The quantization point to wait for
      */
-    QuantizeMode quantizationPoint = QUANTIZE_NONE;
+    QuantizeMode quantizationPoint = QUANTIZE_OFF;
 
     /**
      * Pointer to an information payload, tracking event, or

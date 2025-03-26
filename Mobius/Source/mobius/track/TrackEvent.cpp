@@ -496,8 +496,36 @@ int TrackEvent::getQuantizedFrame(int loopFrames, int cycleFrames, int currentFr
 			break;
 		}
 	}
-
+    
     return qframe;
+}
+
+/**
+ * This stupid utility has to live somewhere, it may as well be here since
+ * we generally also use getQuantizedFrame with it
+ */
+QuantizeMode TrackEvent::convertQuantize(SwitchQuantize sq)
+{
+    QuantizeMode q = QUANTIZE_OFF;
+    switch (sq) {
+        case SWITCH_QUANT_OFF: break;
+        
+        case SWITCH_QUANT_SUBCYCLE:
+        case SWITCH_QUANT_CONFIRM_SUBCYCLE:
+            q =  QUANTIZE_SUBCYCLE;
+            break;
+        
+        case SWITCH_QUANT_CYCLE:
+        case SWITCH_QUANT_CONFIRM_CYCLE:
+            q = QUANTIZE_CYCLE;
+            break;
+        
+        case SWITCH_QUANT_LOOP:
+        case SWITCH_QUANT_CONFIRM_LOOP:
+            q = QUANTIZE_LOOP;
+            break;
+    }
+    return q;
 }
 
 /****************************************************************************/

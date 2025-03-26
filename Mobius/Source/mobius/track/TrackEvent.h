@@ -84,6 +84,10 @@ class TrackEvent : public PooledObject
 
     static int getQuantizedFrame(int loopFrames, int cycleFrames, int currentFrame,
                                  int subcycles, QuantizeMode q, bool after);
+
+    static QuantizeMode convertQuantize(SwitchQuantize sq);
+
+
     
 };
 

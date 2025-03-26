@@ -113,7 +113,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     }
 
     class TrackManager* getTrackManager();
-
+    class LogicalTrack* getLogicalTrack(int number);
+    
     void initializeState(class SystemState* state);
     void requestState(class SystemState* state);
     void refreshPriorityState(class PriorityState* state);

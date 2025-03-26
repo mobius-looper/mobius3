@@ -373,9 +373,10 @@ class Mobius
     void handleMslWait(class Loop* l, class Event* e);
 
     // similar interface for track waits
-    bool scheduleWait(class TrackWait& wait);
-    void cancelWait(class TrackWait& wait);
-    void finishWait(class TrackWait& wait);
+    bool scheduleWait(class TrackWait& wait, class Track* t);
+    void cancelWait(class TrackWait& wait, class Track* t);
+    void finishWait(class TrackWait& wait, class Track* t);
+    void waitEvent(class Loop* l, class Event* e);
     
     //////////////////////////////////////////////////////////////////////
     // New public accessors for events to deal with clips
@@ -409,6 +410,7 @@ class Mobius
 
     // new clip/follower/MIDI support
     int calculateFollowerEventFrame(class Track* track, QuantizeMode q);
+    int getWaitFrame(class TrackWait& wait, class Track* track);
 
     // new for track count reconfig
     void adjustTrackCount();

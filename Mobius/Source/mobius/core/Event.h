@@ -162,6 +162,7 @@ extern EventType* JumpPlayEvent;
 extern EventType* UndoEvent;
 extern EventType* RedoEvent;
 extern EventType* ScriptEvent;
+extern EventType* WaitEvent;
 extern EventType* StartPointEvent;
 extern EventType* RealignEvent;
 extern EventType* MidiStartEvent;
@@ -482,6 +483,14 @@ class Event {
         struct {
             int eventId;
         } follower;
+
+        /**
+         * Wait
+         */
+        struct {
+            int follower;
+            void* requestPayload;
+        } wait;
         
         /**
          * JumpPlayEvent, ReverseEvent

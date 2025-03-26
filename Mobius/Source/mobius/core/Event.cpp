@@ -1135,6 +1135,31 @@ void FollowerEventType::invoke(Loop* l, Event* e)
 FollowerEventType FollowerEventObj;
 EventType* FollowerEvent = &FollowerEventObj;
 
+/**
+ * Newer generalization of FoloowerEventType
+ * Eventual replacement
+ */
+class WaitEventType : public EventType {
+  public:
+    virtual ~WaitEventType() {}
+	WaitEventType();
+	void invoke(Loop* l, Event* e);
+};
+
+WaitEventType::WaitEventType()
+{
+	name = "Wait";
+    stateEventType = TrackState::EventWait;
+}
+
+void WaitEventType::invoke(Loop* l, Event* e)
+{
+    l->getMobius()->waitEvent(l, e);
+}
+
+WaitEventType WaitEventObj;
+EventType* WaitEvent = &WaitEventObj;
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
