@@ -35,10 +35,20 @@ void MslUtil::mutateActionArgument(Symbol* s, MslValue* v, UIAction* a)
                     if (v->type == MslValue::Int) {
                         a->value = v->getInt();
                     }
-                    else if (v->type == MslValue::String || v->type == MslValue::Enum) {
+                    else if (v->type == MslValue::String ||
+                             v->type == MslValue::Keyword ||
+                             v->type == MslValue::Enum) {
                         // don't trust the ordinal in the MslValue, which MSL shouldn't be
                         // setting anyway, just use the name
-                        a->value = s->parameterProperties->getEnumOrdinal(v->getString());
+                        int ordinal = s->parameterProperties->getEnumOrdinal(v->getString());
+                        if (ordinal < 0) {
+                            Trace(1, "MslUtil: Invalid enumeration name for symbol %s %s",
+                                  s->getName(), v->getString());
+                            // can't prevent the action at this point, need a better way
+                            // to raise errors
+                        }
+                        else
+                          a->value = ordinal;
                     }
                     else {
                         // what you give me dude?
