@@ -16,11 +16,11 @@
 
 #include "../../model/Session.h"
 #include "../../model/Scope.h"
+#include "../../LongWatcher.h"
 
 #include "TrackProperties.h"
 #include "TrackListener.h"
 #include "TrackMslHandler.h"
-#include "LongWatcher.h"
 #include "TrackEvent.h"
 #include "../midi/MidiWatcher.h"
 #include "../midi/MidiPools.h"

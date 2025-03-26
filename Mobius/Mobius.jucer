@@ -7,6 +7,8 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="i2YgCX" name="LongWatcher.cpp" compile="1" resource="0" file="Source/LongWatcher.cpp"/>
+      <FILE id="p4QZ6D" name="LongWatcher.h" compile="0" resource="0" file="Source/LongWatcher.h"/>
       <FILE id="Hq3Vul" name="Version.h" compile="0" resource="0" file="Source/Version.h"/>
       <GROUP id="{F23CE5FF-6226-362A-F16D-EAEDC716A0D0}" name="mcl">
         <FILE id="Nobe5P" name="MclEnvironment.cpp" compile="1" resource="0"
@@ -768,8 +770,6 @@
           <FILE id="vEVjGD" name="LogicalTrack.cpp" compile="1" resource="0"
                 file="Source/mobius/track/LogicalTrack.cpp"/>
           <FILE id="TCiX2I" name="LogicalTrack.h" compile="0" resource="0" file="Source/mobius/track/LogicalTrack.h"/>
-          <FILE id="U0i9pO" name="LongWatcher.cpp" compile="1" resource="0" file="Source/mobius/track/LongWatcher.cpp"/>
-          <FILE id="s0AgYM" name="LongWatcher.h" compile="0" resource="0" file="Source/mobius/track/LongWatcher.h"/>
           <FILE id="xYVFGJ" name="LooperScheduler.cpp" compile="1" resource="0"
                 file="Source/mobius/track/LooperScheduler.cpp"/>
           <FILE id="uFryGv" name="LooperScheduler.h" compile="0" resource="0"

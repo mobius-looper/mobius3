@@ -2,13 +2,12 @@
  * Utility class to watch for long presses of a function trigger.
  * A more recent adaptation of core/TriggerState
  *
- * Not specifically related to MIDI tracks.
- * This could go up in Kernel, or even Binderator.
+ * Currently maintained by TrackManager but should be moved to Binderator.
  */
 
 #pragma once
 
-#include "../../model/UIAction.h"
+#include "model/UIAction.h"
 
 class LongWatcher
 {

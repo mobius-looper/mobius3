@@ -16,7 +16,6 @@
             file="Source/NosyAudioProcessor.h"/>
     </GROUP>
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
-      <FILE id="XMWt0t" name="Version.h" compile="0" resource="0" file="../Mobius/Source/Version.h"/>
       <GROUP id="{4CEB93C1-89DE-9EAF-78A0-EF5EAAE7BF4F}" name="mcl">
         <FILE id="FL6ZTR" name="MclEnvironment.cpp" compile="1" resource="0"
               file="../Mobius/Source/mcl/MclEnvironment.cpp"/>
@@ -746,8 +745,6 @@
           <FILE id="YIXHyq" name="LogicalTrack.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/track/LogicalTrack.cpp"/>
           <FILE id="DSawnf" name="LogicalTrack.h" compile="0" resource="0" file="../Mobius/Source/mobius/track/LogicalTrack.h"/>
-          <FILE id="LumdLd" name="LongWatcher.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/track/LongWatcher.cpp"/>
-          <FILE id="jOu98F" name="LongWatcher.h" compile="0" resource="0" file="../Mobius/Source/mobius/track/LongWatcher.h"/>
           <FILE id="H4UTEz" name="LooperScheduler.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/track/LooperScheduler.cpp"/>
           <FILE id="ddWdg1" name="LooperScheduler.h" compile="0" resource="0"
@@ -1023,6 +1020,8 @@
             file="../Mobius/Source/JuceAudioStream.h"/>
       <FILE id="GB7MdQ" name="KeyTracker.cpp" compile="1" resource="0" file="../Mobius/Source/KeyTracker.cpp"/>
       <FILE id="jMyqTF" name="KeyTracker.h" compile="0" resource="0" file="../Mobius/Source/KeyTracker.h"/>
+      <FILE id="vWLgcx" name="LongWatcher.cpp" compile="1" resource="0" file="../Mobius/Source/LongWatcher.cpp"/>
+      <FILE id="EFwtLK" name="LongWatcher.h" compile="0" resource="0" file="../Mobius/Source/LongWatcher.h"/>
       <FILE id="yLsYoR" name="MainThread.cpp" compile="1" resource="0" file="../Mobius/Source/MainThread.cpp"/>
       <FILE id="EPHeye" name="MainThread.h" compile="0" resource="0" file="../Mobius/Source/MainThread.h"/>
       <FILE id="uYNmMY" name="MidiClerk.cpp" compile="1" resource="0" file="../Mobius/Source/MidiClerk.cpp"/>
@@ -1076,6 +1075,7 @@
             file="../Mobius/Source/VariableManager.cpp"/>
       <FILE id="JMMQkt" name="VariableManager.h" compile="0" resource="0"
             file="../Mobius/Source/VariableManager.h"/>
+      <FILE id="XMWt0t" name="Version.h" compile="0" resource="0" file="../Mobius/Source/Version.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>

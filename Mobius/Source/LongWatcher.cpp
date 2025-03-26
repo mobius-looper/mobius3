@@ -4,13 +4,13 @@
  * long pressability, assumes the Listener knows what to do with it.
  */
 
-#include "../../util/Trace.h"
-#include "../../util/Util.h"
-#include "../../model/Session.h"
-#include "../../model/SessionConstants.h"
-#include "../../model/UIAction.h"
-#include "../../model/Symbol.h"
-#include "../../model/FunctionProperties.h"
+#include "util/Trace.h"
+#include "util/Util.h"
+#include "model/Session.h"
+#include "model/SessionConstants.h"
+#include "model/UIAction.h"
+#include "model/Symbol.h"
+#include "model/FunctionProperties.h"
 
 #include "LongWatcher.h"
 
