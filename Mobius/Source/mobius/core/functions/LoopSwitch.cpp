@@ -47,6 +47,11 @@
 #include "../../../model/SymbolId.h"
 #include "../../../model/TrackState.h"
 
+// for EmptySwitchQuantize
+#include "../../track/TrackEvent.h"
+#include "../../track/TrackWait.h"
+#include "../../track/LogicalTrack.h"
+
 #include "../Action.h"
 #include "../Event.h"
 #include "../EventManager.h"
@@ -209,6 +214,8 @@ class LoopTriggerFunction : public ReplicatedFunction {
 
   private:
     Event* scheduleTrigger(Action* action, Loop* current, Loop* next);
+    bool scheduleEmptySwitch(Action* action, Loop* current, Loop* next);
+    void confirmEmptySwitch(Loop* current, Event* switche);
     Event* scheduleSwitch(Action* action, Loop* current, Loop* next, 
                           Event* modeEnd);
     Event* promoteSUSReturn(Action* action, Loop* loop, Event* susret);
@@ -656,23 +663,30 @@ Event* LoopTriggerFunction::scheduleTrigger(Action* action,
 		// ignore if we're restarting a reset loop
 		if (next != current) {
 
-            // schedule it, this also takes ownership of the Action
-			event = addSwitchEvent(action, current, next);
+            bool waiting = false;
+            EmptySwitchQuantize esq = ParameterSource::getEmptySwitchQuantize(current->getTrack());
+            if (esq == EmptySwitchSyncSource)
+              waiting = scheduleEmptySwitch(action, current, next);
 
-            // and immediately confirm it
-            // ?? do the "confirm" modes apply here
-            // event->confirm(action, current, frame) would have
-            // the same effect but we can just call it directly
-            confirmEvent(action, current, event, CONFIRM_FRAME_QUANTIZED);
+            if (!waiting) {
+                // schedule it, this also takes ownership of the Action
+                event = addSwitchEvent(action, current, next);
+
+                // and immediately confirm it
+                // ?? do the "confirm" modes apply here
+                // event->confirm(action, current, frame) would have
+                // the same effect but we can just call it directly
+                confirmEvent(action, current, event, CONFIRM_FRAME_QUANTIZED);
             
-            if (action->getEvent() != event) {
-                // a roudning mode decided not to use this event, 
-                // this should not happen, it was already traced
-                event = nullptr;
-            }
-            else {
-                // play InputLatency frames
-                current->setMode(RunMode);
+                if (action->getEvent() != event) {
+                    // a roudning mode decided not to use this event, 
+                    // this should not happen, it was already traced
+                    event = nullptr;
+                }
+                else {
+                    // play InputLatency frames
+                    current->setMode(RunMode);
+                }
             }
 		}
 	}
@@ -758,6 +772,102 @@ Event* LoopTriggerFunction::scheduleTrigger(Action* action,
 	}
 
 	return event;
+}
+
+/**
+ * New: When doing a switch in an empty loop with EmptySwitchQuantize set
+ * to SyncSource, it gets complicated.
+ */
+bool LoopTriggerFunction::scheduleEmptySwitch(Action* action, Loop* current, Loop* next)
+{
+    bool waiting = false;
+
+    // only makes sense if we have SwitchQuantize, and there is a TrackSyncMaster
+    SwitchQuantize sq = ParameterSource::getSwitchQuantize(current->getTrack());
+    if (sq != SWITCH_QUANT_OFF) {
+        LogicalTrack* master = current->getMobius()->getTrackSyncMaster();
+        if (master != nullptr) {
+
+            // we are in a position to do a synchronized switch
+
+            // this schedules a pending switch event
+            // it also takes ownership of the Action
+            Event* event = addSwitchEvent(action, current, next);
+
+            // unclear if we really need to be checking confirm in this
+            // case, the loop is in reset so there's not like you have a lot of
+            // other things to be doing, still it would give you time to adjust the
+            // target loop if you happened to be close to the extsernal sync point
+            bool needsConfirm = (sq == SWITCH_QUANT_CONFIRM ||
+                                 sq == SWITCH_QUANT_CONFIRM_CYCLE ||
+                                 sq == SWITCH_QUANT_CONFIRM_SUBCYCLE ||
+                                 sq == SWITCH_QUANT_CONFIRM_LOOP);
+
+            if (!needsConfirm) {
+                // go through switch quantization
+                confirmEmptySwitch(current, event);
+            }
+            // else leave it there
+
+            waiting = true;
+        }
+    }
+    return waiting;
+}
+
+/**
+ * Here immediately after scheduling a pending SwitchEvent and there
+ * was no confirmation, or we've just received the confirmation.
+ * Set up the wait event.
+ *
+ * The switch event remains pending.
+ */
+void LoopTriggerFunction::confirmEmptySwitch(Loop* current, Event* switche)
+{
+    bool doItNow = false;
+    
+    // since the event remains pending, set this so we can tell the difference
+    // between Confirm and Synchronize modes
+    switche->fields.loopSwitch.waiting = true;
+            
+    SwitchQuantize sq = ParameterSource::getSwitchQuantize(current->getTrack());
+    QuantizeMode q = TrackEvent::convertQuantize(sq);
+    if (q == QUANTIZE_OFF) {
+        // should never have gotten here, just enable it now
+        doItNow = true;
+    }
+    else {
+        // a lot can happen while you've been sitting in Confirm mode
+        // make sure the TSM still exists
+        LogicalTrack* master = current->getMobius()->getTrackSyncMaster();
+        if (master == nullptr) {
+            doItNow = true;
+        }
+        else {
+            // and now we wait
+            TrackWait wait;
+            wait.follower = current->getTrack()->getLogicalTrack()->getNumber();
+            wait.quantizationPoint = q;
+            wait.waitingEvent = switche;
+            if (!master->scheduleWait(wait)) {
+                Trace(1, "LoopSwitch: Failed to schedule synchronization wait");
+                doItNow = true;
+            }
+            else {
+                // remember this so we can inform the other track if we reset
+                // and no longer need the wait event
+                switche->fields.loopSwitch.waitTrack = master->getNumber();
+                switche->fields.loopSwitch.waitEvent = wait.waitEvent;
+            }
+        }
+    }
+
+    if (doItNow) {
+        // should never have gotten here, just enable it now
+        // still unclear what to do with the fucking JumpPlayEvent
+        switche->pending = false;
+        switche->frame = current->getFrame();
+    }
 }
 
 /**
@@ -1127,6 +1237,11 @@ void LoopTriggerFunction::confirmEvent(Action* action,
     if (switche == nullptr || !switche->pending) {
         // should this be an error?
         Trace(l, 2, "Confirm: no pending switch event\n");
+    }
+    else if (l->getMode() == ResetMode) {
+        // This is EmptySwitchQuant and we've now done the confirmation
+        // continue to scheduling the synchronization wait
+        confirmEmptySwitch(l, switche);
     }
     else {
         long switchFrame = frame;

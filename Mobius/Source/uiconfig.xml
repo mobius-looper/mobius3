@@ -132,6 +132,7 @@
     <Button action="Global Stop"/>
     <Button action="TrackGroup" arguments="next"/>
     <Button action="Shuffle"/>
+    <Button action="Confirm"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

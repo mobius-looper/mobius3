@@ -28,13 +28,13 @@ class TrackWait
      * Passed back to the requesting track when the wait completes or
      * is canceled.
      */
-    void* requestPayload = nullptr;
+    void* waitingEvent = nullptr;
 
     /**
      * Pointer to an opaque object maintained by the target track to handle
      * this wait request.  e.g. a scheduled Event or TrackEvent pointer.
      */
-    void* responsePayload = nullptr;
+    void* waitEvent = nullptr;
 
     // todo: since this is a bi-directional object could also allow the
     // receiving track to pass back errors here

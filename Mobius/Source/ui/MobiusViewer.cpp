@@ -461,6 +461,9 @@ juce::String MobiusViewer::deriveMode(TrackState* tstate)
 
     else if (tstate->switchConfirm)
       mode = "Confirm";
+    
+    else if (tstate->switchWait)
+      mode = "SyncSwitch";
 
     else if (tstate->nextLoop > 0)
       mode = "Switch";

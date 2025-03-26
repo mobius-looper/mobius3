@@ -1106,6 +1106,24 @@ void TrackManager::longPressDetected(LongWatcher::State* state)
             doAction(la);
         }
     }
+    else if (state->symbol->id == FuncMultiply) {
+        // another edpism Bernhard wants
+        if (state->notifications < 2) {
+            UIAction* la = actionPool->newAction();
+            if (state->notifications == 0) {
+                Trace(2, "TrackManager: Long Multiply to TrackReset");
+                la->symbol = getSymbols()->getSymbol(FuncTrackReset);
+            }
+            // would be nice to have this extend to GlobalReset but
+            // would have to throw that back to Kernel
+
+            la->value = state->value;
+            la->setScope(state->scope);
+            CopyString(state->arguments, la->arguments, sizeof(la->arguments));
+
+            doAction(la);
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

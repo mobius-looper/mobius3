@@ -48,7 +48,7 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="MidiStart" tree='Sync'/>
   <Function name="MidiStop" tree='Sync'/>
   <Function name="Move" mayFocus='true' mayCancelMute='true' tree='Movement'/>
-  <Function name="Multiply" mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Multiply" longPressable='true' mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="Mute" mayFocus='true' tree='Track'/>
   <!-- core has this as a mayCancelMute, why? -->
   <Function name="MuteRealign" mayFocus='true' tree='Track'/>

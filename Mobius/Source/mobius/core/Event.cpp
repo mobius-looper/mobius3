@@ -850,6 +850,11 @@ void Event::cancelScriptWait(Mobius* m)
         m->cancelMslWait(this);
         mMslWait = nullptr;
 	}
+
+    // new style TrackWait support, similar to MslWait
+    if (fields.loopSwitch.waiting)
+      m->cancelTrackWait(this);
+    
 }
 
 /****************************************************************************

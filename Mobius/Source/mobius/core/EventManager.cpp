@@ -1932,6 +1932,7 @@ void EventManager::refreshEventState(TrackState* state)
     state->nextLoop = 0;
     state->returnLoop = 0;
     state->switchConfirm = false;
+    state->switchWait = false;
     
 	Event* events = mEvents->getEvents();
     
@@ -1944,8 +1945,12 @@ void EventManager::refreshEventState(TrackState* state)
         
         else if (e->type == SwitchEvent) {
             state->nextLoop = nextLoop->getNumber();
-            if (e->pending)
-              state->switchConfirm = true;
+            if (e->pending) {
+                if (e->fields.loopSwitch.waiting)
+                  state->switchWait = true;
+                else
+                  state->switchConfirm = true;
+            }
         }
     }
 }

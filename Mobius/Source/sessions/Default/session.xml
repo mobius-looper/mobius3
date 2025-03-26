@@ -14,7 +14,7 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="switchQuantize" value="confirmLoop" type="enum" ordinal="7"/>
+      <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
       <Value name="syncSource" value="none" type="enum" ordinal="0"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="trackGroup" value="A"/>
@@ -67,6 +67,7 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="switchQuantize" value="confirmLoop" type="enum" ordinal="7"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="trackGroup" value="A"/>
@@ -209,6 +210,7 @@
     <Value name="controllerActionThreshold" value="64" type="int"/>
     <Value name="driftCheckPoint" value="loop" type="enum" ordinal="0"/>
     <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
+    <Value name="emptySwitchQuantize" value="syncSource" type="enum" ordinal="0"/>
     <Value name="emptyTrackAction" value="none" type="enum" ordinal="0"/>
     <Value name="fadeFrames" value="128" type="int"/>
     <Value name="hostBarsPerLoop" value="1" type="int"/>

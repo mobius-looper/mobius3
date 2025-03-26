@@ -489,7 +489,7 @@ class Event {
          */
         struct {
             int follower;
-            void* requestPayload;
+            void* waitingEvent;
         } wait;
         
         /**
@@ -537,7 +537,9 @@ class Event {
             long nextFrame;
             bool recordCanceled;
             bool upTransition;
-            bool synchronizing;
+            bool waiting;
+            int waitTrack;
+            void* waitEvent;
         } loopSwitch;
 
         /**

@@ -2136,6 +2136,26 @@ void Mobius::cancelMslWait(class Event* e)
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Related to wait scheduling, this is what LoopTriggerFunction needs
+ * to decide whether and where to schedule the wait event.
+ */
+LogicalTrack* Mobius::getTrackSyncMaster()
+{
+    LogicalTrack* tsm = nullptr;
+    
+    int number = mKernel->getSyncMaster()->getTrackSyncMaster();
+    if (number > 0)
+      tsm = mKernel->getLogicalTrack(number);
+
+    return tsm;
+}
+
+LogicalTrack* Mobius::getLogicalTrack(int number)
+{
+    return mKernel->getLogicalTrack(number);
+}
+
+/**
  * No real reason this can't be directly implemented on Track but I want
  * to keep it isolated for awhile.
  */
@@ -2150,12 +2170,12 @@ bool Mobius::scheduleWait(TrackWait& wait, Track* track)
         e->type = WaitEvent;
         e->frame = frame;
         e->fields.wait.follower = wait.follower;
-        e->fields.wait.requestPayload = wait.requestPayload;
+        e->fields.wait.waitingEvent = wait.waitingEvent;
         
         em->addEvent(e);
 
         // caller may use this to correlate finishWait calls
-        wait.responsePayload = e;
+        wait.waitEvent = e;
 
         success = true;
     }
@@ -2165,19 +2185,58 @@ bool Mobius::scheduleWait(TrackWait& wait, Track* track)
 
 void Mobius::cancelWait(TrackWait& wait, Track* track)
 {
-    Event* event = (Event*)wait.responsePayload;
-    EventManager* em = track->getEventManager();
-    em->removeEvent(event);
+    Event* waite = (Event*)wait.waitEvent;
+    if (waite == nullptr) {
+        Trace(1, "Mobius::cancelWait Missing response payload");
+    }
+    else {
+        if (waite->type != WaitEvent)
+          Trace(1, "Mobius::cancelWait Event was not a WaitEvent");
+        EventManager* em = track->getEventManager();
+        em->freeEvent(waite);
+    }
+}
+
+/**
+ * Called by the EventManager/Event when an event is caneled due to
+ * track reset and it noticed a wait payload.
+ */
+void Mobius::cancelTrackWait(Event* event)
+{
+    int number = event->fields.loopSwitch.waitTrack;
+    if (number == 0) {
+        Trace(1, "Mobius::cancelTrackWait No master track set");
+    }
+    else {
+        LogicalTrack* master = getLogicalTrack(number);
+        if (master != nullptr) {
+            TrackWait wait;
+            // hmm, could be nice to include the follower number here but we don't
+            // have that in the caller
+            wait.waitEvent = event->fields.loopSwitch.waitEvent;
+            master->cancelWait(wait);
+        }
+    }
 }
 
 void Mobius::finishWait(TrackWait& wait, Track* track)
 {
-    (void)wait;
-    (void)track;
-    Trace(1, "Mobius::finishWait not implemented");
-
-    // requestPayload from the call to scheduleWait has been included
-    // use that to find a pending event and activate it
+    // this should be the SwitchEvent that was scheduled down in LoopTriggerFunction
+    Event* waiting = (Event*)(wait.waitingEvent);
+    EventManager* em = track->getEventManager();
+    if (!em->isEventScheduled(waiting)) {
+        Trace(1, "Mobius::finishWait Event evaporated");
+    }
+    else {
+        // the only one we expect right now is LoopSwitch but
+        // could be anything
+        if (waiting->type != SwitchEvent)
+          Trace(1, "Mobius::finishWait Not a LoopSwitch event");
+        
+        // activate it
+        waiting->pending = false;
+        waiting->frame = track->getLoop()->getFrame();
+    }
 }
 
 /**
@@ -2190,7 +2249,7 @@ void Mobius::waitEvent(Loop* loop, Event* event)
     LogicalTrack* follower = mKernel->getLogicalTrack(event->fields.wait.follower);
     if (follower != nullptr) {
         TrackWait wait;
-        wait.requestPayload = event->fields.wait.requestPayload;
+        wait.waitingEvent = event->fields.wait.waitingEvent;
         follower->finishWait(wait);
     }
 }
