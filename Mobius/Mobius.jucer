@@ -207,6 +207,28 @@
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
         <FILE id="xUDDwi" name="SvgIcons.cpp" compile="1" resource="0" file="Source/ui/SvgIcons.cpp"/>
         <FILE id="gasp1K" name="SvgIcons.h" compile="0" resource="0" file="Source/ui/SvgIcons.h"/>
+        <GROUP id="{33E7B670-E576-573D-B9BA-7AA3A89A8BB7}" name="binding">
+          <FILE id="WuQCAs" name="BindingDetails.cpp" compile="1" resource="0"
+                file="Source/ui/binding/BindingDetails.cpp"/>
+          <FILE id="ZhuAhk" name="BindingDetails.h" compile="0" resource="0"
+                file="Source/ui/binding/BindingDetails.h"/>
+          <FILE id="qTxuwm" name="BindingEditor.cpp" compile="1" resource="0"
+                file="Source/ui/binding/BindingEditor.cpp"/>
+          <FILE id="WLBMVK" name="BindingEditor.h" compile="0" resource="0" file="Source/ui/binding/BindingEditor.h"/>
+          <FILE id="ciPqsa" name="BindingSetContent.cpp" compile="1" resource="0"
+                file="Source/ui/binding/BindingSetContent.cpp"/>
+          <FILE id="nbpw2M" name="BindingSetContent.h" compile="0" resource="0"
+                file="Source/ui/binding/BindingSetContent.h"/>
+          <FILE id="RdWYDA" name="BindingSetTable.cpp" compile="1" resource="0"
+                file="Source/ui/binding/BindingSetTable.cpp"/>
+          <FILE id="tTy19T" name="BindingSetTable.h" compile="0" resource="0"
+                file="Source/ui/binding/BindingSetTable.h"/>
+          <FILE id="ymKbOr" name="BindingTable.cpp" compile="1" resource="0"
+                file="Source/ui/binding/BindingTable.cpp"/>
+          <FILE id="H9cT8Q" name="BindingTable.h" compile="0" resource="0" file="Source/ui/binding/BindingTable.h"/>
+          <FILE id="liA5BZ" name="NewBindingPanel.h" compile="0" resource="0"
+                file="Source/ui/binding/NewBindingPanel.h"/>
+        </GROUP>
         <GROUP id="{D00C350E-B29D-D24C-688C-04027E4FDEE4}" name="parameter">
           <FILE id="oXrWw9" name="DropTreeView.cpp" compile="1" resource="0"
                 file="Source/ui/parameter/DropTreeView.cpp"/>

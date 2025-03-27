@@ -9,7 +9,8 @@
 #include "../config/ConfigEditor.h"
 #include "../script/TypicalTable.h"
 
-#include "BindingTable.h"
+#include "BindingSetTable.h"
+#include "BindingDetails.h"
 
 class BindingEditor : public ConfigEditor,
                       public TypicalTable::Listener
@@ -19,7 +20,7 @@ class BindingEditor : public ConfigEditor,
     BindingEditor(class Supervisor* s);
     ~BindingEditor();
 
-    juce::String getTitle() override {return "Parameter Bindings";}
+    juce::String getTitle() override {return "Bindings";}
 
     void prepare() override;
     void load() override;
@@ -38,19 +39,24 @@ class BindingEditor : public ConfigEditor,
     void bindingSetTableCopy(juce::String newName, juce::StringArray& errors);
     void bindingSetTableRename(juce::String newName, juce::StringArray& errors);
     void bindingSetTableDelete(juce::StringArray& errors);
+
+    void showBinding(class Binding* b);
     
   private:
 
     int currentSet = -1;
 
     std::unique_ptr<class BindingSets> bindingSets;
-    std::unique_ptr<class BindingSets> revertBindings;
-    std::unique_ptr<class BindingTable> table;
+    std::unique_ptr<class BindingSets> revertSets;
+    std::unique_ptr<class BindingSetTable> setTable;
+    juce::OwnedArray<class BindingSetContent> contents;
 
+    BindingDetailsPanel bindingDetails;
+    
     //juce::OwnedArray<class BindingTreeForms> treeForms;
 
     bool checkName(juce::String newName, juce::StringArray& errors);
-    class ValueSet* getSourceBinding(juce::String action, juce::StringArray& errors);
-    void addNew(class ValueSet* set);
+    class BindingSet* getSourceBindingSet(juce::String action, juce::StringArray& errors);
+    void addNew(class BindingSet* set);
     
 };

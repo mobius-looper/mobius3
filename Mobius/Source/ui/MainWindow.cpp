@@ -373,6 +373,10 @@ void MainWindow::mainMenuSelection(int id)
                 supervisor->decacheForms();
                 break;
                 
+            case MainMenu::InProgress:
+                panelFactory.show(PanelFactory::InProgress);
+                break;
+                
             case MainMenu::ScriptEditor:
                 windowFactory.show(WindowFactory::ScriptEditor);
                 break;

@@ -76,7 +76,7 @@ class BasePanel : public juce::Component, public juce::Button::Listener
     // make the panel visible
     // won't be necessary once PanelFactory is done...
     void show();
-    void close();
+    virtual void close();
 
     // subclass overrides this if it has more preparations to make
     virtual void showing();

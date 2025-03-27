@@ -23,6 +23,8 @@
 // this has all the configuration panels
 #include "config/ConfigPanels.h"
 
+#include "binding/NewBindingPanel.h"
+
 #include "PanelFactory.h"
 
 PanelFactory::PanelFactory(MainWindow* main)
@@ -158,6 +160,11 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case Monitor: panel = new MonitorPanel(super); break;
         case MclConsole: panel = new MclPanel(super); break;
         case TraceLog: panel = new TracePanel(super); break;
+            
+        case InProgress:
+            panel = new NewBindingPanel(super);
+            break;
+            
         default:
             Trace(1, "PanelFactory: Unknown panel id %d\n", id);
             break;

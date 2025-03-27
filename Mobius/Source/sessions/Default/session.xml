@@ -59,6 +59,7 @@
       <Value name="altFeedback" value="127" type="int"/>
       <Value name="audioInputPort" value="0" type="int"/>
       <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="emptySwitchQuantize" value="none" type="enum" ordinal="1"/>
       <Value name="feedback" value="127" type="int"/>
       <Value name="focus" value="false" type="bool"/>
       <Value name="input" value="127" type="int"/>
@@ -67,7 +68,6 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="switchQuantize" value="confirmLoop" type="enum" ordinal="7"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="trackGroup" value="A"/>

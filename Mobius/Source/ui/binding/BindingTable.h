@@ -1,5 +1,5 @@
 /**
- * A table showing BindingSets in a BindingSets.
+ * A table showing Bindings in a BindingSet.
  */
 
 #pragma once
@@ -12,39 +12,42 @@
 
 #include "../../Producer.h"
 
-class BindingSetTableRow
+class BindingTableRow
 {
   public:
-    BindingSetTableRow() {
+    BindingTableRow() {
     }
-    ~BindingSetTableRow() {
+    ~BindingTableRow() {
     }
 
-    juce::String name;
+    class Binding* binding = nullptr;
     
 };
 
-class BindingSetTable : public TypicalTable,
+class BindingTable : public TypicalTable,
                         public YanPopup::Listener,
                         public YanDialog::Listener
 {
   public:
 
-    const int ColumnName = 1;
-    
+    // column ids 
+    static const int TargetColumn = 1;
+    static const int TriggerColumn = 2;
+    static const int ArgumentsColumn = 3;
+    static const int ScopeColumn = 4;
+    static const int DisplayNameColumn = 5;
+
+    // these are used as popup menu item ids so must start with zero
     typedef enum {
-        DialogActivate = 1,
-        DialogDeactivate,
-        DialogCopy,
+        DialogEdit = 1,
         DialogNew,
-        DialogRename,
         DialogDelete
     } Dialog;
     
-    BindingSetTable(class BindingEditor* e);
-    ~BindingSetTable();
+    BindingTable();
+    ~BindingTable();
 
-    void load(class BindingSets* sets);
+    void load(class BindingEditor* e, class BindingSet* set);
     void reload();
     void clear();
     void cancel();
@@ -53,6 +56,7 @@ class BindingSetTable : public TypicalTable,
     int getRowCount() override;
     juce::String getCellText(int rowNumber, int columnId) override;
     void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
+    void cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
     void mouseDown(const juce::MouseEvent& event) override;
     
@@ -60,37 +64,23 @@ class BindingSetTable : public TypicalTable,
     void yanDialogClosed(YanDialog* d, int button) override;
     
   private:
-    
+
     class BindingEditor* editor = nullptr;
-    class BindingSets* bindingSets = nullptr;
+    class BindingSet* bindingSet = nullptr;
     
-    juce::OwnedArray<class BindingSetTableRow> bindingSetRows;
+    juce::OwnedArray<class BindingTableRow> bindingRows;
     
     YanPopup rowPopup {this};
     YanPopup emptyPopup {this};
     
-    YanDialog nameDialog {this};
-    YanDialog deleteAlert {this};
-    YanDialog confirmDialog {this};
-    YanDialog errorAlert {this};
+    YanDialog newDialog {this};
     
-    YanInput newName {"New Name"};
-    
-    juce::String getSelectedName();
-    
-    void doActivate();
-    void doDeactivate();
     void startNew();
-    void startCopy();
-    void startRename();
-    void startDelete();
 
     void finishNew(int button);
-    void finishCopy(int button);
-    void finishRename(int button);
-    void finishDelete(int button);
 
-    void showResult(juce::StringArray& errors);
+    juce::String renderTrigger(class Binding* b);
+    juce::String renderScope(class Binding* b);
 
 };
     

@@ -12,19 +12,15 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
-Build 33 included **very** significant changes from the previous build
+Build 30 included **very** significant changes from the previous build
 28.  If you have been using build 28 or earlier for some
-time, I recommend you proceed with caution about upgrading to build
-33.  While I do run through tests on every build, the chance that behavior
+time, I recommend you proceed with caution about upgrading to any build
+after 30.  While I do run through tests on every build, the chance that behavior
 you have been relying on changed in build 33 is much higher than it has been in the past.
-If you are a new user that doesn't have any complex configuration, then build 33 should be fine.
+If you are a new user that doesn't have any complex configuration, then the most recent build in the 30+ series should be fine.
 
-For this reason I'm keeping download links for both builds.  If you decide to try 33
+For this reason I'm keeping download links for both builds.  If you decide to try the latest build
 and run into a problem, you can go back to 28 until the issue is resolved.
-
-Build 34 continues the evolution away from the original configuration model and replaces *Presets* with
-*Overlays*.  If you have not yet upgraded to build 33, you should go directly to 34.    If you have been on
-build 33 you may move to build 34 but go back to build 33 if necessary.
 
 Please read through the new documentation pages for more on the new features that have been added.
 
@@ -36,25 +32,13 @@ Please read through the new documentation pages for more on the new features tha
 
 [Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-28.pkg)
 
-## Build 34
+## Build 36
 
-This release includes both the new **Session** and **Overlay** architectures.
+[Download for Windows](https://www.mobiuslooper.com/MobiusSetup-36.exe)
 
-[Download for Windows](https://www.mobiuslooper.com/MobiusSetup-34.exe)
+[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius-36.pkg)
 
-[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius-34.pkg)
-
-[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-34.pkg)
-
-## Build 33
-
-This release includes the new **Session** architecture but not *Overlays*.
-
-[Download for Windows](https://www.mobiuslooper.com/MobiusSetup-33.exe)
-
-[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius-33.pkg)
-
-[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-33.pkg)
+[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-36.pkg)
 
 ## Windows Security
 

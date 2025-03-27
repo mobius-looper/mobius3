@@ -13,10 +13,10 @@
 #include "../common/YanDialog.h"
 #include "../common/YanField.h"
 
-#include "BindingSetEditor.h"
+#include "BindingEditor.h"
 #include "BindingSetTable.h"
 
-BindingSetTable::BindingSetTable(BindingSetEditor* e)
+BindingSetTable::BindingSetTable(BindingEditor* e)
 {
     editor = e;
     setName("BindingSetTable");
@@ -64,9 +64,9 @@ BindingSetTable::~BindingSetTable()
 {
 }
 
-void BindingSetTable::load(BindingSets* argSets)
+void BindingSetTable::load(BindingSets* sets)
 {
-    sets = argSets;
+    bindingSets = sets;
     reload();
 }
 

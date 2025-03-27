@@ -133,7 +133,8 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         SymbolTable,
         UpgradeConfig,
         TraceLog,
-        DecacheForms
+        DecacheForms,
+        InProgress
         
         };
     
