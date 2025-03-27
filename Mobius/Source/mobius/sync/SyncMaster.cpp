@@ -1122,6 +1122,30 @@ SyncMaster::RequestResult SyncMaster::requestExtension(int number)
  * Undo/Redo to adjust the ending location and don't want to reset by accident.
  * Could have a parameter for this, but I'm liking just letting it finish.
  *
+ * update: Bernhard noticied this and was expecting Undo to cancel the Record ending
+ * first, then Reset second.  That's more in line with how Undo takes pending events away
+ * before it takes away the layer.  Ignoring AutoRecord, if you're doing a synchronized
+ * recording and accidentally press the second Record to end it, we'll schedule the ending,
+ * but now you can't undo what you just did and the recording is forced to complete.
+ *
+ * AutoRecord is a lot like a synchronized record end.  It's less clear what should happen
+ * there, the notion that an AutoRecord becomes an unbounded record if you press Undo once
+ * seems weird but it would be consistent with regular syncd record.  But if the alternative
+ * is to force it to finish, that seems wrong too, and causing it to completely reset if you
+ * back back the unit count down to nothing seems wrong.  So the rules for both sync record
+ * and AutoRecord are:
+ *
+ * Undo will remove one scheduled unit until it counts down to zero or reaches
+ * the number of elapsed units.
+ *
+ * Upon reaching zero/elapsed, the RecordEndEvent is removed and it becomes an unbounded
+ * Record.
+ *
+ * Undo then causes reset.
+ *
+ * Leave it up to Synchronizer to make that call.  We return zero if we can't go any
+ * lower and it can sort out the details.
+ *
  */
 SyncMaster::RequestResult SyncMaster::requestReduction(int number)
 {

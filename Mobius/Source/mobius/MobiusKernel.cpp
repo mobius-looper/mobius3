@@ -32,6 +32,7 @@
 #include "../Binderator.h"
 #include "../PluginParameter.h"
 #include "../Parametizer.h"
+#include "../MslUtil.h"
 
 #include "MobiusInterface.h"
 #include "MobiusShell.h"
@@ -1708,8 +1709,7 @@ bool MobiusKernel::mslAction(MslAction* action)
         UIAction* uia = actionPool->newAction();
         uia->symbol = symbol;
 
-        if (action->arguments != nullptr)
-          uia->value = action->arguments->getInt();
+        MslUtil::mutateActionArgument(symbol, action->arguments, uia);
 
         // there is no group scope in MslAction
         // !! why?  I guess the interpreter can do the group-to-tracks expansion
@@ -1752,6 +1752,20 @@ bool MobiusKernel::mslAction(MslAction* action)
         Trace(1, "MobiusKernel: mslAction with non-symbol target");
     }
     return success;
+}
+
+/**
+ * Interface needed by MslUtil to look up structure names.
+ * This is all sucking very hard right now.
+ * We've been forwarding this up to Container/Supervisor but that can potentially
+ * allocate memory and is not guaranteed thread safe when accessing UIConfig,
+ * GroupDefinitions, and ParameterSets.
+ *
+ * We have our own copy of the last two but don't have UIConfig.
+ */
+juce::String MobiusKernel::getStructureName(Symbol* s, int v)
+{
+    return container->getStructureName(s, v);
 }
 
 /**

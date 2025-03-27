@@ -7,6 +7,8 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="AQa1OI" name="MslUtil.cpp" compile="1" resource="0" file="Source/MslUtil.cpp"/>
+      <FILE id="Q2Uin9" name="MslUtil.h" compile="0" resource="0" file="Source/MslUtil.h"/>
       <FILE id="i2YgCX" name="LongWatcher.cpp" compile="1" resource="0" file="Source/LongWatcher.cpp"/>
       <FILE id="p4QZ6D" name="LongWatcher.h" compile="0" resource="0" file="Source/LongWatcher.h"/>
       <FILE id="Hq3Vul" name="Version.h" compile="0" resource="0" file="Source/Version.h"/>

@@ -1170,7 +1170,7 @@ bool TrackManager::mslQuery(MslQuery* query)
 
         (void)doQuery(&q);
 
-        mutateMslReturn(q.symbol, q.value, &(query->value));
+        MslUtil::mutateReturn(kernel, q.symbol, q.value, &(query->value));
 
         // Query at this level will never be "async"
         success = true;
@@ -1220,46 +1220,6 @@ bool TrackManager::mslQuery(VarQuery* query)
     // in case we trashed it
     query->scope = saveScope;
     return success;
-}
-
-/**
- * Convert a query result that was the value of an enumerated parameter
- * into a pair of values to return to the interpreter.
- * Not liking this but it works.  Supervisor needs to do exactly the same
- * thing so it would be nice to share this.  The only difference
- * is the way we have to call ParameterHelper.
- */
-void TrackManager::mutateMslReturn(Symbol* s, int value, MslValue* retval)
-{
-    if (s->parameterProperties == nullptr) {
-        // no extra definition, return whatever it was
-        retval->setInt(value);
-    }
-    else {
-        UIParameterType ptype = s->parameterProperties->type;
-        if (ptype == TypeEnum) {
-            // don't use labels since I want scripters to get used to the names
-            const char* ename = s->parameterProperties->getEnumName(value);
-            retval->setEnum(ename, value);
-        }
-        else if (ptype == TypeBool) {
-            retval->setBool(value == 1);
-        }
-        else if (ptype == TypeStructure) {
-            // hmm, the understanding of LevelUI symbols that live in
-            // UIConfig, and LevelTrack parameters like trackGroup and trackOverlay
-            // is in Supervisor right now
-            // todo: Need to repackage this
-            // todo: this could also be Type::Enum in the value but I don't
-            // think anything cares?
-            retval->setJString(kernel->getContainer()->getStructureName(s, value));
-        }
-        else {
-            // should only be here for TypeInt
-            // unclear what String would do
-            retval->setInt(value);
-        }
-    }
 }
 
 //////////////////////////////////////////////////////////////////////

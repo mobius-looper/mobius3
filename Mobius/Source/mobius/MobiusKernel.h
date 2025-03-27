@@ -20,6 +20,7 @@
 
 #include "../script/MslContext.h"
 #include "../script/ScriptUtil.h"
+#include "../MslUtil.h"
 
 #include "sync/SyncMaster.h"
 
@@ -31,7 +32,7 @@
 
 #include "track/TrackManager.h"
 
-class MobiusKernel : public MobiusAudioListener, public MslContext
+class MobiusKernel : public MobiusAudioListener, public MslContext, public MslUtil::Provider
 {
     friend class MobiusShell;
     friend class SampleFunction;
@@ -168,6 +169,10 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     class UIAction* newUIAction();
 
     juce::StringArray saveLoop(int trackNumber, int loopNumber, juce::File& file);
+
+    // stupid interface for MslUtil::Provider
+    // this isn't safe enough!
+    juce::String getStructureName(class Symbol* s, int value) override;
 
     //
     // MslContext

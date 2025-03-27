@@ -55,6 +55,7 @@
 #include "ProjectFiler.h"
 #include "MidiClerk.h"
 #include "ModelTransformer.h"
+#include "MslUtil.h"
 
 #include "script/ScriptClerk.h"
 #include "script/MslEnvironment.h"
@@ -2670,9 +2671,8 @@ bool Supervisor::mslAction(MslAction* action)
             UIAction uia;
             uia.symbol = s;
 
-            if (action->arguments != nullptr)
-              uia.value = action->arguments->getInt();
-
+            MslUtil::mutateActionArgument(s, action->arguments, &uia);
+            
             // there is no group scope in MslAction
             uia.setScopeTrack(action->scope);
     
@@ -2693,6 +2693,7 @@ bool Supervisor::mslAction(MslAction* action)
     }
     return success;
 }
+
 
 /**
  * Waits can not be scheduled at this level, the context

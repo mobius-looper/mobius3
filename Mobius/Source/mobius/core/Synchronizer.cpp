@@ -749,8 +749,11 @@ void Synchronizer::reduceRecordStop(Loop* loop)
         int newUnits = result.goalUnits;
         if (newUnits == 0) {
             // no where to go
-            Trace(2, "Synchronizer: Can't undo any more");
-            loop->reset(nullptr);
+            // see commentary in SyncMaster::requestReduction,
+            // the first phase is to remove the REcordStopEvent and let
+            // this become an unbounded recording,
+            // the second is to let it reset which was handled above
+            em->freeEvent(stop);
         }
         else if (newUnits != stop->number) {
             Trace(loop, 2, "Sync: Reducing record units from %d to %d", stop->number, newUnits);
