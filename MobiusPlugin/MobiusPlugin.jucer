@@ -1032,6 +1032,8 @@
             file="../Mobius/Source/ModelTransformer.cpp"/>
       <FILE id="M1A5vy" name="ModelTransformer.h" compile="0" resource="0"
             file="../Mobius/Source/ModelTransformer.h"/>
+      <FILE id="cohzP5" name="MslUtil.cpp" compile="1" resource="0" file="../Mobius/Source/MslUtil.cpp"/>
+      <FILE id="GK0JqM" name="MslUtil.h" compile="0" resource="0" file="../Mobius/Source/MslUtil.h"/>
       <FILE id="OPrbTI" name="Parametizer.cpp" compile="1" resource="0" file="../Mobius/Source/Parametizer.cpp"/>
       <FILE id="OxC1Fw" name="Parametizer.h" compile="0" resource="0" file="../Mobius/Source/Parametizer.h"/>
       <FILE id="YFYj6n" name="Pathfinder.cpp" compile="1" resource="0" file="../Mobius/Source/Pathfinder.cpp"/>
