@@ -1149,8 +1149,13 @@ SyncMaster::RequestResult SyncMaster::requestReduction(int number)
         int elapsed = (int)ceil((float)location / (float)unitLength);
         
         if (newUnits < elapsed) {
-            Trace(2, "SyncMaster: Supressing attempt to reduce auto record before elapsed");
-            newUnits = elapsed;
+            // formerly ignired this and just let it finish
+            // but that means if you're not using AutoREcord you can never Undo
+            // the recording when you're in the first and only unit
+            // even for auto record, if you try to go past where you are now it should reset
+            //Trace(2, "SyncMaster: Supressing attempt to reduce auto record before elapsed");
+            //newUnits = elapsed;
+            newUnits = 0;
         }
 
         result.goalUnits = newUnits;

@@ -568,6 +568,11 @@ Event* Function::invoke(Action* action, Loop* loop)
 		
 		trace(action, loop);
 
+        if (mode == RecordMode && action->getFunction() == Undo) {
+            int x = 0;
+            (void)x;
+        }
+
 		if (mode == ThresholdMode && !thresholdEnabled) {
 			// still waiting
             Trace(loop, 2, "Ignoring Action in Threshold mode\n");
