@@ -2272,8 +2272,8 @@ int Mobius::getWaitFrame(TrackWait& wait, Track* track)
             // for whatever reason, Track has methods for most of these
             // but for cycleFrames have to get the Loop
             frame = TrackEvent::getQuantizedFrame(track->getFrames(),
-                                                  track->getLoop()->getCycleFrames(),
-                                                  track->getFrame(),
+                                                  (int)(track->getLoop()->getCycleFrames()),
+                                                  (int)(track->getFrame()),
                                                   track->getLogicalTrack()->getSubcycles(),
                                                   wait.quantizationPoint, true);
         }

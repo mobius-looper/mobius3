@@ -508,7 +508,8 @@ QuantizeMode TrackEvent::convertQuantize(SwitchQuantize sq)
 {
     QuantizeMode q = QUANTIZE_OFF;
     switch (sq) {
-        case SWITCH_QUANT_OFF: break;
+        case SWITCH_QUANT_OFF:
+        case SWITCH_QUANT_CONFIRM: break;
         
         case SWITCH_QUANT_SUBCYCLE:
         case SWITCH_QUANT_CONFIRM_SUBCYCLE:
