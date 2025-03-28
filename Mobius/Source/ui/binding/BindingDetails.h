@@ -3,6 +3,7 @@
 
 #include <JuceHeader.h>
 #include "../BasePanel.h"
+#include "BindingTree.h"
 
 class BindingContent : public juce::Component
 {
@@ -14,16 +15,14 @@ class BindingContent : public juce::Component
     BindingContent();
     ~BindingContent() {}
 
-    void setMessage(juce::String msg);
-    void addMessage(juce::String msg);
+    void initialize(Provider* p);
     
     void resized() override;
 
   private:
 
-    juce::Label text;
-    // juce::StringArray messages;
-
+    BindingTree tree;
+    
 };    
 
 class BindingDetailsPanel : public BasePanel
@@ -35,8 +34,10 @@ class BindingDetailsPanel : public BasePanel
 
     void initialize();
 
-    void show(juce::Component* parent, juce::String message);
+    void show(juce::Component* parent);
     void close() override;
+    
+    void initialize(Provider* p);
     
   private:
 

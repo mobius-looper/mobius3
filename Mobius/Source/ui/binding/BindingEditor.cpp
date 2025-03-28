@@ -78,6 +78,9 @@ void BindingEditor::load()
     currentSet = -1;
 
     setTable->selectFirst();
+
+    bindingDetails.initialize(supervisor);
+    
     resized();
 
     //JuceUtil::dumpComponent(this);
@@ -108,7 +111,7 @@ void BindingEditor::showBinding(Binding* b)
 {
     (void)b;
 
-    bindingDetails.show(this, "Hello");
+    bindingDetails.show(this);
     JuceUtil::centerInParent(&bindingDetails);
 }
 

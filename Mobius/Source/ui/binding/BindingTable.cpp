@@ -190,6 +190,8 @@ void BindingTable::cellClicked(int rowNumber, int columnId, const juce::MouseEve
 
 void BindingTable::cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
+    (void)columnId;
+    (void)event;
     BindingTableRow* row = bindingRows[rowNumber];
     if (row != nullptr) {
         if (editor != nullptr)

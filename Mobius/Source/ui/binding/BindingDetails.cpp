@@ -20,7 +20,7 @@ BindingDetailsPanel::BindingDetailsPanel()
     setSize(700, 500);
 }
 
-void BindingDetailsPanel::show(juce::Component* parent, juce::String message)
+void BindingDetailsPanel::show(juce::Component* parent)
 {
     // since Juce can't seem to control z-order, even if we already have this parent
     // (which is unlikely), remove and add it so it's at the top
@@ -29,7 +29,6 @@ void BindingDetailsPanel::show(juce::Component* parent, juce::String message)
       current->removeChildComponent(this);
     parent->addAndMakeVisible(this);
     
-    content.setMessage(message);
     // why was this necessary?
     content.resized();
     JuceUtil::centerInParent(this);
@@ -44,32 +43,35 @@ void BindingDetailsPanel::close()
     }
 }
 
+void BindingDetailsPanel::initialize(Provider* p)
+{
+    content.initialize(p);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Content
+//
+//////////////////////////////////////////////////////////////////////
+
 BindingContent::BindingContent()
 {
-    text.setColour(juce::Label::ColourIds::textColourId, juce::Colours::red);
-    text.setFont(JuceUtil::getFont(FontHeight));
-    text.setJustificationType(juce::Justification::centred);
-    
-    addAndMakeVisible(text);
+    addAndMakeVisible(tree);
+}
+
+void BindingContent::initialize(Provider* p)
+{
+    tree.initialize(p);
 }
 
 void BindingContent::resized()
 {
-    text.setBounds(getLocalBounds());
+    juce::Rectangle<int> area = getLocalBounds();
+    tree.setBounds(area.removeFromLeft(300));
 }
 
-void BindingContent::setMessage(juce::String msg)
-{
-    text.setText(msg, juce::NotificationType::dontSendNotification);
-}
 
-void BindingContent::addMessage(juce::String msg)
-{
-    // does it work to inject newlines between multiple messages?
-    juce::String current = text.getText();
-    if (current.length() > 0)
-      current += "\n";
-    current += msg;
-      
-    text.setText(current, juce::NotificationType::dontSendNotification);
-}
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

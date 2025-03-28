@@ -7,11 +7,9 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
-      <FILE id="AQa1OI" name="MslUtil.cpp" compile="1" resource="0" file="Source/MslUtil.cpp"/>
-      <FILE id="Q2Uin9" name="MslUtil.h" compile="0" resource="0" file="Source/MslUtil.h"/>
-      <FILE id="i2YgCX" name="LongWatcher.cpp" compile="1" resource="0" file="Source/LongWatcher.cpp"/>
-      <FILE id="p4QZ6D" name="LongWatcher.h" compile="0" resource="0" file="Source/LongWatcher.h"/>
-      <FILE id="Hq3Vul" name="Version.h" compile="0" resource="0" file="Source/Version.h"/>
+      <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
+            file="Source/BlueSphere-10-40.png"/>
+      <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
       <GROUP id="{F23CE5FF-6226-362A-F16D-EAEDC716A0D0}" name="mcl">
         <FILE id="Nobe5P" name="MclEnvironment.cpp" compile="1" resource="0"
               file="Source/mcl/MclEnvironment.cpp"/>
@@ -25,9 +23,6 @@
         <FILE id="LXtblH" name="MclParser.h" compile="0" resource="0" file="Source/mcl/MclParser.h"/>
         <FILE id="QcRoJ6" name="MclResult.h" compile="0" resource="0" file="Source/mcl/MclResult.h"/>
       </GROUP>
-      <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
-            file="Source/BlueSphere-10-40.png"/>
-      <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
       <GROUP id="{F958D1D1-0714-F899-8A96-C4B8CCDAC94D}" name="ff_meters">
         <FILE id="MHymLv" name="ff_meters.cpp" compile="1" resource="0" file="Source/ff_meters/ff_meters.cpp"/>
         <FILE id="QGYdos" name="ff_meters.h" compile="0" resource="0" file="Source/ff_meters/ff_meters.h"/>
@@ -226,6 +221,8 @@
           <FILE id="ymKbOr" name="BindingTable.cpp" compile="1" resource="0"
                 file="Source/ui/binding/BindingTable.cpp"/>
           <FILE id="H9cT8Q" name="BindingTable.h" compile="0" resource="0" file="Source/ui/binding/BindingTable.h"/>
+          <FILE id="sP0ePT" name="BindingTree.cpp" compile="1" resource="0" file="Source/ui/binding/BindingTree.cpp"/>
+          <FILE id="GPDzLn" name="BindingTree.h" compile="0" resource="0" file="Source/ui/binding/BindingTree.h"/>
           <FILE id="liA5BZ" name="NewBindingPanel.h" compile="0" resource="0"
                 file="Source/ui/binding/NewBindingPanel.h"/>
         </GROUP>
@@ -1072,6 +1069,8 @@
             file="Source/JuceAudioStream.h"/>
       <FILE id="Ugflnj" name="KeyTracker.cpp" compile="1" resource="0" file="Source/KeyTracker.cpp"/>
       <FILE id="wXaKpF" name="KeyTracker.h" compile="0" resource="0" file="Source/KeyTracker.h"/>
+      <FILE id="i2YgCX" name="LongWatcher.cpp" compile="1" resource="0" file="Source/LongWatcher.cpp"/>
+      <FILE id="p4QZ6D" name="LongWatcher.h" compile="0" resource="0" file="Source/LongWatcher.h"/>
       <FILE id="YlAxvV" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
       <FILE id="x4dOIH" name="MainComponent.cpp" compile="1" resource="0"
             file="Source/MainComponent.cpp"/>
@@ -1086,6 +1085,8 @@
             file="Source/ModelTransformer.cpp"/>
       <FILE id="MOkp2k" name="ModelTransformer.h" compile="0" resource="0"
             file="Source/ModelTransformer.h"/>
+      <FILE id="AQa1OI" name="MslUtil.cpp" compile="1" resource="0" file="Source/MslUtil.cpp"/>
+      <FILE id="Q2Uin9" name="MslUtil.h" compile="0" resource="0" file="Source/MslUtil.h"/>
       <FILE id="qj6h9Q" name="Parametizer.cpp" compile="1" resource="0" file="Source/Parametizer.cpp"/>
       <FILE id="vP0uxA" name="Parametizer.h" compile="0" resource="0" file="Source/Parametizer.h"/>
       <FILE id="vS0bOi" name="Pathfinder.cpp" compile="1" resource="0" file="Source/Pathfinder.cpp"/>
@@ -1122,6 +1123,7 @@
             file="Source/VariableManager.cpp"/>
       <FILE id="YymWkL" name="VariableManager.h" compile="0" resource="0"
             file="Source/VariableManager.h"/>
+      <FILE id="Hq3Vul" name="Version.h" compile="0" resource="0" file="Source/Version.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>

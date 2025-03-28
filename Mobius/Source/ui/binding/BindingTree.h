@@ -3,35 +3,39 @@
 
 #include <JuceHeader.h>
 
-#include "../../model/Symbol.h"
-
-#include "SymbolTree.h"
+#include "../parameter/SymbolTree.h"
 
 class BindingTree : public SymbolTree
 {
   public:
 
+    class Listener {
+      public:
+        virtual ~Listener() {}
+        virtual void bindingTreeClicked(class Symbol* s);
+    };
+    
     BindingTree();
     ~BindingTree();
 
+    void setListener(Listener* l) {
+        listener = l;
+    }
+    
     void initialize(class Provider* p);
+    
     void selectFirst();
 
   private:
 
-};
+    Listener* listener = nullptr;
 
-// this is used by the original dynamic tree builder which is no longer used
-class ParameterTreeComparator
-{
-  public:
+    void addFunctions(Provider* p);
+    void addParameters(Provider* p);
+    void addStructures(Provider* p);
+    
+    bool isFiltered(class Symbol* s, class ParameterProperties* props);
+    void hideEmptyCategories(class SymbolTreeItem* node);
 
-    ParameterTreeComparator(class TreeForm* tf);
-
-    int compareElements(juce::TreeViewItem* first, juce::TreeViewItem* second);
-
-  private:
-
-    class TreeForm* form = nullptr;
 };
 

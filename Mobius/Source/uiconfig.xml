@@ -133,6 +133,7 @@
     <Button action="TrackGroup" arguments="next"/>
     <Button action="Shuffle"/>
     <Button action="Confirm"/>
+    <Button action="LoadSession"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

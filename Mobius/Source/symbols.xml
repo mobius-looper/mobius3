@@ -17,46 +17,49 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="AutoRecord" sustainable='true' longHelp='Long press becomes Reset'
             mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="Backward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
-  <Function name="Bounce" tree='Utility'/>
+  <Function name="Bounce" tree='Recording' hidden='true'/>
   <!-- this one needs work before it can be visible -->
-  <Function name="Checkpoint" mayFocus='true' mayCancelMute='true' tree='Utility'
-            options='noBinding'/>
+  <Function name="Checkpoint" mayFocus='true' mayCancelMute='true' tree='Utility' hidden='true'/>
+
   <Function name="Clear" mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="Confirm" mayFocus='true' tree='Switch'/>
-  <Function name="Divide" mayFocus='true' mayCancelMute='true' tree='Recording'/>
-  <Function name="Divide3" mayFocus='true' mayCancelMute='true' tree='Recording'/>
-  <Function name="Divide4" mayFocus='true' mayCancelMute='true' tree='Reocrding'/>
-  <Function name="FocusLock" tree='Utility'/>
+  <Function name="Divide" mayFocus='true' mayCancelMute='true' tree='Editing'/>
+  <Function name="Divide3" mayFocus='true' mayCancelMute='true' tree='Editing'/>
+  <Function name="Divide4" mayFocus='true' mayCancelMute='true' tree='Editing'/>
+  <Function name="FocusLock" tree='Track'/>
   <Function name="Forward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="GlobalMute" global='true' tree='Track'/>
   <Function name="GlobalPause" global='true' tree='Movement'/>
   <Function name="GlobalReset" global='true' tree='Recording'/>
   <Function name="Halfspeed" mayFocus='true' mayCancelMute='true' tree='Speed'/>
-  <Function name="Insert" mayFocus='true' mayCancelMute='true' tree='Recording'/>
-  <Function name="InstantMultiply" mayFocus='true' tree='Recording'/>
+  <Function name="Insert" mayFocus='true' mayCancelMute='true' tree='Editing'/>
+  <Function name="InstantMultiply" mayFocus='true' tree='Editing'/>
   <!--
       these are similar to replicated functions but have been in use
       for a long time, think about this
       -->
-  <Function name="InstantMultiply3" mayFocus='true' tree='Recording'/>
-  <Function name="InstantMultiply4" mayFocus='true' tree='Recording'/>
+  <Function name="InstantMultiply3" mayFocus='true' tree='Editing'/>
+  <Function name="InstantMultiply4" mayFocus='true' tree='Editing'/>
 
   <!-- Formerly LoopN, Loop1, Loop2, etc. -->
-  <Function name="SelectLoop" mayFocus='true' mayCancelMute='true' tree='Track'
+  <Function name="SelectLoop" mayFocus='true' mayCancelMute='true' tree='Switch'
             argumentHelp="Loop Number: 1-8"/>
 
-  <Function name="MidiStart" tree='Sync'/>
-  <Function name="MidiStop" tree='Sync'/>
+  <!-- figure out what these do, replaced by Transport? -->
+  <Function name="MidiStart" tree='Sync' hidden='true'/>
+  <Function name="MidiStop" tree='Sync' hidden='true'/>
+  
   <Function name="Move" mayFocus='true' mayCancelMute='true' tree='Movement'/>
-  <Function name="Multiply" longPressable='true' mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Multiply" longPressable='true' mayFocus='true' mayCancelMute='true' tree='Editing'/>
+  
   <Function name="Mute" mayFocus='true' tree='Track'/>
   <!-- core has this as a mayCancelMute, why? -->
   <Function name="MuteRealign" mayFocus='true' tree='Track'/>
   <Function name="MuteMidiStart" tree='MIDI'/>
-  <Function name="NextLoop" mayFocus='true' mayCancelMute='true' tree='Track'/>
+  <Function name="NextLoop" mayFocus='true' mayCancelMute='true' tree='Switch'/>
   <Function name="NextTrack" tree='Track'/>
-  <Function name="Overdub" mayFocus='true' mayCancelMute='true' tree='Recording'/>
-  <Function name="Pause" mayFocus='true' tree='Track' mayQuantize='true'/>
+  <Function name="Overdub" mayFocus='true' mayCancelMute='true' tree='Editing'/>
+  <Function name="Pause" mayFocus='true' mayQuantize='true' tree='Movement'/>
   <Function name="PitchDown" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
   <Function name="PitchNext" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
   <Function name="PitchCancel" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
@@ -64,24 +67,24 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="PitchStep" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
   <Function name="PitchUp" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
   <Function name="Play" mayFocus='true' tree='Recording'/>
-  <Function name="PrevLoop" mayFocus='true' mayCancelMute='true' tree='Track'/>
+  <Function name="PrevLoop" mayFocus='true' mayCancelMute='true' tree='Switch'/>
   <Function name="PrevTrack" tree='Track'/>
-  <Function name="Realign" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Track'/>
+  <Function name="Realign" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Sync'/>
   <Function name="Record" sustainable='true' longPressable='true' longHelp='Long press becomes Reset' mayFocus='true' mayCancelMute='true' tree='Recording'/>
-  <Function name="Redo" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Track'/>
+  <Function name="Redo" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Editing'/>
   <!-- this one needs work, either fix it or get rid of it -->
   <Function name="Rehearse" mayFocus='true' mayCancelMute='true'
-            tree='Recording' options='noBinding'/>
-  <Function name="Replace" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Recording'/>
+            tree='Recording' hidden='true'/>
+  <Function name="Replace" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Editing'/>
   <!-- core has this as mayConfirm, why? -->
-  <Function name="Reset" mayFocus='true' tree='Track'/>
+  <Function name="Reset" mayFocus='true' tree='Recording'/>
   <Function name="Restart" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Movement'/>
   <Function name="RestartOnce" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="Reverse" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Movement'/>
   <!-- core has this as mayFocus, don't think that's relevant -->
-  <Function name="SaveCapture" tree='Utility'/>
-  <Function name="SaveLoop" tree='Utility'/>
-  <Function name="Shuffle" mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="SaveCapture" tree='Utility' hidden='true'/>
+  <Function name="SaveLoop" tree='File'/>
+  <Function name="Shuffle" mayFocus='true' mayCancelMute='true' tree='Editing'/>
   <Function name="SlipForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="SlipBackward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="Solo" mayFocus='true' tree='Track'/>
@@ -93,10 +96,10 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="SpeedUp" mayFocus='true' mayCancelMute='true' tree='Speed'/>
   <Function name="SpeedToggle" mayFocus='true' mayCancelMute='true' tree='Speed'/>
   <!-- core has this mayFocus -->
-  <Function name="StartCapture" tree='Utility'/>
+  <Function name="StartCapture" tree='Utility' hidden='true'/>
   <Function name="StartPoint" mayFocus='true' mayCancelMute='true' tree='Editing'/>
   <!-- core has this mayFocus -->
-  <Function name="StopCapture" tree='Utility'/>
+  <Function name="StopCapture" tree='Utility' hidden='true'/>
   <Function name="Stutter" mayFocus='true' mayCancelMute='true' tree='Editing'/>
   <Function name="Substitute" mayFocus='true' mayCancelMute='true' tree='Editing'/>
 
@@ -116,6 +119,7 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="SUSSubstitute" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
   <Function name="SUSUnroundedInsert" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
   <Function name="SUSUnroundedMultiply" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  
   <Function name="SyncStartPoint" mayFocus='true' mayCancelMute='true' tree='Sync'/>
   
   <!-- Formerly TrackN, Track1, etc. -->
@@ -127,7 +131,7 @@ Once those models are fully converted, these symbols can be removed.
   <!-- this was marked sustainable for awhile, I think at one time a longPress of this
        would remove the group assignment, it doesn't any more but that's interesting  -->
   <Function name="TrackGroup" mayFocus='true' tree='Track'/>
-  <Function name="TrackReset" mayFocus='true' tree='Editing'/>
+  <Function name="TrackReset" mayFocus='true' tree='Recording'/>
   <Function name="TrimEnd" mayFocus='true' mayCancelMute='true' tree='Editing'/>
   <Function name="TrimStart" mayFocus='true' mayCancelMute='true' tree='Editing'/>
   <Function name="Undo" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Editing'/>
@@ -137,16 +141,16 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="WindowStartForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="WindowEndBackward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="WindowEndForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
-
+  
   <!-- why aren't the next two visible? -->
-  <Function name="UpCycle" mayFocus='true' tree='MIDI' options='noBinding'/>
-  <Function name="DownCycle" mayFocus='true' tree='MIDI' options='noBinding'/>
-  <Function name="SetCycles" tree='MIDI' options='noBinding'/>
+  <Function name="UpCycle" mayFocus='true' tree='MIDI' hidden='true'/>
+  <Function name="DownCycle" mayFocus='true' tree='MIDI' hidden='true'/>
+  <Function name="SetCycles" tree='Editing'/>
   <Function name="Start" tree='Movement' mayQuantize='true'/>
   <Function name="Stop" tree='Movement' mayQuantize='true'/>
 
   <!-- file oriented functions -->
-  <Function name="LoadMidi" level='ui' tree='ui'/>
+  <Function name="LoadMidi" level='ui' tree='File'/>
   
   <!-- various diagnostic functions for testing -->
   
@@ -159,24 +163,39 @@ Once those models are fully converted, these symbols can be removed.
   <!-- not sure where this one should go -->
   <Function name="SamplePlay" tree='Utility'/>
 
-  <!-- MIDI specific -->
-
-  <Function name="MidiResize" midi='true' mayFocus='true'  tree='MIDI'/>
+  <Function name="MidiResize" midi='true' mayFocus='true' tree='MIDI'/>
   <Function name="MidiHalfspeed" midi='true' mayFocus='true' mayQuantize='true' tree='MIDI'/>
   <Function name="MidiDoublespeed" midi='true' mayFocus='true' mayQuantize='true' tree='MIDI'/>
-
+  
   <Function name='TransportStart' level='kernel' tree='Transport'/>
   <Function name='TransportStop' level='kernel' tree='Transport'/>
   <Function name='TransportTap' level='kernel' tree='Transport'/>
-  <Function name="SyncMasterTrack" level='kernel' tree='Transport'/>
-  <Function name="SyncMasterTransport" level='kernel' tree='Transport'/>
+  <Function name="SyncMasterTrack" level='kernel' tree='Sync'/>
+  <Function name="SyncMasterTransport" level='kernel' tree='Sync'/>
 
   <!-- Session Control
        Sessions may also be loaded with structure bindings.
    -->
-  <Function name="LoadSession" level='ui'/>
-  <Function name="SaveSession" level='ui'/>
+  <Function name="LoadSession" level='ui' tree='File'/>
+  <Function name="SaveSession" level='ui' tree='File'/>
   
+
+  <!-- UI Functions -->
+
+  <Function name="UIParameterUp" level='ui' tree='UI'/>
+  <Function name="UIParameterDown" level='ui' tree='UI'/>
+  <Function name="UIParameterInc" level='ui' tree='UI'/>
+  <Function name="UIParameterDec" level='ui' tree='UI'/>
+
+  <Function name="ReloadScripts" level='ui' tree='File'/>
+  <Function name="ReloadSamples" level='ui' tree='File'/>
+    
+  <Function name="ShowPanel" level='ui' tree='UI'/>
+  <Function name="Message" level='ui' hidden='true'/>
+    
+  <Function name="AddButton" level='ui' hidden='true'/>
+  <Function name="Listen" level='ui' hidden='true'/>
+
   <!--
   Parameter type=int is assumed unless specified
   scope=global implies noBinding unless bindable is on
@@ -188,21 +207,6 @@ Once those models are fully converted, these symbols can be removed.
   instead of 1-16 it is 0-15?  A more useful concept would just be range=128
   rather than low/high.
   -->
-
-  <!-- UI Functions -->
-
-  <Function name="UIParameterUp" level='ui'/>
-  <Function name="UIParameterDown" level='ui'/>
-  <Function name="UIParameterInc" level='ui'/>
-  <Function name="UIParameterDec" level='ui'/>
-  <Function name="ReloadScripts" level='ui'/>
-  <Function name="ReloadSamples" level='ui'/>
-    
-  <Function name="ShowPanel" level='ui'/>
-  <Function name="Message" level='ui' options='noBinding'/>
-    
-  <Function name="AddButton" level='ui' hidden='true'/>
-  <Function name="Listen" level='ui' hidden='true'/>
 
   <!-- =======================================================================
        PRESET
