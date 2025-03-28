@@ -942,6 +942,24 @@ SyncMaster::RequestResult SyncMaster::requestRecordStop(int number, bool noSync)
                 // pass these so the record cursor can be shown right away
                 result.goalUnits = goal;
                 result.extensionLength = unitarian->getSingleAutoRecordUnitLength(lt);
+
+                // kludge for Switch+Record
+                // the way core currently works is if you stack a Record on a Switch
+                // it schedules an event without involving Synchronizer and begins
+                // recording immediately, this means LogicalTrack::syncRecording will be false
+                // as will LogicalTrack::syncRecordStarted
+                // When the Record is pressed again it wants to schedule a pulsed RecordStop
+                // event but this pulse will never be received if those two flags are off
+                // there is almost certainly more that needs to happen here
+                if (!lt->isSyncRecording()) {
+                    Trace(2, "SyncMaster: Synchronized record end without synchronized start");
+                    Trace(2, "SyncMaster: I'm trying my best to deal with it");
+                    lt->setSyncRecording(true);
+                    lt->setSyncRecordStarted(true);
+                    // start has already happened but syncRecordUnit is necessary
+                    // for ending and extension calculations
+                    gatherSyncUnits(lt, src, SyncUnitNone, SyncUnitNone);
+                }
             }
         }
     }

@@ -68,6 +68,7 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="switchQuantize" value="loop" type="enum" ordinal="3"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="trackGroup" value="A"/>
@@ -219,6 +220,7 @@
     <Value name="hostOverrideTimeSignature" value="0" type="int"/>
     <Value name="inputLatency" value="0" type="int"/>
     <Value name="isolateOverdubs" value="0" type="int"/>
+    <Value name="longDisable" value="true" type="bool"/>
     <Value name="longPress" value="500" type="int"/>
     <Value name="loopCount" value="4" type="int"/>
     <Value name="maxLoops" value="2" type="int"/>
