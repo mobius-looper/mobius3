@@ -88,6 +88,9 @@ int Unitarian::getUnitLength(SyncSource src)
  * and preliminary sizing for the UI.  The actual synced recording will be
  * pulsed.
  *
+ * update: No, it isn't always pulsed, With "rounded recording" we need to be
+ * able to calculate a final loop length without receiving an ending sync pulse.
+ *
  * When there is an odd number of cycles or subcycles, the final cycle/subcycle
  * can be of a different size than the others due to roundoff.  e.g.
  * If a track is 100 frames long and has 3 cycles, the first two will be 33 and

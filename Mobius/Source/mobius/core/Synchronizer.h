@@ -30,6 +30,9 @@ class Synchronizer {
 
     void syncEvent(class Track* t, class SyncEvent* e);
 
+    // not really a sync pulse, but similar
+    void syncCycleEvent(class Loop* l, class Event* e);
+    
     //
     // Record scheduling
     //
@@ -92,6 +95,8 @@ class Synchronizer {
     class Event* scheduleRecordStopNow(class Action* action, class Loop* loop);
     class Event* scheduleSyncRecordStop(class Action* action, class Loop* l,
                                         SyncMaster::RequestResult &result);
+
+    void scheduleSyncCycleEvent(Loop* l);
 
     void reduceRecordStop(class Loop* loop);
     void extendRecordStop(class Loop* loop);

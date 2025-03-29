@@ -48,6 +48,10 @@ class SyncMaster
         // on the track's SyncMode 
         bool synchronized = false;
 
+        // true if the recording can start now, but the ending
+        // needs to be synchronized
+        bool synchronizedFreeStart = false;
+
         // extra details for requestAutoRecord
         int autoRecordUnits = 0;
         int autoRecordLength = 0;
@@ -116,6 +120,7 @@ class SyncMaster
     RequestResult requestRecordStart(int number, SyncUnit pulseUnit, SyncUnit startUnit, bool noSync);
     RequestResult requestRecordStart(int number, SyncUnit unit, bool noSync);
     RequestResult requestRecordStart(int number, bool noSync);
+    RequestResult requestSwitchStart(int number);
     RequestResult requestRecordStop(int number, bool noSync);
     RequestResult requestPreRecordStop(int number);
     RequestResult requestAutoRecord(int number, bool noSync);
@@ -126,6 +131,7 @@ class SyncMaster
     // Track Notifications
     //
     
+    void notifyFreeRecordUnit(int number);
     void notifyRecordStarted(int id);
     void notifyRecordStopped(int id);
     

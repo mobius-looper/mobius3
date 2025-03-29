@@ -221,21 +221,10 @@ void Synchronizer::scheduleSwitchRecord(Event* switchEvent, Event* stackedEvent,
     // if this had come from a normal UIAction, then the noSynchronization flag
     // may have been set and would be passed to SyncMaster, untill we decide
     // how this works, pass false and allow it to think it may be synchronized
-    SyncMaster::RequestResult result =
-        mSyncMaster->requestRecordStart(next->getTrack()->getLogicalNumber(), false);
+    int number = next->getTrack()->getLogicalNumber();
+    SyncMaster::RequestResult result = mSyncMaster->requestSwitchStart(number);
 
-    // we never supported threshold recorfding on switch and I still
-    // don't think it makes sense
-    if (result.threshold > 0)
-      Trace(1, "Synchronizer: Ignoring threshold mode in Switch/Record");
-
-    bool syncIt = false;
     if (result.synchronized) {
-        // todo: here have the option to scheduled a pulsed recrd event
-        syncIt = true;
-    }
-
-    if (syncIt) {
         // this is mostly the same as what scheduleSyncRecord does
         // but we're working without an UIAction and don't have
         // threshold mode to deal with
@@ -270,9 +259,98 @@ void Synchronizer::scheduleSwitchRecord(Event* switchEvent, Event* stackedEvent,
 
         re->invoke(next);
         re->free();
+
+        if (result.synchronizedFreeStart) {
+            // while we started immediately, this still has a sync'd ending
+            // to properly count cycles we need to watch our playback location
+            // since sync pulses from the SyncSource won't be in the right place
+            // for recordings that started free
+
+            // ugh, we have to go to the LT to get the unit length, if we're going to
+            // do that, then we may as well skip passing stuff in RequestResult since it's
+            // all on the LT already
+            scheduleSyncCycleEvent(next);
+        }
     }
     
     mMobius->getNotifier()->notify(next, NotificationRecordStart);
+}
+
+void Synchronizer::scheduleSyncCycleEvent(Loop* l)
+{
+    Track* t = l->getTrack();
+    LogicalTrack* lt = t->getLogicalTrack();
+    int unitLength = lt->getUnitLength();
+    if (unitLength == 0) {
+        Trace(1, "Synchronizer::scheduleSyncCycleEvent No unit length set");
+    }
+    else {
+        EventManager* em = t->getEventManager();
+        Event* sce = em->newEvent(SyncCycleEvent, l->getFrame() + unitLength);
+        em->addEvent(sce);
+    }
+}
+
+/**
+ * Here when an event scheduled by scheduleSyncCycleEvent has been encountered
+ */
+void Synchronizer::syncCycleEvent(Loop* l, Event* e)
+{
+    (void)e;
+    Track* t = l->getTrack();
+
+	MobiusMode* mode = l->getMode();
+    if (mode == RecordMode) {
+        // we are still recording, schedule another cycle event
+        LogicalTrack* lt = t->getLogicalTrack();
+        int unitLength = lt->getUnitLength();
+            
+        EventManager* em = t->getEventManager();
+        Event* sce = em->newEvent(SyncCycleEvent, l->getFrame() + unitLength);
+        em->addEvent(sce);
+        
+        // need to tell SM to bump the elapsed unit counter
+        mSyncMaster->notifyFreeRecordUnit(lt->getNumber());
+
+        // bump the cycle count
+        // this is messy and needs to behave the same as
+        // extendRecording does when it receives a SyncPulse
+        // we do't have a SyncEvent to work with, but the same stuff is stored
+        // on the LogicalTrack, which in retrospect is how we could be doing all of this
+
+        int elapsed = lt->getSyncElapsedUnits();
+        int newCycles = elapsed + 1;
+        l->setRecordCycles(newCycles);
+
+        // if there was a RecordStop scheduled, give it the number so it can
+        // be displayed in the UI
+        Event* stop = em->findEvent(RecordStopEvent);
+        if (stop == nullptr) {
+            // this is an unclosed recording and we've passed a unit boundary
+            // bump the cycle count so the user sees something happening
+        }
+        else if (!stop->pending) {
+            // recording is either unsynced, or has already been closed
+            // shouldn't be sending extension events at this point
+            Trace(l, 1, "Sync: SyncEvent::Extend RecordStopEvent not pending");
+        }
+        else {
+            stop->number = newCycles;
+        }
+    }
+    else if (mode == SynchronizeMode) {
+        // shouldn't be here, free record endings aren't synced
+        // and anything else that would establish Synchronize mode should
+        // have removed the cycle event
+        Trace(1, "Synchronizer: Unexpected SyncCycle event in Synchronized mode");
+    }
+    else {
+        // the loop has already finished recording, this must be a residual
+        // event that was pre-emptively scheduled but no longer necessary
+        // because the RecordStop event took control
+        // could have cleaned this up earlier
+        Trace(2, "Syncrhonizer: Ignoring SyncCycle event after record completion");
+    }
 }
 
 /**

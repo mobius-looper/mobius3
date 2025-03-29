@@ -96,6 +96,9 @@ class LogicalTrack
     void setSyncRecordStarted(bool b);
     bool isSyncRecordStarted();
 
+    void setSyncRecordFreeStart(bool b);
+    bool isSyncRecordFreeStart();
+
     void setSyncFinalized(bool b);
     bool isSyncFinalized();
     
@@ -193,12 +196,31 @@ class LogicalTrack
     int inputPort = 0;
     int outputPort = 0;
 
+    //
     // sync recording state
+    //
+
+    // true if we're in the process of making a synchronized recording
     bool syncRecording = false;
+
+    // true if we have begun recording
     bool syncRecordStarted = false;
+
+    // true when doing Switch+Record that did NOT synchronize record start
+    // but needs to sync or round the ending to match the source unit length
+    bool syncRecordFreeStart = false;
+
+    // true when the recording is in the process of ending and is waiting
+    // for the final unit to fill 
     bool syncFinalized = false;
+
+    // the sync pulse to wait for to begin recording
     SyncUnit syncStartUnit = SyncUnitNone;
+    // the sync pulse to wait for to end recording
+    // update: If we always round the ending using the unit length, we don't
+    // really need to pulse the ending
     SyncUnit syncRecordUnit = SyncUnitNone;
+    
     int syncElapsedUnits = 0;
     int syncElapsedBeats = 0;
     int syncGoalUnits = 0;

@@ -180,6 +180,8 @@ extern EventType* MidiOutEvent;
 
 extern EventType* FollowerEvent;
 
+extern EventType* SyncCycleEvent;
+
 /****************************************************************************
  *                                                                          *
  *                                   EVENT                                  *

@@ -817,6 +817,49 @@ SyncMaster::RequestResult SyncMaster::requestRecordStart(int number,
 }
 
 /**
+ * This is a variant requestRecordStart that must be used with Record stacked
+ * on a Switch.  Historically the recording will start immediately after the Switch
+ * even if this is not exactly on a sync pulse.  Depending on TBD options, this could
+ * either ask the track to wait for a sync pulse, or allow it to start immediately.
+ * If result.synchronized is set the track should behave as if the switch finished
+ * and Record was pressed normally and wait for the next pulse.  If the flag is not set
+ * the the track should begin recording now, but since sync pulses are not going to
+ * align with where "cycles" are, it needs to schedule it's own events to determine
+ * this.
+ *
+ * todo: revisit this and see if we can move cycle boundary detection up here so it
+ * can be shared by both audio and midi tracks.  It's annoying though because SM isn't
+ * usually in the business of watching the track's record location.
+ */
+SyncMaster::RequestResult SyncMaster::requestSwitchStart(int number)
+{
+    RequestResult result = requestRecordStart(number, SyncUnitNone, SyncUnitNone, false);
+
+    if (result.threshold > 0) {
+        // ignore threshold in Switch+Record
+        Trace(2, "SyncMaster: Ignoring threshold mode in Switch/Record");
+        result.threshold = 0;
+    }
+
+    if (result.synchronized) {
+        // this would ordinally be synchronized, but in this case we're going to
+        // let it start immediately, but need to set a flag to indiciate that
+        // this had a "free start" and that cycle counting will be relative to the
+        // start of this loop rather than where the sync pulses are
+        
+        LogicalTrack* lt = trackManager->getLogicalTrack(number);
+        if (lt != nullptr) {
+            lt->setSyncRecordFreeStart(true);
+        }
+
+        result.synchronized = false;
+        result.synchronizedFreeStart = true;
+    }
+
+    return result;
+}
+
+/**
  * Gather the units a synchronized recording is going to wait on.
  * These normally come from the session parameters, but I'm adding the eventual
  * ability for these to be overridden in the action to accomplish something like this:
@@ -1245,7 +1288,12 @@ Pulse* SyncMaster::getBlockPulse(LogicalTrack* track)
  */
 void SyncMaster::handleBlockPulse(LogicalTrack* track, Pulse* pulse)
 {
-    if (!track->isSyncRecordStarted()) {
+    if (track->isSyncRecordFreeStart()) {
+        // this track isn't following sync pulses
+        // it will be scheduling it's own internal events
+        // every unit, and calling back to notifySyncUnit
+    }
+    else if (!track->isSyncRecordStarted()) {
         // waiting for a start pulse
         Pulse* annotated = barTender->annotate(track, pulse);
         SyncUnit startUnit = track->getSyncStartUnit();
@@ -1518,6 +1566,54 @@ void SyncMaster::dealWithSyncEvent(class LogicalTrack* lt, SyncEvent* event)
     else if (event->ended) {
         // track must do this
         //notifyRecordStopped(lt->getNumber());
+    }
+}
+
+/**
+ * When doing a "free start" synchronized recording, the BaseTrack was
+ * responsible for keeping track of the passage of time and knowing when
+ * recording crossed a sync unit boundary.  When that happens, it calls
+ * back here so we can adjust the recording state.
+ */
+void SyncMaster::notifyFreeRecordUnit(int number)
+{
+    LogicalTrack* lt = trackManager->getLogicalTrack(number);
+    if (lt != nullptr) {
+
+        if (!lt->isSyncRecordFreeStart()) {
+            // why are we here?
+            Trace(1, "SyncMaster: Free record unit notification not in free mode");
+        }
+        else {
+            // for consistency with the way sync pulses work, bump the
+            // elapsed beat count, though this isn't really a beat
+            int beat = lt->getSyncElapsedBeats() + 1;
+            lt->setSyncElapsedBeats(beat);
+        
+            int elapsed = lt->getSyncElapsedUnits() + 1;
+            lt->setSyncElapsedUnits(elapsed);
+
+            int goalUnits = lt->getSyncGoalUnits();
+
+            // unlike handleBlockPulse we don't need to take any action
+            // on this other than incrementing the counters
+            // temporarily trace some interesting situations 
+
+            if (goalUnits == 0) {
+                // doing an unbounded record
+            }
+            else if (goalUnits == elapsed) {
+                // we've reached the end
+                // we don't send a SyncEvent::Stop pulse because the
+                // track is expected to be handling it
+            }
+            else if (elapsed > goalUnits) {
+                // elapsed was not incremented properly
+                // the track really should have caught this by now
+                Trace(1, "SyncMaster: Free Record missed goal unit %d %d, are you ever going to stop?",
+                      elapsed, goalUnits);
+            }
+        }
     }
 }
 
