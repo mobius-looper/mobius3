@@ -210,6 +210,9 @@
           <FILE id="qTxuwm" name="BindingEditor.cpp" compile="1" resource="0"
                 file="Source/ui/binding/BindingEditor.cpp"/>
           <FILE id="WLBMVK" name="BindingEditor.h" compile="0" resource="0" file="Source/ui/binding/BindingEditor.h"/>
+          <FILE id="zICjss" name="BindingForms.cpp" compile="1" resource="0"
+                file="Source/ui/binding/BindingForms.cpp"/>
+          <FILE id="JxEnnu" name="BindingForms.h" compile="0" resource="0" file="Source/ui/binding/BindingForms.h"/>
           <FILE id="ciPqsa" name="BindingSetContent.cpp" compile="1" resource="0"
                 file="Source/ui/binding/BindingSetContent.cpp"/>
           <FILE id="nbpw2M" name="BindingSetContent.h" compile="0" resource="0"
@@ -223,6 +226,8 @@
           <FILE id="H9cT8Q" name="BindingTable.h" compile="0" resource="0" file="Source/ui/binding/BindingTable.h"/>
           <FILE id="sP0ePT" name="BindingTree.cpp" compile="1" resource="0" file="Source/ui/binding/BindingTree.cpp"/>
           <FILE id="GPDzLn" name="BindingTree.h" compile="0" resource="0" file="Source/ui/binding/BindingTree.h"/>
+          <FILE id="bPrXUM" name="BindingUtil.cpp" compile="1" resource="0" file="Source/ui/binding/BindingUtil.cpp"/>
+          <FILE id="LurqiG" name="BindingUtil.h" compile="0" resource="0" file="Source/ui/binding/BindingUtil.h"/>
           <FILE id="liA5BZ" name="NewBindingPanel.h" compile="0" resource="0"
                 file="Source/ui/binding/NewBindingPanel.h"/>
         </GROUP>

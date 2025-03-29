@@ -5608,21 +5608,8 @@ void Loop::switchEvent(Event* event)
 void Loop::switchRecord(Loop* next, Event* switchEvent,
                         Event* stackedEvent)
 {
-    (void)stackedEvent;
-    // TODO: What about ending with AutoRecord?
-    EventManager* em = mTrack->getEventManager();
-    Event* re = em->newEvent(Record, 0);
-
-    // This is used in some test scripts, not sure if it needs to
-    // be conveyed through the switch event though.  If anything it 
-    // would probably be set on the stacked RecordEvent event?
-    re->fadeOverride = switchEvent->fadeOverride;
-
-    // could put this here if significant?
-    //re->invokingFunction = switchEvent->function;
-
-    re->invoke(next);
-    re->free();
+    // implementation moved to Synchronizer
+    mSynchronizer->scheduleSwitchRecord(switchEvent, stackedEvent, next);
 }
 
 /**

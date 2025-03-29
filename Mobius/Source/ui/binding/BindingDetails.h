@@ -4,6 +4,7 @@
 #include <JuceHeader.h>
 #include "../BasePanel.h"
 #include "BindingTree.h"
+#include "BindingForms.h"
 
 class BindingContent : public juce::Component
 {
@@ -15,14 +16,16 @@ class BindingContent : public juce::Component
     BindingContent();
     ~BindingContent() {}
 
-    void initialize(Provider* p);
+    void initialize(class Provider* p);
+    void load(class Binding* b);
     
     void resized() override;
 
   private:
 
+    class Provider* provider = nullptr;
     BindingTree tree;
-    
+    BindingForms forms;
 };    
 
 class BindingDetailsPanel : public BasePanel
@@ -33,11 +36,11 @@ class BindingDetailsPanel : public BasePanel
     ~BindingDetailsPanel() {}
 
     void initialize();
+    void initialize(class Provider* p);
 
-    void show(juce::Component* parent);
+    void show(juce::Component* parent, class Binding* b);
     void close() override;
     
-    void initialize(Provider* p);
     
   private:
 

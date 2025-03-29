@@ -180,6 +180,102 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 }
 
 /**
+ * Schedule a RecordStart event that follows the completion of
+ * a loop switch.  This is a special case because the Record action
+ * was not processed immediately, it was stacked under the SwitchEvent
+ * and will be activated after the switch completes.
+ *
+ * Ther eis some ambiguity over how this should work when combined
+ * with synchronization.
+ *
+ *    1) Schedule normally and wait for a sync pulse if necessary
+ *    2) Schedule unsynchronized immediately and round off the ending
+ *       so that it matches the SyncSource unit length
+ *
+ * Both are potentially interesting for different audiences, may need
+ * another option.
+ *
+ * Here from Loop::switchEvent toward the end of the gawdawful logic
+ * handling various combinations of stacked events.   If we decide to synchronize
+ * here, then all of the stacked events really should be slid under the RecordStart event
+ * and processed then rather than doing them immediately which in many cases will be canceled
+ * by the RecordStart when it activates.
+ *
+ * stackedEvent is the Record event that was stacked on the switch, don't think
+ * it carries any interesting information but it might.
+ *
+ * Comments copied from Loop::switchRecord
+ * Force recording to start in the next loop.
+ * We do this by making a transient RecordEvent and passing
+ * it through the function handler.  Since Record is so fundamental could
+ * consider just having Loop functions for this?
+ */
+void Synchronizer::scheduleSwitchRecord(Event* switchEvent, Event* stackedEvent,
+                                        Loop* next)
+{
+    (void)stackedEvent;
+
+    // since we know we're happening after a switch we don't need to deal
+    // with any of the current state of the current or next loop, Loop::switchEvent
+    // will have dealt with that
+    // if this had come from a normal UIAction, then the noSynchronization flag
+    // may have been set and would be passed to SyncMaster, untill we decide
+    // how this works, pass false and allow it to think it may be synchronized
+    SyncMaster::RequestResult result =
+        mSyncMaster->requestRecordStart(next->getTrack()->getLogicalNumber(), false);
+
+    // we never supported threshold recorfding on switch and I still
+    // don't think it makes sense
+    if (result.threshold > 0)
+      Trace(1, "Synchronizer: Ignoring threshold mode in Switch/Record");
+
+    bool syncIt = false;
+    if (result.synchronized) {
+        // todo: here have the option to scheduled a pulsed recrd event
+        syncIt = true;
+    }
+
+    if (syncIt) {
+        // this is mostly the same as what scheduleSyncRecord does
+        // but we're working without an UIAction and don't have
+        // threshold mode to deal with
+
+        // Loop::switchEvent isn't done, this may get trashed?
+        next->setMode(SynchronizeMode);
+
+        EventManager* em = next->getTrack()->getEventManager();
+        Event* event = em->newEvent(Record, RecordEvent, 0);
+        event->pending = true;
+        em->addEvent(event);
+
+        Trace(next, 2, "Sync: Scheduled pulsed RecordStart after Switch");
+    }
+    else {
+        // ignore syn and always schedule an immediate record
+        // calling requestRecordStart was still necessary to get the sync recording
+        // state on LogicalTrack set up
+
+        // this is exactly what Loop::switchRecord used to do
+        // TODO: What about ending with AutoRecord?
+        EventManager* em = next->getTrack()->getEventManager();
+        Event* re = em->newEvent(Record, 0);
+
+        // This is used in some test scripts, not sure if it needs to
+        // be conveyed through the switch event though.  If anything it 
+        // would probably be set on the stacked RecordEvent event?
+        re->fadeOverride = switchEvent->fadeOverride;
+
+        // could put this here if significant?
+        //re->invokingFunction = switchEvent->function;
+
+        re->invoke(next);
+        re->free();
+    }
+    
+    mMobius->getNotifier()->notify(next, NotificationRecordStart);
+}
+
+/**
  * Helper for Synchronize and Threshold modes.
  * Schedule a pending Record event and optionally a RecordStop event
  * if this is an AutoRecord.

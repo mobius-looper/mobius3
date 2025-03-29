@@ -111,7 +111,7 @@ void BindingEditor::showBinding(Binding* b)
 {
     (void)b;
 
-    bindingDetails.show(this);
+    bindingDetails.show(this, b);
     JuceUtil::centerInParent(&bindingDetails);
 }
 

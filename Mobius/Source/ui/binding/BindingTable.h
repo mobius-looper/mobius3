@@ -79,8 +79,5 @@ class BindingTable : public TypicalTable,
 
     void finishNew(int button);
 
-    juce::String renderTrigger(class Binding* b);
-    juce::String renderScope(class Binding* b);
-
 };
     

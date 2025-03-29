@@ -20,7 +20,7 @@ BindingDetailsPanel::BindingDetailsPanel()
     setSize(700, 500);
 }
 
-void BindingDetailsPanel::show(juce::Component* parent)
+void BindingDetailsPanel::show(juce::Component* parent, Binding* b)
 {
     // since Juce can't seem to control z-order, even if we already have this parent
     // (which is unlikely), remove and add it so it's at the top
@@ -28,6 +28,8 @@ void BindingDetailsPanel::show(juce::Component* parent)
     if (current != nullptr)
       current->removeChildComponent(this);
     parent->addAndMakeVisible(this);
+
+    content.load(b);
     
     // why was this necessary?
     content.resized();
@@ -57,17 +59,25 @@ void BindingDetailsPanel::initialize(Provider* p)
 BindingContent::BindingContent()
 {
     addAndMakeVisible(tree);
+    addAndMakeVisible(forms);
 }
 
 void BindingContent::initialize(Provider* p)
 {
+    provider = p;
     tree.initialize(p);
+}
+
+void BindingContent::load(Binding* b)
+{
+    forms.load(provider, b);
 }
 
 void BindingContent::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     tree.setBounds(area.removeFromLeft(300));
+    forms.setBounds(area);
 }
 
 

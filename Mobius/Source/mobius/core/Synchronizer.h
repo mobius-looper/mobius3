@@ -37,6 +37,7 @@ class Synchronizer {
     class Event* scheduleRecordStart(class Action* action, class Function* function, class Loop* l);
     class Event* scheduleRecordStop(class Action* action, class Loop* loop);
     
+    void scheduleSwitchRecord(class Event* switchEvent, class Event* stackedEvent, class Loop* next);
     void undoRecordStop(class Loop* loop);
     void redoRecordStop(class Loop* loop);
 
