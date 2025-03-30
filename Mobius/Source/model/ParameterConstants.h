@@ -32,7 +32,11 @@ typedef enum {
 	TypeBool,
 	TypeEnum,
 	TypeString,
-    TypeStructure
+    TypeStructure,
+
+    // obscure and unusual, used for transportTempo which is passed around as an Int
+    // but needs special formatting hints 
+    TypeFloat
 
 } UIParameterType;
 
@@ -411,6 +415,11 @@ typedef enum {
     EmptySwitchSyncSource,
     EmptySwitchNone
 } EmptySwitchQuantize;
+
+typedef enum {
+    ResetFunctionAll,
+    ResetFunctionContent
+} ResetFunctionBehavior;
 
 //////////////////////////////////////////////////////////////////////
 //

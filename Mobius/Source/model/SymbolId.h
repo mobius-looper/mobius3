@@ -208,6 +208,7 @@ typedef enum {
     ParamTrackMasterReset,
     ParamTrackMasterSelect,
     ParamEmptySwitchQuantize,
+    ParamResetMode,
     
     //////////////////////////////////////////////////////////////////////
     //

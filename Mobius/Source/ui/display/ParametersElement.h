@@ -63,6 +63,7 @@ class ParametersElement : public StatusElement,
     int getMax(ParameterState* ps);
     int getMin(ParameterState* ps);
     bool isUnresolved(ParameterState* ps);
+    juce::String formatFloat(int value);
     
 };
 

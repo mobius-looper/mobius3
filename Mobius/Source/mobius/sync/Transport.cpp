@@ -235,7 +235,8 @@ void Transport::cacheSessionParameters(bool force)
 
     // only if disconnected or doing global reset
     if (force || master == 0) {
-        tempo = defaultTempo;
+        // setting the tempo is more than just slamming a value in
+        userSetTempo(defaultTempo);
         beatsPerBar = defaultBeatsPerBar;
         barsPerLoop = defaultBarsPerLoop;
     }

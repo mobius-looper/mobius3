@@ -96,7 +96,7 @@
         symbols='switchDuration,switchLocation,switchVelocity,returnLocation,timeCopyMode,soundCopyMode,emptyLoopAction,emptyTrackAction,trackLeaveAction'/>
   
   <Form name='sessionCategoryFunctions' title='Miscellaneous Function Options'
-        symbols='maxUndo,maxRedo,muteMode,muteCancel,multiplyMode,recordResetsFeedback,roundingOverdub,shuffleMode,slipMode,slipTime,speedRecord,windowEdgeUnit,windowEdgeAmount,windowSlideUnit,windowSlideAmount'/>
+        symbols='maxUndo,maxRedo,resetMode,muteMode,muteCancel,multiplyMode,recordResetsFeedback,roundingOverdub,shuffleMode,slipMode,slipTime,speedRecord,windowEdgeUnit,windowEdgeAmount,windowSlideUnit,windowSlideAmount'/>
 
   <!-- not included: pitchSequence,pitchShiftRestart,pitchStepRange,pitchBendRange,timeStretchRange
   -->

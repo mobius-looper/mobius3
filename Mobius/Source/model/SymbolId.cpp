@@ -275,6 +275,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {"trackMasterReset", ParamTrackMasterReset},
     {"trackMasterSelect", ParamTrackMasterSelect},
     {"emptySwitchQuantize", ParamEmptySwitchQuantize},
+    {"resetMode", ParamResetMode},
     
     //////////////////////////////////////////////////////////////////////
     // Functions

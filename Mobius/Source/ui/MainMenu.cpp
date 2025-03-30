@@ -166,6 +166,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     {
         menu.addItem(EditSession, "Edit Session...");
         menu.addItem(SessionManager, "Manage Sessions...");
+        menu.addItem(ReloadSession, "Reload Session");
         menu.addSeparator();
         
         Provider* provider = mainWindow->getProvider();

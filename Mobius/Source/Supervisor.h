@@ -263,6 +263,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void menuActivateBindings(class BindingSet* set);
     void menuLoadMidi(bool analyze);
     void menuLoadSession(int ordinal);
+    void menuReloadSession();
     
     // MobiusContainer
     int getSampleRate() override;

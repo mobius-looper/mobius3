@@ -429,6 +429,8 @@ UIParameterType Symbolizer::parseType(juce::String name)
       type = TypeString;
     else if (name == "structure")
       type = TypeStructure;
+    else if (name == "float")
+      type = TypeFloat;
 
     return type;
 }

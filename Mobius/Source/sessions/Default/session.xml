@@ -14,6 +14,7 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="resetMode" value="content" type="enum" ordinal="1"/>
       <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
       <Value name="syncSource" value="none" type="enum" ordinal="0"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
@@ -288,7 +289,7 @@
     <Value name="transportMidiClocksWhenStopped" value="1" type="int"/>
     <Value name="transportMidiEnable" value="1" type="int"/>
     <Value name="transportMinTempo" value="30" type="int"/>
-    <Value name="transportTempo" value="200" type="int"/>
+    <Value name="transportTempo" value="90"/>
     <Value name="upgraded" value="true" type="bool"/>
     <Value name="userFileFolder" value="c:\dev\mobius3\Mobius\Source\midifiles"/>
     <Value name="windowEdgeAmount" value="1" type="int"/>

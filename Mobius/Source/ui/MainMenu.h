@@ -111,6 +111,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         // Sessions
         EditSession,
         SessionManager,
+        ReloadSession,
         Overlays,
         
         // Scripts

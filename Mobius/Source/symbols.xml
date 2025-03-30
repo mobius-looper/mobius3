@@ -366,6 +366,7 @@ Once those models are fully converted, these symbols can be removed.
     <!-- Newer things -->
     <Parameter name='trackMasterSelect' values='manual,accept,preferred,never' tree='Sync' />
     <Parameter name='emptySwitchQuantize' values='syncSource,none' tree='Sync' />
+    <Parameter name='resetMode' values='all,content' valueLabels='Content+Parameters,Content Only'/>
 
     <!-- DEPRECATED: keep these for temporary documentation but once we're sure
          core code no longer needs them they can be deleted
@@ -709,7 +710,14 @@ Once those models are fully converted, these symbols can be removed.
     <!-- These are runtime symbols used for actions.  They may be saved in the session
          and restored, but are not edited in the SessionEditor
     -->
-    <Parameter name='transportTempo' type='int' level='kernel' defaultValue='90' displayName='Transport Default Tempo'/>
+
+    <!-- started with a display name of "Transport Default Tempo" but that looks
+         weird if you put it in InstantParameters and it should be obvious what it is
+         when you look at it in the session editor.
+         might actually want to make this nobinding since the value type is float and that
+         causes all sorts of issues when dealing with in Actions and Query
+    -->
+    <Parameter name='transportTempo' type='float' level='kernel' defaultValue='90'/>
     <Parameter name='transportLength' type='int' level='kernel' options='noBinding'/>
 
     <!-- accessible transport parameters -->

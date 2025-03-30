@@ -290,6 +290,10 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::SessionManager);
             }
                 break;
+            case MainMenu::ReloadSession: {
+                supervisor->menuReloadSession();
+            }
+                break;
             case MainMenu::Overlays: {
                 panelFactory.show(PanelFactory::Overlay);
             }

@@ -2352,6 +2352,18 @@ void Supervisor::menuLoadSession(int ordinal)
     }
 }
 
+void Supervisor::menuReloadSession()
+{
+    // until we can do things that modify parts of the UI
+    // we don't need to actually reload it, just send it back
+    // down to the engine as if it had been edited
+
+    // propagate config changes to other components
+    //propagateConfiguration();
+    
+    sendModifiedSession();
+}
+
 /**
  * Reload the samples.
  */

@@ -266,6 +266,13 @@ void ParametersElement::paint(juce::Graphics& g)
         else if (type == TypeStructure) {
             strValue = ParameterHelper::getStructureName(statusArea->getProvider(), s, value);
         }
+        else if (type == TypeFloat) {
+            // the only one of these that exist right now is transportTempo which
+            // is kind of a silly thing to put in InstantParameters but it's allowed
+            // this one is special because it's actually a float but Query can only return
+            // an int, so it is x100 and truncated
+            strValue = formatFloat(value);
+        }
         else {
             strValue = juce::String(value);
         }
@@ -300,6 +307,13 @@ void ParametersElement::paint(juce::Graphics& g)
 
         rowTop = rowTop + ParametersRowHeight + ParametersVerticalGap;
     }
+}
+
+juce::String ParametersElement::formatFloat(int value)
+{
+    int dpart = (int)(value / 100);
+    int fpart = (int)(value % 100);
+    return juce::String(dpart) + "." + juce::String(fpart);
 }
 
 /**
@@ -337,7 +351,13 @@ bool ParametersElement::doAction(UIAction* action)
                 // update: coreAction is a misnomer
                 UIAction coreAction;
                 coreAction.symbol = ps->symbol;
-                coreAction.value = value + 1;
+                // hack for transportTempo
+                // the value is x100 and dragging by 100ths isn't useful
+                // so increase the range
+                int increment = 1;
+                if (ps->symbol->parameterProperties->type == TypeFloat)
+                  increment = 100;
+                coreAction.value = value + increment;
                 statusArea->getProvider()->doAction(&coreAction);
                 // avoid refresh lag and flicker by optimistically setting the value
                 // now and triggering an immediate repaint
@@ -355,7 +375,10 @@ bool ParametersElement::doAction(UIAction* action)
             if (value > 0) {
                 UIAction coreAction;
                 coreAction.symbol = ps->symbol;
-                coreAction.value = value - 1;
+                int decrement = 1;
+                if (ps->symbol->parameterProperties->type == TypeFloat)
+                  decrement = 100;
+                coreAction.value = value - decrement;
                 statusArea->getProvider()->doAction(&coreAction);
                 ps->value = coreAction.value;
                 repaint();
@@ -478,6 +501,9 @@ void ParametersElement::mouseDrag(const juce::MouseEvent& e)
 
         ParameterState* ps = parameters[cursor];
         int value = ps->value;
+
+        // !! this isn't doing the silly float multiplier thing
+        // correctly like inc/dec does
         
         if (newValue != value) {
             //Trace(2, "Changing value to %d", newValue);
