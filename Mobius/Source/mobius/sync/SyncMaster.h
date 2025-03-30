@@ -115,7 +115,7 @@ class SyncMaster
     RequestResult requestRecordStart(int number, SyncUnit pulseUnit, SyncUnit startUnit, bool noSync);
     RequestResult requestRecordStart(int number, SyncUnit unit, bool noSync);
     RequestResult requestRecordStart(int number, bool noSync);
-    RequestResult requestSwitchStart(int number);
+    RequestResult requestSwitchRecord(int number, int blockOffset);
     RequestResult requestRecordStop(int number, bool noSync);
     RequestResult requestPreRecordStop(int number);
     RequestResult requestAutoRecord(int number, bool noSync);
@@ -270,15 +270,17 @@ class SyncMaster
     // pulse injection internals
 
     bool isRelevant(class Pulse* p, SyncUnit unit);
+    void sendSyncEvent(class LogicalTrack* t, Pulse* p, SyncEvent::Type type);
+    void dealWithSyncEvent(class LogicalTrack* lt, class SyncEvent* event);
+    
+    void doContortedMidiShit(class LogicalTrack* track, class Pulse* pulse);
     int getGoalBeats(class LogicalTrack* t);
     bool isSourceLocked(class LogicalTrack* t);
-    void dealWithSyncEvent(class LogicalTrack* lt, class SyncEvent* event);
-    int getSyncPlayHead(class LogicalTrack* t);
 
     bool extremeTrace = false;
-    void sendSyncEvent(class LogicalTrack* t, Pulse* p, SyncEvent::Type type);
     void traceEvent(class LogicalTrack* t, Pulse* p, SyncEvent& e);
     void tracePulse(class LogicalTrack* t, class Pulse* p);
+    int getSyncPlayHead(class LogicalTrack* t);
 
 };
 

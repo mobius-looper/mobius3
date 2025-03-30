@@ -102,9 +102,6 @@ class LogicalTrack
     void setSyncRecordElapsedFrames(int f);
     int getSyncRecordElapsedFrames();
 
-    void setSyncFinalized(bool b);
-    bool isSyncFinalized();
-    
     SyncUnit getSyncStartUnit();
     void setSyncStartUnit(SyncUnit unit);
     
@@ -119,6 +116,9 @@ class LogicalTrack
     
     void setSyncElapsedBeats(int i);
     int getSyncElapsedBeats();
+    
+    void setSyncFinalized(bool b);
+    bool isSyncFinalized();
     
     //////////////////////////////////////////////////////////////////////
     // Notifier State

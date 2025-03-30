@@ -116,15 +116,19 @@ void LoopMeterElement::paint(juce::Graphics& g)
     int thermoLeft = MarkerOverhang + BorderThickness;
 
     int subcycles = track->subcycles;
-    int cycles = track->cycles;
-    int totalSubcycles = subcycles * cycles;
-    if (totalSubcycles == 0) {
+    if (subcycles == 0) {
         // saw this after deleting and readding a plugin
         // divide by zero crashes everything
         // this shouldn't be happening but if it does at least don't crash
         Trace(1, "LoopMeterElement: subcycles was zero!\n");
-        totalSubcycles = 4;
+        subcycles = 4;
     }
+    
+    int totalSubcycles = subcycles;
+    // cycles will be zero when empty or recording
+    if (track->cycles > 0)
+      totalSubcycles = subcycles * track->cycles;
+    
     int subcycleWidth = MeterBarWidth / totalSubcycles;
     int ticksToDraw = totalSubcycles + 1;
 

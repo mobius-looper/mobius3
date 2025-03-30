@@ -221,8 +221,15 @@ void Synchronizer::scheduleSwitchRecord(Event* switchEvent, Event* stackedEvent,
     // if this had come from a normal UIAction, then the noSynchronization flag
     // may have been set and would be passed to SyncMaster, untill we decide
     // how this works, pass false and allow it to think it may be synchronized
-    int number = next->getTrack()->getLogicalNumber();
-    SyncMaster::RequestResult result = mSyncMaster->requestSwitchStart(number);
+    Track* track = next->getTrack();
+
+    // unusual need to know the remaining number of frames in this block so
+    // SyncMaster can know how far to advance the record unit length when this
+    // block is consumed
+    int remaining = track->getRemainingFrames();
+        
+    int number = track->getLogicalNumber();
+    SyncMaster::RequestResult result = mSyncMaster->requestSwitchRecord(number, remaining);
 
     if (result.synchronized) {
         // this is mostly the same as what scheduleSyncRecord does
@@ -1066,7 +1073,9 @@ void Synchronizer::stopRecording(Track* t, SyncEvent* e)
         e->error = true;
     }
     else {
-        Trace(l, 2, "Sync: Stopping after %d goal units reached", stop->number);
+        // started using stop->number here but that's zero for single cycle loops
+        // is elapsedUnits better?
+        Trace(l, 2, "Sync: Stopping after %d goal units reached", e->elapsedUnits);
 
         activateRecordStop(l, stop);
 
@@ -1164,6 +1173,15 @@ void Synchronizer::activateRecordStop(Loop* l, Event* stop)
 	Trace(l, 2, "Sync: Activating RecordStop at %d frames", stop->frame);
 }
 
+/**
+ * This is used only in cases where we're allowing the unit length
+ * to continue smoothing as the recording progresses, in practice
+ * only MIDI from a cold start.
+ *
+ * The stop was scheduled for what we thought was a good unit length,
+ * and now we're a beat before the end of the unit and decided to adjust
+ * it.  Activate the RecordStopEvent early and adjust it's final frame.
+ */
 void Synchronizer::finalizeRecording(Track* t, SyncEvent* e)
 {
     EventManager* em = t->getEventManager();
