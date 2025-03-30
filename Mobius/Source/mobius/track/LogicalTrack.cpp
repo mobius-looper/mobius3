@@ -321,6 +321,7 @@ void LogicalTrack::resetSyncState()
     syncRecording = false;
     syncRecordStarted = false;
     syncRecordFreeStart = false;
+    syncRecordElapsedFrames = 0;
     syncFinalized = false;
     syncStartUnit = SyncUnitNone;
     syncRecordUnit = SyncUnitNone;
@@ -389,6 +390,16 @@ bool LogicalTrack::isSyncRecordFreeStart()
 void LogicalTrack::setSyncRecordFreeStart(bool b)
 {
     syncRecordFreeStart = b;
+}
+
+int LogicalTrack::getSyncRecordElapsedFrames()
+{
+    return syncRecordElapsedFrames;
+}
+
+void LogicalTrack::setSyncRecordElapsedFrames(int f)
+{
+    syncRecordElapsedFrames = f;
 }
 
 bool LogicalTrack::isSyncFinalized()

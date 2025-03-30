@@ -23,6 +23,7 @@
 #include "../../model/SyncConstants.h"
 #include "../../model/SessionHelper.h"
 #include "SyncEvent.h"
+#include "Pulse.h"
 
 class SyncMaster
 {
@@ -47,10 +48,6 @@ class SyncMaster
         // true if the recording is expected to be synchronized based
         // on the track's SyncMode 
         bool synchronized = false;
-
-        // true if the recording can start now, but the ending
-        // needs to be synchronized
-        bool synchronizedFreeStart = false;
 
         // extra details for requestAutoRecord
         int autoRecordUnits = 0;
@@ -111,8 +108,6 @@ class SyncMaster
     // Sync Recording Requests
     //
 
-    bool isRecordSynchronized(int number);
-    bool hasRecordThreshold(int number);
     bool isSyncRecording(int number);
     
     int getRecordThreshold();
@@ -131,7 +126,6 @@ class SyncMaster
     // Track Notifications
     //
     
-    void notifyFreeRecordUnit(int number);
     void notifyRecordStarted(int id);
     void notifyRecordStopped(int id);
     
@@ -237,6 +231,9 @@ class SyncMaster
     // cached session parameters
     int autoRecordUnits = 1;
     int recordThreshold = 0;
+
+    // pulse holder for internally generated unit pulses
+    Pulse unitPulse;
     
     std::unique_ptr<class MidiRealizer> midiRealizer;
     std::unique_ptr<class MidiAnalyzer> midiAnalyzer;
@@ -266,6 +263,9 @@ class SyncMaster
 
     int getAutoRecordUnits(class LogicalTrack* t);
     void lockUnitLength(class LogicalTrack* lt);
+
+    //bool isRecordSynchronized(int number);
+    //bool hasRecordThreshold(int number);
 
     // pulse injection internals
 

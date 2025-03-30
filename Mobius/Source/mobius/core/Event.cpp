@@ -1166,36 +1166,6 @@ void WaitEventType::invoke(Loop* l, Event* e)
 WaitEventType WaitEventObj;
 EventType* WaitEvent = &WaitEventObj;
 
-/**
- * Newer event type to track the passing of cycles when
- * doing a synchronized recording with a free start.
- */
-class SyncCycleEventType : public EventType {
-  public:
-    virtual ~SyncCycleEventType() {}
-	SyncCycleEventType();
-	void invoke(Loop* l, Event* e);
-};
-
-SyncCycleEventType::SyncCycleEventType()
-{
-	name = "SyncCycle";
-
-    // !! hey, shouldn't we be setting these flags for WaitEventType too?
-    noUndo = true;
-    noMode = true;
-    // don't need a type for this since it won't be shown
-    //stateEventType = TrackState::EventSyncCycle;
-}
-
-void SyncCycleEventType::invoke(Loop* l, Event* e)
-{
-    l->getSynchronizer()->syncCycleEvent(l, e);
-}
-
-SyncCycleEventType SyncCycleEventObj;
-EventType* SyncCycleEvent = &SyncCycleEventObj;
-
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

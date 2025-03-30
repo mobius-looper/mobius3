@@ -98,6 +98,9 @@ class LogicalTrack
 
     void setSyncRecordFreeStart(bool b);
     bool isSyncRecordFreeStart();
+    
+    void setSyncRecordElapsedFrames(int f);
+    int getSyncRecordElapsedFrames();
 
     void setSyncFinalized(bool b);
     bool isSyncFinalized();
@@ -209,6 +212,10 @@ class LogicalTrack
     // true when doing Switch+Record that did NOT synchronize record start
     // but needs to sync or round the ending to match the source unit length
     bool syncRecordFreeStart = false;
+
+    // in FreeStart, the number of frames that have been send through
+    // this track prior to the current block
+    int syncRecordElapsedFrames = 0;
 
     // true when the recording is in the process of ending and is waiting
     // for the final unit to fill 

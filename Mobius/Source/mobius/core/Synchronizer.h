@@ -29,9 +29,6 @@ class Synchronizer {
     //
 
     void syncEvent(class Track* t, class SyncEvent* e);
-
-    // not really a sync pulse, but similar
-    void syncCycleEvent(class Loop* l, class Event* e);
     
     //
     // Record scheduling
