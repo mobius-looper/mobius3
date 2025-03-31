@@ -27,6 +27,7 @@
 #include "../Notification.h"
 
 #include "TrackProperties.h"
+#include "ParameterVault.h"
 
 class LogicalTrack
 {
@@ -184,6 +185,9 @@ class LogicalTrack
     // the Session::Track is authoritative over this, but it is really
     // convenient in the debugger to have it here where you can see it
     int number = 0;
+
+    // where the parameters live
+    ParameterVault vault;
 
     // parameter cache
     SyncSource syncSource = SyncSourceNone;

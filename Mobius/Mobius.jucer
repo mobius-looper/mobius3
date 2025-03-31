@@ -189,10 +189,6 @@
               file="Source/model/SystemConfig.cpp"/>
         <FILE id="yhV3fk" name="SystemConfig.h" compile="0" resource="0" file="Source/model/SystemConfig.h"/>
         <FILE id="W5mEyK" name="SystemState.h" compile="0" resource="0" file="Source/model/SystemState.h"/>
-        <FILE id="fuCrqg" name="TrackParameters.cpp" compile="1" resource="0"
-              file="Source/model/TrackParameters.cpp"/>
-        <FILE id="aO4Nb8" name="TrackParameters.h" compile="0" resource="0"
-              file="Source/model/TrackParameters.h"/>
         <FILE id="mlzDDU" name="TrackState.cpp" compile="1" resource="0" file="Source/model/TrackState.cpp"/>
         <FILE id="neInsb" name="TrackState.h" compile="0" resource="0" file="Source/model/TrackState.h"/>
         <FILE id="BmxzkX" name="TreeForm.cpp" compile="1" resource="0" file="Source/model/TreeForm.cpp"/>
@@ -819,6 +815,10 @@
           <FILE id="AKQGLE" name="MobiusLooperTrack.h" compile="0" resource="0"
                 file="Source/mobius/track/MobiusLooperTrack.h"/>
           <FILE id="nBGYi5" name="MslTrack.h" compile="0" resource="0" file="Source/mobius/track/MslTrack.h"/>
+          <FILE id="ynCoZh" name="ParameterVault.cpp" compile="1" resource="0"
+                file="Source/mobius/track/ParameterVault.cpp"/>
+          <FILE id="bNtVwC" name="ParameterVault.h" compile="0" resource="0"
+                file="Source/mobius/track/ParameterVault.h"/>
           <FILE id="fV0G4d" name="ScheduledTrack.h" compile="0" resource="0"
                 file="Source/mobius/track/ScheduledTrack.h"/>
           <FILE id="KRchYg" name="TrackEngine.h" compile="0" resource="0" file="Source/mobius/track/TrackEngine.h"/>
