@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "SymbolId.h"
-
 class SessionDiff
 {
   public:
@@ -17,7 +15,7 @@ class SessionDiff
     int track = 0;
 
     // parameter identifier
-    SymbolId parameter;
+    class Symbol* symbol = nullptr;
 };
 
 class SessionDiffs

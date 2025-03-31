@@ -7,6 +7,10 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="Hd8NrF" name="SessionDifferencer.cpp" compile="1" resource="0"
+            file="Source/SessionDifferencer.cpp"/>
+      <FILE id="O49uHx" name="SessionDifferencer.h" compile="0" resource="0"
+            file="Source/SessionDifferencer.h"/>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
@@ -167,6 +171,7 @@
               file="Source/model/ScriptProperties.h"/>
         <FILE id="YR9r54" name="Session.cpp" compile="1" resource="0" file="Source/model/Session.cpp"/>
         <FILE id="CsEfK5" name="Session.h" compile="0" resource="0" file="Source/model/Session.h"/>
+        <FILE id="obOWBw" name="SessionDiff.h" compile="0" resource="0" file="Source/model/SessionDiff.h"/>
         <FILE id="F6Prbt" name="SessionHelper.cpp" compile="1" resource="0"
               file="Source/model/SessionHelper.cpp"/>
         <FILE id="BJ2osP" name="SessionHelper.h" compile="0" resource="0" file="Source/model/SessionHelper.h"/>

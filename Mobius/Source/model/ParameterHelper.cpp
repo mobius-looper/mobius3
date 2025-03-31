@@ -3,10 +3,12 @@
 
 #include "../util/Trace.h"
 
+#include "SymbolId.h"
 #include "Symbol.h"
 #include "ParameterProperties.h"
 #include "GroupDefinition.h"
 #include "UIConfig.h"
+#include "Session.h"
 
 #include "../Provider.h"
 
@@ -147,6 +149,28 @@ int ParameterHelper::getParameterMax(Provider* p, Symbol* s)
             if (props->type == TypeEnum) {
                 max = props->values.size();
                 handled = true;
+            }
+            else if (props->type == TypeFloat) {
+                // kludge: there is only one of these and it is transportTempo
+                // for now, floats are going to be represented as x100 integer values
+                // in actions and queries
+                // transportTempo is especially weird because it has user configurable
+                // min/max values
+                // there is no getParameterMin, it will use the usual default of zero even
+                // though minTempo is usually around 30, Transport will ignore it
+                if (s->id == ParamTransportTempo) {
+                    Session* s = p->getSession();
+                    // gak, usual name shit
+                    Symbol* keysym = p->getSymbols()->getSymbol(ParamTransportMaxTempo);
+                    if (keysym != nullptr) {
+                        int tempomax = s->getInt(keysym->name);
+                        max = tempomax * 100;
+                    }
+                }
+                else {
+                    Trace(1, "ParameterHelper::getParameterMax Don't know how to deal with %s",
+                          s->getName());
+                }
             }
             else {
                 max = props->high;

@@ -7,14 +7,22 @@
 class SessionDifferencer
 {
   public:
+
+    SessionDifferencer(Provider* p);
     
     // differences are allocated dynamically and must be deleted
-    static class SessionDiffs* diff(class Provider* p, class Session* original, class Session* modified);
+    class SessionDiffs* diff(class Session* original, class Session* modified);
 
   private:
+
+    Provider* provider = nullptr;
+    Session* original = nullptr;
+    Session* modified = nullptr;
+    std::unique_ptr<SessionDiffs> result = nullptr;
     
-    static void diffValueSet(class Provider* p, class SessionDiffs* diffs,
-                             class ValueSet* src, class ValueSet* neu);
+    void diff(class ValueSet* src, class ValueSet* neu, int track);
+    bool isEqual(class MslValue* v1, class MslValue* v2);
+
 };
 
 
