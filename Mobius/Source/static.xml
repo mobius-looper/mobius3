@@ -55,6 +55,7 @@
        ========================================================================= -->
 
   <Tree name='sessionCategory'>
+    <Tree name='Greatest Hits'/>
     <Tree name='General'/>
     <Tree name='Ports'/>
     <Tree name='Midi'/>
@@ -68,6 +69,9 @@
     <Tree name='Advanced'/>
     <Tree name='Overlay'/>
   </Tree>    
+
+  <Form name='sessionCategoryGreatest Hits' title='Most of the things you want'
+        symbols='trackName,trackGroup,loopCount,syncSource,syncUnit,trackSyncUnit,quantize,switchQuantize,subcycles,resetMode'/>
 
   <Form name='sessionCategoryGeneral' title='Track Identity'
         symbols='trackName,trackGroup,focus,loopCount'/>

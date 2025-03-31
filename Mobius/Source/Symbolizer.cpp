@@ -121,14 +121,18 @@ void Symbolizer::initialize()
     // assign indexes
     SymbolTable* table = provider->getSymbols();
     juce::OwnedArray<Symbol>& list = table->getSymbols();
-    int index = 0;
+    int total = 0;
+    int qindex = 0;
     for (auto s : list) {
-        if (s->parameterProperties != nullptr && s->parameterProperties->queryable) {
-            s->parameterProperties->index = index;
-            index++;
+        if (s->parameterProperties != nullptr) {
+            if (s->parameterProperties->queryable) {
+                s->parameterProperties->index = qindex;
+                qindex++;
+            }
+            total++;
         }
     }
-    Trace(2, "Symboliszer: There are %d queryable parameter symbols", index);
+    Trace(2, "Symboliszer: There are %d parameters %d queryable", total, qindex);
 }
 
 /**
