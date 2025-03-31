@@ -189,6 +189,10 @@
               file="Source/model/SystemConfig.cpp"/>
         <FILE id="yhV3fk" name="SystemConfig.h" compile="0" resource="0" file="Source/model/SystemConfig.h"/>
         <FILE id="W5mEyK" name="SystemState.h" compile="0" resource="0" file="Source/model/SystemState.h"/>
+        <FILE id="fuCrqg" name="TrackParameters.cpp" compile="1" resource="0"
+              file="Source/model/TrackParameters.cpp"/>
+        <FILE id="aO4Nb8" name="TrackParameters.h" compile="0" resource="0"
+              file="Source/model/TrackParameters.h"/>
         <FILE id="mlzDDU" name="TrackState.cpp" compile="1" resource="0" file="Source/model/TrackState.cpp"/>
         <FILE id="neInsb" name="TrackState.h" compile="0" resource="0" file="Source/model/TrackState.h"/>
         <FILE id="BmxzkX" name="TreeForm.cpp" compile="1" resource="0" file="Source/model/TreeForm.cpp"/>

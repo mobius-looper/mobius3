@@ -299,6 +299,10 @@ class SymbolTable
         return symbols;
     }
 
+    juce::Array<Symbol*>& getParameters() {
+        return parameters;
+    }
+
     /**
      * Send diagnostic information about the symbol table to the
      * trace log.
@@ -316,9 +320,15 @@ class SymbolTable
      */
     void clear();
 
-    void buildIdMap();
     Symbol* getSymbol(SymbolId id);
     juce::String getName(SymbolId id);
+
+    /**
+     * After the stock symbols have been fully loaded, build out various
+     * search structures.  In particular this create the lookup table
+     * for SymbolIds, and isolates just the parameter symbols.
+     */
+    void bake();
 
   private:
 
@@ -327,7 +337,12 @@ class SymbolTable
     juce::OwnedArray<Symbol> symbols;
     juce::HashMap<juce::String, Symbol*> nameMap;
     juce::Array<Symbol*> idMap;
+
+    // Specialized collections
+    juce::Array<Symbol*> parameters;
     
+    void buildIdMap();
+    void isolateParameters();
 };
 
 /****************************************************************************/

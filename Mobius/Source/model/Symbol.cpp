@@ -231,6 +231,24 @@ juce::String SymbolTable::getName(SymbolId id)
     return name;
 }
 
+void SymbolTable::isolateParameters()
+{
+    parameters.clear();
+    int index = 0;
+    for (auto s : symbols) {
+        if (s->parameterProperties != nullptr) {
+            s->parameterProperties->index = index++;
+            parameters.add(s);
+        }
+    }
+}
+
+void SymbolTable::bake()
+{
+    buildIdMap();
+    isolateParameters();
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

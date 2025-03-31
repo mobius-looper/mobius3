@@ -1,7 +1,10 @@
 /**
- * Utility class to handle loading of the non-core symbol table.
+ * Utility class to build the system symbol table on startup.
  *
- * This is evolving to replace a number of older things.
+ * Symbols may be added after startup from scripts though the
+ * stock system symbols will all be present after the start
+ * phase completes.
+ *
  */
 
 #include <JuceHeader.h>
@@ -20,51 +23,6 @@
 
 //////////////////////////////////////////////////////////////////////
 //
-// UISymbols
-//
-//////////////////////////////////////////////////////////////////////
-
-// update: Don't like having these, you can just define everything with symbols.xml
-
-/**
- * Functions
- * format: id, public, signature
- */
-UISymbols::Function UISymbols::Functions[] = {
-
-    // public
-    {FuncParameterUp, true, nullptr},
-    {FuncParameterDown, true, nullptr},
-    {FuncParameterInc, true, nullptr},
-    {FuncParameterDec, true, nullptr},
-    {FuncReloadScripts, true, nullptr},
-    {FuncReloadSamples, true, nullptr},
-    {FuncShowPanel, true, nullptr},
-    {FuncMessage, true, nullptr},
-    
-    // scripts
-    {FuncScriptAddButton, false, nullptr},
-    {FuncScriptListen, false, nullptr},
-    
-    {SymbolIdNone, false, nullptr}
-};
-
-/**
- * Parameters
- * format: id, displayname
- */
-UISymbols::Parameter UISymbols::Parameters[] = {
-
-    // public
-    {ParamActiveLayout, "Active Layout"},
-    {ParamActiveButtons, "Active Buttons"},
-    {ParamBindingOverlays, "Binding Overlays"},
-    
-    {SymbolIdNone, nullptr}
-};
-
-//////////////////////////////////////////////////////////////////////
-//
 // Symbolizer
 //
 //////////////////////////////////////////////////////////////////////
@@ -79,76 +37,49 @@ Symbolizer::~Symbolizer()
 }
 
 /**
+ * Install the stock symbol table on startup.
  * This does the following things:
  *
  * Interns symbols for the static SymbolDefinitions in model/SymbolId
  *
- * Adds Symbol annotations defined by static UISymbols above.  This style of using
- * static objects is what I would like to use for most simple Symbols that
- * don't need user tweaking of the definitions.
- *
- * Adds Symbol annotations defined by the static model/UIParameter and
- * model/FunctionDefinition objects.  This is the old model for definitions
- * that is being phased out.
- * 
- * Reads the symbols.xml file and adds symbol annotations for both functions
- * and parameters. This will eventually replace the static definition objects.
- * Externalizing the symbol definitions in a file allows the me or the user
- * to tweak definitions after installation.
+ * Reads the symbols.xml file to flesh out the definitions of those symbols.
  *
  * Reads the properties.xml file and adorns the Symbols with user-defined options.
  * These are not part of the symbol definition, they are more like user preferences
- * and have a UI so that users don't have to edit XML.  Still not entirely
- * happy with this.
+ * and have a UI so that users don't have to edit XML.
+ * Still not entirely happy with this, it might belong in the Session.
  *
- * For the upgrader, and possibly others, it builds a lookup table for mapping
- * parameter id numbers to names.
+ * When this completes the symbol table is "baked" which creates a few collections
+ * and search structures like the id map.
  */
 void Symbolizer::initialize()
 {
-    internSymbols();
+    SymbolTable* table = provider->getSymbols();
     
-    installUISymbols();
-
+    internSymbols(table);
+    loadSymbolDefinitions(table);
+    
     // this is deferred until after the Sessions are initialized which
     // comes later in the Supervisor::start process
     //installActivationSymbols();
 
-    loadSymbolDefinitions();
-    
-    loadSymbolProperties();
+    loadSymbolProperties(table);
 
     // assign indexes
-    SymbolTable* table = provider->getSymbols();
-    juce::OwnedArray<Symbol>& list = table->getSymbols();
-    int total = 0;
-    int qindex = 0;
-    for (auto s : list) {
-        if (s->parameterProperties != nullptr) {
-            if (s->parameterProperties->queryable) {
-                s->parameterProperties->index = qindex;
-                qindex++;
-            }
-            total++;
-        }
-    }
-    Trace(2, "Symboliszer: There are %d parameters %d queryable", total, qindex);
+    table->bake();
+
+    juce::Array<Symbol*>& params = table->getParameters();
+    Trace(2, "Symboliszer: There are %d parameters", params.size());
 }
 
 /**
  * Start the internment of symbols by iterating over the SymbolDefinition
- * objects defined in model/SymbolId.cpp.
- *
- * Also builds a table for quickly mapping ids to symbols.
+ * objects defined in model/SymbolId.cpp.  This defines all the symbols that
+ * are expected to be referended by the system.  They are also supposed to have
+ * definitions in the symbols.xml file that is loaded next.
  */
-void Symbolizer::internSymbols()
+void Symbolizer::internSymbols(SymbolTable* symbols)
 {
-    SymbolTable* symbols = provider->getSymbols();
-
-    // I'm curious how large this is getting, be careful it doesn't grow
-    // beyond 255 for optimized switch() compilation
-    Trace(2, "Symbolizer: Interning %d standard symbols", (int)SymbolIdMax);
-
     for (int i = 0 ; SymbolDefinitions[i].name != nullptr ; i++) {
         SymbolDefinition* def = &(SymbolDefinitions[i]);
         Symbol* s = symbols->find(def->name);
@@ -165,89 +96,19 @@ void Symbolizer::internSymbols()
         }
         s->id = def->id;
     }
-
-    // now that they are all there, build the id/name mapping table
-    symbols->buildIdMap();
-    
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// UI Symbols
+// symbols.xml Loading
 //
 //////////////////////////////////////////////////////////////////////
 
-// !! None of this is necessary, now that we're using symbols.xml for everything
-// can just put the UI parameters in there and be consistent about it
-
-void Symbolizer::installUISymbols()
-{
-    SymbolTable* symbols = provider->getSymbols();
-    
-    for (int i = 0 ; UISymbols::Functions[i].id != SymbolIdNone ; i++) {
-        UISymbols::Function* f = &(UISymbols::Functions[i]);
-        
-        Symbol* s = symbols->getSymbol(f->id);
-        if (s == nullptr) {
-            Trace(1, "Symbolizer: Missing SymbolDefinition for function %d", f->id);
-        }
-        else {
-            s->behavior = BehaviorFunction;
-            s->level = LevelUI;
-            if (!f->visible)
-              s->hidden = true;
-            s->treePath = "UI";
-            
-            // todo: parse and store the signature
-            // atm, these don't need full blown FunctionProperties annotations
-            // Well, one of these "ReloadScripts" also has a core function which will
-            // complain if it finds a symbol that doesn't have a property object
-            // It's a good idea anyway
-            FunctionProperties* props = new FunctionProperties();
-            s->functionProperties.reset(props);
-        }
-    }
-    
-    for (int i = 0 ; UISymbols::Parameters[i].id != SymbolIdNone ; i++) {
-        UISymbols::Parameter* p = &(UISymbols::Parameters[i]);
-        
-        Symbol* s = symbols->getSymbol(p->id);
-        if (s == nullptr) {
-            Trace(1, "Symbolizer: Missing SymbolDefinition for parameter %d", p->id);
-        }
-        else {
-            s->behavior = BehaviorParameter;
-            s->level = LevelUI;
-            if (p->displayName == nullptr)
-              s->hidden = true;
-
-            // treePath is now used by the SessionEditor to build a parameter
-            // browsing tree from the symbol table, we don't want UI symbols
-            // appearing there as if they were saved in the session which they aren't,
-            // they're in the uiconfig
-            // may need an alternate way to suppress them different tree builders
-            // like for bindings can include them
-            //s->treePath = "UI";
-
-            // !! the assumption right now is that these are all TypeStructure
-            // but that won't always be true, need more of a definition structure
-            ParameterProperties* props = new ParameterProperties();
-            if (p->displayName != nullptr)
-              props->displayName = juce::String(p->displayName);
-            props->type = TypeStructure;
-            props->scope = ScopeUI;
-            s->parameterProperties.reset(props);
-        }
-    }
-}    
-
-//////////////////////////////////////////////////////////////////////
-//
-// symbols.xml File Loading
-//
-//////////////////////////////////////////////////////////////////////
-
-void Symbolizer::loadSymbolDefinitions()
+/**
+ * Load the symbols.xml file to augment the definitions of the Symbols
+ * Defined in SybolId.cpp.  This is not expected to add anything new.
+ */
+void Symbolizer::loadSymbolDefinitions(SymbolTable* symbols)
 {
     juce::File root = provider->getRoot();
     juce::File file = root.getChildFile("symbols.xml");
@@ -268,10 +129,10 @@ void Symbolizer::loadSymbolDefinitions()
         else {
             for (auto* el : docel->getChildIterator()) {
                 if (el->hasTagName("Function")) {
-                    parseFunction(el);
+                    parseFunction(symbols, el);
                 }
                 else if (el->hasTagName("ParameterScope")) {
-                    parseParameterScope(el);
+                    parseParameterScope(symbols, el);
                 }
             }
         }
@@ -287,7 +148,7 @@ void Symbolizer::xmlError(const char* msg, juce::String arg)
       Trace(1, fullmsg.toUTF8(), arg.toUTF8());
 }
 
-void Symbolizer::parseFunction(juce::XmlElement* root)
+void Symbolizer::parseFunction(SymbolTable* symbols, juce::XmlElement* root)
 {
     juce::String name = root->getStringAttribute("name");
     if (name.length() == 0) {
@@ -313,7 +174,7 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         juce::String options = root->getStringAttribute("options");
         func->noBinding = options.contains("noBinding");
 
-        Symbol* s = provider->getSymbols()->intern(name);
+        Symbol* s = symbols->intern(name);
         s->functionProperties.reset(func);
         s->behavior = BehaviorFunction;
 
@@ -374,7 +235,7 @@ SymbolLevel Symbolizer::parseLevel(juce::String lname)
     return slevel;
 }
 
-void Symbolizer::parseParameterScope(juce::XmlElement* el)
+void Symbolizer::parseParameterScope(SymbolTable* symbols, juce::XmlElement* el)
 {
     juce::String scopeName = el->getStringAttribute("name");
     UIParameterScope scope = parseScope(scopeName);
@@ -383,7 +244,7 @@ void Symbolizer::parseParameterScope(juce::XmlElement* el)
     juce::XmlElement* child = el->getFirstChildElement();
     while (child != nullptr) {
         if (child->hasTagName("Parameter")) {
-            parseParameter(child, scope, queryable);
+            parseParameter(symbols, child, scope, queryable);
         }
         child = child->getNextElement();
     }
@@ -439,7 +300,8 @@ UIParameterType Symbolizer::parseType(juce::String name)
     return type;
 }
 
-void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope, bool scopeSaysQuery)
+void Symbolizer::parseParameter(SymbolTable* symbols, juce::XmlElement* el,
+                                UIParameterScope scope, bool scopeSaysQuery)
 {
     juce::String name = el->getStringAttribute("name");
     if (name.length() == 0) {
@@ -494,7 +356,7 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope, bo
         props->mayFocus = options.contains("mayFocus");
         props->mayResetRetain = options.contains("resetRetain");
         
-        Symbol* s = provider->getSymbols()->intern(name);
+        Symbol* s = symbols->intern(name);
         s->parameterProperties.reset(props);
                 
         // this seems to be necessary for some things
@@ -565,7 +427,7 @@ juce::String Symbolizer::formatDisplayName(juce::String xmlName)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Properties
+// properties.xml Loading
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -583,7 +445,7 @@ juce::String Symbolizer::formatDisplayName(juce::String xmlName)
  * for other object symbols as well.  But this gets the problem solved until it moves
  * to something more general.
  */
-void Symbolizer::loadSymbolProperties()
+void Symbolizer::loadSymbolProperties(SymbolTable* symbols)
 {
     juce::File root = provider->getRoot();
     juce::File file = root.getChildFile("properties.xml");
@@ -604,7 +466,7 @@ void Symbolizer::loadSymbolProperties()
         else {
             for (auto* el : docel->getChildIterator()) {
                 if (el->hasTagName("Property")) {
-                    parseProperty(el);
+                    parseProperty(symbols, el);
                 }
             }
         }
@@ -616,10 +478,8 @@ void Symbolizer::loadSymbolProperties()
  * or ParameterProperties.
  * This assumes that the symbols have already been installed
  */
-void Symbolizer::parseProperty(juce::XmlElement* el)
+void Symbolizer::parseProperty(SymbolTable* symbols, juce::XmlElement* el)
 {
-    SymbolTable* symbols = provider->getSymbols();
-    
     juce::String sname = el->getStringAttribute("symbol");
     juce::String pname = el->getStringAttribute("name");
     juce::String value = el->getStringAttribute("value");

@@ -21,6 +21,9 @@ class ParameterProperties
      * True if this parameter may be accessed with a Query
      * When true the index is used to determine the parameter storage location
      * in the kernel.
+     *
+     * update: actually not using this right now, all parameter symbols
+     * will be assigned an index.
      */
     bool queryable = false;
 
