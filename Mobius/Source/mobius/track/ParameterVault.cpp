@@ -1,7 +1,26 @@
 /**
+ * TODO:
+ *   
  * The validation being done here is going to be duplicated for every track
  * when it gets to the session defaults layer.  Could optimize that out
  * but it adds complexity and isn't that much.
+ *
+ * All parameters are going to be processed, even globals that are not
+ * technically accessible by the tracks and can't be overridden.  Could reduce
+ * the size of the ordinal arrays to only those relevant for track bindings,
+ * but then global bindings for other Kernel components have to be handled a
+ * different way.
+ *
+ * The Kernel components need something almost exactly like this for
+ * the globals like transportTempo, hostBeatsPerBar, etc.  The values come
+ * from the session and need to be validated, and the user is allowed to make
+ * temporary assignments that will be reverted on Reset.  They need to support
+ * both Session loading and UIAction/Query.  Each of these is handlinhg this
+ * in a different way.  The core of the vault could be factored out for
+ * a GlobalParameterVault that doesn't have any of the track-specific stuff in it.
+ *
+ * MidiInputDevice and MidiOutputDevice are currently String parameters but they
+ * could be Structures and managed with ordinals like other structures.
  */
 
 #include <JuceHeader.h>
@@ -28,10 +47,10 @@ ParameterVault::~ParameterVault()
 {
 }
 
-void ParameterVault::initialize(SymbolTable* syms, ParameterSets* sets)
+void ParameterVault::initialize(SymbolTable* syms, bool plugin)
 {
     symbols = syms;
-    parameterSets = sets;
+    isPlugin = plugin;
 
     // go ahead and flesh these out now so we can reduce potential
     // memory allocations after the initialization phase
@@ -51,22 +70,89 @@ void ParameterVault::initArray(juce::Array<int>& array, int size)
       array.add(-1);
 }
 
-void ParameterVault::refresh(ParameterSets* sets)
-{
-    // !! this needs to reflatten when overlays change
-    parameterSets = sets;
-}
-
+/**
+ * Clear local bindings after a Reset/TrackReset/GlobalReset function.
+ *
+ * This is where the old "reset retains" parameter went into play.  That
+ * mutated into the SymbolProperties and still exists in some form but I'm
+ * redesigning how all that works so this just unconditionally clears
+ * everything atm.
+ */
 void ParameterVault::resetLocal()
 {
     for (int i = 0 ; i < localOrdinals.size() ; i++)
       localOrdinals.set(i, -1);
 }
 
-void ParameterVault::loadSession(Session* s, int trackNumber)
+/**
+ * Rebuild the vault after a change to any one of these objects.
+ * Reloading the Session requres passing both the Session and the Track.
+ * When ParameterSets or GropuDefinitions change, the Session and Track
+ * are often the same object we used the last time.  Or the caller can
+ * use one of the more focused refresh() functions, but they all do the
+ * same thing.
+ */
+void ParameterVault::refresh(Session* s, Session::Track* t, ParameterSets* sets,
+                             GroupDefinitions* groups)
 {
-    flatten(symbols, parameterSets, s, trackNumber, flattener);
+    session = s;
+    track = t;
+    parameterSets = sets;
+    groupDefinitions = groups;
+    refresh();
+}
+
+void ParameterVault::refresh(Session* s, Session::Track* t)
+{
+    session = s;
+    track = t;
+    refresh();
+}
+
+void ParameterVault::refresh(ParameterSets* sets)
+{
+    parameterSets = sets;
+    refresh();
+}
+
+void ParameterVault::refresh(GroupDefinitions* groups)
+{
+    groupDefinitions = groups;
+    // is there any need to refresh here?
+    // the only thing this could do is detect when the session references
+    // a trackGroup that is now out of range and put it down to zero
+    refresh();
+}
+
+void ParameterVault::refresh()
+{
+    ValueSet* defaults = session->ensureGlobals();
+    sessionOverlay = findSessionOverlay(defaults);
+    
+    ValueSet* trackValues = nullptr;
+    trackOverlay = nullptr;
+
+    // this may be omitted when building a vault containing only
+    // global parameters that can't have track overrides
+    if (track != nullptr) {
+        trackValues = track->ensureParameters();
+        trackOverlay = findTrackOverlay(defaults, trackValues);
+    }
+
+    // flattening is going to encounter both sessionOverlay and trackOverlay
+    // as parameters and do the same name validation we just did
+    // with findOverlay, we could pre-emptively force those ordinals
+    // into the arraysince we know them now, and then ignore them during flattening
+    // or verify them after flattening
+    
+    flatten(symbols, defaults, trackValues, sessionOverlay, trackOverlay, flattener);
     install(flattener);
+
+    // verify that the overlays found during flattening are the same ones we
+    // used to do the flattening
+    // I'm really hating how much complexity overlays inject here
+    verifyOverlay(ParamSessionOverlay);
+    verifyOverlay(ParamTrackOverlay);
 }
 
 /**
@@ -100,9 +186,161 @@ void ParameterVault::install(juce::Array<int>& ordinals)
     }
 }
 
+/**
+ * This little dance happens a lot and it's getting annoying.
+ * Think about making a search structure for this in the SymbolTable.
+ */
+int ParameterVault::getParameterIndex(SymbolId id)
+{
+    int index = -1;
+    Symbol* s = symbols->getSymbol(id);
+    if (s != nullptr && s->parameterProperties != nullptr) {
+        index = s->parameterProperties->index;
+    }
+    return index;
+}
+
+/**
+ * After flattening, the two overlays will be encountered during the scan and their
+ * ordinals left in the array.  The overlays selected to DO the flattening need
+ * to have matching ordinals.  If they don't match it means something is
+ * wrong either in overlay selection before flattening, or in the flattening algorithm.
+ */
+void ParameterVault::verifyOverlay(SymbolId overlayId)
+{
+    ValueSet* chosenOverlay = nullptr;
+    if (overlayId == ParamSessionOverlay)
+      chosenOverlay = sessionOverlay;
+    else
+      chosenOverlay = trackOverlay;
+
+    int ordinal = getOrdinal(overlayId);
+    
+    if (chosenOverlay != nullptr) {
+        if (ordinal != chosenOverlay->number) {
+            Trace(1, "ParameterVault: Ordinal mismatch on overlay %s",
+                  chosenOverlay->name.toUTF8());
+            // adjust the ordinal in the array to match what we used to flatten
+            fixOverlayOrdinal(overlayId, chosenOverlay->number);
+        }
+    }
+    else if (ordinal > 0) {
+        // this is more serious, we dodn't think we had an overlay but one was
+        // found during flattening
+        Trace(1, "ParameterVault: Overlay ordinal %d found flattening but was not used to flatten");
+        // I guess fix this one too
+        fixOverlayOrdinal(overlayId, 0);
+    }
+}
+
+void ParameterVault::fixOverlayOrdinal(SymbolId id, int ordinal)
+{
+    int index = getParameterIndex(id);
+    if (index >= 0) {
+        // where we fix this is unclear, if there was a local binding
+        // it should have been used but wasn't so the binding can be reset
+        // and the proper ordinal stored in the session array
+        localOrdinals.set(index, -1);
+        sessionOrdinals.set(index, ordinal);
+    }
+}
+
+ValueSet* ParameterVault::findSessionOverlay(ValueSet* globals)
+{
+    ValueSet* result = nullptr;
+    
+    // if we have a local binding for this, do we continue to use it
+    // or revert back to the session?  I think we use it, loading a session
+    // does not necessarily clear local bindings for everything so if this
+    // was left behind by the Reset logic then it applies
+    int ordinal = getLocalOrdinal(ParamSessionOverlay);
+    if (ordinal >= 0) {
+        result = findOverlay(ordinal);
+    }
+    else {
+        // fall back to a name-based session search
+        const char* ovname = globals->getString("sessionOverlay");
+        result = findOverlay(ovname);
+    }
+    return result;
+}
+
+int ParameterVault::getLocalOrdinal(SymbolId id)
+{
+    int ordinal = -1;
+    int index = getParameterIndex(id);
+    if (index >= 0)
+      ordinal = localOrdinals[index];
+    return ordinal;
+}
+
+ValueSet* ParameterVault::findTrackOverlay(ValueSet* globals, ValueSet* trackValues)
+{
+    ValueSet* result = nullptr;
+    
+    // same issues with local bindings
+    int ordinal = getLocalOrdinal(ParamTrackOverlay);
+    if (ordinal >= 0) {
+        result = findOverlay(ordinal);
+    }
+    else {
+        const char* ovname = trackValues->getString("trackOverlay");
+        if (ovname == nullptr)
+          ovname = globals->getString("trackOverlay");
+        result = findOverlay(ovname);
+    }
+    return result;
+}
+
+ValueSet* ParameterVault::findOverlay(const char* ovname)
+{
+    ValueSet* overlay = nullptr;
+    if (ovname != nullptr) {
+        if (parameterSets == nullptr)
+          Trace(1, "ParameterVault: No ParameterSets defined");
+        else {
+            overlay = parameterSets->find(juce::String(ovname));
+            if (overlay == nullptr)
+              Trace(1, "ParameterVault: Invalid parameter overlay name %s", ovname);
+        }
+    }
+    return overlay;
+}
+
+ValueSet* ParameterVault::findOverlay(int ordinal)
+{
+    ValueSet* overlay = nullptr;
+    if (ordinal > 0) {
+        if (parameterSets == nullptr)
+          Trace(1, "ParameterVault: No ParameterSets defined");
+        else {
+            overlay = parameterSets->getByOrdinal(ordinal);
+            if (overlay == nullptr)
+              Trace(1, "ParameterVault: Invalid parameter overlay ordinal %d", ordinal);
+        }
+    }
+    return overlay;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Query
+//
+//////////////////////////////////////////////////////////////////////
+
 int ParameterVault::getOrdinal(SymbolId id)
 {
     return getOrdinal(symbols->getSymbol(id));
+}
+
+/**
+ * LogicalTack wants this for some reason.
+ * It should be the same as just asking for the ParamTrackOverlay ordinal.
+ * refresh() was supposed to have verified this.
+ */
+int ParameterVault::getTrackOverlayNumber()
+{
+    return (trackOverlay != nullptr) ? trackOverlay->number : 0;
 }
 
 int ParameterVault::getOrdinal(Symbol* s)
@@ -116,6 +354,8 @@ int ParameterVault::getOrdinal(Symbol* s)
                 ordinal = sessionOrdinals[index];
                 if (ordinal < 0) {
                     // what the hell is this?
+                    // this might happen if the session was missing some things
+                    // that were added after it was saved
                     Trace(1, "ParameterVault: No ordinal installed for %s", s->getName());
                 }
             }
@@ -128,8 +368,31 @@ bool ParameterVault::doQuery(Query* q)
 {
     int ordinal = getOrdinal(q->symbol);
 
-    // any mutations to do?
-    
+    // LogicalTrack used to have special handl\ing for these, was that necessary?
+    // this extra verification shold not be necessary if refresh() did it's job
+    // check this for awhile but take out eventually
+    switch (q->symbol->id) {
+        case ParamTrackOverlay: {
+            int other = 0;
+            if (trackOverlay != nullptr)
+              other = trackOverlay->number;
+            if (other != ordinal)
+              Trace(1, "ParameterVault: Mismatched track overlay ordinal on Query");
+        }
+            break;
+            
+        case ParamSessionOverlay: {
+            int other = 0;
+            if (sessionOverlay != nullptr)
+              other = sessionOverlay->number;
+            if (other != ordinal)
+              Trace(1, "ParameterVault: Mismatched session overlay ordinal on Query");
+        }
+            break;
+
+        default: break;
+    }
+
     q->value = ordinal;
 
     // todo: should be checking whether the symbol in the query was in fact
@@ -137,43 +400,100 @@ bool ParameterVault::doQuery(Query* q)
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Actions
+//
+//////////////////////////////////////////////////////////////////////
+
+//
+// !!! This is used by LocialTack to force the vault ordinals to match
+// something it did in an action, need to avoid this
+//
+
+void ParameterVault::setOrdinal(Symbol* s, int ordinal)
+{
+    // the machinery is built around UIAction so use that
+    UIAction a;
+    a.symbol = s;
+    a.value = ordinal;
+    doAction(&a);
+}
+
+void ParameterVault::setOrdinal(SymbolId id, int ordinal)
+{
+    Symbol* s = symbols->getSymbol(id);
+    if (s != nullptr)
+      setOrdinal(s, ordinal);
+}
+
 void ParameterVault::doAction(UIAction* a)
 {
     SymbolId sid = a->symbol->id;
     if (sid == ParamTrackOverlay || sid == ParamSessionOverlay) {
         // well shucks, these are complicated
+        doOverlay(a);
+    }
+    else if (a->symbol->behavior == BehaviorActivation) {
+        // LogicalTrack will have already checked this
+        juce::String ovname = a->symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixOverlay, false, false);
+        doOverlay(ovname);
     }
     else {
-        // higher levels should already have checked this
-        ParameterProperties* props = a->symbol->parameterProperties.get();
-        if (props != nullptr) {
-            int index = props->index;
-            if (index >= 0) {
-                if (isValidOrdinal(props, a->value))
-                  localOrdinals.set(index, a->value);
+        // todo: potential problems with the IO ports
+        // at runtime everything should be using ParamInputPort and ParamOutputPort
+        // and not doing queries and ations on the Audio vs. Plugin ports
+        // If you send an action for one of those, the oridinal will be saved but
+        // it won't be propagated to the generic port parameters
+        if (sid == ParamAudioInputPort || sid == ParamAudioOutputPort ||
+            sid == ParamPluginInputPort || sid == ParamPluginOutputPort) {
+            Trace(1, "ParameterVault: Action for audio/plugin ports");
+        }
+        
+        // higher levels should already have done the nullptr checks, hating this
+        int index = getParameterIndex(a->symbol);
+        if (index >= 0) {
+            if (isValidOrdinal(a->symbol, props, a->value))
+              localOrdinals.set(index, a->value);
+            else {
+                // if they sent down an ordinal that was out of range
+                // it could either be ignored, or go back to the default value of zero
+                // for actions I think ignore it
+                // if a session has values out of range those shoudl self-heal
             }
         }
     }
 }
 
-bool ParameterVault::isValidOrdinal(ParameterProperties* props, int value)
+/**
+ * This is used both to validate UIActions and when loading things from the Session
+ */
+bool ParameterVault::isValidOrdinal(Symbol* s, ParameterProperties* props, int value)
 {
     bool valid = false;
 
     switch (props->type) {
+        
         case TypeInt: {
+            // !! todo: the IO port numbers have dynamic highs
+            // in theory those could be passed down, but we don't necessarily
+            // want to ignore the values in case they see an error and go
+            // reconfigure the audio interface
+            // range checking on those would ideally be done in the SessionEditor
             if (value >= props->low) {
                 if (props->high == 0 || value <= props->high)
                   valid = true;
             }
         }
             break;
+            
         case TypeBool: {
             // does't really matter, we just do zero/non-zero
             // but since -1 is used for unbound, require it be positive
             valid = (value >= 0);
         }
             break;
+            
         case TypeEnum: {
             valid = (value >= 0 && value < props->values.size());
         }
@@ -184,10 +504,30 @@ bool ParameterVault::isValidOrdinal(ParameterProperties* props, int value)
             Trace(1, "ParameterVault: Attempted to set a String with an ordinal");
         }
             break;
+            
         case TypeStructure: {
-            // armegeddon
+            // there are only two types we need to deal with
+            // in both cases ordinal zero means "none"
+            // so if a list has three objects, the range is 0-3 inclusive
+            SymbolId sid = s->id;
+            if (sid == ParamSessionOverlay || sid == ParamTrackOverlay) {
+                int count = (parameterSets != nullptr) ? parameterSets->getSets().size();
+                valid = (value >= 0 && value <= count);
+            }
+            else if (sid == ParamTrackGroup) {
+                int count = (groupDefinitions != nullptr) ? groupDefinitions->getGroups().size();
+                valid = (value >= 0 && value <= count);
+            }
+            else if (sid == ParamMidiInput || sid == ParamMidiOutput) {
+                // these are harder to verify, would need the list of currently configured
+                // devices passed in
+                // I don't think we're actually dealing with these as ordinals ATM
+                Trace(1, "ParameterVault: Assigning a midi device with an ordinal");
+                valid = true;
+            }
         }
             break;
+            
         case TypeFloat: {
             // there is only one of these and it's an x100 int
             // could be smarter here
@@ -199,24 +539,65 @@ bool ParameterVault::isValidOrdinal(ParameterProperties* props, int value)
 }
 
 /**
- * Deal with an action on trackOverlay
- * If the overlay changes, this can have widespread effects on other parameters
- * so the entire thing needs to be reflatttened.
+ * When you set an overlay with an action, the flatatening
+ * process needs to happen all over again.
  */
-#if 0
-void ParameterVault::doTrackOverlay(UIAction* a)
+void ParameterVault::doOverlay(UIAction* a)
 {
-    // if the reference in the action does not resolve, leave the
-    // current overlay in place
-    ValueSet* overlay = trackOverlay;
+    SymbolId sid = a->symbol->id;
     
-    if (strlen(a->arguments) > 0) {
-        valueSet* neu = findOverlay(parameterSets, a->arguments);
+    ValueSet* target = nullptr;
+    if (sid == ParamSessionOverlay)
+      target = sessionOverlay;
+    else
+      target = trackOverlay;
+    
+    ValueSet* neu = findOverlay(a, target);
+    if (target != neu) {
+        
+        if (sid == ParamSessionOverlay)
+          sessionOverlay = neu;
+        else
+          trackOverlay = neu;
+        
+        flatten(symbols, session->ensureGlobals(), track->ensureParameters(),
+                sessionOverlay, trackOverlay, flattener);
+
+        install(flattener);
+
+        // also save this as the local binding so it can be queried back
+        // zero means "none"
+        int ordinal = 0;
+        if (parameterSets != nullptr && neu != nullptr) {
+            int index = parameterSets->getSets().indexOf(neu);
+            ordinal = index + 1;
+        }
+
+        int index = a->symbol->parameterProperties->index;
+        if (index >= 0)
+          localOrdinals.set(index, ordinal);
+    }
+}
+
+ValueSet* ParameterVault::findOverlay(UIAction* a, ValueSet* current)
+{
+    ValueSet* overlay = current;
+    
+    if (parameterSets == nullptr) {
+        // not normal, assume this means all of them have been deleted?
+        overlay = nullptr;
+    }
+    else if (strlen(a->arguments) > 0) {
+        ValueSet* neu = parameterSets->find(juce::String(a->arguments));
         if (neu != nullptr)
           overlay = neu;
+        else {
+            // this is where it would be nice to pass back "name not found"
+            // errors to show the user
+        }
     }
     else if (a->value > 0) {
-        ValueSet* neu = findOverlay(a->value);
+        ValueSet* neu = parameterSets->getByOrdinal(a->value);
         if (neu != nullptr)
           overlay = neu;
     }
@@ -226,20 +607,53 @@ void ParameterVault::doTrackOverlay(UIAction* a)
         overlay = nullptr;
     }
 
-    if (overlay != trackOverlay) {
-        // reflatten using the new overlay and the existing session
+    return overlay;
+}
 
+/**
+ * Here from a UIAction that is a BehavorActivation
+ * with an overlay name.
+ * Since we don't have a way of specifying track vs. session
+ * the assumption is that always means the track overlay.
+ */
+void ParameterVault::doOverlay(juce::String ovname)
+{
+    ValueSet* neu = nullptr;
+    if (parameterSets != nullptr) {
+        neu = parameterSets->find(ovname);
+        // another place to throw back an error if the name was bad
+    }
+    
+    if (trackOverlay != neu) {
+        trackOverlay = neu;
+        
         flatten(symbols, session->ensureGlobals(), track->ensureParameters(),
                 sessionOverlay, trackOverlay, flattener);
 
         install(flattener);
+
+        // also save this as the local binding so it can be queried back
+        // zero means "none"
+        int ordinal = 0;
+        if (parameterSets != nullptr && neu != nullptr) {
+            int index = parameterSets->getSets().indexOf(neu);
+            ordinal = index + 1;
+        }
+
+        // setting the ordinal is more complicated since unlike the other
+        // doOverlay, we didnt't start with a Symbol to work from
+        Symbol* s = symbols->getSymbol(ParamTrackOverlay);
+        if (s != nullptr && s->parameterProperties != nullptr) {
+            int index = s->parameterProperties->index;
+            if (index >= 0)
+              localOrdinals.set(index, ordinal);
+        }
     }
 }
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //
-// Static Utilities
+// Flattening
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -248,68 +662,34 @@ void ParameterVault::doTrackOverlay(UIAction* a)
  */
 juce::Array<int> ParameterVault::flattener;
 
-/**
- * Flatten parameters from the session into an ordinal array.
- * Only parameters defined in the SymbolTable's parameter array are included
- * which is currently all of them, but could do more filtering here.
- *
- * In particular global parameters don't need to be here since tracks will
- * never have overrides for them, but it doesn't really hurt anything as long
- * as they are not used as the source for those values.
- *
- * The Session may have ValueSet entries that do not correspond to parameter
- * symbols, this should not happen, it may represent old names that were changed.
- * Do a verification pass on the Maps at the end just to make sure, but this
- * part isn't necessary.
- */
-void ParameterVault::flatten(SymbolTable* symbols, ParameterSets* parameterSets,
-                              Session* session, int trackNumber,
-                              juce::Array<int>& result)
+void ParameterVault::flatten(ValueSet* defaults, ValueSet* trackValues,
+                             ValueSet* sessionOverlay, ValueSet* trackOverlay, 
+                             juce::Array<int>& result)
 {
     result.clearQuick();
 
-    Session::Track* track = session->getTrackById(trackNumber);
-    if (track == nullptr) {
-        Trace(1, "ParameterVault: Invalid track number %d", trackNumber);
-    }
-    else {
-        ValueSet* defaults = session->ensureGlobals();
-        ValueSet* trackValues = track->ensureParameters();
+    juce::Array<Symbol*> parameters = symbols->getParameters();
 
-        ValueSet* sessionOverlay = findSessionOverlay(parameterSets, defaults);
-        ValueSet* trackOverlay = findTrackOverlay(parameterSets, defaults, trackValues);
+    // usual goofyness with sparse arrays, initialize all of them to -1 to
+    // indiciate there is no value, but most of these should be replaced
+    for (int i = 0 ; i < parameters.size() ; i++)
+      result.add(-1);
 
-        juce::Array<Symbol*> parameters = symbols->getParameters();
-
-        // usualy goofyness with sparse arrays, initialize all of them to -1 to
-        // indiciate there is no value, but most of these should be replaced
-        for (int i = 0 ; i < parameters.size() ; i++)
-          result.add(-1);
-
-        for (auto param : parameters) {
-            ParameterProperties* props = param->parameterProperties.get();
-            if (props == nullptr) {
-                Trace(1, "ParameterVault: Symbol got into the parameter list without properties %s",
-                      param->getName());
-            }
-            else if (props->type == TypeString) {
-                // not many of these, but they can't have ordinals so ignore them
-            }
-            else if (props->type == TypeStructure) {
-                // need to support these
-                Trace(1, "ParameterVault: Need to support structure parameter %s",
-                      param->getName());
+    for (auto param : parameters) {
+        ParameterProperties* props = param->parameterProperties.get();
+        if (props == nullptr) {
+            Trace(1, "ParameterVault: Symbol got into the parameter list without properties %s",
+                  param->getName());
+        }
+        else {
+            int index = props->index;
+            if (index < 0 || index >= parameters.size()) {
+                Trace(1, "ParameterVault: Symbol %s has an invalid index %d",
+                      param->getName(), index);
             }
             else {
-                int index = props->index;
-                if (index < 0 || index >= parameters.size()) {
-                    Trace(1, "ParameterVault: Symbol has an invalid index %s",
-                          param->getName());
-                }
-                else {
-                    int ord = resolveOrdinal(param, defaults, trackValues, sessionOverlay, trackOverlay);
-                    result.set(index, ord);
-                }
+                int ord = resolveOrdinal(param, defaults, trackValues, sessionOverlay, trackOverlay);
+                result.set(index, ord);
             }
         }
     }
@@ -319,32 +699,29 @@ void ParameterVault::flatten(SymbolTable* symbols, ParameterSets* parameterSets,
  * The interesting part.
  */
 int ParameterVault::resolveOrdinal(Symbol* symbol, ValueSet* defaults, ValueSet* trackValues,
-                                    ValueSet* sessionOverlay, ValueSet* trackOverlay)
+                                   ValueSet* sessionOverlay, ValueSet* trackOverlay)
 {
     int ordinal = -1;
 
     ParameterProperties* props = symbol->parameterProperties.get();
+    // should have been caught long before now
     if (props == nullptr) return ordinal;
     
-    // first the track overlay
     if (trackOverlay != nullptr) {
         MslValue* v = trackOverlay->get(symbol->name);
         ordinal = resolveOrdinal(symbol, props, v);
     }
 
-    // then the track itself
     if (ordinal < 0) {
         MslValue* v = trackValues->get(symbol->name);
         ordinal = resolveOrdinal(symbol, props, v);
     }
 
-    // then the session overlay
     if (ordinal < 0 && sessionOverlay != nullptr) {
         MslValue* v = sessionOverlay->get(symbol->name);
         ordinal = resolveOrdinal(symbol, props, v);
     }
 
-    // and finally the session defaults
     if (ordinal < 0) {
         MslValue* v = defaults->get(symbol->name);
         ordinal = resolveOrdinal(symbol, props, v);
@@ -366,140 +743,276 @@ int ParameterVault::resolveOrdinal(Symbol* symbol, ValueSet* defaults, ValueSet*
  * This is basically what the old Enumerator did.
  * Don't trust whatever came down in the ValueSet, do range checking on it
  * before we put it in the array.
+ *
+ * Return -1 on error so we can go to the next level.
+ * Very much need error accumulation here.
+ *
+ * This could be doing more aggressive type coersion, like allowing an
+ * MslValue::Bool for a TypeInt parameter.  But I think that actually hides
+ * problems, so be strict about what types we expect to see.
  */
 int ParameterVault::resolveOrdinal(Symbol* s, ParameterProperties* props, MslValue* v)
 {
     int ordinal = -1;
-    if (v != nullptr) {
-        switch (v->type) {
-            case MslValue::Int: {
-                int value = v->getInt();
-                if (!isValidOrdinal(props, value))
-                  Trace(1, "ParameterVault: Session value for %s out of range %d",
-                        s->getName(), value);
-                else
-                  ordinal = value;
-            }
-                break;
-            case MslValue::Float: {
-                // really not expecting these
-                Trace(1, "ParameterVault: Session value for %s was a flaot",
-                      s->getName());
-            }
-                break;
-            case MslValue::Bool: {
-                // go ahead and collapse this to 0/1
-                ordinal = (v->getBool() ? 1 : 0);
-            }
-                break;
-            case MslValue::Keyword:
-            case MslValue::String: {
-                // accept "true" and "false" for Bool targets, otherwise
-                // it needs to coerce
-                if (props->type == TypeBool) {
-                    if (strcmp(v->getString(), "true") == 0)
-                      ordinal = 1;
-                    else
-                      ordinal = 0;
-                }
-                else if (props->type == TypeInt) {
-                    // todo: validate that the string is in fact an int
-                    ordinal = v->getInt();
-                }
-                else if (props->type == TypeEnum) {
-                    // this will be left -1 if not in the enumeration
-                    ordinal = props->values.indexOf(juce::String(v->getString()));
-                    if (ordinal < 0)
-                      Trace(1, "ParameterVault: Session value for %s was an invalid enumration %s",
-                            s->getName(), v->getString());
-                }
-            }
-                break;
-            case MslValue::Enum: {
-                if (props->type == TypeEnum) {
-                    // these have both a name and an ordinal, I've been preferring
-                    // to resolve against the name though they are supposed to match
-                    int value = v->getInt();
-                    if (!isValidOrdinal(props, value)) {
-                        Trace(1, "ParameterVault: Session value for %s out of enumeration range %d",
-                              s->getName(), value);
-                        // fall back to the name since we have both
-                        ordinal = props->values.indexOf(juce::String(v->getString()));
-                        if (ordinal < 0)
-                          Trace(1, "ParameterVault: Session value for %s was an invalid enumration %s",
-                                s->getName(), v->getString());
-                    }
-                    else {
-                        ordinal = value;
-                        // this isn't necessary, but validate the name against the definition
-                        // just to catch inconsistencies in the model
-                        // might happen for old sessions saved before a model change
+    bool invalidType = false;
 
-                        int other = props->values.indexOf(juce::String(v->getString()));
-                        if (other < 0)
-                          Trace(1, "ParameterVault: Session value for %s was an invalid enumration %s",
-                                s->getName(), v->getString());
-                        else if (other != ordinal) {
-                            // which one is more trustworth
-                            Trace(1, "ParameterVault: Session value for %s has mismatched ordinals %d %d",
-                                  s->getName(), ordinal, other);
-                            // in the case where you add something to the enumeration the names
-                            // tend to be the same but the positions are different, so favor
-                            // the name
-                            ordinal = other;
-                        }
-                    }
+    // not supposed to see isNull in the session maps, filter it if it happens
+    if (v != nullptr && !v->isNull()) {
+
+        switch (props->type) {
+            
+            case TypeInt: {
+                // allow Int or String, but the others are a modeling error
+                // we usually allow Keyword for Strings, but it would be
+                // weird to type "inputPort = :1"
+                if (v->type == MslValue::Int ||
+                    v->type == MslValue::String || v->type == MslValue::Keyword) {
+                    int value = v->getInt();
+                    if (isValidOrdinal(props, value))
+                      ordinal = value;
+                    else
+                      Trace(1, "ParameterVault: Session value for %s out of range %d",
+                            s->getName(), value);
                 }
                 else {
-                    // There is an Enum value for a non-enum parameter, this is weird
-                    Trace(1, "ParameterVault: Session value for %s was an enumeration",
-                          s->getName());
-                    ordinal = v->getInt();
+                    invalidType = true;
                 }
             }
                 break;
-            case MslValue::List: {
-                Trace(1, "ParameterVault: Session value for %s was a List",
-                      s->getName());
+                
+            case TypeBool: {
+                // could do more range checking on these, really should be just
+                // 0, 1, "true" or "false"
+                if (v->type == MslValue::Int) {
+                    ordinal = (v->getInt() > 0);
+                }
+                else if (v->type == MslValue::Bool) {
+                    ordinal = v->getBool();
+                }
+                else if (v->type == MslValue::String ||
+                         // using keywords is common in this case "midiThru = :true"
+                         v->type == MslValue::Keyword) {
+                    ordinal = (strcmp(v->getString(), "true") == 0);
+                }
+                else {
+                    invalidType = true;
+                }
             }
                 break;
-            case MslValue::Symbol: {
-                Trace(1, "ParameterVault: Session value for %s was a Symbol",
-                      s->getName());
+                
+            case TypeEnum: {
+                ordinal = resolveEnum(s, props, v);
             }
                 break;
+                
+            case TypeString: {
+                // Strings can't have ordinals
+                // These should have been caught at a higher level if this
+                // came from a UIAction, if we're flattening a Session just ignore it
+            }
+                break;
+                
+            case TypeStructure: {
+                ordinal = resolveStructure(s, props, v);
+            }
+                break;
+                
+            case TypeFloat: {
+                // only one of these, and it's an x100 int
+                // I suppose since we have MslValue::Float we could allow that and
+                // do the x100 conversion but we don't do Floats yet
+                if (v->type == MslValue::Int)
+                  ordinal = v->getInt();
+                else
+                  invalidType = true;
+            }
+                break;
+        }
+
+        if (invalidType) {
+            Trace(1, "ParameterVault: Parameter %s given value with invalid type %d",
+                  s->getName(), (int)(v->type));
         }
     }
     return ordinal;
 }
 
-ValueSet* ParameterVault::findSessionOverlay(ParameterSets* sets, ValueSet* globals)
+/**
+ * Contort an MslValue into an enumerated parameter ordinal.
+ *
+ * The session editor normally saves Enums.
+ * Hand edited XML often leaves out the type and it becomes just a String.
+ * Actions from MSL may use Keyword, e.g. "syncMode = :Host"
+ * Ints would happen if the parameter was bound to a MIDI CC controller.
+ *
+ * When an Enum comes in from the session, we could trust either the symbolic name or
+ * the ordinal.  Leaning toward always using the name since that almost never changes,
+ * but it is sometimes necessary to reorder them or insert new values, so older saved sessions
+ * might have invalid numbers.  If we're going to do that everywhere then there really
+ * isn't any need to have MslType::Enum, is there?
+ */
+int ParameterVault::resolveEnum(Symbol* s, ParameterProperties* props, MslValue* v)
 {
-    const char* ovname = globals->getString("sessionOverlay");
-    return findOverlay(sets, ovname);
+    int ordinal = -1;
+
+    switch (v->type) {
+        
+        case MslValue::Int: {
+            int value = v->getInt();
+            if (isValidOrdinal(props, value))
+              ordinal = value;
+            else
+              Trace(1, "ParameterVault: Parameter %s ordinal out of range %d",
+                    symbol->getName(), value);
+        }
+            break;
+
+        case MslValue::String:
+        case MslValue::Keyword: {
+            // results in -1 if not included 
+            ordinal = props->values.indexOf(juce::String(v->getString()));
+            if (ordinal < 0)
+              Trace(1, "ParameterVault: Parameter %s invalid enumeration %s",
+                    s->getName(), v->getString());
+        }
+            break;
+            
+        case MslValue::Enum: {
+            // prefer the name but cross-check the ordinal
+            // not necessary, but I like to know when this happens
+            ordinal = props->values.indexOf(juce::String(v->getString()));
+            if (ordinal < 0) {
+                // name didn't match, was the index right?
+                if (isValidOrdinal(props, v->getInt())) {
+                    // in theory, the name could have changed but the position
+                    // is still the same and we could use the original
+                    // this would be rare and I think too dangerous to assume
+                    Trace(1, "ParameterVault: Parameter %s invalid enumeration %s with valid ordinal %d",
+                          s->getName(), v->getString(), v->getInt());
+                }
+                else {
+                    // both are wrong, this is most likely a hand edited misplaced value
+                    Trace(1, "ParameterVault: Parameter %s invalid enumeration %s",
+                          s->getName(), v->getString(), v->getInt());
+                }
+            }
+            else {
+                // name was fine, what about the ordinal
+                if (!isValidOrdinal(props, v->getInt())) {
+                    Trace(1, "ParameterVault: Parameter %s had matching name %s but invalid ordinal %d",
+                          s->getName(), v->getString(), v->getInt());
+                    // I don't think it's worth dying for this.
+                    // We can try to fix it, but if this came from the Session, it will still
+                    // exist on disk and we'll see it again when the Session is reloaded.
+                    // If we don't fix it though, we're going to log this every time the session
+                    // is flattened which is annoying.  
+                    v->fixEnum(ordinal);
+                }
+                else {
+                    // shiny, captain
+                }
+            }
+        }
+            break;
+                    
+        default: {
+            // Float, Bool, List, Keyword, Symbol
+            // don't need to be agressive on coercing these
+            Trace(1, "ParameterVault: Parameter %s given bizarre value type");
+        }
+            break;
+    }
+    return ordinal;
 }
 
-ValueSet* ParameterVault::findTrackOverlay(ParameterSets* sets, ValueSet* globals, ValueSet* track)
+/**
+ * Contort a value into a structure ordinal.
+ *
+ * UIActions can only use numbers right now, but soon they'll be able to
+ * contain a full MslValue.
+ *
+ * The Session always stores structure references as Strings.
+ *
+ * The two MIDI devices are technically structures but we don't have everything
+ * in place to treat them as such.  This needs more work.  Currently they are not
+ * set or queried with actions, they can only be named in the session and
+ * are handled directly by MidiTrack without going through the vault.  They
+ * will have type='string' in the symbol.
+ */
+int ParamneterVault::resolveStructure(Symbol* s, ParameterProperties* props, MslValue* v)
 {
-    const char* ovname = track->getString("trackOverlay");
-    if (ovname == nullptr)
-      ovname = globals->getString("trackOverlay");
-    return findOverlay(sets, ovname);
-}
-
-ValueSet* ParameterVault::findOverlay(ParameterSets* sets, const char* ovname)
-{
-    ValueSet* overlay = nullptr;
-    if (ovname != nullptr) {
-        if (sets == nullptr)
-          Trace(1, "ParameterVault: No ParameterSets defined");
+    int ordinal = -1;
+    bool invalidType = false;
+    SymbolId sid = s->id;
+    
+    // for all structures, a value of 0 means "no selection" so
+    // handle that early before we start thinking too hard
+    if (v->type == MslValue::Int && v->getInt() == 0) {
+        ordinal = 0;
+    }
+    else if (sid == ParamTrackOverlay || sid == ParamSessionOverlay) {
+        if (parameterSets == nullptr) {
+            Trace(1, "ParameterVault: No ParameterSets available for resolving overlay ordinals");
+        }
         else {
-            overlay = sets->find(juce::String(ovname));
-            if (overlay == nullptr)
-              Trace(1, "ParameterVault: Invalid parameter overlay name %s", ovname);
+            // during session flattening these were both pulled out early,
+            // validated, and the ordinal forced in with setOrdinal
+            // so it doesn't really matter what we do here
+            if (v->type == MslValue::Int) {
+                int value = v->getInt();
+                if (value >= 0 && value < parameterSets->getSets().size())
+                  ordinal = value;
+                else
+                  Trace(1, "ParameterVault: Parameter %s structure ordinal out of range %d",
+                        s->getName(), value);
+            }
+            else if (v->type == MslValue::String || v->type == MslValue::Keyword) {
+                ordinal = parameterSets->find(juce::String(v->getString()));
+                if (ordinal < 0)
+                  Trace(1, "ParameterVault: Parameter %s invalid structure name %s",
+                        s->getName(), v->getString());
+            }
+            else {
+                invalidType = true;
+            }
         }
     }
-    return overlay;
+    else if (sid == ParamTrackGroup) {
+        if (groupDefinitions == nullptr) {
+            Trace(1, "ParameterVault: No GroupDefinitions available for resolving group ordinals");
+        }
+        else if (v->type == MslValue::Int) {
+            int value = v->getInt();
+            if (value >= 0 && value < groupDefinitions->getGroups().size())
+              ordinal = value;
+            else
+              Trace(1, "ParameterVault: Parameter %s structure ordinal out of range %d",
+                    s->getName(), value);
+        }
+        else if (v->type == MslValue::String || v->type == MslValue::Keyword) {
+            ordinal = groupDefinitions->find(juce::String(v->getString()));
+            if (ordinal < 0)
+              Trace(1, "ParameterVault: Parameter %s invalid structure name %s",
+                    s->getName(), v->getString());
+        }
+        else {
+            invalidType = true;
+        }
+    }
+    else if (sid == ParamMidiInput || sid == ParamMidiOutput) {
+        // since these aren't really in the vault, return zero rather
+        // than -1 to stop walking through the layers since it won't be
+        // in any of them
+        ordinal = 0;
+    }
+    else {
+        // since we're iterating over all symbols, this is going to pick up
+        // things like ParamActiveLayout which are level='UI'
+        // that are not handled down here, just ignore them
+        ordinal = 0;
+    }
+    
+    return ordinal;
 }
 
 /****************************************************************************/

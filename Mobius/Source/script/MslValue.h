@@ -138,14 +138,21 @@ class MslValue
     }
 
     void setString(const char* s) {
-        setNull();
-        if (s == nullptr) {
-            strcpy(string, "");
+        if (s == string) {
+            // someone did this v->setString(v->getString())
+            // or more likely v->setEnum(v->getString(), ordinal)
+            // leave it alone
         }
         else {
-            strncpy(string, s, sizeof(string));
-            if (strlen(string) > 0)
-              type = String;
+            setNull();
+            if (s == nullptr) {
+                strcpy(string, "");
+            }
+            else {
+                strncpy(string, s, sizeof(string));
+                if (strlen(string) > 0)
+                  type = String;
+            }
         }
     }
     
@@ -164,6 +171,13 @@ class MslValue
         setString(s);
         ival = i;
         type = Enum;
+    }
+
+    // hack to fix enumerations where the name is right but the
+    // number is wrong to avoid repeated logging every time this is encountered
+    void fixEnum(int i) {
+        if (type == Enum) 
+          ival = i;
     }
 
     const char* getString() {

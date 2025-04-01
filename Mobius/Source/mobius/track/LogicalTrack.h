@@ -241,14 +241,6 @@ class LogicalTrack
     // sync Pulse for SyncMaster/Pulsator
     Pulse leaderPulse;
 
-    // parameter bindings that override the session
-    // this is everything EXCEPT the sync parameters above
-    class MslBinding* bindings = nullptr;
-
-    // the parameter includes specified in the Session and Session::Track
-    ValueSet* trackOverlay = nullptr;
-    ValueSet* sessionOverlay = nullptr;
-
     /**
      * The underlying track implementation, either a MidiTrack
      * or a MobiusLooperTrack.
@@ -262,31 +254,17 @@ class LogicalTrack
     bool visited = false;
     bool advanced = false;
 
-    // new parameter management, needs organization
-    
     class Symbol* getSymbol(SymbolId id);
-    class ValueSet* findOverlay(const char* ovname);
-    class ValueSet* findOverlay(int number);
-    class ValueSet* resolveOverlay(class ValueSet* referenceSet, const char* referenceName);
-    class ValueSet* resolveTrackOverlay();
-    class ValueSet* resolveSessionOverlay();
     
     void cacheParameters(bool reset);
-    void resolveParameterOverlays(bool reset);
     void doParameter(class UIAction* a);
-    bool validatePort(int number, bool output);
     int getGroupFromSession();
     bool getFocusLockFromSession();
-    int getEnumOrdinal(class Symbol* s, int value);
     int getGroupFromAction(class UIAction* a);
     void resetParameters();
     
-    void bindParameter(UIAction* a);
-    void clearBindings(bool reset);
-    
     void doTrackGroup(class UIAction* a);
     int parseGroupActionArgument(class GroupDefinitions* groups, const char* s);
-    void changeOverlay(class ValueSet* neu);
     
 };
 

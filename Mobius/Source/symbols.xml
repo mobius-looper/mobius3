@@ -558,7 +558,7 @@ Once those models are fully converted, these symbols can be removed.
     -->
     <Parameter name='trackType' values='audio,midi' options='noBinding,noDefault,noOverlay'/>
 
-    <Parameter name='trackGroup' tree='General'
+    <Parameter name='trackGroup' type='structure' structure='Group' tree='General'
                options='noBinding,noDefault,dynamic,resetRetain'
                displayType='combo' displayHelper='trackGroup'/>
 

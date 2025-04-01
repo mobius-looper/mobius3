@@ -43,26 +43,23 @@ class ParameterVault
 
     /**
      * The vault requires a few system services to do it's thing.
-     * This may be called more than once, symbols is not expected to change
-     * but ParameterSets may be changed when a new collection is sent down
-     * after editing.
+     * This is only called once.
+     */
+    void initialize(class SymbolTable* symbols, bool isPlugin);
+
+    /**
+     * The bulk of what the vault does comes from the Session,
+     * and the ParameterSets.  GroupDefinitions re provided for validation
+     * or trackGroup ordinal range.
      *
-     * The vault is allowed to retain a reference to the ParameterSets and
-     * must be reinitialized if that changes.
+     * A full refresh is done whenever any of these change.
      */
-    void initialize(class SymbolTable* symbols, class ParameterSets* sets);
+    void refresh(class Session* s, class Session::Track* t,
+                 class ParameterSets* sets, class GroupDefinitions* groups);
 
-    /**
-     * Refresh the parameter sets (overlays) after editing.
-     */
+    void refresh(class Session* s, class Session::Track* t);
     void refresh(class ParameterSets* sets);
-
-    /**
-     * Install the Session parameters for one track.
-     * The vault is allowed to retain a reference to the Session
-     * and it's contents.
-     */
-    void loadSession(class Session* session, int trackNumber);
+    void refresh(class GroupDefinitions* groups);
 
     /**
      * Remove all local parameter bindings.
@@ -77,6 +74,14 @@ class ParameterVault
     int getOrdinal(class Symbol* s);
 
     /**
+     * A few functions can indirectly set parameters.
+     * When those are intercepted by LogicalTrack it needs to call this to make
+     * the corresponding change in the vault.
+     */
+    void setOrdinal(class Symbol* s, int ordinal);
+    void setOrdinal(SymbolId id, int ordinal);
+    
+    /**
      * Basically the same as getOrdinal depositing the result in the Query.
      */
     bool doQuery(class Query* q);
@@ -86,39 +91,64 @@ class ParameterVault
      * This will also detect and handle changes to overlays.
      */
     void doAction(class UIAction* a);
+
+    // try to get rid of this, used by LogicalTrack::refreshState
+    int getTrackOverlayNumber();
     
   private:
 
     class SymbolTable* symbols = nullptr;
-    class ParameterSets* parameterSets = nullptr;
+    bool isPlugin = false;
     class Session* session = nullptr;
     class Session::Track* track = nullptr;
+    class ParameterSets* parameterSets = nullptr;
+    class GroupDefinitions* groupDefinitions = nullptr;
+    class ValueSet* sessionOverlay = nullptr;
+    class ValueSet* trackOverlay = nullptr;
 
     juce::Array<int> sessionOrdinals;
     juce::Array<int> localOrdinals;
 
     void initArray(juce::Array<int>& array, int size);
+    void refresh();
     void install(juce::Array<int>& ordinals);
 
-    // needed by both doAction and flatten so it has to be static
-    static bool isValidOrdinal(class ParameterProperties* props, int value);
+    // Overlay shit to do flattening
+    class ValueSet* findSessionOverlay(class ValueSet* globals);
+    class ValueSet* findTrackOverlay(class ValueSet* globals, class ValueSet* track);
+    class ValueSet* findOverlay(const char* name);
+    class ValueSet* findOverlay(int ordinal);
+    int getParameterIndex(SymbolId id);
+    int getLocalOrdinal(SymbolId id);
+    void verifyOverlay(SymbolId overlayId);
+    void fixOverlayOrdinal(SymbolId id, int ordinal);
+
+    // Query and Action
+    void doOverlay(class UIAction* a);
+    void doOverlay(juce::String ovname);
+    class ValueSet* findOverlay(class UIAction* a, class ValueSet* current);
 
     // Flattener
     // if this turns out not to e used outside the vault, doesn't need to be static
-
     // tracks can only be refreshed one at a time so we can reuse this one array
     static juce::Array<int> flattener;
 
-    static void flatten(class SymbolTable* symbols, class ParameterSets* sets,
-                        class Session* s, int track, juce::Array<int>& result);
+    void flatten(class ValueSet* defaults, class ValueSet* trackValues,
+                 class ValueSet* sessionOverlay, class ValueSet* trackOverlay,
+                 juce::Array<int>& result);
 
-    static int resolveOrdinal(class Symbol* symbol, class ValueSet* defaults, class ValueSet* trackValues,
-                              class ValueSet* sessionOverlay, class ValueSet* trackOverlay);
+    int resolveOrdinal(class Symbol* symbol, 
+                       class ValueSet* defaults, class ValueSet* trackValues,
+                       class ValueSet* sessionOverlay, class ValueSet* trackOverlay);
 
-    static int resolveOrdinal(class Symbol* s, class ParameterProperties* props, class MslValue* v);
+    int resolveOrdinal(class Symbol* s, class ParameterProperties* props, class MslValue* v);
+
+
+    int resolveEnum(class Symbol* s, class ParameterProperties* props, class MslValue* v);
+
+
+
     
-    static class ValueSet* findSessionOverlay(class ParameterSets*, class ValueSet* globals);
-    static class ValueSet* findTrackOverlay(class ParameterSets*, class ValueSet* globals, class ValueSet* track);
-    static class ValueSet* findOverlay(class ParameterSets*, const char* name);
+    bool isValidOrdinal(class Symbol* s, class ParameterProperties* props, int value);
     
 };
