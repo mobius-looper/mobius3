@@ -124,9 +124,10 @@ class ParameterVault
     void fixOverlayOrdinal(SymbolId id, int ordinal);
 
     // Query and Action
+    bool isValidOrdinal(class Symbol* s, class ParameterProperties* props, int value);
     void doOverlay(class UIAction* a);
     void doOverlay(juce::String ovname);
-    class ValueSet* findOverlay(class UIAction* a, class ValueSet* current);
+    void setOverlay(SymbolId sid, class ValueSet* overlay);
 
     // Flattener
     // if this turns out not to e used outside the vault, doesn't need to be static
@@ -149,6 +150,5 @@ class ParameterVault
 
 
     
-    bool isValidOrdinal(class Symbol* s, class ParameterProperties* props, int value);
     
 };

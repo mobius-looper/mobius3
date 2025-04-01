@@ -318,6 +318,9 @@ MidiTrack* LogicalTrack::getMidiTrack()
 //
 // Synchronized Recording State
 //
+// These are not parameters in the vault, they are transient fields
+// used during synchronized recording and otherwise unused.
+//
 //////////////////////////////////////////////////////////////////////
 
 void LogicalTrack::resetSyncState()
@@ -336,6 +339,7 @@ void LogicalTrack::resetSyncState()
     syncUnitLength = 0;
 }
 
+// pass a SyncEvent through to the BaseTrack
 void LogicalTrack::syncEvent(class SyncEvent* e)
 {
     track->syncEvent(e);
@@ -500,17 +504,19 @@ void LogicalTrack::cacheParameters(bool reset)
     if (reset)
       vault.resetLocal();
     
-    syncSource = getSyncSourceFromSession();
-    syncSourceAlternate = getSyncSourceAlternateFromSession();
-    syncUnit = getSyncUnitFromSession();
-    trackSyncUnit = getTrackSyncUnitFromSession();
-    syncLeader = sessionTrack->getInt(ParamLeaderTrack);
+    syncSource = (SyncSource)(vault.getOrdinal(ParamSyncSource));
+    syncSourceAlternate = (SyncSourceAlternate)(vault.getOrdinal(ParamSyncSourceAlternate));
+    syncUnit = (SyncUnit)(vault.getOrdinal(ParamSyncUnit));
+    trackSyncUnit = (TrackSyncUnit)(vault.getOrdinal(ParamTrackSyncUnit));
+    syncLeader = vault.getOrdinal(ParamLeaderTrack);
 
     // other convenient things
-    groupNumber = getGroupFromSession();
-    focusLock = sessionTrack->getBool(ParamFocus);
+    groupNumber = vault.getOrdinal(ParamTrackGroup);
+    focusLock = (bool)(vault.getOrdinal(ParamFocus));
 
     // handle the virtual port swap
+    // !! vault needs to be doing this so we can deal with
+    // actions and query consistently
     if (manager->getContainer()->isPlugin()) {
         inputPort = getParameterOrdinal(ParamPluginInputPort);
         outputPort = getParameterOrdinal(ParamPluginOutputPort);
@@ -519,43 +525,6 @@ void LogicalTrack::cacheParameters(bool reset)
         inputPort = getParameterOrdinal(ParamAudioInputPort);
         outputPort = getParameterOrdinal(ParamAudioOutputPort);
     }
-}
-
-int LogicalTrack::getGroupFromSession()
-{
-    int gnumber = 0;
-
-    const char* groupName = sessionTrack->getString(ParamTrackGroup);
-    // since we store the name in the session, have to map it back to an ordinal
-    // which requires the GroupDefinitions
-    if (groupName != nullptr) {
-        GroupDefinitions* groups = manager->getGroupDefinitions();
-        int index = groups->getGroupIndex(groupName);
-        if (index < 0)
-          Trace(1, "LogicalTrack: Invalid group name found in session %s", groupName);
-        else
-          gnumber = index + 1;
-    }
-
-    return gnumber;
-}
-
-int LogicalTrack::getGroupFromAction(UIAction* a)
-{
-    int gnumber = 0;
-
-    // todo: assumign we're dealing with numbers, but should take names
-    // in the binding args
-    // number is 1 based with 0 meaning "none"
-    GroupDefinitions* groups = manager->getGroupDefinitions();
-    if (a->value >= 0 && a->value <= groups->groups.size()) {
-        gnumber = a->value;
-    }
-    else {
-        Trace(1, "LogicalTrack: Group number out of range %d", a->value);
-    }
-    
-    return gnumber;
 }
 
 /**
@@ -837,18 +806,18 @@ int LogicalTrack::parseGroupActionArgument(GroupDefinitions* groups, const char*
  */
 bool LogicalTrack::doQuery(Query* q)
 {
-    //return track->doQuery(q);
     q->value = getParameterOrdinal(q->symbol->id);
 
     // assuming we're at the end of the query probe chain and don't
-    // have to bother with returning if this was actually a parameter or not
+    // have to bother with returning if this was actually a relevant
+    // parameter  or not
     return true;
 }
 
 /**
  * This is the most important function for parameter access by BaseTracks.
  *
- * Whenever a track needs the value of a parameter it MUST call up  to this
+ * Whenever a track needs the value of a parameter it MUST call up to this
  * which undestands how they are organized in the session and deals with
  * overlays and action bindings.
  *
@@ -856,8 +825,8 @@ bool LogicalTrack::doQuery(Query* q)
  * MUST respond to a refreshParameters notification and call back to this to
  * refresh their cache.
  *
- * Anything that is maintained in an LT parameter cache needs to be handled
- * here rather than reversing to the Session.
+ * The parameter values are actually stored in the ParameterVault which not
+ * directly accessible.
  */
 int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
 {
@@ -874,6 +843,8 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
 
         bool special = true;
         switch (symbolId) {
+
+            // !!! vault needs to be doing this
             
             case ParamInputPort:
                 ordinal = inputPort;
@@ -902,6 +873,35 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
     return ordinal;
 }
 
+/**
+ * A wrapper around getParameterOrdinal that just does the bool cast.
+ */
+bool LogicalTrack::getBoolParameter(SymbolId sid)
+{
+    bool value = false;
+    int ordinal = getParmeterOrdinal(sid);
+    if (ordinal == 1) {
+        value = true;
+    }
+    else if (ordinal > 1) {
+        // bools are normally supposed to be just 0 or 1
+        // if it was stored in the session as something higher than that,
+        // it might be a symbol mismatch where you're asking for a bool from
+        // somethign that isn't a bool, could do this check all the time
+        Symbol* s = getSymbol(sid);
+        if (s->parameterProperties != nullptr &&
+            s->parameterProperties->type != TypeBool) {
+            Trace(1, "LogicalTrack::getBoolParameter %s is not a bool parameter",
+                  s->getName());
+        }
+
+        // I guess limp along and treat it as true, but that error
+        // needs to be dealt with
+        value = true;
+    }
+    return value;
+}
+
 ///////////////////////////////////////////////////////////////////////
 //
 // Parameter Enumeration Conversion
@@ -909,62 +909,47 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
 // These are older convenience functions used by MidiTrack that
 // are not as necessary any more.  Weed these...
 //
-// Now that everything is in a ValueSet, it requires conversion into
-// the enumerated constant that is more convenient to use in code.
-// These do that transformation and also validate that the strings and ordinals
-// stored in the Session actually match the enumeration.
+// Now that almost everything everything is an ordinal in the ParameterVault.
+// These just pass through to it and static cast the result.
 //
-// These are only used by MIDI tracks.  Audio tracks still get them from
-// the Setup which is created dynamically from the Session.
+// !! for a time there was a difference between these and
+// the getThingNow functions which used a local cache, they're really
+// not any different so merge them.
+//
+// The only thing the old implementation of these did was skip the
+// lcoal value bindings, I don't remember why that was important and
+// it should not have been...
 //
 //////////////////////////////////////////////////////////////////////
 
 SyncSource LogicalTrack::getSyncSourceFromSession()
 {
-    return (SyncSource)Enumerator::getOrdinal(manager->getSymbols(),
-                                              ParamSyncSource,
-                                              sessionTrack->getParameters(),
-                                              SyncSourceNone);
+    return (SyncSource)(vault.getOrdinal(ParamSyncSource));
 }
 
 SyncSourceAlternate LogicalTrack::getSyncSourceAlternateFromSession()
 {
-    return (SyncSourceAlternate)Enumerator::getOrdinal(manager->getSymbols(),
-                                                       ParamSyncSourceAlternate,
-                                                       sessionTrack->getParameters(),
-                                                       SyncAlternateTrack);
+    return (SyncSourceAlternate)(vault.getOrdinal(ParamSyncSourceAlternate));
 }
 
 SyncUnit LogicalTrack::getSyncUnitFromSession()
 {
-    return (SyncUnit)Enumerator::getOrdinal(manager->getSymbols(),
-                                            ParamSyncUnit,
-                                            sessionTrack->getParameters(),
-                                            SyncUnitBar);
+    return (SyncUnit)(vault.getOrdinal(ParamSyncUnit));
 }
 
 TrackSyncUnit LogicalTrack::getTrackSyncUnitFromSession()
 {
-    return (TrackSyncUnit)Enumerator::getOrdinal(manager->getSymbols(),
-                                                 ParamTrackSyncUnit,
-                                                 sessionTrack->getParameters(),
-                                                 TrackUnitLoop);
+    return (TrackSyncUnit)(vault.getOrdinal(ParamTrackSyncUnit));
 }
 
 LeaderType LogicalTrack::getLeaderTypeFromSession()
 {
-    return (LeaderType)Enumerator::getOrdinal(manager->getSymbols(),
-                                              ParamLeaderType,
-                                              sessionTrack->getParameters(),
-                                              LeaderNone);
+    return (LeaderType)(vault.getOrdinal(ParamLeaderType));
 }
 
 LeaderLocation LogicalTrack::getLeaderSwitchLocationFromSession()
 {
-    return (LeaderLocation)Enumerator::getOrdinal(manager->getSymbols(),
-                                                  ParamLeaderSwitchLocation,
-                                                  sessionTrack->getParameters(),
-                                                  LeaderLocationNone);
+    return (LeaderLocation)(vault.getOrdinal(ParamLeaderSwitchLocation));
 }
 
 /**
@@ -977,6 +962,8 @@ LeaderLocation LogicalTrack::getLeaderSwitchLocationFromSession()
 int LogicalTrack::getLoopCountFromSession()
 {
     int result = 2;
+
+    // !! vault should be doing all this
 
     // it is not unusual for this to be zero if the track was created in the
     // editor and saved without filling in the form, default to 2
@@ -1052,7 +1039,6 @@ EmptyLoopAction LogicalTrack::getEmptyLoopAction()
     return (EmptyLoopAction)getParameterOrdinal(ParamEmptyLoopAction);
 }
 
-
 //////////////////////////////////////////////////////////////////////
 //
 // Notifier State
@@ -1122,6 +1108,11 @@ void LogicalTrack::setAdvanced(bool b)
 //
 // This evolved away from Leader/Follower in Pulsator and we're keeping this
 // at several levels now.   Don't need so much duplication.
+//
+// !! There shouldn't be any difference between these and
+// the older getThingFromSession methods above, merge them.
+// You can cache it if you want, but the vault always has the right
+// value and it obeys temporary bindings.
 //
 //////////////////////////////////////////////////////////////////////
 

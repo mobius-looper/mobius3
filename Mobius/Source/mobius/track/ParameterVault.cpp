@@ -406,27 +406,35 @@ bool ParameterVault::doQuery(Query* q)
 //
 //////////////////////////////////////////////////////////////////////
 
-//
-// !!! This is used by LocialTack to force the vault ordinals to match
-// something it did in an action, need to avoid this
-//
-
-void ParameterVault::setOrdinal(Symbol* s, int ordinal)
-{
-    // the machinery is built around UIAction so use that
-    UIAction a;
-    a.symbol = s;
-    a.value = ordinal;
-    doAction(&a);
-}
-
+/**
+ * Direct ordinal assignment is used by LogicalTrack when it handles
+ * a Function action that sets a parameter as a side effect.
+ * Examples are FuncFocusLock and FunkTrackGroup.
+ *
+ * LT has determined what the ordinal should be after analyzing the
+ * function arguments, and now wants to apply it.
+ *
+ * This is not expected to fail, but it might so LT should query
+ * back the parameter if it wants to cache it to make sure the
+ * request went through.
+ */
 void ParameterVault::setOrdinal(SymbolId id, int ordinal)
 {
+    // make it look like a normal UIAction on a parameter
     Symbol* s = symbols->getSymbol(id);
-    if (s != nullptr)
-      setOrdinal(s, ordinal);
+    if (s != nullptr) {
+        UIAction a;
+        a.symbol = s;
+        a.value = ordinal;
+        doAction(&a);
+    }
 }
 
+/**
+ * Handle a UIAction on a parameter
+ * LT will already have filtered out function actions and Activation
+ * actions that weren't for an overlay.
+ */
 void ParameterVault::doAction(UIAction* a)
 {
     SymbolId sid = a->symbol->id;
@@ -450,7 +458,6 @@ void ParameterVault::doAction(UIAction* a)
             Trace(1, "ParameterVault: Action for audio/plugin ports");
         }
         
-        // higher levels should already have done the nullptr checks, hating this
         int index = getParameterIndex(a->symbol);
         if (index >= 0) {
             if (isValidOrdinal(a->symbol, props, a->value))
@@ -539,75 +546,36 @@ bool ParameterVault::isValidOrdinal(Symbol* s, ParameterProperties* props, int v
 }
 
 /**
- * When you set an overlay with an action, the flatatening
+ * When you set an overlay with an action, the flattening
  * process needs to happen all over again.
  */
 void ParameterVault::doOverlay(UIAction* a)
 {
-    SymbolId sid = a->symbol->id;
-    
-    ValueSet* target = nullptr;
-    if (sid == ParamSessionOverlay)
-      target = sessionOverlay;
-    else
-      target = trackOverlay;
-    
-    ValueSet* neu = findOverlay(a, target);
-    if (target != neu) {
-        
-        if (sid == ParamSessionOverlay)
-          sessionOverlay = neu;
-        else
-          trackOverlay = neu;
-        
-        flatten(symbols, session->ensureGlobals(), track->ensureParameters(),
-                sessionOverlay, trackOverlay, flattener);
-
-        install(flattener);
-
-        // also save this as the local binding so it can be queried back
-        // zero means "none"
-        int ordinal = 0;
-        if (parameterSets != nullptr && neu != nullptr) {
-            int index = parameterSets->getSets().indexOf(neu);
-            ordinal = index + 1;
-        }
-
-        int index = a->symbol->parameterProperties->index;
-        if (index >= 0)
-          localOrdinals.set(index, ordinal);
-    }
-}
-
-ValueSet* ParameterVault::findOverlay(UIAction* a, ValueSet* current)
-{
-    ValueSet* overlay = current;
+    ValueSet* overlay = nullptr;
+    bool forceOff = false;
     
     if (parameterSets == nullptr) {
         // not normal, assume this means all of them have been deleted?
-        overlay = nullptr;
+        Trace(1, "ParameterVault: Attempt to assign overlay without ParameterSets");
     }
     else if (strlen(a->arguments) > 0) {
-        ValueSet* neu = parameterSets->find(juce::String(a->arguments));
-        if (neu != nullptr)
-          overlay = neu;
-        else {
-            // this is where it would be nice to pass back "name not found"
-            // errors to show the user
-        }
+        overlay = parameterSets->find(juce::String(a->arguments));
+        if (overlay == nullpt)
+          Trace(1, "ParameterVault: Invalid overlay name %s in UIAction", a->arguments);
     }
     else if (a->value > 0) {
-        ValueSet* neu = parameterSets->getByOrdinal(a->value);
-        if (neu != nullptr)
-          overlay = neu;
+        overlay = parameterSets->getByOrdinal(a->value);
+        if (overlay == 0)
+          Trace(1, "ParameterVault: Invalid overlay ordinal %d in UIAction", a->value);
     }
     else {
         // an action with no value specified means to take away the
         // current overlay
-        overlay = nullptr;
+        forceOff = true;
     }
 
-    return overlay;
+    if (overlay != nullptr || forceOff)
+      setOverlay(a->symbol->id, overlay);
 }
 
 /**
@@ -618,36 +586,67 @@ ValueSet* ParameterVault::findOverlay(UIAction* a, ValueSet* current)
  */
 void ParameterVault::doOverlay(juce::String ovname)
 {
-    ValueSet* neu = nullptr;
-    if (parameterSets != nullptr) {
-        neu = parameterSets->find(ovname);
-        // another place to throw back an error if the name was bad
+    ValueSet* overlay = nullptr;
+    if (parameterSets == nullptr) {
+        // not normal, assume this means all of them have been deleted?
+        Trace(1, "ParameterVault: Attempt to assign overlay without ParameterSets");
     }
+    else {
+        overlay = parameterSets->find(ovname);
+        if (overlay == nullptr)
+          Trace(1, "ParameterVault: Invalid overlay name %s in UIAction", ovname);
+    }
+
+    if (overlay != nullptr)
+      setOverlay(ParamTrackOverlay, overlay);
+}
+
+/**
+ * Here from both styles of UIAction that want to set an overlay.
+ * Install the overlay in the local cache, and reflatten.
+ *
+ * For actions, the new ValueSet will be nullptr if the overlay
+ * identifier in the action was invalid, e.g. misspelled name or
+ * ordinal out of range.  In those cases an error is logged but
+ * we don't chanage the existing overlay.
+ *
+ * If the forceOff flag is set, it means the action deliberately
+ * wanted to remove the overlay.
+ */
+void ParameterVault::setOverlay(SymbolId sid, ValueSet* overlay)
+{
+    ValueSet* target = nullptr;
+    if (sid == ParamSessionOverlay)
+      target = sessionOverlay;
+    else
+      target = trackOverlay;
     
-    if (trackOverlay != neu) {
-        trackOverlay = neu;
-        
+    if (target != overlay) {
+
+        // change it in the local bindings so it will Query back
+        // correctly
+        int ordinal = 0;
+        if (overlay != nullptr) {
+            ordinal = parameterSets->getSets().indexOf(overlay);
+            ordinal = index + 1;
+        }
+        int index = getParameterIndex(sid);
+        if (index >= 0)
+          localOrdinals.set(index, ordinal);
+
+        // set the local cache
+        if (sid == ParamSessionOverlay)
+          sessionOverlay = neu;
+        else
+          trackOverlay = neu;
+
+        // flatten
         flatten(symbols, session->ensureGlobals(), track->ensureParameters(),
                 sessionOverlay, trackOverlay, flattener);
 
         install(flattener);
 
-        // also save this as the local binding so it can be queried back
-        // zero means "none"
-        int ordinal = 0;
-        if (parameterSets != nullptr && neu != nullptr) {
-            int index = parameterSets->getSets().indexOf(neu);
-            ordinal = index + 1;
-        }
-
-        // setting the ordinal is more complicated since unlike the other
-        // doOverlay, we didnt't start with a Symbol to work from
-        Symbol* s = symbols->getSymbol(ParamTrackOverlay);
-        if (s != nullptr && s->parameterProperties != nullptr) {
-            int index = s->parameterProperties->index;
-            if (index >= 0)
-              localOrdinals.set(index, ordinal);
-        }
+        // not necessary, but verify like we do with refresh()
     }
 }
 

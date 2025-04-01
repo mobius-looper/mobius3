@@ -73,12 +73,6 @@ BaseScheduler::~BaseScheduler()
  *
  * Since we go through the LogicalTrack now we don't need the Session::Track
  * passed in.
- *
- * !! Should reloading a session also clear bindings?
- *
- * Also too, if it gets to the point where MSL scripts can bind these
- * on the fly, then we're going to need to recalculate things again, it has more
- * side effects than just binding a parameter.  doParameter will need to intercept.
  */
 void BaseScheduler::loadSession(Session::Track* def)
 {
@@ -88,34 +82,30 @@ void BaseScheduler::loadSession(Session::Track* def)
 
 void BaseScheduler::refreshParameters()
 {
-    // ugly inconsistency about where we pull things
-    Session::Track* def = logicalTrack->getSession();
-    
-    // convert sync options into a Pulsator follow
-    // !! using LogicalTrack to do the enumeration conversions
-    // get these out of there
-    // it's also looking in the Session and not the Session::Track
+    // !! these are old from when MidiTrack was first built
+    // In the new SyncMaster/ParameterVault era, some of this
+    // should be unnecessary to cache
+    // syncSource for example is cached here and returned in
+    // the TrackState, but SyncMaster could be doing that as well since
+    // it's in charge of most sync state
+
     LogicalTrack* lt = scheduledTrack->getLogicalTrack();
 
-    syncSource = lt->getSyncSourceFromSession();
-    pulseUnit = lt->getSyncUnitFromSession();
+    syncSource = lt->getSyncSource();
+    pulseUnit = lt->getSyncUnit();
 
     // follower options
     // a few are in MidiTrack but they should be here if we need them
-    // !!! clean up how we access these through the levels, LogicalTrack
-    // is now the owner of all things realted to sync
 
-    leaderType = lt->getLeaderTypeFromSession();
-    leaderTrack = def->getInt(ParamLeaderTrack);
-
-    // only reason it uses this is to do enumeration conversion
-    leaderSwitchLocation = lt->getLeaderSwitchLocationFromSession();
+    leaderType = lt->getLeaderType();
+    leaderTrack = lt->getParameterOrdinal(ParamLeaderTrack);
+    leaderSwitchLocation = lt->getLeaderSwitchLocation();
     
-    followQuantize = def->getBool(ParamFollowQuantizeLocation);
-    followRecord = def->getBool(ParamFollowRecord);
-    followRecordEnd = def->getBool(ParamFollowRecordEnd);
-    followSize = def->getBool(ParamFollowSize);
-    followMute = def->getBool(ParamFollowMute);
+    followQuantize = lt->getBoolParameter(ParamFollowQuantizeLocation);
+    followRecord = lt->getBoolParameter(ParamFollowRecord);
+    followRecordEnd = lt->getBoolParameter(ParamFollowRecordEnd);
+    followSize = lt->getBoolParameter(ParamFollowSize);
+    followMute = lt->getBoolParameter(ParamFollowMute);
 }
 
 //////////////////////////////////////////////////////////////////////

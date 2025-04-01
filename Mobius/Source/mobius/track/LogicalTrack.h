@@ -157,6 +157,7 @@ class LogicalTrack
     //////////////////////////////////////////////////////////////////////
 
     int getParameterOrdinal(SymbolId id);
+    bool getBoolParameter(SymbolId sid);
     int unbindFeedback();
 
     // weed these and just call the cached accessors
@@ -258,9 +259,6 @@ class LogicalTrack
     
     void cacheParameters(bool reset);
     void doParameter(class UIAction* a);
-    int getGroupFromSession();
-    bool getFocusLockFromSession();
-    int getGroupFromAction(class UIAction* a);
     void resetParameters();
     
     void doTrackGroup(class UIAction* a);
