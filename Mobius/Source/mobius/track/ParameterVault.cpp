@@ -212,15 +212,22 @@ void ParameterVault::install(juce::Array<int>& ordinals)
             int neu = ordinals[i];
             if (current != neu) {
                 // local binding goes away
-                localOrdinals.set(i, -1);
+                if (localOrdinals[i] >= 0) {
+                    // temporary so I can watch what's happening
+                    Symbol* s = symbols->getParameterWithIndex(i);
+                    Trace(2, "ParameterVault: Parameter %s changed from %d to %d, canceling local override",
+                          s->getName(), current, neu);
+                    localOrdinals.set(i, -1);
+                }
                 sessionOrdinals.set(i, neu);
-
-                // temporary so I can watch what's happening
-                // on initial load, this will always change from -1 to something
-                // so suppress those
-                if (current != -1)
-                  Trace(2, "ParameterValue: Changing parameter %d from %d to %d",
-                        i, current, neu);
+            }
+            else {
+                // also temporary
+                if (localOrdinals[i] >= 0) {
+                    Symbol* s = symbols->getParameterWithIndex(i);
+                    Trace(2, "ParameterVault: Parameter %s preserved local override",
+                          s->getName());
+                }
             }
         }
     }

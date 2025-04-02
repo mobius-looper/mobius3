@@ -63,6 +63,17 @@ ParameterTreeForms::~ParameterTreeForms()
 {
 }
 
+/**
+ * Option to use with form collections where the same parameter
+ * may appear in more than one form.  Since changing the parameter
+ * in one form need to be reflected in other forms, whenever the displayed
+ * form changes, it is saved and the new form is reloaded.
+ */
+void ParameterTreeForms::setDuplicateParameters(bool b)
+{
+    forms.setDuplicateParameters(b);
+}
+
 void ParameterTreeForms::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();

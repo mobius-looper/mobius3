@@ -32,6 +32,7 @@ class ParameterFormCollection : public juce::Component
 
     void initialize(class Factory* f, class ValueSet* values);
     void setFlatStyle(bool b);
+    void setDuplicateParameters(bool b);
     
     // may call back to the factory if the form was not found
     void show(juce::String formName);
@@ -52,6 +53,7 @@ class ParameterFormCollection : public juce::Component
     Factory* factory = nullptr;
     class ValueSet* valueSet = nullptr;
     bool flatStyle = false;
+    bool duplicateParameters = false;
 
     std::unique_ptr<class ParameterForm> flatForm;
     juce::OwnedArray<class ParameterForm> forms;

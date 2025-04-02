@@ -109,9 +109,9 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="none"/>
-      <Value name="syncUnit" value="bar"/>
-      <Value name="trackSyncUnit" value="loop"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
   <Track id="7" type="audio" name="a5">
@@ -145,9 +145,9 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="none"/>
-      <Value name="syncUnit" value="bar"/>
-      <Value name="trackSyncUnit" value="loop"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
   <Track id="9" type="audio" name="a7">
@@ -185,7 +185,7 @@
       <Value name="followerMuteStart" value="false" type="bool"/>
       <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
       <Value name="leaderType" value="none" type="enum" ordinal="0"/>
-      <Value name="loopCount" value="0" type="int"/>
+      <Value name="loopCount" value="2" type="int"/>
       <Value name="midiBeatsPerBar" value="4" type="int"/>
       <Value name="midiChannelOverride" value="off" type="enum" ordinal="0"/>
       <Value name="midiOutput" value="Bome MIDI Translator 1"/>
@@ -193,7 +193,7 @@
       <Value name="outputDevice" value="Bome MIDI Translator 1"/>
       <Value name="quantize" value="off" type="enum" ordinal="0"/>
       <Value name="slaveSyncUnit" value="beat" type="enum" ordinal="0"/>
-      <Value name="subcycles" value="0" type="int"/>
+      <Value name="subcycles" value="4" type="int"/>
       <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
       <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
       <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
@@ -270,7 +270,7 @@
     <Value name="subcycles" value="8" type="int"/>
     <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
     <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
-    <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
+    <Value name="switchQuantize" value="confirmLoop" type="enum" ordinal="7"/>
     <Value name="switchVelocity" value="false" type="bool"/>
     <Value name="syncSource" value="none" type="enum" ordinal="0"/>
     <Value name="syncUnit" value="beat" type="enum" ordinal="0"/>

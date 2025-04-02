@@ -264,6 +264,35 @@
               file="../Mobius/Source/model/VariableDefinition.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
+        <GROUP id="{41C3E134-39FF-7D3E-54EC-2C8184FDAADB}" name="binding">
+          <FILE id="JgLreX" name="BindingDetails.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/binding/BindingDetails.cpp"/>
+          <FILE id="Nitu9c" name="BindingDetails.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/binding/BindingDetails.h"/>
+          <FILE id="FXBTXV" name="BindingEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/binding/BindingEditor.cpp"/>
+          <FILE id="fd8jB1" name="BindingEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/binding/BindingEditor.h"/>
+          <FILE id="waPlN7" name="BindingForms.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/binding/BindingForms.cpp"/>
+          <FILE id="hyACUt" name="BindingForms.h" compile="0" resource="0" file="../Mobius/Source/ui/binding/BindingForms.h"/>
+          <FILE id="DhxM3d" name="BindingSetContent.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/binding/BindingSetContent.cpp"/>
+          <FILE id="cbiCgv" name="BindingSetContent.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/binding/BindingSetContent.h"/>
+          <FILE id="Jarf1O" name="BindingSetTable.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/binding/BindingSetTable.cpp"/>
+          <FILE id="DqbnqQ" name="BindingSetTable.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/binding/BindingSetTable.h"/>
+          <FILE id="SwNBHp" name="BindingTable.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/binding/BindingTable.cpp"/>
+          <FILE id="cCDcr4" name="BindingTable.h" compile="0" resource="0" file="../Mobius/Source/ui/binding/BindingTable.h"/>
+          <FILE id="L7ocO6" name="BindingTree.cpp" compile="1" resource="0" file="../Mobius/Source/ui/binding/BindingTree.cpp"/>
+          <FILE id="J798l4" name="BindingTree.h" compile="0" resource="0" file="../Mobius/Source/ui/binding/BindingTree.h"/>
+          <FILE id="zkg7an" name="BindingUtil.cpp" compile="1" resource="0" file="../Mobius/Source/ui/binding/BindingUtil.cpp"/>
+          <FILE id="hNnIlT" name="BindingUtil.h" compile="0" resource="0" file="../Mobius/Source/ui/binding/BindingUtil.h"/>
+          <FILE id="EccR8L" name="NewBindingPanel.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/binding/NewBindingPanel.h"/>
+        </GROUP>
         <GROUP id="{4D9FCDBF-4B09-3827-C66D-3CD74CEDBAD0}" name="parameter">
           <FILE id="QnaH1f" name="DropTreeView.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/parameter/DropTreeView.cpp"/>
@@ -759,6 +788,10 @@
           <FILE id="gHRwcY" name="MobiusLooperTrack.h" compile="0" resource="0"
                 file="../Mobius/Source/mobius/track/MobiusLooperTrack.h"/>
           <FILE id="mv2y4i" name="MslTrack.h" compile="0" resource="0" file="../Mobius/Source/mobius/track/MslTrack.h"/>
+          <FILE id="PjTGAT" name="ParameterVault.cpp" compile="1" resource="0"
+                file="../Mobius/Source/mobius/track/ParameterVault.cpp"/>
+          <FILE id="RQtE6n" name="ParameterVault.h" compile="0" resource="0"
+                file="../Mobius/Source/mobius/track/ParameterVault.h"/>
           <FILE id="OaV64U" name="ScheduledTrack.h" compile="0" resource="0"
                 file="../Mobius/Source/mobius/track/ScheduledTrack.h"/>
           <FILE id="Rj5dge" name="TrackEngine.h" compile="0" resource="0" file="../Mobius/Source/mobius/track/TrackEngine.h"/>
@@ -780,8 +813,6 @@
                 file="../Mobius/Source/mobius/track/TrackProperties.h"/>
         </GROUP>
         <GROUP id="{2604F741-E637-CC59-72EB-4DD5ED5AACB9}" name="midi">
-          <FILE id="RrqoUo" name="MidiEngine.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiEngine.cpp"/>
-          <FILE id="sxCqxY" name="MidiEngine.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiEngine.h"/>
           <FILE id="sutrkW" name="MidiFollower.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/midi/MidiFollower.cpp"/>
           <FILE id="JJtgei" name="MidiFragment.cpp" compile="1" resource="0"

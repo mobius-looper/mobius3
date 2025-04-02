@@ -26,6 +26,17 @@ void ParameterFormCollection::initialize(Factory* f, ValueSet* vs)
     valueSet = vs;
 }
 
+/**
+ * Option to use with form collections where the same parameter
+ * may appear in more than one form.  Since changing the parameter
+ * in one form need to be reflected in other forms, whenever the displayed
+ * form changes, it is saved and the new form is reloaded.
+ */
+void ParameterFormCollection::setDuplicateParameters(bool b)
+{
+    duplicateParameters = b;
+}
+
 void ParameterFormCollection::setFlatStyle(bool b)
 {
     if (flatStyle != b) {
@@ -215,7 +226,8 @@ void ParameterFormCollection::show(juce::String formName)
     }
     else {
         ParameterForm* form = formTable[formName];
-
+        bool created = false;
+        
         if (form == nullptr) {
 
             if (factory == nullptr) {
@@ -233,17 +245,27 @@ void ParameterFormCollection::show(juce::String formName)
                 }
                 else {
                     add(formName, form);
+                    created = true;
                 }
             }
         }
 
         if (form != nullptr && form != currentForm) {
 
-            if (currentForm != nullptr)
-              currentForm->setVisible(false);
+            if (currentForm != nullptr) {
+
+                // hack for parameters that can be in more than one form
+                if (duplicateParameters && valueSet != nullptr)
+                  currentForm->save(valueSet);
+                
+                currentForm->setVisible(false);
+            }
 
             form->setVisible(true);
             currentForm = form;
+
+            if (duplicateParameters && valueSet != nullptr && !created)
+              currentForm->load(valueSet);
         }
         else if (form == nullptr) {
             // don't keep showing the current form if we failed to find one

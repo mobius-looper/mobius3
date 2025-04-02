@@ -26,6 +26,9 @@ void SessionParameterEditor::initialize(Provider* p, SessionEditor* se)
     provider = p;
     editor = se;
 
+    // option to auto save/load forms containing duplicate parameters
+    setDuplicateParameters(true);
+
     // exclude parameters that can't have default session values
     tree.setFilterNoDefault(true);
     

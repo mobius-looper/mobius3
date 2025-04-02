@@ -48,6 +48,7 @@ class Notifier
     // Newer interface for MIDI tracks
     //
     void notify(class LogicalTrack* lt, NotificationId id);
+    void notify(class LogicalTrack* lt, NotificationId id, NotificationPayload& payload);
     
     //
     // Old interface used for the initial prototype

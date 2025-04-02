@@ -40,6 +40,10 @@ void SessionTrackForms::initialize(Provider* p, SessionEditor* se, Session* s, S
     sessionTrack = def;
     values = sessionTrack->ensureParameters();
 
+    // experimenent with auto-save/load for user categories when the
+    // same parameter can be in more than one form
+    setDuplicateParameters(true);
+
     if (!lockingStyle)
       tree.setDraggable(true);
 
@@ -62,7 +66,8 @@ void SessionTrackForms::initialize(Provider* p, SessionEditor* se, Session* s, S
     
     // this wants a ValueSet but we use a Refresher style so it
     // isn't needed during initialization
-    forms.initialize(this, nullptr);
+    // actually it is if you want to use the duplicateParameters option
+    forms.initialize(this, values);
  
     // auto select the first tree node
     tree.selectFirst();

@@ -168,14 +168,34 @@ void Notifier::notify(Track* track, NotificationId id, NotificationPayload& payl
 // Basically the same shit but for Midi tracks
 //
 // Revisit this when the dust settles so we can share some of this
+// All notifications should work this way
 //
 //////////////////////////////////////////////////////////////////////
 
 void Notifier::notify(LogicalTrack* lt, NotificationId id)
 {
-    (void)lt;
-    (void)id;
-    Trace(1, "Notifier::notify LogicalTrack interface not implemented");
+    TrackProperties props;
+    props.number = lt->getNumber();
+    lt->getTrackProperties(props);
+
+    // inform the track listeners
+    lt->notifyListeners(id, props);
+
+    // and any scripts
+    NotificationPayload payload;
+    notifyScript(id, props, payload);
+}
+
+void Notifier::notify(LogicalTrack* lt, NotificationId id, NotificationPayload& payload)
+{
+    TrackProperties props;
+    props.number = lt->getNumber();
+    lt->getTrackProperties(props);
+            
+    // the older ones that don't use a payload won't have listeners and listeners
+    // aren't prepared to accept a payload, add listeners later
+
+    notifyScript(id, props, payload);
 }
 
 //////////////////////////////////////////////////////////////////////
