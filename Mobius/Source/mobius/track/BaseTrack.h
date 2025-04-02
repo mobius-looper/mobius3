@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include "../../model/Session.h"
 #include "../Notification.h"
 
 class BaseTrack

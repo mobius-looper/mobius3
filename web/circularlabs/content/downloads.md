@@ -16,7 +16,7 @@ Build 30 included **very** significant changes from the previous build
 28.  If you have been using build 28 or earlier for some
 time, I recommend you proceed with caution about upgrading to any build
 after 30.  While I do run through tests on every build, the chance that behavior
-you have been relying on changed in build 33 is much higher than it has been in the past.
+you have been relying on changed in build 30+ is much higher than it has been in the past.
 If you are a new user that doesn't have any complex configuration, then the most recent build in the 30+ series should be fine.
 
 For this reason I'm keeping download links for both builds.  If you decide to try the latest build
@@ -32,13 +32,13 @@ Please read through the new documentation pages for more on the new features tha
 
 [Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-28.pkg)
 
-## Build 36
+## Build 37
 
-[Download for Windows](https://www.mobiuslooper.com/MobiusSetup-36.exe)
+[Download for Windows](https://www.mobiuslooper.com/MobiusSetup-37.exe)
 
-[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius-36.pkg)
+[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius-37.pkg)
 
-[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-36.pkg)
+[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-37.pkg)
 
 ## Windows Security
 
