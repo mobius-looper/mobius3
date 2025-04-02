@@ -354,7 +354,7 @@ void Symbolizer::parseParameter(SymbolTable* symbols, juce::XmlElement* el,
         props->displayHelper = el->getStringAttribute("displayHelper");
 
         props->mayFocus = options.contains("mayFocus");
-        props->mayResetRetain = options.contains("resetRetain");
+        props->mayResetRetain = options.contains("mayResetRetain");
         
         Symbol* s = symbols->intern(name);
         s->parameterProperties.reset(props);

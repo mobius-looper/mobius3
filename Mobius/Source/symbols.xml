@@ -184,9 +184,9 @@ Once those models are fully converted, these symbols can be removed.
   <!-- Experimental
        These were added during early MIDI track development, unclear if we still need them
        -->
-  <Function name='MidiResize' level='kernel' hidden='true'/>
-  <Function name='UnroundedMultiply' level='kernel' hidden='true'/>
-  <Function name='UnroundedInsert' level='kernel' hidden='true'/>
+  <Function name='MidiResize' level='track' hidden='true'/>
+  <Function name='UnroundedMultiply' level='track' hidden='true'/>
+  <Function name='UnroundedInsert' level='track' hidden='true'/>
 
   
 

@@ -378,6 +378,9 @@ void Mobius::installSymbols()
 
         // copy over some internal options
         // !! these can be coming from symbols.xml too, should make sure they're in sync
+        // actuallyo most of this should go away and just be verificiations of what
+        // came from symbols.xml
+        // things related to focus don't even apply down here any more
         props->sustainable = f->isSustainable();
         props->mayFocus = !f->noFocusLock && f->eventType != RunScriptEvent;
         props->mayConfirm = f->mayConfirm;

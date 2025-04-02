@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Properties>
+  <Property symbol="input" name="resetRetain" value="true"/>
   <Property symbol="AutoRecord" name="focus" value="true"/>
   <Property symbol="Backward" name="focus" value="true"/>
   <Property symbol="Checkpoint" name="focus" value="true"/>

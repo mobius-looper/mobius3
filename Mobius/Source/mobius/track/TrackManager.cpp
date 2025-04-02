@@ -895,6 +895,16 @@ UIAction* TrackManager::replicateFocused(UIAction* src)
 {
     UIAction* list = nullptr;
 
+    // !! there are FunctionProperties and ParameterProperties flags
+    // mayFocus and focus that I think were intended to provide more control
+    // over which functions would obey focus lock
+    // these are not being tested here even though they are shown in the UI
+    // If we support this at all, then I think the default should be to accept focus
+    // If mayFocus is true, then it accepts, and if noFocus is true ot overrides this
+    // It is certainlyh the case for functions that focus lock is expected
+    // for parameters it is less obvous and not often used
+    // the UI has been hiding focus lock for parameters
+
     // find the group number of the focused track
     int focusedGroupNumber = 0;
     GroupDefinition* groupdef = nullptr;
