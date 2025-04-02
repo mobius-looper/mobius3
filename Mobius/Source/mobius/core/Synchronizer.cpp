@@ -226,7 +226,7 @@ void Synchronizer::scheduleSwitchRecord(Event* switchEvent, Event* stackedEvent,
     // unusual need to know the remaining number of frames in this block so
     // SyncMaster can know how far to advance the record unit length when this
     // block is consumed
-    int remaining = track->getRemainingFrames();
+    int remaining = (int)(track->getRemainingFrames());
         
     int number = track->getLogicalNumber();
     SyncMaster::RequestResult result = mSyncMaster->requestSwitchRecord(number, remaining);

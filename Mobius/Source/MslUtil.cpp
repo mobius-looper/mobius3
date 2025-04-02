@@ -31,6 +31,20 @@ void MslUtil::mutateActionArgument(Symbol* s, MslValue* v, UIAction* a)
                 case TypeBool:
                     a->value = v->getInt();
                     break;
+                case TypeFloat: {
+                    // only for transportTempo, this is expected as
+                    // an x100 float from the UI, from MSL it can be either
+                    // a float or an int but need to x100 either
+                    if (v->type == MslValue::Int)
+                      a->value = v->getInt() * 100;
+                    else if (v->type == MslValue::Float)
+                      a->value = (int)(v->getFloat() * 100.0f);
+                    else {
+                        // strings or what have you, cast to int
+                        a->value = v->getInt() * 100;
+                    }
+                }
+                    break;
                 case TypeEnum: {
                     if (v->type == MslValue::Int) {
                         a->value = v->getInt();

@@ -644,6 +644,8 @@ void ParameterVault::promotePortAction(Symbol* s, ParameterProperties* props, in
             }
         }
             break;
+
+        default: break;
     }
 }
 
