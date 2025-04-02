@@ -109,7 +109,7 @@ class FunctionProperties
     // User configurable properties
     //
 
-    bool focus = false;
+    bool xxxfocus = false;
     bool confirmation = false;
     bool muteCancel = false;
     bool quantized = false;

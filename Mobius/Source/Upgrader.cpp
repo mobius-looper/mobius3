@@ -132,7 +132,7 @@ void Upgrader::upgradeFunctionProperty(StringList* names, bool focus, bool confi
                 Trace(1, "Upgrader::upgradeFunctionProperties Missing function properties for %s\n", name);
             }
             else {
-                if (focus) s->functionProperties->focus = true;
+                if (focus) s->functionProperties->xxxfocus = true;
                 if (confirm) s->functionProperties->confirmation = true;
                 if (muteCancel) s->functionProperties->muteCancel = true;
             }

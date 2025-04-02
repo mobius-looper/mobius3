@@ -376,20 +376,34 @@ void Mobius::installSymbols()
         s->coreFunction = f;
         props->coreFunction = f;
 
-        // copy over some internal options
-        // !! these can be coming from symbols.xml too, should make sure they're in sync
-        // actuallyo most of this should go away and just be verificiations of what
-        // came from symbols.xml
-        // things related to focus don't even apply down here any more
-        props->sustainable = f->isSustainable();
-        props->mayFocus = !f->noFocusLock && f->eventType != RunScriptEvent;
-        props->mayConfirm = f->mayConfirm;
-        props->mayCancelMute = f->mayCancelMute;
+        // formerly copied these unconditionally
+        // symbols.xml should be in charge of this
+        if (f->isSustainable() && !props->sustainable) {
+            Trace(1, "Mobius: Function %s was not marked sustainable",
+                  f->getName());
+            props->sustainable = true;
+        }
 
-        // until core can pay attention to quantization configuration,
-        // force the flags to match what is hard coded in the Function
+        if (f->mayConfirm && !props->mayConfirm) {
+            Trace(1, "Mobius: Function %s was not marked mayConfirm",
+                  f->getName());
+            props->mayConfirm = true;
+        }
+        
+        if (f->mayCancelMute && !props->mayCancelMute) {
+            Trace(1, "Mobius: Function %s was not marked mayCancelMute",
+                  f->getName());
+            props->mayCancelMute = true;
+        }
+
+        // punting on focus, this is a much larger issue that can't be decided
+        // down here
+        //props->mayFocus = !f->noFocusLock && f->eventType != RunScriptEvent;
+
         // todo: quantizedStacked might also be interesting
-        if (f->quantized) {
+        if (f->quantized && !props->mayQuantize) {
+            Trace(1, "Mobius: Function %s was not marked mayQuantize",
+                  f->getName());
             props->mayQuantize = true;
             // don't force this on until we can respond to it, MIDI tracks can
             // be selective about this and the setting needs to be preserved on restart
@@ -615,13 +629,12 @@ void Mobius::propagateSymbolProperties()
         if (symbol->coreFunction != nullptr && symbol->functionProperties != nullptr) {
             Function* f = (Function*)symbol->coreFunction;
             
-            f->focusLockDisabled = false;
             f->cancelMute = false;
             f->confirms = false;
 
-            if (!f->noFocusLock && f->eventType != RunScriptEvent) {
-                f->focusLockDisabled = !symbol->functionProperties->focus;
-            }
+            //if (!f->noFocusLock && f->eventType != RunScriptEvent) {
+            //f->focusLockDisabled = !symbol->functionProperties->xxxfocus;
+            //}
                 
             if (f->mayCancelMute) {
                 f->cancelMute = symbol->functionProperties->muteCancel;

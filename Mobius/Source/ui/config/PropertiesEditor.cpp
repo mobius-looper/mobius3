@@ -162,7 +162,7 @@ void PropertyTable::init(SymbolTable* symbols, bool parameter)
                 // force the may flag on if the option is set by other means
 
                 if (!symbol->functionProperties->mayFocus &&
-                    symbol->functionProperties->focus) {
+                    symbol->functionProperties->xxxfocus) {
                     Trace(1, "PropertiesEditor: Forcing mayFocus on for %s", symbol->getName());
                     symbol->functionProperties->mayFocus = true;
                 }
@@ -197,7 +197,7 @@ void PropertyTable::init(SymbolTable* symbols, bool parameter)
             else if (symbol->parameterProperties != nullptr && isParameter) {
 
                 if (!symbol->parameterProperties->mayFocus &&
-                    symbol->parameterProperties->focus) {
+                    symbol->parameterProperties->xxxfocus) {
                     Trace(1, "PropertiesEditor: Forcing mayFocus on for %s", symbol->getName());
                     symbol->parameterProperties->mayFocus = true;
                 }
@@ -294,7 +294,7 @@ void PropertyTable::load(SymbolTable* symbols)
             if (symbol->parameterProperties != nullptr) {
                 PropertyTableRow* row = getRow(symbol->name);
                 if (row != nullptr) {
-                    if (symbol->parameterProperties->focus)
+                    if (symbol->parameterProperties->xxxfocus)
                       row->checks.add(PropertyColumnFocus);
 
                     if (symbol->parameterProperties->resetRetain)
@@ -307,7 +307,7 @@ void PropertyTable::load(SymbolTable* symbols)
                 // not every function will have a row, some were suppressed
                 PropertyTableRow* row = getRow(symbol->name);
                 if (row != nullptr) {
-                    if (symbol->functionProperties->focus)
+                    if (symbol->functionProperties->xxxfocus)
                       row->checks.add(PropertyColumnFocus);
 
                     if (symbol->functionProperties->confirmation)
@@ -339,7 +339,7 @@ void PropertyTable::save(SymbolTable* symbols)
             if (s->functionProperties != nullptr) {
                 FunctionProperties* props = s->functionProperties.get();
                 if (props != nullptr) {
-                    props->focus = obj->checks.contains(PropertyColumnFocus);
+                    props->xxxfocus = obj->checks.contains(PropertyColumnFocus);
                     props->confirmation = obj->checks.contains(PropertyColumnConfirmation);
                     props->muteCancel = obj->checks.contains(PropertyColumnMuteCancel);
                     props->quantized = obj->checks.contains(PropertyColumnQuantize);
@@ -348,7 +348,7 @@ void PropertyTable::save(SymbolTable* symbols)
             else if (s->parameterProperties != nullptr) {
                 ParameterProperties* props = s->parameterProperties.get();
                 if (props != nullptr) {
-                    props->focus = obj->checks.contains(PropertyColumnFocus);
+                    props->xxxfocus = obj->checks.contains(PropertyColumnFocus);
                     props->resetRetain = obj->checks.contains(PropertyColumnResetRetain);
                 }
             }

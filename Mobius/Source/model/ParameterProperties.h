@@ -161,7 +161,7 @@ class ParameterProperties
     /**
      * When true, this is selected for group focus.
      */
-    bool focus = false;
+    bool xxxfocus = false;
 
     /**
      * When true, this parameter may retain it's current value after track reset.

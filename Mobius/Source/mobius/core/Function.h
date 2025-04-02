@@ -66,8 +66,7 @@ class Function : public SystemConstant {
 	bool thresholdEnabled;		// valid in Threshold mode
 	bool cancelReturn;			// cancels a return transition
 	bool runsWithoutAudio;	    // function meaningful even if no audio device
-	bool noFocusLock;			// not used with focus lock
-	bool focusLockDisabled;		// focus lock possible but disabled
+    bool noFocusLock = false;
 	bool scriptSync;			// true if scripts always wait for completion
 	bool scriptOnly;			// true if callable only from scripts
 
@@ -153,11 +152,6 @@ class Function : public SystemConstant {
 	void trace(class Action* action, class Mobius* m);
 	void trace(class Action* action, class Loop* l);
     //void changePreset(class Action* action, class Loop* l, bool after);
-
-	/**
-     * True if it is possible to focus lock, and focus lock is not disabled.
-     */
-	bool isFocusable();
 
     /**
      * Tue if both down and up transitions must be known.

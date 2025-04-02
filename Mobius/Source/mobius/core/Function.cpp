@@ -369,8 +369,6 @@ void Function::init()
 	thresholdEnabled = false;
     cancelReturn = false;
 	runsWithoutAudio = false;
-	noFocusLock = false;
-	focusLockDisabled = false;
 	scriptSync = false;
 	scriptOnly = false;
 	mayCancelMute = false;
@@ -389,11 +387,6 @@ void Function::init()
 
 Function::~Function()
 {
-}
-
-bool Function::isFocusable()
-{
-	return (!noFocusLock && !focusLockDisabled);
 }
 
 bool Function::isScript()

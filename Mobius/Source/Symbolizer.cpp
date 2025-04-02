@@ -499,7 +499,7 @@ void Symbolizer::parseProperty(SymbolTable* symbols, juce::XmlElement* el)
             // todo: need name constants
             bool bvalue = isTruthy(value);
             if (pname == "focus") {
-                s->functionProperties->focus = bvalue;
+                s->functionProperties->xxxfocus = bvalue;
             }
             else if (pname == "confirmation") {
                 s->functionProperties->confirmation = bvalue;
@@ -517,7 +517,7 @@ void Symbolizer::parseProperty(SymbolTable* symbols, juce::XmlElement* el)
         else if (s->parameterProperties != nullptr) {
             bool bvalue = isTruthy(value);
             if (pname == "focus") {
-                s->parameterProperties->focus = bvalue;
+                s->parameterProperties->xxxfocus = bvalue;
             }
             else if (pname == "resetRetain") {
                 s->parameterProperties->resetRetain = bvalue;
@@ -548,7 +548,7 @@ void Symbolizer::saveSymbolProperties()
     SymbolTable* symbols = provider->getSymbols();
     for (auto symbol : symbols->getSymbols()) {
         if (symbol->functionProperties != nullptr) {
-            if (symbol->functionProperties->focus)
+            if (symbol->functionProperties->xxxfocus)
               addProperty(xmlroot, symbol, "focus", "true");
             
             if (symbol->functionProperties->confirmation)
@@ -561,7 +561,7 @@ void Symbolizer::saveSymbolProperties()
               addProperty(xmlroot, symbol, "quantized", "true");
         }
         else if (symbol->parameterProperties != nullptr) {
-            if (symbol->parameterProperties->focus)
+            if (symbol->parameterProperties->xxxfocus)
               addProperty(xmlroot, symbol, "focus", "true");
             
             if (symbol->parameterProperties->resetRetain)
