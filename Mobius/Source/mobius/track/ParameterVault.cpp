@@ -35,10 +35,17 @@
 #include "../../model/GroupDefinition.h"
 #include "../../model/Query.h"
 #include "../../model/UIAction.h"
+#include "../../model/ParameterConstants.h"
 
 #include "../../script/MslValue.h"
 
 #include "ParameterVault.h"
+
+//////////////////////////////////////////////////////////////////////
+//
+// Refresh
+//
+//////////////////////////////////////////////////////////////////////
 
 ParameterVault::ParameterVault()
 {
@@ -69,27 +76,6 @@ void ParameterVault::initArray(juce::Array<int>& array, int size)
     array.clearQuick();
     for (int i = 0 ; i < size ; i++)
       array.add(-1);
-}
-
-/**
- * Clear local bindings after a Reset/TrackReset/GlobalReset function.
- *
- * This is where the old "reset retains" parameter went into play.  That
- * mutated into the SymbolProperties and still exists in some form but I'm
- * redesigning how all that works so this just unconditionally clears
- * everything atm.
- */
-void ParameterVault::resetLocal()
-{
-    for (int i = 0 ; i < localOrdinals.size() ; i++)
-      localOrdinals.set(i, -1);
-}
-
-void ParameterVault::unbind(SymbolId id)
-{
-    int index = getParameterIndex(id);
-    if (index >= 0)
-      localOrdinals.set(index, -1);
 }
 
 /**
@@ -206,29 +192,6 @@ void ParameterVault::promotePorts()
     setSessionOrdinal(ParamOutputPort, getSessionOrdinal(outputSid));
 }
 
-int ParameterVault::getSessionOrdinal(SymbolId sid)
-{
-    int ordinal = 0;
-    int index = getParameterIndex(sid);
-    if (index >= 0)
-      ordinal = sessionOrdinals[index];
-    return ordinal;
-}
-
-void ParameterVault::setSessionOrdinal(SymbolId sid, int value)
-{
-    int index = getParameterIndex(sid);
-    if (index >= 0)
-      sessionOrdinals.set(index, value);
-}
-
-void ParameterVault::setLocalOrdinal(SymbolId sid, int value)
-{
-    int index = getParameterIndex(sid);
-    if (index >= 0)
-      localOrdinals.set(index, value);
-}
-
 /**
  * Install a flattened ordinal array.
  */
@@ -263,6 +226,12 @@ void ParameterVault::install(juce::Array<int>& ordinals)
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Ordinals
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * This little dance happens a lot and it's getting annoying.
  * Think about making a search structure for this in the SymbolTable.
@@ -286,50 +255,43 @@ int ParameterVault::getParameterIndex(Symbol* s)
     return index;
 }
 
-/**
- * After flattening, the two overlays will be encountered during the scan and their
- * ordinals left in the array.  The overlays selected to DO the flattening need
- * to have matching ordinals.  If they don't match it means something is
- * wrong either in overlay selection before flattening, or in the flattening algorithm.
- */
-void ParameterVault::verifyOverlay(SymbolId overlayId)
+int ParameterVault::getLocalOrdinal(SymbolId id)
 {
-    ValueSet* chosenOverlay = nullptr;
-    if (overlayId == ParamSessionOverlay)
-      chosenOverlay = sessionOverlay;
-    else
-      chosenOverlay = trackOverlay;
-
-    int ordinal = getOrdinal(overlayId);
-    
-    if (chosenOverlay != nullptr) {
-        if (ordinal != chosenOverlay->number) {
-            Trace(1, "ParameterVault: Ordinal mismatch on overlay %s",
-                  chosenOverlay->name.toUTF8());
-            // adjust the ordinal in the array to match what we used to flatten
-            fixOverlayOrdinal(overlayId, chosenOverlay->number);
-        }
-    }
-    else if (ordinal > 0) {
-        // this is more serious, we dodn't think we had an overlay but one was
-        // found during flattening
-        Trace(1, "ParameterVault: Overlay ordinal %d found flattening but was not used to flatten");
-        // I guess fix this one too
-        fixOverlayOrdinal(overlayId, 0);
-    }
-}
-
-void ParameterVault::fixOverlayOrdinal(SymbolId id, int ordinal)
-{
+    int ordinal = -1;
     int index = getParameterIndex(id);
-    if (index >= 0) {
-        // where we fix this is unclear, if there was a local binding
-        // it should have been used but wasn't so the binding can be reset
-        // and the proper ordinal stored in the session array
-        localOrdinals.set(index, -1);
-        sessionOrdinals.set(index, ordinal);
-    }
+    if (index >= 0)
+      ordinal = localOrdinals[index];
+    return ordinal;
 }
+
+int ParameterVault::getSessionOrdinal(SymbolId sid)
+{
+    int ordinal = 0;
+    int index = getParameterIndex(sid);
+    if (index >= 0)
+      ordinal = sessionOrdinals[index];
+    return ordinal;
+}
+
+void ParameterVault::setSessionOrdinal(SymbolId sid, int value)
+{
+    int index = getParameterIndex(sid);
+    if (index >= 0)
+      sessionOrdinals.set(index, value);
+}
+
+void ParameterVault::setLocalOrdinal(SymbolId sid, int value)
+{
+    int index = getParameterIndex(sid);
+    if (index >= 0)
+      localOrdinals.set(index, value);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Overlays
+//
+//////////////////////////////////////////////////////////////////////
 
 ValueSet* ParameterVault::findSessionOverlay(ValueSet* globals)
 {
@@ -349,15 +311,6 @@ ValueSet* ParameterVault::findSessionOverlay(ValueSet* globals)
         result = findOverlay(ovname);
     }
     return result;
-}
-
-int ParameterVault::getLocalOrdinal(SymbolId id)
-{
-    int ordinal = -1;
-    int index = getParameterIndex(id);
-    if (index >= 0)
-      ordinal = localOrdinals[index];
-    return ordinal;
 }
 
 ValueSet* ParameterVault::findTrackOverlay(ValueSet* globals, ValueSet* trackValues)
@@ -406,6 +359,97 @@ ValueSet* ParameterVault::findOverlay(int ordinal)
         }
     }
     return overlay;
+}
+
+/**
+ * After flattening, the two overlays will be encountered during the scan and their
+ * ordinals left in the array.  The overlays selected to DO the flattening need
+ * to have matching ordinals.  If they don't match it means something is
+ * wrong either in overlay selection before flattening, or in the flattening algorithm.
+ */
+void ParameterVault::verifyOverlay(SymbolId overlayId)
+{
+    ValueSet* chosenOverlay = nullptr;
+    if (overlayId == ParamSessionOverlay)
+      chosenOverlay = sessionOverlay;
+    else
+      chosenOverlay = trackOverlay;
+
+    int ordinal = getOrdinal(overlayId);
+    
+    if (chosenOverlay != nullptr) {
+        if (ordinal != chosenOverlay->number) {
+            Trace(1, "ParameterVault: Ordinal mismatch on overlay %s",
+                  chosenOverlay->name.toUTF8());
+            // adjust the ordinal in the array to match what we used to flatten
+            fixOverlayOrdinal(overlayId, chosenOverlay->number);
+        }
+    }
+    else if (ordinal > 0) {
+        // this is more serious, we dodn't think we had an overlay but one was
+        // found during flattening
+        Trace(1, "ParameterVault: Overlay ordinal %d found flattening but was not used to flatten");
+        // I guess fix this one too
+        fixOverlayOrdinal(overlayId, 0);
+    }
+}
+
+void ParameterVault::fixOverlayOrdinal(SymbolId id, int ordinal)
+{
+    int index = getParameterIndex(id);
+    if (index >= 0) {
+        // where we fix this is unclear, if there was a local binding
+        // it should have been used but wasn't so the binding can be reset
+        // and the proper ordinal stored in the session array
+        localOrdinals.set(index, -1);
+        sessionOrdinals.set(index, ordinal);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Reset
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Remove a single local binding
+ */
+void ParameterVault::unbind(SymbolId id)
+{
+    int index = getParameterIndex(id);
+    if (index >= 0)
+      localOrdinals.set(index, -1);
+}
+
+/**
+ * Clear local bindings after a Reset/TrackReset/GlobalReset function.
+ *
+ * This is one of the few things in the vault that is sensitive to parameters
+ * stored inside the vault.  It uses ParamResetMode to determine whether
+ * to clear bindings or not on reset.
+ *
+ * If parameter reset is enabled, it then uses the "resetRetain" option on each
+ * symbol to determine whether or not to reset it.
+ */
+void ParameterVault::resetLocal()
+{
+    // interesting that resetMode can itself have a local binding, may not want that
+    ResetFunctionBehavior mode = (ResetFunctionBehavior)getOrdinal(ParamResetMode);
+    
+    if (mode == ResetFunctionAll) {
+        for (int i = 0 ; i < localOrdinals.size() ; i++) {
+
+            Symbol* s = symbols->getParameterWithIndex(i);
+            if (s == nullptr) {
+                // not supposed to happen, leave it alone I guess
+                Trace(1, "ParameterVault: Symbol lookup by index hosed");
+            }
+            else if (!s->parameterProperties->resetRetain) {
+                localOrdinals.set(i, -1);
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

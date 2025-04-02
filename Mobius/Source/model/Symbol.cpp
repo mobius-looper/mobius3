@@ -273,6 +273,14 @@ void SymbolTable::isolateParameters()
     }
 }
 
+Symbol* SymbolTable::getParameterWithIndex(int index)
+{
+    Symbol* found = nullptr;
+    if (index >= 0 && index < parameters.size())
+      found = parameters[index];
+    return found;
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

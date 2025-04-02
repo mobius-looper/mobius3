@@ -99,6 +99,12 @@ Session::TrackType LogicalTrack::getType()
     return trackType;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Session Refresh
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * This happens during TrackManager::configureTracks after we've fleshed
  * out the LogicalTrack array and want to start making or updating the BaseTracks.
@@ -119,7 +125,7 @@ void LogicalTrack::prepareParameters()
     vault.refresh(sessionTrack->getSession(), sessionTrack,
                   manager->getParameterSets(), manager->getGroupDefinitions());
 
-    cacheParameters(false);
+    cacheParameters(false, false);
 }
 
 /**
@@ -164,6 +170,7 @@ void LogicalTrack::loadSession()
 
     // only need to call refreshParameters for non-core tracks right now,
     // it doesn't hurt but it's redundant
+    // audio tracks will have been refreshed in bulk by mobius->configureTracks
     if (trackType == Session::TypeMidi)
       track->refreshParameters();
 }
@@ -171,12 +178,70 @@ void LogicalTrack::loadSession()
 void LogicalTrack::refresh(ParameterSets* sets)
 {
     vault.refresh(sets);
+    // changing overlays can have a dramatic impact on parameters
+    cacheParameters(false, false);
 }
 
 void LogicalTrack::refresh(GroupDefinitions* groups)
 {
     vault.refresh(groups);
+
+    // the only reason to refresh parameters is if a group was deleted and
+    // the currently referenced group is now gone
 }
+
+/**
+ * Synchronization parameters are extremely important for deciding things
+ * so cache them rather than going back to the Session and the bindings every time.
+ *
+ * These have been duplicated at several levels, but now that LT is managing them
+ * they can get them from here.  These are AUTHORITATIVE over everything above
+ * and below the LT.
+ *
+ * This is also where temporary overrides to the values go if you ahve an action
+ * or script that changes them.
+ *
+ * The reset flag is false if this is the result of a session load, and true
+ * if this is the result of a TrackReset or GlobalReset.  Most parameters return
+ * to their session values on reset, except for a few that had the "reset retain" option.
+ */
+void LogicalTrack::cacheParameters(bool reset, bool global)
+{
+    // todo: needs lots of work
+    if (reset)
+      vault.resetLocal();
+    
+    syncSource = (SyncSource)(vault.getOrdinal(ParamSyncSource));
+    syncSourceAlternate = (SyncSourceAlternate)(vault.getOrdinal(ParamSyncSourceAlternate));
+    syncUnit = (SyncUnit)(vault.getOrdinal(ParamSyncUnit));
+    trackSyncUnit = (TrackSyncUnit)(vault.getOrdinal(ParamTrackSyncUnit));
+    syncLeader = vault.getOrdinal(ParamLeaderTrack);
+
+    // other convenient things
+    groupNumber = vault.getOrdinal(ParamTrackGroup);
+    focusLock = (bool)(vault.getOrdinal(ParamFocus));
+
+    // ParameterVault is now responsible for picking either the
+    // audio or plugin ports and promoting them to the generic port parameters
+    inputPort = getParameterOrdinal(ParamInputPort);
+    outputPort = getParameterOrdinal(ParamOutputPort);
+
+    // tell the inner track to do the same
+    // may be null if we're in prepareParameters before the inner track is fleshed out
+    if (track != nullptr) {
+        // kludge for global reset
+        // this is done in bulk by Mobius core so the parameters for all audio
+        // tracks will already have been refreshed
+        if (!(trackType == Session::TypeAudio && global))
+          track->refreshParameters();
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Randomness
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Return the wrapped MobiusLooperTrack for this logical track.
@@ -219,12 +284,6 @@ int LogicalTrack::getSessionId()
     // correlation ids, but it doesn't matter since we rebuild them every time
     return (sessionTrack != nullptr) ? sessionTrack->id : 0;
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// Generic Operations
-//
-//////////////////////////////////////////////////////////////////////
 
 void LogicalTrack::getTrackProperties(TrackProperties& props)
 {
@@ -388,7 +447,7 @@ bool LogicalTrack::isSyncRecording()
 
 void LogicalTrack::setSyncRecording(bool b)
 {
-    syncRecording = b;
+     syncRecording = b;
     if (!b) {
         // clear this too since it is no longer relevant
         syncRecordStarted = false;
@@ -488,46 +547,9 @@ int LogicalTrack::getSyncGoalUnits()
 
 //////////////////////////////////////////////////////////////////////
 //
-// Parameter Cache
+// State Export
 //
 //////////////////////////////////////////////////////////////////////
-
-/**
- * Synchronization parameters are extremely important for deciding things
- * so cache them rather than going back to the Session and the bindings every time.
- *
- * These have been duplicated at several levels, but now that LT is managing them
- * they can get them from here.  These are AUTHORITATIVE over everything above
- * and below the LT.
- *
- * This is also where temporary overrides to the values go if you ahve an action
- * or script that changes them.
- *
- * The reset flag is false if this is the result of a session load, and true
- * if this is the result of a TrackReset or GlobalReset.  Most parameters return
- * to their session values on reset, except for a few that had the "reset retain" option.
- */
-void LogicalTrack::cacheParameters(bool reset)
-{
-    // todo: needs lots of work
-    if (reset)
-      vault.resetLocal();
-    
-    syncSource = (SyncSource)(vault.getOrdinal(ParamSyncSource));
-    syncSourceAlternate = (SyncSourceAlternate)(vault.getOrdinal(ParamSyncSourceAlternate));
-    syncUnit = (SyncUnit)(vault.getOrdinal(ParamSyncUnit));
-    trackSyncUnit = (TrackSyncUnit)(vault.getOrdinal(ParamTrackSyncUnit));
-    syncLeader = vault.getOrdinal(ParamLeaderTrack);
-
-    // other convenient things
-    groupNumber = vault.getOrdinal(ParamTrackGroup);
-    focusLock = (bool)(vault.getOrdinal(ParamFocus));
-
-    // ParameterVault is now responsible for picking either the
-    // audio or plugin ports and promoting them to the generic port parameters
-    inputPort = getParameterOrdinal(ParamInputPort);
-    outputPort = getParameterOrdinal(ParamOutputPort);
-}
 
 /**
  * State refresh is closely related to how parameters are cached.
@@ -574,9 +596,15 @@ void LogicalTrack::doAction(UIAction* a)
     SymbolId sid = a->symbol->id;
 
     if (sid == FuncTrackReset || sid == FuncGlobalReset) {
+        bool global = sid == FuncGlobalReset;
         resetSyncState();
-        cacheParameters(true);
-        track->doAction(a);
+        cacheParameters(true, global);
+        if (global) {
+            // this one is all fucked up and needs to be redesigned
+            // See commentary in TrackManager::doGlobal
+            if (trackType != Session::TypeAudio)
+              track->doAction(a);
+        }
     }
     else if (sid == FuncFocusLock) {
         focusLock = !focusLock;
@@ -592,6 +620,8 @@ void LogicalTrack::doAction(UIAction* a)
         // the track overlay
         if (a->symbol->name.startsWith(Symbol::ActivationPrefixOverlay)) {
             vault.doAction(a);
+            // assuming this succeeded, need to recache parameters
+            cacheParameters(false, false);
         }
         else {
             Trace(1, "LogicalTrack: Received unsupported activation prefix %s",
@@ -678,6 +708,12 @@ void LogicalTrack::doParameter(UIAction* a)
             outputPort = vault.getOrdinal(ParamOutputPort);
             break;
 
+        case ParamSessionOverlay:
+        case ParamTrackOverlay:
+            // if the overlays changed, everything needs to be refreshed
+            cacheParameters(false, false);
+            break;
+            
         default: {
             local = false;
         }
@@ -699,6 +735,15 @@ void LogicalTrack::doParameter(UIAction* a)
  * Now that we manage what the feedback value is, the core Record function implementation
  * needs to call back up here to ask us to reset it, it can't just slam a value into
  * the track without our knowledge.
+ *
+ * !! Is there enough coordination between the vault and the core track on the
+ * feedback level after unbinding?  If the track set it, then we need to know what
+ * that is, and if it just expects us to do it, then it needs to immediately call back
+ * to the vault to get what it is now.
+ *
+ * I think if the behavior of this parameter is to FORCE it to 127, then that actually
+ * needs to become a local binding, otherwise it will go back to whatever was
+ * in the session
  */
 int LogicalTrack::unbindFeedback()
 {

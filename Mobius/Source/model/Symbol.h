@@ -329,7 +329,8 @@ class SymbolTable
      * for SymbolIds, and isolates just the parameter symbols.
      */
     void bake();
-
+    Symbol* getParameterWithIndex(int index);
+    
   private:
 
     // the set of defined symbols

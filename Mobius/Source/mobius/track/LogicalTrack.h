@@ -255,7 +255,7 @@ class LogicalTrack
     bool visited = false;
     bool advanced = false;
 
-    void cacheParameters(bool reset);
+    void cacheParameters(bool reset, bool global);
     void doParameter(class UIAction* a);
     void resetParameters();
     

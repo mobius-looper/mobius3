@@ -14,7 +14,7 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="resetMode" value="content" type="enum" ordinal="1"/>
+      <Value name="resetMode" value="all" type="enum" ordinal="0"/>
       <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
       <Value name="syncSource" value="none" type="enum" ordinal="0"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
@@ -252,6 +252,7 @@
     <Value name="quickSave" value="mobiusloop"/>
     <Value name="recordResetsFeedback" value="false" type="bool"/>
     <Value name="recordTransfer" value="off" type="enum" ordinal="0"/>
+    <Value name="resetMode" value="all" type="enum" ordinal="0"/>
     <Value name="returnLocation" value="follow" type="enum" ordinal="0"/>
     <Value name="reverseTransfer" value="off" type="enum" ordinal="0"/>
     <Value name="roundingOverdub" value="true" type="bool"/>

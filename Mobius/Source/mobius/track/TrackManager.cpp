@@ -957,13 +957,30 @@ bool TrackManager::isGroupFocused(GroupDefinition* def, UIAction* src)
  *
  * MIDI tracks do not have any special handling for global functions, they are
  * simply duplicated for each track.
+ *
+ * !! This mighty sucks.  LogicalTrack now expects to receive GlobalReset
+ * so it can manage the parameter vault.  It's going to then pass this along
+ * to the core track which will apply the function to every track internally.
+ * So if you call GlobalReset on tracks higher than the first, it goes internal
+ * GR all over again which doesn't hurt but leaves garbage in the logs.
+ * Mobius core needs to get out of the business of handling global function
+ * replication and just let TM do it.
  */
 void TrackManager::doGlobal(UIAction* src)
 {
     // first send it to all midi tracks, they won't trash the action
     for (auto track : tracks) {
-        if (track->getType() != Session::TypeAudio)
-          track->doAction(src);
+        // LT has a kludge for TypeAudio tracks to reset it's own
+        // internal state, but defer passing that to the inner track
+        // and will expect us to handle it
+        if (src->symbol->id == FuncGlobalReset) {
+            track->doAction(src);
+        }
+        else if (track->getType() != Session::TypeAudio) {
+            // GlobalMute and GlobalPause only get sent individually
+            // to the midi tracks
+            track->doAction(src);
+        }
     }
 
     // then send it to the first audio track
