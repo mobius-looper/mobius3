@@ -199,6 +199,26 @@ void SymbolTable::traceTable()
     }
 }
 
+Symbol* SymbolTable::getSymbol(SymbolId id)
+{
+    return idMap[id];
+}
+
+juce::String SymbolTable::getName(SymbolId id)
+{
+    juce::String name;
+    Symbol* s = getSymbol(id);
+    if (s != nullptr)
+      name = s->name;
+    return name;
+}
+
+void SymbolTable::bake()
+{
+    buildIdMap();
+    isolateParameters();
+}
+
 /**
  * AFTER the Symbol table has been fully populated, build an array to map
  * id numbers to Symbols.  Can't do this as they are interned, because
@@ -215,20 +235,30 @@ void SymbolTable::buildIdMap()
             idMap.set(symbol->id, symbol);
         }
     }
-}
 
-Symbol* SymbolTable::getSymbol(SymbolId id)
-{
-    return idMap[id];
-}
+    // another pass, this time using the SymbolId enumeration
+    // to mske sure that for every SymbolId there is a corresponding Symbol
+    // code does not expect getSymbol(sid) to return nullptr, and it's nice
+    // not to have to check every time
+    // if something is missing then it is an error in symbols.xml
 
-juce::String SymbolTable::getName(SymbolId id)
-{
-    juce::String name;
-    Symbol* s = getSymbol(id);
-    if (s != nullptr)
-      name = s->name;
-    return name;
+    // index 0 is SymbolIdNone and won't have a Symbol
+    // SymbolIdMax is a placeholder and won't have a symbol either
+    for (int i = 1 ; i < SymbolIdMax ; i++) {
+        Symbol* s = idMap[i];
+        if (s == nullptr) {
+            Trace(1, "SymbolTable: Missing Symbol definition for id %d", i);
+        }
+        else if (s->parameterProperties == nullptr &&
+                 s->functionProperties == nullptr &&
+                 s->script == nullptr &&
+                 s->sample == nullptr &&
+                 s->variable == nullptr) {
+
+            // curious about these
+            Trace(1, "SymbolTable: Symbol %s looks empty", s->getName());
+        }
+    }
 }
 
 void SymbolTable::isolateParameters()
@@ -241,12 +271,6 @@ void SymbolTable::isolateParameters()
             parameters.add(s);
         }
     }
-}
-
-void SymbolTable::bake()
-{
-    buildIdMap();
-    isolateParameters();
 }
 
 /****************************************************************************/

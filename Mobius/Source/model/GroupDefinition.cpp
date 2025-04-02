@@ -39,6 +39,18 @@ void GroupDefinitions::add(GroupDefinition* g)
     groups.add(g);
 }
 
+GroupDefinition* GroupDefinitions::find(juce::String name)
+{
+    GroupDefinition* found = nullptr;
+    for (auto g : groups) {
+        if (g->name == name) {
+            found = g;
+            break;
+        }
+    }
+    return found;
+}
+
 int GroupDefinitions::getGroupIndex(juce::String name)
 {
     int index = -1;

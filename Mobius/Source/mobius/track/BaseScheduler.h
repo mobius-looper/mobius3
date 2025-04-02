@@ -44,7 +44,6 @@ class BaseScheduler
     BaseScheduler(class TrackManager* tm, class LogicalTrack* lt, class ScheduledTrack* t);
     virtual ~BaseScheduler();
     
-    void loadSession(Session::Track* def);
     void refreshParameters();
     
     void refreshState(class TrackState* state);

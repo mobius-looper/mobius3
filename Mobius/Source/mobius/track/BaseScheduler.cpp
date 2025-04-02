@@ -69,17 +69,8 @@ BaseScheduler::~BaseScheduler()
 }
 
 /**
- * Derive sync options from a session.
- *
- * Since we go through the LogicalTrack now we don't need the Session::Track
- * passed in.
+ * Derive sync options from a previously installed session.
  */
-void BaseScheduler::loadSession(Session::Track* def)
-{
-    (void)def;
-    refreshParameters();
-}
-
 void BaseScheduler::refreshParameters()
 {
     // !! these are old from when MidiTrack was first built

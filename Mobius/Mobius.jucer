@@ -821,7 +821,6 @@
                 file="Source/mobius/track/ParameterVault.h"/>
           <FILE id="fV0G4d" name="ScheduledTrack.h" compile="0" resource="0"
                 file="Source/mobius/track/ScheduledTrack.h"/>
-          <FILE id="KRchYg" name="TrackEngine.h" compile="0" resource="0" file="Source/mobius/track/TrackEngine.h"/>
           <FILE id="hyg5ti" name="TrackEvent.cpp" compile="1" resource="0" file="Source/mobius/track/TrackEvent.cpp"/>
           <FILE id="m01XMg" name="TrackEvent.h" compile="0" resource="0" file="Source/mobius/track/TrackEvent.h"/>
           <FILE id="Yy3tXx" name="TrackListener.h" compile="0" resource="0" file="Source/mobius/track/TrackListener.h"/>
@@ -841,8 +840,6 @@
           <FILE id="yR3Eor" name="TrackWait.h" compile="0" resource="0" file="Source/mobius/track/TrackWait.h"/>
         </GROUP>
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
-          <FILE id="N2rO6u" name="MidiEngine.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiEngine.cpp"/>
-          <FILE id="xn2n6u" name="MidiEngine.h" compile="0" resource="0" file="Source/mobius/midi/MidiEngine.h"/>
           <FILE id="Sbv33s" name="MidiFollower.cpp" compile="1" resource="0"
                 file="Source/mobius/midi/MidiFollower.cpp"/>
           <FILE id="lDUunw" name="MidiFragment.cpp" compile="1" resource="0"

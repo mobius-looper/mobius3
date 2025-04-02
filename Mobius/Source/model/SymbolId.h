@@ -146,7 +146,7 @@ typedef enum {
 
     // Random new things
     ParamNoReset,
-    ParamNoEdit,
+    ParamNoModify,
     ParamEventScript,
     
     //
@@ -211,51 +211,9 @@ typedef enum {
     ParamResetMode,
     
     //////////////////////////////////////////////////////////////////////
-    //
-    // Obsolete Parameters
-    //
-    // Should be working on removing these.  New code should not use them
-    // and old code should be phased out.
-    //
-    //////////////////////////////////////////////////////////////////////
-
-    // Globals
-    
-    //ParamActiveSetup,
-    //ParamDriftCheckPoint,
-    //ParamIntegerWaveFile,
-    //ParamGroupFocusLock,
-    //ParamTrackCount,
-    
-    // Setup
-    
-    //ParamDefaultSyncSource,
-    //ParamDefaultTrackSyncUnit,
-    //ParamSlaveSyncUnit,
-    //ParamManualStart,
-    //ParamMinTempo,
-    //ParamMaxTempo,
-    //ParamBeatsPerBar,
-    //ParamMuteSyncMode,
-    //ParamResizeSyncAdjust,
-    //ParamSpeedSyncAdjust,
-    //ParamRealignTime,
-    //ParamActiveTrack,
-
-    // Track
-    
-    ParamOldSyncSource,
-    ParamOldTrackSyncUnit,
-    ParamGroupName,
-
-    //////////////////////////////////////////////////////////////////////
     // Functions
     //////////////////////////////////////////////////////////////////////
 
-    //
-    // Mobius Functions
-    //
-    
     FuncAutoRecord,
     FuncBackward,
     FuncBounce,
@@ -440,9 +398,7 @@ typedef enum {
     // Files
     //
 
-    FuncLoadLoop,
     FuncLoadMidi,
-    FuncSaveMidi,
     FuncLoadSession,
     FuncSaveSession,
 

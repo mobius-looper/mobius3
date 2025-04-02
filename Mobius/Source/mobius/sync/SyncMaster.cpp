@@ -309,10 +309,10 @@ LogicalTrack* SyncMaster::getLeaderTrack(LogicalTrack* follower)
 {
     LogicalTrack* leader = nullptr;
     
-    SyncSource src = follower->getSyncSourceNow();
+    SyncSource src = follower->getSyncSource();
     if (src == SyncSourceTrack) {
         
-        int leaderNumber = follower->getSyncLeaderNow();
+        int leaderNumber = follower->getSyncLeader();
         if (leaderNumber == 0)
           leaderNumber = getTrackSyncMaster();
         
@@ -615,9 +615,9 @@ void SyncMaster::refreshState(SystemState* sysstate)
 
         LogicalTrack* lt = trackManager->getLogicalTrack(trackNumber);
         if (lt != nullptr) {
-            tstate->syncSource = lt->getSyncSourceNow();
-            tstate->syncUnit = lt->getSyncUnitNow();
-            tstate->trackSyncUnit = lt->getTrackSyncUnitNow();
+            tstate->syncSource = lt->getSyncSource();
+            tstate->syncUnit = lt->getSyncUnit();
+            tstate->trackSyncUnit = lt->getTrackSyncUnit();
 
             // old convention was to suppress beat/bar display
             // if the source was not in a started state
@@ -686,7 +686,7 @@ SyncSource SyncMaster::getEffectiveSource(LogicalTrack* lt)
 {
     SyncSource source = SyncSourceNone;
     if (lt != nullptr) {
-        source = lt->getSyncSourceNow();
+        source = lt->getSyncSource();
         if (source == SyncSourceMaster) {
             int transportMaster = transport->getMaster();
             if (transportMaster > 0 && transportMaster != lt->getNumber()) {
@@ -892,7 +892,7 @@ void SyncMaster::gatherSyncUnits(LogicalTrack* lt, SyncSource src,
     SyncUnit defaultUnit = SyncUnitBar;
     
     if (src == SyncSourceTrack) {
-        TrackSyncUnit tsu = lt->getTrackSyncUnitNow();
+        TrackSyncUnit tsu = lt->getTrackSyncUnit();
         if (tsu == TrackUnitNone) {
             Trace(1, "SyncMaster: Someone stored TrackUnitNone in the session");
             tsu = TrackUnitLoop;
@@ -902,7 +902,7 @@ void SyncMaster::gatherSyncUnits(LogicalTrack* lt, SyncSource src,
         defaultUnit = (SyncUnit)tsu;
     }
     else {
-        defaultUnit = lt->getSyncUnitNow();
+        defaultUnit = lt->getSyncUnit();
         if (defaultUnit == SyncUnitNone) {
             Trace(1, "SyncMaster: Someone stored SyncUnitNone in the session");
             defaultUnit = SyncUnitBar;
@@ -1282,7 +1282,7 @@ Pulse* SyncMaster::getBlockPulse(LogicalTrack* track)
                 if (startUnit == SyncUnitNone) {
                     // should have stored these when we started all this
                     Trace(1, "SyncMaster: Someone forgot to store their units");
-                    startUnit = track->getSyncUnitNow();
+                    startUnit = track->getSyncUnit();
                 }
                 if (isRelevant(annotated, startUnit)) {
                     pulse = annotated;
@@ -1489,7 +1489,7 @@ void SyncMaster::dealWithSyncEvent(class LogicalTrack* lt, SyncEvent* event)
 bool SyncMaster::isSourceLocked(LogicalTrack* t)
 {
     bool locked = true;
-    SyncSource src = t->getSyncSourceNow();
+    SyncSource src = t->getSyncSource();
     if (src == SyncSourceMidi)
       locked = midiAnalyzer->isLocked();;
     return locked;
@@ -1509,7 +1509,7 @@ bool SyncMaster::isSourceLocked(LogicalTrack* t)
  */
 void SyncMaster::doContortedMidiShit(LogicalTrack* track, Pulse* pulse)
 {
-    SyncSource src = track->getSyncSourceNow();
+    SyncSource src = track->getSyncSource();
     int goalUnits = track->getSyncGoalUnits();
     
     if (!track->isSyncFinalized() && src == SyncSourceMidi && goalUnits > 0) {
@@ -1572,8 +1572,8 @@ void SyncMaster::doContortedMidiShit(LogicalTrack* track, Pulse* pulse)
 
 int SyncMaster::getGoalBeats(LogicalTrack* t)
 {
-    SyncSource src = t->getSyncSourceNow();
-    int unit = t->getSyncUnitNow();
+    SyncSource src = t->getSyncSource();
+    int unit = t->getSyncUnit();
     int units = t->getSyncGoalUnits();
     int beats = 1;
     
@@ -1688,7 +1688,7 @@ void SyncMaster::notifyTrackAvailable(int number)
         if (trackSyncMaster == 0)
           trackSyncMaster = number;
 
-        SyncSource src = lt->getSyncSourceNow();
+        SyncSource src = lt->getSyncSource();
         
         if (src == SyncSourceMaster) {
             // this one wants to be special
@@ -2149,7 +2149,7 @@ SyncUnit SyncMaster::getSyncUnit(int id)
     SyncUnit unit = SyncUnitBeat;
     LogicalTrack* t = trackManager->getLogicalTrack(id);
     if (t != nullptr) {
-        unit = t->getSyncUnitNow();
+        unit = t->getSyncUnit();
     }
     return unit;
 }

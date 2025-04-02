@@ -46,10 +46,12 @@
 LogicalTrack::LogicalTrack(TrackManager* tm)
 {
     manager = tm;
+    symbols = tm->getSymbols();
+    
     // won't have many of these, really just TrackManager right now
     listeners.ensureStorageAllocated(4);
 
-    vault.initialize(tm->getSymbols(), tm->getParameterSets());
+    vault.initialize(symbols, tm->getContainer()->isPlugin());
 }
 
 LogicalTrack::~LogicalTrack()
@@ -114,6 +116,9 @@ void LogicalTrack::prepareParameters()
         return;
     }
 
+    vault.refresh(sessionTrack->getSession(), sessionTrack,
+                  manager->getParameterSets(), manager->getGroupDefinitions());
+
     cacheParameters(false);
 }
 
@@ -131,9 +136,10 @@ void LogicalTrack::loadSession()
         return;
     }
 
-    // ugh, interface here is messy
-    // 
-    vault.loadSession(sessionTrack->getSession(), sessionTrack);
+    // do all four things at once since Kernel doesn't deal with them
+    // individually yet
+    vault.refresh(sessionTrack->getSession(), sessionTrack,
+                  manager->getParameterSets(), manager->getGroupDefinitions());
 
     // now doen earlier in prepareParameters
     //cacheParameters(false);
@@ -160,6 +166,16 @@ void LogicalTrack::loadSession()
     // it doesn't hurt but it's redundant
     if (trackType == Session::TypeMidi)
       track->refreshParameters();
+}
+
+void LogicalTrack::refresh(ParameterSets* sets)
+{
+    vault.refresh(sets);
+}
+
+void LogicalTrack::refresh(GroupDefinitions* groups)
+{
+    vault.refresh(groups);
 }
 
 /**
@@ -470,13 +486,6 @@ int LogicalTrack::getSyncGoalUnits()
     return syncGoalUnits;
 }
 
-Symbol* LogicalTrack::getSymbol(SymbolId id)
-{
-    // we're going to need this all the time, just bring
-    // SymbolTable inside
-    return manager->getSymbols()->getSymbol(id);
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Parameter Cache
@@ -514,17 +523,10 @@ void LogicalTrack::cacheParameters(bool reset)
     groupNumber = vault.getOrdinal(ParamTrackGroup);
     focusLock = (bool)(vault.getOrdinal(ParamFocus));
 
-    // handle the virtual port swap
-    // !! vault needs to be doing this so we can deal with
-    // actions and query consistently
-    if (manager->getContainer()->isPlugin()) {
-        inputPort = getParameterOrdinal(ParamPluginInputPort);
-        outputPort = getParameterOrdinal(ParamPluginOutputPort);
-    }
-    else {
-        inputPort = getParameterOrdinal(ParamAudioInputPort);
-        outputPort = getParameterOrdinal(ParamAudioOutputPort);
-    }
+    // ParameterVault is now responsible for picking either the
+    // audio or plugin ports and promoting them to the generic port parameters
+    inputPort = getParameterOrdinal(ParamInputPort);
+    outputPort = getParameterOrdinal(ParamOutputPort);
 }
 
 /**
@@ -582,7 +584,7 @@ void LogicalTrack::doAction(UIAction* a)
         vault.setOrdinal(ParamFocus, focusLock);
     }
     else if (sid == FuncTrackGroup) {
-        doTrackGroup(a);
+        doTrackGroupFunction(a);
         vault.setOrdinal(ParamTrackGroup, groupNumber);
     }
     else if (a->symbol->behavior == BehaviorActivation) {
@@ -598,6 +600,8 @@ void LogicalTrack::doAction(UIAction* a)
     }
     else if (sid == ParamInputLatency || sid == ParamOutputLatency) {
         // might want these actionable someday
+        // !! old unit tests set these so when those get resurrected
+        // will need to support this
         Trace(1, "LogicalTrack: Action on latencies");
     }
     else if (a->symbol->parameterProperties == nullptr) {
@@ -661,11 +665,17 @@ void LogicalTrack::doParameter(UIAction* a)
             break;
             
         case ParamInputPort:
-            inputPort = vault.getOrdinal(s);
+        case ParamAudioInputPort:
+        case ParamPluginInputPort:
+            // you're not supposed to use the last two, but if you do either
+            // of them may be promoted to the generic port that is used at runtime
+            inputPort = vault.getOrdinal(ParamInputPort);
             break;
             
         case ParamOutputPort:
-            outputPort = vault.getOrdinal(s);
+        case ParamAudioOutputPort:
+        case ParamPluginOutputPort:
+            outputPort = vault.getOrdinal(ParamOutputPort);
             break;
 
         default: {
@@ -693,11 +703,10 @@ void LogicalTrack::doParameter(UIAction* a)
 int LogicalTrack::unbindFeedback()
 {
     int current = getParameterOrdinal(ParamFeedback);
+    
+    vault.unbind(ParamFeedback);
 
-    // ugh: punting on this since the binding list is too horrible to deal with
-    // revisit when this gets converted to a binding array like you thought about
-    Trace(1, "LogicalTrack::unbindFeedback not implemented");
-
+    // why are we returning the previous value?
     return current;
 }
 
@@ -710,27 +719,39 @@ int LogicalTrack::unbindFeedback()
 /**
  * Handler for the FuncTrackGroup action.
  *
- * This replicates what used to be down in core/functions/TrackGroup
+ * This allows more complex arguments than what ParaqmeterVault supports.
+ * After converting the function arguments into  a group ordinal, pass it
+ * into the vault.
  */
-void LogicalTrack::doTrackGroup(UIAction* a)
+void LogicalTrack::doTrackGroupFunction(UIAction* a)
 {
     // this was sustainable='true' for a time, I vaguely remember longPress
     // being used to remove the group assignment, not supported at the moment
     // but if you bring that back, need to ignore up transitions here
     if (!a->sustainEnd) {
-        // to allow longPress
+        // to allow longPress is supposed to clear the assignment
+        
         GroupDefinitions* groups = manager->getGroupDefinitions();
 
         // binding args can be used for special commands as well as names
         if (strlen(a->arguments) > 0) {
-            groupNumber = parseGroupActionArgument(groups, a->arguments);
-        }
-        else if (a->value >= 0 && a->value <= groups->groups.size()) {
-            groupNumber = a->value;
+            int group = parseGroupActionArgument(groups, a->arguments);
+            // pretend this came in as a parameter for the vault
+            UIAction pa;
+            pa.symbol = symbols->getSymbol(ParamTrackGroup);
+            pa.value = group;
+            vault.doAction(&pa);
         }
         else {
-            Trace(1, "LogicalTrack: Group number out of range %d", a->value);
+            // must be a number, same as ParamTrackGroups
+            UIAction pa;
+            pa.symbol = symbols->getSymbol(ParamTrackGroup);
+            pa.value = a->value;
+            vault.doAction(&pa);
         }
+
+        // whatever the vault did, read it back into our cache
+        groupNumber = vault.getOrdinal(ParamTrackGroup);
     }
 }
 
@@ -830,7 +851,7 @@ bool LogicalTrack::doQuery(Query* q)
  */
 int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
 {
-    Symbol* s = getSymbol(symbolId);
+    Symbol* s = symbols->getSymbol(symbolId);
     int ordinal = 0;
 
     if (s == nullptr) {
@@ -844,16 +865,13 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
         bool special = true;
         switch (symbolId) {
 
-            // !!! vault needs to be doing this
-            
-            case ParamInputPort:
-                ordinal = inputPort;
-                break;
-                
-            case ParamOutputPort:
-                ordinal = outputPort;
-                break;
-
+            // latencies are not in the Session and won't be handled
+            // by the vault, they come from SystemConfig or are derived
+            // from the audio block size
+            // !! this means they can't have a runtime binding, but the old
+            // unit tests expect to do that
+            // need to move these into the vault, but that requires
+            // access to the container and SystemConfig
             case ParamInputLatency:
                 ordinal = manager->getInputLatency();
                 break;
@@ -879,7 +897,7 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
 bool LogicalTrack::getBoolParameter(SymbolId sid)
 {
     bool value = false;
-    int ordinal = getParmeterOrdinal(sid);
+    int ordinal = getParameterOrdinal(sid);
     if (ordinal == 1) {
         value = true;
     }
@@ -888,7 +906,7 @@ bool LogicalTrack::getBoolParameter(SymbolId sid)
         // if it was stored in the session as something higher than that,
         // it might be a symbol mismatch where you're asking for a bool from
         // somethign that isn't a bool, could do this check all the time
-        Symbol* s = getSymbol(sid);
+        Symbol* s = symbols->getSymbol(sid);
         if (s->parameterProperties != nullptr &&
             s->parameterProperties->type != TypeBool) {
             Trace(1, "LogicalTrack::getBoolParameter %s is not a bool parameter",
@@ -906,51 +924,7 @@ bool LogicalTrack::getBoolParameter(SymbolId sid)
 //
 // Parameter Enumeration Conversion
 //
-// These are older convenience functions used by MidiTrack that
-// are not as necessary any more.  Weed these...
-//
-// Now that almost everything everything is an ordinal in the ParameterVault.
-// These just pass through to it and static cast the result.
-//
-// !! for a time there was a difference between these and
-// the getThingNow functions which used a local cache, they're really
-// not any different so merge them.
-//
-// The only thing the old implementation of these did was skip the
-// lcoal value bindings, I don't remember why that was important and
-// it should not have been...
-//
 //////////////////////////////////////////////////////////////////////
-
-SyncSource LogicalTrack::getSyncSourceFromSession()
-{
-    return (SyncSource)(vault.getOrdinal(ParamSyncSource));
-}
-
-SyncSourceAlternate LogicalTrack::getSyncSourceAlternateFromSession()
-{
-    return (SyncSourceAlternate)(vault.getOrdinal(ParamSyncSourceAlternate));
-}
-
-SyncUnit LogicalTrack::getSyncUnitFromSession()
-{
-    return (SyncUnit)(vault.getOrdinal(ParamSyncUnit));
-}
-
-TrackSyncUnit LogicalTrack::getTrackSyncUnitFromSession()
-{
-    return (TrackSyncUnit)(vault.getOrdinal(ParamTrackSyncUnit));
-}
-
-LeaderType LogicalTrack::getLeaderTypeFromSession()
-{
-    return (LeaderType)(vault.getOrdinal(ParamLeaderType));
-}
-
-LeaderLocation LogicalTrack::getLeaderSwitchLocationFromSession()
-{
-    return (LeaderLocation)(vault.getOrdinal(ParamLeaderSwitchLocation));
-}
 
 /**
  * !! The loop count was formerly in the Preset which
@@ -984,6 +958,16 @@ int LogicalTrack::getLoopCountFromSession()
     return result;
 }
 
+LeaderType LogicalTrack::getLeaderType()
+{
+    return (LeaderType)(vault.getOrdinal(ParamLeaderType));
+}
+
+LeaderLocation LogicalTrack::getLeaderSwitchLocation()
+{
+    return (LeaderLocation)(vault.getOrdinal(ParamLeaderSwitchLocation));
+}
+
 /**
  * This is part of the MslTrack interface, and used in a lot of places so
  * give it a special accessor.
@@ -998,16 +982,6 @@ int LogicalTrack::getSubcycles()
     
     return subcycles;
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// Group 2: Things that might be in the Preset
-//
-// These are temporary until the session editor is fleshed out.
-//
-// todo: more weeding to do
-//
-//////////////////////////////////////////////////////////////////////
 
 ParameterMuteMode LogicalTrack::getMuteMode()
 {
@@ -1106,32 +1080,26 @@ void LogicalTrack::setAdvanced(bool b)
 //
 // Sync State
 //
-// This evolved away from Leader/Follower in Pulsator and we're keeping this
-// at several levels now.   Don't need so much duplication.
-//
-// !! There shouldn't be any difference between these and
-// the older getThingFromSession methods above, merge them.
-// You can cache it if you want, but the vault always has the right
-// value and it obeys temporary bindings.
+// Most of these are in the vault, but we cache them
 //
 //////////////////////////////////////////////////////////////////////
 
-SyncSource LogicalTrack::getSyncSourceNow()
+SyncSource LogicalTrack::getSyncSource()
 {
     return syncSource;
 }
 
-SyncUnit LogicalTrack::getSyncUnitNow()
+SyncUnit LogicalTrack::getSyncUnit()
 {
     return syncUnit;
 }
 
-TrackSyncUnit LogicalTrack::getTrackSyncUnitNow()
+TrackSyncUnit LogicalTrack::getTrackSyncUnit()
 {
     return trackSyncUnit;
 }
 
-int LogicalTrack::getSyncLeaderNow()
+int LogicalTrack::getSyncLeader()
 {
     return syncLeader;
 }

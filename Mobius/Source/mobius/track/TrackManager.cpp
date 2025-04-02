@@ -75,10 +75,33 @@ void TrackManager::initialize(Session* ses, GroupDefinitions* argGroups, Mobius*
 /**
  * Have to get this to refresh GroupDefinitions
  */
-void TrackManager::reconfigure(GroupDefinitions* argGroups)
+void TrackManager::refresh(GroupDefinitions* argGroups)
 {
     groups = argGroups;
+
+    // sigh, we would ordinarilly do this, but Kernel calls this immediately
+    // before calling loadSession which will cause the vault to refresh again
+    // after it already did when the groups were passed down, assuming Kernal
+    // ALWAYS calls loadSession immediately after refresh(groups) then we can
+    // defer it until then, but it's messy
+    // need to work through how each of the major config components are sent down
+    // and propagated 
+    //for (auto lt : tracks)
+    //lt->refresh(argGroups);
 }
+
+/**
+ * Same issues as refresh(groups)
+ * We don't send these down without also calling loadSession, so this
+ * is not currently used.
+ */
+#if 0
+void TrackManager::refresh(ParameterSets* sets)
+{
+    for (auto lt : tracks)
+      lt->refresh(sets);
+}
+#endif
 
 /**
  * Reconfigure the LogicalTracks based on the session.

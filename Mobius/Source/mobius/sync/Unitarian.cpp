@@ -238,7 +238,7 @@ int Unitarian::getSingleAutoRecordUnitLength(LogicalTrack* track)
 {
     int recordLength = 0;
     SyncSource src = syncMaster->getEffectiveSource(track);
-    SyncUnit unit = track->getSyncUnitNow();
+    SyncUnit unit = track->getSyncUnit();
 
     if (src == SyncSourceTrack) {
         // tracks do not have beat-based units
@@ -309,7 +309,7 @@ int Unitarian::getLockUnitLength(LogicalTrack* track)
 {
     int lockLength = 0;
     SyncSource src = syncMaster->getEffectiveSource(track);
-    SyncUnit unit = track->getSyncUnitNow();
+    SyncUnit unit = track->getSyncUnit();
 
     if (src == SyncSourceTrack) {
         // tracks do not have beat-based units
@@ -393,7 +393,7 @@ void Unitarian::verifySyncLength(LogicalTrack* lt)
             Trace(1, "SyncMaster::verifySyncLength No leader track");
         }
         else {
-            SyncUnit unit = lt->getSyncUnitNow();
+            SyncUnit unit = lt->getSyncUnit();
             // live dangerously
             TrackSyncUnit tsu = (TrackSyncUnit)unit;
             int leaderUnit = getTrackUnitLength(leader, tsu);
@@ -486,7 +486,7 @@ int Unitarian::calculateUnitLength(LogicalTrack* lt)
         }
         else {
             int cycleLength = props.frames / props.cycles;
-            int bpb = barTender->getBeatsPerBar(lt->getSyncUnitNow());
+            int bpb = barTender->getBeatsPerBar(lt->getSyncUnit());
             unitLength = cycleLength / bpb;
 
             if (cycleLength % bpb)
@@ -523,7 +523,7 @@ int Unitarian::getActiveFollowers(SyncSource src, int unitLength, LogicalTrack* 
         // Midi or Host but Master is weird.  It doesn't really matter though, if the
         // source changes and it just happens to have the right unit length it will
         // effectively assimilate as a follower
-        if (lt->getSyncSourceNow() == src) {
+        if (lt->getSyncSource() == src) {
             // todo: still some lingering issues if the track has multiple loops
             // and they were recorded with different unit lenghts, that would be unusual
             // but is possible

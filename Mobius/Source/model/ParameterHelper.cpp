@@ -1,4 +1,7 @@
-
+/**
+ * Find out who uses these and if they're still necessary.
+ * ParameterVault should be handling most parameter related things in the kernel
+ */
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
@@ -159,11 +162,11 @@ int ParameterHelper::getParameterMax(Provider* p, Symbol* s)
                 // there is no getParameterMin, it will use the usual default of zero even
                 // though minTempo is usually around 30, Transport will ignore it
                 if (s->id == ParamTransportTempo) {
-                    Session* s = p->getSession();
+                    Session* session = p->getSession();
                     // gak, usual name shit
                     Symbol* keysym = p->getSymbols()->getSymbol(ParamTransportMaxTempo);
                     if (keysym != nullptr) {
-                        int tempomax = s->getInt(keysym->name);
+                        int tempomax = session->getInt(keysym->name);
                         max = tempomax * 100;
                     }
                 }

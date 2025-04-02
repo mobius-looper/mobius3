@@ -250,7 +250,7 @@ Pulse* Pulsator::getAnyBlockPulse(LogicalTrack* t)
         // once the follower is locked, you can't change the source out
         // from under it
         // ?? why was this necessary
-        SyncSource source = t->getSyncSourceNow();
+        SyncSource source = t->getSyncSource();
         int leader = 0;
         if (source == SyncSourceTrack) {
 
@@ -260,7 +260,7 @@ Pulse* Pulsator::getAnyBlockPulse(LogicalTrack* t)
             // what leader/follower does is independent of synchronized recording
             // the difference between SyncSource and having a Leader track is messy
             // and needs more thought
-            //leader = t->getSyncLeaderNow();
+            //leader = t->getSyncLeader();
             //if (leader == 0)
             leader = syncMaster->getTrackSyncMaster();
         }

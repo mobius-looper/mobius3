@@ -94,6 +94,9 @@ class ParameterVault
 
     // try to get rid of this, used by LogicalTrack::refreshState
     int getTrackOverlayNumber();
+
+    // used in the implementation of LogicalTrack::unbindFeedback
+    void unbind(SymbolId id);
     
   private:
 
@@ -119,6 +122,7 @@ class ParameterVault
     class ValueSet* findOverlay(const char* name);
     class ValueSet* findOverlay(int ordinal);
     int getParameterIndex(SymbolId id);
+    int getParameterIndex(class Symbol* s);
     int getLocalOrdinal(SymbolId id);
     void verifyOverlay(SymbolId overlayId);
     void fixOverlayOrdinal(SymbolId id, int ordinal);
@@ -135,20 +139,19 @@ class ParameterVault
     static juce::Array<int> flattener;
 
     void flatten(class ValueSet* defaults, class ValueSet* trackValues,
-                 class ValueSet* sessionOverlay, class ValueSet* trackOverlay,
                  juce::Array<int>& result);
 
     int resolveOrdinal(class Symbol* symbol, 
-                       class ValueSet* defaults, class ValueSet* trackValues,
-                       class ValueSet* sessionOverlay, class ValueSet* trackOverlay);
+                       class ValueSet* defaults, class ValueSet* trackValues);
 
     int resolveOrdinal(class Symbol* s, class ParameterProperties* props, class MslValue* v);
-
-
     int resolveEnum(class Symbol* s, class ParameterProperties* props, class MslValue* v);
+    int resolveStructure(class Symbol* s, class ParameterProperties* props, class MslValue* v);
 
-
-
-    
+    void promotePorts();
+    void promotePortAction(class Symbol* s, class ParameterProperties* props, int value);
+    int getSessionOrdinal(SymbolId sid);
+    void setSessionOrdinal(SymbolId sid, int value);
+    void setLocalOrdinal(SymbolId sid, int value);
     
 };

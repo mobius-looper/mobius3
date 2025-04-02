@@ -43,6 +43,8 @@ class LogicalTrack
     void prepareParameters();
     // this causes the session to be fully loaded and the BaseTracks initialized
     void loadSession();
+    void refresh(class ParameterSets* sets);
+    void refresh(class GroupDefinitions* groups);
 
     void markDying();
     bool isDying();
@@ -133,11 +135,11 @@ class LogicalTrack
     // Sync State
     //////////////////////////////////////////////////////////////////////
 
-    SyncSource getSyncSourceNow();
-    SyncSourceAlternate getSyncSourceAlternateNow();
-    SyncUnit getSyncUnitNow();
-    TrackSyncUnit getTrackSyncUnitNow();
-    int getSyncLeaderNow();
+    SyncSource getSyncSource();
+    SyncSourceAlternate getSyncSourceAlternate();
+    SyncUnit getSyncUnit();
+    TrackSyncUnit getTrackSyncUnit();
+    int getSyncLeader();
     Pulse* getLeaderPulse();
 
     // not really sync state, but we need this during the Preset transition mess
@@ -153,23 +155,20 @@ class LogicalTrack
     void setAdvanced(bool b);
 
     //////////////////////////////////////////////////////////////////////
-    // Subclass parameter accessors
+    // Parameter Accessors
     //////////////////////////////////////////////////////////////////////
 
     int getParameterOrdinal(SymbolId id);
     bool getBoolParameter(SymbolId sid);
     int unbindFeedback();
 
-    // weed these and just call the cached accessors
-    SyncSource getSyncSourceFromSession();
-    SyncSourceAlternate getSyncSourceAlternateFromSession();
-    SyncUnit getSyncUnitFromSession();
-    TrackSyncUnit getTrackSyncUnitFromSession();
+    // think on this one
     int getLoopCountFromSession();
-    LeaderType getLeaderTypeFromSession();
-    LeaderLocation getLeaderSwitchLocationFromSession();
 
-    // these are also "from session"
+    // These are all just getParameterOrdinal with enum casting
+    
+    LeaderType getLeaderType();
+    LeaderLocation getLeaderSwitchLocation();
     ParameterMuteMode getMuteMode();
     SwitchLocation getSwitchLocation();
     SwitchDuration getSwitchDuration();
@@ -180,6 +179,7 @@ class LogicalTrack
   private:
 
     class TrackManager* manager = nullptr;
+    SymbolTable* symbols = nullptr;
     class Session::Track* sessionTrack = nullptr;
     Session::TrackType trackType = Session::TypeAudio;
 
@@ -255,13 +255,11 @@ class LogicalTrack
     bool visited = false;
     bool advanced = false;
 
-    class Symbol* getSymbol(SymbolId id);
-    
     void cacheParameters(bool reset);
     void doParameter(class UIAction* a);
     void resetParameters();
     
-    void doTrackGroup(class UIAction* a);
+    void doTrackGroupFunction(class UIAction* a);
     int parseGroupActionArgument(class GroupDefinitions* groups, const char* s);
     
 };

@@ -19,7 +19,6 @@
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
-#include "../../model/Session.h"
 #include "../../model/SymbolId.h"
 
 #include "../../midi/MidiEvent.h"

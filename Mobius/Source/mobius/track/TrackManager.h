@@ -47,7 +47,8 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     ~TrackManager();
 
     void initialize(class Session* s, class GroupDefinitions* g, class Mobius* engine);
-    void reconfigure(class GroupDefinitions* g);
+    void refresh(class GroupDefinitions* groups);
+    void refresh(class ParameterSets* sets);
     void loadSession(class Session* s);
 
     class LogicalTrack* getLogicalTrack(int number);

@@ -308,9 +308,9 @@ void TimeSlicer::orderTracks(LogicalTrack* t)
 {
     if (!t->isVisited()) {
         t->setVisited(true);
-        if (t->getSyncSourceNow() == SyncSourceTrack) {
+        if (t->getSyncSource() == SyncSourceTrack) {
             
-            int leader = t->getSyncLeaderNow();
+            int leader = t->getSyncLeader();
             if (leader == 0)
               leader = syncMaster->getTrackSyncMaster();
 

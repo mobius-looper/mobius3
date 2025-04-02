@@ -425,8 +425,11 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     scriptUtil.configure(session, groups);
 
     // give TM the new GroupDefinitions first so it can parse scope names
-    mTracks->reconfigure(groups);
-
+    // !! this is also needed by ParameterVault, but if that refreshes now
+    // it's going to do it all over again when we call loadSession
+    // have TrackManager defer refreshing vault groups until loadSession
+    mTracks->refresh(groups);
+    
     // this will do the second call to core to configureTracks where
     // most of the excitment happens
     // note that this needs to happen even if the payload didn't have a new Session

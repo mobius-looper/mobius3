@@ -104,8 +104,6 @@ const char* ParamNameAltFeedback = "altFeedback";
 const char* ParamNameInput = "input";
 const char* ParamNameOutput = "output";
 const char* ParamNamePan = "pan";
-const char* ParamNameOldSyncSource = "oldSyncSource";
-const char* ParamNameOldTrackSyncUnit = "oldTrackSyncUnit";
 const char* ParamNameAudioInputPort = "audioInputPort";
 const char* ParamNameAudioOutputPort = "audioOutputPort";
 const char* ParamNamePluginInputPort = "pluginInputPort";
@@ -222,7 +220,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {"transportMaster", ParamTransportMaster},
 
     {"trackNoReset", ParamNoReset},
-    {"trackNoEdit", ParamNoEdit},
+    {"trackNoModify", ParamNoModify},
     {"eventScript", ParamEventScript},
     
     {ParamNameSubcycles, ParamSubcycles},
@@ -354,6 +352,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {"SUSMuteRestart", FuncSUSMuteRestart},
     {"SUSNextLoop", FuncSUSNextLoop},
     {"SUSOverdub", FuncSUSOverdub},
+    {"SUSPause", FuncSUSPause},
     {"SUSPrevLoop", FuncSUSPrevLoop},
     {"SUSRecord", FuncSUSRecord},
     {"SUSReplace", FuncSUSReplace},
@@ -419,7 +418,7 @@ SymbolDefinition SymbolDefinitions[] = {
     // MIDI
     //
 
-    {"Resize", FuncMidiResize},
+    {"MidiResize", FuncMidiResize},
     {"MidiHalfspeed", FuncMidiHalfspeed},
     {"MidiDoublespeed", FuncMidiDoublespeed},
     
@@ -427,9 +426,7 @@ SymbolDefinition SymbolDefinitions[] = {
     // Files
     //
 
-    {"LoadLoop", FuncLoadLoop},
     {"LoadMidi", FuncLoadMidi},
-    {"SaveMidi", FuncSaveMidi},
     {"LoadSession", FuncLoadSession},
     {"SaveSession", FuncSaveSession},
 
@@ -447,14 +444,6 @@ SymbolDefinition SymbolDefinitions[] = {
     // was SyncMasterMidi for awhile, should upgrade or add an alias
     {"SyncMasterTransport", FuncSyncMasterTransport},
 
-    //////////////////////////////////////////////////////////////////////
-    // Deprecated
-    //////////////////////////////////////////////////////////////////////
-    
-    {"groupName", ParamGroupName},
-    {ParamNameOldSyncSource, ParamOldSyncSource},
-    {ParamNameOldTrackSyncUnit, ParamOldTrackSyncUnit},
-    
     //
     // Terminator
     //

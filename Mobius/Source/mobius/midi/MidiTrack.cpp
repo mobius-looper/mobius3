@@ -110,6 +110,8 @@ void MidiTrack::refreshParameters()
     loopCount = logicalTrack->getLoopCountFromSession();
     
     // tell the player where to go
+    // NOTE: Device names are the only thing not handled by ParameterVault yet
+    // need to fix that
     Session::Track* def = logicalTrack->getSession();
     MslValue* v = def->get(ParamMidiOutput);
     if (v == nullptr) {
@@ -124,16 +126,16 @@ void MidiTrack::refreshParameters()
         player.setDeviceId(id);
     }
     
-    midiThru = def->getBool(ParamMidiThru);
+    midiThru = logicalTrack->getBoolParameter(ParamMidiThru);
 
     // some leader/follow parameters are in TrackScheduler
     // the flags are only necessary in here
     // !! reconsider this, Scheduler should handle all of them?
-    followerStartMuted = def->getBool(ParamFollowerStartMuted);
-    followLocation = def->getBool(ParamFollowLocation);
-    noReset = def->getBool(ParamNoReset);
+    followerStartMuted = logicalTrack->getBoolParameter(ParamFollowerStartMuted);
+    followLocation = logicalTrack->getBoolParameter(ParamFollowLocation);
+    noReset = logicalTrack->getBoolParameter(ParamNoReset);
 
-    player.setChannelOverride(def->getInt(ParamMidiChannelOverride));
+    player.setChannelOverride(logicalTrack->getParameterOrdinal(ParamMidiChannelOverride));
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -80,6 +80,7 @@ class GroupDefinitions
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);
 
     int getGroupIndex(juce::String name);
+    GroupDefinition* find(juce::String name);
     GroupDefinition* getGroupByIndex(int index);
     void getGroupNames(juce::StringArray& names);
 };

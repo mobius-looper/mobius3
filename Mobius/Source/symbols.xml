@@ -110,6 +110,8 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="SUSMuteRestart" sustainable='true' mayFocus='true' tree='Sustaining'/>
   <Function name="SUSNextLoop" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
   <Function name="SUSOverdub" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <!-- this one is probably broken but define it so we don't get a warning about a SymbolId being unresolved -->
+  <Function name="SUSPause" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining' hidden='true'/>
   <Function name="SUSPrevLoop" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
   <Function name="SUSRecord" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
   <Function name="SUSReplace" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
@@ -178,6 +180,14 @@ Once those models are fully converted, these symbols can be removed.
    -->
   <Function name="LoadSession" level='ui' tree='File'/>
   <Function name="SaveSession" level='ui' tree='File'/>
+
+  <!-- Experimental
+       These were added during early MIDI track development, unclear if we still need them
+       -->
+  <Function name='MidiResize' level='kernel' hidden='true'/>
+  <Function name='UnroundedMultiply' level='kernel' hidden='true'/>
+  <Function name='UnroundedInsert' level='kernel' hidden='true'/>
+
   
 
   <!-- UI Functions -->
@@ -220,7 +230,7 @@ Once those models are fully converted, these symbols can be removed.
 
   <ParameterScope name='preset' query='true'>
      
-    <Parameter name='subcycles' low='1' high='128' tree='Quantize'/>
+    <Parameter name='subcycles' low='1' high='128' tree='Quantize' defaultValue='4'/>
 
     <Parameter name='multiplyMode' values='normal,simple' tree='Functions' track='audio'/>
 
@@ -414,7 +424,7 @@ Once those models are fully converted, these symbols can be removed.
   
   <!-- A few things that live outside the session in the system.xml file.
        May want more of the session globals in here too.
-       Ugh, some of these must live in the session gecause they're settable from
+       Ugh, some of these must live in the session because they're settable from
        scripts and that's where the kernel gets them.  If you move them outside
        then the doAction handlers in the kernel need to go there to set them
        -->
@@ -559,10 +569,10 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='trackType' values='audio,midi' options='noBinding,noDefault,noOverlay'/>
 
     <Parameter name='trackGroup' type='structure' structure='Group' tree='General'
-               options='noBinding,noDefault,dynamic,resetRetain'
+               options='noBinding,noDefault,dynamic,mayResetRetain'
                displayType='combo' displayHelper='trackGroup'/>
 
-    <Parameter name='focus' type='bool' options='resetRetain,noBinding,noDefault' tree='General'/>
+    <Parameter name='focus' type='bool' options='mayResetRetain,noBinding,noDefault' tree='General'/>
 
     <!-- hide these for now, they were a MIDI experiment that will become more interesting
          once sessions can contain content, maybe just a "locked" flag -->
@@ -582,7 +592,7 @@ Once those models are fully converted, these symbols can be removed.
     <Parameter name='trackOverlay' tree='Overlay'
                type='structure' structure='Overlay'
                displayType='combo' displayHelper='parameterSet'
-               options='noBinding,noOverlay,resetRetain'/>
+               options='noBinding,noOverlay,mayResetRetain'/>
 
     <!-- the replacement for oldSyncSource defined SyncSource in SyncConstants.h -->
     <Parameter name='syncSource' values='none,transport,track,host,midi,master'
@@ -638,23 +648,23 @@ Once those models are fully converted, these symbols can be removed.
     
     <Parameter name='input' tree='Mixer' track='audio'
                high='127' defaultValue='127'
-               options='control,resetRetain,mayFocus'/>
+               options='control,mayResetRetain,mayFocus'/>
     
     <Parameter name='output' tree='Mixer' track='audio'
                high='127' defaultValue='127'
-               options='control,resetRetain,mayFocus'/>
+               options='control,mayResetRetain,mayFocus'/>
     
     <Parameter name='feedback' tree='Mixer' track='audio'
                high='127' defaultValue='127'
-               options='control,resetRetain,mayFocus'/>
+               options='control,mayResetRetain,mayFocus'/>
     
     <Parameter name='altFeedback' tree='Mixer' track='audio'
                high='127'defaultValue='127'
-               options='control,resetRetain,mayFocus'/>
+               options='control,mayResetRetain,mayFocus'/>
     
     <Parameter name='pan' tree='Mixer' track='audio'
                high='127' defaultValue='64'
-               options='control,resetRetain,mayFocus'/>
+               options='control,mayResetRetain,mayFocus'/>
 
     <!-- Ports are unusual
          The port numbers can be different for standalone or plugin operation since
@@ -778,18 +788,16 @@ Once those models are fully converted, these symbols can be removed.
   </ParameterScope>
   
   <!-- =======================================================================
-       SETUP
+       OBSOLETE
        ============================================================================ -->
   
   <!--
-      Setup parameters are essentially global parameters but they were managed
-      inside multiiple objects that could be swapped rather than a single set
-      shared by all Setups.  They are no longer used, replaced by Session parameters
-      though there are a few name overlaps.
+      These were formerly Setup parameters.
+      I don't remember why these needed to be here, maybe to support parsing
+      old Setups from mobius.xml?
   -->
   
   <ParameterScope name='setup'>
-
 
     <!-- note that this needs "default" as the first enum value even though that's not
          allowed for this parameter since internally it shares the same SyncSource enumeration
@@ -831,13 +839,17 @@ Once those models are fully converted, these symbols can be removed.
   </ParameterScope>
 
   <!-- =======================================================================
-       TRACK
+       OBSOLETE TRACK
   ============================================================================ -->
+
+  <!-- another set of parameters formerly in SetupTrack but replaced by new
+       session things, why are these here ?
+       -->
 
   <ParameterScope name='track'>
     
     <!-- this used to be a number
-    <Parameter name='group' options='dynamic,resetRetain'/>
+    <Parameter name='group' options='dynamic,mayResetRetain'/>
     -->
 
     <!-- These have correspondence in the new model, but the enumerations
@@ -852,7 +864,7 @@ Once those models are fully converted, these symbols can be removed.
 
     <!-- this was used for the group name in the Setup days, but trackGroup above should take it's place    -->
     
-    <Parameter name='groupName' options='noBinding,dynamic,resetRetain'/>
+    <Parameter name='groupName' options='noBinding,dynamic,mayResetRetain'/>
     
   </ParameterScope>
   

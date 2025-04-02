@@ -11,7 +11,6 @@
 
 #include "../../util/Util.h"
 #include "../../model/TrackState.h"
-#include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 
 #include "../Notification.h"

@@ -216,7 +216,7 @@ Pulse* BarTender::annotate(LogicalTrack* lt, Pulse* beatPulse)
     bool onBar = false;
     bool onLoop = false;
     
-    switch (lt->getSyncSourceNow()) {
+    switch (lt->getSyncSource()) {
         case SyncSourceNone:
             // shouldn't be here
             break;
@@ -388,7 +388,7 @@ int BarTender::getBeat(LogicalTrack* lt)
 {
     int beat = 0;
     if (lt != nullptr) {
-        SyncSource src = lt->getSyncSourceNow();
+        SyncSource src = lt->getSyncSource();
         if (src == SyncSourceTrack) {
             // unclear what this means, it could be the subcycle number from
             // the leader track, but really we shouldn't be trying to display beat/bar counts
@@ -458,7 +458,7 @@ int BarTender::getBar(LogicalTrack* lt)
 {
     int bar = 0;
     if (lt != nullptr) {
-        SyncSource src = lt->getSyncSourceNow();
+        SyncSource src = lt->getSyncSource();
         if (src == SyncSourceTrack) {
             // unclear what this means, it could be the cycle number from
             // the leader track, but really we shouldn't be trying to display beat/bar counts
@@ -533,7 +533,7 @@ int BarTender::getLoop(LogicalTrack* lt)
 {
     int loop = 0;
     if (lt != nullptr) {
-        SyncSource src = lt->getSyncSourceNow();
+        SyncSource src = lt->getSyncSource();
         if (src == SyncSourceTrack) {
             // unclear what this means, tracks don't remember how many times they've
             // played a loop
@@ -606,7 +606,7 @@ int BarTender::getBeatsPerBar(LogicalTrack* track)
 {
     int bpb = 4;
     if (track != nullptr) {
-        SyncSource src = track->getSyncSourceNow();
+        SyncSource src = track->getSyncSource();
         if (src == SyncSourceTrack) {
             // another that shuoldn't be used in the UI
             Trace(1, "BarTender::getBeatsPerBar(LogicalTrack) with SyncSourceTrack)");
@@ -672,7 +672,7 @@ int BarTender::getBarsPerLoop(LogicalTrack* track)
 {
     int bpl = 1;
     if (track != nullptr) {
-        SyncSource src = track->getSyncSourceNow();
+        SyncSource src = track->getSyncSource();
         if (src == SyncSourceTrack) {
             Trace(1, "BarTender::getBarsPerLoop(LogicalTrack) with SyncSourceTrack");
         }
