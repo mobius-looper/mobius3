@@ -147,7 +147,8 @@ void PropertyTable::init(SymbolTable* symbols, bool parameter)
             addColumnCheckbox("Reset Retain", PropertyColumnResetRetain);
         }
         else {
-            addColumnCheckbox("Focus Lock", PropertyColumnFocus);
+            // this is broken so don't show it
+            //addColumnCheckbox("Focus Lock", PropertyColumnFocus);
             addColumnCheckbox("Mute Cancel", PropertyColumnMuteCancel);
             addColumnCheckbox("Confirmation", PropertyColumnConfirmation);
             addColumnCheckbox("Quantize", PropertyColumnQuantize);
@@ -184,7 +185,8 @@ void PropertyTable::init(SymbolTable* symbols, bool parameter)
                     symbol->functionProperties->mayQuantize = true;
                 }
 
-                if (symbol->functionProperties->mayFocus ||
+                // suppress the focus column until that is fixed
+                if (// symbol->functionProperties->mayFocus ||
                     symbol->functionProperties->mayConfirm ||
                     symbol->functionProperties->mayCancelMute ||
                     symbol->functionProperties->mayQuantize) {
@@ -206,7 +208,8 @@ void PropertyTable::init(SymbolTable* symbols, bool parameter)
                     symbol->parameterProperties->mayResetRetain = true;
                 }
 
-                if (symbol->parameterProperties->mayFocus ||
+                // suppress the focus column until that is fixed
+                if (// symbol->parameterProperties->mayFocus ||
                     symbol->parameterProperties->mayResetRetain) {
                     
                     objectNames.add(symbol->name);
