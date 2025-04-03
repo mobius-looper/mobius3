@@ -103,10 +103,12 @@ SubstituteFunction::SubstituteFunction(bool sus)
 
 	if (!sus) {
 		setName("Substitute");
-		longFunction = SUSSubstitute;
+		//longFunction = SUSSubstitute;
         // formarly could also force this with SustainFunctions parameter
-        maySustain = true;
-        mayConfirm = true;
+        //maySustain = true;
+        // not sure why this was, the whole concept of what might act
+        // as a confirmation needs thought
+        //mayConfirm = true;
         symbol = FuncSubstitute;
 	}
 	else {

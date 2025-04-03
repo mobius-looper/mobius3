@@ -36,6 +36,8 @@ class Symbolizer
     void xmlError(const char* msg, juce::String arg);
     
     void parseFunction(class SymbolTable* symbols, juce::XmlElement* root);
+    bool getOption(juce::XmlElement* root, juce::String& options, const char* opname);
+    
     SymbolLevel parseLevel(juce::String lname);
 
     void parseParameterScope(class SymbolTable* symbols, juce::XmlElement* root);

@@ -66,7 +66,7 @@ class Function : public SystemConstant {
 	bool thresholdEnabled;		// valid in Threshold mode
 	bool cancelReturn;			// cancels a return transition
 	bool runsWithoutAudio;	    // function meaningful even if no audio device
-    bool noFocusLock = false;
+    //bool noFocusLock = false;
 	bool scriptSync;			// true if scripts always wait for completion
 	bool scriptOnly;			// true if callable only from scripts
 
@@ -209,8 +209,8 @@ class Function : public SystemConstant {
 
 	virtual void invoke(class Action* action, class Mobius* l);
 	virtual class Event* invoke(class Action* action, class Loop* l);
-    virtual void invokeLong(class Action* action, Mobius* m);
-    virtual void invokeLong(class Action* action, Loop* l);
+    //virtual void invokeLong(class Action* action, Mobius* m);
+    //virtual void invokeLong(class Action* action, Loop* l);
 	virtual void invokeEvent(Loop* l, Event* e);
 
 	virtual Event* scheduleEvent(class Action* action, class Loop* l);

@@ -224,7 +224,7 @@ Function* ResumeScript = &ResumeScriptObj;
 ResumeScriptFunction::ResumeScriptFunction() :
     Function("ResumeScript")
 {
-	noFocusLock = true;
+	//noFocusLock = true;
 
     // until this does something inteesting, keep it out of the binding windows
     scriptOnly = true;
@@ -264,7 +264,7 @@ ReloadScriptsFunction::ReloadScriptsFunction() :
     Function("ReloadScripts")
 {
     global = true;
-	noFocusLock = true;
+	//noFocusLock = true;
     runsWithoutAudio = true;
 }
 

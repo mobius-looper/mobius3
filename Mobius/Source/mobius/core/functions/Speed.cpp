@@ -446,9 +446,10 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
 		case SPEED_TOGGLE:
 			setName("SpeedToggle");
             alias1 = "Speed";
-            longFunction = SUSSpeedToggle;
-            maySustain = true;
-            mayConfirm = true;
+            //longFunction = SUSSpeedToggle;
+            //maySustain = true;
+            // why the hell was this ever a mayConfirm?
+            //mayConfirm = true;
             symbol = FuncSpeedToggle;
 			break;
         case SPEED_SUS_TOGGLE:

@@ -402,7 +402,9 @@ bool Function::isScript()
  */
 bool Function::isSustainable()
 {
-	return (sustain || maySustain || longPressable || longFunction != nullptr);
+    // new: lobotimized long press handling down here
+	// return (sustain || maySustain || longPressable || longFunction != nullptr);
+	return (sustain || maySustain);
 }
 
 /**
@@ -965,6 +967,7 @@ Event* Function::scheduleTransfer(Loop* l)
 /**
  * Default long press handler for global functions.
  */
+#if 0
 void Function::invokeLong(Action* action, Mobius* m)
 {
     (void)action;
@@ -981,6 +984,7 @@ void Function::invokeLong(Action* action, Loop* l)
 	// TODO: If this is a long-pressable function, can emit
 	// a temorary message to indiciate the mode transition
 }
+#endif
 
 /**
  * Reschedule a function start event that had been previously scheduled.

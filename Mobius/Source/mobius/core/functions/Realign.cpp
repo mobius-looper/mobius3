@@ -270,7 +270,7 @@ DriftCorrectFunction::DriftCorrectFunction() :
     Function("DriftCorrect")
 {
     global = true;
-	noFocusLock = true;
+	//noFocusLock = true;
     scriptOnly = true;
 }
 

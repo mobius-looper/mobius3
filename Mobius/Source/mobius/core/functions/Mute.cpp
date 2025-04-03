@@ -144,7 +144,7 @@ class MuteFunction : public Function {
     MuteFunction(bool stop);
     void invoke(Action* action, Mobius* m);
     Event* invoke(Action* action, Loop* l);
-    void invokeLong(Action* action, Loop* l);
+    //void invokeLong(Action* action, Loop* l);
 	Event* scheduleEvent(Action* action, Loop* l);
 	Event* rescheduleEvent(Loop* l, Event* prev, Event* next);
 	void prepareJump(Loop* l, Event* e, JumpContext* jump);
@@ -244,7 +244,7 @@ MuteFunction::MuteFunction(bool pause, bool sus, bool start, bool glob,
 
 	// don't need all combinations, but could have
 	if (global) {
-		noFocusLock = true;
+		//noFocusLock = true;
 		if (mPause) {
 			setName("GlobalPause");
             symbol = FuncGlobalPause;
@@ -265,7 +265,7 @@ MuteFunction::MuteFunction(bool pause, bool sus, bool start, bool glob,
 		}
 		else {
 			setName("Pause");
-			longFunction = SUSPause;
+			//longFunction = SUSPause;
             symbol = FuncPause;
 		}
 	}
@@ -281,7 +281,7 @@ MuteFunction::MuteFunction(bool pause, bool sus, bool start, bool glob,
 		// to force MuteMode=Continuous, the only way for Loop to know
 		// that is to pass down the longPress status in Action
 		// and Event
-		longFunction = SUSMute;
+		//longFunction = SUSMute;
 
 		// On switch, if loop is not empty, enter mute.
 		// If loop is empty, LoopCopy=Sound then mute.
@@ -541,11 +541,13 @@ void MuteFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 /**
  * TODO: Long-Mute is supposed to become SUSMultiply
  */
+#if 0
 void MuteFunction::invokeLong(Action* action, Loop* l)
 {
     (void)action;
     (void)l;
 }
+#endif
 
 /**
  * Mute event handler.

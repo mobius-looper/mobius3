@@ -413,7 +413,7 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
         p->groups = groups;
         groups = newGroups;
     }
-    
+
     // immediately give the Session a SymbolTable so it can support the
     // SymbolId interfaces everyone wants
     session->setSymbols(container->getSymbols());
@@ -429,6 +429,14 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     // it's going to do it all over again when we call loadSession
     // have TrackManager defer refreshing vault groups until loadSession
     mTracks->refresh(groups);
+    
+    if (p->globalReset) {
+        // this is normally set for ReloadSession that loads a session
+        // but also wants an unconditional GR along with it
+        // since it's hard to feed that in to the session loading process
+        // do it up front, easiest way is to pretent we got an action
+        mTracks->globalReset();
+    }
     
     // this will do the second call to core to configureTracks where
     // most of the excitment happens

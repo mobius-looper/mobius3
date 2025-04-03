@@ -110,7 +110,7 @@ class OverdubFunction : public Function {
 	bool isSustain();
 	Event* scheduleEvent(Action* action, Loop* l);
 	void doEvent(Loop* l, Event* e);
-    void invokeLong(Action* action, Loop* l);
+    //void invokeLong(Action* action, Loop* l);
   private:
 	bool toggle;
 	bool off;
@@ -172,9 +172,9 @@ OverdubFunction::OverdubFunction(bool sus, bool tog, bool turnOff)
 	}
 	else {
 		setName("Overdub");
-		longFunction = SUSOverdub;
+		//longFunction = SUSOverdub;
         // formerly sustain controlled by the SustainFunctions parameter
-        maySustain = true;
+        //maySustain = true;
         symbol = FuncOverdub;
 	}
 }
@@ -267,11 +267,13 @@ void OverdubFunction::doEvent(Loop* loop, Event* event)
 /**
  * TODO: Long-Overdub is supposed to become SUSOverdub
  */
+#if 0
 void OverdubFunction::invokeLong(Action* action, Loop* l)
 {
     (void)action;
     (void)l;
 }
+#endif
 
 /****************************************************************************/
 /****************************************************************************/

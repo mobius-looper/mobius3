@@ -439,12 +439,12 @@ void ParameterVault::unbind(SymbolId id)
  * If parameter reset is enabled, it then uses the "resetRetain" option on each
  * symbol to determine whether or not to reset it.
  */
-void ParameterVault::resetLocal()
+void ParameterVault::resetLocal(bool force)
 {
     // interesting that resetMode can itself have a local binding, may not want that
     ResetFunctionBehavior mode = (ResetFunctionBehavior)getOrdinal(ParamResetMode);
     
-    if (mode == ResetFunctionAll) {
+    if (mode == ResetFunctionAll || force) {
         for (int i = 0 ; i < localOrdinals.size() ; i++) {
 
             Symbol* s = symbols->getParameterWithIndex(i);
@@ -452,7 +452,7 @@ void ParameterVault::resetLocal()
                 // not supposed to happen, leave it alone I guess
                 Trace(1, "ParameterVault: Symbol lookup by index hosed");
             }
-            else if (!s->parameterProperties->resetRetain) {
+            else if (!s->parameterProperties->resetRetain || force) {
                 localOrdinals.set(i, -1);
             }
         }
@@ -501,42 +501,6 @@ int ParameterVault::getOrdinal(Symbol* s)
         }
     }
     return ordinal;
-}
-
-bool ParameterVault::doQuery(Query* q)
-{
-    int ordinal = getOrdinal(q->symbol);
-
-    // LogicalTrack used to have special handl\ing for these, was that necessary?
-    // this extra verification shold not be necessary if refresh() did it's job
-    // check this for awhile but take out eventually
-    switch (q->symbol->id) {
-        case ParamTrackOverlay: {
-            int other = 0;
-            if (trackOverlay != nullptr)
-              other = trackOverlay->number;
-            if (other != ordinal)
-              Trace(1, "ParameterVault: Mismatched track overlay ordinal on Query");
-        }
-            break;
-            
-        case ParamSessionOverlay: {
-            int other = 0;
-            if (sessionOverlay != nullptr)
-              other = sessionOverlay->number;
-            if (other != ordinal)
-              Trace(1, "ParameterVault: Mismatched session overlay ordinal on Query");
-        }
-            break;
-
-        default: break;
-    }
-
-    q->value = ordinal;
-
-    // todo: should be checking whether the symbol in the query was in fact
-    // something that can be managed by a track, that is, not a global
-    return true;
 }
 
 //////////////////////////////////////////////////////////////////////

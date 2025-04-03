@@ -39,7 +39,6 @@ class BaseTrack
     virtual void doAction(class UIAction* a) = 0;
 
     // and you can ask them their secrets
-    // todo: should be removed
     virtual bool doQuery(class Query* q) = 0;
 
     // they are voracious consumers of audio

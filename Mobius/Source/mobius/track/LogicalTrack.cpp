@@ -125,7 +125,7 @@ void LogicalTrack::prepareParameters()
     vault.refresh(sessionTrack->getSession(), sessionTrack,
                   manager->getParameterSets(), manager->getGroupDefinitions());
 
-    cacheParameters(false, false);
+    cacheParameters(false, false, false);
 }
 
 /**
@@ -179,7 +179,7 @@ void LogicalTrack::refresh(ParameterSets* sets)
 {
     vault.refresh(sets);
     // changing overlays can have a dramatic impact on parameters
-    cacheParameters(false, false);
+    cacheParameters(false, false, false);
 }
 
 void LogicalTrack::refresh(GroupDefinitions* groups)
@@ -205,11 +205,11 @@ void LogicalTrack::refresh(GroupDefinitions* groups)
  * if this is the result of a TrackReset or GlobalReset.  Most parameters return
  * to their session values on reset, except for a few that had the "reset retain" option.
  */
-void LogicalTrack::cacheParameters(bool reset, bool global)
+void LogicalTrack::cacheParameters(bool reset, bool global, bool forceAll)
 {
     // todo: needs lots of work
     if (reset)
-      vault.resetLocal();
+      vault.resetLocal(forceAll);
     
     syncSource = (SyncSource)(vault.getOrdinal(ParamSyncSource));
     syncSourceAlternate = (SyncSourceAlternate)(vault.getOrdinal(ParamSyncSourceAlternate));
@@ -584,6 +584,27 @@ void LogicalTrack::refreshFocusedState(FocusedTrackState* state)
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Force a GR prior to loading a session.
+ *
+ * The entire Mobius core will already have been reset, so
+ * we only need to deal with state local to the LogicalTrack
+ * and pass it to non-audio tracks.
+ */
+void LogicalTrack::globalReset()
+{
+    resetSyncState();
+    cacheParameters(true, true, true);
+    // this one is all fucked up and needs to be redesigned
+    // See commentary in TrackManager::doGlobal
+    if (trackType != Session::TypeAudio) {
+        // only way to ask for this is to simulate an action
+        UIAction a;
+        a.symbol = symbols->getSymbol(FuncGlobalReset);
+        track->doAction(&a);
+    }
+}
+
+/**
  * A few functions are intercepted here, most are passed along to the BaseTrack.
  *
  * Parameters are entirely handled here, BaseTracks are informed only if they wish
@@ -598,7 +619,7 @@ void LogicalTrack::doAction(UIAction* a)
     if (sid == FuncTrackReset || sid == FuncGlobalReset) {
         bool global = sid == FuncGlobalReset;
         resetSyncState();
-        cacheParameters(true, global);
+        cacheParameters(true, global, false);
         if (global) {
             // this one is all fucked up and needs to be redesigned
             // See commentary in TrackManager::doGlobal
@@ -621,7 +642,7 @@ void LogicalTrack::doAction(UIAction* a)
         if (a->symbol->name.startsWith(Symbol::ActivationPrefixOverlay)) {
             vault.doAction(a);
             // assuming this succeeded, need to recache parameters
-            cacheParameters(false, false);
+            cacheParameters(false, false, false);
         }
         else {
             Trace(1, "LogicalTrack: Received unsupported activation prefix %s",
@@ -711,7 +732,7 @@ void LogicalTrack::doParameter(UIAction* a)
         case ParamSessionOverlay:
         case ParamTrackOverlay:
             // if the overlays changed, everything needs to be refreshed
-            cacheParameters(false, false);
+            cacheParameters(false, false, false);
             break;
             
         default: {
@@ -872,12 +893,21 @@ int LogicalTrack::parseGroupActionArgument(GroupDefinitions* groups, const char*
  */
 bool LogicalTrack::doQuery(Query* q)
 {
-    q->value = getParameterOrdinal(q->symbol->id);
+    q->value = getParameterOrdinal(q->symbol);
+
+    // todo: eventually Query should be able to ask for things that
+    // are not parameters, this should be the way you ask for internal "variables"
+    // that are not defined in the session and can't be set
 
     // assuming we're at the end of the query probe chain and don't
     // have to bother with returning if this was actually a relevant
     // parameter  or not
     return true;
+}
+
+int LogicalTrack::getParameterOrdinal(SymbolId sid)
+{
+    return getParameterOrdinal(symbols->getSymbol(sid));
 }
 
 /**
@@ -894,21 +924,16 @@ bool LogicalTrack::doQuery(Query* q)
  * The parameter values are actually stored in the ParameterVault which not
  * directly accessible.
  */
-int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
+int LogicalTrack::getParameterOrdinal(Symbol* s)
 {
-    Symbol* s = symbols->getSymbol(symbolId);
     int ordinal = 0;
 
-    if (s == nullptr) {
-        Trace(1, "LogicalTrack: Unmapped symbol id %d", symbolId);
-    }
-    else if (s->parameterProperties == nullptr) {
+    if (s->parameterProperties == nullptr) {
         Trace(1, "LogicalTrack: Symbol %s is not a parameter", s->getName());
     }
     else {
-
         bool special = true;
-        switch (symbolId) {
+        switch (s->id) {
 
             // latencies are not in the Session and won't be handled
             // by the vault, they come from SystemConfig or are derived

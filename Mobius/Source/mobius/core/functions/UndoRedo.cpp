@@ -87,7 +87,7 @@ class UndoFunction : public Function {
 	UndoFunction(bool dynamic, bool shortpress, bool only);
 	Event* scheduleEvent(Action* action, Loop* l);
  	Event* scheduleSwitchStack(Action* action, Loop* l);
-    void invokeLong(Action* action, Loop* l);
+    //void invokeLong(Action* action, Loop* l);
     void doEvent(Loop* l, Event* e);
   private:
 	bool mDynamic;
@@ -248,11 +248,13 @@ Event* UndoFunction::scheduleSwitchStack(Action* action, Loop* l)
  * opposite of what is in MuteMode.
  * 
  */
+#if 0
 void UndoFunction::invokeLong(Action* action, Loop* l)
 {
     (void)action;
     (void)l;
 }
+#endif
 
 /**
  * RedoEvent event handler.

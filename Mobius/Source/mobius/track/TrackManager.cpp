@@ -104,6 +104,20 @@ void TrackManager::refresh(ParameterSets* sets)
 #endif
 
 /**
+ * Force a full GR prior to load (or reloading) a Session.
+ * This is not subject to the resetMode parameter or the resetRetain options.
+ */
+void TrackManager::globalReset()
+{
+    // audio tracks are done in bulk, along with some other state managed by Mobius
+    audioEngine->globalReset(nullptr);
+
+    // reset parameters and caches in all tracks and make MidiTrack do a GR
+    for (auto track : tracks)
+      track->globalReset();
+}
+
+/**
  * Reconfigure the LogicalTracks based on the session.
  *
  * The Session is expected to have been normalized with audioCount and midiCount

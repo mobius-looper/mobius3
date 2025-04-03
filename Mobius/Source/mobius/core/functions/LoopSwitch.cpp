@@ -207,7 +207,7 @@ class LoopTriggerFunction : public ReplicatedFunction {
 	Event* invoke(Action* action, Loop* l);
     Event* scheduleEvent(Action* action, Loop* l);
     bool isMuteCancel(Loop * l);
-    void invokeLong(Action* action, Loop* l);
+    //void invokeLong(Action* action, Loop* l);
     void doEvent(Loop* l, Event* e);
     void undoEvent(Loop* l, Event* e);
     void confirmEvent(Action* action, Loop* l, Event* e, long frame);
@@ -328,7 +328,7 @@ LoopTriggerFunction::LoopTriggerFunction(int i, bool sus, bool relative)
 		//setName("Loop");
         setName("SelectLoop");
         alias1 = "Loop";
-        maySustain = false;
+        //maySustain = false;
         symbol = FuncSelectLoop;
 	}
 	else {
@@ -1141,11 +1141,13 @@ Event* LoopTriggerFunction::promoteSUSReturn(Action* action,
  * TODO: EDP resets the triggered loop (unless SwitchDuration=Sustain).
  * Is this true for NextLoop?  Could convert to SUSNextLoop
  */
+#if 0
 void LoopTriggerFunction::invokeLong(Action* action, Loop* l)
 {
     (void)action;
     (void)l;
 }
+#endif
 
 /****************************************************************************
  *                                                                          *

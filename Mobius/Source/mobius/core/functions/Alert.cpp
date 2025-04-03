@@ -26,7 +26,6 @@ AlertFunction::AlertFunction()
 {
     setName("Alert");
 	global = true;
-	noFocusLock = true;
     scriptOnly = true;
 }
 

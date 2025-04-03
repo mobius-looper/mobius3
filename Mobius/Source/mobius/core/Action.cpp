@@ -47,7 +47,7 @@ void Action::init()
     triggerValue = 0;
     triggerOffset = 0;
     down = false;
-    longPress = false;
+    //longPress = false;
     
     // Target, Scope
     type = nullptr;
@@ -177,7 +177,7 @@ void Action::clone(Action* src)
     triggerValue = src->triggerValue;
     triggerOffset = src->triggerOffset;
     down = src->down;
-    longPress = src->longPress;
+    //longPress = src->longPress;
     
     // Target, Scope
     // take the private target if we have one

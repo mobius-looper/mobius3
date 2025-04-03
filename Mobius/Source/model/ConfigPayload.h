@@ -19,6 +19,10 @@ class ConfigPayload
     class Session* session = nullptr;
     class ParameterSets* parameters = nullptr;
     class GroupDefinitions* groups = nullptr;
+
+    // when true, this means that in addition to load (reloading) the
+    // session it should do a full unconditional GlobalReset
+    bool globalReset = false;
     
     // this may be where FunctionProperties need to live too
 

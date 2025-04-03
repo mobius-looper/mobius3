@@ -6203,13 +6203,17 @@ void Loop::trackCopySound(Track* src)
         // why not do this for trackCopyTiming?
         // !! do we really want this, what if they preset the controls
         // for some effect?
+
+        // new: BaseTracks are no longer allowed to set parmeters as a side effect of things
+        // without informing the LogicalTrack
+        // this was debatable anyway, and if you want this back, do it at a higher level
+#if 0        
 		mTrack->setInputLevel(src->getInputLevel());
 		mTrack->setOutputLevel(src->getOutputLevel());
 		mTrack->setFeedback(src->getFeedback());
 		mTrack->setAltFeedback(src->getAltFeedback());
 		mTrack->setPan(src->getPan());
-
-		// what about group and focus lock?
+#endif
 		// what about pitch, rate, and direction?
         // !! should this be a special Synchronizer callback like loopSwitch?
 		mSynchronizer->loopResize(this, false);

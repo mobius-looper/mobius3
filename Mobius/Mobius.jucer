@@ -983,9 +983,6 @@
           <FILE id="mydA6m" name="Synchronizer.h" compile="0" resource="0" file="Source/mobius/core/Synchronizer.h"/>
           <FILE id="U54Yyx" name="Track.cpp" compile="1" resource="0" file="Source/mobius/core/Track.cpp"/>
           <FILE id="Pk3xfB" name="Track.h" compile="0" resource="0" file="Source/mobius/core/Track.h"/>
-          <FILE id="eAJ65C" name="TriggerState.cpp" compile="1" resource="0"
-                file="Source/mobius/core/TriggerState.cpp"/>
-          <FILE id="sLafRe" name="TriggerState.h" compile="0" resource="0" file="Source/mobius/core/TriggerState.h"/>
           <FILE id="e5tfsC" name="Variable.cpp" compile="1" resource="0" file="Source/mobius/core/Variable.cpp"/>
           <FILE id="knqe8D" name="Variable.h" compile="0" resource="0" file="Source/mobius/core/Variable.h"/>
         </GROUP>

@@ -216,7 +216,7 @@ class Action {
     int triggerValue;
 	int triggerOffset;
 	bool down;
-	bool longPress;
+	//bool longPress;
 
     // UIAction had this but it shouldn't be necessary in core
     //bool passOscArg;

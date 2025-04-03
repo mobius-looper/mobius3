@@ -134,7 +134,7 @@ class ReversePlayEventType : public EventType {
     virtual ~ReversePlayEventType() {}
 	ReversePlayEventType();
 	void invoke(Loop* l, Event* e);
-    void invokeLong(Action* action, Loop* l);
+    //void invokeLong(Action* action, Loop* l);
 	void undo(Loop* l, Event* e);
 };
 
@@ -169,7 +169,7 @@ class ReverseFunction : public Function {
 	Event* scheduleSwitchStack(Action* action, Loop* l);
     Event* scheduleTransfer(Loop* l);
 	void prepareJump(Loop* l, Event* e, JumpContext* jump);
-    void invokeLong(Action* action, Loop* l);
+    //void invokeLong(Action* action, Loop* l);
     void doEvent(Loop* loop, Event* event);
   private:
     long reverseFrame(Loop* l, long frame);
@@ -220,9 +220,9 @@ ReverseFunction::ReverseFunction(bool sus, bool tog, bool fwd)
 	}
 	else {
 		setName("Reverse");
-		longFunction = SUSReverse;
+		//longFunction = SUSReverse;
         // formerly could also force this with SustainFunctions preset parameter
-        maySustain = true;
+        //maySustain = true;
         mayConfirm = true;
         symbol = FuncReverse;
 	}
@@ -397,11 +397,13 @@ void ReverseFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 /**
  * Long-Reverse is supposed to become SUSReverse
  */
+#if 0
 void ReverseFunction::invokeLong(Action* action, Loop* l)
 {
     (void)action;
     (void)l;
 }
+#endif
 
 /**
  * ReverseEvent event handler.

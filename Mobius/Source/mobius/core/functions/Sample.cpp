@@ -39,7 +39,7 @@ Function* CoreSamplePlay = &CoreSamplePlayObj;
 SampleFunction::SampleFunction()
 {
 	global = true;
-	noFocusLock = true;
+	//noFocusLock = true;
 
     setName("Sample");
     scriptOnly = true;

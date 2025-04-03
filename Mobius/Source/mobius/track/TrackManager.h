@@ -50,7 +50,8 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void refresh(class GroupDefinitions* groups);
     void refresh(class ParameterSets* sets);
     void loadSession(class Session* s);
-
+    void globalReset();
+    
     class LogicalTrack* getLogicalTrack(int number);
 
     //class GroupDefinitions* getGroupDefinitions();

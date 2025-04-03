@@ -67,7 +67,7 @@ BounceFunction::BounceFunction() :
 {
 	// this is not a "global" function, since we try to schedule events
 	// in the current track
-	noFocusLock = true;
+	//noFocusLock = true;
 	quantized = true;
 	eventType = BounceEvent;
 

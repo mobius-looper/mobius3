@@ -17,7 +17,7 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="AutoRecord" sustainable='true' longHelp='Long press becomes Reset'
             mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="Backward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
-  <Function name="Bounce" tree='Recording' hidden='true'/>
+  <Function name="Bounce" tree='Recording' options='noFocus' hidden='true'/>
   <!-- this one needs work before it can be visible -->
   <Function name="Checkpoint" mayFocus='true' mayCancelMute='true' tree='Utility' hidden='true'/>
 
@@ -46,8 +46,9 @@ Once those models are fully converted, these symbols can be removed.
             argumentHelp="Loop Number: 1-8"/>
 
   <!-- figure out what these do, replaced by Transport? -->
-  <Function name="MidiStart" tree='Sync' hidden='true'/>
-  <Function name="MidiStop" tree='Sync' hidden='true'/>
+  <Function name="MidiStart" tree='Sync' options='noFocus' hidden='true'/>
+  <Function name="MuteMidiStart" options='noFocus' hidden='true'/>
+  <Function name="MidiStop" tree='Sync' options='noFocus' hidden='true'/>
   
   <Function name="Move" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="Multiply" longPressable='true' mayFocus='true' mayCancelMute='true' tree='Editing'/>
@@ -55,7 +56,6 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="Mute" mayFocus='true' tree='Track'/>
   <!-- core has this as a mayCancelMute, why? -->
   <Function name="MuteRealign" mayFocus='true' tree='Track'/>
-  <Function name="MuteMidiStart" tree='MIDI'/>
   <Function name="NextLoop" mayFocus='true' mayCancelMute='true' tree='Switch'/>
   <Function name="NextTrack" tree='Track'/>
   <Function name="Overdub" mayFocus='true' mayCancelMute='true' tree='Editing'/>
@@ -128,8 +128,8 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="SelectTrack"
             argumentHelp="Track Number: 1-16" tree='Track'/>
   
-  <Function name="TrackCopy" tree='Track'/>
-  <Function name="TrackCopyTiming" tree='Track'/>
+  <Function name="TrackCopy" options='noFocus' tree='Track'/>
+  <Function name="TrackCopyTiming" options='noFocus' tree='Track'/>
   <!-- this was marked sustainable for awhile, I think at one time a longPress of this
        would remove the group assignment, it doesn't any more but that's interesting  -->
   <Function name="TrackGroup" mayFocus='true' tree='Track'/>

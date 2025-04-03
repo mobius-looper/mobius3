@@ -1300,7 +1300,7 @@ void Supervisor::sendInitialConfiguration()
  * Don't need to include ParameterSets and GroupDefinitions, those
  * are sent independently.
  */
-void Supervisor::sendModifiedSession()
+void Supervisor::sendModifiedSession(bool globalReset)
 {
     Session* ses = getSession();
 
@@ -1311,6 +1311,7 @@ void Supervisor::sendModifiedSession()
     // make a payload
     ConfigPayload* payload = new ConfigPayload();
     payload->session = new Session(ses);
+    payload->globalReset = globalReset;
     
     mobius->reconfigure(payload);
 }
@@ -1527,7 +1528,7 @@ void Supervisor::loadSession(Session* neu)
     propagateConfiguration();
 
     // send it down to the engine
-    sendModifiedSession();
+    sendModifiedSession(false);
 }
 
 /**
@@ -1628,7 +1629,7 @@ void Supervisor::sessionEditorSave()
     propagateConfiguration();
 
     // send it down to the engine
-    sendModifiedSession();
+    sendModifiedSession(false);
 
     // don't need to do this since bindings haven't changed
     //configureBindings();
@@ -2352,16 +2353,24 @@ void Supervisor::menuLoadSession(int ordinal)
     }
 }
 
+/**
+ * What "reload" means needs more thought
+ * If the session has been modified but not saved, then this could
+ * mean throwing away the changes (track content, transient parameters)
+ * and reloading it fresh from disk.
+ *
+ * If the session is up to date relateive to the disk, the it should mean
+ * to reset all content and parameters to what it would be if this ssession
+ * was loaded for the first time.
+ */
 void Supervisor::menuReloadSession()
 {
-    // until we can do things that modify parts of the UI
-    // we don't need to actually reload it, just send it back
-    // down to the engine as if it had been edited
-
-    // propagate config changes to other components
+    // nothing in the UI right now needs propagation
     //propagateConfiguration();
-    
-    sendModifiedSession();
+
+    // the globalReset flag is passed in the ConfigPayload to cause
+    // a full content/parameter reset
+    sendModifiedSession(true);
 }
 
 /**

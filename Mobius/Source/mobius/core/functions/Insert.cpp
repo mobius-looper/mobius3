@@ -126,7 +126,7 @@ class InsertFunction : public Function {
 	InsertFunction(bool sus, bool unrounded);
 	bool isSustain();
 	Event* invoke(Action* action, Loop* l);
-    void invokeLong(Action* action, Loop* l);
+    //void invokeLong(Action* action, Loop* l);
 	Event* scheduleEvent(Action* action, Loop* l);
 	void prepareJump(Loop* l, Event* e, JumpContext* jump);
 	void doEvent(Loop* l, Event* e);
@@ -164,7 +164,7 @@ InsertFunction::InsertFunction(bool sus, bool unrounded)
 	if (!sus) {
 		setName("Insert");
         // formerly controlled by SustainFunctions parameter
-        maySustain = true;
+        //maySustain = true;
         symbol = FuncInsert;
 	}
 	else if (unrounded) {
@@ -316,11 +316,13 @@ Event* InsertFunction::scheduleEvent(Action* action, Loop* l)
  * !! If the current mode is Mute, this is supposed to restart the
  * loop, let it play once, then mute again.
  */
+#if 0
 void InsertFunction::invokeLong(Action* action, Loop* l)
 {
     (void)action;
     (void)l;
 }
+#endif
 
 /**
  * This one is more complicated than most because the jump event

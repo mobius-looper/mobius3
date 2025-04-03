@@ -49,8 +49,18 @@ class FunctionProperties
     /**
      * When true, this function may obey focus lock.
      * Whether it does or not is user configurable and the focus flag will be set.
+     *
+     * NEW: I think this is backwards, everything shold default to focus lockable and
+     * have to be turned off, mayFocus just means it is configurable.
      */
     bool mayFocus = false;
+
+    /**
+     * When true, this function will never be used with focus lock.
+     * Assumed when global=true, is this really necessary?
+     * What are the functions that can't do focusLock but are not global?
+     */
+    bool noFocus = false;
     
     /**
      * When true, this function may act as a switch confirmation function.

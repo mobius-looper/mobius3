@@ -506,7 +506,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void resizeSystemState(class Session* s);
 
     void sendInitialConfiguration();
-    void sendModifiedSession();
+    void sendModifiedSession(bool globalReset);
     
     // Listener notification
     void notifyAlertListeners(juce::String msg);

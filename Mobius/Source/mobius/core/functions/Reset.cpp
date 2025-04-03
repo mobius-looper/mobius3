@@ -86,7 +86,7 @@ ResetFunction::ResetFunction(bool gen, bool glob)
 	}
 	else if (glob) {
 		setName("GlobalReset");
-		noFocusLock = true;
+		//noFocusLock = true;
         // new: why the fuck was this never global=true?
         // oh shit, it's the "deferred to audio interrupt shit
         // that should no longer apply but I'm afraid of touching it
@@ -95,7 +95,10 @@ ResetFunction::ResetFunction(bool gen, bool glob)
 	}
 	else {
 		setName("Reset");
-        mayConfirm = true;
+
+        // this was mayConfirm for a time, but that's long gone
+        // the three Resets have too much special meaning
+        //mayConfirm = true;
         symbol = FuncReset;
 	}
 }

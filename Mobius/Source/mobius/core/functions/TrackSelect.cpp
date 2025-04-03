@@ -107,7 +107,7 @@ TrackSelectFunction::TrackSelectFunction(int i, bool relative)
 	eventType = TrackEvent;
 	index = i;
 	replicated = !relative;
-	noFocusLock = true;
+	//noFocusLock = true;
 	activeTrack = true;
 	// set this so we can respond visually to track select even
 	// when there is no audio device pumping interrupts

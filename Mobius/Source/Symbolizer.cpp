@@ -157,14 +157,8 @@ void Symbolizer::parseFunction(SymbolTable* symbols, juce::XmlElement* root)
     else {
         FunctionProperties* func = new FunctionProperties();
         func->global = root->getBoolAttribute("global");
-        func->sustainable = root->getBoolAttribute("sustainable");
-        func->longPressable = root->getBoolAttribute("longPressable");
-        func->mayFocus = root->getBoolAttribute("mayFocus");
-        func->mayConfirm = root->getBoolAttribute("mayConfirm");
-        func->mayCancelMute = root->getBoolAttribute("mayCancelMute");
         func->argumentHelp = root->getStringAttribute("argumentHelp");
         func->sustainHelp = root->getStringAttribute("sustainHelp");
-        func->mayQuantize = root->getBoolAttribute("mayQuantize");
         
         // todo: generalize this into a track type specifier, possibly a csv
         // !! see how parameters do this with track='audio,midi'
@@ -173,6 +167,15 @@ void Symbolizer::parseFunction(SymbolTable* symbols, juce::XmlElement* root)
         // this is how parameters have been doing it, move the others to this
         juce::String options = root->getStringAttribute("options");
         func->noBinding = options.contains("noBinding");
+        func->noFocus = options.contains("noFocus");
+
+        // these used to have explicit attributes but now should have options
+        // support both styles for awhile
+        func->sustainable = getOption(root, options, "sustainable");
+        func->longPressable = getOption(root, options, "longPressable");
+        func->mayConfirm = getOption(root, options, "mayConfirm");
+        func->mayCancelMute = getOption(root, options, "mayCancelMute");
+        func->mayQuantize = getOption(root, options, "mayQuantize");
 
         Symbol* s = symbols->intern(name);
         s->functionProperties.reset(func);
@@ -195,6 +198,14 @@ void Symbolizer::parseFunction(SymbolTable* symbols, juce::XmlElement* root)
         
         // Trace(2, "Symbolizer: Installed function %s\n", name.toUTF8());
     }
+}
+
+bool Symbolizer::getOption(juce::XmlElement* root, juce::String& options, const char* opname)
+{
+    bool haz = options.contains(opname);
+    if (!haz)
+      haz = root->getBoolAttribute(opname);
+    return haz;
 }
 
 void Symbolizer::parseTrackTypes(juce::XmlElement* el, Symbol* s)

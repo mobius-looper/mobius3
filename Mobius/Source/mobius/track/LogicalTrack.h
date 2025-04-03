@@ -43,6 +43,7 @@ class LogicalTrack
     void prepareParameters();
     // this causes the session to be fully loaded and the BaseTracks initialized
     void loadSession();
+    void globalReset();
     void refresh(class ParameterSets* sets);
     void refresh(class GroupDefinitions* groups);
 
@@ -159,6 +160,7 @@ class LogicalTrack
     //////////////////////////////////////////////////////////////////////
 
     int getParameterOrdinal(SymbolId id);
+    int getParameterOrdinal(Symbol* s);
     bool getBoolParameter(SymbolId sid);
     int unbindFeedback();
 
@@ -255,7 +257,7 @@ class LogicalTrack
     bool visited = false;
     bool advanced = false;
 
-    void cacheParameters(bool reset, bool global);
+    void cacheParameters(bool reset, bool global, bool forceAll);
     void doParameter(class UIAction* a);
     void resetParameters();
     

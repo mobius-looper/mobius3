@@ -46,7 +46,7 @@ Function* TrackCopyTiming = &TrackCopyTimingObj;
 TrackCopyFunction::TrackCopyFunction(bool b)
 {
 	timing = b;
-	noFocusLock = true;
+	//noFocusLock = true;
 	activeTrack = true;
 
 	if (timing) {

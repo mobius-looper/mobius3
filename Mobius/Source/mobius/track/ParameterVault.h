@@ -64,7 +64,7 @@ class ParameterVault
     /**
      * Remove all local parameter bindings.
      */
-    void resetLocal();
+    void resetLocal(bool force);
         
     /**
      * Return the ordinal value of a parameter.
@@ -81,11 +81,6 @@ class ParameterVault
     void setOrdinal(class Symbol* s, int ordinal);
     void setOrdinal(SymbolId id, int ordinal);
     
-    /**
-     * Basically the same as getOrdinal depositing the result in the Query.
-     */
-    bool doQuery(class Query* q);
-
     /**
      * Process a parameter action.
      * This will also detect and handle changes to overlays.

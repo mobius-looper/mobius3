@@ -103,7 +103,7 @@ MidiStartFunction::MidiStartFunction(bool isMute, bool isClip)
 {
 	eventType = MidiStartEvent;
 	resetEnabled = true;
-	noFocusLock = true;
+	//noFocusLock = true;
 	mute = isMute;
     clip = isClip;
     
@@ -319,7 +319,7 @@ MidiStopFunction::MidiStopFunction() :
 
 	eventType = MidiStopEvent;
 	resetEnabled = true;
-	noFocusLock = true;
+	//noFocusLock = true;
 	// let it stack for after the switch
 	switchStack = true;
 }

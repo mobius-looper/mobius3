@@ -138,9 +138,9 @@ ReplaceFunction::ReplaceFunction(bool sus)
 	if (!sus) {
 		setName("Replace");
 		// this was not defined in the EDP manual but seems logical
-		longFunction = SUSReplace;
+		//longFunction = SUSReplace;
         // formerly could also force this with SustainFunctions parameter
-        maySustain = true;
+        //maySustain = true;
         mayConfirm = true;
         symbol = FuncReplace;
 	}

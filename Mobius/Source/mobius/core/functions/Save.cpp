@@ -47,7 +47,7 @@ SaveLoopFunction::SaveLoopFunction() :
     Function("SaveLoop")
 {
 	global = true;
-	noFocusLock = true;
+	//noFocusLock = true;
 }
 
 // static Layer* KludgeLayerSave = nullptr;

@@ -93,7 +93,6 @@
 #define ATT_INPUT "input"
 #define ATT_OUTPUT "output"
 #define ATT_PAN "pan"
-#define ATT_FOCUS_LOCK "focusLock"
 #define ATT_DEFERRED_FADE_LEFT "deferredFadeLeft"
 #define ATT_DEFERRED_FADE_RIGHT "deferredFadeRight"
 #define ATT_CONTAINS_DEFERRED_FADE_LEFT "containsDeferredFadeLeft"
@@ -821,8 +820,6 @@ ProjectTrack::ProjectTrack(Project* p, Track* t)
 
 	init();
 
-    //mGroup = t->getGroup();
-	//mFocusLock = t->isFocusLock();
 	mInputLevel = t->getInputLevel();
 	mOutputLevel = t->getOutputLevel();
 	mFeedback = t->getFeedback();
@@ -859,7 +856,6 @@ void ProjectTrack::init()
     mNumber = 0;
 	mActive = false;
     mGroup = 0;
-	mFocusLock = false;
 	mInputLevel = 127;
 	mOutputLevel = 127;
 	mFeedback = 127;
@@ -1060,16 +1056,6 @@ int ProjectTrack::getTimeStretch()
 	return mTimeStretch;
 }
 
-void ProjectTrack::setFocusLock(bool b)
-{
-	mFocusLock = b;
-}
-
-bool ProjectTrack::isFocusLock()
-{
-	return mFocusLock;
-}
-
 void ProjectTrack::add(ProjectLoop* l)
 {
 	if (mLoops == nullptr)
@@ -1141,10 +1127,6 @@ void ProjectTrack::toXml(XmlBuffer* b, bool isTemplate)
 
     b->addAttribute(ATT_ACTIVE, mActive);
 
-    if (mGroup > 0)
-      b->addAttribute(ATT_GROUP, mGroup);
-    b->addAttribute(ATT_FOCUS_LOCK, mFocusLock);
-
     b->addAttribute(ATT_INPUT, mInputLevel);
     b->addAttribute(ATT_OUTPUT, mOutputLevel);
     b->addAttribute(ATT_FEEDBACK, mFeedback);
@@ -1191,8 +1173,6 @@ void ProjectTrack::toXml(XmlBuffer* b, bool isTemplate)
 void ProjectTrack::parseXml(XmlElement* e)
 {
 	setActive(e->getBoolAttribute(ATT_ACTIVE));
-    setGroup(e->getIntAttribute(ATT_GROUP));
-	setFocusLock(e->getBoolAttribute(ATT_FOCUS_LOCK));
 	setInputLevel(e->getIntAttribute(ATT_INPUT));
 	setOutputLevel(e->getIntAttribute(ATT_OUTPUT));
 	setFeedback(e->getIntAttribute(ATT_FEEDBACK));

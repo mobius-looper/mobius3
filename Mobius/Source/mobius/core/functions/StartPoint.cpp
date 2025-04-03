@@ -68,7 +68,7 @@ class StartPointFunction : public Function {
 
   public:
 	StartPointFunction(bool midiop);
-    void invokeLong(Action* action, Loop* l);
+    //void invokeLong(Action* action, Loop* l);
 	Event* scheduleEvent(Action* action, Loop* l);
 	void doEvent(Loop* loop, Event* event);
 	void undoEvent(Loop* loop, Event* event);
@@ -134,7 +134,7 @@ Event* StartPointFunction::scheduleEvent(Action* action, Loop* l)
 
 	return event;
 }
-
+#if 0
 void StartPointFunction::invokeLong(Action* action, Loop* l)
 {
     (void)action;
@@ -164,6 +164,7 @@ void StartPointFunction::invokeLong(Action* action, Loop* l)
 		}
 	}
 }
+#endif
 
 /**
  * Undo handler.

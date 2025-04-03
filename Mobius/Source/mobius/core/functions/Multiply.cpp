@@ -124,7 +124,7 @@ class MultiplyFunction : public Function {
 	bool isSustain();
     Event* invoke(Action* action, Loop* l);
 	Event* scheduleEvent(Action* action, Loop* l);
-    void invokeLong(Action* action, Loop* l);
+    //void invokeLong(Action* action, Loop* l);
     void doEvent(Loop* loop, Event* event);
   private:
 	bool isUnroundedEnding(Function* f);
@@ -159,7 +159,7 @@ MultiplyFunction::MultiplyFunction(bool sus, bool unr)
 
 	if (!sus) {
 		setName("Multiply");
-        maySustain = true;
+        //maySustain = true;
         symbol = FuncMultiply;
 	}
 	else if (unrounded) {
@@ -280,6 +280,7 @@ Event* MultiplyFunction::scheduleEvent(Action* action, Loop* l)
  * to convert it to SUSMultiply.
  * 
  */
+#if 0
 void MultiplyFunction::invokeLong(Action* action, Loop* l)
 {
     (void)action;
@@ -291,6 +292,7 @@ void MultiplyFunction::invokeLong(Action* action, Loop* l)
 		t->getMobius()->resumeScript(t, TrackReset);
     }
 }
+#endif
 
 /****************************************************************************
  *                                                                          *

@@ -285,7 +285,7 @@ class RecordFunction : public Function {
 
 	void doEvent(Loop* loop, Event* event);
 
-    void invokeLong(Action* action, Loop* l);
+    //void invokeLong(Action* action, Loop* l);
 	void prepareSwitch(Loop* l, Event* e, SwitchContext* sc, JumpContext *jc);
 
   private:
@@ -321,14 +321,14 @@ RecordFunction::RecordFunction(bool sus, bool aut)
 	}
 	else if (mAuto) {
 		setName("AutoRecord");
-		longPressable = true;
+		//longPressable = true;
         symbol = FuncAutoRecord;
 	}
 	else {
 		setName("Record");
-		longPressable = true;
+		//longPressable = true;
         // controlled by RecordFunctions parameter
-        maySustain = true;
+        //maySustain = true;
         symbol = FuncRecord;
 	}
 }
@@ -360,6 +360,7 @@ bool RecordFunction::isSustain()
  * of the mDownFunction which is the thing that got us into
  * invokeLong in the first place, so don't mess that up.
  */
+#if 0
 void RecordFunction::invokeLong(Action* action, Loop* l)
 {
     (void)action;
@@ -395,6 +396,7 @@ void RecordFunction::invokeLong(Action* action, Loop* l)
         m->completeAction(a);
 	}
 }
+#endif
 
 /**
  * Schedule a recording event.
@@ -811,7 +813,8 @@ class RehearseFunction : public RecordFunction {
 RehearseFunction::RehearseFunction() : RecordFunction(false, false)
 {
     setName("Rehearse");
-    maySustain = false;
+    // not sure why this was
+    //maySustain = false;
 }
 
 RehearseFunction RehearseObj;

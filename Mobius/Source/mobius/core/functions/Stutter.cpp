@@ -116,9 +116,9 @@ StutterFunction::StutterFunction(bool sus)
 
 	if (!sus) {
 		setName("Stutter");
-		longFunction = SUSStutter;
+		//longFunction = SUSStutter;
         // formerly used SustainFunctions
-        maySustain = true;
+        //maySustain = true;
         symbol = FuncStutter;
 	}
 	else {
