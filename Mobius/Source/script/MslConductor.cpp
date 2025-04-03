@@ -299,10 +299,20 @@ void MslConductor::addSession(MslContext* c, MslSession* s)
     if (c->mslGetContextId() == MslContextShell) {
         s->next = shellSessions;
         shellSessions = s;
+        MslProcess* p = s->process;
+        if (p != nullptr)
+          p->context = MslContextShell;
+        else
+          Trace(1, "MslConductor: Expecting to have an MslProcess by now");
     }
     else {
         s->next = kernelSessions;
         kernelSessions = s;
+        MslProcess* p = s->process;
+        if (p != nullptr)
+          p->context = MslContextKernel;
+        else
+          Trace(1, "MslConductor: Expecting to have an MslProcess by now");
     }
 }
 

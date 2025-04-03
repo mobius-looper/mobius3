@@ -33,7 +33,7 @@ class MslProcess : public MslPooledObject
     MslSessionState state = MslStateNone;
 
     // the context that owns it
-    MslContextId context;
+    MslContextId context = MslContextNone;
 
     // display name for this process, taken from the MslCompilation
     // or MslLinkage

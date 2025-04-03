@@ -23,6 +23,7 @@ void MslProcess::poolInit()
     next = nullptr;
     sessionId = 0;
     state = MslStateNone;
+    //context = MslContextNone;
     strcpy(name, "");
     triggerId = 0;
     session = nullptr;
