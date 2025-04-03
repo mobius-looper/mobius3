@@ -1,0 +1,6 @@
+#name Start/Stop
+
+echo mode
+
+if inPause Play else Stop
+

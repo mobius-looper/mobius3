@@ -134,6 +134,8 @@
     <Button action="Shuffle"/>
     <Button action="Confirm"/>
     <Button action="LoadSession"/>
+    <Button action="Rec/Over/Play"/>
+    <Button action="Start/Stop"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

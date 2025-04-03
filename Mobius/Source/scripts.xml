@@ -63,6 +63,10 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\persistence.msl" name="persistence"
             added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\rec-ov-play.msl" name="Rec/Over/Play"
+            added="1743708672446"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\start-stop.msl" name="Start/Stop"
+            added="1743709510171"/>
     </Files>
   </Machine>
   <Machine name="Loki">

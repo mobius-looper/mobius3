@@ -1,0 +1,8 @@
+#name Rec/Over/Play
+
+case mode {
+  :Reset Record
+  :Record Overdub
+  :Overdub Play
+  :Play Overdub
+}
