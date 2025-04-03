@@ -21,7 +21,7 @@ AboutContent::AboutContent(Supervisor* s)
     product.setText(juce::CharPointer_UTF8("M\xc3\xb6""bius 3 by"), juce::NotificationType::dontSendNotification);
     addAndMakeVisible(product);
 
-    url = juce::URL("http://www.circularlabs.com");
+    url = juce::URL("http://www.mobiuslooper.com");
     hyper.setButtonText("Circular Labs");
     hyper.setURL(url);
     addAndMakeVisible(hyper);
