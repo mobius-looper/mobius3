@@ -140,7 +140,7 @@ class Transport : public SyncAnalyzer
     int loop = 0;
 
     // for FuncTransportTap the time of the last tap
-    int tapStart = 0;
+    juce::uint32 tapStart = 0;
 
     void cacheSessionParameters(bool force);
     void recalculateBeats();

@@ -31,7 +31,7 @@ class Pulse
     SyncUnit unit = SyncUnitBeat;
     
     // system time this pulse was detected, mostly for debugging
-    int millisecond = 0;
+    juce::uint32 millisecond = 0;
 
     // the sample/frame offset into the current audio block where this
     // pulse logically happened
@@ -48,7 +48,7 @@ class Pulse
     // not really a pulse but conveyed as one
     bool stop = false;
 
-    void reset(SyncSource s, int msec) {
+    void reset(SyncSource s, juce::uint32 msec) {
         source = s;
         millisecond = msec;
         blockFrame = 0;

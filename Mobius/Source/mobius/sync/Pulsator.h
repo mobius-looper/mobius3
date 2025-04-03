@@ -54,7 +54,7 @@ class Pulsator
     class BarTender* barTender = nullptr;
 
     // captured during advance
-    int millisecond = 0;
+    juce::uint32 millisecond = 0;
     int blockFrames = 0;
 
     Pulse hostPulse;

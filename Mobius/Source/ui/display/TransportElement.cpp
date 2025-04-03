@@ -316,7 +316,7 @@ void TransportElement::atomButtonPressed(UIAtomButton* b)
             tapStart = juce::Time::getMillisecondCounter();
         }
         else {
-            int tapEnd = juce::Time::getMillisecondCounter();
+            juce::uint32 tapEnd = juce::Time::getMillisecondCounter();
 
             bool tempoMethod = false;
             if (tempoMethod) {
@@ -334,7 +334,7 @@ void TransportElement::atomButtonPressed(UIAtomButton* b)
             else {
                 // length method
                 // mostly just for testing, though this might be useful?
-                int millis = tapEnd - tapStart;
+                juce::uint32 millis = tapEnd - tapStart;
                 UIAction a;
                 a.symbol = provider->getSymbols()->getSymbol(ParamTransportLength);
                 a.value = millis;

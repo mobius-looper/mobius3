@@ -304,7 +304,7 @@ void MidiRealizer::clockThreadAdvance()
         // I starated using this, but web chatter suggests that the HiRes variant
         // can be more accurate.  It returns a float however which complicates things.
         // Explore this someday
-        int now = juce::Time::getMillisecondCounter();
+        juce::uint32 now = juce::Time::getMillisecondCounter();
         if (lastMillisecondCounter == 0) {
             // first time here, one of the pending flags needs to have been set
             // to force it through the pulse reset logic

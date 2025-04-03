@@ -76,17 +76,17 @@ class MslSuspendState
 
     // the system millisecond time this suspension started
     // if this is zero it means the suspension is not active
-    int start = 0;
+    juce::uint32 start = 0;
 
     // the time in miliiseconds to wait between notifications
     // for #suspend this is the length of time the trigger is held
     // before OnSustain is called
     // for #repeeat this is the length of time to wait for further
     // repeat triggers before ending the session and calling OnTimeout
-    int timeout = 0;
+    juce::uint32 timeout = 0;
 
     // the time we reset the timeout
-    int timeoutStart = 0;
+    juce::uint32 timeoutStart = 0;
 
     // the nuber of times OnSustain or OnRepeat have been called
     // this starts at 1 for the first call

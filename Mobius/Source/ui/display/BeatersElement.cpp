@@ -112,7 +112,7 @@ void BeatersElement::paint(juce::Graphics& g)
 
 void BeatersElement::highRefresh(PriorityState* s)
 {
-    int startMsec = juce::Time::getMillisecondCounter();
+    juce::uint32 startMsec = juce::Time::getMillisecondCounter();
     bool anyChanged = false;
     
     if (s->trackLoop) {
@@ -171,7 +171,7 @@ void BeatersElement::highRefresh(PriorityState* s)
  * Called by Beaters to turn us on.
  * Returns true if the graphics state changed.
  */
-bool Beater::start(int now)
+bool Beater::start(juce::uint32 now)
 {
     bool changed = false;
     if (on) {
@@ -194,7 +194,7 @@ bool Beater::start(int now)
  * Called by Beaters every maintenance thread interval.
  * Return true if the light inside us dies.
  */
-bool Beater::tick(int now)
+bool Beater::tick(juce::uint32 now)
 {
     bool changed = false;
     

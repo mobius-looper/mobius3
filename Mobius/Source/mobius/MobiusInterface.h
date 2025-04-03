@@ -372,15 +372,6 @@ class MobiusContainer
     virtual int getBlockSize() = 0;
 
     /**
-     * This is used to monitor run times of internal components,
-     * it is not expected to have any particular base value, just that
-     * it always increments with an accurate milliseond interval.
-     * todo: Doesn't need to be here, but it's used often enough that
-     * it is convenient to package it here in an OS independent way.
-     */
-    virtual int getMillisecondCounter() = 0;
-
-    /**
      * Used in rare cases to synchronously delay for a short time, typically
      * during startup or shutdown while starting and stopping system threads.
      */

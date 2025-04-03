@@ -268,7 +268,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // MobiusContainer
     int getSampleRate() override;
     int getBlockSize() override;
-    int getMillisecondCounter() override;
     void sleep(int millis) override;
     void midiSend(const juce::MidiMessage& msg, int deviceId) override;
     void midiExport(const juce::MidiMessage& msg) override;
@@ -364,8 +363,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     juce::StringArray commandLine;
     bool startPrevented = false;
     char meterName[128];
-    int meterStart = 0;
-    int meterTime = 0;
+    juce::uint32 meterStart = 0;
+    juce::uint32 meterTime = 0;
     bool doMeters = true;
     void meter(const char* name);
 

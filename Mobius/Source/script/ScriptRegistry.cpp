@@ -460,7 +460,7 @@ juce::String ScriptRegistry::renderTime(juce::Time& t)
 
 juce::Time ScriptRegistry::parseTime(juce::String src)
 {
-    return juce::Time(src.getIntValue());
+    return juce::Time(src.getLargeIntValue());
 }
 
 /****************************************************************************/

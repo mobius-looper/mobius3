@@ -70,7 +70,7 @@ class TransportElement : public UIElement, public UIAtomButton::Listener,
     YanPopup popup {this};
     
     int tempoValue = 0;
-    int tapStart = 0;
+    juce::uint32 tapStart = 0;
     int lastBeat = 0;
     int lastBar = 0;
     int lastLoop = 0;

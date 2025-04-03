@@ -284,7 +284,7 @@ void TestDriver::runTest(Symbol* s, juce::String testName)
         BlockNumber = 0;
         if (bypass) {
             waitingId = action.requestId;
-            waitStart = supervisor->getMillisecondCounter();
+            waitStart = juce::Time::getMillisecondCounter();
         }
     }
 }
@@ -345,13 +345,13 @@ void TestDriver::advance()
 {
     if (active) {
         if (waitingId > 0) {
-            int msec = supervisor->getMillisecondCounter();
-            int delta = msec - waitStart;
+            juce::uint32 msec = juce::Time::getMillisecondCounter();
+            juce::uint32 delta = msec - waitStart;
             // wait at most 10 seconds
             // actually this is way to short for larger tests like layertest
             // added the Cancel button to abort the test, so we don't really\
             // need a timeout any more
-            int timeoutSeconds = 60 * 10;
+            juce::uint32 timeoutSeconds = 60 * 10;
             if (delta >= (timeoutSeconds * 1000)) {
                 Trace(1, "TestDriver: Timeout waiting for script %d\n", waitingId);
                 cancel();

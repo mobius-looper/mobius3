@@ -721,7 +721,7 @@ void Transport::userTap()
         tapStart = juce::Time::getMillisecondCounter();
     }
     else {
-        int tapEnd = juce::Time::getMillisecondCounter();
+        juce::uint32 tapEnd = juce::Time::getMillisecondCounter();
 
         bool tempoMethod = false;
         if (tempoMethod) {

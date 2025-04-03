@@ -31,14 +31,14 @@ class Beater : public juce::Component
     }
     
     // the sytem millisecond counter when this beater was turned on
-	int startMsec = 0;
+    juce::uint32 startMsec = 0;
     // the amount of time to decay
-    int decayMsec = 0;
+    juce::uint32 decayMsec = 0;
     // are we on now?
     bool on = false;
 
-    bool start(int now);
-    bool tick(int now);
+    bool start(juce::uint32 now);
+    bool tick(juce::uint32 now);
 
     void paintBeater(juce::Graphics& g);
 

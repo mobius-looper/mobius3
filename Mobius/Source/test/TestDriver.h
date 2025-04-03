@@ -110,7 +110,7 @@ class TestDriver : public MobiusListener, public MobiusAudioListener, public Mob
     // script we're waiting on
     int waitingId = 0;
     // time we started waiting
-    int waitStart = 0;
+    juce::uint32 waitStart = 0;
     // development hack
     int checkMemoryLeak = 0;
     

@@ -670,8 +670,8 @@ MslBinding* MslSession::addSuspensionBindings(MslBinding* start)
         combined = b;
 
         // what is more useful, knowing the start or total elapsed?
-        int now = juce::Time::getMillisecondCounter();
-        int elapsed = now - sustaining.start;
+        juce::uint32 now = juce::Time::getMillisecondCounter();
+        juce::uint32 elapsed = now - sustaining.start;
         b = makeSuspensionBinding("sustainElapsed", elapsed);
         b->next = combined;
         combined = b;
@@ -682,15 +682,15 @@ MslBinding* MslSession::addSuspensionBindings(MslBinding* start)
         b->next = combined;
         combined = b;
 
-        int now = juce::Time::getMillisecondCounter();
-        int elapsed = now - repeating.start;
+        juce::uint32 now = juce::Time::getMillisecondCounter();
+        juce::uint32 elapsed = now - repeating.start;
         b = makeSuspensionBinding("repeatElapsed", elapsed);
         b->next = combined;
         combined = b;
 
         // delta is more interesting for repeats since the user controls the distance
         // between them
-        int delta = now - repeating.timeoutStart;
+        juce::uint32 delta = now - repeating.timeoutStart;
         b = makeSuspensionBinding("repeatDelta", delta);
         b->next = combined;
         combined = b;

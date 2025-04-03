@@ -491,7 +491,7 @@ void Supervisor::addStartupErrors(juce::StringArray src)
 void Supervisor::meter(const char* name)
 {
     if (doMeters) {
-        int now = getMillisecondCounter();
+        juce::uint32 now = juce::Time::getMillisecondCounter();
         if (meterTime > 0) {
             int delta = now - meterTime;
             Trace(2, "Supervisor: meter %s elapsed %d\n",
@@ -505,7 +505,7 @@ void Supervisor::meter(const char* name)
           snprintf(meterName, sizeof(meterName), "%s", name);
         else {
             strcpy(meterName, "");
-            int delta = now - meterStart;
+            juce::uint32 delta = now - meterStart;
             Trace(2, "Supervisor: Total startup time %d\n", delta);
         }
     }
@@ -1777,11 +1777,6 @@ int Supervisor::getBlockSize()
     if (blockSize == 0)
       blockSize = 256;
     return blockSize;
-}
-
-int Supervisor::getMillisecondCounter()
-{
-    return juce::Time::getMillisecondCounter();
 }
 
 /**

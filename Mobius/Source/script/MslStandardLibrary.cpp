@@ -61,6 +61,13 @@ MslValue* MslStandardLibrary::Time(MslSession* s, MslValue* arguments)
 {
     (void)arguments;
     MslValue* v = s->getEnvironment()->allocValue();
+
+    // !!!!!!!!!!!!!
+    // this returns a juce::uint32 which on Macs I often see go negative
+    // if you put that in an int
+    // either MslValue is going to need an unsigned int type, or the consumer
+    // of this is going to have to deal with it
+    
     v->setInt(juce::Time::getMillisecondCounter());
     return v;
 }

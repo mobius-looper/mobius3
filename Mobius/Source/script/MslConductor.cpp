@@ -917,8 +917,8 @@ void MslConductor::ageSuspended(MslContext* c)
  */
 void MslConductor::ageSustain(MslContext* c, MslSession* s, MslSuspendState* state)
 {
-    int now = juce::Time::getMillisecondCounter();
-    int delta = now - state->timeoutStart;
+    juce::uint32 now = juce::Time::getMillisecondCounter();
+    juce::uint32 delta = now - state->timeoutStart;
     if (delta > state->timeout) {
         // bump the counter and re-arm for next time
         state->count++;
@@ -930,8 +930,8 @@ void MslConductor::ageSustain(MslContext* c, MslSession* s, MslSuspendState* sta
 
 void MslConductor::ageRepeat(MslContext* c, MslSession* s, MslSuspendState* state)
 {
-    int now = juce::Time::getMillisecondCounter();
-    int delta = now - state->timeoutStart;
+    juce::uint32 now = juce::Time::getMillisecondCounter();
+    juce::uint32 delta = now - state->timeoutStart;
     if (delta > state->timeout) {
 
         // this doesn't bump the counter or rearm, it means the repeat wait is over

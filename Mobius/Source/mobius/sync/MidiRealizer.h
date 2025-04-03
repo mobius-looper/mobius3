@@ -116,7 +116,7 @@ class MidiRealizer
      * The system millisecond counter on the last advance.
      * Used to calculate how much time elapses between advances.
      */
-    int lastMillisecondCounter = 0;
+    juce::uint32 lastMillisecondCounter = 0;
 
     // flags indicating transport events should be sent on the next advance
     // these are normally set in the audio or UI thread and cleared in the clock thread
@@ -160,12 +160,12 @@ class MidiRealizer
      * Increments each time we send MS_START, 
      * cleared after MS_STOP.
      */
-	int mStarts = 0;
+	//int mStarts = 0;
 
     /**
      * Set at the start of each interrupt, used for timing adjusments.  
      */
-	long mInterruptMsec = 0;
+	//long mInterruptMsec = 0;
 
     /**
      * Flag to suppress warning flood when debugging.
