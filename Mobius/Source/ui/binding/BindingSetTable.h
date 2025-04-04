@@ -45,6 +45,7 @@ class BindingSetTable : public TypicalTable,
     ~BindingSetTable();
 
     void load(class BindingSets* sets);
+    void refresh();
     void reload();
     void clear();
     void cancel();

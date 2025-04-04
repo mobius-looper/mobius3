@@ -38,6 +38,21 @@ void BindingSetContent::cancel()
     hostTable.cancel();
 }
 
+/**
+ * We get this notificiation in a roundabout way when a BindingDetails popup
+ * that edited a single binding was saved.
+ * Refresh the table it came from.
+ */
+void BindingSetContent::bindingSaved()
+{
+    if (midiTable.isVisible())
+      midiTable.refresh();
+    else if (keyTable.isVisible())
+      keyTable.refresh();
+    else if (hostTable.isVisible())
+      hostTable.refresh();
+}
+
 void BindingSetContent::resized()
 {
     tabs.setBounds(getLocalBounds());
@@ -99,9 +114,3 @@ void BindingSetContent::itemDropped (const juce::DragAndDropTarget::SourceDetail
     }
 }
 
-#if 0
-void BindingSetContent::setListener(Listener* l)
-{
-    listener = l;
-}
-#endif

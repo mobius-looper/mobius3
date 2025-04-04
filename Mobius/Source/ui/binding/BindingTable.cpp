@@ -85,6 +85,11 @@ void BindingTable::reload()
     updateContent();
 }
 
+void BindingTable::refresh()
+{
+    updateContent();
+}
+
 void BindingTable::add(Binding* b)
 {
     addBinding(b);
@@ -207,16 +212,59 @@ void BindingTable::yanPopupSelected(YanPopup* src, int id)
     Dialog dialog = (Dialog)id;
     switch (dialog) {
         
-        case DialogEdit:
+        case DialogEdit: {
+            int selected = getSelectedRow();
+            if (selected >= 0) {
+                BindingTableRow* row = bindingRows[selected];
+                if (row != nullptr) {
+                    if (editor != nullptr)
+                      editor->showBinding(row->binding);
+                }
+            }
+        }
             break;
             
-        case DialogDelete:
+        case DialogDelete: {
+            deleteCurrent();
+        }
             break;
             
         case DialogHelp:
             startHelp();
             break;
     }
+}
+
+/**
+ * todo: It might be nice to keep this Binding in on an undo list
+ * so it can be restored if you deleted it accidentally without having
+ * to cancel the entire binding editor and reload it.
+ */
+void BindingTable::deleteCurrent()
+{
+    int selected = getSelectedRow();
+    if (selected >= 0) {
+        BindingTableRow* row = bindingRows[selected];
+        if (row != nullptr) {
+            bindingSet->remove(row->binding);
+            bindingRows.removeObject(row, true);
+            refresh();
+        }
+    }
+}
+
+/**
+ * TableListBoxModel override
+ */
+void BindingTable::deleteKeyPressed(int lastRowSelected)
+{
+    // the use of the words "lastRow" is disturbing, is this ever
+    // different than the current row?
+    int current = getSelectedRow();
+    if (current == lastRowSelected)
+      deleteCurrent();
+    else
+      Trace(1, "BindingTable::deleteKeyPressed row number mismatch");
 }
 
 void BindingTable::startHelp()

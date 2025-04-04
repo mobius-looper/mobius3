@@ -53,3 +53,8 @@ void BindingSet::add(Binding* b)
 {
     bindings.add(b);
 }
+
+void BindingSet::remove(Binding* b)
+{
+    bindings.removeObject(b, true);
+}

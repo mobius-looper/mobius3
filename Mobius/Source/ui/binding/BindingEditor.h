@@ -14,6 +14,7 @@
 
 class BindingEditor : public ConfigEditor,
                       public TypicalTable::Listener,
+                      public BindingDetailsListener,
                       public juce::DragAndDropContainer
 {
   public:
@@ -43,6 +44,7 @@ class BindingEditor : public ConfigEditor,
     void bindingSetTableDelete(juce::StringArray& errors);
 
     void showBinding(class Binding* b);
+    void bindingSaved();
     
   private:
 

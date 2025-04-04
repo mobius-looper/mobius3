@@ -54,6 +54,7 @@ class BindingTable : public TypicalTable,
     ~BindingTable();
 
     void load(class BindingEditor* e, class BindingSet* set, Type type);
+    void refresh();
     void reload();
     void clear();
     void cancel();
@@ -70,6 +71,10 @@ class BindingTable : public TypicalTable,
     
     void yanPopupSelected(YanPopup* src, int id) override;
     void yanDialogClosed(YanDialog* d, int button) override;
+
+    // a TypicalTable/TableListBoxModel override that is called when
+    // the delete key is pressed on a row
+    void deleteKeyPressed(int lastRowSelected) override;
     
   private:
 
@@ -86,6 +91,7 @@ class BindingTable : public TypicalTable,
     void startHelp();
 
     void addBinding(class Binding* b);
+    void deleteCurrent();
 
 };
     

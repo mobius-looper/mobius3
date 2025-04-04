@@ -1180,7 +1180,13 @@ void Supervisor::decacheForms()
 void Supervisor::bindingEditorSave(BindingSets* neu)
 {
     SystemConfig* scon = getSystemConfig();
+
+    // the old binding editor created a new BindingSets object,
+    // the new one edits the BindingSets in side the original
+    // container and returns the same container
+    // SystemConfig needs to deal with that
     scon->setBindings(neu);
+    
     updateSystemConfig();
 
     configureBindings();

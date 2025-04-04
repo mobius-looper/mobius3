@@ -88,6 +88,11 @@ void BindingSetTable::reload()
     updateContent();
 }
 
+void BindingSetTable::refresh()
+{
+    updateContent();
+}
+
 /**
  * This is called by the BindingSetEditor when it saves or cancels.'
  * Forget everything you know since the object we've been editing is

@@ -387,6 +387,10 @@ void SymbolTree::endSearch()
 //
 // Favorites
 //
+// This was an experiment I abandoned.
+// User defined categories with drag and drop or right-click to add
+// to a category is better.
+//
 //////////////////////////////////////////////////////////////////////
 
 juce::String SymbolTree::getFavorites()
@@ -622,6 +626,9 @@ void SymbolTreeItem::paintItem(juce::Graphics& g, int width, int height)
 void SymbolTreeItem::itemClicked(const juce::MouseEvent& e)
 {
     if (e.mods.isRightButtonDown()) {
+        // Favorites never went anywhere, and would need more work if you
+        // ever want it back.  User defined categories is more useful
+#if 0        
         SymbolTree* tree = static_cast<SymbolTree*>(getOwnerView()->getParentComponent());
         juce::PopupMenu menu;
         juce::PopupMenu::Item item ("Favorite");
@@ -631,6 +638,7 @@ void SymbolTreeItem::itemClicked(const juce::MouseEvent& e)
         menu.addItem(item);
         juce::PopupMenu::Options options;
         menu.showMenuAsync(options, [this] (int result) {popupSelection(result);});
+#endif        
     }
     else {
         SymbolTree* tree = static_cast<SymbolTree*>(getOwnerView()->getParentComponent());

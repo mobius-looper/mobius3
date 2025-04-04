@@ -111,6 +111,8 @@ void BindingForms::load(Provider* p, Binding* b)
         triggerForm.setVisible(true);
 
         release.setValue(b->release);
+        arguments.setValue(b->arguments);
+        
         capture.setValue(false);
         captureText.setValue("");
     }

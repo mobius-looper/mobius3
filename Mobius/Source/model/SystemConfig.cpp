@@ -97,7 +97,8 @@ BindingSets* SystemConfig::getBindings()
 
 void SystemConfig::setBindings(BindingSets* sets)
 {
-    bindings.reset(sets);
+    if (sets != bindings.get())
+      bindings.reset(sets);
 }
 
 GroupDefinitions* SystemConfig::getGroups()
@@ -108,7 +109,8 @@ GroupDefinitions* SystemConfig::getGroups()
 
 void SystemConfig::setGroups(GroupDefinitions* newGroups)
 {
-    groups.reset(newGroups);
+    if (newGroups != groups.get())
+      groups.reset(newGroups);
 }
 
 SampleConfig* SystemConfig::getSamples()
@@ -118,7 +120,8 @@ SampleConfig* SystemConfig::getSamples()
 
 void SystemConfig::setSamples(SampleConfig* newSamples)
 {
-    samples.reset(newSamples);
+    if (newSamples != samples.get())
+      samples.reset(newSamples);
 }
 
 /****************************************************************************/

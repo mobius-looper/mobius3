@@ -27,6 +27,10 @@ class BindingForms : public juce::Component, YanCombo::Listener, YanInput::Liste
     
     void resized() override;
 
+    Type getType() {
+        return type;
+    }
+
     // YanField Listeners
     void yanInputChanged(class YanInput* i) override;
     void yanComboSelected(class YanCombo* c, int selection) override;

@@ -24,7 +24,8 @@ class BindingSet
     void toXml(juce::XmlElement* parent);
 
     void add(Binding* b);
-
+    void remove(Binding* b);
+    
     // kludge for the binding selection menu
     int transientMenuId = 0;
     

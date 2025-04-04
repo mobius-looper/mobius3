@@ -121,23 +121,51 @@ void BindingEditor::showBinding(Binding* b)
 {
     (void)b;
 
-    bindingDetails.show(this, b);
+    bindingDetails.show(this, this, b);
     JuceUtil::centerInParent(&bindingDetails);
+}
+
+void BindingEditor::bindingSaved()
+{
+    // jesus fuck, the chain of command here is messy
+    // BindingDetails goes all the way back here for the save notification
+    // and we have to go back down to the content to refresh the table
+    if (currentSet >= 0) {
+        BindingSetContent* current =  contents[currentSet];
+        current->bindingSaved();
+    }
 }
 
 /**
  * Called by the Save button in the footer.
+ *
+ * BindingSetContent uses BindingSetDetails for editing and those
+ * will have been committed by now, or if one was left open it is canceled.
+ * Any changes that were made to existing bindings were left in the
+ * same BindingSet that it was loaded from which we own.
+ *
+ * So the outer Save, just replaces the BindingSets we've been maintaining
+ * in the SystemConfig.
  */
 void BindingEditor::save()
 {
-    // there are no unsaved forms in the BindingSetContent list atm
-
-    // todo: magic stuff
-    
     // make sure dialogs are clean
     setTable->cancel();
     for (auto cont : contents)
       cont->cancel();
+
+    SystemConfig* scon = supervisor->getSystemConfig();
+    BindingSets* master = scon->getBindings();
+
+    master->transfer(bindingSets.get());
+    supervisor->bindingEditorSave(master);
+    
+    
+    bindingSets.reset();
+    revertSets.reset();
+
+    setTable->clear();
+    contents.clear();
 }
 
 /**
@@ -145,12 +173,15 @@ void BindingEditor::save()
  */
 void BindingEditor::cancel()
 {
-    bindingSets.reset();
-    revertSets.reset();
     setTable->clear();
+    
     for (auto cont : contents)
       cont->cancel();
-    setTable->cancel();
+    contents.clear();
+    
+    bindingSets.reset();
+    revertSets.reset();
+    
 }
 
 void BindingEditor::decacheForms()
