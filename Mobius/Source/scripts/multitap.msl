@@ -1,0 +1,19 @@
+#name MainTap 
+#sustain 1200
+#repeat 300
+
+case mode {
+  :Reset Record
+  :Record Overdub
+  :Overdub Play
+  :Mute Play
+  else print("Unhandled mode" mode)
+}
+
+function OnSustain {
+    if sustainCount == 1 Reset
+}
+
+function OnRepeat {
+  if repeatCount == 1 Undo
+}
