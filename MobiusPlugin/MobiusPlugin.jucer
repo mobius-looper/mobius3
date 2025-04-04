@@ -264,6 +264,10 @@
               file="../Mobius/Source/model/VariableDefinition.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
+        <GROUP id="{D901D281-D7D9-189F-CB98-15FD0CED89D7}" name="help">
+          <FILE id="zGhTHt" name="HelpTest.cpp" compile="1" resource="0" file="../Mobius/Source/ui/help/HelpTest.cpp"/>
+          <FILE id="ZJAHQK" name="HelpTest.h" compile="0" resource="0" file="../Mobius/Source/ui/help/HelpTest.h"/>
+        </GROUP>
         <GROUP id="{41C3E134-39FF-7D3E-54EC-2C8184FDAADB}" name="binding">
           <FILE id="JgLreX" name="BindingDetails.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/binding/BindingDetails.cpp"/>

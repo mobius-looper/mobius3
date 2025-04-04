@@ -30,14 +30,17 @@ BindingTable::BindingTable()
     addColumn("Scope", ScopeColumn, 50);
 
     rowPopup.add("Edit...", DialogEdit);
-    rowPopup.add("New...", DialogNew);
     rowPopup.add("Delete...", DialogDelete);
+    rowPopup.add("Help...", DialogHelp);
 
-    emptyPopup.add("New...", DialogNew);
+    emptyPopup.add("Help...", DialogHelp);
 
-    newDialog.setTitle("New Binding");
-    newDialog.setButtons("Ok,Cancel");
+    //newDialog.setTitle("New Binding");
+    //newDialog.setButtons("Ok,Cancel");
 
+    helpDialog.setTitle("Binding Help");
+    helpDialog.setButtons("Ok");
+    
     // add ourselves as a MouseListener to pick up clicks outside the rows
     table.addMouseListener(this, false);
 }
@@ -46,10 +49,11 @@ BindingTable::~BindingTable()
 {
 }
 
-void BindingTable::load(BindingEditor* ed, BindingSet* set)
+void BindingTable::load(BindingEditor* ed, BindingSet* set, Type t)
 {
     editor = ed;
     bindingSet = set;
+    type = t;
     reload();
 }
 
@@ -58,12 +62,40 @@ void BindingTable::reload()
     bindingRows.clear();
 
     for (auto b : bindingSet->getBindings()) {
-        BindingTableRow* row = new BindingTableRow();
-        row->binding = b;
-        bindingRows.add(row);
+
+        if (type == TypeMidi) {
+            if (b->trigger == Binding::TriggerNote ||
+                b->trigger == Binding::TriggerControl ||
+                b->trigger == Binding::TriggerProgram) {
+                addBinding(b);
+            }
+        }
+        else if (type == TypeKey) {
+            if (b->trigger == Binding::TriggerKey) {
+                addBinding(b);
+            }
+        }
+        else if (type == TypeHost) {
+            if (b->trigger == Binding::TriggerHost) {
+                addBinding(b);
+            }
+        }
     }
     
     updateContent();
+}
+
+void BindingTable::add(Binding* b)
+{
+    addBinding(b);
+    updateContent();
+}
+
+void BindingTable::addBinding(Binding* b)
+{
+    BindingTableRow* row = new BindingTableRow();
+    row->binding = b;
+    bindingRows.add(row);
 }
 
 /**
@@ -81,8 +113,9 @@ void BindingTable::cancel()
 {
     clear();
     // make sure all of the dialogs are gone
-    newDialog.cancel();
+    //newDialog.cancel();
     // popups too?
+    helpDialog.cancel();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -177,34 +210,26 @@ void BindingTable::yanPopupSelected(YanPopup* src, int id)
         case DialogEdit:
             break;
             
-        case DialogNew:
-            startNew();
+        case DialogDelete:
             break;
             
-        case DialogDelete:
+        case DialogHelp:
+            startHelp();
             break;
     }
 }
 
-void BindingTable::startNew()
+void BindingTable::startHelp()
 {
-    newDialog.setTitle("Select Binding Type");
-    newDialog.setId(DialogNew);
-    newDialog.show(getParentComponent());
+    helpDialog.setTitle("Binding Table Help");
+    helpDialog.setId(DialogHelp);
+    helpDialog.show(getParentComponent());
 }
 
 void BindingTable::yanDialogClosed(YanDialog* d, int button)
 {
-    int id = d->getId();
-    switch (id) {
-        case DialogNew: finishNew(button); break;
-    }
-}
-
-void BindingTable::finishNew(int button)
-{
-    if (button == 0) {
-    }
+    (void)d;
+    (void)button;
 }
 
 /****************************************************************************/

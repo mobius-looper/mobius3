@@ -14,6 +14,7 @@
 #include "../JuceUtil.h"
 
 #include "BindingSetTable.h"
+#include "BindingTree.h"
 #include "BindingSetContent.h"
 
 #include "BindingEditor.h"
@@ -24,8 +25,11 @@ BindingEditor::BindingEditor(Supervisor* s) : ConfigEditor(s)
 
     setTable.reset(new BindingSetTable(this));
     addAndMakeVisible(setTable.get());
-
     setTable->setListener(this);
+
+    bindingTree.reset(new BindingTree());
+    bindingTree->setDraggable(true);
+    addAndMakeVisible(bindingTree.get());
 
     addChildComponent(bindingDetails);
 }
@@ -34,8 +38,14 @@ BindingEditor::~BindingEditor()
 {
 }
 
+Provider* BindingEditor::getProvider()
+{
+    return supervisor;
+}
+
 void BindingEditor::prepare()
 {
+    bindingTree->initialize(supervisor);
 }
 
 void BindingEditor::resized()
@@ -43,11 +53,11 @@ void BindingEditor::resized()
     juce::Rectangle<int> area = getLocalBounds();
 
     setTable->setBounds(area.removeFromLeft(200));
+
+    bindingTree->setBounds(area.removeFromLeft(200));
+    
     for (auto c : contents)
       c->setBounds(area);
-    
-    //for (auto tf : treeForms)
-    //tf->setBounds(area);
 }
 
 //////////////////////////////////////////////////////////////////////

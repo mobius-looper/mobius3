@@ -24,6 +24,7 @@
 #include "config/ConfigPanels.h"
 
 #include "binding/NewBindingPanel.h"
+#include "help/HelpTest.h"
 
 #include "PanelFactory.h"
 
@@ -161,9 +162,8 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case MclConsole: panel = new MclPanel(super); break;
         case TraceLog: panel = new TracePanel(super); break;
             
-        case InProgress:
-            panel = new NewBindingPanel(super);
-            break;
+        case InProgress: panel = new NewBindingPanel(super); break;
+        case HelpTest: panel = new HelpPanel(super); break;
             
         default:
             Trace(1, "PanelFactory: Unknown panel id %d\n", id);

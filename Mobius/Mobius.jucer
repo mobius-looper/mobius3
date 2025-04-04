@@ -46,6 +46,13 @@
         <FILE id="wjojNb" name="StereoFieldComponent.h" compile="0" resource="0"
               file="Source/ff_meters/Visualisers/StereoFieldComponent.h"/>
       </GROUP>
+      <GROUP id="{DE6C02BE-BF18-DE6E-DCF1-21AA6574A9B4}" name="tools">
+        <GROUP id="{D2FED10B-2B26-688F-6730-68B3BA50B67B}" name="BarleyML">
+          <FILE id="CGeo7R" name="BarelyML.cpp" compile="1" resource="0" file="Source/tools/BarelyML/BarelyML.cpp"/>
+          <FILE id="POzp8c" name="BarelyML.h" compile="0" resource="0" file="Source/tools/BarelyML/BarelyML.h"/>
+          <FILE id="kBo14s" name="BarelyMLDemo.h" compile="0" resource="0" file="Source/tools/BarelyML/BarelyMLDemo.h"/>
+        </GROUP>
+      </GROUP>
       <GROUP id="{AA148867-8C9E-F915-82DD-CBE33D79A966}" name="util">
         <FILE id="Zkkfco" name="DataModel.cpp" compile="1" resource="0" file="Source/util/DataModel.cpp"/>
         <FILE id="wDfiXs" name="DataModel.h" compile="0" resource="0" file="Source/util/DataModel.h"/>
@@ -205,6 +212,10 @@
               file="Source/model/VariableDefinition.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
+        <GROUP id="{64D3F900-2DA5-8FEC-0485-077BC79C44FA}" name="help">
+          <FILE id="pGHm6c" name="HelpTest.cpp" compile="1" resource="0" file="Source/ui/help/HelpTest.cpp"/>
+          <FILE id="Kk1f2F" name="HelpTest.h" compile="0" resource="0" file="Source/ui/help/HelpTest.h"/>
+        </GROUP>
         <FILE id="xUDDwi" name="SvgIcons.cpp" compile="1" resource="0" file="Source/ui/SvgIcons.cpp"/>
         <FILE id="gasp1K" name="SvgIcons.h" compile="0" resource="0" file="Source/ui/SvgIcons.h"/>
         <GROUP id="{33E7B670-E576-573D-B9BA-7AA3A89A8BB7}" name="binding">
@@ -782,9 +793,6 @@
           <FILE id="dUy6Dl" name="SyncMaster.h" compile="0" resource="0" file="Source/mobius/sync/SyncMaster.h"/>
           <FILE id="f0p3FR" name="SyncTrace.cpp" compile="1" resource="0" file="Source/mobius/sync/SyncTrace.cpp"/>
           <FILE id="E0YtiX" name="SyncTrace.h" compile="0" resource="0" file="Source/mobius/sync/SyncTrace.h"/>
-          <FILE id="XTDaQc" name="TempoMonitor.cpp" compile="1" resource="0"
-                file="Source/mobius/sync/TempoMonitor.cpp"/>
-          <FILE id="KYpJgt" name="TempoMonitor.h" compile="0" resource="0" file="Source/mobius/sync/TempoMonitor.h"/>
           <FILE id="I21MGe" name="TimeSlicer.cpp" compile="1" resource="0" file="Source/mobius/sync/TimeSlicer.cpp"/>
           <FILE id="AVNwTh" name="TimeSlicer.h" compile="0" resource="0" file="Source/mobius/sync/TimeSlicer.h"/>
           <FILE id="DKstkR" name="Transport.cpp" compile="1" resource="0" file="Source/mobius/sync/Transport.cpp"/>

@@ -381,6 +381,10 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::InProgress);
                 break;
                 
+            case MainMenu::HelpTest:
+                panelFactory.show(PanelFactory::HelpTest);
+                break;
+                
             case MainMenu::ScriptEditor:
                 windowFactory.show(WindowFactory::ScriptEditor);
                 break;

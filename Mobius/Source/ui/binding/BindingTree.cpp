@@ -20,6 +20,14 @@ BindingTree::~BindingTree()
 {
 }
 
+/**
+ * Set this if you want items in the tree to be draggable.
+ */
+void BindingTree::setDraggable(bool b)
+{
+    draggable = b;
+}
+
 void BindingTree::selectFirst()
 {
     // If the tree is dynamic and contains hidden items with no children
@@ -104,6 +112,13 @@ void BindingTree::addParameters(Provider* p)
             
                             SymbolTreeItem* param = new SymbolTreeItem(nodename);
                             param->setSymbol(s);
+
+                            if (draggable) {
+                                // for the description, use a prefix so the receiver
+                                // knows where it came from followed by the canonical symbol name
+                                param->setDragDescription(juce::String(DragPrefix) + s->name);
+                            }
+                            
                             category->addSubItem(param);
                         }
                     }
@@ -149,6 +164,12 @@ void BindingTree::addFunctions(Provider* p)
             if (parent != nullptr) {
 
                 SymbolTreeItem* neu = new SymbolTreeItem(symbol->name);
+                neu->setSymbol(symbol);
+                if (draggable) {
+                    // for the description, use a prefix so the receiver
+                    // knows where it came from followed by the canonical symbol name
+                    neu->setDragDescription(juce::String(DragPrefix) + symbol->name);
+                }
 
                 if (symbol->treePath == "") {
                     //parent->addSubItem(neu);

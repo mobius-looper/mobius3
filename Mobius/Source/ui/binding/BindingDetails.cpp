@@ -16,8 +16,12 @@ BindingDetailsPanel::BindingDetailsPanel()
     // this gives it dragability within the entire window since
     // these don't have a title bar
     followContentMouse();
+
+    resetButtons();
+    addButton(&saveButton);
+    addButton(&cancelButton);
         
-    setSize(700, 500);
+    setSize(350,400);
 }
 
 void BindingDetailsPanel::show(juce::Component* parent, Binding* b)
@@ -50,6 +54,19 @@ void BindingDetailsPanel::initialize(Provider* p)
     content.initialize(p);
 }
 
+void BindingDetailsPanel::footerButton(juce::Button* b)
+{
+    if (b == &saveButton) {
+        content.save();
+    }
+    else if (b == &cancelButton) {
+        content.cancel();
+    }
+    
+    if (b == &saveButton || b == &cancelButton)
+      close();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Content
@@ -58,14 +75,14 @@ void BindingDetailsPanel::initialize(Provider* p)
 
 BindingContent::BindingContent()
 {
-    addAndMakeVisible(tree);
+    //addAndMakeVisible(tree);
     addAndMakeVisible(forms);
 }
 
 void BindingContent::initialize(Provider* p)
 {
     provider = p;
-    tree.initialize(p);
+    //tree.initialize(p);
 }
 
 void BindingContent::load(Binding* b)
@@ -73,14 +90,20 @@ void BindingContent::load(Binding* b)
     forms.load(provider, b);
 }
 
+void BindingContent::save()
+{
+}
+
+void BindingContent::cancel()
+{
+}
+
 void BindingContent::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-    tree.setBounds(area.removeFromLeft(300));
+    //tree.setBounds(area.removeFromLeft(300));
     forms.setBounds(area);
 }
-
-
 
 /****************************************************************************/
 /****************************************************************************/

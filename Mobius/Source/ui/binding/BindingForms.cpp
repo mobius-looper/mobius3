@@ -5,6 +5,7 @@
 #include "../../model/Binding.h"
 #include "../../model/GroupDefinition.h"
 #include "../../model/Scope.h"
+#include "../../model/Symbol.h"
 #include "../../Provider.h"
 #include "../MobiusView.h"
 
@@ -14,6 +15,7 @@
 
 BindingForms::BindingForms()
 {
+    title.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(title);
 
     triggerTitle.setText("Trigger", juce::NotificationType::dontSendNotification);
@@ -22,13 +24,13 @@ BindingForms::BindingForms()
     targetTitle.setText("Target", juce::NotificationType::dontSendNotification);
     addAndMakeVisible(targetTitle);
     
-    juce::StringArray triggerTypeNames;
-    triggerTypeNames.add("MIDI");
-    triggerTypeNames.add("Key");
-    triggerType.setItems(triggerTypeNames);
-    triggerType.setListener(this);
-    commonForm.add(&triggerType);
-    addAndMakeVisible(commonForm);
+    //juce::StringArray triggerTypeNames;
+    //triggerTypeNames.add("MIDI");
+    //triggerTypeNames.add("Key");
+    //triggerType.setItems(triggerTypeNames);
+    //triggerType.setListener(this);
+    //commonForm.add(&triggerType);
+    //addAndMakeVisible(commonForm);
 
     juce::StringArray midiTypeNames;
     // could have an array of Triggers for these
@@ -72,8 +74,32 @@ BindingForms::BindingForms()
 void BindingForms::load(Provider* p, Binding* b)
 {
     provider = p;
+    showMidi = false;
+    showKey = false;
+
+    juce::String prefix;
+    Symbol* s = provider->getSymbols()->find(b->symbol);
+    if (s == nullptr)
+      prefix = "???: ";
+    else if (s->functionProperties != nullptr)
+      prefix = "Function: ";
+    else if (s->parameterProperties != nullptr)
+      prefix = "Parameter: ";
+    else if (s->script != nullptr)
+      prefix = "Script: ";
+    else if (s->sample != nullptr)
+      prefix = "Sample: ";
+    else if (s->behavior ==  BehaviorActivation)
+      prefix = "";
+    else
+      prefix = "???: ";
     
-    title.setText(juce::String("Binding: ") + b->symbol, juce::NotificationType::dontSendNotification);
+    title.setText(prefix + b->symbol, juce::NotificationType::dontSendNotification);
+
+    if (b->trigger == Binding::TriggerUnknown) {
+        Trace(1, "BindingForms: Trigger not set on binding");
+        // what to do now?
+    }
     
     if (b->trigger == Binding::TriggerKey) {
         showKey = true;
@@ -81,27 +107,28 @@ void BindingForms::load(Provider* p, Binding* b)
     else if (b->trigger == Binding::TriggerNote ||
              b->trigger == Binding::TriggerControl ||
              b->trigger == Binding::TriggerProgram) {
-        showKey = false;
+        showMidi = true;
+    }
+    else if (b->trigger == Binding::TriggerHost) {
+        // nothing specific atm, maybe the unique parameter id?
     }
     else {
         Trace(1, "BindingForms: Unsupported trigger type %d", (int)(b->trigger));
-        showKey = false;
     }
 
     if (showKey) {
-        triggerType.setSelection(1);
+        //triggerType.setSelection(1);
 
         keyForm.setVisible(true);
         midiForm.setVisible(false);
-
+        
         keyValue.setValue(BindingUtil::renderTrigger(b));
         keyRelease.setValue(b->release);
         keyCapture.setValue(false);
         keySummary.setValue("");
     }
-    else {
-        triggerType.setSelection(0);
-
+    else if (showMidi) {
+        //triggerType.setSelection(0);
         keyForm.setVisible(false);
         midiForm.setVisible(true);
 
@@ -117,6 +144,7 @@ void BindingForms::load(Provider* p, Binding* b)
         }
         else {
             // shouldn't be here, go back to Note
+            Trace(1, "BindingForms: Invalide trigger type in MIDI form");
             midiType.setSelection(0);
         }
         
@@ -126,6 +154,7 @@ void BindingForms::load(Provider* p, Binding* b)
 
     refreshScopeNames();
     refreshScopeValue(b);
+    resized();
 }
 
 /**
@@ -194,11 +223,14 @@ void BindingForms::resized()
     
     area.removeFromTop(8);
 
-    triggerType.setBounds(area.removeFromTop(12));
-    
-    juce::Rectangle<int> formArea = area.removeFromTop(200);
-    midiForm.setBounds(formArea);
-    keyForm.setBounds(formArea);
+    //triggerType.setBounds(area.removeFromTop(12));
+
+    if (midiForm.isVisible()) {
+        midiForm.setBounds(area.removeFromTop(midiForm.getPreferredHeight()));
+    }
+    else if (keyForm.isVisible()) {
+        keyForm.setBounds(area.removeFromTop(keyForm.getPreferredHeight()));
+    }
 
     area.removeFromTop(8);
 
@@ -206,7 +238,7 @@ void BindingForms::resized()
     
     area.removeFromTop(8);
 
-    qualifiers.setBounds(area.removeFromTop(100));
+    qualifiers.setBounds(area.removeFromTop(qualifiers.getPreferredHeight()));
 }
 
 void BindingForms::yanInputChanged(YanInput* i)

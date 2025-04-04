@@ -26,13 +26,14 @@ class BindingForms : public juce::Component, YanCombo::Listener, YanInput::Liste
     int maxTracks = 0;
     
     bool showKey = false;
-
+    bool showMidi = false;
+    
     juce::Label title;
     juce::Label triggerTitle;
     juce::Label targetTitle;
 
-    YanForm commonForm;
-    YanCombo triggerType {"Trigger Type"};
+    //YanForm commonForm;
+    //YanCombo triggerType {"Trigger Type"};
     //YanCheckbox activeBox {"Active"};;
 
     YanForm midiForm;

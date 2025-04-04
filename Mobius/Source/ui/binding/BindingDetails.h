@@ -18,6 +18,8 @@ class BindingContent : public juce::Component
 
     void initialize(class Provider* p);
     void load(class Binding* b);
+    void save();
+    void cancel();
     
     void resized() override;
 
@@ -41,9 +43,13 @@ class BindingDetailsPanel : public BasePanel
     void show(juce::Component* parent, class Binding* b);
     void close() override;
     
+    // BasePanel button handler
+    void footerButton(juce::Button* b) override;
     
   private:
 
+    juce::TextButton saveButton {"Save"};
+    juce::TextButton cancelButton {"Cancel"};
     BindingContent content;
 };
 

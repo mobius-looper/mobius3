@@ -1,0 +1,9 @@
+Fri Apr  4 08:52:21 2025
+
+Found in this forum post:
+
+https://forum.juce.com/t/markup-display-for-juce/58236
+
+Quote:
+The git repository contains also an interactive demo (PIP => just drag BarelyMLDemo.h onto a Projucer window and it will create the project for you), as a quick way to test the rendering of documents in various formats. The demo also serves as example code for the integration of BarelyML in JUCE applications.
+

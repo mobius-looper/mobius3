@@ -7,9 +7,11 @@
 
 #include <JuceHeader.h>
 
+#include "../common/BasicTabs.h"
 #include "BindingTable.h"
 
-class BindingSetContent : public juce::Component
+class BindingSetContent : public juce::Component,
+                          public juce::DragAndDropTarget
 {
   public:
 
@@ -19,7 +21,17 @@ class BindingSetContent : public juce::Component
     void cancel();
     void resized();
     
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details) override;
+    void itemDropped (const juce::DragAndDropTarget::SourceDetails&) override;
+    
   private:
 
-    BindingTable table;
+    BindingEditor* editor = nullptr;
+    BindingSet* bindingSet = nullptr;
+    
+    BasicTabs tabs;
+    BindingTable midiTable;
+    BindingTable keyTable;
+    BindingTable hostTable;
+    
 };

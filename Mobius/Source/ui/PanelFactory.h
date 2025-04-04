@@ -65,7 +65,8 @@ class PanelFactory
         SymbolTable,
         Upgrade,
         TraceLog,
-        InProgress
+        InProgress,
+        HelpTest
     };
 
     PanelFactory(class MainWindow* main);

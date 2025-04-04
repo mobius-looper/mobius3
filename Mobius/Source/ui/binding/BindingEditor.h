@@ -13,7 +13,8 @@
 #include "BindingDetails.h"
 
 class BindingEditor : public ConfigEditor,
-                      public TypicalTable::Listener
+                      public TypicalTable::Listener,
+                      public juce::DragAndDropContainer
 {
   public:
     
@@ -21,6 +22,7 @@ class BindingEditor : public ConfigEditor,
     ~BindingEditor();
 
     juce::String getTitle() override {return "Bindings";}
+    class Provider* getProvider();
 
     void prepare() override;
     void load() override;
@@ -48,7 +50,9 @@ class BindingEditor : public ConfigEditor,
 
     std::unique_ptr<class BindingSets> bindingSets;
     std::unique_ptr<class BindingSets> revertSets;
+    
     std::unique_ptr<class BindingSetTable> setTable;
+    std::unique_ptr<class BindingTree> bindingTree;
     juce::OwnedArray<class BindingSetContent> contents;
 
     BindingDetailsPanel bindingDetails;

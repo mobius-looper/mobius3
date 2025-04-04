@@ -135,6 +135,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         UpgradeConfig,
         TraceLog,
         DecacheForms,
+        HelpTest,
         InProgress
         
         };

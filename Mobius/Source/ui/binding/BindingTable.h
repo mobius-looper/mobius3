@@ -30,6 +30,12 @@ class BindingTable : public TypicalTable,
 {
   public:
 
+    typedef enum {
+        TypeMidi,
+        TypeKey,
+        TypeHost
+    } Type;
+
     // column ids 
     static const int TargetColumn = 1;
     static const int TriggerColumn = 2;
@@ -40,17 +46,19 @@ class BindingTable : public TypicalTable,
     // these are used as popup menu item ids so must start with zero
     typedef enum {
         DialogEdit = 1,
-        DialogNew,
-        DialogDelete
+        DialogDelete,
+        DialogHelp
     } Dialog;
     
     BindingTable();
     ~BindingTable();
 
-    void load(class BindingEditor* e, class BindingSet* set);
+    void load(class BindingEditor* e, class BindingSet* set, Type type);
     void reload();
     void clear();
     void cancel();
+
+    void add(Binding* b);
                 
     // TypicalTable overrides
     int getRowCount() override;
@@ -67,17 +75,17 @@ class BindingTable : public TypicalTable,
 
     class BindingEditor* editor = nullptr;
     class BindingSet* bindingSet = nullptr;
+    Type type = TypeMidi;
     
     juce::OwnedArray<class BindingTableRow> bindingRows;
     
-    YanPopup rowPopup {this};
+    YanPopup rowPopup {this}; 
     YanPopup emptyPopup {this};
+    YanDialog helpDialog {this};
     
-    YanDialog newDialog {this};
-    
-    void startNew();
+    void startHelp();
 
-    void finishNew(int button);
+    void addBinding(class Binding* b);
 
 };
     
