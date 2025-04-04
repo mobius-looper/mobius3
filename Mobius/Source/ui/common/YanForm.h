@@ -52,6 +52,8 @@ class YanForm : public juce::Component
     void insert(int index, YanField* f);
     bool remove(YanField* f);
 
+    void clear();
+
   private:
 
     // fields arranged in a single column unless adjacent

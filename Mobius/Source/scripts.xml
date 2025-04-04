@@ -67,6 +67,10 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\start-stop.msl" name="Start/Stop"
             added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\globalstop.msl" name="Global Stop"
+            added="1743785489347"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\multitap.msl" name="MainTap"
+            added="1743785489347"/>
     </Files>
   </Machine>
   <Machine name="Loki">

@@ -8,14 +8,17 @@ BindingDetailsPanel::BindingDetailsPanel()
 {
     // don't really need a title on these
     // but without a title bar you don't get mouse
-    // events for dragging
+    // events for dragging, unless you use followContentMouse
     //setTitle("Binding");
+
     setContent(&content);
-    // this gives it a yellow border
-    setAlert();
+
     // this gives it dragability within the entire window since
     // these don't have a title bar
     followContentMouse();
+
+    // this gives it a yellow border
+    setAlert();
 
     resetButtons();
     addButton(&saveButton);
@@ -87,11 +90,13 @@ void BindingContent::initialize(Provider* p)
 
 void BindingContent::load(Binding* b)
 {
+    binding = b;
     forms.load(provider, b);
 }
 
 void BindingContent::save()
 {
+    forms.save(binding);
 }
 
 void BindingContent::cancel()

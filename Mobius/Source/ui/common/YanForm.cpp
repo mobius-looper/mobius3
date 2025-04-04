@@ -363,6 +363,16 @@ bool YanForm::remove(YanField* f)
     return removed;
 }
 
+void YanForm::clear()
+{
+    for (auto field : fields) {
+        removeChildComponent(field);
+        removeChildComponent(field->getLabel());
+    }
+    fields.clear();
+    labels.clear();
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

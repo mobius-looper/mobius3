@@ -10,9 +10,20 @@ class BindingForms : public juce::Component, YanCombo::Listener, YanInput::Liste
 {
   public:
 
+    /**
+     * The trigger form configures itself for one of these types.
+     */
+    typedef enum {
+        TypeUnknown,
+        TypeMidi,
+        TypeKey,
+        TypeHost
+    } Type;
+
     BindingForms();
 
     void load(class Provider* p, class Binding* b);
+    void save(Binding* b);
     
     void resized() override;
 
@@ -23,32 +34,30 @@ class BindingForms : public juce::Component, YanCombo::Listener, YanInput::Liste
   private:
 
     class Provider* provider = nullptr;
+    Type type = TypeUnknown;
     int maxTracks = 0;
-    
-    bool showKey = false;
-    bool showMidi = false;
+    int capturedCode = 0;
     
     juce::Label title;
     juce::Label triggerTitle;
     juce::Label targetTitle;
 
-    //YanForm commonForm;
-    //YanCombo triggerType {"Trigger Type"};
-    //YanCheckbox activeBox {"Active"};;
+    // This was "passthrough" which I think caused any MIDI being
+    // received to be treated as if it was an active binding and
+    // sent to the engine, I think jmage wanted this for testing
+    // unclear if that's a good idea
+    //YanCheckbox activeBox {"Active"};
 
-    YanForm midiForm;
+    YanForm triggerForm;
+
     YanCombo midiType {"Type"};
     YanCombo midiChannel {"Channel"};
-    YanInput midiValue {"Value"};
-    YanCheckbox midiRelease {"Release"};
-    YanCheckbox midiCapture {"Capture"};
-    YanInput midiSummary {""};
+
+    YanInput triggerValue {"Value"};
+    YanCheckbox release {"Release"};
     
-    YanForm keyForm;
-    YanInput keyValue {"Key"};
-    YanCheckbox keyRelease {"Release"};
-    YanCheckbox keyCapture {"Capture"};
-    YanInput keySummary {""};
+    YanCheckbox capture {"Capture"};
+    YanInput captureText {""};
     
     YanForm qualifiers;
     YanCombo scope {"Scope"};
@@ -56,4 +65,7 @@ class BindingForms : public juce::Component, YanCombo::Listener, YanInput::Liste
     
     void refreshScopeNames();
     void refreshScopeValue(class Binding* b);
+    int unpackKeyCode();
+    juce::String unpackScope();
+    
 };

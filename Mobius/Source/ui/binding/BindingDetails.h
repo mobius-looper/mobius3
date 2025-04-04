@@ -26,6 +26,8 @@ class BindingContent : public juce::Component
   private:
 
     class Provider* provider = nullptr;
+    Binding* binding = nullptr;
+
     BindingTree tree;
     BindingForms forms;
 };    

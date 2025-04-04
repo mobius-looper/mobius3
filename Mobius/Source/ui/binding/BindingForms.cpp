@@ -23,14 +23,6 @@ BindingForms::BindingForms()
     
     targetTitle.setText("Target", juce::NotificationType::dontSendNotification);
     addAndMakeVisible(targetTitle);
-    
-    //juce::StringArray triggerTypeNames;
-    //triggerTypeNames.add("MIDI");
-    //triggerTypeNames.add("Key");
-    //triggerType.setItems(triggerTypeNames);
-    //triggerType.setListener(this);
-    //commonForm.add(&triggerType);
-    //addAndMakeVisible(commonForm);
 
     juce::StringArray midiTypeNames;
     // could have an array of Triggers for these
@@ -39,7 +31,6 @@ BindingForms::BindingForms()
     midiTypeNames.add("Program");
     midiType.setItems(midiTypeNames);
     midiType.setListener(this);
-    midiForm.add(&midiType);
 
     // Binding number is the combo index where
     // zero means "any"
@@ -50,21 +41,11 @@ BindingForms::BindingForms()
     }
     midiChannel.setItems(channelNames);
     midiChannel.setListener(this);
-    midiForm.add(&midiChannel);
 
-    midiValue.setListener(this);
-    midiForm.add(&midiValue);
-    
-    midiForm.add(&midiRelease);
-    midiForm.add(&midiCapture);
-    midiForm.add(&midiSummary);
-    addChildComponent(midiForm);
+    triggerValue.setListener(this);
 
-    keyForm.add(&keyValue);
-    keyForm.add(&keyRelease);
-    keyForm.add(&keyCapture);
-    keyForm.add(&keySummary);
-    addChildComponent(keyForm);
+    // form fields are added during load()
+    addChildComponent(triggerForm);
 
     qualifiers.add(&scope);
     qualifiers.add(&arguments);
@@ -74,8 +55,6 @@ BindingForms::BindingForms()
 void BindingForms::load(Provider* p, Binding* b)
 {
     provider = p;
-    showMidi = false;
-    showKey = false;
 
     juce::String prefix;
     Symbol* s = provider->getSymbols()->find(b->symbol);
@@ -96,42 +75,50 @@ void BindingForms::load(Provider* p, Binding* b)
     
     title.setText(prefix + b->symbol, juce::NotificationType::dontSendNotification);
 
+    // since the form is a member object and we reubild it every time,
+    // it must be cleared first
+    triggerForm.clear();
+
     if (b->trigger == Binding::TriggerUnknown) {
         Trace(1, "BindingForms: Trigger not set on binding");
-        // what to do now?
     }
-    
-    if (b->trigger == Binding::TriggerKey) {
-        showKey = true;
+    else if (b->trigger == Binding::TriggerKey) {
+        type = TypeKey;
     }
     else if (b->trigger == Binding::TriggerNote ||
              b->trigger == Binding::TriggerControl ||
              b->trigger == Binding::TriggerProgram) {
-        showMidi = true;
+        type = TypeMidi;
+
+        triggerForm.add(&midiType);
+        triggerForm.add(&midiChannel);
     }
     else if (b->trigger == Binding::TriggerHost) {
         // nothing specific atm, maybe the unique parameter id?
+        type = TypeHost;
     }
     else {
         Trace(1, "BindingForms: Unsupported trigger type %d", (int)(b->trigger));
     }
 
-    if (showKey) {
-        //triggerType.setSelection(1);
-
-        keyForm.setVisible(true);
-        midiForm.setVisible(false);
+    if (type == TypeKey || type == TypeMidi) {
+        triggerForm.add(&triggerValue);
+        triggerForm.add(&release);
+        triggerForm.add(&capture);
+        captureText.setAdjacent(true);
+        triggerForm.add(&captureText);
         
-        keyValue.setValue(BindingUtil::renderTrigger(b));
-        keyRelease.setValue(b->release);
-        keyCapture.setValue(false);
-        keySummary.setValue("");
-    }
-    else if (showMidi) {
-        //triggerType.setSelection(0);
-        keyForm.setVisible(false);
-        midiForm.setVisible(true);
+        triggerForm.setVisible(true);
 
+        release.setValue(b->release);
+        capture.setValue(false);
+        captureText.setValue("");
+    }
+
+    if (type == TypeKey) {
+        triggerValue.setValue(BindingUtil::renderTrigger(b));
+    }
+    else if (type == TypeMidi) {
         Binding::Trigger trigger = b->trigger;
         if (trigger == Binding::TriggerNote) {
             midiType.setSelection(0);
@@ -149,7 +136,11 @@ void BindingForms::load(Provider* p, Binding* b)
         }
         
         midiChannel.setSelection(b->midiChannel);
-        midiValue.setValue(juce::String(b->triggerValue));
+
+        // todo: Capture is going to display symbolic names
+        // but the value is a raw number, need one or the other
+        // or both
+        triggerValue.setValue(juce::String(b->triggerValue));
     }
 
     refreshScopeNames();
@@ -158,7 +149,9 @@ void BindingForms::load(Provider* p, Binding* b)
 }
 
 /**
- * This needs to be done every time in order to track group renames.
+ * This needs to be done every time the form is displayed in order
+ * to track group renames.  Not an issue right now since this
+ * entire component is rebuilt every time.
  */
 void BindingForms::refreshScopeNames()
 {
@@ -185,7 +178,6 @@ void BindingForms::refreshScopeNames()
     
     scope.setItems(scopeNames);
 }
-
 
 void BindingForms::refreshScopeValue(Binding* b)
 {
@@ -219,20 +211,14 @@ void BindingForms::resized()
 
     area.removeFromTop(8);
 
-    triggerTitle.setBounds(area.removeFromTop(30));
+    if (type != TypeUnknown) {
     
-    area.removeFromTop(8);
+        triggerTitle.setBounds(area.removeFromTop(30));
+        area.removeFromTop(8);
 
-    //triggerType.setBounds(area.removeFromTop(12));
-
-    if (midiForm.isVisible()) {
-        midiForm.setBounds(area.removeFromTop(midiForm.getPreferredHeight()));
+        triggerForm.setBounds(area.removeFromTop(triggerForm.getPreferredHeight()));
+        area.removeFromTop(8);
     }
-    else if (keyForm.isVisible()) {
-        keyForm.setBounds(area.removeFromTop(keyForm.getPreferredHeight()));
-    }
-
-    area.removeFromTop(8);
 
     targetTitle.setBounds(area.removeFromTop(30));
     
@@ -244,14 +230,96 @@ void BindingForms::resized()
 void BindingForms::yanInputChanged(YanInput* i)
 {
     (void)i;
-    //formChanged();
+
+    // in the old binding editor it was important to dynamically track field changes
+    // so they could be immediately reflected in the binding table, but now that this
+    // is a popup over the table it doesn't matter
 }
 
 void BindingForms::yanComboSelected(YanCombo* c, int selection)
 {
     (void)c;
     (void)selection;
-    //formChanged();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Save
+//
+//////////////////////////////////////////////////////////////////////
+
+void BindingForms::save(Binding* b)
+{
+    if (type == TypeMidi) {
+
+        switch (midiType.getSelection()) {
+            case 0: b->trigger = Binding::TriggerNote; break;
+            case 1: b->trigger = Binding::TriggerControl; break;
+            case 2: b->trigger = Binding::TriggerProgram; break;
+            default: break;
+        }
+
+        b->midiChannel = midiChannel.getSelection();
+        b->triggerValue = triggerValue.getInt();
+    }
+    else if (type == TypeKey) {
+        b->triggerValue = unpackKeyCode();
+    }
+
+    b->scope = unpackScope();
+    b->arguments = arguments.getValue();
+
+    // only relevant for certain types
+    if (b->trigger == Binding::TriggerKey || b->trigger == Binding::TriggerNote)
+      b->release = release.getValue();
+    else
+      b->release = false;
+}
+
+/**
+ * Undo the symbolic transformation to get back to
+ * a raw key code
+ */
+int BindingForms::unpackKeyCode()
+{
+    juce::String value = triggerValue.getValue();
+    int myCode = BindingUtil::unrenderKeyText(value);
+    
+    // capture has priority
+    if (capture.getValue() && capturedCode > 0) {
+        // test to see if there are any conditions where the text transform
+        // doesn't end up  with the same thing
+        if (capturedCode != myCode)
+          Trace(1, "KeyboardEditor: Key encoding anomoly %d %d\n",
+                capturedCode, myCode);
+        myCode = capturedCode;
+    }
+
+    return myCode;
+}
+
+juce::String BindingForms::unpackScope()
+{
+    juce::String result;
+    
+    // item 0 is global, then tracks, then groups
+    int item = scope.getSelection();
+    if (item == 0) {
+        // global
+    }
+    else if (item <= maxTracks) {
+        // track number
+        result = juce::String(item);
+    }
+    else {
+        // skip going back to the SystemConfig for the names and
+        // just remove our prefix
+        juce::String itemName = scope.getSelectionText();
+        juce::String groupName = itemName.fromFirstOccurrenceOf("Group ", false, false);
+        result = groupName;
+    }
+
+    return result;
 }
 
 /****************************************************************************/

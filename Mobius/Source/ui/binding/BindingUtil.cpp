@@ -51,6 +51,16 @@ juce::String BindingUtil::renderTrigger(Binding* b)
     return text;
 }
 
+int BindingUtil::unrenderKeyText(juce::String value)
+{
+    // undo the text transformation that was captured or typed in
+    int code = 0;
+    int modifiers = 0;
+    KeyTracker::parseKeyText(value, &code, &modifiers);
+
+    return Binderator::getKeyQualifier(code, modifiers);
+}
+
 /**
  * I think the old way stored these as text and they were
  * parsed at runtime into the mTrack and mGroup numbers
