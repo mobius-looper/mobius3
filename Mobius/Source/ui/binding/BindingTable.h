@@ -75,6 +75,7 @@ class BindingTable : public TypicalTable,
     // a TypicalTable/TableListBoxModel override that is called when
     // the delete key is pressed on a row
     void deleteKeyPressed(int lastRowSelected) override;
+    void returnKeyPressed(int lastRowSelected) override;
     
   private:
 

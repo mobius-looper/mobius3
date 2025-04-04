@@ -192,6 +192,12 @@ void BindingSetTable::deleteKeyPressed(int lastRowSelected)
     startDelete();
 }
 
+void BindingSetTable::returnKeyPressed(int lastRowSelected)
+{
+    (void)lastRowSelected;
+    startProperties();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Menu Handlers and Dialogs

@@ -267,6 +267,19 @@ void BindingTable::deleteKeyPressed(int lastRowSelected)
       Trace(1, "BindingTable::deleteKeyPressed row number mismatch");
 }
 
+void BindingTable::returnKeyPressed(int lastRowSelected)
+{
+    (void)lastRowSelected;
+    int current = getSelectedRow();
+    if (current >= 0) {
+        BindingTableRow* row = bindingRows[current];
+        if (row != nullptr) {
+            if (editor != nullptr)
+              editor->showBinding(row->binding);
+        }
+    }
+}
+
 void BindingTable::startHelp()
 {
     helpDialog.setTitle("Binding Table Help");

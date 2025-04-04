@@ -61,6 +61,7 @@ class BindingSetTable : public TypicalTable,
     void yanDialogClosed(YanDialog* d, int button) override;
     
     void deleteKeyPressed(int lastRowSelected) override;
+    void returnKeyPressed(int lastRowSelected) override;
     
   private:
     
