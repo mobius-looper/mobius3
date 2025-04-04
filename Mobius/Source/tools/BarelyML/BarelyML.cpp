@@ -114,7 +114,8 @@ void BarelyMLDisplay::resized()
   int h = margin;
   for (int i=0; i<blocks.size(); i++) {
     int bh;
-    bh = blocks[i]->getHeightRequired(getWidth()-2*margin)+5;  // just to be on the safe side
+    // jsl - float conversion warning
+    bh = (int)(blocks[i]->getHeightRequired((float)(getWidth()-2*margin)+5));  // just to be on the safe side
     if (blocks[i]->canExtendBeyondMargin()) {
       blocks[i]->setBounds(0,h,getWidth(),bh);
     } else {
@@ -364,7 +365,8 @@ String BarelyMLDisplay::convertFromDokuWiki(String dw) {
   Array<int> oLI = {1, 1, 1, 1, 1}; // ordered list indices up to 5 nesting levels supported
   for (int li=0; li<lines.size(); li++) {
     String line = lines[li];
-    // replace headings
+    // replace headings
+
     bool isHeading = false;
     if (line.startsWith("====== ")) { line = "# " + line.substring(7); isHeading = true; }
     if (line.startsWith("===== ")) { line = "## " + line.substring(6); isHeading = true; }
@@ -795,14 +797,18 @@ AttributedString BarelyMLDisplay::Block::parsePureText(const StringArray& lines,
         int iidx = line.indexOf("_");
         int tidx = line.indexOf("<");
         Colour nextColour = currentColour;
-        if (bidx > -1 && (bidx < iidx | iidx == -1) && (bidx < tidx | tidx == -1)) {
+        // jsl - operator precedence warning, changed | to ||
+        // if (bidx > -1 && (bidx < iidx | iidx == -1) && (bidx < tidx | tidx == -1)) {
+        if (bidx > -1 && (bidx < iidx || iidx == -1) && (bidx < tidx || tidx == -1)) {
           // if the next token is toggling the bold state...
           // ...first add everything up to the token...
           attributedString.append(line.substring(0, bidx), font, currentColour);
           line = line.substring(bidx+1); // ...then drop up to and including the token...
           bold = !bold;                  // ...toggle the bold status...
           needsNewFont = true;           // ...and request new font.
-        } else if (iidx > -1 && (iidx < tidx | tidx == -1)) {
+          // jsl - operator precedence
+          //} else if (iidx > -1 && (iidx < tidx | tidx == -1)) {
+        } else if (iidx > -1 && (iidx < tidx || tidx == -1)) {
           // if the next token is toggling the italic state...
           // ...first add everything up to the token...
           attributedString.append(line.substring(0, iidx), font, currentColour);
@@ -937,10 +943,11 @@ void BarelyMLDisplay::AdmonitionBlock::paint(juce::Graphics& g) {
   // draw lines left and right
   g.fillRect(Rectangle<int>(iconsize,0,linewidth,getHeight()));
   g.fillRect(Rectangle<int>(getWidth()-linewidth,0,linewidth,getHeight()));
-  attributedString.draw(g, Rectangle<float>(iconsize+margin+linewidth,
-                                          0,
-                                          getWidth()-iconsize-2*(margin+linewidth),
-                                          getHeight()));
+  // jsl - float coersion warning
+  attributedString.draw(g, Rectangle<float>((float)(iconsize+margin+linewidth),
+                                            0.0f,
+                                            (float)(getWidth()-iconsize-2*(margin+linewidth)),
+                                            (float)(getHeight())));
 }
 
 
@@ -1043,7 +1050,8 @@ void BarelyMLDisplay::TableBlock::parseMarkup(const StringArray& lines, Font fon
     }
     table.rowheights.set(i, rowheight);
   }
-  table.setBounds(0, 0, getWidthRequired()+table.leftmargin+table.cellgap, getHeightRequired(0.f));
+  // jsl - float coersion warning
+  table.setBounds(0, 0, (int)(getWidthRequired()+table.leftmargin+table.cellgap), (int)getHeightRequired(0.f));
 }
 
 float BarelyMLDisplay::TableBlock::getWidthRequired() {
@@ -1072,7 +1080,8 @@ void BarelyMLDisplay::TableBlock::resized() {
 void BarelyMLDisplay::TableBlock::Table::paint(juce::Graphics& g) {
   float y = 0.f;    // Y coordinate of cell's top left corner
   for (int i=0; i<cells.size(); i++) {
-    float x = leftmargin;  // X coordinate of cell's top left corner
+      // jsl - coersion warning
+      float x = (float)leftmargin;  // X coordinate of cell's top left corner
     OwnedArray<Cell>* row = cells[i]; // get current row
     for (int j=0; j<row->size(); j++) {
       Cell* c = (*row)[j];            // get current cell
@@ -1083,7 +1092,12 @@ void BarelyMLDisplay::TableBlock::Table::paint(juce::Graphics& g) {
       }
       // fill background
       g.fillRect(x, y, columnwidths[j] + 2 * cellmargin, rowheights[i] + 2 * cellmargin);
-      Rectangle<float> destArea = Rectangle<float>(x+cellmargin, y+cellmargin, columnwidths[j], rowheights[i]);
+      // jsl - float coercion warnings
+      //Rectangle<float> destArea = Rectangle<float>(x+cellmargin, y+cellmargin, columnwidths[j], rowheights[i]);
+      Rectangle<float> destArea = Rectangle<float>((float)(x+cellmargin),
+                                                   (float)(y+cellmargin),
+                                                   (float)columnwidths[j],
+                                                   (float)rowheights[i]);
       if (c->drawable) {
         // draw drawable
         c->drawable->drawWithin(g, destArea, RectanglePlacement::centred, 1.0f);
@@ -1104,17 +1118,19 @@ void BarelyMLDisplay::TableBlock::Table::mouseDown(const MouseEvent& event) {
 }
 
 void BarelyMLDisplay::TableBlock::Table::mouseUp(const MouseEvent& event) {
-  String link;
+    // jsl - hindes class member warning
+  String a_link;
   // find link for mouseDownPosition
   float mdy = mouseDownPosition.y;
   float mdx = mouseDownPosition.x;
   float y = 0.f;                    // Y coordinate of row's top edge
   for (int i=0; i<cells.size(); i++) {
     if (mdy>=y && mdy<y+rowheights[i] + 2 * cellmargin) {
-      float x = leftmargin;         // X coordinate of cell's left edge
+        // jsl - float coersion warning
+        float x = (float)leftmargin;         // X coordinate of cell's left edge
       for (int j=0; j<cells[i]->size(); j++) {
         if (mdx>=x && mdx<x+columnwidths[j] + 2 * cellmargin) {
-          link = (*cells[i])[j]->link;
+            a_link = (*cells[i])[j]->link;
         }
         // move one cell to the right
         x += columnwidths[j] + 2 * cellmargin + cellgap;
@@ -1123,11 +1139,11 @@ void BarelyMLDisplay::TableBlock::Table::mouseUp(const MouseEvent& event) {
     // move to next row
     y += rowheights[i] + 2 * cellmargin + cellgap;
   }
-  if (link.isNotEmpty()) {          // if we have a link...
+  if (a_link.isNotEmpty()) {          // if we have a link...
     float distance = event.position.getDistanceFrom(mouseDownPosition);
     if (distance < 20) {            // ...and we're not scrolling...
       jassert(bmlDisplay);
-      bmlDisplay->handleURL(link);  // ...let bmlDisplay handle URL.
+      bmlDisplay->handleURL(a_link);  // ...let bmlDisplay handle URL.
     }
   }
 }
@@ -1175,16 +1191,22 @@ float BarelyMLDisplay::ImageBlock::getHeightRequired(float width) {
 
 void BarelyMLDisplay::ImageBlock::paint(juce::Graphics& g) {
   if (drawable) {
-    float w = getWidth();
+      // jsl - float coersion warning
+      float w = (float)getWidth();
     if (maxWidth>0) {
       w = jmin((float)maxWidth,w);
     }
-    drawable->drawWithin(g, Rectangle<float>(0, 0, w, getHeight()), RectanglePlacement::centred, 1.0f);
+    // jsl - float coercion warnings
+    //drawable->drawWithin(g, Rectangle<float>(0, 0, w, getHeight()), RectanglePlacement::centred, 1.0f);
+    drawable->drawWithin(g, Rectangle<float>(0.0f, 0.0f, w, (float)getHeight()), RectanglePlacement::centred, 1.0f);
   } else {
     g.setColour(defaultColour);
     g.drawRect(getLocalBounds());
-    g.drawLine(0, 0, getWidth(), getHeight());
-    g.drawLine(getWidth(), 0, 0, getHeight());
+    // jsl - float coercion warning
+    //g.drawLine(0, 0, getWidth(), getHeight());
+    //g.drawLine(getWidth(), 0, 0, getHeight());
+    g.drawLine(0.0f, 0.0f, (float)getWidth(), (float)getHeight());
+    g.drawLine((float)getWidth(), 0.0f, 0.0f, (float)getHeight());
     imageMissingMessage.draw(g, getLocalBounds().reduced(5,5).toFloat());
   }
 }
