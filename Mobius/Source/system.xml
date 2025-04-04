@@ -9,7 +9,7 @@
   <BindingSets>
     <BindingSet name="Base">
       <Binding symbol="Record" trigger="note" value="10" channel="4"/>
-      <Binding symbol="Overdub" trigger="note" value="11" channel="4"/>
+      <Binding symbol="Overdub" trigger="note" value="41" channel="1"/>
       <Binding symbol="Record" trigger="key" value="82"/>
       <Binding symbol="Reset" trigger="key" value="27"/>
       <Binding symbol="NextLoop" trigger="key" value="65576"/>
@@ -51,7 +51,7 @@
     <BindingSet name="midi1">
       <Binding symbol="Overdub" trigger="note" value="50" channel="1"/>
     </BindingSet>
-    <BindingSet name="midi2"/>
+    <BindingSet name="midix"/>
     <BindingSet name="midi3" overlay="true">
       <Binding symbol="Reset" trigger="note" value="52" channel="1"/>
     </BindingSet>

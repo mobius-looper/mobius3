@@ -142,7 +142,7 @@ void BasePanel::paint(juce::Graphics& g)
 
     // drakgrey looks nice and highlights where the black input fields
     // are but it should be darker
-    g.fillAll (juce::Colours::black);
+    //g.fillAll (juce::Colours::black);
     g.fillAll (juce::Colours::darkgrey.darker(0.8f));
 
     g.setColour(borderColor);

@@ -220,7 +220,7 @@ void BindingEditor::typicalTableChanged(TypicalTable* t, int row)
     }
 }
 
-bool BindingEditor::checkName(juce::String newName, juce::StringArray& errors)
+bool BindingEditor::checkName(BindingSet* set, juce::String newName, juce::StringArray& errors)
 {
     bool ok = false;
 
@@ -232,7 +232,7 @@ bool BindingEditor::checkName(juce::String newName, juce::StringArray& errors)
     }
     else {
         BindingSet* existing = bindingSets->find(newName);
-        if (existing != nullptr) {
+        if (existing != nullptr && existing != set) {
             errors.add(juce::String("Binding Set name ") + newName + " is already in use");
         }
         else {
@@ -242,12 +242,13 @@ bool BindingEditor::checkName(juce::String newName, juce::StringArray& errors)
     return ok;
 }
 
-void BindingEditor::bindingSetTableNew(juce::String newName, juce::StringArray& errors)
+void BindingEditor::bindingSetTableNew(BindingSet* neu, juce::StringArray& errors)
 {
-    if (checkName(newName, errors)) {
-        BindingSet* neu = new BindingSet();
-        neu->name = newName;
+    if (checkName(nullptr, neu->name, errors)) {
         addNew(neu);
+    }
+    else {
+        delete neu;
     }
 }
 
@@ -285,23 +286,12 @@ BindingSet* BindingEditor::getSourceBindingSet(juce::String action, juce::String
 
 void BindingEditor::bindingSetTableCopy(juce::String newName, juce::StringArray& errors)
 {
-    if (checkName(newName, errors)) {
+    if (checkName(nullptr, newName, errors)) {
         BindingSet* set = getSourceBindingSet("Copy", errors);
         if (set != nullptr) {
             BindingSet* copy = new BindingSet(set);
             copy->name = newName;
             addNew(copy);
-        }
-    }
-}
-
-void BindingEditor::bindingSetTableRename(juce::String newName, juce::StringArray& errors)
-{
-    if (checkName(newName, errors)) {
-        BindingSet* set = getSourceBindingSet("Rename", errors);
-        if (set != nullptr) {
-            set->name = newName;
-            setTable->reload();
         }
     }
 }

@@ -23,7 +23,7 @@ BindingSetTable::BindingSetTable(BindingEditor* e)
 
     initialize();
 
-    addColumn("Name", ColumnName, 200);
+    addColumn("Binding Set", ColumnName, 200);
 
     // activation/deactivation doesn't work yet, you
     // have to select them as the sessionBindingSet or trackBindingSet in the
@@ -33,16 +33,23 @@ BindingSetTable::BindingSetTable(BindingEditor* e)
     
     rowPopup.add("Copy...", DialogCopy);
     rowPopup.add("New...", DialogNew);
-    rowPopup.add("Rename...", DialogRename);
+    rowPopup.add("Properties...", DialogProperties);
     rowPopup.add("Delete...", DialogDelete);
-
+    rowPopup.add("Help...", DialogHelp);
+    
     emptyPopup.add("New...", DialogNew);
+    emptyPopup.add("Help...", DialogHelp);
 
-    nameDialog.setTitle("New BindingSet");
+    nameDialog.setTitle("New Binding Set");
     nameDialog.setButtons("Ok,Cancel");
     nameDialog.addField(&newName);
-
-    deleteAlert.setTitle("Delete BindingSet");
+    
+    propertiesDialog.setTitle("Binding Set Properties");
+    propertiesDialog.setButtons("Ok,Cancel");
+    propertiesDialog.addField(&propName);
+    propertiesDialog.addField(&propOverlay);
+    
+    deleteAlert.setTitle("Delete Binding Set");
     deleteAlert.setButtons("Delete,Cancel");
     deleteAlert.setSerious(true);
     deleteAlert.addMessage("Are you sure you want to delete this binding set?");
@@ -52,7 +59,7 @@ BindingSetTable::BindingSetTable(BindingEditor* e)
     confirmDialog.setButtons("Ok,Cancel");
     confirmDialog.addMessage("Are you sure you want to do that?");
     
-    errorAlert.setTitle("Error Saving BindingSet");
+    errorAlert.setTitle("Error Saving Binding Set");
     errorAlert.addButton("Ok");
     errorAlert.setSerious(true);
 
@@ -80,7 +87,7 @@ void BindingSetTable::reload()
         }
         else {
             BindingSetTableRow* row = new BindingSetTableRow();
-            row->name = set->name;
+            row->set = set;
             bindingSetRows.add(row);
         }
     }
@@ -108,6 +115,7 @@ void BindingSetTable::cancel()
 {
     // make sure all of the dialogs are gone
     nameDialog.cancel();
+    propertiesDialog.cancel();
     deleteAlert.cancel();
     confirmDialog.cancel();
     errorAlert.cancel();
@@ -133,7 +141,9 @@ juce::String BindingSetTable::getCellText(int rowNumber, int columnId)
     BindingSetTableRow* row = bindingSetRows[rowNumber];
 
     if (columnId == ColumnName) {
-        cell = row->name;
+        cell = row->set->name;
+        if (row->set->overlay)
+          cell += " (overlay)";
     }
 
     return cell;
@@ -145,6 +155,14 @@ void BindingSetTable::cellClicked(int rowNumber, int columnId, const juce::Mouse
       rowPopup.show();
     else
       TypicalTable::cellClicked(rowNumber, columnId, event);
+}
+
+void BindingSetTable::cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+{
+    (void)rowNumber;
+    (void)columnId;
+    (void)event;
+    startProperties();
 }
 
 /**
@@ -165,6 +183,15 @@ void BindingSetTable::mouseDown(const juce::MouseEvent& event)
       emptyPopup.show();
 }
 
+/**
+ * TableListBoxModel override
+ */
+void BindingSetTable::deleteKeyPressed(int lastRowSelected)
+{
+    (void)lastRowSelected;
+    startDelete();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Menu Handlers and Dialogs
@@ -177,49 +204,41 @@ void BindingSetTable::yanPopupSelected(YanPopup* src, int id)
     
     Dialog dialog = (Dialog)id;
     switch (dialog) {
-        case DialogActivate: doActivate(); break;
-        case DialogDeactivate: doDeactivate(); break;
         case DialogCopy: startCopy(); break;
         case DialogNew: startNew(); break;
-        case DialogRename: startRename(); break;
+        case DialogProperties: startProperties(); break;
         case DialogDelete: startDelete(); break;
     }
 }
 
-void BindingSetTable::doActivate()
-{
-    Trace(1, "BindingSetTable::doActivate not implemented");
-}
-
-void BindingSetTable::doDeactivate()
-{
-    Trace(1, "BindingSetTable::doDeactivate not implemented");
-}
-
 void BindingSetTable::startNew()
 {
-    nameDialog.setTitle("Create New BindingSet");
-    nameDialog.setId(DialogNew);
-    newName.setValue("");
-    nameDialog.show(getParentComponent());
+    propertiesDialog.setTitle("Create New Binding Set");
+    propertiesDialog.setId(DialogNew);
+    propName.setValue("");
+    propOverlay.setValue(false);
+    propertiesDialog.show(getParentComponent());
 }
 
 void BindingSetTable::startCopy()
 {
-    nameDialog.setTitle("Copy BindingSet");
+    nameDialog.setTitle("Copy Binding Set");
     nameDialog.setId(DialogCopy);
     newName.setValue("");
     nameDialog.show(getParentComponent());
 }
 
-void BindingSetTable::startRename()
+void BindingSetTable::startProperties()
 {
-    nameDialog.setTitle("Rename BindingSet");
-    nameDialog.setId(DialogRename);
+    propertiesDialog.setTitle("Binding Set Properties");
+    propertiesDialog.setId(DialogProperties);
 
-    newName.setValue(getSelectedName());
-    
-    nameDialog.show(getParentComponent());
+    BindingSet* set = getSelectedSet();
+    if (set != nullptr) {
+        propName.setValue(set->name);
+        propOverlay.setValue(set->overlay);
+        propertiesDialog.show(getParentComponent());
+    }
 }
 
 void BindingSetTable::startDelete()
@@ -235,23 +254,33 @@ void BindingSetTable::yanDialogClosed(YanDialog* d, int button)
     switch (id) {
         case DialogNew: finishNew(button); break;
         case DialogCopy: finishCopy(button); break;
-        case DialogRename: finishRename(button); break;
+        case DialogProperties: finishProperties(button); break;
         case DialogDelete: finishDelete(button); break;
     }
 }
 
-juce::String BindingSetTable::getSelectedName()
+BindingSet* BindingSetTable::getSelectedSet()
 {
+    BindingSet* result = nullptr;
     int rownum = getSelectedRow();
-    BindingSetTableRow* row = bindingSetRows[rownum];
-    return row->name;
+    if (rownum >= 0) {
+        BindingSetTableRow* row = bindingSetRows[rownum];
+        if (row != nullptr)
+          result = row->set;
+    }
+    return result;
 }
 
 void BindingSetTable::finishNew(int button)
 {
     if (button == 0) {
+
+        BindingSet* neu = new BindingSet();
+        neu->name = propName.getValue();
+        neu->overlay = propOverlay.getValue();
+        
         juce::StringArray errors;
-        editor->bindingSetTableNew(newName.getValue(), errors);
+        editor->bindingSetTableNew(neu, errors);
         showResult(errors);
     }
 }
@@ -265,12 +294,25 @@ void BindingSetTable::finishCopy(int button)
     }
 }
 
-void BindingSetTable::finishRename(int button)
+void BindingSetTable::finishProperties(int button)
 {
     if (button == 0) {
         juce::StringArray errors;
-        editor->bindingSetTableRename(newName.getValue(), errors);
-        showResult(errors);
+
+        // !! we've asynchronously left the table and shown a dialog
+        // when the dialog closes there is no guarantee that the original
+        // set will still be selected
+        BindingSet* set = getSelectedSet();
+
+        editor->checkName(set, propName.getValue(), errors);
+
+        if (errors.size() > 0)
+          showResult(errors);
+        else {
+            set->name = propName.getValue();
+            set->overlay = propOverlay.getValue();
+            refresh();
+        }
     }
 }
 

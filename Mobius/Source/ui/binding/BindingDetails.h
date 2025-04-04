@@ -8,7 +8,6 @@
 #include "../../KeyTracker.h"
 
 #include "BindingTree.h"
-#include "BindingForms.h"
 
 class BindingDetailsListener {
   public:

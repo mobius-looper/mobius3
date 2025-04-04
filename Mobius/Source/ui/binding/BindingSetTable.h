@@ -20,7 +20,7 @@ class BindingSetTableRow
     ~BindingSetTableRow() {
     }
 
-    juce::String name;
+    BindingSet* set = nullptr;
     
 };
 
@@ -33,12 +33,11 @@ class BindingSetTable : public TypicalTable,
     const int ColumnName = 1;
     
     typedef enum {
-        DialogActivate = 1,
-        DialogDeactivate,
-        DialogCopy,
+        DialogCopy = 1,
         DialogNew,
-        DialogRename,
-        DialogDelete
+        DialogProperties,
+        DialogDelete,
+        DialogHelp
     } Dialog;
     
     BindingSetTable(class BindingEditor* e);
@@ -54,11 +53,14 @@ class BindingSetTable : public TypicalTable,
     int getRowCount() override;
     juce::String getCellText(int rowNumber, int columnId) override;
     void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
+    void cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
     void mouseDown(const juce::MouseEvent& event) override;
     
     void yanPopupSelected(YanPopup* src, int id) override;
     void yanDialogClosed(YanDialog* d, int button) override;
+    
+    void deleteKeyPressed(int lastRowSelected) override;
     
   private:
     
@@ -71,24 +73,25 @@ class BindingSetTable : public TypicalTable,
     YanPopup emptyPopup {this};
     
     YanDialog nameDialog {this};
+    YanDialog propertiesDialog {this};
     YanDialog deleteAlert {this};
     YanDialog confirmDialog {this};
     YanDialog errorAlert {this};
     
     YanInput newName {"New Name"};
+    YanInput propName {"Name"};
+    YanCheckbox propOverlay {"Overlay"};
     
-    juce::String getSelectedName();
+    class BindingSet* getSelectedSet();
     
-    void doActivate();
-    void doDeactivate();
     void startNew();
     void startCopy();
-    void startRename();
+    void startProperties();
     void startDelete();
 
     void finishNew(int button);
     void finishCopy(int button);
-    void finishRename(int button);
+    void finishProperties(int button);
     void finishDelete(int button);
 
     void showResult(juce::StringArray& errors);

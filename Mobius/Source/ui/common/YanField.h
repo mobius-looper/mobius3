@@ -152,6 +152,8 @@ class YanInput : public YanField, public juce::Label::Listener, public juce::Tex
     void setListener(Listener* l);
 
     void setDisabled(bool b) override;
+
+    void setBackgroundColor(juce::Colour c);
     
     int getPreferredComponentWidth() override;
 

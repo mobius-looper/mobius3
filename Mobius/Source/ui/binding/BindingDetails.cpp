@@ -256,6 +256,12 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
         triggerForm.add(&release);
         triggerForm.add(&capture);
         captureText.setAdjacent(true);
+
+        // this is the same color as used by BasePanel to make the capture
+        // text stand out less than a black input field
+        // !! need to be sharing this color
+        captureText.setBackgroundColor(juce::Colours::darkgrey.darker(0.8f));
+        
         triggerForm.add(&captureText);
         
         triggerForm.setVisible(true);

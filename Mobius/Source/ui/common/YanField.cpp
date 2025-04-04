@@ -298,6 +298,11 @@ YanInput::YanInput(juce::String label, int argCharWidth, bool argReadOnly) : Yan
     addAndMakeVisible(text);
 }
 
+void YanInput::setBackgroundColor(juce::Colour c)
+{
+    text.setColour(juce::Label::ColourIds::backgroundColourId, c);
+}
+
 void YanInput::setDisabled(bool b)
 {
     text.setEnabled(!b);

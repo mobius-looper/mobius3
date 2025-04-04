@@ -38,7 +38,8 @@ class BindingEditor : public ConfigEditor,
 
     void show(int index);
 
-    void bindingSetTableNew(juce::String newName, juce::StringArray& errors);
+    bool checkName(class BindingSet* src, juce::String newName, juce::StringArray& errors);
+    void bindingSetTableNew(class BindingSet* neu, juce::StringArray& errors);
     void bindingSetTableCopy(juce::String newName, juce::StringArray& errors);
     void bindingSetTableRename(juce::String newName, juce::StringArray& errors);
     void bindingSetTableDelete(juce::StringArray& errors);
@@ -61,7 +62,6 @@ class BindingEditor : public ConfigEditor,
     
     //juce::OwnedArray<class BindingTreeForms> treeForms;
 
-    bool checkName(juce::String newName, juce::StringArray& errors);
     class BindingSet* getSourceBindingSet(juce::String action, juce::StringArray& errors);
     void addNew(class BindingSet* set);
     
