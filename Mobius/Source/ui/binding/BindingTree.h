@@ -11,28 +11,17 @@ class BindingTree : public SymbolTree
 
     constexpr static const char* DragPrefix = "BindingTree:";
     
-    class Listener {
-      public:
-        virtual ~Listener() {}
-        virtual void bindingTreeClicked(class Symbol* s);
-    };
-    
     BindingTree();
     ~BindingTree();
 
     void setDraggable(bool b);
 
-    void setListener(Listener* l) {
-        listener = l;
-    }
-    
     void initialize(class Provider* p);
     
     void selectFirst();
 
   private:
 
-    Listener* listener = nullptr;
     bool draggable = false;
     
     void addFunctions(Provider* p);

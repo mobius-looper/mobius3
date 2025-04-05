@@ -205,16 +205,14 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\vartest1.msl" name="vartest1"
             added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\nexttrack.mos" name="nexttrack"
-            added="2147483647"/>
       <File path="C:\dev\mobius3\Mobius\Source\scripts\globalstop.msl" name="Global Stop"
-            added="0"/>
-      <File path="C:\dev\mobius3\Mobius\Source\scripts\foo.msl" name="foo"
             added="0"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\rec-ov-play.msl" name="Rec/Over/Play"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\start-stop.msl" name="Start/Stop"
             added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\multitap.msl" name="MainTap"
+            added="1743823943368"/>
     </Files>
   </Machine>
   <MslState>

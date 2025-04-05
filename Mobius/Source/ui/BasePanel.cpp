@@ -136,6 +136,12 @@ void BasePanel::resized()
       contentComponent->setBounds(area);
 }
 
+void BasePanel::setBackground(juce::Colour c)
+{
+    backgroundColor = c;
+    backgroundColorSet = true;
+}
+
 void BasePanel::paint(juce::Graphics& g)
 {
     juce::Rectangle<int> area = getLocalBounds();
@@ -143,7 +149,10 @@ void BasePanel::paint(juce::Graphics& g)
     // drakgrey looks nice and highlights where the black input fields
     // are but it should be darker
     //g.fillAll (juce::Colours::black);
-    g.fillAll (juce::Colours::darkgrey.darker(0.8f));
+    if (backgroundColorSet)
+      g.fillAll (backgroundColor);
+    else
+      g.fillAll (juce::Colours::darkgrey.darker(0.8f));
 
     g.setColour(borderColor);
     g.drawRect(area, BorderWidth);

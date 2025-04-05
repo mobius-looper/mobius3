@@ -341,6 +341,10 @@ void MainWindow::mainMenuSelection(int id)
             }
                 break;
 
+            case MainMenu::Bindings:
+                panelFactory.show(PanelFactory::Bindings);
+                break;
+
             case MainMenu::KeyBindings:
                 panelFactory.show(PanelFactory::KeyboardSummary);
                 break;
@@ -378,7 +382,8 @@ void MainWindow::mainMenuSelection(int id)
                 break;
                 
             case MainMenu::InProgress:
-                panelFactory.show(PanelFactory::InProgress);
+                //panelFactory.show(PanelFactory::InProgress);
+                panelFactory.show(PanelFactory::Buttons);
                 break;
                 
             case MainMenu::HelpTest:

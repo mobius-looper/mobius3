@@ -15,20 +15,35 @@
 
 BindingSetContent::BindingSetContent()
 {
-    addAndMakeVisible(tabs);
+}
 
-    tabs.add("MIDI", &midiTable);
-    tabs.add("Keyboard", &keyTable);
-    tabs.add("Host Parameter", &hostTable);
+void BindingSetContent::initialize(bool argButtons)
+{
+    buttons = argButtons;
+    
+    if (buttons) {
+        addAndMakeVisible(buttonTable);
+    }
+    else {
+        addAndMakeVisible(tabs);
+        tabs.add("MIDI", &midiTable);
+        tabs.add("Keyboard", &keyTable);
+        tabs.add("Host Parameter", &hostTable);
+    }
 }
 
 void BindingSetContent::load(class BindingEditor* ed, class BindingSet* set)
 {
     editor = ed;
     bindingSet = set;
-    midiTable.load(ed, set, BindingTable::TypeMidi);
-    keyTable.load(ed, set, BindingTable::TypeKey);
-    hostTable.load(ed, set, BindingTable::TypeHost);
+    if (buttons) {
+        buttonTable.load(ed, set, BindingTable::TypeButton);
+    }
+    else {
+        midiTable.load(ed, set, BindingTable::TypeMidi);
+        keyTable.load(ed, set, BindingTable::TypeKey);
+        hostTable.load(ed, set, BindingTable::TypeHost);
+    }
 }
 
 void BindingSetContent::cancel()
@@ -36,6 +51,7 @@ void BindingSetContent::cancel()
     midiTable.cancel();
     keyTable.cancel();
     hostTable.cancel();
+    buttonTable.cancel();
 }
 
 /**
@@ -51,11 +67,16 @@ void BindingSetContent::bindingSaved()
       keyTable.refresh();
     else if (hostTable.isVisible())
       hostTable.refresh();
+    else if (buttonTable.isVisible())
+      buttonTable.refresh();
 }
 
 void BindingSetContent::resized()
 {
-    tabs.setBounds(getLocalBounds());
+    if (buttons)
+      buttonTable.setBounds(getLocalBounds());
+    else
+      tabs.setBounds(getLocalBounds());
 }
 
 bool BindingSetContent::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details)
@@ -101,6 +122,10 @@ void BindingSetContent::itemDropped (const juce::DragAndDropTarget::SourceDetail
         else if (hostTable.isVisible()) {
             table = &hostTable;
             neu->trigger = Binding::TriggerHost;
+        }
+        else if (buttonTable.isVisible()) {
+            table = &buttonTable;
+            neu->trigger = Binding::TriggerUI;
         }
 
         if (table != nullptr) {

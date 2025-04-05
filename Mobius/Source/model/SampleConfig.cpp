@@ -21,8 +21,10 @@ SampleConfig::SampleConfig()
 
 SampleConfig::SampleConfig(SampleConfig* src)
 {
-    for (auto s : src->getSamples())
-      add(new Sample(s));
+    if (src != nullptr) {
+        for (auto s : src->getSamples())
+          add(new Sample(s));
+    }
 }
 
 SampleConfig::~SampleConfig()

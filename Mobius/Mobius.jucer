@@ -241,8 +241,13 @@
           <FILE id="GPDzLn" name="BindingTree.h" compile="0" resource="0" file="Source/ui/binding/BindingTree.h"/>
           <FILE id="bPrXUM" name="BindingUtil.cpp" compile="1" resource="0" file="Source/ui/binding/BindingUtil.cpp"/>
           <FILE id="LurqiG" name="BindingUtil.h" compile="0" resource="0" file="Source/ui/binding/BindingUtil.h"/>
+          <FILE id="OTnt7Y" name="ButtonsEditor.cpp" compile="1" resource="0"
+                file="Source/ui/binding/ButtonsEditor.cpp"/>
+          <FILE id="bb6uyv" name="ButtonsEditor.h" compile="0" resource="0" file="Source/ui/binding/ButtonsEditor.h"/>
           <FILE id="liA5BZ" name="NewBindingPanel.h" compile="0" resource="0"
                 file="Source/ui/binding/NewBindingPanel.h"/>
+          <FILE id="kKQdSn" name="NewButtonPanel.h" compile="0" resource="0"
+                file="Source/ui/binding/NewButtonPanel.h"/>
         </GROUP>
         <GROUP id="{D00C350E-B29D-D24C-688C-04027E4FDEE4}" name="parameter">
           <FILE id="oXrWw9" name="DropTreeView.cpp" compile="1" resource="0"

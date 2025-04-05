@@ -8,6 +8,7 @@
 
 #include "../config/ConfigEditor.h"
 #include "../script/TypicalTable.h"
+#include "../parameter/SymbolTree.h"
 
 #include "BindingSetTable.h"
 #include "BindingDetails.h"
@@ -15,12 +16,13 @@
 class BindingEditor : public ConfigEditor,
                       public TypicalTable::Listener,
                       public BindingDetailsListener,
+                      public SymbolTree::Listener,
                       public juce::DragAndDropContainer
 {
   public:
     
     BindingEditor(class Supervisor* s);
-    ~BindingEditor();
+    virtual ~BindingEditor();
 
     juce::String getTitle() override {return "Bindings";}
     class Provider* getProvider();
@@ -46,11 +48,17 @@ class BindingEditor : public ConfigEditor,
 
     void showBinding(class Binding* b);
     void bindingSaved();
+    void bindingCanceled();
+    void moveBinding(int sourceRow, int dropRow);
     
-  private:
+    void symbolTreeClicked(class SymbolTreeItem* item);
+    void symbolTreeDoubleClicked(class SymbolTreeItem* item);
+    
+  protected:
 
     int currentSet = -1;
-
+    bool capturing = false;
+    
     std::unique_ptr<class BindingSets> bindingSets;
     std::unique_ptr<class BindingSets> revertSets;
     
@@ -60,8 +68,7 @@ class BindingEditor : public ConfigEditor,
 
     BindingDetailsPanel bindingDetails;
     
-    //juce::OwnedArray<class BindingTreeForms> treeForms;
-
+    void install(class BindingSets* sets, bool buttons);
     class BindingSet* getSourceBindingSet(juce::String action, juce::StringArray& errors);
     void addNew(class BindingSet* set);
     

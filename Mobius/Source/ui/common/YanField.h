@@ -150,9 +150,9 @@ class YanInput : public YanField, public juce::Label::Listener, public juce::Tex
     };
     
     void setListener(Listener* l);
-
     void setDisabled(bool b) override;
 
+    void setNoBorder(bool b);
     void setBackgroundColor(juce::Colour c);
     
     int getPreferredComponentWidth() override;
@@ -165,6 +165,8 @@ class YanInput : public YanField, public juce::Label::Listener, public juce::Tex
     void setInt(int i);
 
     void resized() override;
+    void paint(juce::Graphics& g) override;
+    
     void labelTextChanged(juce::Label* l) override;
     void textEditorTextChanged(juce::TextEditor& ed) override;
 
@@ -174,6 +176,7 @@ class YanInput : public YanField, public juce::Label::Listener, public juce::Tex
     juce::Label text;
     int charWidth = 0;
     bool readOnly = false;
+    bool noBorder = false;
 };
 
 class YanCheckbox : public YanField

@@ -298,6 +298,11 @@ YanInput::YanInput(juce::String label, int argCharWidth, bool argReadOnly) : Yan
     addAndMakeVisible(text);
 }
 
+void YanInput::setNoBorder(bool b)
+{
+    noBorder = b;
+}
+
 void YanInput::setBackgroundColor(juce::Colour c)
 {
     text.setColour(juce::Label::ColourIds::backgroundColourId, c);
@@ -366,7 +371,19 @@ int YanInput::getPreferredComponentWidth()
 
 void YanInput::resized()
 {
-    text.setBounds(resizeLabel());
+    juce::Rectangle<int> textBounds = resizeLabel();
+    if (!noBorder)
+      textBounds = textBounds.reduced(1);
+    
+    text.setBounds(textBounds);
+}
+
+void YanInput::paint(juce::Graphics& g)
+{
+    if (!noBorder) {
+        g.setColour(juce::Colours::darkgrey);
+        g.drawRect(getLocalBounds(), 1);
+    }
 }
 
 void YanInput::labelTextChanged(juce::Label* l)

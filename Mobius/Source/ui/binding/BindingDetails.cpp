@@ -33,12 +33,16 @@ BindingDetailsPanel::BindingDetailsPanel()
     followContentMouse();
 
     // this gives it a yellow border
-    setAlert();
+    // too distracting
+    //setAlert();
 
     resetButtons();
     addButton(&saveButton);
     addButton(&cancelButton);
-        
+
+    setBackground(juce::Colours::black);
+    setBorderColor(juce::Colours::lightgrey);
+    
     setSize(350,400);
 }
 
@@ -169,30 +173,52 @@ void BindingContent::initialize(Supervisor* s)
 void BindingContent::cancel()
 {
     closeTrackers();
+    if (listener != nullptr)
+      listener->bindingCanceled();
 }
 
 void BindingContent::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-
-    title.setBounds(area.removeFromTop(30));
-
     area.removeFromTop(8);
 
-    if (type != TypeUnknown) {
-    
-        triggerTitle.setBounds(area.removeFromTop(30));
-        area.removeFromTop(8);
+    int titleHeight = 20;
+    title.setFont(JuceUtil::getFont(titleHeight));
+    title.setBounds(area.removeFromTop(titleHeight));
 
-        triggerForm.setBounds(area.removeFromTop(triggerForm.getPreferredHeight()));
-        area.removeFromTop(8);
+    area.removeFromTop(20);
+    area.removeFromLeft(15);
+
+    int sectionHeight = 20;
+
+    if (type == TypeHost) {
+        // no interesting trigger fields
+    }
+    else if (type == TypeButton) {
+        // todo: display name, but is that really a Trigger?
+    }
+    else if (type != TypeUnknown) {
+
+        triggerTitle.setColour(juce::Label::textColourId, juce::Colours::yellow);
+        triggerTitle.setFont(JuceUtil::getFont(sectionHeight));
+        triggerTitle.setBounds(area.removeFromTop(sectionHeight));
+        area.removeFromTop(20);
+
+        juce::Rectangle<int> triggerArea = area.removeFromTop(triggerForm.getPreferredHeight());
+        triggerArea.removeFromLeft(20);
+        triggerForm.setBounds(triggerArea);
+        area.removeFromTop(20);
     }
 
-    targetTitle.setBounds(area.removeFromTop(30));
+    targetTitle.setColour(juce::Label::textColourId, juce::Colours::yellow);
+    targetTitle.setFont(JuceUtil::getFont(sectionHeight));
+    targetTitle.setBounds(area.removeFromTop(sectionHeight));
     
-    area.removeFromTop(8);
+    area.removeFromTop(20);
 
-    qualifiers.setBounds(area.removeFromTop(qualifiers.getPreferredHeight()));
+    juce::Rectangle<int> qualifierArea = area.removeFromTop(qualifiers.getPreferredHeight());
+    qualifierArea.removeFromLeft(20);
+    qualifiers.setBounds(qualifierArea);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -256,11 +282,13 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
         triggerForm.add(&release);
         triggerForm.add(&capture);
         captureText.setAdjacent(true);
-
+        captureText.setNoBorder(true);
+        
         // this is the same color as used by BasePanel to make the capture
         // text stand out less than a black input field
         // !! need to be sharing this color
-        captureText.setBackgroundColor(juce::Colours::darkgrey.darker(0.8f));
+        // captureText.setBackgroundColor(juce::Colours::darkgrey.darker(0.8f));
+        captureText.setBackgroundColor(juce::Colours::black);
         
         triggerForm.add(&captureText);
         
@@ -269,7 +297,7 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
         release.setValue(b->release);
         arguments.setValue(b->arguments);
         
-        capture.setValue(false);
+        capture.setValue(capturing);
         captureText.setValue("");
     }
 
@@ -460,6 +488,11 @@ juce::String BindingContent::unpackScope()
 // Trackers
 //
 //////////////////////////////////////////////////////////////////////
+
+void BindingContent::setCapturing(bool b)
+{
+    capturing = b;
+}
 
 bool BindingContent::isCapturing()
 {

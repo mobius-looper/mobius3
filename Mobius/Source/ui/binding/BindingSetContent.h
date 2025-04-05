@@ -17,6 +17,7 @@ class BindingSetContent : public juce::Component,
 
     BindingSetContent();
 
+    void initialize(bool buttons);
     void load(class BindingEditor* ed, class BindingSet* set);
     void cancel();
     void resized();
@@ -29,10 +30,12 @@ class BindingSetContent : public juce::Component,
 
     BindingEditor* editor = nullptr;
     BindingSet* bindingSet = nullptr;
+    bool buttons = false;
     
     BasicTabs tabs;
     BindingTable midiTable;
     BindingTable keyTable;
     BindingTable hostTable;
+    BindingTable buttonTable;
     
 };

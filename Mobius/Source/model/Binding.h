@@ -52,6 +52,8 @@ class Binding
     
     // Alternate name for UI buttons
     juce::String displayName;
+    // transient, for DisplayButton conversion
+    int color = 0;
     
   private:
 

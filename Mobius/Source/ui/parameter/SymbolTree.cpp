@@ -126,6 +126,15 @@ void SymbolTree::itemClicked(SymbolTreeItem* item)
     }
 }
 
+void SymbolTree::itemDoubleClicked(SymbolTreeItem* item)
+{
+    if (item->canBeSelected()) {
+        //Trace(2, "Clicked %s", item->getName().toUTF8());
+        if (listener != nullptr)
+          listener->symbolTreeDoubleClicked(item);
+    }
+}
+
 SymbolTreeItem* SymbolTree::findAnnotatedItem(juce::String s)
 {
     return findAnnotatedItem(&root, s);
@@ -645,6 +654,13 @@ void SymbolTreeItem::itemClicked(const juce::MouseEvent& e)
         tree->itemClicked(this);
     }
 }
+
+void SymbolTreeItem::itemDoubleClicked(const juce::MouseEvent& e)
+{
+    (void)e;
+    SymbolTree* tree = static_cast<SymbolTree*>(getOwnerView()->getParentComponent());
+    tree->itemDoubleClicked(this);
+}    
 
 /**
  * Menu handler for "Favorites"

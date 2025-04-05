@@ -13,6 +13,7 @@ class BindingDetailsListener {
   public:
     virtual ~BindingDetailsListener() {}
     virtual void bindingSaved() = 0;
+    virtual void bindingCanceled() = 0;
 };
 
 class BindingContent : public juce::Component,
@@ -29,7 +30,8 @@ class BindingContent : public juce::Component,
         TypeUnknown,
         TypeMidi,
         TypeKey,
-        TypeHost
+        TypeHost,
+        TypeButton
     } Type;
 
     static const int FontHeight = 20;
@@ -42,6 +44,9 @@ class BindingContent : public juce::Component,
     void load(BindingDetailsListener* l, class Binding* b);
     void save();
     void cancel();
+    
+    bool isCapturing();
+    void setCapturing(bool b);
     
     void resized() override;
 
@@ -56,7 +61,8 @@ class BindingContent : public juce::Component,
     class Supervisor* supervisor = nullptr;
     BindingDetailsListener* listener = nullptr;
     Binding* binding = nullptr;
-
+    bool capturing = false;
+    
     Type type = TypeUnknown;
     int maxTracks = 0;
     int capturedCode = 0;
@@ -95,7 +101,6 @@ class BindingContent : public juce::Component,
     void trackMidi();
     void closeTrackers();
 
-    bool isCapturing();
     juce::String renderCapture(const juce::MidiMessage& msg);
     void showCapture(juce::String& cap);
     
@@ -111,6 +116,14 @@ class BindingDetailsPanel : public BasePanel
 
     void initialize();
     void initialize(class Supervisor* s);
+
+    void setCapturing(bool b) {
+        content.setCapturing(b);
+    }
+
+    bool isCapturing() {
+        return content.isCapturing();
+    }
 
     void show(juce::Component* parent, BindingDetailsListener* l, class Binding* b);
     void close() override;

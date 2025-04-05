@@ -48,6 +48,7 @@ class SymbolTreeItem : public juce::TreeViewItem
     int getItemHeight() const override;
     bool canBeSelected() const override;
     void itemClicked(const juce::MouseEvent& e) override;
+    void itemDoubleClicked(const juce::MouseEvent& e) override;
     juce::var getDragSourceDescription() override;
 
     // Favorites experiment
@@ -116,6 +117,7 @@ class SymbolTree : public juce::Component, public YanInput::Listener
       public:
         virtual ~Listener() {}
         virtual void symbolTreeClicked(SymbolTreeItem* item) =  0;
+        virtual void symbolTreeDoubleClicked(SymbolTreeItem* item) {(void)item;}
     };
 
     SymbolTreeItem* getRoot() {
@@ -125,6 +127,7 @@ class SymbolTree : public juce::Component, public YanInput::Listener
     void setListener(Listener* l);
     void setDropListener(DropTreeView::Listener* l);
     void itemClicked(SymbolTreeItem* item);
+    void itemDoubleClicked(SymbolTreeItem* item);
     
     // old load interface, remove
     void loadSymbols(class SymbolTable* table, juce::String favorites);

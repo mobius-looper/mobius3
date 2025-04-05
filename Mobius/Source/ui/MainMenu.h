@@ -122,6 +122,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         MclConsole,
 
         // Help
+        Bindings,
         KeyBindings,
         MidiBindings,
         MidiMonitor,

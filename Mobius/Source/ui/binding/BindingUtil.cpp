@@ -44,6 +44,9 @@ juce::String BindingUtil::renderTrigger(Binding* b)
         Binderator::unpackKeyQualifier(b->triggerValue, &code, &modifiers);
         return KeyTracker::getKeyText(code, modifiers);
     }
+    else if (trigger == Binding::TriggerHost) {
+        text = "Host";
+    }
     else {
         text = "???";
     }

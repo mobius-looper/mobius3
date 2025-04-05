@@ -38,6 +38,7 @@ class PanelFactory
         KeyboardSummary,
 
         // configuration editing panels
+        Bindings,
         Keyboard,
         Midi,
         Host,
@@ -45,6 +46,7 @@ class PanelFactory
         Sample,
         Display,
         Button,
+        Buttons,
         Properties,
         Group,
         Session,

@@ -58,6 +58,7 @@ class BasePanel : public juce::Component, public juce::Button::Listener
         id = i;
     }
 
+    void setBackground(juce::Colour c);
     void setContent(juce::Component* c);
     void resetButtons();
     void addButton(juce::Button* b);
@@ -104,6 +105,8 @@ class BasePanel : public juce::Component, public juce::Button::Listener
 
     juce::String title;
     juce::Colour borderColor;
+    juce::Colour backgroundColor;
+    bool backgroundColorSet = false;
     BasicButtonRow closeButtons;
     juce::TextButton okButton {"OK"};
     juce::Component* contentComponent = nullptr;

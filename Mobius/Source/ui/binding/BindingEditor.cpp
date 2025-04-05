@@ -29,6 +29,7 @@ BindingEditor::BindingEditor(Supervisor* s) : ConfigEditor(s)
 
     bindingTree.reset(new BindingTree());
     bindingTree->setDraggable(true);
+    bindingTree->setListener(this);
     addAndMakeVisible(bindingTree.get());
 
     addChildComponent(bindingDetails);
@@ -70,15 +71,20 @@ void BindingEditor::load()
 {
     SystemConfig* scon = supervisor->getSystemConfig();
     BindingSets* master = scon->getBindings();
-    bindingSets.reset(new BindingSets(master));
-    revertSets.reset(new BindingSets(master));
-    //treeForms.clear();
+    BindingSets* copy = new BindingSets(master);
+    install(copy, false);
+}
+
+void BindingEditor::install(BindingSets* sets, bool buttons)
+{
+    bindingSets.reset(sets);
 
     setTable->load(bindingSets.get());
 
     contents.clear();
     for (auto set : bindingSets->getSets()) {
         BindingSetContent* cont = new BindingSetContent();
+        cont->initialize(buttons);
         cont->load(this, set);
         contents.add(cont);
         addChildComponent(cont);
@@ -121,6 +127,7 @@ void BindingEditor::showBinding(Binding* b)
 {
     (void)b;
 
+    bindingDetails.setCapturing(capturing);
     bindingDetails.show(this, this, b);
     JuceUtil::centerInParent(&bindingDetails);
 }
@@ -134,8 +141,31 @@ void BindingEditor::bindingSaved()
         BindingSetContent* current =  contents[currentSet];
         current->bindingSaved();
     }
+
+    // save this for next time
+    capturing = bindingDetails.isCapturing();
 }
 
+void BindingEditor::bindingCanceled()
+{
+    // regardless save this
+    capturing = bindingDetails.isCapturing();
+}
+
+void BindingEditor::symbolTreeClicked(SymbolTreeItem* item)
+{
+    (void)item;
+}
+
+void BindingEditor::symbolTreeDoubleClicked(SymbolTreeItem* item)
+{
+    Symbol* s = item->getSymbol();
+    if (s != nullptr) {
+        Trace(1, "BindingEditor: Would very much like to add %s",
+              s->getName());
+    }
+}
+    
 /**
  * Called by the Save button in the footer.
  *
@@ -159,7 +189,6 @@ void BindingEditor::save()
 
     master->transfer(bindingSets.get());
     supervisor->bindingEditorSave(master);
-    
     
     bindingSets.reset();
     revertSets.reset();

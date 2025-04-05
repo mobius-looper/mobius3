@@ -24,6 +24,7 @@
 #include "config/ConfigPanels.h"
 
 #include "binding/NewBindingPanel.h"
+#include "binding/NewButtonPanel.h"
 #include "help/HelpTest.h"
 
 #include "PanelFactory.h"
@@ -140,10 +141,12 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case Script: panel = new ScriptPanel(super); break;
         case Sample: panel = new SamplePanel(super); break;
         case Display: panel = new DisplayPanel(super); break;
-            
+
+        case Bindings: panel = new NewBindingPanel(super); break;
         case Keyboard: panel = new KeyboardPanel(super); break;
         case Midi: panel = new MidiPanel(super); break;
         case Button: panel = new ButtonPanel(super); break;
+        case Buttons: panel = new NewButtonPanel(super); break;
         case Host: panel = new HostPanel(super); break;
         case Properties: panel = new PropertiesPanel(super); break;
         case Group: panel = new GroupPanel(super); break;

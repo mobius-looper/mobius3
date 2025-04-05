@@ -24,16 +24,26 @@ class BindingTableRow
     
 };
 
+class BindingTableComparator
+{
+  public:
+
+    int compareElements(BindingTableRow* first, BindingTableRow* second);
+};
+
 class BindingTable : public TypicalTable,
-                        public YanPopup::Listener,
-                        public YanDialog::Listener
+                     public YanPopup::Listener,
+                     public YanDialog::Listener,
+                     public juce::DragAndDropTarget, public juce::DragAndDropContainer
+                     
 {
   public:
 
     typedef enum {
         TypeMidi,
         TypeKey,
-        TypeHost
+        TypeHost,
+        TypeButton
     } Type;
 
     // column ids 
@@ -52,7 +62,7 @@ class BindingTable : public TypicalTable,
     
     BindingTable();
     ~BindingTable();
-
+    
     void load(class BindingEditor* e, class BindingSet* set, Type type);
     void refresh();
     void reload();
@@ -76,6 +86,14 @@ class BindingTable : public TypicalTable,
     // the delete key is pressed on a row
     void deleteKeyPressed(int lastRowSelected) override;
     void returnKeyPressed(int lastRowSelected) override;
+
+    // row reordering for buttons
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails&) override;
+    void itemDragEnter (const juce::DragAndDropTarget::SourceDetails&) override;
+    void itemDragMove (const juce::DragAndDropTarget::SourceDetails&) override;
+    void itemDragExit (const juce::DragAndDropTarget::SourceDetails&) override;
+    void itemDropped (const juce::DragAndDropTarget::SourceDetails&) override;
+    juce::var getDragSourceDescription (const juce::SparseSet<int>& selectedRows) override;
     
   private:
 
@@ -93,6 +111,14 @@ class BindingTable : public TypicalTable,
 
     void addBinding(class Binding* b);
     void deleteCurrent();
+
+    // drag and drop hacking
+    bool targetActive = false;
+    bool moveActive = false;
+    int lastInsertIndex = -1;
+    int getDropRow(const juce::DragAndDropTarget::SourceDetails& details);
+    bool doMove(int sourceRow, int dropRow);
+    void moveBinding(int sourceRow, int desiredRow);
 
 };
     

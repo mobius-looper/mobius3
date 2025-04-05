@@ -263,6 +263,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
 
     else if (menuIndex == menuIndexBindings) {
         // these have ids within the enumeration
+        menu.addItem(Bindings, "Edit Bindings...");
         menu.addItem(MidiControl, "Edit MIDI Bindings...");
         menu.addItem(KeyboardControl, "Edit Keyboard Bindings...");
         menu.addSeparator();
