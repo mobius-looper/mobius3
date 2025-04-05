@@ -19,9 +19,10 @@
 
 #include "BindingEditor.h"
 
-BindingEditor::BindingEditor(Supervisor* s) : ConfigEditor(s)
+BindingEditor::BindingEditor(Supervisor* s, bool argButtons) : ConfigEditor(s)
 {
     setName("BindingEditor");
+    buttons = argButtons;
 
     setTable.reset(new BindingSetTable(this));
     addAndMakeVisible(setTable.get());
@@ -72,10 +73,10 @@ void BindingEditor::load()
     SystemConfig* scon = supervisor->getSystemConfig();
     BindingSets* master = scon->getBindings();
     BindingSets* copy = new BindingSets(master);
-    install(copy, false);
+    install(copy);
 }
 
-void BindingEditor::install(BindingSets* sets, bool buttons)
+void BindingEditor::install(BindingSets* sets)
 {
     bindingSets.reset(sets);
 
@@ -83,11 +84,7 @@ void BindingEditor::install(BindingSets* sets, bool buttons)
 
     contents.clear();
     for (auto set : bindingSets->getSets()) {
-        BindingSetContent* cont = new BindingSetContent();
-        cont->initialize(buttons);
-        cont->load(this, set);
-        contents.add(cont);
-        addChildComponent(cont);
+        install(set);
     }
 
     // reset this to trigger show() during selectFirst()
@@ -100,6 +97,15 @@ void BindingEditor::install(BindingSets* sets, bool buttons)
     resized();
 
     //JuceUtil::dumpComponent(this);
+}
+
+void BindingEditor::install(BindingSet* set)
+{
+    BindingSetContent* cont = new BindingSetContent();
+    cont->initialize(isButtons());
+    cont->load(this, set);
+    contents.add(cont);
+    addChildComponent(cont);
 }
 
 void BindingEditor::show(int index)
@@ -285,10 +291,7 @@ void BindingEditor::addNew(BindingSet* neu)
 {
     bindingSets->add(neu);
 
-    BindingSetContent* cont = new BindingSetContent();
-    cont->load(this, neu);
-    contents.add(cont);
-    addChildComponent(cont);
+    install(neu);
     resized();
 
     setTable->reload();

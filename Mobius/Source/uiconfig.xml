@@ -137,7 +137,12 @@
     <Button action="Rec/Over/Play"/>
     <Button action="Start/Stop"/>
   </ButtonSet>
-  <ButtonSet name="Buttons2"/>
+  <ButtonSet name="Buttons2">
+    <Button action="Reset"/>
+    <Button action="TrackReset"/>
+    <Button action="Record"/>
+    <Button action="Play"/>
+  </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>
     <Property name="alertHeight" value="30"/>

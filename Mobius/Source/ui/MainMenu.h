@@ -96,10 +96,11 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         Exit,
 
         // Configuration
-        MidiControl,
-        KeyboardControl,
+        Bindings,
         Buttons,
-        HostParameters,
+        OldMidiControl,
+        OldKeyboardControl,
+        OldHostParameters,
         DisplayComponents,
         Samples,
         MidiDevices,
@@ -122,7 +123,6 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         MclConsole,
 
         // Help
-        Bindings,
         KeyBindings,
         MidiBindings,
         MidiMonitor,

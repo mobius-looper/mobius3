@@ -264,8 +264,9 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     else if (menuIndex == menuIndexBindings) {
         // these have ids within the enumeration
         menu.addItem(Bindings, "Edit Bindings...");
-        menu.addItem(MidiControl, "Edit MIDI Bindings...");
-        menu.addItem(KeyboardControl, "Edit Keyboard Bindings...");
+        // leave these around temporarily, but delete after a few releases
+        //menu.addItem(OldMidiControl, "Edit MIDI Bindings...");
+        //menu.addItem(OldKeyboardControl, "Edit Keyboard Bindings...");
         menu.addSeparator();
         
         Provider* provider = mainWindow->getProvider();
@@ -331,12 +332,10 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
 
     else if (menuIndex == menuIndexConfig)
     {
-        //menu.addItem(MidiControl, "MIDI Control");
-        //menu.addItem(KeyboardControl, "Keyboard Control");
-        //menu.addSeparator();
         menu.addItem(Properties, "Function Behavior");
         menu.addItem(Groups, "Track Groups");
-        menu.addItem(HostParameters, "Plugin Parameters");
+        // now part of Bindings
+        //menu.addItem(OldHostParameters, "Plugin Parameters");
         menu.addItem(System, "System Configuration");
         menu.addSeparator();
         menu.addItem(Samples, "Samples");
@@ -382,7 +381,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(TraceLog, "Trace Log");
         menu.addItem(DecacheForms, "Decache Forms");
         menu.addItem(HelpTest, "Help Test");
-        menu.addItem(InProgress, "In Progress");
+        //menu.addItem(InProgress, "In Progress");
     }
 
     return menu;

@@ -9,13 +9,15 @@
 #include <JuceHeader.h>
 
 #include "BindingEditor.h"
-\
+
 class ButtonsEditor : public BindingEditor
 {
   public:
 
     ButtonsEditor(class Supervisor* s);
 
+    juce::String getTitle() override {return "Buttons";}
+    
     void load() override;
     void save() override;
 

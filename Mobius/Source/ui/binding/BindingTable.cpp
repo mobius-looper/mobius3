@@ -119,7 +119,15 @@ void BindingTable::addBinding(Binding* b)
     else {
         BindingTableComparator comparator;
         bindingRows.addSorted(comparator, row);
+        // todo: need to find it and select it
     }
+}
+
+void BindingTable::addAndEdit(Binding* b)
+{
+    addBinding(b);
+    if (editor != nullptr)
+      editor->showBinding(b);
 }
 
 int BindingTableComparator::compareElements(BindingTableRow* first, BindingTableRow* second)
@@ -329,85 +337,83 @@ void BindingTable::yanDialogClosed(YanDialog* d, int button)
 //
 //////////////////////////////////////////////////////////////////////
 
-bool BindingTable::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details)
+/**
+ * Build the thing the target gets when something is dropped from this table.
+ * Since we're the only one interested in drops from ourselves, pass
+ * the row number.
+ */
+juce::var BindingTable::getDragSourceDescription (const juce::SparseSet<int>& selectedRows)
 {
-    (void)details;
-    if (type == TypeButton)
-      return true;
-    else
-      return false;
-}
-
-void BindingTable::itemDragEnter(const juce::DragAndDropTarget::SourceDetails& details)
-{
+    juce::String desc;
     if (type == TypeButton) {
-        // we are both a source and a target, so don't highlight if we're over oursleves
-        // spec is unclear what the sourceComponent will be if this is an item from
-        // a ListBox, what you are dragging is some sort of inner component for the ListBox
-        // with arbitrary structure between it and the ListBox, comparing against the
-        // outer ListBox seems to work
-
-        // !! why would this ever want to support drop from outside?
-        if (details.sourceComponent != &table) {
-            Trace(2, "BindingTable::itemDragEnter From outside");
-            targetActive = true;
-            moveActive = false;
+        if (selectedRows.size() > 1) {
+            Trace(1, "BindingTable: Trying to drag more than one row");
         }
         else {
-            //Trace(2, "BindingTable::itemDragEnter From inside");
-            // moving within ourselves
-            moveActive = true;
-            targetActive = false;
+            desc = juce::String(DragPrefix) + juce::String(selectedRows[0]);
         }
+    }
+    return desc;
+}
+
+/**
+ * Interested in drops only for the button table,
+ */
+bool BindingTable::isInterestedInDragSource(const juce::DragAndDropTarget::SourceDetails& details)
+{
+    (void)details;
+    return (type == TypeButton);
+}
+
+/**
+ * When something comes in, start dragging the drop location with a little
+ * line between rows.
+ *
+ * This is drawn by TypicalTable when the paintDropTarget fla is set and
+ * dropTargetRow has the row number.
+ */
+void BindingTable::itemDragEnter(const juce::DragAndDropTarget::SourceDetails& details)
+{
+    (void)details;
+    if (type == TypeButton) {
         paintDropTarget = true;
+        // should be initialized but make sure and wait for an itemDragMove
+        dropTargetRow = -1;
     }
 }
 
 /**
- * If we're dragging within ourselves, give some indication of the insertion point.
- * Actually it doesn't matter if the drag is coming from the outside, still need
- * to be order sensitive unless sorted.  I gave up trying to predict what
- * getInsertionIndexForPosition does.  You can calculate the drop position without that
- * in itemDropped, though it would be nice to draw that usual insertion line between items
- * while the drag is in progress.  Revisit someday...
+ * As the drag moves within the table, draw the insertion point as with a line
+ * between rows.  getInsertIndexForPosition handles the viewport calculations
+ * and picks a good index, using the center of the row as the transition point.
  */
 void BindingTable::itemDragMove(const juce::DragAndDropTarget::SourceDetails& details)
 {
     if (type == TypeButton) {
         juce::Point<int> pos = details.localPosition;
-        // position is "relative to the target component"  in this case the target
-        // is the BindingTable which offsets the ListBox by 4 on all sides to draw
-        // the drop border, convert wrapper coordinates to ListBox coordinates
+
         int listBoxX = pos.getX() - table.getX();
         int listBoxY = pos.getY() - table.getY();
         int insertIndex =  table.getInsertionIndexForPosition(listBoxX, listBoxY);
-        if (insertIndex != lastInsertIndex) {
-            //Trace(2, "Insertion index %ld\n", (long)insertIndex);
-            lastInsertIndex = insertIndex;
-        }
-
-        // try this isntead
-        int dropRow = getDropRow(details);
-        if (dropRow != dropTargetRow) {
-            dropTargetRow = dropRow;
+        
+        if (insertIndex != dropTargetRow) {
+            //Trace(2, "Insertion index %d", insertIndex);
+            dropTargetRow =  insertIndex;
             repaint();
         }
     }
 }
 
 /**
- * If we started a drag, and went off into space without landing on a target, I suppose we
- * could treat this as a special form of move that removes the value from the list.
- * But I don't think we can tell from here, this just means that the mouse left the
- * ListBox, it may come back again.
+ * The drag went off into space.
+ * For some tables, this could indicate a removal of the row.
+ * I'd rather not do that for bindings since it's easy to do accidentally.
  */
 void BindingTable::itemDragExit (const juce::DragAndDropTarget::SourceDetails& details)
 {
     (void)details;
     if (type == TypeButton) {
-        Trace(2, "BindingTable::itemDragExit");
-        targetActive = false;
-        moveActive = false;
+        //Trace(2, "BindingTable::itemDragExit");
         paintDropTarget = false;
         dropTargetRow = -1;
         repaint();
@@ -423,44 +429,50 @@ void BindingTable::itemDragExit (const juce::DragAndDropTarget::SourceDetails& d
  * a StringArray, add those values to our list, and inform the listener that
  * new values were received.  When used with MultiSelectDrag this will cause
  * those values to be removed from the source ListBox.
+ *
+ * NOTE WELL:
+ *
+ * Even though BindingTable is used for both Buttons and Midi bindings, you
+ * won't actually get here when dropping symbols in the BindingEditor.  That's
+ * because BindingEditor defines it's own DragAndDropTarget and it sorts so
+ * the dropTargetRow tracking won't have been done.
+ *
+ * This is messy, and will get moreso when TypicalTable gets redesigned.
+ * The table should be handling all drop requests and forwarding to the listener
+ * to do any special handling it might require.
  */
 void BindingTable::itemDropped (const juce::DragAndDropTarget::SourceDetails& details)
 {
     (void)details;
-    if (type ==  TypeButton) {
+    if (type ==  TypeButton && dropTargetRow >= 0) {
 
-        // here is where you would figure out the source row by comparing what
-        // was placed in the details by getDragSourceDesription to one of the rows in the model
-        //int sourceRow = strings.indexOf(newValues[0]);
-    
-        int dropRow = getDropRow(details);
+        // and who dropped it
+        juce::String dropSource = details.description.toString();
 
-        juce::String sourceThing = "???";;
-        juce::var stuff = details.description;
-        if (stuff.isArray()) {
-            Trace(1, "BindingTable: Something dropped in an array");
-        }
-        else {
-            sourceThing = stuff;
-        }
-    
-#if 0    
-        juce::String msg = juce::String("Dropped ") + sourceThing + juce::String(" into row ") +
-            juce::String(dropRow);
-        Trace(2, "BindingTable: %s", msg.toUTF8());
-#endif
-    
-        if (sourceThing.length() > 0) {
-            int sourceRow = sourceThing.getIntValue();
-            if (doMove(sourceRow, dropRow)) {
-                // we forward the move request to SessiontTrackEditor which
-                // will normally call back to our reload() if it decided to do it
-                //table.updateContent();
+        if (dropSource.startsWith(BindingTree::DragPrefix)) {
+            // dragging something from the parameter tree, insert new binding
+            juce::String sname = dropSource.fromFirstOccurrenceOf(BindingTree::DragPrefix, false, false);
+            Symbol* s = editor->getProvider()->getSymbols()->find(sname);
+            if (s == nullptr)
+              Trace(1, "BindingTable: Invalid symbol name in drop %s", sname.toUTF8());
+            else {
+                doInsert(s, dropTargetRow);
             }
         }
+        else if (dropSource.startsWith(BindingTable::DragPrefix)) {
+            // dragging onto ourselves, a row move
+            juce::String srow = dropSource.fromFirstOccurrenceOf(BindingTable::DragPrefix, false, false);
+            if (srow.length() > 0) {
+                int dragRow = srow.getIntValue();
+                doMove(dragRow, dropTargetRow);
+            }
+        }
+        else {
+            Trace(1, "BindingTable: Unknown drop source %s",
+                  dropSource.toUTF8());
+        }
 
-        targetActive = false;
-        moveActive = false;
+        // stop drawing insert points
         paintDropTarget = false;
         dropTargetRow = -1;
 
@@ -470,112 +482,65 @@ void BindingTable::itemDropped (const juce::DragAndDropTarget::SourceDetails& de
 }
 
 /**
- * Calculate the row where a drop should be inserted when using
- * an unordered list.
- *
- * getInsertionIndexForPosition tracking during itemDragMove was wonky
- * and I never did understand it.  We don't really need that since we have
- * the drop coordinates in details.localPosition and can ask the ListBox
- * for getRowContainingPosition.  Note that localPosition is relative to the
- * DragAndDropTarget which is BindingTable and the ListBox is inset by
- * 4 on all sides to draw a border.  So have to adjust the coordinates to ListBox
- * coordinates when calling getRowCintainingPosition.
+ * Handle a drop from the parameter tree.
  */
-int BindingTable::getDropRow(const juce::DragAndDropTarget::SourceDetails& details)
+void BindingTable::doInsert(Symbol* s, int dropRow)
 {
-    juce::Point<int> pos = details.localPosition;
-    int dropX = pos.getX();
-    int dropY = pos.getY();
-    //Trace(2, "Drop position %ld %ld\n", dropX, dropY);
-    dropX -= table.getX();
-    dropY -= table.getY();
-    //Trace(2, "Drop position within ListBox %ld %ld\n", dropX, dropY);
-    int dropRow = table.getRowContainingPosition(dropX, dropY);
+    Binding* neu = new Binding();
+    neu->symbol = s->name;
 
-    return dropRow;
-}
-
-/**
- * Build the thing the target gets when something is dropped.
- * 
- * from the demo:
- * for our drag description, we'll just make a comma-separated list of the selected row
- * numbers - this will be picked up by the drag target and displayed in its box.
- *
- * In the context of MultiSelectDrag we want to move a set of strings from
- * one list box to another.  The easiest way to do that is to have the description
- * be array of strings.  A CSV is unreliable because an item in the array could contain
- * a comma, and I don't want to mess with delimiters and quoting.
- *
- * Passing just the item numbers like the demo means we have to ask some parent
- * component what those numbers mean.  This might make StringArrayListBox more usable
- * in different contexts, but more work.
- *
- * It is unclear what the side effects of having the description be an arbitrarily
- * long array of arbitrarily long strings would be.
- */
-juce::var BindingTable::getDragSourceDescription (const juce::SparseSet<int>& selectedRows)
-{
-    juce::String desc;
-    if (type == TypeButton) {
-        if (selectedRows.size() > 1) {
-            Trace(1, "BindingTable: Trying to drag more than one row");
-        }
-        else {
-            desc = juce::String(selectedRows[0]);
-        }
+    switch (type) {
+        case TypeMidi: neu->trigger = Binding::TriggerNote; break;
+        case TypeKey: neu->trigger = Binding::TriggerKey; break;
+        case TypeHost: neu->trigger = Binding::TriggerHost; break;
+        case TypeButton: neu->trigger = Binding::TriggerUI; break;
     }
-    return desc;
+
+    // here is where we have the dual model problems
+    // the BindingSet is authorative over order so we have to insert
+    // into that and then rebuild the row model, there would be less
+    // churn if we let the table control order, just make a Binding
+    // and a BindingTableRow and insert that, then rebuild the BindingSet
+    // list when it is saved. 
+
+    juce::OwnedArray<class Binding>& bindings = bindingSet->getBindings();
+    bindings.insert(dropRow, neu);
+
+    // could do this with an incremental add if you were smarter
+    // but this gets the job done
+    reload();
+    selectRow(dropRow);
+
+    // expectation is immediate edit
+    // todo: here there is an expectation problem
+    // if the user selects Cancel from the popup then they may expect
+    // that the add doesn't happen, but the row is still there
+    // hmm: for buttons this is actually unnecessary since the only things
+    // you can change are the scope and display name which are uncommon
+    //if (editor != nullptr)
+    //editor->showBinding(neu);
 }
 
 /**
- * Finally after all that, we have our instructions.
+ * For ordered tables only, move a row to a new location.
  *
- * sourceRow is the row index you were ON when the drag started.
- * dropRow is the row you are on when the drag ended.
- *
- * The insertion line is painted at the top of the dropRow, indicating
- * that you want to the source row to be in between the dropRow and
- * the one above it.
- *
- * When dropRow == sourceRow you have not moved and nothing happens.
- *
- * When dropRow == sourceRow + 1 you are already above the drop row so
- * nothing happens.
- *
- * When dropRow is -1 it means that the drop happened outside of the
- * table rows so it moves to the end.  If sourceRow is already the last
- * one nothing happens.
+ * SessionTrackEditor has some mind numbing logic due to the way
+ * the drop row was calculated.  Simplified here.
  */
-bool BindingTable::doMove(int sourceRow, int dropRow)
+void BindingTable::doMove(int sourceRow, int dropRow)
 {
-    bool moved = false;
-    
     Trace(2, "BindingTable: Move row %d to %d", sourceRow, dropRow);
-
-    if (dropRow < 0)
-      // brain hurting, see comments in BindingTable for why this needs to be one past the end
-      dropRow = bindingRows.size();
-
-    if (sourceRow == dropRow) {
-        // already there
-    }
-    else if (sourceRow == (dropRow - 1)) {
-        // already above the target
-    }
-    else {
-        // somewhere to go
-        // SessionTrackTable where this came from fowarded this to the SessionEditor
-        // we don't neeed to since we have the BindingSet container and can do it ourselves
+    if (dropRow >= 0 && dropRow != sourceRow) {
         moveBinding(sourceRow, dropRow);
-        moved = true;
     }
-    return moved;
 }
 
 /**
- * The binding table would like to move a row.
- * This is active only when editing ButtonSets
+ * This is complicated due to the way juce::Array::move works and
+ * needs to take into account whether the new location is above
+ * or below the starting location.
+ *
+ * Still don't fully undestand this, but testing shows this method worked.
  *
  * sourceRow is the track INDEX it wants to move and
  * desiredRow is the index the track should have.
@@ -604,15 +569,9 @@ void BindingTable::moveBinding(int sourceRow, int desiredRow)
             adjustedRow >= 0 && adjustedRow < bindings.size()) {
 
             bindings.move(sourceRow, adjustedRow);
+            reload();
+            selectRow(adjustedRow);
         }
-        
-        reload();
-        // keep on the same object
-        // should already be there but make sure it's in sync
-        selectRow(desiredRow);
-        // we don't have this state
-        //currentTrack = desiredRow;
-        //show(currentTrack);
     }
 }
 

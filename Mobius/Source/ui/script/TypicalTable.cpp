@@ -219,6 +219,7 @@ void TypicalTable::paintRowBackground(juce::Graphics& g, int rowNumber,
             g.drawLine(left, top, right, top);
          }
         else if (dropTargetRow == -1 && rowNumber == (getRowCount() - 1)) {
+            Trace(2, "TypicalTable::paintDropTarget bottom");
             float bottom = (float)(height - 1);
             g.setColour(juce::Colours::red);
             g.drawLine(left, bottom, right, bottom);

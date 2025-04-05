@@ -298,23 +298,23 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::Overlay);
             }
                 break;
-            case MainMenu::MidiControl: {
-                panelFactory.show(PanelFactory::Midi);
+            case MainMenu::OldMidiControl: {
+                panelFactory.show(PanelFactory::OldMidi);
             }
                 break;
         
-            case MainMenu::KeyboardControl:  {
-                panelFactory.show(PanelFactory::Keyboard);
+            case MainMenu::OldKeyboardControl:  {
+                panelFactory.show(PanelFactory::OldKeyboard);
             }
                 break;
             
             case MainMenu::Buttons: {
-                panelFactory.show(PanelFactory::Button);
+                panelFactory.show(PanelFactory::Buttons);
             }
                 break;
 
-            case MainMenu::HostParameters: {
-                panelFactory.show(PanelFactory::Host);
+            case MainMenu::OldHostParameters: {
+                panelFactory.show(PanelFactory::OldHost);
             }
                 break;
 
@@ -383,7 +383,7 @@ void MainWindow::mainMenuSelection(int id)
                 
             case MainMenu::InProgress:
                 //panelFactory.show(PanelFactory::InProgress);
-                panelFactory.show(PanelFactory::Buttons);
+                //panelFactory.show(PanelFactory::Buttons);
                 break;
                 
             case MainMenu::HelpTest:

@@ -39,6 +39,8 @@ class BindingTable : public TypicalTable,
 {
   public:
 
+    constexpr static const char* DragPrefix = "BindingTable:";
+
     typedef enum {
         TypeMidi,
         TypeKey,
@@ -110,14 +112,11 @@ class BindingTable : public TypicalTable,
     void startHelp();
 
     void addBinding(class Binding* b);
+    void addAndEdit(Binding* b);
     void deleteCurrent();
 
-    // drag and drop hacking
-    bool targetActive = false;
-    bool moveActive = false;
-    int lastInsertIndex = -1;
-    int getDropRow(const juce::DragAndDropTarget::SourceDetails& details);
-    bool doMove(int sourceRow, int dropRow);
+    void doInsert(class Symbol* s, int dropRow);
+    void doMove(int sourceRow, int dropRow);
     void moveBinding(int sourceRow, int desiredRow);
 
 };

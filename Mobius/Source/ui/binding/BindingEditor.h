@@ -21,8 +21,12 @@ class BindingEditor : public ConfigEditor,
 {
   public:
     
-    BindingEditor(class Supervisor* s);
+    BindingEditor(class Supervisor* s, bool buttons = false);
     virtual ~BindingEditor();
+
+    bool isButtons() {
+        return buttons;
+    }
 
     juce::String getTitle() override {return "Bindings";}
     class Provider* getProvider();
@@ -55,7 +59,8 @@ class BindingEditor : public ConfigEditor,
     void symbolTreeDoubleClicked(class SymbolTreeItem* item);
     
   protected:
-
+    
+    bool buttons = false;
     int currentSet = -1;
     bool capturing = false;
     
@@ -68,7 +73,8 @@ class BindingEditor : public ConfigEditor,
 
     BindingDetailsPanel bindingDetails;
     
-    void install(class BindingSets* sets, bool buttons);
+    void install(class BindingSets* sets);
+    void install(BindingSet* set);
     class BindingSet* getSourceBindingSet(juce::String action, juce::StringArray& errors);
     void addNew(class BindingSet* set);
     

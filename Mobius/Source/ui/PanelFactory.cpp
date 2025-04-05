@@ -143,11 +143,11 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case Display: panel = new DisplayPanel(super); break;
 
         case Bindings: panel = new NewBindingPanel(super); break;
-        case Keyboard: panel = new KeyboardPanel(super); break;
-        case Midi: panel = new MidiPanel(super); break;
-        case Button: panel = new ButtonPanel(super); break;
         case Buttons: panel = new NewButtonPanel(super); break;
-        case Host: panel = new HostPanel(super); break;
+        case OldKeyboard: panel = new KeyboardPanel(super); break;
+        case OldMidi: panel = new MidiPanel(super); break;
+        case OldButton: panel = new ButtonPanel(super); break;
+        case OldHost: panel = new HostPanel(super); break;
         case Properties: panel = new PropertiesPanel(super); break;
         case Group: panel = new GroupPanel(super); break;
         case Session: panel = new SessionPanel(super); break;
@@ -165,7 +165,7 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case MclConsole: panel = new MclPanel(super); break;
         case TraceLog: panel = new TracePanel(super); break;
             
-        case InProgress: panel = new NewBindingPanel(super); break;
+        case InProgress: break;
         case HelpTest: panel = new HelpPanel(super); break;
             
         default:

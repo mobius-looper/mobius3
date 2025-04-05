@@ -67,6 +67,7 @@ class BindingSetTable : public TypicalTable,
     
     class BindingEditor* editor = nullptr;
     class BindingSets* bindingSets = nullptr;
+    juce::String objectTypeName;
     
     juce::OwnedArray<class BindingSetTableRow> bindingSetRows;
     

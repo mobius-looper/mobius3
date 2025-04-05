@@ -23,7 +23,12 @@ BindingSetTable::BindingSetTable(BindingEditor* e)
 
     initialize();
 
-    addColumn("Binding Set", ColumnName, 200);
+    if (e->isButtons())
+      objectTypeName = "Button Set";
+    else
+      objectTypeName = "Binding Set";
+
+    addColumn(objectTypeName, ColumnName, 200);
 
     // activation/deactivation doesn't work yet, you
     // have to select them as the sessionBindingSet or trackBindingSet in the
@@ -40,26 +45,23 @@ BindingSetTable::BindingSetTable(BindingEditor* e)
     emptyPopup.add("New...", DialogNew);
     emptyPopup.add("Help...", DialogHelp);
 
-    nameDialog.setTitle("New Binding Set");
     nameDialog.setButtons("Ok,Cancel");
     nameDialog.addField(&newName);
     
-    propertiesDialog.setTitle("Binding Set Properties");
     propertiesDialog.setButtons("Ok,Cancel");
     propertiesDialog.addField(&propName);
-    propertiesDialog.addField(&propOverlay);
+    if (!(e->isButtons()))
+      propertiesDialog.addField(&propOverlay);
     
-    deleteAlert.setTitle("Delete Binding Set");
     deleteAlert.setButtons("Delete,Cancel");
     deleteAlert.setSerious(true);
-    deleteAlert.addMessage("Are you sure you want to delete this binding set?");
+    deleteAlert.addMessage("Are you sure you want to delete this set?");
     deleteAlert.addMessage("This cannot be undone");
     
     confirmDialog.setTitle("Confirm");
     confirmDialog.setButtons("Ok,Cancel");
     confirmDialog.addMessage("Are you sure you want to do that?");
     
-    errorAlert.setTitle("Error Saving Binding Set");
     errorAlert.addButton("Ok");
     errorAlert.setSerious(true);
 
@@ -219,7 +221,7 @@ void BindingSetTable::yanPopupSelected(YanPopup* src, int id)
 
 void BindingSetTable::startNew()
 {
-    propertiesDialog.setTitle("Create New Binding Set");
+    propertiesDialog.setTitle(juce::String("Create New ") + objectTypeName);
     propertiesDialog.setId(DialogNew);
     propName.setValue("");
     propOverlay.setValue(false);
@@ -228,7 +230,7 @@ void BindingSetTable::startNew()
 
 void BindingSetTable::startCopy()
 {
-    nameDialog.setTitle("Copy Binding Set");
+    nameDialog.setTitle(juce::String("Copy ") + objectTypeName);
     nameDialog.setId(DialogCopy);
     newName.setValue("");
     nameDialog.show(getParentComponent());
@@ -236,9 +238,8 @@ void BindingSetTable::startCopy()
 
 void BindingSetTable::startProperties()
 {
-    propertiesDialog.setTitle("Binding Set Properties");
+    propertiesDialog.setTitle(objectTypeName + juce::String(" Properties"));
     propertiesDialog.setId(DialogProperties);
-
     BindingSet* set = getSelectedSet();
     if (set != nullptr) {
         propName.setValue(set->name);
@@ -249,8 +250,8 @@ void BindingSetTable::startProperties()
 
 void BindingSetTable::startDelete()
 {
+    deleteAlert.setTitle(juce::String("Delete ") + objectTypeName);
     deleteAlert.setId(DialogDelete);
-
     deleteAlert.show(getParentComponent());
 }
 
@@ -338,6 +339,8 @@ void BindingSetTable::showResult(juce::StringArray& errors)
         errorAlert.clearMessages();
         for (auto e : errors)
           errorAlert.addMessage(e);
+
+        errorAlert.setTitle(juce::String("Error saving ") + objectTypeName);
         errorAlert.show(getParentComponent());
     }
 }

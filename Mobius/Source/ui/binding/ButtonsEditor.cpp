@@ -8,7 +8,7 @@
 
 #include "ButtonsEditor.h"
 
-ButtonsEditor::ButtonsEditor(Supervisor* s) : BindingEditor(s)
+ButtonsEditor::ButtonsEditor(Supervisor* s) : BindingEditor(s, true)
 {
 }
 
@@ -16,7 +16,7 @@ void ButtonsEditor::load()
 {
     UIConfig* uicon = supervisor->getUIConfig();
     BindingSets* converted = convert(uicon);
-    install(converted, true);
+    install(converted);
 }
 
 void ButtonsEditor::save()
