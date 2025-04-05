@@ -24,13 +24,13 @@ and run into a problem, you can go back to 28 until the issue is resolved.
 
 Please read through the new documentation pages for more on the new features that have been added.
 
-## Build 38
+## Build 39
 
-[Download for Windows](https://www.mobiuslooper.com/MobiusSetup-38.exe)
+[Download for Windows](https://www.mobiuslooper.com/MobiusSetup-39.exe)
 
-[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius-38.pkg)
+[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius-39.pkg)
 
-[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-38.pkg)
+[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel-39.pkg)
 
 ## Build 28
 
