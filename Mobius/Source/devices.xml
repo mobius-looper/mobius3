@@ -22,5 +22,5 @@
   <Machine hostName="Baldr" inputPorts="1" outputPorts="1" audioDeviceType="ASIO"
            audioInput="Focusrite USB ASIO" inputChannels="11" audioOutput="Focusrite USB ASIO"
            outputChannels="11" sampleRate="48000" blockSize="256"/>
-  <PluginConfig defaultAuxInputs="3" defaultAuxOutputs="2"/>
+  <PluginConfig defaultAuxInputs="5" defaultAuxOutputs="2"/>
 </DeviceConfig>

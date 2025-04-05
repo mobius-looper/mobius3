@@ -9,10 +9,10 @@
       <Value name="feedback" value="127" type="int"/>
       <Value name="focus" value="false" type="bool"/>
       <Value name="input" value="127" type="int"/>
-      <Value name="mono" value="true" type="bool"/>
+      <Value name="mono" value="false" type="bool"/>
       <Value name="output" value="127" type="int"/>
       <Value name="pan" value="64" type="int"/>
-      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginInputPort" value="1" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
       <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
       <Value name="syncSource" value="none" type="enum" ordinal="0"/>
@@ -66,7 +66,7 @@
       <Value name="mono" value="false" type="bool"/>
       <Value name="output" value="127" type="int"/>
       <Value name="pan" value="64" type="int"/>
-      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginInputPort" value="1" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
       <Value name="switchQuantize" value="loop" type="enum" ordinal="3"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
@@ -126,9 +126,9 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="none"/>
-      <Value name="syncUnit" value="bar"/>
-      <Value name="trackSyncUnit" value="loop"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
   <Track id="8" type="audio" name="a6">
@@ -162,9 +162,9 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
-      <Value name="syncSource" value="none"/>
-      <Value name="syncUnit" value="bar"/>
-      <Value name="trackSyncUnit" value="loop"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
   <Track id="10" type="audio" name="something">
@@ -245,7 +245,7 @@
     <Value name="pitchShiftRestart" value="false" type="bool"/>
     <Value name="pitchStepRange" value="24" type="int"/>
     <Value name="pitchTransfer" value="off" type="enum" ordinal="0"/>
-    <Value name="pluginInputPort" value="0" type="int"/>
+    <Value name="pluginInputPort" value="1" type="int"/>
     <Value name="pluginOutputPort" value="0" type="int"/>
     <Value name="quantize" value="subCycle" type="enum" ordinal="1"/>
     <Value name="quickSave" value="mobiusloop"/>

@@ -151,8 +151,8 @@ void ParameterVault::refresh()
     // or verify them after flattening
     
     flatten(defaults, trackValues, flattener);
-    promotePorts();
     install(flattener);
+    promotePorts();
 
     // verify that the overlays found during flattening are the same ones we
     // used to do the flattening
@@ -784,8 +784,8 @@ void ParameterVault::setOverlay(SymbolId sid, ValueSet* overlay)
 
         // flatten
         flatten(session->ensureGlobals(), track->ensureParameters(), flattener);
-        promotePorts();
         install(flattener);
+        promotePorts();
 
         // not necessary, but verify like we do with refresh()
     }
