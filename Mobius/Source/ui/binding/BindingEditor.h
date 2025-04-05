@@ -51,12 +51,12 @@ class BindingEditor : public ConfigEditor,
     void bindingSetTableDelete(juce::StringArray& errors);
 
     void showBinding(class Binding* b);
-    void bindingSaved();
-    void bindingCanceled();
+    void bindingSaved() override;
+    void bindingCanceled() override;
     void moveBinding(int sourceRow, int dropRow);
     
-    void symbolTreeClicked(class SymbolTreeItem* item);
-    void symbolTreeDoubleClicked(class SymbolTreeItem* item);
+    void symbolTreeClicked(class SymbolTreeItem* item) override;
+    void symbolTreeDoubleClicked(class SymbolTreeItem* item) override;
     
   protected:
     

@@ -20,7 +20,7 @@ class BindingSetContent : public juce::Component,
     void initialize(bool buttons);
     void load(class BindingEditor* ed, class BindingSet* set);
     void cancel();
-    void resized();
+    void resized() override;
     void bindingSaved();
     
     bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details) override;

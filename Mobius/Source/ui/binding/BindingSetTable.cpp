@@ -216,6 +216,7 @@ void BindingSetTable::yanPopupSelected(YanPopup* src, int id)
         case DialogNew: startNew(); break;
         case DialogProperties: startProperties(); break;
         case DialogDelete: startDelete(); break;
+        case DialogHelp: break;
     }
 }
 
@@ -263,6 +264,7 @@ void BindingSetTable::yanDialogClosed(YanDialog* d, int button)
         case DialogCopy: finishCopy(button); break;
         case DialogProperties: finishProperties(button); break;
         case DialogDelete: finishDelete(button); break;
+        case DialogHelp: break;
     }
 }
 
