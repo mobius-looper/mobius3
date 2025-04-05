@@ -199,7 +199,7 @@ bool Beater::tick(juce::uint32 now)
     bool changed = false;
     
     if (on) {
-        int delta = now - startMsec;
+        juce::uint32 delta = now - startMsec;
         if (delta > decayMsec) {
             on = false;
             changed = true;
