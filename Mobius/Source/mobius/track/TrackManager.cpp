@@ -1069,7 +1069,18 @@ void TrackManager::doTrackSelectAction(UIAction* a)
     }
     else if (s->id == FuncSelectTrack) {
         // action argument is 1 based, convert to index
-        newFocusedIndex = a->value - 1;
+        if (a->value > 0) {
+            newFocusedIndex = a->value - 1;
+        }
+        else {
+            // they forgot to enter an argument, if this had a track scope, send it there
+            // it's common to set scope to a track thinking that's the way to specify
+            // the track number
+            int trackScope = a->getScopeTrack();
+            if (trackScope > 0)
+              newFocusedIndex = trackScope - 1;
+        }
+        
         if (newFocusedIndex < 0 || newFocusedIndex > maxIndex) {
             Trace(1, "TrackManager: Bad SelectTrack argument");
             newFocusedIndex = prevFocusedIndex;

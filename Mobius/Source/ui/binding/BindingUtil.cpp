@@ -72,7 +72,7 @@ int BindingUtil::unrenderKeyText(juce::String value)
 juce::String BindingUtil::renderScope(Binding* b)
 {
     if (b->scope == "")
-      return juce::String("Global");
+      return juce::String("Focused");
     else
       return b->scope;
 }

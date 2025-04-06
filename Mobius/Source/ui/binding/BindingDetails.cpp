@@ -348,7 +348,7 @@ void BindingContent::refreshScopeNames()
 {
     // scope always goes first
     juce::StringArray scopeNames;
-    scopeNames.add("Global");
+    scopeNames.add("Focused");
 
     // context is not always set at this point so we have to go direct
     // to Supervisor to get to GroupDefinitions, this sucks work out a more
@@ -388,7 +388,7 @@ void BindingContent::refreshScopeValue(Binding* b)
         GroupDefinitions* groups = supervisor->getGroupDefinitions();
         int index = groups->getGroupIndex(b->scope);
         if (index >= 0)
-          scope.setSelection(maxTracks + index);
+          scope.setSelection(maxTracks + 1 + index);
         else
           Trace(1, "BindingContent: Binding scope with unresolved group name %s", scopeString);
     }

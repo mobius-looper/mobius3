@@ -53,13 +53,13 @@ void BindingTable::load(BindingEditor* ed, BindingSet* set, Type t)
     if (type == TypeButton) {
         addColumn("Target", TargetColumn, 200);
         addColumn("Arguments", ArgumentsColumn, 100);
-        addColumn("Scope", ScopeColumn, 50);
+        addColumn("Send To", ScopeColumn, 50);
     }
     else {
         addColumn("Target", TargetColumn, 200);
         addColumn("Trigger", TriggerColumn, 200);
         addColumn("Arguments", ArgumentsColumn, 100);
-        addColumn("Scope", ScopeColumn, 50);
+        addColumn("Send To", ScopeColumn, 50);
     }
     
     reload();

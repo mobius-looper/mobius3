@@ -89,7 +89,7 @@ class BindingContent : public juce::Component,
     YanInput captureText {""};
     
     YanForm qualifiers;
-    YanCombo scope {"Scope"};
+    YanCombo scope {"Send To"};
     YanInput arguments {"Arguments"};
     
     void refreshScopeNames();
