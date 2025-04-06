@@ -168,6 +168,11 @@ void Symbolizer::parseFunction(SymbolTable* symbols, juce::XmlElement* root)
         juce::String options = root->getStringAttribute("options");
         func->noBinding = options.contains("noBinding");
         func->noFocus = options.contains("noFocus");
+        
+        func->hasArguments = options.contains("hasArguments");
+        func->argumentLabel = root->getStringAttribute("argumentLabel");
+        func->argumentValue = root->getStringAttribute("argumentValue");
+        func->argumentNone = root->getStringAttribute("argumentNone");
 
         // these used to have explicit attributes but now should have options
         // support both styles for awhile

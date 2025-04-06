@@ -1,3 +1,14 @@
+/**
+ * Oddities on the argument combos:
+ *
+ * TrackGroup
+ *
+ * TrackGroup can be sent to the Focused track or any track by number so
+ * it needs a scope selector.  The scope selector ALSO includes group names
+ * which is functional but looks weird.  You have a group binding to A that changes the
+ * tracks in that group to a different group.
+ *
+ */
 
 #include <JuceHeader.h>
 
@@ -8,6 +19,7 @@
 #include "../../model/GroupDefinition.h"
 #include "../../model/Scope.h"
 #include "../../model/Symbol.h"
+#include "../../model/FunctionProperties.h"
 
 #include "../../Supervisor.h"
 #include "../../KeyTracker.h"
@@ -18,6 +30,8 @@
 #include "BindingUtil.h"
 
 #include "BindingDetails.h"
+
+#define SectionHeight 20
 
 BindingDetailsPanel::BindingDetailsPanel()
 {
@@ -101,9 +115,14 @@ BindingContent::BindingContent()
     addAndMakeVisible(title);
 
     triggerTitle.setText("Trigger", juce::NotificationType::dontSendNotification);
+    triggerTitle.setColour(juce::Label::textColourId, juce::Colours::yellow);
+    triggerTitle.setFont(JuceUtil::getFont(SectionHeight));
     addAndMakeVisible(triggerTitle);
     
-    targetTitle.setText("Target", juce::NotificationType::dontSendNotification);
+    targetTitle.setText("Options", juce::NotificationType::dontSendNotification);
+    targetTitle.setColour(juce::Label::textColourId, juce::Colours::yellow);
+    targetTitle.setFont(JuceUtil::getFont(SectionHeight));
+    
     addAndMakeVisible(targetTitle);
 
     juce::StringArray midiTypeNames;
@@ -125,8 +144,6 @@ BindingContent::BindingContent()
     // form fields are added during load()
     addChildComponent(triggerForm);
 
-    qualifiers.add(&scope);
-    qualifiers.add(&arguments);
     addAndMakeVisible(qualifiers);
 }
 
@@ -189,8 +206,6 @@ void BindingContent::resized()
     area.removeFromTop(20);
     area.removeFromLeft(15);
 
-    int sectionHeight = 20;
-
     if (type == TypeHost) {
         // no interesting trigger fields
     }
@@ -199,9 +214,7 @@ void BindingContent::resized()
     }
     else if (type != TypeUnknown) {
 
-        triggerTitle.setColour(juce::Label::textColourId, juce::Colours::yellow);
-        triggerTitle.setFont(JuceUtil::getFont(sectionHeight));
-        triggerTitle.setBounds(area.removeFromTop(sectionHeight));
+        triggerTitle.setBounds(area.removeFromTop(SectionHeight));
         area.removeFromTop(20);
 
         juce::Rectangle<int> triggerArea = area.removeFromTop(triggerForm.getPreferredHeight());
@@ -210,9 +223,7 @@ void BindingContent::resized()
         area.removeFromTop(20);
     }
 
-    targetTitle.setColour(juce::Label::textColourId, juce::Colours::yellow);
-    targetTitle.setFont(JuceUtil::getFont(sectionHeight));
-    targetTitle.setBounds(area.removeFromTop(sectionHeight));
+    targetTitle.setBounds(area.removeFromTop(SectionHeight));
     
     area.removeFromTop(20);
 
@@ -232,8 +243,12 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
     listener = l;
     binding = b;
 
+    // capture these for use in building the fields
+    maxTracks = supervisor->getSession()->getTrackCount();
+
+    SymbolTable* symbols = supervisor->getSymbols();
     juce::String prefix;
-    Symbol* s = supervisor->getSymbols()->find(b->symbol);
+    Symbol* s = symbols->find(b->symbol);
     if (s == nullptr)
       prefix = "???: ";
     else if (s->functionProperties != nullptr)
@@ -329,14 +344,185 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
         triggerValue.setValue(juce::String(b->triggerValue));
     }
 
-    refreshScopeNames();
-    refreshScopeValue(b);
+    // YanForm needs to restructure itself if the contents change but the outer
+    // area doesn't, resized() alone won't do that
+    triggerForm.forceResize();
+
+    qualifiers.clear();
+
+    bool addScope = false;
+    if (s->parameterProperties != nullptr) {
+        // should only be including track-related parameters
+        // in the tree so don't have much filtering to do here
+        addScope = true;
+    }
+    else if (s->functionProperties != nullptr) {
+        addScope = !(s->functionProperties->global);
+    }
+
+    if (addScope) {
+        qualifiers.add(&scope);
+        refreshScopeNames();
+        refreshScopeValue(b);
+    }
+
+    if (s->functionProperties != nullptr) {
+        FunctionProperties* props = s->functionProperties.get();
+        if (props->hasArguments ||
+            props->argumentLabel.length() > 0 ||
+            props->argumentValue.length() > 0) {
+
+            YanField* field = renderArguments(b, props);
+            qualifiers.add(field);
+            
+            juce::String label = props->argumentLabel;
+            if (label.length() == 0)
+              label = "Arguments";
+            field->setLabel(label);
+        }
+    }
+
+    qualifiers.forceResize();
+
     resized();
 
     if (type == BindingContent::TypeKey)
       trackKeys();
     else if (type == BindingContent::TypeMidi)
       trackMidi();
+}
+
+/**
+ * Sure would be nice to have a YanField that could handle
+ * this kind fo render switching.
+ */
+YanField* BindingContent::renderArguments(Binding* b, FunctionProperties* props)
+{
+    YanField* result = nullptr;
+
+    argumentType = props->argumentValue;
+    argumentNone = false;
+    
+    if (argumentType == "loopNumber") {
+        renderLoopNumber(b);
+        result = &argumentCombo;
+    }
+    else if (argumentType == "trackNumber") {
+
+        juce::String none = props->argumentNone;
+        if (none.length() > 0)
+          argumentNone = true;
+        
+        renderTrackNumber(b, none);
+        result = &argumentCombo;
+    }
+    else if (argumentType == "trackGroup") {
+        renderTrackGroup(b);
+        result = &argumentCombo;
+    }
+    else {
+        argumentType = "";
+        result = &arguments;
+    }
+
+    return result;
+}
+
+void BindingContent::addTrackNumbers(juce::String prefix, juce::StringArray& items)
+{
+    // saved maxtracks at the start of load()
+    for (int i = 1 ; i <= maxTracks ; i++)
+      items.add(prefix + juce::String(i));
+}
+
+void BindingContent::addGroupNames(juce::String prefix, juce::StringArray& items)
+{
+    GroupDefinitions* container = supervisor->getGroupDefinitions();
+    for (auto g : container->groups)
+      items.add(prefix + g->name);
+}
+
+void BindingContent::renderLoopNumber(Binding* b)
+{
+    // hmm, the maxLoops parameter got lost along the way
+    // this should be more than enough for most people
+    int maxLoops = 8;
+    
+    juce::StringArray items;
+    for (int i = 1 ; i <= maxLoops ; i++)
+      items.add(juce::String(i));
+
+    int selection = 0;
+    if (b->arguments.length() > 0) {
+        selection = items.indexOf(b->arguments);
+        if (selection < 0) {
+            // out of range loop numbers are far less common than track numbers
+            // or group names, and is considered an error, fall back to loop 1
+            Trace(1, "BindingDetails: Loop number in binding out of range %d",
+                  b->arguments.getIntValue());
+            selection = 0;
+        }
+    }
+
+    argumentCombo.setItems(items);
+    argumentCombo.setSelection(selection);
+}
+
+void BindingContent::renderTrackNumber(Binding* b, juce::String none)
+{
+    juce::StringArray items;
+    if (none.length() > 0) {
+        items.add(none);
+    }
+    addTrackNumbers("", items);
+
+    int selection = 0;
+    if (b->arguments.length() > 0) {
+        selection = items.indexOf(b->arguments);
+        if (selection < 0) {
+            // the binding had a track number that is out of range,
+            // this can be normal if you swap between sessions that have
+            // different numbers of tracks, and a binding created in the
+            // larger session is edited in the smaller one
+            // we could extend the item list to include it, but like
+            // deleted track groups, you can't use it so stick it on the
+            // end with a warning
+            items.add(juce::String("Invalid: ") + b->arguments);
+            selection = items.size() - 1;
+        }
+    }
+    
+    argumentCombo.setItems(items);
+    argumentCombo.setSelection(selection);
+}
+
+void BindingContent::renderTrackGroup(Binding* b)
+{
+    juce::StringArray items;
+
+    // these are special operator keywords
+    items.add("clear");
+    items.add("next");
+    items.add("prev");
+
+    addGroupNames("", items);
+    
+    // if the current name in the binding does not exist
+    // in the list, it means the binding is old and the group it
+    // referenced was deleted
+    // we could add it to the list, but it won't do anything
+    // they probably want to know though so stick a prefix on it
+    int selection = 0;
+    if (b->arguments.length() > 0) {
+        selection = items.indexOf(b->arguments);
+        if (selection < 0) {
+            items.add(juce::String("Invalid: ") + b->arguments);
+            selection = items.size() - 1;
+        }
+    }
+    
+    argumentCombo.setItems(items);
+    argumentCombo.setSelection(selection);
 }
 
 /**
@@ -350,22 +536,8 @@ void BindingContent::refreshScopeNames()
     juce::StringArray scopeNames;
     scopeNames.add("Focused");
 
-    // context is not always set at this point so we have to go direct
-    // to Supervisor to get to GroupDefinitions, this sucks work out a more
-    // orderly initialization sequence
-
-    MobiusView* view = supervisor->getMobiusView();
-    maxTracks = view->totalTracks;
-    for (int i = 0 ; i < maxTracks ; i++)
-      scopeNames.add("Track " + juce::String(i+1));
-
-    juce::StringArray gnames;
-    GroupDefinitions* groups = supervisor->getGroupDefinitions();
-    groups->getGroupNames(gnames);
-
-    for (auto gname : gnames) {
-        scopeNames.add(juce::String("Group ") + gname);
-    }
+    addTrackNumbers("Track ", scopeNames);
+    addGroupNames("Group ", scopeNames);
     
     scope.setItems(scopeNames);
 }
@@ -428,7 +600,7 @@ void BindingContent::save(Binding* b)
     }
 
     b->scope = unpackScope();
-    b->arguments = arguments.getValue();
+    b->arguments = unpackArguments();
 
     // only relevant for certain types
     if (b->trigger == Binding::TriggerKey || b->trigger == Binding::TriggerNote)
@@ -465,8 +637,11 @@ juce::String BindingContent::unpackScope()
     
     // item 0 is global, then tracks, then groups
     int item = scope.getSelection();
-    if (item == 0) {
-        // global
+    if (item < 0) {
+        // no selection, scope combo was not used
+    }
+    else if (item == 0) {
+        // focused
     }
     else if (item <= maxTracks) {
         // track number
@@ -478,6 +653,36 @@ juce::String BindingContent::unpackScope()
         juce::String itemName = scope.getSelectionText();
         juce::String groupName = itemName.fromFirstOccurrenceOf("Group ", false, false);
         result = groupName;
+    }
+
+    return result;
+}
+
+juce::String BindingContent::unpackArguments()
+{
+    juce::String result;
+    
+    if (argumentType == "loopNumber") {
+        // 1 based number just slides over
+        result = argumentCombo.getSelectionText();
+    }
+    else if (argumentType == "trackNumber") {
+        int trackNumber = argumentCombo.getSelection() + 1;
+        // deal with the placeholder at the top to mean "no selection"
+        if (argumentNone)
+          trackNumber--;
+
+        if (trackNumber > 0)
+          result = juce::String(trackNumber);
+    }
+    else if (argumentType == "trackGroup") {
+        // these all slide over literally, either operator
+        // keywords or unqualfiied group names
+        result = argumentCombo.getSelectionText();
+    }
+    else {
+        // raw unadorned arguments
+        result = arguments.getValue();
     }
 
     return result;

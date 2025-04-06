@@ -115,6 +115,12 @@ class FunctionProperties
      */
     bool noBinding = false;
 
+    // Options used by the binding editor
+    bool hasArguments = false;
+    juce::String argumentLabel;
+    juce::String argumentValue;
+    juce::String argumentNone;
+
     //
     // User configurable properties
     //

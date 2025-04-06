@@ -47,6 +47,12 @@
       <Binding symbol="SelectLoop" trigger="key" value="56" arguments="8"/>
       <Binding symbol="SelectLoop" trigger="key" value="49" arguments="1"/>
       <Binding symbol="Divide4" trigger="host"/>
+      <Binding symbol="SelectTrack" trigger="note" arguments="1"/>
+      <Binding symbol="SelectLoop" trigger="note" arguments="2"/>
+      <Binding symbol="SyncMasterTrack" trigger="note" scope="1"/>
+      <Binding symbol="SyncMasterTransport" trigger="note"/>
+      <Binding symbol="TrackGroup" trigger="note" arguments="Bx"/>
+      <Binding symbol="SamplePlay" trigger="note" arguments="66"/>
     </BindingSet>
     <BindingSet name="midi1">
       <Binding symbol="Overdub" trigger="note" value="50" channel="1"/>

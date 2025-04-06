@@ -787,7 +787,10 @@ void YanCombo::setItemNoNotify(int id)
 // having trouble getting the setItems size to stick
 int YanCombo::calculatePreferredWidth()
 {
-    int maxChars = 0;
+    // something wrong with your math here, for simple combos containing integers less
+    // than 10, nothing is displayed except the arrow
+    // have to bump it up to 2 digits to get enough space to see single digit numbers
+    int maxChars = 2;
     for (int i = 0 ; i < combobox.getNumItems() ; i++) {
         juce::String name = combobox.getItemText(i);
         if (name.length() > maxChars)

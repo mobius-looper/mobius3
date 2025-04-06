@@ -42,8 +42,9 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="InstantMultiply4" mayFocus='true' tree='Editing'/>
 
   <!-- Formerly LoopN, Loop1, Loop2, etc. -->
-  <Function name="SelectLoop" mayFocus='true' mayCancelMute='true' tree='Switch'
-            argumentHelp="Loop Number: 1-8"/>
+  <Function name="SelectLoop" tree='Switch'
+            options='mayCancelMute,mayFocus,hasArguments'
+            argumentLabel='Loop To Select' argumentValue='loopNumber'/>
 
   <!-- figure out what these do, replaced by Transport? -->
   <Function name="MidiStart" tree='Sync' options='noFocus' hidden='true'/>
@@ -125,14 +126,16 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="SyncStartPoint" mayFocus='true' mayCancelMute='true' tree='Sync'/>
   
   <!-- Formerly TrackN, Track1, etc. -->
-  <Function name="SelectTrack"
-            argumentHelp="Track Number: 1-16" tree='Track'/>
+  <Function name="SelectTrack" global='true' tree='Track'
+            argumentLabel='Track To Select' argumentValue='trackNumber'/>
   
   <Function name="TrackCopy" options='noFocus' tree='Track'/>
   <Function name="TrackCopyTiming" options='noFocus' tree='Track'/>
   <!-- this was marked sustainable for awhile, I think at one time a longPress of this
        would remove the group assignment, it doesn't any more but that's interesting  -->
-  <Function name="TrackGroup" mayFocus='true' tree='Track'/>
+  <Function name="TrackGroup" tree='Track'
+            options='mayFocus' argumentLabel='Group' argumentValue='trackGroup'/>
+
   <Function name="TrackReset" mayFocus='true' tree='Recording'/>
   <Function name="TrimEnd" mayFocus='true' mayCancelMute='true' tree='Editing'/>
   <Function name="TrimStart" mayFocus='true' mayCancelMute='true' tree='Editing'/>
@@ -160,10 +163,11 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="TraceStatus" tree='Utility' hidden='true'/>
 
   <!-- new one for MIDI structure dumping -->
-  <Function name="Dump" tree='Utility'/>
+  <Function name="Dump" tree='Utility' global='true'/>
 
   <!-- not sure where this one should go -->
-  <Function name="SamplePlay" tree='Utility'/>
+  <Function name="SamplePlay" tree='Utility' level='kernel'
+            argumentLabel='Sample Number'/>
 
   <Function name="MidiResize" midi='true' mayFocus='true' tree='MIDI'/>
   <Function name="MidiHalfspeed" midi='true' mayFocus='true' mayQuantize='true' tree='MIDI'/>
@@ -172,9 +176,13 @@ Once those models are fully converted, these symbols can be removed.
   <Function name='TransportStart' level='kernel' tree='Transport'/>
   <Function name='TransportStop' level='kernel' tree='Transport'/>
   <Function name='TransportTap' level='kernel' tree='Transport'/>
-  <Function name="SyncMasterTrack" level='kernel' tree='Sync'/>
-  <Function name="SyncMasterTransport" level='kernel' tree='Sync'/>
-
+  
+  <Function name="SyncMasterTrack" global='true' level='kernel' tree='Sync'
+            argumentLabel='Track To Select' argumentValue='trackNumber' argumentNone='Focused'/>
+  
+  <Function name="SyncMasterTransport" global='true' level='kernel' tree='Sync'
+            argumentLabel='Track To Select' argumentValue='trackNumber' argumentNone='Focused'/>
+            
   <!-- Session Control
        Sessions may also be loaded with structure bindings.
    -->
@@ -200,8 +208,10 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="ReloadScripts" level='ui' tree='File'/>
   <Function name="ReloadSamples" level='ui' tree='File'/>
     
-  <Function name="ShowPanel" level='ui' tree='UI'/>
-  <Function name="Message" level='ui' hidden='true'/>
+  <Function name="ShowPanel" level='ui' tree='UI'
+            argumentLabel='Panel Name'/>
+  <Function name="Message" level='ui' hidden='true'
+            argumentLabel='Message'/>
     
   <Function name="AddButton" level='ui' hidden='true'/>
   <Function name="Listen" level='ui' hidden='true'/>

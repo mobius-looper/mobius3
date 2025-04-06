@@ -91,6 +91,9 @@ class BindingContent : public juce::Component,
     YanForm qualifiers;
     YanCombo scope {"Send To"};
     YanInput arguments {"Arguments"};
+    YanCombo argumentCombo {"Arguments"};
+    juce::String argumentType;
+    bool argumentNone = false;
     
     void refreshScopeNames();
     void refreshScopeValue(class Binding* b);
@@ -105,7 +108,16 @@ class BindingContent : public juce::Component,
     void showCapture(juce::String& cap);
     
     void save(class Binding* b);
-};    
+
+    class YanField* renderArguments(class Binding* b, class FunctionProperties* props);
+    void renderLoopNumber(class Binding* b);
+    void renderTrackNumber(class Binding* b, juce::String none);
+    void renderTrackGroup(class Binding* b);
+    void addTrackNumbers(juce::String prefix, juce::StringArray& items);
+    void addGroupNames(juce::String prefix, juce::StringArray& items);
+    juce::String unpackArguments();
+    
+};
 
 class BindingDetailsPanel : public BasePanel
 {

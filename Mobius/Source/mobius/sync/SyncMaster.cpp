@@ -173,14 +173,29 @@ int SyncMaster::getTrackSyncMaster()
 
 /**
  * Action handler for FuncSyncMasterTrack and ParamTrackSyncMaster
- * Formerly implemented as a Mobius core function that took no arguments and
- * made the active track the master.
  *
- * Now this makes the focused track the master which may include MIDI tracks.
- * To allow more control, the action may have an argument with a track number.
+ * The way functions are handled went through a few iterations, I started
+ * specifying the track as an argument, but this is redundant if you allow
+ * it to be given a scope.   This could be implemented in two ways:
+ *
+ *   Scope
+ *     The function is "sent" to a specific track number.  It actually doesn't
+ *     get to the LogicalTrack, we intercept it as if it were a global and handle it.
+ *
+ *   Argument
+ *     The function is treated more like an actual global function and logically
+ *     not sent to the track.
+ *
+ * The problem with using Scope is that the scope selector in the binding window
+ * will include track groups and it makes no sense to replicate this to a group.
+ * But it "feels" right to the user, you're sending a command to a track like
+ * any other track function.
+ *
+ * Using an argument is more like how SelectTrack works.  With the new binding window
+ * that can be labeled as "Target Track" or "Track To Select".  
+ * 
  * todo: This needs to be expanded to accept any form of track identifier.
  *
- * The action may specify FuncSyncMasterTrack or ParamTrackSyncMaster
  * The parameter action does not allow jumping to the focused track with
  * a zero value so it is predictable as a sweepable host parameter. Value
  * zero means "no master".
