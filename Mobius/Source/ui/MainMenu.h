@@ -91,7 +91,6 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         LoadScripts,
         LoadSamples,
         LoadMidi,
-        AnalyzeMidi,
         RunMcl,
         Exit,
 
@@ -137,6 +136,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         TraceLog,
         DecacheForms,
         HelpTest,
+        AnalyzeMidi,
         InProgress
         
         };

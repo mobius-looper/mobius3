@@ -159,6 +159,12 @@ class ParameterProperties
     bool mayFocus = false;
 
     /**
+     * See FunctionProperties.  mayFocus needs to be the default with this
+     * turning it off.  But perhaps less so for parsmeters?
+     */
+    bool noFocus = false;
+
+    /**
      * When true, this is selected for group focus.
      */
     bool xxxfocus = false;

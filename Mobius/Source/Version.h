@@ -5,6 +5,6 @@ class Version
 {
   public:
 
-    static const int BuildNumber = 39;
+    static const int BuildNumber = 40;
 
 };

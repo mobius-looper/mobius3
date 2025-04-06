@@ -46,8 +46,17 @@ void GroupEditor::prepare()
     juce::StringArray allowed;
     for (auto symbol : supervisor->getSymbols()->getSymbols()) {
         if (symbol->functionProperties != nullptr &&
-            symbol->functionProperties->mayFocus)
-          allowed.add(symbol->name);
+            !(symbol->hidden) &&
+            (symbol->level == LevelTrack || symbol->level == LevelNone) &&
+            // if you can't bind to it, then it doesn't make sense in groups
+            !(symbol->functionProperties->noBinding) &&
+
+            // formerly tested this, but it should be the reverse
+            // symbol->functionProperties->mayFocus)
+            !(symbol->functionProperties->noFocus)) {
+          
+            allowed.add(symbol->name);
+        }
     }
 
     functions.setAllowed(allowed);
@@ -57,8 +66,15 @@ void GroupEditor::prepare()
     allowed.clear();
     for (auto symbol : supervisor->getSymbols()->getSymbols()) {
         if (symbol->parameterProperties != nullptr &&
-            symbol->parameterProperties->mayFocus)
-          allowed.add(symbol->name);
+            !(symbol->hidden) && 
+            (symbol->level == LevelTrack || symbol->level == LevelNone) &&
+            !(symbol->parameterProperties->noBinding) &&
+            
+            // symbol->parameterProperties->mayFocus)
+            !(symbol->parameterProperties->noFocus)) {
+            
+            allowed.add(symbol->name);
+        }
     }
     parameters.setAllowed(allowed);
     tabs.add("Focus Lock Parameters", &parameters);

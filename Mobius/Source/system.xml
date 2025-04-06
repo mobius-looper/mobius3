@@ -60,7 +60,7 @@
     </BindingSet>
   </BindingSets>
   <GroupDefinitions>
-    <GroupDefinition name="A" color="-2208178" replicatedFunctions="Overdub"/>
+    <GroupDefinition name="A" color="-2208178" replicatedFunctions="Overdub" replicatedParameters="altFeedback"/>
     <GroupDefinition name="Bx" color="-6964104"/>
   </GroupDefinitions>
   <SampleConfig>
