@@ -616,16 +616,21 @@ void LogicalTrack::doAction(UIAction* a)
 {
     SymbolId sid = a->symbol->id;
 
-    if (sid == FuncTrackReset || sid == FuncGlobalReset) {
-        bool global = sid == FuncGlobalReset;
+    if (sid == FuncGlobalReset) {
         resetSyncState();
-        cacheParameters(true, global, false);
-        if (global) {
-            // this one is all fucked up and needs to be redesigned
-            // See commentary in TrackManager::doGlobal
-            if (trackType != Session::TypeAudio)
-              track->doAction(a);
+        cacheParameters(true, true, false);
+        // this one is all fucked up and needs to be redesigned
+        // See commentary in TrackManager::doGlobal
+        if (trackType != Session::TypeAudio)
+          track->doAction(a);
+        else {
+            // this one is all fucked up on control flow
         }
+    }
+    else if (sid == FuncTrackReset) {
+        resetSyncState();
+        cacheParameters(true, false, false);
+        track->doAction(a);
     }
     else if (sid == FuncFocusLock) {
         focusLock = !focusLock;
