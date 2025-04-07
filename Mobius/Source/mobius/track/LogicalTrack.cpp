@@ -398,20 +398,19 @@ MidiTrack* LogicalTrack::getMidiTrack()
 //
 //////////////////////////////////////////////////////////////////////
 
-void LogicalTrack::resetSyncState()
+/**
+ * Return the number of frames that have been recorded in this track so far
+ * todo: terrible name, find a better one
+ */
+int LogicalTrack::getSyncLength()
 {
-    syncRecording = false;
-    syncRecordStarted = false;
-    syncRecordFreeStart = false;
-    syncRecordElapsedFrames = 0;
-    syncFinalized = false;
-    syncStartUnit = SyncUnitNone;
-    syncRecordUnit = SyncUnitNone;
-    syncElapsedUnits = 0;
-    syncElapsedBeats = 0;
-    syncGoalUnits = 0;
-    // might want an option for this to be preserved
-    syncUnitLength = 0;
+    return track->getSyncLength();
+}
+
+// !! what is this and how does it differ from getSyncLength
+int LogicalTrack::getSyncLocation()
+{
+    return track->getSyncLocation();
 }
 
 // pass a SyncEvent through to the BaseTrack
@@ -420,24 +419,24 @@ void LogicalTrack::syncEvent(class SyncEvent* e)
     track->syncEvent(e);
 }
 
-void LogicalTrack::setUnitLength(int l)
+void LogicalTrack::resetSyncState()
 {
-    syncUnitLength = l;
-}
-
-int LogicalTrack::getUnitLength()
-{
-    return syncUnitLength;
-}
-
-int LogicalTrack::getSyncLength()
-{
-    return track->getSyncLength();
-}
-
-int LogicalTrack::getSyncLocation()
-{
-    return track->getSyncLocation();
+    syncRecording = false;
+    syncStartUnit = SyncUnitNone;
+    syncRecordUnit = SyncUnitNone;
+    syncRecordStarted = false;
+    syncRecordFreeStart = false;
+    syncFinalized = false;
+    syncRecordUnitLength = 0;
+    syncElapsedFrames = 0;
+    syncElapsedUnits = 0;
+    syncGoalUnits = 0;
+    syncElapsedBeats = 0;
+    
+    // !! might want an option for this to be preserved
+    // yes, this can be used after recording is finished to detect a disconnect
+    // between the SyncSource tempo/length and what this track was recorded with
+    syncFundamentalUnitLength = 0;
 }
 
 bool LogicalTrack::isSyncRecording()
@@ -449,10 +448,30 @@ void LogicalTrack::setSyncRecording(bool b)
 {
      syncRecording = b;
     if (!b) {
-        // clear this too since it is no longer relevant
+        // make sure this is clear too
         syncRecordStarted = false;
         // what about the pulse units?
     }
+}
+
+void LogicalTrack::setSyncStartUnit(SyncUnit unit)
+{
+    syncStartUnit = unit;
+}
+
+SyncUnit LogicalTrack::getSyncStartUnit()
+{
+    return syncStartUnit;
+}
+
+void LogicalTrack::setSyncRecordUnit(SyncUnit unit)
+{
+    syncRecordUnit = unit;
+}
+
+SyncUnit LogicalTrack::getSyncRecordUnit()
+{
+    return syncRecordUnit;
 }
 
 bool LogicalTrack::isSyncRecordStarted()
@@ -475,16 +494,6 @@ void LogicalTrack::setSyncRecordFreeStart(bool b)
     syncRecordFreeStart = b;
 }
 
-int LogicalTrack::getSyncRecordElapsedFrames()
-{
-    return syncRecordElapsedFrames;
-}
-
-void LogicalTrack::setSyncRecordElapsedFrames(int f)
-{
-    syncRecordElapsedFrames = f;
-}
-
 bool LogicalTrack::isSyncFinalized()
 {
     return syncFinalized;
@@ -495,24 +504,24 @@ void LogicalTrack::setSyncFinalized(bool b)
     syncFinalized = b;
 }
 
-SyncUnit LogicalTrack::getSyncStartUnit()
+int LogicalTrack::getSyncRecordUnitLength()
 {
-    return syncStartUnit;
+    return syncRecordUnitLength;
 }
 
-void LogicalTrack::setSyncStartUnit(SyncUnit unit)
+void LogicalTrack::setSyncRecordUnitLength(int l)
 {
-    syncStartUnit = unit;
+    syncRecordUnitLength = l;
 }
 
-SyncUnit LogicalTrack::getSyncRecordUnit()
+int LogicalTrack::getSyncElapsedFrames()
 {
-    return syncRecordUnit;
+    return syncElapsedFrames;
 }
 
-void LogicalTrack::setSyncRecordUnit(SyncUnit unit)
+void LogicalTrack::setSyncElapsedFrames(int f)
 {
-    syncRecordUnit = unit;
+    syncElapsedFrames = f;
 }
 
 void LogicalTrack::setSyncElapsedUnits(int i)
@@ -543,6 +552,16 @@ void LogicalTrack::setSyncGoalUnits(int i)
 int LogicalTrack::getSyncGoalUnits()
 {
     return syncGoalUnits;
+}
+
+void LogicalTrack::setFundamentalUnitLength(int l)
+{
+    syncFundamentalUnitLength = l;
+}
+
+int LogicalTrack::getFundamentalUnitLength()
+{
+    return syncFundamentalUnitLength;
 }
 
 //////////////////////////////////////////////////////////////////////

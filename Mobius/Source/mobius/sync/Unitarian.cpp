@@ -362,6 +362,37 @@ int Unitarian::getLockUnitLength(LogicalTrack* track)
     return lockLength;
 }
 
+/**
+ * Calculate the length of one "record unit".
+ * This will be the minimum number of frames we record and the length
+ * of each record extension.  It may be larger than the fundamental beat length
+ * for SyncSources Transport, Host, and Midi.
+ *
+ * For SyncSource=Track, it will be the length of the TrackSyncUnit.
+ *
+ * The fundamental or "lock" unit length must already have been calculated.
+ */
+int Unitarian::getRecordUnitLength(LogicalTrack* lt)
+{
+    int unitLength = lt->getFundamentalUnitLength();
+    
+    SyncSource src = syncMaster->getEffectiveSource(lt);
+
+    if (src != SyncSourceTrack) {
+        SyncUnit unit = lt->getSyncUnit();
+        int bpb = barTender->getBeatsPerBar(lt);
+        
+        if (unit == SyncUnitBar) {
+            unitLength *= bpb;
+        }
+        else if (unit == SyncUnitLoop) {
+            unitLength *= (bpb * barTender->getBarsPerLoop(lt));
+        }
+        // else SyncUnitBeat, same as Fundamental
+    }
+    return unitLength;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Verfification
@@ -438,7 +469,7 @@ void Unitarian::verifySyncLength(LogicalTrack* lt)
                     int trackUnitLength = calculateUnitLength(lt);
                     if (!midiAnalyzer->forceUnitLength(trackUnitLength))
                       Trace(1, "SyncMaster: Unable to relock unit length for abnormal track");
-                    lt->setUnitLength(trackUnitLength);
+                    lt->setFundamentalUnitLength(trackUnitLength);
                 }
             }
         }
@@ -528,8 +559,9 @@ int Unitarian::getActiveFollowers(SyncSource src, int unitLength, LogicalTrack* 
             // and they were recorded with different unit lenghts, that would be unusual
             // but is possible
 
-            int trackUnitLength = lt->getUnitLength();
+            int trackUnitLength = lt->getFundamentalUnitLength();
             // not saving this on every loop, see if a disconnect happened
+            // !!! this is all wrong isn't it?
             int syncLength = lt->getSyncLength();
             if (syncLength > 0) {
                 int leftover = syncLength % unitLength;

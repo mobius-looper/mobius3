@@ -192,7 +192,6 @@ void Symbolizer::parseFunction(SymbolTable* symbols, juce::XmlElement* root)
         juce::String levelValue = root->getStringAttribute("level");
         if (levelValue.length() > 0) {
             SymbolLevel level = parseLevel(levelValue);
-            func->level = level;
             s->level = level;
         }
 

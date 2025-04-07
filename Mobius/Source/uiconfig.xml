@@ -109,26 +109,35 @@
     <Button action="Reset"/>
     <Button action="Record"/>
     <Button action="Overdub" scope="A" color="-15707416"/>
-    <Button action="Multiply"/>
     <Button action="NextLoop"/>
     <Button action="PrevLoop"/>
+    <Button action="Reverse"/>
+    <Button action="SelectTrack" arguments="3" scope="4"/>
+    <Button action="Halfspeed"/>
+    <Button action="Multiply"/>
+    <Button action="Insert"/>
     <Button action="Undo"/>
     <Button action="Redo"/>
+    <Button action="Replace"/>
+    <Button action="Dump"/>
     <Button action="Mute"/>
     <Button action="Pause"/>
+    <Button action="SyncMasterTrack"/>
     <Button action="Start"/>
     <Button action="Stop"/>
     <Button action="MainTap"/>
     <Button action="Play"/>
     <Button action="AutoRecord"/>
     <Button action="Global Stop"/>
+    <Button action="Confirm"/>
     <Button action="Global Stop"/>
     <Button action="TrackGroup" arguments="next"/>
+    <Button action="Shuffle"/>
+    <Button action="Confirm"/>
     <Button action="LoadSession"/>
     <Button action="Rec/Over/Play"/>
     <Button action="Start/Stop"/>
-    <Button action="SyncMasterTrack"/>
-    <Button action="TrackGroup" arguments="next"/>
+    <Button action="SelectLoop" arguments="4"/>
   </ButtonSet>
   <ButtonSet name="Buttons2">
     <Button action="Reset"/>

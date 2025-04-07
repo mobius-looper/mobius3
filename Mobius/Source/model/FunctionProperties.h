@@ -18,16 +18,6 @@ class FunctionProperties
     ~FunctionProperties() {}
 
     /**
-     * The level this function is implemented in.
-     * This exists only during the conversion of a file containg <Function> definitions
-     * into the Symbol table, after which it will be the Symbol's level.
-     * todo: if we can get to the point where all function/parameter symbols have
-     * a properties object, then this may be the more appropriate place to keep the level
-     * and get it off Symbol.
-     */
-    SymbolLevel level = LevelNone;
-
-    /**
      * True if this function is relevant only in MIDI tracks.
      */
     bool midiOnly = false;

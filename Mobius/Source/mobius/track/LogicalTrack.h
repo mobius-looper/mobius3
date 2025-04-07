@@ -86,43 +86,49 @@ class LogicalTrack
     // Synchronized Recording State
     //
 
-    void resetSyncState();
     void syncEvent(class SyncEvent* e);
 
+    // todo: rename this...
     int getSyncLength();
     int getSyncLocation();
-    int getUnitLength();
-    void setUnitLength(int l);
     
+    void resetSyncState();
+
     void setSyncRecording(bool b);
     bool isSyncRecording();
     
-    void setSyncRecordStarted(bool b);
-    bool isSyncRecordStarted();
-
-    void setSyncRecordFreeStart(bool b);
-    bool isSyncRecordFreeStart();
-    
-    void setSyncRecordElapsedFrames(int f);
-    int getSyncRecordElapsedFrames();
-
     SyncUnit getSyncStartUnit();
     void setSyncStartUnit(SyncUnit unit);
     
     SyncUnit getSyncRecordUnit();
     void setSyncRecordUnit(SyncUnit unit);
 
+    void setSyncRecordStarted(bool b);
+    bool isSyncRecordStarted();
+
+    void setSyncRecordFreeStart(bool b);
+    bool isSyncRecordFreeStart();
+
+    void setSyncFinalized(bool b);
+    bool isSyncFinalized();
+    
+    int getSyncRecordUnitLength();
+    void setSyncRecordUnitLength(int l);
+    
+    void setSyncElapsedFrames(int f);
+    int getSyncElapsedFrames();
+
     void setSyncElapsedUnits(int i);
     int getSyncElapsedUnits();
 
-    void setSyncGoalUnits(int i);
-    int getSyncGoalUnits();
-    
     void setSyncElapsedBeats(int i);
     int getSyncElapsedBeats();
     
-    void setSyncFinalized(bool b);
-    bool isSyncFinalized();
+    void setSyncGoalUnits(int i);
+    int getSyncGoalUnits();
+    
+    int getFundamentalUnitLength();
+    void setFundamentalUnitLength(int l);
     
     //////////////////////////////////////////////////////////////////////
     // Notifier State
@@ -213,6 +219,14 @@ class LogicalTrack
     // true if we're in the process of making a synchronized recording
     bool syncRecording = false;
 
+    // the sync pulse to wait for to begin recording
+    SyncUnit syncStartUnit = SyncUnitNone;
+    
+    // the sync pulse to wait for to end recording
+    // update: now that we use syncRecordUnitLength to measure record units
+    // and don't pulse the ending, we don't actually need to save this
+    SyncUnit syncRecordUnit = SyncUnitNone;
+    
     // true if we have begun recording
     bool syncRecordStarted = false;
 
@@ -220,26 +234,32 @@ class LogicalTrack
     // but needs to sync or round the ending to match the source unit length
     bool syncRecordFreeStart = false;
 
-    // in FreeStart, the number of frames that have been send through
-    // this track prior to the current block
-    int syncRecordElapsedFrames = 0;
-
     // true when the recording is in the process of ending and is waiting
     // for the final unit to fill 
     bool syncFinalized = false;
 
-    // the sync pulse to wait for to begin recording
-    SyncUnit syncStartUnit = SyncUnitNone;
-    // the sync pulse to wait for to end recording
-    // update: If we always round the ending using the unit length, we don't
-    // really need to pulse the ending
-    SyncUnit syncRecordUnit = SyncUnitNone;
-    
+    // the length of one RecordUnit
+    int syncRecordUnitLength = 0;
+
+    // the number of frames that have been sent through this track prior to
+    // the current block
+    int syncElapsedFrames = 0;
+
+    // the number of elapsed recordUnits, this starts at zero and increments on
+    // each time syncREcordElapsedFrames reaches syncREcordUnitLength
     int syncElapsedUnits = 0;
+
+    // for MIDI only, the number of sync beats that have been passed
+    // beats may be (and usually are) smaller than the record unit
     int syncElapsedBeats = 0;
+    
+    // after requesting a stop, the number of elapsed units to reach before stopping
     int syncGoalUnits = 0;
-    // unit length this track was recorded with after finishing
-    int syncUnitLength = 0;
+
+    // unit fundamental length this track was recorded with after finishing
+    // this will be the length of one beat for Transport, Host, and MIDI
+    // it will be the length of one cycle for Track 
+    int syncFundamentalUnitLength = 0;
 
     // sync Pulse for SyncMaster/Pulsator
     Pulse leaderPulse;

@@ -25,6 +25,7 @@ class Unitarian
 
     int getSingleAutoRecordUnitLength(class LogicalTrack* track);
     int getLockUnitLength(class LogicalTrack* track);
+    int getRecordUnitLength(class LogicalTrack* lt);
 
     void verifySyncLength(LogicalTrack* lt);
     int getActiveFollowers(SyncSource src, int unitLength);

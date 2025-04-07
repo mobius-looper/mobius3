@@ -533,6 +533,7 @@ void Track::syncEvent(class SyncEvent* e)
 /**
  * This is always the same as the loop frame length and is used
  * to derive the unit length this loop was recorded with.
+ * update: is that comment still relevant?
  *
  * Subtlety around recording...
  * Loop::getFrames returns zero until it is finalized, we often need

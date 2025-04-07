@@ -366,8 +366,6 @@ void Mobius::installSymbols()
 
         // adjust the level
         s->level = LevelTrack;
-        // unclear why we need the level duplicated here
-        props->level = LevelTrack;
 
         // some things still check behavior though should be testing FunctionProperties
         s->behavior = BehaviorFunction;

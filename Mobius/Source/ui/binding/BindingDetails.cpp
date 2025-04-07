@@ -357,7 +357,8 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
         addScope = true;
     }
     else if (s->functionProperties != nullptr) {
-        addScope = !(s->functionProperties->global);
+        addScope = (!s->functionProperties->global &&
+                    !s->level == LevelUI);
     }
 
     if (addScope) {
