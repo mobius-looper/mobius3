@@ -143,6 +143,7 @@ void BindingEditor::showBinding(Binding* b)
  * if the details panel is canceled.
  * Ownership of the Binding is transferred.
  */
+#if 0
 void BindingEditor::createBinding(Binding* b)
 {
     // avoid deleting the last one until BindingDetails is reset
@@ -154,7 +155,23 @@ void BindingEditor::createBinding(Binding* b)
 
     delete last;
 }
+#endif
 
+void BindingEditor::bindingSaved()
+{
+    // jesus fuck, the chain of command here is messy
+    // BindingDetails goes all the way back here for the save notification
+    // and we have to go back down to the content to refresh the table
+    if (currentSet >= 0) {
+        BindingSetContent* current =  contents[currentSet];
+        current->bindingSaved();
+    }
+
+    // save this for next time
+    capturing = bindingDetails.isCapturing();
+}
+
+#if 0
 void BindingEditor::bindingSaved(Binding* b))
 {
     if (b == lastCreate) {
@@ -172,6 +189,7 @@ void BindingEditor::bindingSaved(Binding* b))
     // save this for next time
     capturing = bindingDetails.isCapturing();
 }
+#endif
 
 void BindingEditor::bindingCanceled()
 {

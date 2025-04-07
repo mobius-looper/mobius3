@@ -138,6 +138,7 @@
     <Button action="Rec/Over/Play"/>
     <Button action="Start/Stop"/>
     <Button action="SelectLoop" arguments="4"/>
+    <Button action="Rec/Play/Stop"/>
   </ButtonSet>
   <ButtonSet name="Buttons2">
     <Button action="Reset"/>

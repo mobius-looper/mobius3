@@ -71,6 +71,8 @@
             added="1743785489347"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\multitap.msl" name="MainTap"
             added="1743785489347"/>
+      <File path="C:\dev\mobius3\Mobius\Source\scripts\recplaystop.msl" name="Rec/Play/Stop"
+            added="0"/>
     </Files>
   </Machine>
   <Machine name="Loki">

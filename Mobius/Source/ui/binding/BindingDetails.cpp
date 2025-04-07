@@ -288,6 +288,9 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
         // nothing specific atm, maybe the unique parameter id?
         type = TypeHost;
     }
+    else if (b->trigger == Binding::TriggerUI) {
+        type = TypeButton;
+    }
     else {
         Trace(1, "BindingContent: Unsupported trigger type %d", (int)(b->trigger));
     }
