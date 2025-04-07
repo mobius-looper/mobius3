@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Session name="Basic8" audioTracks="8" midiTracks="2">
+  <Track id="3" type="audio" name="a1">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="1" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackGroup" value="A"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
+    </ValueSet>
+  </Track>
+  <Track id="4" type="audio" name="a2">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="emptySwitchQuantize" value="none" type="enum" ordinal="1"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="1" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="switchQuantize" value="loop" type="enum" ordinal="3"/>
+      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackGroup" value="A"/>
+      <Value name="trackMasterSelect" value="accept" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
+    </ValueSet>
+  </Track>
+  <Track id="5" type="audio" name="a3">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackMasterSelect" value="accept" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
+    </ValueSet>
+  </Track>
+  <Track id="6" type="audio" name="a4">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
+    </ValueSet>
+  </Track>
+  <Track id="7" type="audio" name="a5">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
+    </ValueSet>
+  </Track>
+  <Track id="8" type="audio" name="a6">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
+    </ValueSet>
+  </Track>
+  <Track id="9" type="audio" name="a7">
+    <ValueSet>
+      <Value name="altFeedback" value="127" type="int"/>
+      <Value name="audioInputPort" value="0" type="int"/>
+      <Value name="audioOutputPort" value="0" type="int"/>
+      <Value name="feedback" value="127" type="int"/>
+      <Value name="focus" value="false" type="bool"/>
+      <Value name="input" value="127" type="int"/>
+      <Value name="mono" value="false" type="bool"/>
+      <Value name="output" value="127" type="int"/>
+      <Value name="pan" value="64" type="int"/>
+      <Value name="pluginInputPort" value="0" type="int"/>
+      <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+      <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="2"/>
+    </ValueSet>
+  </Track>
+  <Track id="10" type="audio" name="something">
+    <ValueSet>
+      <Value name="focus" value="false" type="bool"/>
+    </ValueSet>
+  </Track>
+  <ValueSet>
+    <Value name="activeSetup" value="Default"/>
+    <Value name="altFeedbackEnable" value="true" type="bool"/>
+    <Value name="audioInputPort" value="0" type="int"/>
+    <Value name="audioOutputPort" value="0" type="int"/>
+    <Value name="autoFeedbackReduction" value="0" type="int"/>
+    <Value name="bounceQuantize" value="off" type="enum" ordinal="0"/>
+    <Value name="controllerActionThreshold" value="64" type="int"/>
+    <Value name="driftCheckPoint" value="loop" type="enum" ordinal="0"/>
+    <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
+    <Value name="emptySwitchQuantize" value="syncSource" type="enum" ordinal="0"/>
+    <Value name="emptyTrackAction" value="none" type="enum" ordinal="0"/>
+    <Value name="fadeFrames" value="128" type="int"/>
+    <Value name="hostBarsPerLoop" value="1" type="int"/>
+    <Value name="hostBeatsPerBar" value="4" type="int"/>
+    <Value name="hostOverride" value="false" type="bool"/>
+    <Value name="hostOverrideTimeSignature" value="0" type="int"/>
+    <Value name="inputLatency" value="0" type="int"/>
+    <Value name="isolateOverdubs" value="0" type="int"/>
+    <Value name="longDisable" value="true" type="bool"/>
+    <Value name="longPress" value="500" type="int"/>
+    <Value name="loopCount" value="4" type="int"/>
+    <Value name="maxLoops" value="2" type="int"/>
+    <Value name="maxRedo" value="4" type="int"/>
+    <Value name="maxSyncDrift" value="2048" type="int"/>
+    <Value name="maxUndo" value="8" type="int"/>
+    <Value name="midiBarsPerLoop" value="1" type="int"/>
+    <Value name="midiBeatsPerBar" value="4" type="int"/>
+    <Value name="midiRecordMode" value="average" type="enum" ordinal="0"/>
+    <Value name="monitorAudio" value="false" type="bool"/>
+    <Value name="mono" value="false" type="bool"/>
+    <Value name="multiplyMode" value="normal" type="enum" ordinal="0"/>
+    <Value name="muteCancel" value="never" type="enum" ordinal="0"/>
+    <Value name="muteMode" value="continue" type="enum" ordinal="0"/>
+    <Value name="noFeedbackUndo" value="false" type="bool"/>
+    <Value name="noLayerFlattening" value="false" type="bool"/>
+    <Value name="noiseFloor" value="50" type="int"/>
+    <Value name="outputLatency" value="0" type="int"/>
+    <Value name="overdubQuantized" value="true" type="bool"/>
+    <Value name="overdubTransfer" value="off" type="enum" ordinal="0"/>
+    <Value name="pitchBendRange" value="12" type="int"/>
+    <Value name="pitchShiftRestart" value="false" type="bool"/>
+    <Value name="pitchStepRange" value="24" type="int"/>
+    <Value name="pitchTransfer" value="off" type="enum" ordinal="0"/>
+    <Value name="pluginInputPort" value="1" type="int"/>
+    <Value name="pluginOutputPort" value="0" type="int"/>
+    <Value name="quantize" value="subCycle" type="enum" ordinal="1"/>
+    <Value name="quickSave" value="mobiusloop"/>
+    <Value name="recordResetsFeedback" value="false" type="bool"/>
+    <Value name="recordTransfer" value="off" type="enum" ordinal="0"/>
+    <Value name="resetMode" value="content" type="enum" ordinal="1"/>
+    <Value name="returnLocation" value="follow" type="enum" ordinal="0"/>
+    <Value name="reverseTransfer" value="off" type="enum" ordinal="0"/>
+    <Value name="roundingOverdub" value="true" type="bool"/>
+    <Value name="saveLayers" value="0" type="int"/>
+    <Value name="shuffleMode" value="random" type="enum" ordinal="3"/>
+    <Value name="slipMode" value="subCycle" type="enum" ordinal="0"/>
+    <Value name="slipTime" value="0" type="int"/>
+    <Value name="soundCopyMode" value="multiply" type="enum" ordinal="2"/>
+    <Value name="speedBendRange" value="12" type="int"/>
+    <Value name="speedRecord" value="false" type="bool"/>
+    <Value name="speedShiftRestart" value="false" type="bool"/>
+    <Value name="speedStepRange" value="24" type="int"/>
+    <Value name="speedTransfer" value="off" type="enum" ordinal="0"/>
+    <Value name="spreadRange" value="48" type="int"/>
+    <Value name="subcycles" value="8" type="int"/>
+    <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
+    <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
+    <Value name="switchQuantize" value="confirmLoop" type="enum" ordinal="7"/>
+    <Value name="switchVelocity" value="false" type="bool"/>
+    <Value name="syncSource" value="none" type="enum" ordinal="0"/>
+    <Value name="syncUnit" value="beat" type="enum" ordinal="0"/>
+    <Value name="timeCopyMode" value="insert" type="enum" ordinal="3"/>
+    <Value name="timeStretchRange" value="12" type="int"/>
+    <Value name="trackLeaveAction" value="none" type="enum" ordinal="0"/>
+    <Value name="trackMasterReset" value="move" type="enum" ordinal="1"/>
+    <Value name="trackMasterSelect" value="manual" type="enum" ordinal="0"/>
+    <Value name="trackSyncUnit" value="subcycle" type="enum" ordinal="0"/>
+    <Value name="transportBarsPerLoop" value="1" type="int"/>
+    <Value name="transportBeatsPerBar" value="4" type="int"/>
+    <Value name="transportClocks" value="false" type="bool"/>
+    <Value name="transportManualStart" value="false" type="bool"/>
+    <Value name="transportMaxTempo" value="300" type="int"/>
+    <Value name="transportMetronome" value="false" type="bool"/>
+    <Value name="transportMidi" value="false" type="bool"/>
+    <Value name="transportMidiClocksWhenStopped" value="1" type="int"/>
+    <Value name="transportMidiEnable" value="1" type="int"/>
+    <Value name="transportMinTempo" value="30" type="int"/>
+    <Value name="transportTempo" value="90"/>
+    <Value name="upgraded" value="true" type="bool"/>
+    <Value name="userFileFolder" value="c:\dev\mobius3\Mobius\Source\midifiles"/>
+    <Value name="windowEdgeAmount" value="1" type="int"/>
+    <Value name="windowEdgeUnit" value="loop" type="enum" ordinal="0"/>
+    <Value name="windowSlideAmount" value="1" type="int"/>
+    <Value name="windowSlideUnit" value="loop" type="enum" ordinal="0"/>
+  </ValueSet>
+</Session>
