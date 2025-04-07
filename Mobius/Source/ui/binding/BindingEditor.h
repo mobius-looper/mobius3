@@ -51,6 +51,7 @@ class BindingEditor : public ConfigEditor,
     void bindingSetTableDelete(juce::StringArray& errors);
 
     void showBinding(class Binding* b);
+    void createBinding(class Binding* b);
     void bindingSaved() override;
     void bindingCanceled() override;
     void moveBinding(int sourceRow, int dropRow);

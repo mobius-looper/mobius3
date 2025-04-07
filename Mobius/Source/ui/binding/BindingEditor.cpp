@@ -138,14 +138,35 @@ void BindingEditor::showBinding(Binding* b)
     JuceUtil::centerInParent(&bindingDetails);
 }
 
-void BindingEditor::bindingSaved()
+/**
+ * Show a new binding, but don't save it in the BindingSet
+ * if the details panel is canceled.
+ * Ownership of the Binding is transferred.
+ */
+void BindingEditor::createBinding(Binding* b)
 {
-    // jesus fuck, the chain of command here is messy
-    // BindingDetails goes all the way back here for the save notification
-    // and we have to go back down to the content to refresh the table
-    if (currentSet >= 0) {
-        BindingSetContent* current =  contents[currentSet];
-        current->bindingSaved();
+    // avoid deleting the last one until BindingDetails is reset
+    Binding* last = lastCreate.release();
+    lastCreate.reset(b);
+    
+    bindingDetails.setCapturing(capturing);
+    bindingDetails.show(this, this, b);
+
+    delete last;
+}
+
+void BindingEditor::bindingSaved(Binding* b))
+{
+    if (b == lastCreate) {
+    }
+    else {
+        // jesus fuck, the chain of command here is messy
+        // BindingDetails goes all the way back here for the save notification
+        // and we have to go back down to the content to refresh the table
+        if (currentSet >= 0) {
+            BindingSetContent* current =  contents[currentSet];
+            current->bindingSaved();
+        }
     }
 
     // save this for next time
