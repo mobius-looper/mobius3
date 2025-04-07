@@ -361,7 +361,7 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
     }
     else if (s->functionProperties != nullptr) {
         addScope = (!s->functionProperties->global &&
-                    !s->level == LevelUI);
+                    s->level != LevelUI);
     }
 
     if (addScope) {
