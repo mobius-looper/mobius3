@@ -1,0 +1,16 @@
+
+Mobius Concepts
+  Tracks and Loops
+  Functions
+  Parameters
+  Scripts
+
+What is Synchronization
+
+  describe the fundamental concept and touch on the different types
+
+Transport Sync
+Host Sync
+Midi Sync
+
+
