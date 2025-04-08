@@ -125,7 +125,7 @@
   </VForm>
 
   <VForm name='systemFiles'>
-    <Field name='userFileFolder' type='string'/>
+    <Field name='userFileFolder' type='string' file='true'/>
     <Field name='quicksaveFile' type='string'/>
   </VForm>
 

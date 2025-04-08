@@ -17,9 +17,17 @@
 
 #include <JuceHeader.h>
 
-class Prompter
+#include "Services.h"
+
+class Prompter : public FileChooserService
 {
   public:
+
+    class Handler {
+      public:
+        virtual ~Handler() {}
+        virtual void prompterHandleFile(juce::String path) = 0;
+    };
     
     Prompter(class Provider* p);
     ~Prompter();
@@ -27,8 +35,14 @@ class Prompter
     void importScripts();
     void deleteScript(juce::String path);
 
+    // FileChooserService
+    void fileChooserRequestFolder(juce::String purpose, FileChooserService::Handler* handler) override;
+    void fileChooserCancel(juce::String purpose) override;
+    
     void runMcl();
 
+    void logActiveHandlers();
+    
   private:
 
     class Provider* provider = nullptr;
@@ -37,10 +51,13 @@ class Prompter
     // though we could have an array of them for each purpose
     std::unique_ptr<juce::FileChooser> chooser;
 
+    juce::HashMap<juce::String,FileChooserService::Handler*> fileChooserRequests;
+
     void startScriptImport();
     void finishScriptImport(juce::Array<juce::File> files);
     void finishRunMcl(juce::Array<juce::File> files);
 
+    void chooseDirectory(juce::String name, Handler* handler);
 };    
 
  

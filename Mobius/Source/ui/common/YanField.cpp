@@ -2,7 +2,9 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
+#include "../../Services.h"
 #include "../JuceUtil.h"
+
 #include "ColorPopup.h"
 #include "YanField.h"
 #include "YanForm.h"
@@ -391,6 +393,72 @@ void YanInput::labelTextChanged(juce::Label* l)
     (void)l;
     if (listener != nullptr)
       listener->yanInputChanged(this);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// YanFile
+//
+//////////////////////////////////////////////////////////////////////
+
+YanFile::YanFile(juce::String label) : input(label)
+{
+    button.setButtonText("Choose");
+    button.addListener(this);
+    
+    addAndMakeVisible(input);
+    addAndMakeVisible(button);
+}
+
+YanFile::~YanFile()
+{
+    // unusual, but if you kill the parent component containing this field
+    // before the async file chooser request is finished, the handler needs to
+    // be removed since this object will no longer be valid
+
+    // !! This caused a puzzling destruction ordering problem
+    // if you leave the file chooser open and then close the application,
+    // this YanFile is not destructed until after ~Supervisor is in the process
+    // of being called, calling Prompter here raises an exception, I guess because
+    // it has already been destroyed by this time
+    // it would be better if Supervisor destroyed everything in the UI first before
+    // allowing the automatic destruction process on itself to happen, or maybe
+    // make a pass over all the current UI components and tell them to remove themselves
+    // from any handler registration they might have
+    //if (fileChooser != nullptr)
+    //fileChooser->fileChooserCancel(purpose);
+}
+
+void YanFile::initialize(juce::String purp, FileChooserService* svc)
+{
+    purpose = purp;
+    fileChooser = svc;
+}
+
+int YanFile::getPreferredComponentWidth()
+{
+    return input.getPreferredComponentWidth() + 50;
+}
+
+void YanFile::resized()
+{
+    juce::Rectangle<int> area = getLocalBounds();
+    button.setBounds(area.removeFromRight(50));
+    input.setBounds(area);
+}
+
+void YanFile::buttonClicked(juce::Button* b)
+{
+    (void)b;
+    if (fileChooser == nullptr)
+      Trace(1, "YanFile: FileChooserService not available");
+    else
+      fileChooser->fileChooserRequestFolder(purpose, this);
+}
+
+void YanFile::fileChooserResponse(juce::File f)
+{
+    input.setValue(f.getFullPathName());
 }
 
 //////////////////////////////////////////////////////////////////////

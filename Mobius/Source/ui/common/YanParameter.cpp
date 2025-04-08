@@ -26,6 +26,7 @@ void YanParameter::setListener(Listener* l)
 void YanParameter::init(Provider* p, Symbol* s)
 {
     symbol = s;
+    type = TypeText;
     isText = false;
     isCombo = false;
     isCheckbox = false;
@@ -48,12 +49,14 @@ void YanParameter::init(Provider* p, Symbol* s)
             initCombo(p, s);
         }
         else if (props->type == TypeBool) {
+            type = TypeCheckbox;
             isCheckbox = true;
             addAndMakeVisible(&checkbox);
             // yuno have one?
             // checkbox.setListener(this);
         }
         else {
+            type = TypeText;
             isText = true;
             addAndMakeVisible(&input);
             input.setListener(this);
@@ -63,6 +66,7 @@ void YanParameter::init(Provider* p, Symbol* s)
 
 void YanParameter::initCombo(Provider* p, Symbol* s)
 {
+    type = TypeCombo;
     isCombo = true;
     addAndMakeVisible(&combo);
     combo.setListener(this);

@@ -9,6 +9,7 @@
 #include <JuceHeader.h>
 
 #include "ColorPopup.h"
+#include "../../Services.h"
 
 /**
  * Subclass used for Labels within a YanField/YanForm.
@@ -177,6 +178,34 @@ class YanInput : public YanField, public juce::Label::Listener, public juce::Tex
     int charWidth = 0;
     bool readOnly = false;
     bool noBorder = false;
+};
+
+class YanFile : public YanField, public juce::Button::Listener, public FileChooserService::Handler
+{
+  public:
+
+    YanFile(juce::String label);
+    ~YanFile();
+    
+    void initialize(juce::String purpose, FileChooserService* svc);
+    
+    int getPreferredComponentWidth() override;
+    
+    void resized() override;
+    
+    // Button::Listener
+    void buttonClicked(juce::Button* b) override;
+
+    // FileChooserService::Handler
+    void fileChooserResponse(juce::File f) override;
+    
+  private:
+
+    juce::String purpose;
+    FileChooserService* fileChooser = nullptr;
+    YanInput input;
+    juce::TextButton button;
+    
 };
 
 class YanCheckbox : public YanField

@@ -11,7 +11,9 @@
 
 #include <JuceHeader.h>
 
-class Provider
+#include "Services.h"
+
+class Provider : public FileChooserService
 {
   public:
 

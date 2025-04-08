@@ -4,6 +4,8 @@
 #include "../../util/Trace.h"
 #include "../../model/Form.h"
 #include "../../script/MslValue.h"
+#include "../../Services.h"
+#include "../../Provider.h"
 
 #include "YanField.h"
 #include "YanFieldHelpers.h"
@@ -20,9 +22,7 @@ ValueSetField::~ValueSetField()
 void ValueSetField::init(Provider* p, Field* def)
 {
     definition = def;
-    isText = false;
-    isCombo = false;
-    isCheckbox = false;
+    type = TypeText;
     
     if (def == nullptr) {
         Trace(1, "ValueSetField: Missing definition");
@@ -35,11 +35,17 @@ void ValueSetField::init(Provider* p, Field* def)
             initCombo(p, def);
         }
         else if (def->type == TypeBool) {
-            isCheckbox = true;
+            type = TypeCheckbox;
             addAndMakeVisible(&checkbox);
         }
+        else if (def->type == TypeString && def->file) {
+            type = TypeFile;
+            addAndMakeVisible(&file);
+            // this is the magic that connects it all together
+            file.initialize(def->name, p);
+        }
         else {
-            isText = true;
+            type = TypeText;
             addAndMakeVisible(&input);
             input.setListener(this);
         }
@@ -48,7 +54,7 @@ void ValueSetField::init(Provider* p, Field* def)
 
 void ValueSetField::initCombo(Provider* p, Field* def)
 {
-    isCombo = true;
+    type = TypeCombo;
     addAndMakeVisible(&combo);
     combo.setListener(this);
             
@@ -71,29 +77,34 @@ void ValueSetField::initCombo(Provider* p, Field* def)
 int ValueSetField::getPreferredComponentWidth()
 {
     int width = 0;
-    if (isCombo)
+    if (type == TypeCombo)
       width = combo.getPreferredComponentWidth();
-    else if (isCheckbox)
+    else if (type == TypeCheckbox)
       width = checkbox.getPreferredComponentWidth();
-    else
+    else if (type == TypeText)
       width = input.getPreferredComponentWidth();
+    else if (type == TypeFile)
+     width = file.getPreferredComponentWidth();
+    
     return width;
 }
 
 void ValueSetField::resized()
 {
     juce::Rectangle<int> remainder = resizeLabel();
-    if (isCombo)
+    if (type == TypeCombo)
       combo.setBounds(remainder);
-    else if (isCheckbox)
+    else if (type == TypeCheckbox)
       checkbox.setBounds(remainder);
-    else
+    else if (type == TypeText)
       input.setBounds(remainder);
+    else if (type == TypeFile)
+      file.setBounds(remainder);
 }
 
 void ValueSetField::load(MslValue* v)
 {
-    if (isCombo) {
+    if (type == TypeCombo) {
         if (structureNames.size() > 0) {
             // we had a parameterHelper that found the allowed values
             if (v == nullptr) {
@@ -147,11 +158,15 @@ void ValueSetField::load(MslValue* v)
             }
         }
     }
-    else if (isCheckbox) {
+    else if (type ==  TypeCheckbox) {
         if (v == nullptr)
           checkbox.setValue(false);
         else
           checkbox.setValue(v->getBool());
+    }
+    else if (type == TypeFile) {
+
+          
     }
     else if (definition->type == TypeInt) {
         // note that defaultValue still has displayBase applied to it
@@ -173,7 +188,7 @@ void ValueSetField::save(MslValue* v)
 {
     v->setNull();
     
-    if (isCombo) {
+    if (type == TypeCombo) {
         juce::String helper = definition->displayHelper;
         if (helper.length() > 0) {
             juce::String result = YanFieldHelpers::comboSave(&combo, helper);
@@ -192,8 +207,10 @@ void ValueSetField::save(MslValue* v)
             }
         }
     }
-    else if (isCheckbox) {
+    else if (type == TypeCheckbox) {
         v->setBool(checkbox.getValue());
+    }
+    else if (type == TypeFile) {
     }
     else if (definition->type == TypeInt) {
         juce::String svalue = input.getValue();

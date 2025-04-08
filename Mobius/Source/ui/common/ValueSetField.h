@@ -48,18 +48,24 @@ class ValueSetField : public YanField,
 
   private:
     
+    typedef enum {
+        TypeText,
+        TypeCombo,
+        TypeCheckbox,
+        TypeFile
+    } Type;
+    
     void initCombo(class Provider* p, class Symbol* s);
     
     class Field* definition = nullptr;
     juce::StringArray structureNames;
-    bool isText = false;
-    bool isCombo = false;
-    bool isCheckbox = false;
+    Type type = TypeText;
     
     // various renderings
     YanCombo combo {""};
     YanInput input {""};
     YanCheckbox checkbox {""};
+    YanFile file {""};
     
     void initCombo(Provider* p, Field* def);
     

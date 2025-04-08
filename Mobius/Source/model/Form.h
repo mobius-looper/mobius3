@@ -30,7 +30,8 @@ class Field
     int displayBase = 0;
 
     UIParameterType type = TypeInt;
-
+    bool file = false;
+    
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);
 
   private:

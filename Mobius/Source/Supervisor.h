@@ -51,6 +51,7 @@
 #include "ui/MobiusView.h"
 #include "ui/MobiusViewer.h"
 
+#include "Services.h"
 #include "Provider.h"
 #include "MslUtil.h"
 
@@ -360,6 +361,13 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // stupid utility to generate unique identififers for bindings
     int newUid();
+
+    //////////////////////////////////////////////////////////////////////
+    // Services
+    //////////////////////////////////////////////////////////////////////
+
+    void fileChooserRequestFolder(juce::String purpose, FileChooserService::Handler* handler) override;
+    void fileChooserCancel(juce::String purpose) override;
 
   private:
 

@@ -537,6 +537,8 @@ void Supervisor::shutdown()
         return;
     }
 
+    prompter.logActiveHandlers();
+
     // stop the maintenance thread so we don't get any more advance() calls
     Trace(2, "Supervisor: Stopping maintenance thread\n");
     uiThread.stop();
@@ -3121,6 +3123,24 @@ void Supervisor::cancelListenerOverrides()
     audioStream.setAudioListener(audioListener);
 
     mobius->setListener(this);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Services
+//
+// These are new, an eventually decomposition of what is in Provider.
+//
+//////////////////////////////////////////////////////////////////////
+
+void Supervisor::fileChooserRequestFolder(juce::String purpose, FileChooserService::Handler* handler)
+{
+    prompter.fileChooserRequestFolder(purpose, handler);
+}
+
+void Supervisor::fileChooserCancel(juce::String purpose)
+{
+    prompter.fileChooserCancel(purpose);
 }
 
 //////////////////////////////////////////////////////////////////////

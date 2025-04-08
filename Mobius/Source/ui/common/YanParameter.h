@@ -60,6 +60,15 @@ class YanParameter : public YanField,
     void yanInputChanged(YanInput* i) override;
 
   private:
+
+    typedef enum {
+        TypeText,
+        TypeCombo,
+        TypeCheckbox,
+        TypeFile
+    } Type;
+
+    Type type = TypeText;
     
     void initCombo(class Provider* p, class Symbol* s);
     

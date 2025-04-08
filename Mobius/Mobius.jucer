@@ -7,10 +7,6 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
-      <FILE id="Hd8NrF" name="SessionDifferencer.cpp" compile="1" resource="0"
-            file="Source/SessionDifferencer.cpp"/>
-      <FILE id="O49uHx" name="SessionDifferencer.h" compile="0" resource="0"
-            file="Source/SessionDifferencer.h"/>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
@@ -1095,9 +1091,14 @@
       <FILE id="NzgXK9" name="Provider.h" compile="0" resource="0" file="Source/Provider.h"/>
       <FILE id="hGOwW6" name="RootLocator.cpp" compile="1" resource="0" file="Source/RootLocator.cpp"/>
       <FILE id="Tgt8wg" name="RootLocator.h" compile="0" resource="0" file="Source/RootLocator.h"/>
+      <FILE id="zCmz8L" name="Services.h" compile="0" resource="0" file="Source/Services.h"/>
       <FILE id="oKFVlR" name="SessionClerk.cpp" compile="1" resource="0"
             file="Source/SessionClerk.cpp"/>
       <FILE id="soBeCj" name="SessionClerk.h" compile="0" resource="0" file="Source/SessionClerk.h"/>
+      <FILE id="Hd8NrF" name="SessionDifferencer.cpp" compile="1" resource="0"
+            file="Source/SessionDifferencer.cpp"/>
+      <FILE id="O49uHx" name="SessionDifferencer.h" compile="0" resource="0"
+            file="Source/SessionDifferencer.h"/>
       <FILE id="eOUyrZ" name="SuperDumper.cpp" compile="1" resource="0" file="Source/SuperDumper.cpp"/>
       <FILE id="mBQtpX" name="SuperDumper.h" compile="0" resource="0" file="Source/SuperDumper.h"/>
       <FILE id="md4KUz" name="Supervisor.cpp" compile="1" resource="0" file="Source/Supervisor.cpp"/>

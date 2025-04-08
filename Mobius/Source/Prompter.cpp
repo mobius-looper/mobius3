@@ -7,6 +7,7 @@
 #include "Pathfinder.h"
 #include "script/ScriptClerk.h"
 #include "mcl/MclEnvironment.h"
+#include "Services.h"
 
 #include "Prompter.h"
 
@@ -173,6 +174,84 @@ void Prompter::finishRunMcl(juce::Array<juce::File> files)
             // may want a different border or something
             provider->alert(res.messages);
         }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// FileChooserService
+//
+//////////////////////////////////////////////////////////////////////
+
+void Prompter::fileChooserRequestFolder(juce::String purpose, FileChooserService::Handler* handler)
+{
+    FileChooserService::Handler* existing = fileChooserRequests[purpose];
+    if (existing != nullptr) {
+
+        // several options here, launch a duplicate, bring the existing one to the front
+        // ignore
+        Trace(1, "Prompter: Attempt to open more than one file chooser for %s",
+              purpose.toUTF8());
+    }
+    else {
+        fileChooserRequests.set(purpose, handler);
+        
+        Pathfinder* pf = provider->getPathfinder();
+        juce::File startPath(pf->getLastFolder(purpose));
+
+        juce::String title = "Select a folder...";
+
+        // !! this actually is going to effectively cancel the previous request
+        // need more work on how this manages multiple file requests for different
+        // things, and if we even allow that at all
+
+        chooser = std::make_unique<juce::FileChooser> (title, startPath, "");
+
+        auto chooserFlags = (juce::FileBrowserComponent::openMode |
+                             juce::FileBrowserComponent::canSelectDirectories);
+
+        chooser->launchAsync (chooserFlags, [this,purpose] (const juce::FileChooser& fc)
+        {
+            juce::Array<juce::File> result = fc.getResults();
+            if (result.size() > 0) {
+                juce::File file = result[0];
+                Pathfinder* pf = provider->getPathfinder();
+                pf->saveLastFolder(purpose, file.getParentDirectory().getFullPathName());
+
+                // make sure the handler still exists and was not canceled
+                FileChooserService::Handler* responseHandler = fileChooserRequests[purpose];
+                if (responseHandler != nullptr) {
+                    responseHandler->fileChooserResponse(file);
+                }
+                else {
+                    // not an error, but I want to know
+                    Trace(1, "Prompter: FileChooserService hander was removed before completion");
+                }
+            }
+
+            // hmm, is this always guaranteed to get back here, even if you cancel?
+            fileChooserRequests.remove(purpose);
+        
+        });
+    }
+}
+
+void Prompter::fileChooserCancel(juce::String purpose)
+{
+    fileChooserRequests.remove(purpose);
+}
+
+/**
+ * Called during shutdown to log whether there are any active async requests.
+ */
+void Prompter::logActiveHandlers()
+{
+    juce::StringArray keys;
+    for (juce::HashMap<juce::String,FileChooserService::Handler*>::Iterator i(fileChooserRequests) ; i.next();)
+      keys.add(i.getKey());
+
+    for (auto key : keys) {
+        Trace(1, "Prompter: Active file chooser at shutdown %s", key.toUTF8());
     }
 }
 

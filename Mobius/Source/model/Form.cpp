@@ -23,6 +23,9 @@ void Field::parseXml(juce::XmlElement* root, juce::StringArray& errors)
       displayName = formatDisplayName(name);
     
     type = parseType(root->getStringAttribute("type"));
+
+    // really should be rolled into type but don't want to extend all the switches right now
+    file = root->getBoolAttribute("file");
 }
 
 /**
