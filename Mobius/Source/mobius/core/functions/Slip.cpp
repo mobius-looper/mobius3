@@ -198,7 +198,7 @@ void SlipFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 				int msecs = ParameterSource::getSlipTime(l->getTrack());
 				float speed = l->getTrack()->getEffectiveSpeed();
 				// should we ceil()?
-                int mframes = ParameterSource::msecToFrames(msecs);
+                int mframes = ParameterSource::msecToFrames(l->getTrack(), msecs);
 				unitFrames = (long)(mframes * speed);
 				relativeFrames = unitFrames * units;
 			}

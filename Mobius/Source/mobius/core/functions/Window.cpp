@@ -40,9 +40,6 @@
 #include "../Track.h"
 #include "../ParameterSource.h"
 
-// only for CD_SAMPLE_RATE which is used by MSEC_TO_FRAMES
-#include "../AudioConstants.h"
-
 #include "../Mem.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -161,11 +158,11 @@ class WindowFunction : public Function {
 
   private:
 
-    void moveWindow(Event* event);
-    void resizeWindow(Event* event);
+    void moveWindow(Track* t, Event* event);
+    void resizeWindow(Track* t, Event* event);
     WindowUnit getScriptUnit(ExValue* arg);
-    long getUnitFrames(WindowUnit unit);
-    long getMsecFrames(int msecs);
+    long getUnitFrames(Track* t, WindowUnit unit);
+    long getMsecFrames(Track* t, int msecs);
     void buildWindow();
     void constrainWindow();
     Segment* buildSegments();
@@ -308,11 +305,11 @@ void WindowFunction::doEvent(Loop* loop, Event* event)
 
         if (!mEdge) {
             // default is PUSH, don't have an option to override that
-            moveWindow(event);
+            moveWindow(loop->getTrack(), event);
         }
         else {
             mStyle = OVERFLOW_TRUNCATE;
-            resizeWindow(event);
+            resizeWindow(loop->getTrack(), event);
         }
 
         buildWindow();
@@ -331,7 +328,7 @@ void WindowFunction::doEvent(Loop* loop, Event* event)
  * The WindowSlideAmount preset parameter has the number of units.  If not
  * set the amount is 1.
  */
-void WindowFunction::moveWindow(Event* event)
+void WindowFunction::moveWindow(Track* t, Event* event)
 {
     int amount = -1;
 
@@ -389,7 +386,7 @@ void WindowFunction::moveWindow(Event* event)
         Trace(mLoop, 1, "WindowMove layer not implemented\n");
     }
     else {
-        long unitFrames = getUnitFrames(unit);
+        long unitFrames = getUnitFrames(t, unit);
         long slideFrames = amount * unitFrames;
         if (mDirection >= 0)
           mOffset += slideFrames;
@@ -401,7 +398,7 @@ void WindowFunction::moveWindow(Event* event)
 /**
  * Adjust an edge which may change both the offset and size.
  */
-void WindowFunction::resizeWindow(Event* event)
+void WindowFunction::resizeWindow(Track* t, Event* event)
 {
     int amount = 0;
 
@@ -476,7 +473,7 @@ void WindowFunction::resizeWindow(Event* event)
               amount = 0 - amount;
         }
 
-        long unitFrames = getUnitFrames(unit);
+        long unitFrames = getUnitFrames(t, unit);
         long resizeFrames = amount * unitFrames;
 
         if (start) {
@@ -539,7 +536,7 @@ WindowUnit WindowFunction::getScriptUnit(ExValue* arg)
 /**
  * Calculate the number of frames in one unit.
  */
-long WindowFunction::getUnitFrames(WindowUnit unit)
+long WindowFunction::getUnitFrames(Track* t, WindowUnit unit)
 {
     long frames = 0;
 
@@ -558,7 +555,7 @@ long WindowFunction::getUnitFrames(WindowUnit unit)
         }
     }
     else if (unit == WINDOW_UNIT_MSEC) {
-        frames = getMsecFrames(1);
+        frames = getMsecFrames(t, 1);
     }
     else if (unit == WINDOW_UNIT_FRAME) {
         frames = 1;
@@ -575,14 +572,14 @@ long WindowFunction::getUnitFrames(WindowUnit unit)
  * This is adjusted relative to the playback speed since you want to 
  * hear the change the same way regardless of the speed.
  */
-long WindowFunction::getMsecFrames(int msecs)
+long WindowFunction::getMsecFrames(Track* t, int msecs)
 {
     // milliseconds are relative to the playback rate
     // !! do they need to be?
     float rate = mLoop->getTrack()->getEffectiveSpeed();
 
     // should we ceil()?
-    int mframes = ParameterSource::msecToFrames(msecs);
+    int mframes = ParameterSource::msecToFrames(t, msecs);
     long frames = (long)(mframes * rate);
 
    return frames;

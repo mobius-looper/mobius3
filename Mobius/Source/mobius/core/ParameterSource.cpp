@@ -9,6 +9,8 @@
  */
 
 #include "../../model/ParameterConstants.h"
+// DEFAULT_NOISE_FLOOR
+#include "../../model/old/MobiusConfig.h"
 #include "../../model/SymbolId.h"
 #include "../../model/StepSequence.h"
 
@@ -18,9 +20,6 @@
 #include "Track.h"
 #include "Event.h"
 #include "Mobius.h"
-
-// for the stupid MSEC_TO_FRAMES which needs CD_SAMPLE_RATE
-#include "AudioConstants.h"
 
 #include "ParameterSource.h"
 
@@ -319,13 +318,13 @@ int ParameterSource::getSpreadRange(Loop* l)
 }
 
 /**
- * Temporary encapsulation of this old macro.
- * This is obviously wrong and needs to be using the Container to
- * get the accurate sample rate.
+ * Replacement for an old macro
+ * Used by Slip, and Window
  */
-int ParameterSource::msecToFrames(int msec)
+int ParameterSource::msecToFrames(Track* t, int msec)
 {
-    return MSEC_TO_FRAMES(msec);
+    Mobius* m = t->getMobius();
+    return m->msecToFrames(msec);
 }
     
 bool ParameterSource::isAutoFeedbackReduction(Loop* l)

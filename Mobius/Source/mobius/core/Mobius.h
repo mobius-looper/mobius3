@@ -1,9 +1,8 @@
 /**
- * The main component of the Mobius core.
+ * The main wrapper component of the old Mobius core.
  * 
- * The code between Mobius and roughtly Track is an almost complete
- * rewrite of the original code.  From Track on down is still relatively
- * original.  Script is mostly original.
+ * The code between Mobius and Track has been almost completely gutted.
+ * From Track on down is still relatively original.  Script is mostly original.
  *
  * Mobius now lives entirely in the Kernel and does need to deal with
  * thread issues except during the initialize() sequence.
@@ -18,28 +17,6 @@
 #include "../Notification.h"
 #include "Loader.h"
 #include "MobiusMslHandler.h"
-
-/**
- * Size of a static char buffer to keep the custom mode name.
- */
-#define MAX_CUSTOM_MODE 256
-
-//
-// These used to be in MobiusConfig.h but that's going away
-// Find a better home
-//
-
-/**
- * Calculate the number of frames in a millisecond range.
- * NOTE: Can't actually do it this way since sample rate is variable,
- * need to calculate this at runtime based on the stream and cache it!
- */
-#define MSEC_TO_FRAMES(msec) (int)(CD_SAMPLE_RATE * ((float)msec / 1000.0f))
-
-/**
- * Default noise floor.
- */
-#define DEFAULT_NOISE_FLOOR 13
 
 /****************************************************************************
  *                                                                          *
@@ -267,7 +244,8 @@ class Mobius
      * Used in a few places that need to calculate tempo relative to frames.
      */
     int getSampleRate();
-
+    int msecToFrames(int msec);
+    
     // Tracks
     // used internally only
     // now used by Actionator

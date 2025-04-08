@@ -48,9 +48,6 @@
 #include <memory.h>
 #include <ctype.h>
 
-// for CD_SAMPLE_RATE, MSEC_TO_FRAMES
-#include "AudioConstants.h"
-
 #include "Expr.h"
 #include "../../util/Trace.h"
 #include "../../util/List.h"
@@ -3769,8 +3766,8 @@ Event* ScriptWaitStatement::setupWaitEvent(ScriptInterpreter* si,
 long ScriptWaitStatement::getMsecFrames(ScriptInterpreter* si, long msecs)
 {
 	float rate = si->getTargetTrack()->getEffectiveSpeed();
-	// should we ceil()?
-	long frames = (long)(MSEC_TO_FRAMES(msecs) * rate);
+    int baseFrames = si->getMobius()->msecToFrames(msecs);
+	long frames = (long)(baseFrames * rate);
 	return frames;
 }
 

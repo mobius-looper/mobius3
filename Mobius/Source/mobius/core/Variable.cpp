@@ -33,9 +33,6 @@
 #include "../../model/old/Trigger.h"
 #include "../../model/SyncConstants.h"
 
-// for AUDIO_FRAMES_PER_BUFFER
-#include "AudioConstants.h"
-
 // for getLastSampleFrames
 #include "../MobiusKernel.h"
 #include "../sync/SyncMaster.h"
@@ -521,7 +518,7 @@ void BlockFramesVariableType::getTrackValue(Track* t, ExValue* value)
 {
     (void)t;
     // !! need to be checking the MobiusContainer
-	value->setLong(AUDIO_FRAMES_PER_BUFFER);
+	value->setLong(256);
 }
 
 BlockFramesVariableType BlockFramesVariableObj;

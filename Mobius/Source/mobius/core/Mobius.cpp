@@ -1468,6 +1468,18 @@ int Mobius::getSampleRate()
     return mContainer->getSampleRate();
 }
 
+int Mobius::msecToFrames(int msecs)
+{
+    // old code uses the MSEC_TO_FRAMES macro which was defined
+    // as this buried in MobiusConfig.h
+    // #define MSEC_TO_FRAMES(msec) (int)(CD_SAMPLE_RATE * ((float)msec / 1000.0f))
+    // that obviously doesn't work with variable sample rates so need to weed
+    // out all uses of that old macro
+	// should we ceil() here?
+    int msecFrames = (int)((float)(mContainer->getSampleRate()) * ((float)msecs / 1000.0f));
+    return msecFrames;
+}
+
 //
 // Tracks
 //

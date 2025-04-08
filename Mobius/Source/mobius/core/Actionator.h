@@ -1,8 +1,9 @@
 /**
  * Code related to the processing of UIActions sent to Mobius.
- * This is mostly old code factored out of Mobius to reduce the size.
- *
  * Mapping between the new UIAction model and old Action is done here.
+ *
+ * Mostly gutted now that parameters are done by LogicalTrack/ParameterVault
+ * and scope and focus is too.
  *
  */
 

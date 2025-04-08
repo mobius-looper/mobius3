@@ -78,7 +78,7 @@ class ParameterSource
 
     // this isn't a parameter but it wraps a macro that lived in MobiusConfig
     // which was wrong and needs to take the actual sample rate into account
-    static int msecToFrames(int msec);
+    static int msecToFrames(class Track* t, int msec);
 
     static bool isAutoFeedbackReduction(class Loop* l);
     static int getNoiseFloor(class Loop* l);

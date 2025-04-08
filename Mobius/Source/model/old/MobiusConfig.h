@@ -82,9 +82,9 @@
  * NOTE: Can't actually do it this way since sample rate is variable,
  * need to calculate this at runtime based on the stream and cache it!
  */
-#define MSEC_TO_FRAMES(msec) (int)(CD_SAMPLE_RATE * ((float)msec / 1000.0f))
+//#define MSEC_TO_FRAMES(msec) (int)(CD_SAMPLE_RATE * ((float)msec / 1000.0f))
 
-#define DEFAULT_EVENT_GRAVITY_FRAMES MSEC_TO_FRAMES(DEFAULT_EVENT_GRAVITY_MSEC)
+//#define DEFAULT_EVENT_GRAVITY_FRAMES MSEC_TO_FRAMES(DEFAULT_EVENT_GRAVITY_MSEC)
 
 /**
  * The maximum number of track groups we allow.
@@ -122,6 +122,11 @@
  * This also controls the width of the layer list in the UI.
  */
 #define DEFAULT_MAX_REDO_INFO 10
+
+/**
+ * Size of a static char buffer to keep the custom mode name.
+ */
+#define MAX_CUSTOM_MODE 256
 
 /****************************************************************************
  *                                                                          *
