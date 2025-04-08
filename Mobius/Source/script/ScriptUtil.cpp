@@ -21,6 +21,16 @@ void ScriptUtil::configure(Session* s, GroupDefinitions* g)
     groups = g;
 }
 
+void ScriptUtil::refresh(Session* s)
+{
+    session = s;
+}
+
+void ScriptUtil::refresh(GroupDefinitions* g)
+{
+    groups =  g;
+}
+
 int ScriptUtil::getMaxScope()
 {
     return session->getTrackCount();

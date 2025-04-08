@@ -511,6 +511,11 @@ void Supervisor::meter(const char* name)
     }
 }
 
+int Supervisor::newUid()
+{
+    return uid++;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Shutdown
@@ -1219,7 +1224,7 @@ void Supervisor::groupEditorSave(GroupDefinitions* neu)
     updateSystemConfig();
 
     // UI doesn't currently care, but this does
-    scriptUtil.configure(session.get(), neu);
+    scriptUtil.refresh(neu);
 
     // and send a copy down to the kernel
     ConfigPayload* payload = new ConfigPayload();
@@ -1529,6 +1534,8 @@ void Supervisor::loadSession(Session* neu)
     neu->setVersion(++sessionVersion);
 
     mobiusViewer.configure(neu, &mobiusView);
+
+    scriptUtil.refresh(neu);
 
     // propagate config changes to other components
     propagateConfiguration();

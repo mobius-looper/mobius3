@@ -23,7 +23,8 @@ class Binding
     
     Binding() {}
     Binding(Binding* src);
-
+    void copy(Binding* src);
+    
     void parseXml(juce::XmlElement* root, juce::StringArray& errors);
     void toXml(juce::XmlElement* parent);
 
@@ -45,7 +46,7 @@ class Binding
     // transient runtime state
 
     // unique identifier for correlation in the editor
-    int id = 0;
+    int uid = 0;
     
     // BindingSet this came from for the binding summary display
     juce::String source;

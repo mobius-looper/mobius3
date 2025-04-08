@@ -19,6 +19,8 @@ class ScriptUtil
 
     void initialize(class MslContext* c);
     void configure(class Session* s, class GroupDefinitions* g);
+    void refresh(class Session* s);
+    void refresh(class GroupDefinitions* g);
 
     int getMaxScope();
     bool isScopeKeyword(const char* cname);

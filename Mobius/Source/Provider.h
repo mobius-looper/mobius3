@@ -120,5 +120,7 @@ class Provider
 
 
     virtual void alert(juce::StringArray& messages) = 0;
+
+    virtual int newUid() = 0;
     
 };

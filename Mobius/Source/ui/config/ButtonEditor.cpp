@@ -178,12 +178,12 @@ void ButtonEditor::loadButtons(int index)
     ButtonSet* set = buttons[index];
     int id = 0;
     for (auto button : set->buttons) {
-        button->id = id;
+        button->uid = id;
         // pretend it is a Binding for BindingTable
         // shouldn't have an empty string but filter if we do
         if (button->action.length() > 0) {
             Binding b;
-            b.id = id;
+            b.uid = id;
             b.symbol = button->action;
 
             b.scope = button->scope;
@@ -234,7 +234,7 @@ void ButtonEditor::saveButtons(int index)
         // find the corresponding DisplayButton
         DisplayButton* match = nullptr;
         for (auto b : set->buttons) {
-            if (b->id == binding->id) {
+            if (b->uid == binding->uid) {
                 match = b;
                 break;
             }

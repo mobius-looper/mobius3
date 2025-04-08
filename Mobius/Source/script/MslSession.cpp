@@ -2359,6 +2359,7 @@ bool MslSession::expandInKeyword(MslValue* keyword)
 
 /**
  * This behaves just like a block after parsing
+ * !! so why can't it just be a block?
  */
 void MslSession::mslVisit(MslSequenceNode* seq)
 {

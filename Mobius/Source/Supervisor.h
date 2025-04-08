@@ -356,7 +356,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     juce::StringArray& getCommandLine() {
         return commandLine;
-    }        
+    }
+
+    // stupid utility to generate unique identififers for bindings
+    int newUid();
 
   private:
 
@@ -488,6 +491,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // a number put into the Session when it is edited and sent to the engine
     // and used to detect when the engine has finished processing it
     int sessionVersion = 0;
+
+    // another number used to generate UIDs for Bindings and possibly other things
+    // this can probably be combined with sessionVersion
+    int uid = 1;
 
     //
     // Methods

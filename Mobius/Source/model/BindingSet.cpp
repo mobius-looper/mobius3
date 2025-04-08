@@ -58,3 +58,15 @@ void BindingSet::remove(Binding* b)
 {
     bindings.removeObject(b, true);
 }
+
+Binding* BindingSet::findByUid(int uid)
+{
+    Binding* found = nullptr;
+    for (auto b : bindings) {
+        if (b->uid == uid) {
+            found = b;
+            break;
+        }
+    }
+    return found;
+}

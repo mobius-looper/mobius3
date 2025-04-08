@@ -256,7 +256,7 @@ class DisplayButton
 
     // kludge: transient id number used to correlate this with a Binding
     // when editing in the ButtonPanel
-    int id = 0;
+    int uid = 0;
 
 };
 

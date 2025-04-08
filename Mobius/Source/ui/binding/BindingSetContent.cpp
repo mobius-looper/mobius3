@@ -55,20 +55,53 @@ void BindingSetContent::cancel()
 }
 
 /**
- * We get this notificiation in a roundabout way when a BindingDetails popup
- * that edited a single binding was saved.
- * Refresh the table it came from.
+ * Here indirectly from BindingEditor after BindingEditor has finished editing
+ * an object and wants it saved.
+ *
+ * This was a COPY of the Binding from the set managed here.
+ * We do not get to own it.
  */
-void BindingSetContent::bindingSaved()
+void BindingSetContent::save(Binding& edited)
 {
-    if (midiTable.isVisible())
-      midiTable.refresh();
-    else if (keyTable.isVisible())
-      keyTable.refresh();
-    else if (hostTable.isVisible())
-      hostTable.refresh();
-    else if (buttonTable.isVisible())
-      buttonTable.refresh();
+    BindingTable* table = nullptr;
+    if (edited.trigger == Binding::TriggerKey) {
+        table = &midiTable;
+    }
+    else if (edited.trigger == Binding::TriggerHost) {
+        table = &hostTable;
+    }
+    else if (edited.trigger == Binding::TriggerNote ||
+             edited.trigger == Binding::TriggerControl ||
+             edited.trigger == Binding::TriggerProgram) {
+        table = &midiTable;
+    }
+    else if (edited.trigger == Binding::TriggerUI) {
+        table = &buttonTable;
+    }
+    else {
+        Trace(1, "BindingSetContent: Attempt to save binding with an invalid trigger");
+    }
+
+    if (table != nullptr) {
+        if (edited.uid == 0) {
+            // a new one
+            Binding* neu = new Binding(&edited);
+            bindingSet->add(neu);
+            table->add(neu);
+        }
+        else {
+            Binding* src = bindingSet->findByUid(edited.uid);
+            if (src == nullptr) {
+                // not normal, if the BindingDeatails popup managed to make it all the
+                // way back here, then a uid should have been assigned on the way out
+                Trace(1, "BindingSetContent: Attempt to save binding with no matching uid");
+            }
+            else {
+                src->copy(&edited);
+                table->refresh();
+            }
+        }
+    }
 }
 
 void BindingSetContent::resized()

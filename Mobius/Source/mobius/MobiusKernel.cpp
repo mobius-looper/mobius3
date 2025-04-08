@@ -418,11 +418,11 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     // SymbolId interfaces everyone wants
     session->setSymbols(container->getSymbols());
 
+    // needs both Session and GroupDefinitions to resolve things
+    scriptUtil.configure(session, groups);
+    
     // actually doesn't do much any more, sets some Function flags to match the Symbols
     mCore->reconfigure();
-        
-    // why the hell does this need both?
-    scriptUtil.configure(session, groups);
 
     // give TM the new GroupDefinitions first so it can parse scope names
     // !! this is also needed by ParameterVault, but if that refreshes now

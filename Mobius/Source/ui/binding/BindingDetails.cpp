@@ -238,17 +238,19 @@ void BindingContent::resized()
 //
 //////////////////////////////////////////////////////////////////////
 
-void BindingContent::load(BindingDetailsListener* l, Binding* b)
+void BindingContent::load(BindingDetailsListener* l, Binding* src)
 {
     listener = l;
-    binding = b;
+
+    // make a local copy
+    binding.copy(src);
 
     // capture these for use in building the fields
     maxTracks = supervisor->getSession()->getTrackCount();
 
     SymbolTable* symbols = supervisor->getSymbols();
     juce::String prefix;
-    Symbol* s = symbols->find(b->symbol);
+    Symbol* s = symbols->find(binding.symbol);
     if (s == nullptr)
       prefix = "???: ";
     else if (s->functionProperties != nullptr)
@@ -264,35 +266,35 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
     else
       prefix = "???: ";
     
-    title.setText(prefix + b->symbol, juce::NotificationType::dontSendNotification);
+    title.setText(prefix + binding.symbol, juce::NotificationType::dontSendNotification);
 
     // since the form is a member object and we reubild it every time,
     // it must be cleared first
     triggerForm.clear();
 
-    if (b->trigger == Binding::TriggerUnknown) {
+    if (binding.trigger == Binding::TriggerUnknown) {
         Trace(1, "BindingContent: Trigger not set on binding");
     }
-    else if (b->trigger == Binding::TriggerKey) {
+    else if (binding.trigger == Binding::TriggerKey) {
         type = TypeKey;
     }
-    else if (b->trigger == Binding::TriggerNote ||
-             b->trigger == Binding::TriggerControl ||
-             b->trigger == Binding::TriggerProgram) {
+    else if (binding.trigger == Binding::TriggerNote ||
+             binding.trigger == Binding::TriggerControl ||
+             binding.trigger == Binding::TriggerProgram) {
         type = TypeMidi;
 
         triggerForm.add(&midiType);
         triggerForm.add(&midiChannel);
     }
-    else if (b->trigger == Binding::TriggerHost) {
+    else if (binding.trigger == Binding::TriggerHost) {
         // nothing specific atm, maybe the unique parameter id?
         type = TypeHost;
     }
-    else if (b->trigger == Binding::TriggerUI) {
+    else if (binding.trigger == Binding::TriggerUI) {
         type = TypeButton;
     }
     else {
-        Trace(1, "BindingContent: Unsupported trigger type %d", (int)(b->trigger));
+        Trace(1, "BindingContent: Unsupported trigger type %d", (int)(binding.trigger));
     }
 
     if (type == TypeKey || type == TypeMidi) {
@@ -312,18 +314,18 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
         
         triggerForm.setVisible(true);
 
-        release.setValue(b->release);
-        arguments.setValue(b->arguments);
+        release.setValue(binding.release);
+        arguments.setValue(binding.arguments);
         
         capture.setValue(capturing);
         captureText.setValue("");
     }
 
     if (type == TypeKey) {
-        triggerValue.setValue(BindingUtil::renderTrigger(b));
+        triggerValue.setValue(BindingUtil::renderTrigger(&binding));
     }
     else if (type == TypeMidi) {
-        Binding::Trigger trigger = b->trigger;
+        Binding::Trigger trigger = binding.trigger;
         if (trigger == Binding::TriggerNote) {
             midiType.setSelection(0);
         }
@@ -339,12 +341,12 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
             midiType.setSelection(0);
         }
         
-        midiChannel.setSelection(b->midiChannel);
+        midiChannel.setSelection(binding.midiChannel);
 
         // todo: Capture is going to display symbolic names
         // but the value is a raw number, need one or the other
         // or both
-        triggerValue.setValue(juce::String(b->triggerValue));
+        triggerValue.setValue(juce::String(binding.triggerValue));
     }
 
     // YanForm needs to restructure itself if the contents change but the outer
@@ -367,7 +369,7 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
     if (addScope) {
         qualifiers.add(&scope);
         refreshScopeNames();
-        refreshScopeValue(b);
+        refreshScopeValue();
     }
 
     if (s->functionProperties != nullptr) {
@@ -376,7 +378,7 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
             props->argumentLabel.length() > 0 ||
             props->argumentValue.length() > 0) {
 
-            YanField* field = renderArguments(b, props);
+            YanField* field = renderArguments(props);
             qualifiers.add(field);
             
             juce::String label = props->argumentLabel;
@@ -400,7 +402,7 @@ void BindingContent::load(BindingDetailsListener* l, Binding* b)
  * Sure would be nice to have a YanField that could handle
  * this kind fo render switching.
  */
-YanField* BindingContent::renderArguments(Binding* b, FunctionProperties* props)
+YanField* BindingContent::renderArguments(FunctionProperties* props)
 {
     YanField* result = nullptr;
 
@@ -408,7 +410,7 @@ YanField* BindingContent::renderArguments(Binding* b, FunctionProperties* props)
     argumentNone = false;
     
     if (argumentType == "loopNumber") {
-        renderLoopNumber(b);
+        renderLoopNumber();
         result = &argumentCombo;
     }
     else if (argumentType == "trackNumber") {
@@ -417,11 +419,11 @@ YanField* BindingContent::renderArguments(Binding* b, FunctionProperties* props)
         if (none.length() > 0)
           argumentNone = true;
         
-        renderTrackNumber(b, none);
+        renderTrackNumber(none);
         result = &argumentCombo;
     }
     else if (argumentType == "trackGroup") {
-        renderTrackGroup(b);
+        renderTrackGroup();
         result = &argumentCombo;
     }
     else {
@@ -446,7 +448,7 @@ void BindingContent::addGroupNames(juce::String prefix, juce::StringArray& items
       items.add(prefix + g->name);
 }
 
-void BindingContent::renderLoopNumber(Binding* b)
+void BindingContent::renderLoopNumber()
 {
     // hmm, the maxLoops parameter got lost along the way
     // this should be more than enough for most people
@@ -457,13 +459,13 @@ void BindingContent::renderLoopNumber(Binding* b)
       items.add(juce::String(i));
 
     int selection = 0;
-    if (b->arguments.length() > 0) {
-        selection = items.indexOf(b->arguments);
+    if (binding.arguments.length() > 0) {
+        selection = items.indexOf(binding.arguments);
         if (selection < 0) {
             // out of range loop numbers are far less common than track numbers
             // or group names, and is considered an error, fall back to loop 1
             Trace(1, "BindingDetails: Loop number in binding out of range %d",
-                  b->arguments.getIntValue());
+                  binding.arguments.getIntValue());
             selection = 0;
         }
     }
@@ -472,7 +474,7 @@ void BindingContent::renderLoopNumber(Binding* b)
     argumentCombo.setSelection(selection);
 }
 
-void BindingContent::renderTrackNumber(Binding* b, juce::String none)
+void BindingContent::renderTrackNumber(juce::String none)
 {
     juce::StringArray items;
     if (none.length() > 0) {
@@ -481,8 +483,8 @@ void BindingContent::renderTrackNumber(Binding* b, juce::String none)
     addTrackNumbers("", items);
 
     int selection = 0;
-    if (b->arguments.length() > 0) {
-        selection = items.indexOf(b->arguments);
+    if (binding.arguments.length() > 0) {
+        selection = items.indexOf(binding.arguments);
         if (selection < 0) {
             // the binding had a track number that is out of range,
             // this can be normal if you swap between sessions that have
@@ -491,7 +493,7 @@ void BindingContent::renderTrackNumber(Binding* b, juce::String none)
             // we could extend the item list to include it, but like
             // deleted track groups, you can't use it so stick it on the
             // end with a warning
-            items.add(juce::String("Invalid: ") + b->arguments);
+            items.add(juce::String("Invalid: ") + binding.arguments);
             selection = items.size() - 1;
         }
     }
@@ -500,7 +502,7 @@ void BindingContent::renderTrackNumber(Binding* b, juce::String none)
     argumentCombo.setSelection(selection);
 }
 
-void BindingContent::renderTrackGroup(Binding* b)
+void BindingContent::renderTrackGroup()
 {
     juce::StringArray items;
 
@@ -517,10 +519,10 @@ void BindingContent::renderTrackGroup(Binding* b)
     // we could add it to the list, but it won't do anything
     // they probably want to know though so stick a prefix on it
     int selection = 0;
-    if (b->arguments.length() > 0) {
-        selection = items.indexOf(b->arguments);
+    if (binding.arguments.length() > 0) {
+        selection = items.indexOf(binding.arguments);
         if (selection < 0) {
-            items.add(juce::String("Invalid: ") + b->arguments);
+            items.add(juce::String("Invalid: ") + binding.arguments);
             selection = items.size() - 1;
         }
     }
@@ -546,9 +548,9 @@ void BindingContent::refreshScopeNames()
     scope.setItems(scopeNames);
 }
 
-void BindingContent::refreshScopeValue(Binding* b)
+void BindingContent::refreshScopeValue()
 {
-    const char* scopeString = b->scope.toUTF8();
+    const char* scopeString = binding.scope.toUTF8();
     int tracknum = Scope::parseTrackNumber(scopeString);
     if (tracknum > maxTracks) {
         // must be an old binding created before reducing
@@ -562,7 +564,7 @@ void BindingContent::refreshScopeValue(Binding* b)
     }
     else {
         GroupDefinitions* groups = supervisor->getGroupDefinitions();
-        int index = groups->getGroupIndex(b->scope);
+        int index = groups->getGroupIndex(binding.scope);
         if (index >= 0)
           scope.setSelection(maxTracks + 1 + index);
         else
@@ -578,39 +580,39 @@ void BindingContent::refreshScopeValue(Binding* b)
 
 void BindingContent::save()
 {
-    save(binding);
+    saveFields();
     if (listener != nullptr)
-      listener->bindingSaved();
+      listener->bindingSaved(binding);
 
     closeTrackers();
 }
 
-void BindingContent::save(Binding* b)
+void BindingContent::saveFields()
 {
     if (type == TypeMidi) {
 
         switch (midiType.getSelection()) {
-            case 0: b->trigger = Binding::TriggerNote; break;
-            case 1: b->trigger = Binding::TriggerControl; break;
-            case 2: b->trigger = Binding::TriggerProgram; break;
+            case 0: binding.trigger = Binding::TriggerNote; break;
+            case 1: binding.trigger = Binding::TriggerControl; break;
+            case 2: binding.trigger = Binding::TriggerProgram; break;
             default: break;
         }
 
-        b->midiChannel = midiChannel.getSelection();
-        b->triggerValue = triggerValue.getInt();
+        binding.midiChannel = midiChannel.getSelection();
+        binding.triggerValue = triggerValue.getInt();
     }
     else if (type == TypeKey) {
-        b->triggerValue = unpackKeyCode();
+        binding.triggerValue = unpackKeyCode();
     }
 
-    b->scope = unpackScope();
-    b->arguments = unpackArguments();
+    binding.scope = unpackScope();
+    binding.arguments = unpackArguments();
 
     // only relevant for certain types
-    if (b->trigger == Binding::TriggerKey || b->trigger == Binding::TriggerNote)
-      b->release = release.getValue();
+    if (binding.trigger == Binding::TriggerKey || binding.trigger == Binding::TriggerNote)
+      binding.release = release.getValue();
     else
-      b->release = false;
+      binding.release = false;
 }
 
 /**

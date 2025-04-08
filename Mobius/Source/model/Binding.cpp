@@ -5,6 +5,11 @@
 
 Binding::Binding(Binding* src)
 {
+    copy(src);
+}
+
+void Binding::copy(Binding* src)
+{
     trigger = src->trigger;
     triggerValue = src->triggerValue;
     midiChannel = src->midiChannel;
@@ -14,7 +19,7 @@ Binding::Binding(Binding* src)
     scope = src->scope;
 
     // think these are okay
-    id = src->id;
+    uid = src->uid;
     source = src->source;
     displayName = src->displayName;
 }

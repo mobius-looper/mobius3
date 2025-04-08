@@ -7,12 +7,14 @@
 #include "../../MidiManager.h"
 #include "../../KeyTracker.h"
 
+#include "../../model/Binding.h"
+
 #include "BindingTree.h"
 
 class BindingDetailsListener {
   public:
     virtual ~BindingDetailsListener() {}
-    virtual void bindingSaved() = 0;
+    virtual void bindingSaved(class Binding& edited) = 0;
     virtual void bindingCanceled() = 0;
 };
 
@@ -60,7 +62,8 @@ class BindingContent : public juce::Component,
 
     class Supervisor* supervisor = nullptr;
     BindingDetailsListener* listener = nullptr;
-    Binding* binding = nullptr;
+    // local copy
+    Binding binding;
     bool capturing = false;
     
     Type type = TypeUnknown;
@@ -96,7 +99,7 @@ class BindingContent : public juce::Component,
     bool argumentNone = false;
     
     void refreshScopeNames();
-    void refreshScopeValue(class Binding* b);
+    void refreshScopeValue();
     int unpackKeyCode();
     juce::String unpackScope();
     
@@ -107,12 +110,12 @@ class BindingContent : public juce::Component,
     juce::String renderCapture(const juce::MidiMessage& msg);
     void showCapture(juce::String& cap);
     
-    void save(class Binding* b);
+    void saveFields();
 
-    class YanField* renderArguments(class Binding* b, class FunctionProperties* props);
-    void renderLoopNumber(class Binding* b);
-    void renderTrackNumber(class Binding* b, juce::String none);
-    void renderTrackGroup(class Binding* b);
+    class YanField* renderArguments(class FunctionProperties* props);
+    void renderLoopNumber();
+    void renderTrackNumber(juce::String none);
+    void renderTrackGroup();
     void addTrackNumbers(juce::String prefix, juce::StringArray& items);
     void addGroupNames(juce::String prefix, juce::StringArray& items);
     juce::String unpackArguments();
@@ -144,6 +147,9 @@ class BindingDetailsPanel : public BasePanel
     void footerButton(juce::Button* b) override;
     
   private:
+
+    // local copy of the Binding
+    Binding binding;
 
     juce::TextButton saveButton {"Save"};
     juce::TextButton cancelButton {"Cancel"};

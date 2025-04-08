@@ -522,12 +522,19 @@ void MslParser::parseInner(juce::String source)
                     // would be better to have an isReady or isWaiting method?
                     // feels like this needs to recurse up, we have to do that for
                     // Sequence which is hacked
-                    if (!current->isBlock()) {
+
+                    MslSequenceNode* seq = current->getSequence();
+                    if (seq != nullptr) {
+                        // !! logic is a mess here, why would you need to
+                        // do this down below as well?
+                        seq->armed = true;
+                    }
+                    else if (!current->isBlock()) {
                         current->locked = true;
                         current = current->parent;
 
                         // maybe call wantsNode here instead
-                        MslSequenceNode* seq = current->getSequence();
+                        seq = current->getSequence();
                         if (seq != nullptr)
                           seq->armed = true;
                     }

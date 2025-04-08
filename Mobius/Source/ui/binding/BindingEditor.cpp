@@ -129,9 +129,15 @@ void BindingEditor::show(int index)
     }
 }
 
+/**
+ * Here when the user clicks on an existing binding in the binding table.
+ * Ownership of the binding is retained by BindingEditor, BindingDetails
+ * will make a copy.
+ */
 void BindingEditor::showBinding(Binding* b)
 {
-    (void)b;
+    // set an id for correlation on save
+    if (b->uid == 0) b->uid = supervisor->newUid();
 
     bindingDetails.setCapturing(capturing);
     bindingDetails.show(this, this, b);
@@ -139,57 +145,42 @@ void BindingEditor::showBinding(Binding* b)
 }
 
 /**
- * Show a new binding, but don't save it in the BindingSet
+ * Create a new binding, but don't save it in the BindingSet
  * if the details panel is canceled.
- * Ownership of the Binding is transferred.
  */
-#if 0
-void BindingEditor::createBinding(Binding* b)
+void BindingEditor::createBinding(Symbol* s)
 {
-    // avoid deleting the last one until BindingDetails is reset
-    Binding* last = lastCreate.release();
-    lastCreate.reset(b);
+    Binding b;
+    b.symbol = s->name;
+
+    // can leave uid 0 to indiciate this is new
     
     bindingDetails.setCapturing(capturing);
-    bindingDetails.show(this, this, b);
-
-    delete last;
+    bindingDetails.show(this, this, &b);
 }
-#endif
 
-void BindingEditor::bindingSaved()
+/**
+ * Here when BindingDetails finishes doing it's thing and is passing
+ * us it's copy of the binding to be saved.
+ * Match it with the source object and transfer the contents.
+ * Ownership of the passed Binding is retained by BindingDetails.
+ */
+void BindingEditor::bindingSaved(Binding& edited)
 {
     // jesus fuck, the chain of command here is messy
     // BindingDetails goes all the way back here for the save notification
     // and we have to go back down to the content to refresh the table
     if (currentSet >= 0) {
         BindingSetContent* current =  contents[currentSet];
-        current->bindingSaved();
-    }
-
-    // save this for next time
-    capturing = bindingDetails.isCapturing();
-}
-
-#if 0
-void BindingEditor::bindingSaved(Binding* b))
-{
-    if (b == lastCreate) {
+        current->save(edited);
     }
     else {
-        // jesus fuck, the chain of command here is messy
-        // BindingDetails goes all the way back here for the save notification
-        // and we have to go back down to the content to refresh the table
-        if (currentSet >= 0) {
-            BindingSetContent* current =  contents[currentSet];
-            current->bindingSaved();
-        }
+        Trace(1, "BindingEditor: Attempt to save a binding with no set selected");
     }
-
+    
     // save this for next time
     capturing = bindingDetails.isCapturing();
 }
-#endif
 
 void BindingEditor::bindingCanceled()
 {

@@ -25,6 +25,8 @@ class BindingSet
 
     void add(Binding* b);
     void remove(Binding* b);
+
+    Binding* findByUid(int uid);
     
     // kludge for the binding selection menu
     int transientMenuId = 0;
