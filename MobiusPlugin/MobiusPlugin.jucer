@@ -16,6 +16,7 @@
             file="Source/NosyAudioProcessor.h"/>
     </GROUP>
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
+      <FILE id="TQaBSl" name="Services.h" compile="0" resource="0" file="../Mobius/Source/Services.h"/>
       <GROUP id="{59A74BF1-C49F-39B8-54CF-132F813D34E1}" name="tools">
         <GROUP id="{122DB4F9-FA34-2F0F-9244-51BE62F2E765}" name="BarelyML">
           <FILE id="DbsCne" name="BarelyML.cpp" compile="1" resource="0" file="../Mobius/Source/tools/BarelyML/BarelyML.cpp"/>
