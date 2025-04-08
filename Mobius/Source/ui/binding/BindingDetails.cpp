@@ -388,6 +388,11 @@ void BindingContent::load(BindingDetailsListener* l, Binding* src)
         }
     }
 
+    if (type == TypeButton) {
+        qualifiers.add(&displayName);
+        displayName.setValue(src->displayName);
+    }
+
     qualifiers.forceResize();
 
     resized();
@@ -603,6 +608,9 @@ void BindingContent::saveFields()
     }
     else if (type == TypeKey) {
         binding.triggerValue = unpackKeyCode();
+    }
+    else if (type == TypeButton) {
+        binding.displayName = displayName.getValue();
     }
 
     binding.scope = unpackScope();

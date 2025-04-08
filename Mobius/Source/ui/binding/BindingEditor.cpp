@@ -148,15 +148,11 @@ void BindingEditor::showBinding(Binding* b)
  * Create a new binding, but don't save it in the BindingSet
  * if the details panel is canceled.
  */
-void BindingEditor::createBinding(Symbol* s)
+void BindingEditor::createBinding(Binding& pending)
 {
-    Binding b;
-    b.symbol = s->name;
-
     // can leave uid 0 to indiciate this is new
-    
     bindingDetails.setCapturing(capturing);
-    bindingDetails.show(this, this, &b);
+    bindingDetails.show(this, this, &pending);
 }
 
 /**

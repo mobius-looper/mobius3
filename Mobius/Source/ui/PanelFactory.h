@@ -40,10 +40,6 @@ class PanelFactory
         // configuration editing panels
         Bindings,
         Buttons,
-        OldKeyboard,
-        OldMidi,
-        OldHost,
-        OldButton,
         Script,
         Sample,
         Display,

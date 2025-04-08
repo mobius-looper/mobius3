@@ -102,12 +102,6 @@ void BindingTable::refresh()
     updateContent();
 }
 
-void BindingTable::add(Binding* b)
-{
-    addBinding(b);
-    updateContent();
-}
-
 void BindingTable::addBinding(Binding* b)
 {
     BindingTableRow* row = new BindingTableRow();
@@ -178,6 +172,8 @@ juce::String BindingTable::getCellText(int rowNumber, int columnId)
 
         if (columnId == TargetColumn) {
             cell = b->symbol;
+            if (b->displayName.length() > 0)
+              cell += juce::String(" as ") + b->displayName;
         }
         else if (columnId == TriggerColumn) {
             cell = BindingUtil::renderTrigger(b);
@@ -362,7 +358,8 @@ juce::var BindingTable::getDragSourceDescription (const juce::SparseSet<int>& se
 bool BindingTable::isInterestedInDragSource(const juce::DragAndDropTarget::SourceDetails& details)
 {
     (void)details;
-    return (type == TypeButton);
+    //return (type == TypeButton);
+    return true;
 }
 
 /**
@@ -443,58 +440,51 @@ void BindingTable::itemDragExit (const juce::DragAndDropTarget::SourceDetails& d
  */
 void BindingTable::itemDropped (const juce::DragAndDropTarget::SourceDetails& details)
 {
-    (void)details;
-    if (type ==  TypeButton && dropTargetRow >= 0) {
+    juce::String dropSource = details.description.toString();
 
-        // and who dropped it
-        juce::String dropSource = details.description.toString();
+    if (dropSource.startsWith(BindingTree::DragPrefix)) {
 
-        if (dropSource.startsWith(BindingTree::DragPrefix)) {
-            // dragging something from the parameter tree, insert new binding
-            juce::String sname = dropSource.fromFirstOccurrenceOf(BindingTree::DragPrefix, false, false);
-            Symbol* s = editor->getProvider()->getSymbols()->find(sname);
-            if (s == nullptr)
-              Trace(1, "BindingTable: Invalid symbol name in drop %s", sname.toUTF8());
-            else {
-                doInsert(s, dropTargetRow);
-            }
+        juce::String sname = dropSource.fromFirstOccurrenceOf(BindingTree::DragPrefix, false, false);
+        // dragging something from the parameter tree, launch the BindingDetails
+        // to fill it out before insertion and give the user a chance to Cancel
+        Binding b;
+        b.symbol = sname;
+        // this we need when BindingDetails is done to deposit it in the desired place
+        b.row = dropTargetRow;
+
+        switch (type) {
+            case TypeMidi: b.trigger = Binding::TriggerNote; break;
+            case TypeKey: b.trigger = Binding::TriggerKey; break;
+            case TypeHost: b.trigger = Binding::TriggerHost; break;
+            case TypeButton: b.trigger = Binding::TriggerUI; break;
         }
-        else if (dropSource.startsWith(BindingTable::DragPrefix)) {
-            // dragging onto ourselves, a row move
-            juce::String srow = dropSource.fromFirstOccurrenceOf(BindingTable::DragPrefix, false, false);
-            if (srow.length() > 0) {
-                int dragRow = srow.getIntValue();
-                doMove(dragRow, dropTargetRow);
-            }
-        }
-        else {
-            Trace(1, "BindingTable: Unknown drop source %s",
-                  dropSource.toUTF8());
-        }
-
-        // stop drawing insert points
-        paintDropTarget = false;
-        dropTargetRow = -1;
-
-        // do this even if we decided not to move to get rid of the drop markers
-        repaint();
+            
+        editor->createBinding(b);
     }
+    else if (dropSource.startsWith(BindingTable::DragPrefix)) {
+        // dragging onto ourselves, a row move
+        juce::String srow = dropSource.fromFirstOccurrenceOf(BindingTable::DragPrefix, false, false);
+        if (srow.length() > 0) {
+            int dragRow = srow.getIntValue();
+            doMove(dragRow, dropTargetRow);
+        }
+    }
+    else {
+        Trace(1, "BindingTable: Unknown drop source %s",
+              dropSource.toUTF8());
+    }
+
+    // stop drawing insert points
+    paintDropTarget = false;
+    dropTargetRow = -1;
+
+    // do this even if we decided not to move to get rid of the drop markers
+    repaint();
 }
 
-/**
- * Handle a drop from the parameter tree.
- */
-void BindingTable::doInsert(Symbol* s, int dropRow)
+void BindingTable::finishCreate(Binding& pending)
 {
-    Binding* neu = new Binding();
-    neu->symbol = s->name;
-
-    switch (type) {
-        case TypeMidi: neu->trigger = Binding::TriggerNote; break;
-        case TypeKey: neu->trigger = Binding::TriggerKey; break;
-        case TypeHost: neu->trigger = Binding::TriggerHost; break;
-        case TypeButton: neu->trigger = Binding::TriggerUI; break;
-    }
+    Binding* neu = new Binding(pending);
 
     // here is where we have the dual model problems
     // the BindingSet is authorative over order so we have to insert
@@ -504,12 +494,25 @@ void BindingTable::doInsert(Symbol* s, int dropRow)
     // list when it is saved. 
 
     juce::OwnedArray<class Binding>& bindings = bindingSet->getBindings();
-    bindings.insert(dropRow, neu);
+
+    // insert is only necessary for type == Button which is ordered
+    // for the others, we can just append, which makes the XML diffs a little
+    // cleaner and also makes it slightly more predictable if you have multiple
+    // bindins on the same trigger, older ones would be preferred since they
+    // are encountered by Binderator first, or is it a LIFO?
+    if (type == TypeButton)
+      bindings.insert(pending.row, neu);
+    else
+      bindings.add(neu);
 
     // could do this with an incremental add if you were smarter
     // but this gets the job done
     reload();
-    selectRow(dropRow);
+
+    // actually don't need to auto-select this now that we bring
+    // up BindingDetails first
+    if (type == TypeButton)
+      selectRow(pending.row);
 
     // expectation is immediate edit
     // todo: here there is an expectation problem

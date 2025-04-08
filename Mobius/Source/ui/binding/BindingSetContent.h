@@ -10,8 +10,8 @@
 #include "../common/BasicTabs.h"
 #include "BindingTable.h"
 
-class BindingSetContent : public juce::Component,
-                          public juce::DragAndDropTarget
+class BindingSetContent : public juce::Component
+//public juce::DragAndDropTarget
 {
   public:
 
@@ -27,8 +27,8 @@ class BindingSetContent : public juce::Component,
     // forwards the save to us
     void save(Binding& edited);
     
-    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details) override;
-    void itemDropped (const juce::DragAndDropTarget::SourceDetails&) override;
+    //bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details) override;
+    //void itemDropped (const juce::DragAndDropTarget::SourceDetails&) override;
     
   private:
 

@@ -97,9 +97,6 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         // Configuration
         Bindings,
         Buttons,
-        OldMidiControl,
-        OldKeyboardControl,
-        OldHostParameters,
         DisplayComponents,
         Samples,
         MidiDevices,

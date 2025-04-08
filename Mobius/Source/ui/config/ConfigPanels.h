@@ -15,10 +15,6 @@
 
 #include "ScriptConfigEditor.h"
 #include "SampleEditor.h"
-#include "KeyboardEditor.h"
-#include "MidiEditor.h"
-#include "HostEditor.h"
-#include "ButtonEditor.h"
 #include "MidiDeviceEditor.h"
 #include "AudioEditor.h"
 #include "DisplayEditor.h"
@@ -52,58 +48,6 @@ class SamplePanel : public ConfigPanel
  
   private:
     SampleEditor editor;
-};
-
-class KeyboardPanel : public ConfigPanel
-{
-  public:
-    KeyboardPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
-        setName("KeyboardPanel");
-        setEditor(&editor);
-    }
-    ~KeyboardPanel() {}
- 
-  private:
-    KeyboardEditor editor;
-};
-
-class MidiPanel : public ConfigPanel
-{
-  public:
-    MidiPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
-        setName("MidiPanel");
-        setEditor(&editor);
-    }
-    ~MidiPanel() {}
- 
-  private:
-    MidiEditor editor;
-};
-
-class HostPanel : public ConfigPanel
-{
-  public:
-    HostPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
-        setName("HostPanel");
-        setEditor(&editor);
-    }
-    ~HostPanel() {}
- 
-  private:
-    HostEditor editor;
-};
-
-class ButtonPanel : public ConfigPanel
-{
-  public:
-    ButtonPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
-        setName("ButtonPanel");
-        setEditor(&editor);
-    }
-    ~ButtonPanel() {}
- 
-  private:
-    ButtonEditor editor;
 };
 
 class MidiDevicePanel : public ConfigPanel

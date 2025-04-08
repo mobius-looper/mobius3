@@ -350,9 +350,6 @@
         <GROUP id="{C154E97D-0CEE-20FA-DFB7-9667274BF918}" name="config">
           <FILE id="Rx6MAi" name="AudioEditor.cpp" compile="1" resource="0" file="Source/ui/config/AudioEditor.cpp"/>
           <FILE id="ByMaOa" name="AudioEditor.h" compile="0" resource="0" file="Source/ui/config/AudioEditor.h"/>
-          <FILE id="DRfYUA" name="ButtonEditor.cpp" compile="1" resource="0"
-                file="Source/ui/config/ButtonEditor.cpp"/>
-          <FILE id="To8mZc" name="ButtonEditor.h" compile="0" resource="0" file="Source/ui/config/ButtonEditor.h"/>
           <FILE id="HHh8io" name="ConfigEditor.h" compile="0" resource="0" file="Source/ui/config/ConfigEditor.h"/>
           <FILE id="RvUEDT" name="ConfigPanel.cpp" compile="1" resource="0" file="Source/ui/config/ConfigPanel.cpp"/>
           <FILE id="fdciwP" name="ConfigPanel.h" compile="0" resource="0" file="Source/ui/config/ConfigPanel.h"/>
@@ -361,18 +358,10 @@
           <FILE id="I1bVV8" name="DisplayEditor.h" compile="0" resource="0" file="Source/ui/config/DisplayEditor.h"/>
           <FILE id="QsqaLh" name="GroupEditor.cpp" compile="1" resource="0" file="Source/ui/config/GroupEditor.cpp"/>
           <FILE id="u7Aap2" name="GroupEditor.h" compile="0" resource="0" file="Source/ui/config/GroupEditor.h"/>
-          <FILE id="KVy75i" name="HostEditor.cpp" compile="1" resource="0" file="Source/ui/config/HostEditor.cpp"/>
-          <FILE id="GgP3FP" name="HostEditor.h" compile="0" resource="0" file="Source/ui/config/HostEditor.h"/>
-          <FILE id="EYOICC" name="KeyboardEditor.cpp" compile="1" resource="0"
-                file="Source/ui/config/KeyboardEditor.cpp"/>
-          <FILE id="Y1X7Kt" name="KeyboardEditor.h" compile="0" resource="0"
-                file="Source/ui/config/KeyboardEditor.h"/>
           <FILE id="uJ4NaL" name="MidiDeviceEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/MidiDeviceEditor.cpp"/>
           <FILE id="NsZHFn" name="MidiDeviceEditor.h" compile="0" resource="0"
                 file="Source/ui/config/MidiDeviceEditor.h"/>
-          <FILE id="cLSRUC" name="MidiEditor.cpp" compile="1" resource="0" file="Source/ui/config/MidiEditor.cpp"/>
-          <FILE id="KlGcL4" name="MidiEditor.h" compile="0" resource="0" file="Source/ui/config/MidiEditor.h"/>
           <FILE id="CqcHvV" name="MultiSelectDrag.cpp" compile="1" resource="0"
                 file="Source/ui/config/MultiSelectDrag.cpp"/>
           <FILE id="DzO444" name="MultiSelectDrag.h" compile="0" resource="0"
@@ -381,18 +370,6 @@
                 file="Source/ui/config/ObjectSelector.cpp"/>
           <FILE id="IRESL5" name="ObjectSelector.h" compile="0" resource="0"
                 file="Source/ui/config/ObjectSelector.h"/>
-          <FILE id="jpQVFU" name="OldBindingEditor.cpp" compile="1" resource="0"
-                file="Source/ui/config/OldBindingEditor.cpp"/>
-          <FILE id="x45JO6" name="OldBindingEditor.h" compile="0" resource="0"
-                file="Source/ui/config/OldBindingEditor.h"/>
-          <FILE id="MU4PcM" name="OldBindingTable.cpp" compile="1" resource="0"
-                file="Source/ui/config/OldBindingTable.cpp"/>
-          <FILE id="VwQ5gW" name="OldBindingTable.h" compile="0" resource="0"
-                file="Source/ui/config/OldBindingTable.h"/>
-          <FILE id="GOYLOn" name="OldBindingTargetSelector.cpp" compile="1" resource="0"
-                file="Source/ui/config/OldBindingTargetSelector.cpp"/>
-          <FILE id="i9W7WY" name="OldBindingTargetSelector.h" compile="0" resource="0"
-                file="Source/ui/config/OldBindingTargetSelector.h"/>
           <FILE id="a1eGSE" name="PropertiesEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/PropertiesEditor.cpp"/>
           <FILE id="emfqEq" name="PropertiesEditor.h" compile="0" resource="0"
@@ -425,14 +402,6 @@
           <FILE id="xfj2bn" name="SystemEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/SystemEditor.cpp"/>
           <FILE id="puG9K6" name="SystemEditor.h" compile="0" resource="0" file="Source/ui/config/SystemEditor.h"/>
-          <FILE id="ImU9ao" name="TargetSelectorWrapper.cpp" compile="1" resource="0"
-                file="Source/ui/config/TargetSelectorWrapper.cpp"/>
-          <FILE id="MuAGqD" name="TargetSelectorWrapper.h" compile="0" resource="0"
-                file="Source/ui/config/TargetSelectorWrapper.h"/>
-          <FILE id="PJf3KC" name="TreeTargetSelector.cpp" compile="1" resource="0"
-                file="Source/ui/config/TreeTargetSelector.cpp"/>
-          <FILE id="OOMFyO" name="TreeTargetSelector.h" compile="0" resource="0"
-                file="Source/ui/config/TreeTargetSelector.h"/>
         </GROUP>
         <GROUP id="{506F264E-A601-E29C-91E6-134CCA9C4AAA}" name="display">
           <FILE id="NZymdN" name="ActionButton.cpp" compile="1" resource="0"

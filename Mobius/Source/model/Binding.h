@@ -43,16 +43,22 @@ class Binding
     juce::String arguments;
     juce::String scope;
 
+    //////////////////////////////////////////////////////////////////////
     // transient runtime state
+    //////////////////////////////////////////////////////////////////////
 
     // unique identifier for correlation in the editor
     int uid = 0;
+
+    // insertion index if this was dropped into an ordered table
+    int row = 0;
     
     // BindingSet this came from for the binding summary display
     juce::String source;
     
     // Alternate name for UI buttons
     juce::String displayName;
+    
     // transient, for DisplayButton conversion
     int color = 0;
     

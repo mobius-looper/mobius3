@@ -95,6 +95,7 @@ class BindingContent : public juce::Component,
     YanCombo scope {"Send To"};
     YanInput arguments {"Arguments"};
     YanCombo argumentCombo {"Arguments"};
+    YanInput displayName {"Button Text"};
     juce::String argumentType;
     bool argumentNone = false;
     

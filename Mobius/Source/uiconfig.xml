@@ -105,6 +105,7 @@
   </Layout>
   <ButtonSet name="Default">
     <Button action="GlobalReset" color="-15707416"/>
+    <Button name="foo" action="Clear"/>
     <Button action="TrackReset"/>
     <Button action="Reset"/>
     <Button action="Record"/>

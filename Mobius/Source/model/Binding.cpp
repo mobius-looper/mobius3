@@ -20,6 +20,7 @@ void Binding::copy(Binding* src)
 
     // think these are okay
     uid = src->uid;
+    row = src->row;
     source = src->source;
     displayName = src->displayName;
 }

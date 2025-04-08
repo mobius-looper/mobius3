@@ -144,10 +144,6 @@ BasePanel* PanelFactory::createPanel(PanelId id)
 
         case Bindings: panel = new NewBindingPanel(super); break;
         case Buttons: panel = new NewButtonPanel(super); break;
-        case OldKeyboard: panel = new KeyboardPanel(super); break;
-        case OldMidi: panel = new MidiPanel(super); break;
-        case OldButton: panel = new ButtonPanel(super); break;
-        case OldHost: panel = new HostPanel(super); break;
         case Properties: panel = new PropertiesPanel(super); break;
         case Group: panel = new GroupPanel(super); break;
         case Session: panel = new SessionPanel(super); break;

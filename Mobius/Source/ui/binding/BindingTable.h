@@ -71,7 +71,7 @@ class BindingTable : public TypicalTable,
     void clear();
     void cancel();
 
-    void add(Binding* b);
+    void finishCreate(Binding& pending);
                 
     // TypicalTable overrides
     int getRowCount() override;
@@ -115,7 +115,6 @@ class BindingTable : public TypicalTable,
     void addAndEdit(Binding* b);
     void deleteCurrent();
 
-    void doInsert(class Symbol* s, int dropRow);
     void doMove(int sourceRow, int dropRow);
     void moveBinding(int sourceRow, int desiredRow);
 

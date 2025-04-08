@@ -84,10 +84,8 @@ void BindingSetContent::save(Binding& edited)
 
     if (table != nullptr) {
         if (edited.uid == 0) {
-            // a new one
-            Binding* neu = new Binding(&edited);
-            bindingSet->add(neu);
-            table->add(neu);
+            // a new one, table will add it in the right location
+            table->finishCreate(edited);
         }
         else {
             Binding* src = bindingSet->findByUid(edited.uid);
@@ -112,6 +110,7 @@ void BindingSetContent::resized()
       tabs.setBounds(getLocalBounds());
 }
 
+#if 0
 bool BindingSetContent::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& details)
 {
     bool interested = false;
@@ -120,6 +119,7 @@ bool BindingSetContent::isInterestedInDragSource (const juce::DragAndDropTarget:
       interested = true;
     return interested;
 }
+#endif
 
 /**
  * So we don't have enough awareness to fully process the drop, so forward back
@@ -133,6 +133,7 @@ bool BindingSetContent::isInterestedInDragSource (const juce::DragAndDropTarget:
  *
  * Here we simply insert it sorted.  This is messy.
  */
+#if 0
 void BindingSetContent::itemDropped (const juce::DragAndDropTarget::SourceDetails& details)
 {
     //if (listener != nullptr)
@@ -143,64 +144,31 @@ void BindingSetContent::itemDropped (const juce::DragAndDropTarget::SourceDetail
     juce::String src = details.description.toString();
 
     if (src.startsWith(BindingTree::DragPrefix)) {
-    
-        juce::String name = src.fromFirstOccurrenceOf(BindingTree::DragPrefix, false, false);
-        Symbol* s = editor->getProvider()->getSymbols()->find(name);
-        if (s == nullptr) {
-            Trace(1, "BindingSetContent: Invalid symbol name %s", name.toUTF8());
+            
+        juce::String sname = src.fromFirstOccurrenceOf(BindingTree::DragPrefix, false, false);
+        Binding::Trigger trigger = Binding::TriggerUnknown;
+        
+        if (midiTable.isVisible()) {
+            trigger = Binding::TriggerNote;
+        }
+        else if (keyTable.isVisible()) {
+            trigger = Binding::TriggerKey;
+        }
+        else if (hostTable.isVisible()) {
+            trigger = Binding::TriggerHost;
+        }
+        else if (buttonTable.isVisible()) {
+            trigger = Binding::TriggerUI;
+        }
+
+        if (trigger != Binding::TriggerUnknown) {
+            Binding b;
+            b.symbol = sname;
+            b.trigger = trigger;
+            editor->createBinding(b);
         }
         else {
-            Binding* neu = new Binding();
-            neu->symbol = name;
-
-            BindingTable* table = nullptr;
-            bool autoEdit = false;
-        
-            if (midiTable.isVisible()) {
-                table = &midiTable;
-                neu->trigger = Binding::TriggerNote;
-                autoEdit = true;
-            }
-            else if (keyTable.isVisible()) {
-                table = &keyTable;
-                neu->trigger = Binding::TriggerKey;
-                autoEdit = true;
-            }
-            else if (hostTable.isVisible()) {
-                table = &hostTable;
-                neu->trigger = Binding::TriggerHost;
-                // these don't have much in them, don't auto-edit
-            }
-            else if (buttonTable.isVisible()) {
-                table = &buttonTable;
-                neu->trigger = Binding::TriggerUI;
-                // actually won't be here, BindingTable intercepts it
-                // and does positional insertion
-            }
-
-            if (table != nullptr) {
-                bindingSet->add(neu);
-                table->add(neu);
-
-                // todo: it would be nice to auto-select what we just added
-                // but since it's sorted we don't know where it is
-                // need to search the BindingSet list to find the position it was
-                // placed in, then select the corresponding row
-
-                // unlike Buttons, midi and keyboard always need
-                // immediate editing to set the trigger
-                // convenient to automatically pop up the details editor after
-                // inserting
-                // todo: this is going to cause expectations since if the user clicks
-                // cancel they may thing that the drag didn't actually happen, but it's
-                // already been added to the table and will still be visible
-                if (autoEdit && editor != nullptr)
-                  editor->showBinding(neu);
-            }
-            else {
-                Trace(1, "BindingSetContent: Problem finding binding table");
-                delete neu;
-            }
+            Trace(1, "BindingSetContent: Problem finding binding table");
         }
     }
     else {
@@ -211,4 +179,5 @@ void BindingSetContent::itemDropped (const juce::DragAndDropTarget::SourceDetail
               src.toUTF8());
     }
 }
+#endif
 
