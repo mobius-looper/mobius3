@@ -157,7 +157,7 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="Stop" tree='Movement' mayQuantize='true'/>
 
   <!-- file oriented functions -->
-  <Function name="LoadMidi" level='ui' tree='File'/>
+  <Function name="LoadMidi" level='ui' tree='File' argumentLabel='MIDI File'/>
   
   <!-- various diagnostic functions for testing -->
   
