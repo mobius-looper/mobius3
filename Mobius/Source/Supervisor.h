@@ -38,7 +38,6 @@
 #include "Alerter.h"
 #include "AudioClerk.h"
 #include "ProjectFiler.h"
-#include "ProjectClerk.h"
 #include "Pathfinder.h"
 #include "Prompter.h"
 #include "script/ScriptClerk.h"
@@ -141,7 +140,11 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     juce::AudioDeviceManager* getAudioDeviceManager();
 
     class MainWindow* getMainWindow();
-    
+
+    // this is what things that need to display a YanDialog use if htey
+    // want to host it on the main window
+    juce::Component* getDialogParent() override;
+        
     class KeyTracker* getKeyTracker() {
         return &keyTracker;
     }
@@ -390,7 +393,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // it is important that this be close to the end so the UI can unregister
     // listeners before it is destroyed
     ScriptClerk scriptClerk {this};
-    ProjectClerk projectClerk {this};
     
     // symbol table for this application/plugin instance
     SymbolTable symbols;
@@ -461,6 +463,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // new way of doing embedded objects that doesn't require a
     // full link every time you touch the header file
     std::unique_ptr<class MidiClerk> midiClerk;
+    std::unique_ptr<class ProjectClerk> projectClerk;
 
     // internal component listeners
     juce::Array<ActionListener*> actionListeners;

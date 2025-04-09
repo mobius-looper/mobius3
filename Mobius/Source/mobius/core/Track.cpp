@@ -48,6 +48,7 @@
 #include "../MobiusPools.h"
 #include "../Notification.h"
 #include "../Notifier.h"
+#include "../TrackContent.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -1680,6 +1681,17 @@ void Track::dump(TraceBuffer* b)
     }
 }
 #endif
+
+//////////////////////////////////////////////////////////////////////
+//
+// New replacement for projects
+//
+//////////////////////////////////////////////////////////////////////
+
+void Track::gatherContent(TrackContent* content)
+{
+    content->errors.add(juce::String("Track ") + juce::String(getDisplayNumber()) + ": Unable to export audio content");
+}
 
 /****************************************************************************/
 /****************************************************************************/

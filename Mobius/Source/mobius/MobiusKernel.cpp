@@ -39,6 +39,7 @@
 
 #include "Audio.h"
 #include "SampleManager.h"
+#include "TrackContent.h"
 
 // drag this bitch in
 #include "core/Mobius.h"
@@ -1888,10 +1889,36 @@ juce::StringArray MobiusKernel::loadTrackContent(TrackContent* c)
     return errors;
 }
 
+/**
+ * This is what underpins project export.
+ * Copy all of the current track content into the TrackContent payload container.
+ * 
+ * We are in the UI thread and the kernel must be suspended while this happens.
+ */
 TrackContent* MobiusKernel::getTrackContent(bool includeLayers)
 {
     (void)includeLayers;
-    return nullptr;
+
+    TrackContent* content = new TrackContent();
+
+    suspend();
+    
+    // we shouldn't have to wait too long and don't need to "poll" more than once
+    // since audio blocks should be comming in every few milliseconds
+    container->sleep(100);
+
+    if (!isSuspended()) {
+        content->errors.add("Unable to suspend kernel");
+        // !!this is bad, even if we clear this flag there is no assurance
+        // that the audio thread didn't see it at this very moment
+        // need to work on the race conditions 
+        suspendRequested = false;
+    }
+    else {
+        mTracks->gatherContent(content);
+        resume();
+    }
+    return content;
 }
 
 /****************************************************************************/

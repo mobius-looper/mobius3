@@ -124,5 +124,7 @@ class Provider : public FileChooserService
     virtual void alert(juce::StringArray& messages) = 0;
 
     virtual int newUid() = 0;
+
+    virtual class juce::Component* getDialogParent() = 0;
     
 };

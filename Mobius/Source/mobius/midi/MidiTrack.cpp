@@ -45,6 +45,7 @@
 // necessary for a few subcomponents
 #include "../track/TrackManager.h"
 #include "../track/TrackProperties.h"
+#include "../TrackContent.h"
 
 #include "MidiPools.h"
 #include "MidiLoop.h"
@@ -1133,6 +1134,17 @@ void MidiTrack::advanceRegion(int frames)
         TrackState::Region& region = regions.getReference(activeRegion);
         region.endFrame += frames;
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Export
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::gatherContent(TrackContent* content)
+{
+    content->errors.add(juce::String("Track ") + juce::String(getNumber()) + ": Unable to export MIDI content");
 }
 
 /****************************************************************************/

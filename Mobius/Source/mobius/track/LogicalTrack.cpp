@@ -99,6 +99,11 @@ Session::TrackType LogicalTrack::getType()
     return trackType;
 }
 
+void LogicalTrack::gatherContent(class TrackContent* c)
+{
+    track->gatherContent(c);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Session Refresh

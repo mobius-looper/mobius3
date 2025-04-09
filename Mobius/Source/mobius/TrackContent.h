@@ -9,6 +9,9 @@
 
 #include <JuceHeader.h>
 
+#include "Audio.h"
+#include "../midi/MidiSequence.h"
+
 class TrackContent
 {
   public:
@@ -17,7 +20,7 @@ class TrackContent
       public:
 
         std::unique_ptr<class Audio> audio;
-        std::unique_ptr<class MIdiSequence> midi;
+        std::unique_ptr<class MidiSequence> midi;
     };
 
     class Loop {
@@ -36,6 +39,8 @@ class TrackContent
     ~TrackContent() {}
 
     juce::OwnedArray<Track> tracks;
+    juce::StringArray errors;
+    
 };
 
 

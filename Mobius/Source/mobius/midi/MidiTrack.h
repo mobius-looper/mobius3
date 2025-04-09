@@ -62,6 +62,8 @@ class MidiTrack : public LooperTrack, public MslTrack
     bool scheduleWait(class TrackWait& wait) override;
     void cancelWait(class TrackWait& wait) override;
     void finishWait(class TrackWait& wait) override;
+
+    void gatherContent(class TrackContent* content) override;
     
     //
     // ScheduledTrack

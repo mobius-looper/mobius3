@@ -9,6 +9,12 @@
 
 #include <JuceHeader.h>
 
+#include "mobius/TrackContent.h"
+//#include "mobius/Audio.h"
+//#include "midi/MidiSequence.h"
+
+#include "ui/common/YanDialog.h"
+
 /**
  * Transient structure to represent the files files discovered during import
  * or the files to create during export.
@@ -20,8 +26,9 @@ class ProjectPlan
     // file to be read or created
     class File {
       public:
-        File() {};
-        ~File();
+        File() {}
+        // todo: override this and use the pools
+        ~File() {}
         juce::File file;
         std::unique_ptr<class Audio> audio;
         std::unique_ptr<class MidiSequence> midi;
@@ -36,7 +43,28 @@ class ProjectPlan
     juce::OwnedArray<File> files;
 };
 
-class ProjectClerk
+class ProjectWorkflow
+{
+  public:
+
+    std::unique_ptr<ProjectPlan> plan;
+
+
+    juce::File projectContainer;
+    juce::File projectFolder;
+    
+    juce::StringArray errors;
+    juce::StringArray warnings;
+    
+    bool warnOverwrite = false;
+
+    bool hasErrors() {
+        return (errors.size() > 0);
+    }
+    
+};
+
+class ProjectClerk : public YanDialog::Listener
 {
   public:
 
@@ -52,8 +80,37 @@ class ProjectClerk
     
     void importProject();
 
+    // internal use but need to be public for the async notification?
+    // void continueWorkflow(bool cancel);
+    
+    void yanDialogClosed(YanDialog* d, int button);
+
   private:
 
     class Provider* provider = nullptr;
+    YanDialog confirmDialog {this};
+    YanDialog resultDialog {this};
+    
+    std::unique_ptr<ProjectWorkflow> workflow;
+
+    // workflow steps
+    void confirmDestination();
+
+    // final file creation
+    void compileProject();
+    void addTrack(TrackContent::Track* track);
+    void addLoop(juce::String baseName, TrackContent::Loop* loop, int number);
+    void addLayer(juce::String baseName, TrackContent::Layer* layer, int number);
+
+    void locateProjectDestination();
+    juce::File generateUnique(juce::String desired);
+
+    void writePlan();
+    void cleanFolder(juce::File folder);
+    void cleanFolder(juce::File folder, juce::String extension);
+    
+    void chooseDestination();
+    void showResult();
+    void cancelWorkflow();
 
 };

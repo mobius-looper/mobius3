@@ -127,6 +127,7 @@
     <Button action="Start"/>
     <Button action="Stop"/>
     <Button action="MainTap"/>
+    <Button action="testloop"/>
     <Button action="Play"/>
     <Button action="AutoRecord"/>
     <Button action="Global Stop"/>

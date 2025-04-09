@@ -190,6 +190,8 @@ Once those models are fully converted, these symbols can be removed.
    -->
   <Function name="LoadSession" level='ui' tree='File' argumentLabel='Session Name'/>
   <Function name="SaveSession" level='ui' tree='File'/>
+  <Function name="ProjectExport" level='ui' tree='File'/>
+  <Function name="ProjectImport" level='ui' tree='File'/>
 
   <!-- Experimental
        These were added during early MIDI track development, unclear if we still need them

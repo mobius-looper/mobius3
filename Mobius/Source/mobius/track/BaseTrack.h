@@ -73,6 +73,9 @@ class BaseTrack
     virtual int getSyncLength() = 0;
     virtual int getSyncLocation() = 0;
 
+    // and can really spill its guts
+    virtual void gatherContent(class TrackContent* content) = 0;
+
     // and we can watch what it does
     virtual int scheduleFollowerEvent(QuantizeMode q, int follower, int eventId) = 0;
 

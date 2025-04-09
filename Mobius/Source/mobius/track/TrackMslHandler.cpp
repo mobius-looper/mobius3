@@ -224,9 +224,11 @@ bool TrackMslHandler::mslWait(LogicalTrack* ltrack, MslWait* wait, MslContextErr
                 
             case MslWaitStart: {
                 if (wait->repeats == 0)
-                  track->scheduleWaitFrame(wait, 0);
+                  success = track->scheduleWaitFrame(wait, 0);
                 else {
                     // I suppose this could mean waiting for several loop passes
+                    Trace(1, "TrackMslHandler: Ignoring repeats on wait loop");
+                    success = track->scheduleWaitFrame(wait, 0);
                 }
             }
                 break;
@@ -234,7 +236,7 @@ bool TrackMslHandler::mslWait(LogicalTrack* ltrack, MslWait* wait, MslContextErr
             case MslWaitEnd: {
                 // todo: this is going to need something special, forget
                 // how Mobius did this
-                track->scheduleWaitFrame(wait, 0);
+                success = track->scheduleWaitFrame(wait, 0);
             }
                 break;
                 

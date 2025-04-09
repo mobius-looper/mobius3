@@ -53,6 +53,7 @@
 #include "JuceAudioStream.h"
 #include "SuperDumper.h"
 #include "ProjectFiler.h"
+#include "ProjectClerk.h"
 #include "MidiClerk.h"
 #include "ModelTransformer.h"
 #include "MslUtil.h"
@@ -462,7 +463,8 @@ bool Supervisor::start()
 
     // random internal utility objects
     midiClerk.reset(new MidiClerk(this));
-
+    projectClerk.reset(new ProjectClerk(this));
+                       
     alert(startupErrors);
     
     meter(nullptr);
@@ -664,6 +666,11 @@ void Supervisor::timerCallback()
 }
 
 MainWindow* Supervisor::getMainWindow()
+{
+    return mainWindow.get();
+}
+
+juce::Component* Supervisor::getDialogParent()
 {
     return mainWindow.get();
 }
@@ -2202,10 +2209,10 @@ bool Supervisor::doUILevelAction(UIAction* action)
                 loadMidi(action);
                 break;
             case FuncProjectExport:
-                projectClerk.exportProject();
+                projectClerk->exportProject();
                 break;
             case FuncProjectImport:
-                projectClerk.importProject();
+                projectClerk->importProject();
                 break;
             default:
                 handled = false;

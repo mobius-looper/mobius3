@@ -195,6 +195,11 @@ void MobiusLooperTrack::finishWait(TrackWait& wait)
     mobius->finishWait(wait, track);
 }
 
+void MobiusLooperTrack::gatherContent(TrackContent* content)
+{
+    track->gatherContent(content);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MslTrack Waits

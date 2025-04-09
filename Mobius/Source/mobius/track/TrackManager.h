@@ -51,6 +51,9 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void refresh(class ParameterSets* sets);
     void loadSession(class Session* s);
     void globalReset();
+
+    // part of project export
+    void gatherContent(class TrackContent* content);
     
     class LogicalTrack* getLogicalTrack(int number);
 

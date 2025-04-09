@@ -46,7 +46,8 @@ class LogicalTrack
     void globalReset();
     void refresh(class ParameterSets* sets);
     void refresh(class GroupDefinitions* groups);
-
+    void gatherContent(class TrackContent* content);
+    
     void markDying();
     bool isDying();
     
