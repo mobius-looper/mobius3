@@ -188,7 +188,7 @@ Once those models are fully converted, these symbols can be removed.
   <!-- Session Control
        Sessions may also be loaded with structure bindings.
    -->
-  <Function name="LoadSession" level='ui' tree='File'/>
+  <Function name="LoadSession" level='ui' tree='File' argumentLabel='Session Name'/>
   <Function name="SaveSession" level='ui' tree='File'/>
 
   <!-- Experimental

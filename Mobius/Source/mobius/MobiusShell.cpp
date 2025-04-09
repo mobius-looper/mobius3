@@ -1291,6 +1291,16 @@ juce::StringArray MobiusShell::saveProject(juce::File dest)
     return projectManager.saveProject(dest);
 }
 
+juce::StringArray MobiusShell::loadTrackContent(TrackContent* c)
+{
+    return kernel.loadTrackContent(c);
+}
+
+TrackContent* MobiusShell::getTrackContent(bool includeLayers)
+{
+    return kernel.getTrackContent(includeLayers);
+}
+
 juce::StringArray MobiusShell::loadLoop(juce::File src)
 {
     return projectManager.loadLoop(src);

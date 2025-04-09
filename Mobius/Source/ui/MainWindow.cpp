@@ -259,6 +259,19 @@ void MainWindow::mainMenuSelection(int id)
                 supervisor->menuLoadMidi(true);
             }
                 break;
+            case MainMenu::ProjectExport: {
+                // start using this style instead of a bunch of Supervisor:menuFoo methods
+                UIAction a;
+                a.symbol = supervisor->getSymbols()->getSymbol(FuncProjectExport);
+                supervisor->doAction(&a);
+            }
+                break;
+            case MainMenu::ProjectImport: {
+                UIAction a;
+                a.symbol = supervisor->getSymbols()->getSymbol(FuncProjectImport);
+                supervisor->doAction(&a);
+            }
+                break;
             case MainMenu::RunMcl: {
                 Prompter* p = supervisor->getPrompter();
                 p->runMcl();

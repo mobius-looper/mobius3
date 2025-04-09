@@ -56,6 +56,8 @@ class MobiusShell : public MobiusInterface
     
     juce::StringArray saveProject(juce::File dest) override;
     juce::StringArray loadProject(juce::File src) override;
+    class TrackContent* getTrackContent(bool includeLayers) override;
+    juce::StringArray loadTrackContent(class TrackContent* c) override;
     juce::StringArray saveLoop(juce::File dest) override;
     juce::StringArray loadLoop(juce::File src) override;
     juce::StringArray saveLoop(int trackNumber, int loopNumber, juce::File& file) override;

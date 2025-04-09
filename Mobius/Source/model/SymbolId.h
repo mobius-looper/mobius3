@@ -401,6 +401,8 @@ typedef enum {
     FuncLoadMidi,
     FuncLoadSession,
     FuncSaveSession,
+    FuncProjectExport,
+    FuncProjectImport,
 
     //
     // SyncMaster

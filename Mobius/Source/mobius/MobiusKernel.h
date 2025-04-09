@@ -100,6 +100,9 @@ class MobiusKernel : public MobiusAudioListener, public MslContext, public MslUt
 
     int getBlockSize();
 
+    juce::StringArray loadTrackContent(class TrackContent* c);
+    class TrackContent* getTrackContent(bool includeLayers);
+
     //
     // Internal state needed by the Mobius core
     // and MobiusShell

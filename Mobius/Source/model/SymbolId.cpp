@@ -429,6 +429,8 @@ SymbolDefinition SymbolDefinitions[] = {
     {"LoadMidi", FuncLoadMidi},
     {"LoadSession", FuncLoadSession},
     {"SaveSession", FuncSaveSession},
+    {"ProjectExport", FuncProjectExport},
+    {"ProjectImport", FuncProjectImport},
 
     //
     // SyncMaster

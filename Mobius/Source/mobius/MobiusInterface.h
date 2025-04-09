@@ -193,7 +193,7 @@ class MobiusInterface {
      * and install it as a loop.  Ownership of the Audio is taken.
      */
     virtual void installLoop(class Audio* src, int track, int loop) = 0;
-    
+
     /**
      * Install a collection of scripts into the engine.
      * 
@@ -277,6 +277,11 @@ class MobiusInterface {
      * Return a list of important messages to be shown to the user.
      */
     virtual juce::StringArray loadProject(juce::File src) = 0;
+
+    // New interface, eventually replacement for saveProject and loadProject
+
+    virtual class TrackContent* getTrackContent(bool includeLayers) = 0;
+    virtual juce::StringArray loadTrackContent(class TrackContent* c) = 0;
 
     // newer interfaces for individual loop load/save that fit more with
     // the Project style of doing things

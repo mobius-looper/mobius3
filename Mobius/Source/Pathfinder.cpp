@@ -1,6 +1,7 @@
 
 #include <JuceHeader.h>
 
+#include "model/SystemConfig.h"
 #include "Provider.h"
 
 #include "Pathfinder.h"
@@ -29,4 +30,18 @@ juce::String Pathfinder::getLastFolder(juce::String purpose)
 void Pathfinder::saveLastFolder(juce::String purpose, juce::String path)
 {
     lastFolders.set(purpose, path);
+}
+
+void Pathfinder::load(SystemConfig* scon)
+{
+    (void)scon;
+}
+
+bool Pathfinder::save(SystemConfig* scon)
+{
+    bool changed = false;
+    
+    (void)scon;
+    
+    return changed;
 }

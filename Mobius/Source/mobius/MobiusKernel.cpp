@@ -1874,6 +1874,26 @@ void MobiusKernel::finishWait(MslWait* wait, bool canceled)
     env->resume(this, wait);
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// TrackContent
+//
+//////////////////////////////////////////////////////////////////////
+
+juce::StringArray MobiusKernel::loadTrackContent(TrackContent* c)
+{
+    juce::StringArray errors;
+    errors.add("Not implemented");
+    (void)c;
+    return errors;
+}
+
+TrackContent* MobiusKernel::getTrackContent(bool includeLayers)
+{
+    (void)includeLayers;
+    return nullptr;
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

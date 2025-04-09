@@ -376,6 +376,9 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(DecacheForms, "Decache Forms");
         menu.addItem(AnalyzeMidi, "Analyze MIDI File");
         menu.addItem(HelpTest, "Help Test");
+        menu.addItem(ProjectImport, "New Project Import");
+        menu.addItem(ProjectExport, "New Project Export");
+        
         //menu.addItem(InProgress, "In Progress");
     }
 

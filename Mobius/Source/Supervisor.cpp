@@ -2201,6 +2201,12 @@ bool Supervisor::doUILevelAction(UIAction* action)
             case FuncLoadMidi:
                 loadMidi(action);
                 break;
+            case FuncProjectExport:
+                projectClerk.exportProject();
+                break;
+            case FuncProjectImport:
+                projectClerk.importProject();
+                break;
             default:
                 handled = false;
                 break;

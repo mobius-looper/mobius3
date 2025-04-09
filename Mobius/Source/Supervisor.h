@@ -38,6 +38,7 @@
 #include "Alerter.h"
 #include "AudioClerk.h"
 #include "ProjectFiler.h"
+#include "ProjectClerk.h"
 #include "Pathfinder.h"
 #include "Prompter.h"
 #include "script/ScriptClerk.h"
@@ -389,7 +390,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // it is important that this be close to the end so the UI can unregister
     // listeners before it is destroyed
     ScriptClerk scriptClerk {this};
-
+    ProjectClerk projectClerk {this};
+    
     // symbol table for this application/plugin instance
     SymbolTable symbols;
 

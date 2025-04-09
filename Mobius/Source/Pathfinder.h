@@ -10,9 +10,6 @@
  * Now that we have this, it could become more of a hub for other
  * file-related needs, perhaps replacing RootLocator or managing
  * the user-specified folder locations for the script library.
- *
- * Beyond that, this could provide some common code for doing
- * file browsing which is now duplicated in several places.
  */
 
 #pragma once
@@ -32,6 +29,16 @@ class Pathfinder
     juce::String getLastFolder(juce::String purpose);
 
     void saveLastFolder(juce::String purpose, juce::String folder);
+
+    /**
+     * Load previous used paths saved in the system config.
+     */
+    void load(class SystemConfig* config);
+
+    /**
+     * Save the paths used in this runtime session to the system config.
+     */
+    bool save(class SystemConfig* config);
 
   private:
 
