@@ -1690,7 +1690,25 @@ void Track::dump(TraceBuffer* b)
 
 void Track::gatherContent(TrackContent* content)
 {
-    content->errors.add(juce::String("Track ") + juce::String(getDisplayNumber()) + ": Unable to export audio content");
+    // avoid creating one if we're empty
+    TrackContent::Track* tcontent = nullptr;
+
+    for (int i = 0 ; i < mLoopCount ; i++) {
+        Loop* l = mLoops[i];
+        if (!l->isEmpty()) {
+
+            TrackContent::Loop* lcontent = new TrackContent::Loop();
+            l->gatherContent(lcontent);
+            
+            if (tcontent == nullptr) {
+                tcontent = new TrackContent::Track();
+                tcontent->number = mLogicalTrack->getNumber();
+                content->tracks.add(tcontent);
+            }
+            
+            tcontent->loops.add(lcontent);
+        }
+    }
 }
 
 /****************************************************************************/

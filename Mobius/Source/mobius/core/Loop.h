@@ -12,7 +12,8 @@
 #ifndef LOOP_H
 #define LOOP_H
 
-#include "../../util/Trace.h"
+//#include "../../util/Trace.h"
+#include "../TrackContent.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -131,7 +132,8 @@ class Loop : public TraceContext {
 	~Loop();
 
     void dump(class StructureDumper& d);
-
+    void gatherContent(TrackContent::Loop* lcontent);
+    
     void kludgeSavePlayLayer();
 
 	void getTraceContext(int* context, long* time);

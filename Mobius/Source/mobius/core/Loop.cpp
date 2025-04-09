@@ -56,6 +56,7 @@
 #include "../Audio.h"
 #include "../Notification.h"
 #include "../Notifier.h"
+#include "../TrackContent.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -6296,6 +6297,27 @@ void Loop::cancelSyncMute(Event* e)
     mPause = false;
 	mMuteMode = false;
 	resumePlay();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Export
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This doesn't save anywhere close the same amount of state as the old Project did
+ * We're not saving layers atm, but if you do, then there are all the fade deferral flags
+ * and whatnot
+ */
+void Loop::gatherContent(TrackContent::Loop* lcontent)
+{
+    Layer* layer = getPlayLayer();
+    if (layer != nullptr) {
+        TrackContent::Layer* ycontent = new TrackContent::Layer();
+        ycontent->audio.reset(layer->flatten());
+        lcontent->layers.add(ycontent);
+    }
 }
 
 /****************************************************************************/
