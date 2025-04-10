@@ -219,8 +219,8 @@ juce::File ProjectClerk::generateUnique(juce::String desired)
  */
 void ProjectClerk::confirmDestination()
 {
-    confirmDialog.addMessage(workflow->projectFolder.getFullPathName());
     confirmDialog.clearMessages();
+    confirmDialog.addMessage(workflow->projectFolder.getFullPathName());
 
     if (workflow->warnOverwrite) {
         confirmDialog.addMessage("Folder exists and contains files");
@@ -245,7 +245,7 @@ void ProjectClerk::yanDialogClosed(YanDialog* d, int button)
                 showResult();
             }
             else {
-                writePlan();
+                writeProject();
                 showResult();
             }
         }
@@ -320,13 +320,6 @@ void ProjectClerk::compileProject()
     workflow->errors.clear();
     workflow->warnings.clear();
 
-    if (workflow->plan != nullptr) {
-        // can this happen? maybe if we loop back in the workflow and try again
-        Trace(1, "ProjectClerk: Cleaning residual workflow plan");
-    }
-    workflow->plan.reset(new ProjectPlan());
-    
-    
     TrackContent* content = mobius->getTrackContent(includeLayers);
     if (content == nullptr) {
         workflow->errors.add("Mobius engine did not return track content");
@@ -335,88 +328,23 @@ void ProjectClerk::compileProject()
         // all tracks were empty, we could go ahead and create the
         // project folder and leave it empty, but why bother
         workflow->warnings.add("Warning: Session has no content to export");
+        delete content;
     }
     else {
-        // start by building out the names and moving the contents over to the plan
-        for (auto track : content->tracks) {
-            addTrack(track);
-        }
-    }
-}
-
-void ProjectClerk::addTrack(TrackContent::Track* track)
-{
-    juce::String baseName = juce::String("track-") + juce::String(track->number) + "-";
-
-    int loopNumber = 1;
-    for (auto loop : track->loops) {
-        addLoop(baseName, loop, loopNumber);
-        loopNumber++;
-    }
-}
-
-void ProjectClerk::addLoop(juce::String baseName,
-                           TrackContent::Loop* loop, int number)
-{
-    juce::String loopFile = baseName + "loop-" + juce::String(number);
-    
-    // for layers the first is number zero which won't have a "-layer-" annotation
-    // if the extract included other layers, the annotation is added and the numbers
-    // start from 1
-    int layerNumber = 0;
-    for (auto layer : loop->layers) {
-        addLayer(loopFile, layer, layerNumber);
-        layerNumber++;
-    }
-}
-
-void ProjectClerk::addLayer(juce::String baseName,
-                            TrackContent::Layer* layer, int number)
-{
-    juce::String layerFile = baseName;
-
-    // no suffix on the first layer
-    if (number > 0)
-      layerFile += juce::String("-layer-") + juce::String(number);
-
-
-    ProjectPlan::File* planFile = nullptr;
-
-    if (layer->audio != nullptr) {
-        juce::String fullpath = layerFile + ".wav";
-        planFile = new ProjectPlan::File();
-        planFile->file = juce::File(fullpath);
-        planFile->audio.reset(layer->audio.release());
-    }
-    else if (layer->midi != nullptr) {
-        juce::String fullpath = layerFile + ".mid";
-        planFile = new ProjectPlan::File();
-        planFile->file = juce::File(fullpath);
-        planFile->midi.reset(layer->midi.release());
-    }
-    else {
-        // is this a problem?  I don't think this happens with audio tracks
-        // but for MIDI it might be easier to cause an empty sequence
-        // nothing will be written but the file number will increment so
-        // this layer can be recreated empty on import
-        Trace(1, "ProjectClerk: TrackContent contained an empty layer");
-    }
-
-    if (planFile != nullptr) {
-        workflow->plan->files.add(planFile);
+        workflow->content.reset(content);
     }
 }
 
 /**
- * Commit the previously constructed ProjectPlan to the file system.
+ * Commit the TrackContent to the file system.
  * Existing files may be cleared out of the way as that happens.
  * The user will have had the opportunity to cancel if they didn't want overwrites.
  */
-void ProjectClerk::writePlan()
+void ProjectClerk::writeProject()
 {
     // I suppose we could have done the cleanup during the approval phase
     // before we bothered to extract all the data, not expecting this to fail though
-    juce::File folder = workflow->plan->folder;
+    juce::File folder = workflow->projectFolder;
     if (folder.existsAsFile()) {
         // the user had the opportunity to preserve this
         if (!folder.deleteFile()) {
@@ -438,30 +366,66 @@ void ProjectClerk::writePlan()
 
     if (!workflow->hasErrors()) {
 
-        for (auto file : workflow->plan->files) {
+        juce::String manifest;
+        manifest += juce::String("project\n");
 
-            if (file->midi != nullptr) {
-                // todo: still don't have a .mid file writer
-                workflow->warnings.add("Warning: Unable to save MIDI file");
-                workflow->warnings.add(juce::String("File: ") + file->file.getFullPathName());
-            }
-            else if (file->audio != nullptr) {
-                // still using this old gawdawful .wav file tool
-                // need to update this!!
-                Audio* audio = file->audio.get();
+        for (auto track : workflow->content->tracks) {
+            
+            manifest += juce::String("track ") + juce::String(track->number) + "\n";
                 
-                // when exchanging project files with other applications it can
-                // is important to save the correct sample rate used when they were
-                // recorded.  AudioFile will take the sampleRate stored in the Audio
-                // object
-                audio->setSampleRate(provider->getSampleRate());
+            for (auto loop : track->loops) {
 
-                juce::StringArray writeErrors = AudioFile::write(file->file, audio);
-                workflow->errors.addArray(writeErrors);
+                manifest += juce::String("loop ") + juce::String(loop->number) + "\n";
 
-                // Could stop now, on error but proceed and try to get as many of tem
-                // as we can.  If one fails though they probably all will.
+                int layerNumber = 0;
+                for (auto layer : loop->layers) {
+                    
+                    juce::String filename = juce::String("track-") + juce::String(track->number) +
+                        juce::String("-loop-") + juce::String(loop->number);
+
+                    if (layerNumber > 0)
+                      filename += juce::String("-layer-") + juce::String(layerNumber+1);
+
+                    if (layer->midi != nullptr)
+                      filename += ".mid";
+                    else if (layer->audio != nullptr)
+                      filename += ".wav";
+
+                    manifest += filename + "\n";
+
+                    juce::File file = folder.getChildFile(filename);
+
+                    if (layer->midi != nullptr) {
+                        // todo: still don't have a .mid file writer
+                        workflow->warnings.add("Warning: Unable to save MIDI file");
+                        workflow->warnings.add(juce::String("File: ") + file.getFullPathName());
+                    }
+                    else if (layer->audio != nullptr) {
+                        // still using this old gawdawful .wav file tool
+                        // need to update this!!
+                        Audio* audio = layer->audio.get();
+                
+                        // when exchanging project files with other applications it can
+                        // is important to save the correct sample rate used when they were
+                        // recorded.  AudioFile will take the sampleRate stored in the Audio
+                        // object
+                        audio->setSampleRate(provider->getSampleRate());
+
+                        juce::StringArray writeErrors = AudioFile::write(file, audio);
+                        workflow->errors.addArray(writeErrors);
+
+                        // Could stop on error but proceed and try to get as many of tem
+                        // as we can.  If one fails though they probably all will.
+                    }
+
+                    layerNumber++;
+                }
             }
+        }
+
+        juce::File manifestFile = folder.getChildFile("content.mcl");
+        if (!manifestFile.replaceWithText(manifest)) {
+            workflow->errors.add("Unable to write manifest file");
         }
     }
 }

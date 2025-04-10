@@ -217,6 +217,8 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\multitap.msl" name="MainTap"
             added="1743823943368"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\.#start-stop.msl"
+            added="1744257977370"/>
     </Files>
   </Machine>
   <MslState>

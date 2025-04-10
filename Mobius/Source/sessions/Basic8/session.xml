@@ -56,6 +56,7 @@
       <Value name="pan" value="64" type="int"/>
       <Value name="pluginInputPort" value="0" type="int"/>
       <Value name="pluginOutputPort" value="0" type="int"/>
+      <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
       <Value name="syncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="trackMasterSelect" value="accept" type="enum" ordinal="1"/>

@@ -581,7 +581,8 @@ void MobiusConsole::showResult(MslResult* result)
         }
         if (result->state == MslStateTransitioning) {
             asyncSession = result->sessionId;
-            console.add("Session " + juce::String(asyncSession) + " is transitioning");
+            // this is kind of annoying to see every time
+            //console.add("Session " + juce::String(asyncSession) + " is transitioning to kernel");
         }
     }
 }

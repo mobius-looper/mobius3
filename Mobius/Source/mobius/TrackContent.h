@@ -25,7 +25,7 @@ class TrackContent
 
     class Loop {
       public:
-
+        int number = 0;
         juce::OwnedArray<Layer> layers;
     };
 

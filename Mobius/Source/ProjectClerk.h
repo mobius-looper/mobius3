@@ -10,48 +10,17 @@
 #include <JuceHeader.h>
 
 #include "mobius/TrackContent.h"
-//#include "mobius/Audio.h"
-//#include "midi/MidiSequence.h"
 
 #include "ui/common/YanDialog.h"
-
-/**
- * Transient structure to represent the files files discovered during import
- * or the files to create during export.
- */
-class ProjectPlan
-{
-  public:
-
-    // file to be read or created
-    class File {
-      public:
-        File() {}
-        // todo: override this and use the pools
-        ~File() {}
-        juce::File file;
-        std::unique_ptr<class Audio> audio;
-        std::unique_ptr<class MidiSequence> midi;
-    };
-
-    // the root of the project folder
-    juce::File folder;
-
-    // errors accumulated during discovery
-    juce::StringArray errors;
-
-    juce::OwnedArray<File> files;
-};
 
 class ProjectWorkflow
 {
   public:
 
-    std::unique_ptr<ProjectPlan> plan;
-
-
     juce::File projectContainer;
     juce::File projectFolder;
+
+    std::unique_ptr<class TrackContent> content;
     
     juce::StringArray errors;
     juce::StringArray warnings;
@@ -95,22 +64,16 @@ class ProjectClerk : public YanDialog::Listener
 
     // workflow steps
     void confirmDestination();
-
-    // final file creation
-    void compileProject();
-    void addTrack(TrackContent::Track* track);
-    void addLoop(juce::String baseName, TrackContent::Loop* loop, int number);
-    void addLayer(juce::String baseName, TrackContent::Layer* layer, int number);
-
     void locateProjectDestination();
     juce::File generateUnique(juce::String desired);
-
-    void writePlan();
-    void cleanFolder(juce::File folder);
-    void cleanFolder(juce::File folder, juce::String extension);
-    
     void chooseDestination();
     void showResult();
     void cancelWorkflow();
+
+    // final file creation
+    void compileProject();
+    void writeProject();
+    void cleanFolder(juce::File folder);
+    void cleanFolder(juce::File folder, juce::String extension);
 
 };

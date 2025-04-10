@@ -1321,7 +1321,13 @@ void MslEnvironment::processInitializerResult(MslContext* c, MslCompilation* uni
                 // hmm, in theory this could create multiple sessions for every
                 // init block or static variable initializer, might be better to do
                 // that with threads if it is common
-                Trace(2, "MslConductor: Initialization block is transitioning");
+                const char* dest = "";
+                if (c->mslGetContextId() == MslContextShell)
+                  dest = "kernel";
+                else
+                  dest = "shell";
+                
+                Trace(2, "MslConductor: Initialization block is transitioning to %s", dest);
             }
                 break;
         }

@@ -1698,6 +1698,7 @@ void Track::gatherContent(TrackContent* content)
         if (!l->isEmpty()) {
 
             TrackContent::Loop* lcontent = new TrackContent::Loop();
+            lcontent->number = i+1;
             l->gatherContent(lcontent);
             
             if (tcontent == nullptr) {
