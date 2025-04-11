@@ -7,6 +7,14 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <GROUP id="{93FA2405-6D9B-AFB1-E955-699B69DC1F0A}" name="task">
+        <FILE id="UmTY9o" name="AlertTask.cpp" compile="1" resource="0" file="Source/task/AlertTask.cpp"/>
+        <FILE id="Klwt5G" name="AlertTask.h" compile="0" resource="0" file="Source/task/AlertTask.h"/>
+        <FILE id="c6knkE" name="Task.cpp" compile="1" resource="0" file="Source/task/Task.cpp"/>
+        <FILE id="mek4TJ" name="Task.h" compile="0" resource="0" file="Source/task/Task.h"/>
+        <FILE id="Zc0b4E" name="TaskMaster.cpp" compile="1" resource="0" file="Source/task/TaskMaster.cpp"/>
+        <FILE id="LwwcrV" name="TaskMaster.h" compile="0" resource="0" file="Source/task/TaskMaster.h"/>
+      </GROUP>
       <FILE id="HPyeq9" name="ProjectClerk.cpp" compile="1" resource="0"
             file="Source/ProjectClerk.cpp"/>
       <FILE id="u0CkdS" name="ProjectClerk.h" compile="0" resource="0" file="Source/ProjectClerk.h"/>

@@ -457,6 +457,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     Prompter prompter {this};
     ApplicationBinderator binderator {this};
 
+    std::unique_ptr<class TaskMaster> taskMaster;
+
     // new session manager, start using this style to reduce header dependencies
     std::unique_ptr<class Producer> producer;
 

@@ -52,6 +52,7 @@
 #include "MidiManager.h"
 #include "JuceAudioStream.h"
 #include "SuperDumper.h"
+#include "task/TaskMaster.h"
 #include "ProjectFiler.h"
 #include "ProjectClerk.h"
 #include "MidiClerk.h"
@@ -464,6 +465,10 @@ bool Supervisor::start()
     // random internal utility objects
     midiClerk.reset(new MidiClerk(this));
     projectClerk.reset(new ProjectClerk(this));
+
+    // unclear where in the startup process this needs to be brought up,
+    // not necessary until we have auto-start tasks
+    taskMaster.reset(new TaskMaster(this));
                        
     alert(startupErrors);
     
@@ -1022,6 +1027,8 @@ void Supervisor::advance()
 
     // let MidiMonitors display things queued from the plugin
     midiManager.performMaintenance();
+
+    taskMaster->advance();
 }
 
 /**
