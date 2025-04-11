@@ -173,7 +173,7 @@
     <Value name="mono" value="false" type="bool"/>
     <Value name="multiplyMode" value="normal" type="enum" ordinal="0"/>
     <Value name="muteCancel" value="never" type="enum" ordinal="0"/>
-    <Value name="muteMode" value="continue" type="enum" ordinal="0"/>
+    <Value name="muteMode" value="start" type="enum" ordinal="1"/>
     <Value name="noFeedbackUndo" value="false" type="bool"/>
     <Value name="noLayerFlattening" value="false" type="bool"/>
     <Value name="noiseFloor" value="50" type="int"/>
