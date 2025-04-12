@@ -16,6 +16,25 @@
             file="Source/NosyAudioProcessor.h"/>
     </GROUP>
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
+      <GROUP id="{BE79A77C-59B8-927E-C7CD-D6DA95162218}" name="task">
+        <FILE id="hbFmKZ" name="AlertTask.cpp" compile="1" resource="0" file="../Mobius/Source/task/AlertTask.cpp"/>
+        <FILE id="UbBrGa" name="AlertTask.h" compile="0" resource="0" file="../Mobius/Source/task/AlertTask.h"/>
+        <FILE id="LN6rYQ" name="ProjectClerk.cpp" compile="1" resource="0"
+              file="../Mobius/Source/task/ProjectClerk.cpp"/>
+        <FILE id="fjbhKp" name="ProjectClerk.h" compile="0" resource="0" file="../Mobius/Source/task/ProjectClerk.h"/>
+        <FILE id="qPn0o5" name="ProjectExportTask.cpp" compile="1" resource="0"
+              file="../Mobius/Source/task/ProjectExportTask.cpp"/>
+        <FILE id="F0biVD" name="ProjectExportTask.h" compile="0" resource="0"
+              file="../Mobius/Source/task/ProjectExportTask.h"/>
+        <FILE id="ekhqgK" name="ProjectImportTask.cpp" compile="1" resource="0"
+              file="../Mobius/Source/task/ProjectImportTask.cpp"/>
+        <FILE id="E75s4e" name="ProjectImportTask.h" compile="0" resource="0"
+              file="../Mobius/Source/task/ProjectImportTask.h"/>
+        <FILE id="hsMjM3" name="Task.cpp" compile="1" resource="0" file="../Mobius/Source/task/Task.cpp"/>
+        <FILE id="MY2IL9" name="Task.h" compile="0" resource="0" file="../Mobius/Source/task/Task.h"/>
+        <FILE id="VPufZL" name="TaskMaster.cpp" compile="1" resource="0" file="../Mobius/Source/task/TaskMaster.cpp"/>
+        <FILE id="aloHLv" name="TaskMaster.h" compile="0" resource="0" file="../Mobius/Source/task/TaskMaster.h"/>
+      </GROUP>
       <FILE id="TQaBSl" name="Services.h" compile="0" resource="0" file="../Mobius/Source/Services.h"/>
       <GROUP id="{59A74BF1-C49F-39B8-54CF-132F813D34E1}" name="tools">
         <GROUP id="{122DB4F9-FA34-2F0F-9244-51BE62F2E765}" name="BarelyML">

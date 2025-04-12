@@ -11,9 +11,9 @@
 #include "../mobius/AudioFile.h"
 
 #include "../Provider.h"
-#include "../ProjectClerk.h"
 
 #include "Task.h"
+#include "ProjectClerk.h"
 
 #include "ProjectImportTask.h"
 

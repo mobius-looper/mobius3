@@ -10,6 +10,9 @@
       <GROUP id="{93FA2405-6D9B-AFB1-E955-699B69DC1F0A}" name="task">
         <FILE id="UmTY9o" name="AlertTask.cpp" compile="1" resource="0" file="Source/task/AlertTask.cpp"/>
         <FILE id="Klwt5G" name="AlertTask.h" compile="0" resource="0" file="Source/task/AlertTask.h"/>
+        <FILE id="XGJdta" name="ProjectClerk.cpp" compile="1" resource="0"
+              file="Source/task/ProjectClerk.cpp"/>
+        <FILE id="kPlIYI" name="ProjectClerk.h" compile="0" resource="0" file="Source/task/ProjectClerk.h"/>
         <FILE id="nu0YWB" name="ProjectExportTask.cpp" compile="1" resource="0"
               file="Source/task/ProjectExportTask.cpp"/>
         <FILE id="x2BpYt" name="ProjectExportTask.h" compile="0" resource="0"
@@ -23,9 +26,6 @@
         <FILE id="Zc0b4E" name="TaskMaster.cpp" compile="1" resource="0" file="Source/task/TaskMaster.cpp"/>
         <FILE id="LwwcrV" name="TaskMaster.h" compile="0" resource="0" file="Source/task/TaskMaster.h"/>
       </GROUP>
-      <FILE id="HPyeq9" name="ProjectClerk.cpp" compile="1" resource="0"
-            file="Source/ProjectClerk.cpp"/>
-      <FILE id="u0CkdS" name="ProjectClerk.h" compile="0" resource="0" file="Source/ProjectClerk.h"/>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>

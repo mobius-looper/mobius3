@@ -1,19 +1,20 @@
 
 #include <JuceHeader.h>
 
-#include "util/Trace.h"
+#include "../util/Trace.h"
 
-#include "model/SystemConfig.h"
-#include "model/Session.h"
+#include "../model/SystemConfig.h"
+#include "../model/Session.h"
 
-#include "midi/MidiSequence.h"
+#include "../midi/MidiSequence.h"
 
-#include "mobius/MobiusInterface.h"
-#include "mobius/Audio.h"
-#include "mobius/AudioFile.h"
+#include "../mobius/MobiusInterface.h"
+#include "../mobius/TrackContent.h"
+#include "../mobius/Audio.h"
+#include "../mobius/AudioFile.h"
 
-#include "Provider.h"
-#include "task/Task.h"
+#include "../Provider.h"
+#include "Task.h"
 
 #include "ProjectClerk.h"
 

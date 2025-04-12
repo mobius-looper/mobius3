@@ -9,10 +9,6 @@
 
 #include <JuceHeader.h>
 
-#include "mobius/TrackContent.h"
-
-#include "ui/common/YanDialog.h"
-
 class ProjectClerk
 {
   public:
@@ -20,7 +16,7 @@ class ProjectClerk
     ProjectClerk(class Provider* p);
     ~ProjectClerk();
     
-    void writeProject(class Task* task, juce::File folder, TrackContent* content);
+    void writeProject(class Task* task, juce::File folder, class TrackContent* content);
 
   private:
 
