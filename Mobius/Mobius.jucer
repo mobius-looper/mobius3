@@ -10,6 +10,14 @@
       <GROUP id="{93FA2405-6D9B-AFB1-E955-699B69DC1F0A}" name="task">
         <FILE id="UmTY9o" name="AlertTask.cpp" compile="1" resource="0" file="Source/task/AlertTask.cpp"/>
         <FILE id="Klwt5G" name="AlertTask.h" compile="0" resource="0" file="Source/task/AlertTask.h"/>
+        <FILE id="nu0YWB" name="ProjectExportTask.cpp" compile="1" resource="0"
+              file="Source/task/ProjectExportTask.cpp"/>
+        <FILE id="x2BpYt" name="ProjectExportTask.h" compile="0" resource="0"
+              file="Source/task/ProjectExportTask.h"/>
+        <FILE id="lvOPwA" name="ProjectImportTask.cpp" compile="1" resource="0"
+              file="Source/task/ProjectImportTask.cpp"/>
+        <FILE id="gPC9kX" name="ProjectImportTask.h" compile="0" resource="0"
+              file="Source/task/ProjectImportTask.h"/>
         <FILE id="c6knkE" name="Task.cpp" compile="1" resource="0" file="Source/task/Task.cpp"/>
         <FILE id="mek4TJ" name="Task.h" compile="0" resource="0" file="Source/task/Task.h"/>
         <FILE id="Zc0b4E" name="TaskMaster.cpp" compile="1" resource="0" file="Source/task/TaskMaster.cpp"/>

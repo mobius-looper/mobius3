@@ -3,6 +3,8 @@
 
 #include "../Supervisor.h"
 #include "../Version.h"
+#include "../task/TaskMaster.h"
+#include "../task/Task.h"
 
 #include "JuceUtil.h"
 #include "EnvironmentPanel.h"
@@ -127,6 +129,17 @@ void EnvironmentContent::showing()
             {
                 log.add("No audio device open");
             }
+        }
+    }
+
+    // random stuff that is variable but not part of the container
+    log.add("");
+    TaskMaster* tm = supervisor->getTaskMaster();
+    juce::OwnedArray<Task>& tasks = tm->getTasks();
+    if (tasks.size() > 0) {
+        log.add("Tasks");
+        for (auto task : tasks) {
+            log.add(juce::String("  ") + task->getTypeName());
         }
     }
 }

@@ -1,8 +1,9 @@
 
 #include "AlertTask.h"
 
-AlertTask::AlertTask(Provider* p) : Task(p)
+AlertTask::AlertTask()
 {
+    type = Task::Alert;
 }
 
 void AlertTask::run()

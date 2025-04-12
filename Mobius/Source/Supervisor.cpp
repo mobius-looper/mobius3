@@ -52,9 +52,9 @@
 #include "MidiManager.h"
 #include "JuceAudioStream.h"
 #include "SuperDumper.h"
+#include "task/Task.h"
 #include "task/TaskMaster.h"
 #include "ProjectFiler.h"
-#include "ProjectClerk.h"
 #include "MidiClerk.h"
 #include "ModelTransformer.h"
 #include "MslUtil.h"
@@ -464,7 +464,6 @@ bool Supervisor::start()
 
     // random internal utility objects
     midiClerk.reset(new MidiClerk(this));
-    projectClerk.reset(new ProjectClerk(this));
 
     // unclear where in the startup process this needs to be brought up,
     // not necessary until we have auto-start tasks
@@ -965,6 +964,11 @@ Prompter* Supervisor::getPrompter()
 Producer* Supervisor::getProducer()
 {
     return producer.get();
+}
+
+TaskMaster* Supervisor::getTaskMaster()
+{
+    return taskMaster.get();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2216,10 +2220,10 @@ bool Supervisor::doUILevelAction(UIAction* action)
                 loadMidi(action);
                 break;
             case FuncProjectExport:
-                projectClerk->exportProject();
+                (void)(taskMaster->launch(Task::ProjectExport));
                 break;
             case FuncProjectImport:
-                projectClerk->importProject();
+                (void)(taskMaster->launch(Task::ProjectImport));
                 break;
             default:
                 handled = false;

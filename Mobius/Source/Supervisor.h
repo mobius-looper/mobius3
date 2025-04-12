@@ -256,6 +256,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     Pathfinder* getPathfinder() override;
     Prompter* getPrompter() override;
     class Producer* getProducer() override;
+    class TaskMaster* getTaskMaster() override;
     
     // menu implementations
     void menuLoadScripts(bool poppup = true);
@@ -465,7 +466,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // new way of doing embedded objects that doesn't require a
     // full link every time you touch the header file
     std::unique_ptr<class MidiClerk> midiClerk;
-    std::unique_ptr<class ProjectClerk> projectClerk;
 
     // internal component listeners
     juce::Array<ActionListener*> actionListeners;

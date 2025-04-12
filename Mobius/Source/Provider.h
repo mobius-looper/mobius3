@@ -109,7 +109,8 @@ class Provider : public FileChooserService
     virtual juce::File getRoot() = 0;
     virtual class ScriptClerk* getScriptClerk() = 0;
     virtual class Producer* getProducer() = 0;
-
+    virtual class TaskMaster* getTaskMaster() = 0;
+    
     virtual bool isTestMode() = 0;
     // this is terrible
     virtual bool isIdentifyMode() = 0;

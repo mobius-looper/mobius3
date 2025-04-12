@@ -7,7 +7,7 @@ class AlertTask : public Task
 {
   public:
     
-    AlertTask(class Provider* p);
+    AlertTask();
 
     void run() override;
 };
