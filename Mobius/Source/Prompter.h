@@ -11,6 +11,11 @@
  *
  * Makes use of the new Pathfinder, which could probably be merged with this unless
  * Pathfinder has something else to do besides file chooser folders.
+ *
+ * !! UPDATE
+ *
+ * This needs to be redesigned in light of the new Task subsystem.
+ * Anything that needs to choose and act on files should be a Task now.
  */
 
 #pragma once

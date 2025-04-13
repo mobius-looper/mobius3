@@ -51,17 +51,14 @@ bool Task::isFinished()
     return finished;
 }
 
-void Task::addError(juce::String e)
+bool Task::hasMessages()
 {
-    errors.add(e);
+    return (messages.size() > 0 || errors.size() > 0 || warnings.size() > 0);
 }
 
-bool Task::hasErrors()
+void Task::clearMessages()
 {
-    return (errors.size() > 0);
-}
-
-void Task::addWarning(juce::String w)
-{
-    warnings.add(w);
+    messages.clear();
+    warnings.clear();
+    errors.clear();
 }

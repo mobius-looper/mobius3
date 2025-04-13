@@ -1,24 +1,36 @@
+/**
+ *  Workflow for project export
+ */
 
 #include <JuceHeader.h>
 
 #include "../ui/common/YanDialog.h"
 #include "../mobius/TrackContent.h"
 
+#include "TaskPromptDialog.h"
 #include "Task.h"
 
 class ProjectExportTask : public Task, public YanDialog::Listener
 {
   public:
+
+    typedef enum {
+        Start,
+        WarnMissingUserFolder,
+        WarnInvalidUserFolder,
+        ChooseContainer,
+        ChooseFolder,
+        Export,
+        Results,
+        Cancel
+    } Step;
     
     ProjectExportTask();
 
     void run() override;
-
     void cancel();
     
     // internal use but need to be public for the async notification?
-    // void continueWorkflow(bool cancel);
-    
     void yanDialogClosed(YanDialog* d, int button);
 
   private:
@@ -26,22 +38,23 @@ class ProjectExportTask : public Task, public YanDialog::Listener
     juce::File projectContainer;
     juce::File projectFolder;
 
+    TaskPromptDialog dialog {this};
+    std::unique_ptr<juce::FileChooser> chooser;
+
+    Step step = Start;
+
     std::unique_ptr<class TrackContent> content;
 
-    YanDialog confirmDialog {this};
-    YanDialog resultDialog {this};
-    
-    bool warnOverwrite = false;
-
     // workflow steps
-    void confirmDestination();
     void locateProjectDestination();
     juce::File generateUnique(juce::String desired);
+    void confirmDestination();
     void chooseDestination();
-    void showResult();
+    void finishChooseDestination(juce::File choice);
 
-    // final file creation
+    void doExport();
     void compileProject();
+    void showResult();
 
 };
 

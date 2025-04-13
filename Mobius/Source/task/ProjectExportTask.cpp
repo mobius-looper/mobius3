@@ -1,3 +1,44 @@
+/*
+ * The most annoying part about this process is determining where the
+ * the project goes.  
+ *
+ * Export ultimately needs the full path to a project folder.
+ *
+ * The project folder itself will be created so what the user must select is the
+ * folder *containing* the project folder.
+ *
+ * The default location is the value of the ParmUserFileFolder from the system
+ * configuration.  If this is not set, the user must choose a container with
+ * a file browser.
+ *
+ * The name of the project folder will start as the name of the session.
+ * Once the container is defaulted or chosen, it is examined to see if it already has
+ * a folder with the project name.  If the project folder does not exist or is empty,
+ * the export proceeds.
+ *
+ * If the project folder already exists, a name qualifier is added to the base name to
+ * make it unique.  If the name qualification is disabled or fails, the user is warned
+ * that the existing folder will be overwritten.
+ *
+ * The overwrite warning dialog displays the path of the containing folder and a text
+ * field where they can enter their own name. If they select Ok without changing the name,
+ * the overwrite proceeds.  If they enter a name, and it is unique the export proceeds
+ * to that name.
+ *
+ * If they enter a new name and it is also existing, the overwrite warning is displayed again.
+ *
+ * NOTE: Sinc the user can't see what names are in the containing folder, it would be nice to
+ * have a scrolling panel of the existing projects in that folder.
+ *
+ * Once the project folder has been confirmed, the export proceeds.
+ *
+ * A final results dialog is displayed that shows:
+ *
+ *    - the full path of the project folder that was used
+ *    - the number of .wav or .mid files that were created
+ *    - errors or warnings encountered during the export process
+ *
+ */
 
 #include <JuceHeader.h>
 
@@ -14,6 +55,7 @@
 #include "../mobius/AudioFile.h"
 
 #include "../Provider.h"
+#include "../Pathfinder.h"
 
 #include "Task.h"
 #include "ProjectClerk.h"
@@ -24,64 +66,169 @@ ProjectExportTask::ProjectExportTask()
 {
     type = Task::ProjectExport;
     
-    confirmDialog.setTitle("Export the project to this folder?");
+    confirmDialog.setTitle("Confirm Export Location");
     confirmDialog.addButton("Ok");
     confirmDialog.addButton("Choose");
     confirmDialog.addButton("Cancel");
     
+    resultDialog.setTitle("Export Results");
     resultDialog.addButton("Ok");
 }
 
 void ProjectExportTask::run()
 {
-    locateProjectDestination();
-
-    if (!hasErrors()) {
-        // this will now go async and we end up back in yanDialogClosed
-        // until the process completes
-        confirmDestination();
-    }
+    step = Start;
+    transition();
 }
 
 void ProjectExportTask::cancel()
 {
     // todo: close any open dialogs
     finished = true;
+
+    // this is a unique_ptr but want to verify we can delete
+    //this at any time to cancel it
+    chooser.reset();
+}
+
+void ProjectExportTask::ping()
+{
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// Export Location
+// Transition Logic
+//
+//////////////////////////////////////////////////////////////////////
+
+void ProjectExportTask::transition()
+{
+    switch (step) {
+        
+        case Start: findProjectContainer(); break;
+        case WarnMissingUserFolder: warnMissingUserFolder(); break;
+        case WarnInvalidUserFolder: warnInvalidUserFolder(); break;
+        case ChooseContainer: chooseContainer(); break;
+        case ChooseFolder: chooseFolder(); break;
+        case Export: doExport(); break;
+        case Results: doResults(); break;
+        case Cancel: cancel(); break;
+
+        default: cancel(); break;
+    }
+}
+
+void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
+{
+    switch (step) {
+        case WarnMissingUserFolder:
+        case WarnInvalidUserFolder:
+            step = ChooseContainer;
+            break;
+    }
+
+    transition();
+
+    #if 0
+    if (button == 0) {
+        // ok
+        doExport();
+    }
+    else if (button == 1) {
+        chooseDestination();
+    }
+    else {
+        cancel();
+    }
+    #endif
+    
+}
+
+void ProjectExportTask::fileChosen(juce::File file)
+{
+    if (file == juce::File()) {
+        step = Cancel;
+    }
+    else if (step == ChooseContainer) {
+        projectContainer = file;
+        step = ChooseFolder;
+    }
+    else {
+        Trace(1, "ProjectExportTask: Unexpected step after file chooser %d", step);
+        step = Cancel;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Steps
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * The most annoying part about this process is determining where the
- * the project goes.  
+ * Determine the folder to contain the project folder.
  *
- * Export ultimately needs the full path to a project folder.
- * It starts by assuming this lives under the configured userFileFolder system parameter.
- * If that is not set, it defaults to the installation directory under a folder
- * named "projects".
+ * Issues:
  *
- * Within that containing folder, the project folder will have the name of the crrently loaded
- * session.  If that name already exist is it qualified with a number until it is unique.
+ * If ParamUserFileFolder is not set, it should be recommended that it be set
+ * so they don't have to start over with a file chooser every time.  Where
+ * that is presented is unclear.  If you tell them that up front, it's an extra
+ * dialog they'll have to click through before they get to the file browser
+ * which isn't bad.
  *
- * Once a usable default path is determined it is presented to the user for approval.
- * They may either accept that or choose a different location.
+ * Alternately, we can proceed directly to the file browser, but warn them about it
+ * in the final result dialog.
  *
- * If the user's choice already exists and has things in it, the user must confirm the
- * replacement of the existing content.
- *
- * Adding qualfiiers should be optional.  In some cases it is enough just to keep
- * ovewriting the same folder with the name of the session.  The "versioning" of the
- * exports is optional.
- *
- * After hunting around for a potential location, the end result is that the user
- * will be prompted for verification.  So this method never "returns", it launches
- * an async process that will call back to finishProjectExport
- * 
+ * If the user file folder is entered but invalid, that's more serious and probably
+ * should be presented right away.
  */
+void ProjectExportTask::findProjectContainer()
+{
+    // first see if we can auto-create it within the configured user directory
+    SystemConfig* scon = provider->getSystemConfig();
+    juce::String userFolder = scon->getString("userFileFolder");
+
+    if (userFolder.length() == 0) {
+        step = WarnMissingUserFolder;
+    }
+    else {
+        juce::File f (userFolder);
+        if (f.isDirectory()) {
+            projectContainer = f;
+            step = ChooseFolder;
+        }
+        else {
+            step = WarnInvalidUserFolder;
+        }
+    }
+
+    transition();
+}
+
+void ProjectExportTask::warnMissingUserFolder()
+{
+    dialog.reset();
+    // user file folder is not set at all
+    // can recommend they do that, or just go straight to the browser
+    dialog.addWarning("The User File Folder was not set in the system configuration");
+    dialog.addWarning("It is recommended that this be set to the default");
+    dialog.addWarning("location for exports");
+    
+    dialog.show(provider->getDialogParent());
+}
+
+void ProjectExportTask::warnInvalidUserFolder()
+{
+    dialog.reset();
+    // UserFileFolder is set but is bad, tell them
+    dialog.addWarning(juce::String("Invalid value for User File Folder parameter"));
+    dialog.addWarning(juce::String("Value: ") + userFolder);
+    
+    dialog.show(provider->getDialogParent());
+}
+
+
+
 void ProjectExportTask::locateProjectDestination()
 {
     // first see if we can auto-create it within the configured user directory
@@ -94,29 +241,30 @@ void ProjectExportTask::locateProjectDestination()
             projectContainer = f;
         }
         else {
-            warnings.add(juce::String("Warning: Invalid value for User File Folder parameter"));
+            warnings.add(juce::String("Invalid value for User File Folder parameter"));
             warnings.add(juce::String("Value: ") + userFolder);
         }
     }
 
     // if the userFileFolder was not valid, try the installation folder
+    // this will usually not be what you want since it's buried under the installation root
     if (projectContainer == juce::File()) {
         juce::File root = provider->getRoot();
-        juce::File defaultContainer = root.getChildFile("projects");
-        if (defaultContainer.isDirectory()) {
-            projectContainer = defaultContainer;
+        juce::File possible = root.getChildFile("projects");
+        if (!possible.isDirectory()) {
+            // no projects directory, bad installation, don't try to hard here
+            // make them choose
+            errors.add("Unable to locate system projects folder");
         }
         else {
-            // not there yet, can we create it?
-            juce::Result res = defaultContainer.createDirectory();
-            if (res.failed()) {
-                // this would be unusual, don't give up
-                warnings.add("Warning: Unable to create default projects folder");
-                warnings.add(juce::String("Error: ") + res.getErrorMessage());
-            }
-            else {
-                projectContainer = defaultContainer;
-            }
+            // the default project folder has the same name as the session
+            // since there is already a folder named for the session
+            // under /projects, go another level
+            Session* s = provider->getSession();
+            possible = possible.getChildFile(s->getName() + "/exports");
+            
+            // it is okay if this does not exist, can create it later
+            projectContainer = possible;
         }
     }
 
@@ -165,7 +313,9 @@ void ProjectExportTask::locateProjectDestination()
             }
             else {
                 // not expected
-                warnings.add("Warning: Unable to generate qualified project name");
+                warnings.add("Default export folder already exists");
+                warnings.add("Unable to generate qualified folder name");
+                             
             }
         }
     }
@@ -188,7 +338,7 @@ juce::File ProjectExportTask::generateUnique(juce::String desired)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Destaination Confirmation 
+// Destaination Selection
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -200,52 +350,142 @@ juce::File ProjectExportTask::generateUnique(juce::String desired)
 void ProjectExportTask::confirmDestination()
 {
     confirmDialog.clearMessages();
-    confirmDialog.addMessage(projectFolder.getFullPathName());
+
+    YanDialog::Message m;
+    //m.prefix = "Folder:";
+    m.message = projectFolder.getFullPathName();
+    confirmDialog.addMessage(m);
 
     if (warnOverwrite) {
-        confirmDialog.addMessage("Folder exists and contains files");
-        confirmDialog.addMessage("All files will be replaced");
+        confirmDialog.addWarning("Folder exists and contains files");
+        confirmDialog.addWarning("All files will be replaced");
     }
 
     for (auto warning : warnings) {
-        confirmDialog.addMessage(warning);
+        confirmDialog.addWarning(warning);
     }
     
     confirmDialog.show(provider->getDialogParent());
 }
 
-void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
+void ProjectExportTask::doExport()
 {
-    if (d == &confirmDialog) {
-
-        if (button == 0) {
-            // ok
-            compileProject();
-            if (hasErrors()) {
-                showResult();
-            }
-            else {
-                ProjectClerk pc(provider);
-                pc.writeProject(this, projectFolder, content.get());
-                showResult();
-            }
-        }
-        else if (button == 1) {
-            chooseDestination();
-        }
-        else {
-            cancel();
-        }
+    compileProject();
+    if (hasErrors()) {
+        showResult();
     }
-    else if (d == &resultDialog) {
-        // doesn't matter what the button is
-        cancel();
+    else if (content == nullptr) {
+        // should have said this was an error already
+        showResult();
+    }
+    else {
+        ProjectClerk pc(provider);
+        int count = pc.writeProject(this, projectFolder, content.get());
+        messages.add(juce::String(count) + " files exported");
+        showResult();
     }
 }
 
+/**
+ * The usual annoyances with launchAsync
+ * In theory, if after the file chooser has been launched, the user could do something
+ * to cancel the task and the callback lambda will have an invalid "this" pointer.
+ * That should not be possible as long as an orderly cancel() of this task deletes
+ * the file chooser object?
+ */
 void ProjectExportTask::chooseDestination()
 {
-    // todo
+    if (chooser != nullptr) {
+        // should not be possible
+        Trace(1, "ProjectExportTask: FileChooser already active");
+    }
+    else {
+        juce::String purpose = "projectExport";
+    
+        Pathfinder* pf = provider->getPathfinder();
+        juce::File startPath(pf->getLastFolder(purpose));
+
+        juce::String title = "Select a folder...";
+
+        chooser.reset(new juce::FileChooser(title, startPath, ""));
+
+        auto chooserFlags = (juce::FileBrowserComponent::openMode |
+                             juce::FileBrowserComponent::canSelectDirectories);
+
+        chooser->launchAsync (chooserFlags, [this,purpose] (const juce::FileChooser& fc)
+        {
+            juce::Array<juce::File> result = fc.getResults();
+            if (result.size() > 0) {
+                juce::File file = result[0];
+                Pathfinder* pf = provider->getPathfinder();
+                pf->saveLastFolder(purpose, file.getParentDirectory().getFullPathName());
+
+                finishChooseDestination(file);
+            }
+            else {
+                // same as cancel?
+                cancel();
+            }
+        });
+    }
+}
+    
+void ProjectExportTask::finishChooseDestination(juce::File choice)
+{
+    // this will be the folder CONTAINING the export folder
+    projectContainer = choice;
+
+    // !! this part is exactly the same as above, refactor this
+    
+    // we've got a place to put the project folder
+    // now name the project folder
+    Session* s = provider->getSession();
+    juce::String projectName = s->getName();
+    juce::File possibleFolder = projectContainer.getChildFile(projectName);
+
+    bool exists = false;
+    bool qualify = false;
+
+    // todo: need more optios around whether we attempt to auto-qualify
+    // or not
+    if (possibleFolder.existsAsFile()) {
+        // this would e strange, a file without an extension that has
+        // the same name as the session, we can add qualfiiers to this
+        // but it is likely that they don't want it here
+        exists = true;
+        qualify = true;
+    }
+    else if (possibleFolder.isDirectory()) {
+        // this is common, the project was already saved here
+        exists = true;
+        qualify = true;
+    }
+
+    projectFolder = possibleFolder;
+
+    if (!exists) {
+        // shiny captain, we have a good location
+    }
+    else if (!qualify) {
+        // need guidance
+        warnOverwrite = true;
+    }
+    else {
+        juce::File qualified = generateUnique(projectName);
+        if (qualified != juce::File()) {
+            projectFolder = qualified;
+        }
+        else {
+            // not expected
+            warnings.add("Default export folder already exists");
+            warnings.add("Unable to generate qualified folder name");
+        }
+    }
+
+    if (warnOverwrite || warnings.size() > 0)
+      confirmDestination();
+    else
+      doExport();
 }
 
 void ProjectExportTask::showResult()
@@ -259,12 +499,16 @@ void ProjectExportTask::showResult()
         resultDialog.setTitle("Project Export Result");
     }
 
+    for (auto msg : messages) {
+        resultDialog.addMessage(msg);
+    }
+
     for (auto error : errors) {
-        resultDialog.addMessage(error);
+        resultDialog.addError(error);
     }
 
     for (auto warning : warnings) {
-        resultDialog.addMessage(warning);
+        resultDialog.addWarning(warning);
     }
 
     resultDialog.show(provider->getDialogParent());
@@ -295,11 +539,12 @@ void ProjectExportTask::compileProject()
     TrackContent* tc = mobius->getTrackContent(includeLayers);
     if (tc == nullptr) {
         errors.add("Mobius engine did not return track content");
+        content.reset();
     }
     else if (tc->tracks.size() == 0) {
         // all tracks were empty, we could go ahead and create the
         // project folder and leave it empty, but why bother
-        warnings.add("Warning: Session has no content to export");
+        warnings.add("Session has no content to export");
         delete tc;
     }
     else {

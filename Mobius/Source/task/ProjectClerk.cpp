@@ -38,8 +38,10 @@ ProjectClerk::~ProjectClerk()
  * Existing files may be cleared out of the way as that happens.
  * The user will have had the opportunity to cancel if they didn't want overwrites.
  */
-void ProjectClerk::writeProject(Task* task, juce::File folder, TrackContent* content)
+int ProjectClerk::writeProject(Task* task, juce::File folder, TrackContent* content)
 {
+    int fileCount = 0;
+    
     // I suppose we could have done the cleanup during the approval phase
     // before we bothered to extract all the data, not expecting this to fail though
     if (folder.existsAsFile()) {
@@ -109,8 +111,14 @@ void ProjectClerk::writeProject(Task* task, juce::File folder, TrackContent* con
                         audio->setSampleRate(provider->getSampleRate());
 
                         juce::StringArray writeErrors = AudioFile::write(file, audio);
-                        for (auto err : writeErrors)
-                          task->addError(err);
+
+                        // usually returning no errors means it was created
+                        if (writeErrors.size() == 0)
+                          fileCount++;
+                        else {
+                            for (auto err : writeErrors)
+                              task->addError(err);
+                        }
 
                         // Could stop on error but proceed and try to get as many of tem
                         // as we can.  If one fails though they probably all will.
@@ -126,6 +134,8 @@ void ProjectClerk::writeProject(Task* task, juce::File folder, TrackContent* con
             task->addError("Unable to write manifest file");
         }
     }
+
+    return fileCount;
 }
 
 /**

@@ -25,6 +25,10 @@
         <FILE id="mek4TJ" name="Task.h" compile="0" resource="0" file="Source/task/Task.h"/>
         <FILE id="Zc0b4E" name="TaskMaster.cpp" compile="1" resource="0" file="Source/task/TaskMaster.cpp"/>
         <FILE id="LwwcrV" name="TaskMaster.h" compile="0" resource="0" file="Source/task/TaskMaster.h"/>
+        <FILE id="H26K8l" name="TaskPromptDialog.cpp" compile="1" resource="0"
+              file="Source/task/TaskPromptDialog.cpp"/>
+        <FILE id="kuFSWP" name="TaskPromptDialog.h" compile="0" resource="0"
+              file="Source/task/TaskPromptDialog.h"/>
       </GROUP>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>

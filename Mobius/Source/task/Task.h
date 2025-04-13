@@ -40,14 +40,14 @@ class Task
     bool isFinished();
 
     virtual void run() = 0;
-
+    virtual void pint() {}
+    
     virtual bool isConcurrent() {
         return false;
     }
 
-    void addError(juce::String e);
-    void addWarning(juce::String e);
-    bool hasErrors();
+    bool hasMessages();
+    void clearMessages();
     
   protected:
 
@@ -56,6 +56,7 @@ class Task
     int id = 0;
     bool finished = false;
 
+    juce::StringArray messages;
     juce::StringArray errors;
     juce::StringArray warnings;
     

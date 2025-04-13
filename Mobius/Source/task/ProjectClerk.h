@@ -16,7 +16,7 @@ class ProjectClerk
     ProjectClerk(class Provider* p);
     ~ProjectClerk();
     
-    void writeProject(class Task* task, juce::File folder, class TrackContent* content);
+    int writeProject(class Task* task, juce::File folder, class TrackContent* content);
 
   private:
 
