@@ -68,7 +68,7 @@ ScriptWindow::ScriptWindow(Supervisor* s) :
       contentArea.removeFromTop(40);
     content.setBounds(contentArea);
 
-    JuceUtil::dumpComponent(this);
+    //JuceUtil::dumpComponent(this);
 }
 
 ScriptWindow::~ScriptWindow()

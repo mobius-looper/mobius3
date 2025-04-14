@@ -264,19 +264,17 @@ void YanDialog::show(juce::Component* parent)
     show();
 }
 
-int YanDialog::getDefaultHeight()
+int YanDialog::getPreferredHeight()
 {
+    // dialog is sournded by a border and an inset
+    // always with a gapped button row at the bottom
     int height = (BorderWidth * 2) + (MainInset * 2) + BottomGap + ButtonHeight + buttonGap;
 
-    if (title.length() > 0)
-      height += titleHeight + titleGap;
-
-    int mheight = getMessagesHeight();
-    if (mheight > 0) {
-        height += mheight + MessagePostGap;
-    }
-
-    // user defined content, this may be our form or something custom
+    // title and leading messages
+    height += getSpaceBeforeContent();
+    
+    // content may be representd with an arbitrary component or a YanForm
+    // if either are present, a content inset is added
     int cheight = 0;
     if (content != nullptr) {
         cheight = content->getHeight();
@@ -286,57 +284,86 @@ int YanDialog::getDefaultHeight()
     else if (form.getParentComponent() != nullptr) {
         cheight = form.getPreferredHeight();
     }
-    if (cheight > 0)
-      height += cheight + (ContentInset * 2);
+
+    if (cheight > 0) {
+        height += cheight + (ContentInset * 2);
+        // and a trailing gap if anything follows it
+        if (errors.size() > 0 || warnings.size() > 0) {
+            height += sectionGap;
+        }
+    }
+    
+    // errors and warnings are titled message sections
+    if (errors.size() > 0) {
+        height += getMessageSectionHeight(true, errors, errorHeight);
+        // and a trailing gap if anything follows it
+        if (warnings.size() > 0)
+          height += sectionGap;
+    }
+    
+    if (warnings.size() > 0) {
+        height += getMessageSectionHeight(true, warnings, warningHeight);
+    }
+        
+    return height;
+}
+
+int YanDialog::getHeightUpToContent()
+{
+    
+
+int YanDialog::getMessageSectionHeight(bool hasTitle, Message& messages, int defaultHeight)
+{
+    int height = 0;
+
+    if (hasTitle) {
+        height += (sectionHeight + sectionGap);
+    }
+
+    for (auto m : messages) {
+
+        int max = 0;
+
+        if (m.prefixHeight > 0)
+          max = m.prefixHeight;
+
+        if (m.messageHeight > 0 && m.messageHeight > max)
+          max = m.messageHeight;
+
+        if (max == 0)
+          max = defaultHeight;
+
+        height += max;
+    }
+
+    return height;
+}
+
+int YanDialog::getSpaceBeforeContent()
+{
+    int height = 0;
+    
+    // title sits directly under the MainInset but has a trailing gap
+    if (title.length() > 0)
+      height += titleHeight + titleGap;
+
+    // messages are variable with no title, and a trailing gap
+    if (messages.size() > 0) {
+        height += getMessageSectionHeight(false, messages, messageHeight);
+        // technically this is only necessary if there is something following
+        // it, but there almost always is, so leave it in unconditionally
+        height += MessagePostGap;
+    }
 
     return height;
 }
 
 /**
- * Splitting up messages is still experimental.
- * If there is more than one message, then the message array lenght
- * defines the number of rows.
- * Otherwise the user may specify a number of rows, and there is a minimum number.
+ * The only things that are Components are the ButtonRow
+ * and the content or YanForm, everything else is drawn around it.
+ *
+ * The content and/or form is expected to size itself, we just set the top/left
  */
-int YanDialog::getMessagesHeight()
-{
-    return getMessagesHeight(messages, messageHeight);
-}
-
-int YanDialog::getWarningsHeight()
-{
-    return getMessagesHeight(warnings, warningHeight);
-}
-
-int YanDialog::getErrorsHeight()
-{
-    return getMessagesHeight(errors, errorHeight);
-}
-
-int YanDialog::getMessageHeight(Message& m, int defaultHeight)
-{
-    int max = 0;
-
-    if (m.prefixHeight > 0)
-      max = m.prefixHeight;
-
-    if (m.messageHeight > 0 && m.messageHeight > max)
-      max = m.messageHeight;
-
-    if (max == 0) max = defaultHeight;
-
-    return max;
-}
-
-int YanDialog::getMessagesHeight(juce::Array<Message>& list, int mheight)
-{
-    int height = 0;
-    for (auto m : list) {
-        height += getMessageHeight(m, mheight);
-    }
-    return height;
-}
-
 void YanDialog::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
@@ -344,24 +371,29 @@ void YanDialog::resized()
 
     area.removeFromBottom(BottomGap);
     buttonRow.setBounds(area.removeFromBottom(ButtonHeight));
+    
     // often the same size on redisplay, force a refresh
     buttonRow.resized();
-    (void)area.removeFromBottom(buttonGap);
-    
-    if (title.length() > 0) {
-        (void)area.removeFromTop(titleHeight + titleGap);
-    }
 
-    if (messages.size() > 0) {
-        int mheight = getMessagesHeight();
-        (void)area.removeFromTop(mheight + MessagePostGap);
-    }
+    // title and messages
+    (void)area.removeFromTop(getSpaceBeforeContent());
 
+    // content inset
     area = area.reduced(ContentInset);
-    if (content != nullptr)
-      content->setBounds(area);
-    else
-      form.setBounds(area);
+    
+    if (content != nullptr) {
+        cheight = content->getHeight();
+        // should have set this in getPreferredHeight
+        if (cheight == 0)
+          cheight = DefaultContentHeight;
+
+        content->setBounds(area.getX(), area.getY(), area->getWidth(), cheight);
+    }
+    else if (form.getParentComponent() != nullptr) {
+        form->setBounds(area.getX(), area.getY(), area->getWidth(), form.getPreferredHeight());
+        // often the same so force a resize
+        form->forceResize();
+    }
     
     //JuceUtil::dumpComponent(this);
 }

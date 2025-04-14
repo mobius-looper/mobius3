@@ -25,7 +25,33 @@ class YanDialog : public juce::Component, public juce::Button::Listener
 {
   public:
 
-    class Message {
+    static const int DefaultWidth = 400;
+    static const int BorderWidth = 2;
+    static const int MainInset = 2;
+
+    static const int TitleDefaultHeight = 16;
+    static const int TitlePostGap = 8;
+    
+    static const int ButtonTopGap = 8;
+    static const int ButtonHeight = 20;
+    static const int ButtonBottomGap = 4;
+
+    static const int SectionGap = 8;
+    static const int SectionDefaultTitleHeight 12;
+    
+    static const int ContentInset = 8;
+    static const int ContentDefaultHeight = 200;
+    
+    static const int MessageDefaultHeight = 12;
+    
+    class TitleSection : public juce::Component {
+      public:
+        juce::String title;
+        juce::Colour color;
+        int height = TitleDefaultHeight;
+    };
+    
+    class Message : {
       public:
         Message() {}
         Message(juce::String s) {message = s;}
@@ -37,27 +63,23 @@ class YanDialog : public juce::Component, public juce::Button::Listener
         int messageHeight = 0;
     };
 
-    class Section {
+    class MessageSection : public juce::Component {
       public:
         juce::String title;
         juce::Colour titleColor;
-        int titleHeight = 0;
+        int titleHeight = SectionDefaultTitleHeight;
+        int messageHeight = MessageDefaultHeight;
         juce::Array<Message> messages;
     };
-    
-    static const int DefaultWidth = 400;
-    static const int DefaultContentHeight = 200;
-    static const int BorderWidth = 2;
-    static const int MainInset = 2;
-    
-    static const int TitleHeight = 16;
-    static const int TitlePostGap = 8;
-    static const int MessageFontHeight = 12;
-    static const int MessagePostGap = 4;
-    static const int ContentInset = 8;
-    static const int ButtonGap = 8;
-    static const int BottomGap = 4;
-    static const int ButtonHeight = 20;
+
+    class ContentSection : public juce::Component {
+      public:
+        // replaces the built-in form for complex content
+        juce::Component* content = nullptr;
+        
+        // built-in form you can add fields to
+        YanForm form;
+    };
     
     class Listener {
       public:
@@ -72,6 +94,10 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     void setId(int id);
     int getId();
 
+    void setListener(Listener* l);
+    void setSerious(bool b);
+    void setTitle(juce::String s);
+
     void setWidth(int w);
     void setHeight(int h);
     void setTitleHeight(int h);
@@ -85,10 +111,6 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     void setErrorHeight(int h);
     void setSectionHeight(int h);
     void setButtonGap(int h);
-    
-    void setListener(Listener* l);
-    void setSerious(bool b);
-    void setTitle(juce::String s);
     
     void clearMessages();
     void addMessage(juce::String s);
@@ -120,32 +142,20 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     int id = 0;
     int requestedWidth = 0;
     int requestedHeight = 0;
-    int titleHeight = TitleHeight;
-    int titleGap = TitlePostGap;
-    int sectionGap = TitlePostGap;
-    int messageHeight = MessageFontHeight;
-    int warningHeight = MessageFontHeight;
-    int errorHeight = MessageFontHeight;
-    int sectionHeight = MessageFontHeight;
-    int buttonGap = ButtonGap;
 
-    juce::Colour titleColor = juce::Colours::green;
-    juce::Colour messageColor = juce::Colours::white;
-    juce::Colour warningColor = juce::Colours::white;
-    juce::Colour errorColor = juce::Colours::white;
-    
     bool serious = false;
     juce::Colour borderColor;
-    juce::String title;
-    juce::Array<Message> messages;
-    juce::Array<Message> warnings;
-    juce::Array<Message> errors;
-    
-    // built-in form you can add fields to
-    YanForm form;
-    
-    // replaces the built-in form for complex content
-    juce::Component* content = nullptr;
+    juce::Colour messageColor = juce::Colours::white;
+
+    int titleGap = TitlePostGap;
+    int sectionGap = SectionGap;
+    int buttonGap = ButtonGap;
+
+    TitleSection title;
+    MessageSection messages;
+    ContentSection content;
+    MessageSection errors;
+    MessageSection warnings;
     
     // dynamic button list
     juce::StringArray buttonNames;
@@ -153,15 +163,7 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     BasicButtonRow buttonRow;
     
     void init();
-    //void layoutButtons(juce::Rectangle<int> area);
-    int getMessagesHeight();
-    int getWarningsHeight();
-    int getMessageHeight(Message& m, int defaultHeight);
-    int getErrorsHeight();
-    int getMessagesHeight(juce::Array<Message>& list, int mheight);
-    int getDefaultHeight();
-
-    void renderMessage(juce::Graphics& g, Message& m, juce::Rectangle<int>& area, int top, int height, juce::Colour defaultColor);
+    
 };
 
 
