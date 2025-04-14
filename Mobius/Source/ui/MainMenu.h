@@ -137,7 +137,8 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         HelpTest,
         AnalyzeMidi,
         InProgress,
-        CancelTasks
+        CancelTasks,
+        TestTask,
         
         };
     

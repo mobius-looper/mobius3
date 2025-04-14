@@ -379,6 +379,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(ProjectImport, "New Project Import");
         menu.addItem(ProjectExport, "New Project Export");
         menu.addItem(CancelTasks, "Cancel Tasks");
+        menu.addItem(TestTask, "Test Task");
         
         //menu.addItem(InProgress, "In Progress");
     }

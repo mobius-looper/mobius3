@@ -6,6 +6,7 @@
 #include "AlertTask.h"
 #include "ProjectExportTask.h"
 #include "ProjectImportTask.h"
+#include "DialogTestTask.h"
 
 #include "Task.h"
 #include "TaskMaster.h"
@@ -30,6 +31,7 @@ int TaskMaster::launch(Task::Type type)
     Task* task = nullptr; 
     switch (type) {
 
+        case Task::DialogTest: task = new DialogTestTask(); break;
         case Task::Alert: task = new AlertTask(); break;
         case Task::ProjectExport: task = new ProjectExportTask(); break;
         case Task::ProjectImport: task = new ProjectImportTask(); break;

@@ -10,6 +10,10 @@
       <GROUP id="{93FA2405-6D9B-AFB1-E955-699B69DC1F0A}" name="task">
         <FILE id="UmTY9o" name="AlertTask.cpp" compile="1" resource="0" file="Source/task/AlertTask.cpp"/>
         <FILE id="Klwt5G" name="AlertTask.h" compile="0" resource="0" file="Source/task/AlertTask.h"/>
+        <FILE id="jDeyF0" name="DialogTestTask.cpp" compile="1" resource="0"
+              file="Source/task/DialogTestTask.cpp"/>
+        <FILE id="FH2PAh" name="DialogTestTask.h" compile="0" resource="0"
+              file="Source/task/DialogTestTask.h"/>
         <FILE id="XGJdta" name="ProjectClerk.cpp" compile="1" resource="0"
               file="Source/task/ProjectClerk.cpp"/>
         <FILE id="kPlIYI" name="ProjectClerk.h" compile="0" resource="0" file="Source/task/ProjectClerk.h"/>

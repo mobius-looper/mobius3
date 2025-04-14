@@ -24,6 +24,7 @@
 #include "../Producer.h"
 #include "../Prompter.h"
 #include "../task/TaskMaster.h"
+#include "../task/Task.h"
 
 #include "JuceUtil.h"
 #include "MainMenu.h"
@@ -388,6 +389,12 @@ void MainWindow::mainMenuSelection(int id)
             case MainMenu::CancelTasks: {
                 TaskMaster* tm = supervisor->getTaskMaster();
                 tm->cancelAll();
+            }
+                break;
+                
+            case MainMenu::TestTask: {
+                TaskMaster* tm = supervisor->getTaskMaster();
+                tm->launch(Task::DialogTest);
             }
                 break;
                 

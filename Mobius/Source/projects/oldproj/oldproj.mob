@@ -1,0 +1,14 @@
+<Project number='0'>
+  <Track active='true' input='127' output='127' feedback='127' altFeedback='127' pan='64' reverse='true' speedOctave='0' speedStep='0' speedBend='0' speedToggle='0' pitchOctave='0' pitchStep='0' pitchBend='0' timeStretch='0'>
+    <Loop active='true'>
+      <Layer cycles='1' audio='C:\dev\mobius3\Mobius\Source\projects\oldproj\oldproj-1-1-0.wav'/>
+    </Loop>
+  </Track>
+  <Track input='127' output='127' feedback='127' altFeedback='127' pan='64' reverse='true' speedOctave='0' speedStep='0' speedBend='0' speedToggle='0' pitchOctave='0' pitchStep='0' pitchBend='0' timeStretch='0'/>
+  <Track input='127' output='127' feedback='127' altFeedback='127' pan='64' reverse='true' speedOctave='0' speedStep='0' speedBend='0' speedToggle='0' pitchOctave='0' pitchStep='0' pitchBend='0' timeStretch='0'/>
+  <Track input='127' output='127' feedback='127' altFeedback='127' pan='64' reverse='true' speedOctave='0' speedStep='0' speedBend='0' speedToggle='0' pitchOctave='0' pitchStep='0' pitchBend='0' timeStretch='0'/>
+  <Track input='127' output='127' feedback='127' altFeedback='127' pan='64' reverse='true' speedOctave='0' speedStep='0' speedBend='0' speedToggle='0' pitchOctave='0' pitchStep='0' pitchBend='0' timeStretch='0'/>
+  <Track input='127' output='127' feedback='127' altFeedback='127' pan='64' reverse='true' speedOctave='0' speedStep='0' speedBend='0' speedToggle='0' pitchOctave='0' pitchStep='0' pitchBend='0' timeStretch='0'/>
+  <Track input='127' output='127' feedback='127' altFeedback='127' pan='64' reverse='true' speedOctave='0' speedStep='0' speedBend='0' speedToggle='0' pitchOctave='0' pitchStep='0' pitchBend='0' timeStretch='0'/>
+  <Track input='127' output='127' feedback='127' altFeedback='127' pan='64' reverse='true' speedOctave='0' speedStep='0' speedBend='0' speedToggle='0' pitchOctave='0' pitchStep='0' pitchBend='0' timeStretch='0'/>
+</Project>

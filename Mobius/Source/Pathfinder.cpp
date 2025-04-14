@@ -27,8 +27,10 @@ juce::String Pathfinder::getLastFolder(juce::String purpose)
         // !! actually, I don't like defaulting to the installation root
         // because almost nothing of interesting is going to be there
         // for user files
-        juce::File home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
-        path = home.getFullPathName();
+        // ugh, this needs to be in the released version but it's too painful
+        // for development to have to walk back here
+        //juce::File home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
+        //path = home.getFullPathName();
     }
     return path;
 }

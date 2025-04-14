@@ -269,7 +269,7 @@ void ProjectExportTask::chooseFolder()
             if (result.size() > 0) {
                 juce::File file = result[0];
                 Pathfinder* pf = provider->getPathfinder();
-                pf->saveLastFolder(purpose, file.getFullPathName());
+                pf->saveLastFolder(purpose, file.getParentDirectory().getFullPathName());
 
                 // !! this may recorse and call chooseFolder again
                 // to avoid the chooser != nullptr test above, have to reset it

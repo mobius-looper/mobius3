@@ -32,6 +32,7 @@ const char* Task::getTypeName()
     const char* name = "???";
     switch (type) {
         case None: name = "None"; break;
+        case DialogTest: name = "DialogTest"; break;
         case Alert: name = "Alert"; break;
         case ProjectExport: name = "ProjectExport"; break;
         case ProjectImport: name = "ProjectImport"; break;

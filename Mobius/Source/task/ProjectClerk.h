@@ -18,6 +18,9 @@ class ProjectClerk
     
     int writeProject(class Task* task, juce::File folder, class TrackContent* content);
 
+    class TrackContent* readSnapshot(class Task* task, juce::File file);
+    class TrackContent* readOld(class Task* task, juce::File file);
+
   private:
 
     class Provider* provider = nullptr;

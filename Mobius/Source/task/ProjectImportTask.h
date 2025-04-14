@@ -5,30 +5,47 @@
 #include "../mobius/TrackContent.h"
 
 #include "Task.h"
+#include "TaskPromptDialog.h"
 
 class ProjectImportTask : public Task, public YanDialog::Listener
 {
   public:
     
+    typedef enum {
+        Start,
+        Inspect,
+        MismatchedTracks,
+        ImportNew,
+        ImportOld,
+        Result,
+        Cancel
+    } Step;
+    
     ProjectImportTask();
 
     void run() override;
-
-    void cancel();
-    
-    // internal use but need to be public for the async notification?
-    // void continueWorkflow(bool cancel);
+    void ping() override;
+    void cancel() override;
     
     void yanDialogClosed(YanDialog* d, int button);
-
+    void fileChosen(juce::File file);
+    
   private:
 
+    Step step = Start;
+
+    juce::File importFile;
     std::unique_ptr<class TrackContent> content;
     
-    YanDialog resultDialog {this};
+    TaskPromptDialog dialog {this};
+    std::unique_ptr<juce::FileChooser> chooser;
 
-    // final file creation
-    void compileProject();
+    void transition();
+    void findImport();
+    void inspectImport();
+    void doImportNew();
+    void doImportOld();
+    void showResult();
 
 };
 

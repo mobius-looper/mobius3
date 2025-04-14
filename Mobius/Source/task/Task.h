@@ -21,6 +21,7 @@ class Task
     typedef enum {
         
         None,
+        DialogTest,
         Alert,
         ProjectExport,
         ProjectImport
