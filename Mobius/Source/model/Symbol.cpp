@@ -217,6 +217,36 @@ void SymbolTable::bake()
 {
     buildIdMap();
     isolateParameters();
+    info();
+}
+
+void SymbolTable::info()
+{
+    int functions = 0;
+    int params = 0;
+    int scripts = 0;
+    int samples = 0;
+    int configs = 0;
+
+    for (auto s : symbols) {
+        if (s->functionProperties != nullptr)
+          functions++;
+        else if (s->parameterProperties != nullptr)
+          params++;
+        else if (s->script != nullptr)
+          scripts++;
+        else if (s->sample != nullptr)
+          samples++;
+        else if (s->behavior == BehaviorActivation)
+          configs++;
+    }
+
+    Trace(2, "SymbolTable: %d functiosn %d parameters %d scripts %d objects",
+          functions, params, scripts, configs);
+
+    if (samples > 0) {
+        Trace(2, "SymbolTable: %d samples", samples);
+    }
 }
 
 /**

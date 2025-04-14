@@ -89,7 +89,7 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     void setListener(Listener* l);
     void setSerious(bool b);
     void setTitle(juce::String s);
-    void clear();
+    
     void clearMessages();
     void addMessage(juce::String s);
     void addMessage(Message m);
@@ -100,12 +100,15 @@ class YanDialog : public juce::Component, public juce::Button::Listener
     void clearButtons();
     void addButton(juce::String text);
     void setButtons(juce::String csv);
+    
     void addField(class YanField* f);
     void setContent(juce::Component* c);
 
     void show();
     void show(juce::Component* parent);
     void cancel();
+    void clear();
+    void reset();
     
     void resized();
     void paint(juce::Graphics& g);

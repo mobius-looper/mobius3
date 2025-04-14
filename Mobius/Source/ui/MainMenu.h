@@ -136,7 +136,8 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         DecacheForms,
         HelpTest,
         AnalyzeMidi,
-        InProgress
+        InProgress,
+        CancelTasks
         
         };
     

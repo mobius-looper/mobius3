@@ -23,6 +23,7 @@
 #include "../Symbolizer.h"
 #include "../Producer.h"
 #include "../Prompter.h"
+#include "../task/TaskMaster.h"
 
 #include "JuceUtil.h"
 #include "MainMenu.h"
@@ -382,6 +383,12 @@ void MainWindow::mainMenuSelection(int id)
             case MainMenu::InProgress:
                 //panelFactory.show(PanelFactory::InProgress);
                 //panelFactory.show(PanelFactory::Buttons);
+                break;
+
+            case MainMenu::CancelTasks: {
+                TaskMaster* tm = supervisor->getTaskMaster();
+                tm->cancelAll();
+            }
                 break;
                 
             case MainMenu::HelpTest:

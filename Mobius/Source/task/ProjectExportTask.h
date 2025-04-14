@@ -2,7 +2,7 @@
  *  Workflow for project export
  */
 
-#include <JuceHeader.h>
+#include <JuceHeader.h >
 
 #include "../ui/common/YanDialog.h"
 #include "../mobius/TrackContent.h"
@@ -18,23 +18,26 @@ class ProjectExportTask : public Task, public YanDialog::Listener
         Start,
         WarnMissingUserFolder,
         WarnInvalidUserFolder,
-        ChooseContainer,
         ChooseFolder,
+        VerifyFolder,
+        WarnOverwrite,
         Export,
-        Results,
+        Result,
         Cancel
     } Step;
     
     ProjectExportTask();
 
     void run() override;
-    void cancel();
+    void ping() override;
+    void cancel() override;
     
     // internal use but need to be public for the async notification?
     void yanDialogClosed(YanDialog* d, int button);
 
   private:
 
+    juce::String userFolder;
     juce::File projectContainer;
     juce::File projectFolder;
 
@@ -46,14 +49,17 @@ class ProjectExportTask : public Task, public YanDialog::Listener
     std::unique_ptr<class TrackContent> content;
 
     // workflow steps
-    void locateProjectDestination();
-    juce::File generateUnique(juce::String desired);
-    void confirmDestination();
-    void chooseDestination();
-    void finishChooseDestination(juce::File choice);
 
+    void transition();
+    void fileChosen(juce::File file);
+    void findProjectContainer();
+    void warnMissingUserFolder();
+    void warnInvalidUserFolder();
+    void chooseFolder();
+    void verifyFolder();
+    bool isEmpty(juce::File f);
+    void warnOverwrite();
     void doExport();
-    void compileProject();
     void showResult();
 
 };

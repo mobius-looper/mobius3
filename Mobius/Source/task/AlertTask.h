@@ -10,6 +10,8 @@ class AlertTask : public Task
     AlertTask();
 
     void run() override;
+    void cancel() override;
+    
 };
 
 

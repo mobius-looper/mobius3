@@ -40,14 +40,19 @@ class Task
     bool isFinished();
 
     virtual void run() = 0;
-    virtual void pint() {}
+    virtual void cancel() = 0;
+    virtual void ping() {}
     
     virtual bool isConcurrent() {
         return false;
     }
 
     bool hasMessages();
+    bool hasErrors();
     void clearMessages();
+    void addMessage(juce::String s);
+    void addError(juce::String e);
+    void addWarning(juce::String w);
     
   protected:
 

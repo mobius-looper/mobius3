@@ -11,3 +11,7 @@ void AlertTask::run()
     finished = true;
 }
 
+void AlertTask::cancel()
+{
+    finished = true;
+}

@@ -118,12 +118,19 @@ void YanDialog::setTitle(juce::String s)
     title = s;
 }
 
-void YanDialog::clear()
+void YanDialog::reset()
 {
     title = "";
     messages.clear();
     warnings.clear();
     errors.clear();
+    clearButtons();
+    addButton("Ok");
+
+    form.clear();
+    if (form.getParentComponent() != nullptr) {
+        form.getParentComponent()->removeChildComponent(&form);
+    }
 }
 
 void YanDialog::clearMessages()
@@ -194,9 +201,9 @@ void YanDialog::addField(YanField* f)
 void YanDialog::clearButtons()
 {
     buttonNames.clear();
+    buttonRow.clear();
     while (buttons.size() > 0) {
         juce::Button* b = buttons.removeAndReturn(0);
-        buttonRow.remove(b);
         delete b;
     }
 }
@@ -228,6 +235,7 @@ void YanDialog::show()
     }
     else {
         resized();
+        form.forceResize();
         JuceUtil::centerInParent(this);
         setVisible(true);
     }
@@ -336,6 +344,8 @@ void YanDialog::resized()
 
     area.removeFromBottom(BottomGap);
     buttonRow.setBounds(area.removeFromBottom(ButtonHeight));
+    // often the same size on redisplay, force a refresh
+    buttonRow.resized();
     (void)area.removeFromBottom(buttonGap);
     
     if (title.length() > 0) {
@@ -484,15 +494,18 @@ void YanDialog::renderMessage(juce::Graphics& g, Message& m, juce::Rectangle<int
 
 void YanDialog::buttonClicked(juce::Button* b)
 {
-    int ordinal = buttons.indexOf(b);
-    if (listener != nullptr)
-      listener->yanDialogClosed(this, ordinal);
-
+    // things like Tasks that reuse the same dialog in a sequence
+    // may want to adjust it and show it again in the close handler
+    // so remove it first, so it can be added back
     // just hiding it isn't good, if the window reorganizes
     // while it is hidden it can mess up the z-order making the dialog
     // invisible
     //setVisible(false);
     getParentComponent()->removeChildComponent(this);
+
+    int ordinal = buttons.indexOf(b);
+    if (listener != nullptr)
+      listener->yanDialogClosed(this, ordinal);
 }
 
 void YanDialog::cancel()

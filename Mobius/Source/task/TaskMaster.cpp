@@ -100,6 +100,22 @@ void TaskMaster::cancel(int id)
     }
 }
 
+void TaskMaster::cancelAll()
+{
+    // give them a chance to do an orderly shutdown
+    for (auto task : tasks) {
+        task->cancel();
+    }
+    // force an advance to reap them
+    advance();
+
+    // if any are lingering lay waste
+    if (tasks.size() > 0) {
+        Trace(1, "TaskMaster::cancelAll Lingering tasks after orderly cancel");
+        tasks.clear();
+    }
+}
+
 juce::OwnedArray<Task>& TaskMaster::getTasks()
 {
     return tasks;
@@ -110,6 +126,9 @@ void TaskMaster::advance()
     int index = 0;
     while (index < tasks.size()) {
         Task* t = tasks[index];
+
+        t->ping();
+        
         if (t->isFinished()) {
             Trace(2, "TaskMaster: Reclaiming finished task %s", t->getTypeName());
             finish(t);

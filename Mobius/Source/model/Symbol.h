@@ -344,6 +344,7 @@ class SymbolTable
     
     void buildIdMap();
     void isolateParameters();
+    void info();
 };
 
 /****************************************************************************/

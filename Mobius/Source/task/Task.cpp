@@ -56,9 +56,33 @@ bool Task::hasMessages()
     return (messages.size() > 0 || errors.size() > 0 || warnings.size() > 0);
 }
 
+bool Task::hasErrors()
+{
+    return (errors.size() > 0);
+}
+
 void Task::clearMessages()
 {
     messages.clear();
     warnings.clear();
     errors.clear();
 }
+
+void Task::addMessage(juce::String m)
+{
+    messages.add(m);
+}
+
+void Task::addError(juce::String e)
+{
+    errors.add(e);
+}
+
+void Task::addWarning(juce::String w)
+{
+    warnings.add(w);
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

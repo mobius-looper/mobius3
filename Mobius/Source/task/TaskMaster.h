@@ -21,7 +21,8 @@ class TaskMaster
     
     void finish(int id);
     void cancel(int id);
-
+    void cancelAll();
+    
     void advance();
 
     class Task* find(Task::Type t);
