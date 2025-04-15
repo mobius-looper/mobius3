@@ -141,6 +141,11 @@
     <Button action="Start/Stop"/>
     <Button action="SelectLoop" arguments="4"/>
     <Button action="Rec/Play/Stop"/>
+    <Button action="SpeedUp" arguments="1"/>
+    <Button action="SpeedDown" arguments="1"/>
+    <Button action="SpeedToggle" arguments="-5"/>
+    <Button action="SpeedStep" arguments="3"/>
+    <Button action="SpeedCancel"/>
   </ButtonSet>
   <ButtonSet name="Buttons2">
     <Button action="Reset"/>

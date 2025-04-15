@@ -139,7 +139,10 @@ void Loader::loadLoop(Audio* audio, int trackNumber, int loopNumber)
             // doesn't necessarily mean you want this to be the sync master always?
             if (loop == track->getLoop())
               mobius->getSynchronizer()->loadLoop(loop);
-            
+
+            // new flag eventually copied to TrackState
+            // this method can be removed when Loader goes away
+            track->setNeedsRefresh();
         }
     }
 

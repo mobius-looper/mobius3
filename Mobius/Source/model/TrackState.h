@@ -307,10 +307,6 @@ class TrackState
     // latching flag indiciating that loops were loaded from files
     // or otherwise had their size adjusted when not active
     bool refreshLoopContent = false;
-        
-    // another from OldMobiusState
-    // I think this was set after loading projects
-    bool needsRefresh = false;
 };
 
 ///////////////////////////////////////////////////////////////////////

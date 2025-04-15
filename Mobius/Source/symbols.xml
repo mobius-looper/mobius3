@@ -89,13 +89,19 @@ Once those models are fully converted, these symbols can be removed.
   <Function name="SlipForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="SlipBackward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="Solo" mayFocus='true' tree='Track'/>
-  <Function name="SpeedDown" mayFocus='true' mayCancelMute='true' tree='Speed'/>
+  
+  <Function name="SpeedDown" mayFocus='true' mayCancelMute='true' tree='Speed'
+            options='hasArguments'/>
   <Function name="SpeedNext" mayFocus='true' mayCancelMute='true' tree='Speed'/>
   <Function name="SpeedCancel" mayFocus='true' mayCancelMute='true' tree='Speed'/>
   <Function name="SpeedPrev" mayFocus='true' mayCancelMute='true' tree='Speed'/>
-  <Function name="SpeedStep" mayFocus='true' mayCancelMute='true' tree='Speed'/>
-  <Function name="SpeedUp" mayFocus='true' mayCancelMute='true' tree='Speed'/>
-  <Function name="SpeedToggle" mayFocus='true' mayCancelMute='true' tree='Speed'/>
+  <Function name="SpeedStep" mayFocus='true' mayCancelMute='true' tree='Speed'
+            options='hasArguments'/>
+  <Function name="SpeedUp" mayFocus='true' mayCancelMute='true' tree='Speed'
+            options='hasArguments'/>
+  <Function name="SpeedToggle" mayFocus='true' mayCancelMute='true' tree='Speed'
+            options='hasArguments'/>
+  
   <!-- core has this mayFocus -->
   <Function name="StartCapture" global='true' tree='Utility' hidden='true'/>
   <Function name="StartPoint" mayFocus='true' mayCancelMute='true' tree='Editing'/>

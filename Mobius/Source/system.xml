@@ -53,6 +53,8 @@
       <Binding symbol="SyncMasterTransport" trigger="note"/>
       <Binding symbol="TrackGroup" trigger="note" arguments="Bx"/>
       <Binding symbol="SamplePlay" trigger="note" arguments="66"/>
+      <Binding symbol="asdf:bar" trigger="note" scope="1" arguments="jyg"/>
+      <Binding symbol="Global Stop" trigger="note" scope="2"/>
     </BindingSet>
     <BindingSet name="midi1">
       <Binding symbol="Overdub" trigger="note" value="50" channel="1"/>

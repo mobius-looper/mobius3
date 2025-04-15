@@ -1040,6 +1040,19 @@ void Track::refreshState(TrackState* s)
         if (stop != nullptr)
           s->frames = (int)(stop->frame);
     }
+
+    // this is set after loading a project or snapshot
+    // it "latches" and stays set until the next refresh
+    if (mNeedsRefresh) {
+        s->refreshLoopContent = true;
+        mNeedsRefresh = false;
+    }
+}
+
+// only for Loader to set this flag until Loader goes away
+void Track::setNeedsRefresh()
+{
+    mNeedsRefresh = true;
 }
 
 /****************************************************************************
@@ -1768,6 +1781,9 @@ void Track::loadContent(TrackContent* content, TrackContent::Track* src)
             }
         }
     }
+
+    // remember this and copy it into the TrackState on the next refresh cycle
+    mNeedsRefresh = true;
 }
 
 /****************************************************************************/

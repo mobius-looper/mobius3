@@ -365,6 +365,11 @@ void BindingContent::load(BindingDetailsListener* l, Binding* src)
         addScope = (!s->functionProperties->global &&
                     s->level != LevelUI);
     }
+    else if (s->script != nullptr) {
+        // scripts don't have any metadata yet to indiciate whether they are
+        // global or track-specific
+        addScope = true;
+    }
 
     if (addScope) {
         qualifiers.add(&scope);
@@ -387,7 +392,11 @@ void BindingContent::load(BindingDetailsListener* l, Binding* src)
             field->setLabel(label);
         }
     }
-
+    else if (s->script != nullptr) {
+        argumentType = "";
+        qualifiers.add(&arguments);
+    }
+    
     if (type == TypeButton) {
         qualifiers.add(&displayName);
         displayName.setValue(src->displayName);
@@ -433,6 +442,7 @@ YanField* BindingContent::renderArguments(FunctionProperties* props)
     }
     else {
         argumentType = "";
+        arguments.setValue(binding.arguments);
         result = &arguments;
     }
 

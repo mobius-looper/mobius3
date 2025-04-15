@@ -19,6 +19,10 @@
       <GROUP id="{BE79A77C-59B8-927E-C7CD-D6DA95162218}" name="task">
         <FILE id="hbFmKZ" name="AlertTask.cpp" compile="1" resource="0" file="../Mobius/Source/task/AlertTask.cpp"/>
         <FILE id="UbBrGa" name="AlertTask.h" compile="0" resource="0" file="../Mobius/Source/task/AlertTask.h"/>
+        <FILE id="LBagOW" name="DialogTestTask.cpp" compile="1" resource="0"
+              file="../Mobius/Source/task/DialogTestTask.cpp"/>
+        <FILE id="oL9rcb" name="DialogTestTask.h" compile="0" resource="0"
+              file="../Mobius/Source/task/DialogTestTask.h"/>
         <FILE id="LN6rYQ" name="ProjectClerk.cpp" compile="1" resource="0"
               file="../Mobius/Source/task/ProjectClerk.cpp"/>
         <FILE id="fjbhKp" name="ProjectClerk.h" compile="0" resource="0" file="../Mobius/Source/task/ProjectClerk.h"/>
@@ -34,6 +38,10 @@
         <FILE id="MY2IL9" name="Task.h" compile="0" resource="0" file="../Mobius/Source/task/Task.h"/>
         <FILE id="VPufZL" name="TaskMaster.cpp" compile="1" resource="0" file="../Mobius/Source/task/TaskMaster.cpp"/>
         <FILE id="aloHLv" name="TaskMaster.h" compile="0" resource="0" file="../Mobius/Source/task/TaskMaster.h"/>
+        <FILE id="nMNMxW" name="TaskPromptDialog.cpp" compile="1" resource="0"
+              file="../Mobius/Source/task/TaskPromptDialog.cpp"/>
+        <FILE id="po7UHi" name="TaskPromptDialog.h" compile="0" resource="0"
+              file="../Mobius/Source/task/TaskPromptDialog.h"/>
       </GROUP>
       <FILE id="TQaBSl" name="Services.h" compile="0" resource="0" file="../Mobius/Source/Services.h"/>
       <GROUP id="{59A74BF1-C49F-39B8-54CF-132F813D34E1}" name="tools">

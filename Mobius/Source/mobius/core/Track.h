@@ -82,6 +82,9 @@ class Track : public TraceContext
 
     void gatherContent(class TrackContent* c);
     void loadContent(class TrackContent* c, class TrackContent::Track* src);
+
+    // temporary for Loader until we switch everything to loadContent
+    void setNeedsRefresh();
     
     //////////////////////////////////////////////////////////////////////
     // Old Interface
@@ -289,6 +292,11 @@ class Track : public TraceContext
 
 	int mRawNumber = 0;        // zero based
     class LogicalTrack* mLogicalTrack = nullptr;
+
+    // new flag indiciating that the loop structure has changed in some way
+    // and needs a full UI refresh
+    // set after loading projects/snapshots
+    bool mNeedsRefresh = false;
 
 	class Mobius* mMobius = nullptr;
     class Notifier* mNotifier = nullptr;
