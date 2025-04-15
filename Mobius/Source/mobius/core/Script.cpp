@@ -3766,7 +3766,7 @@ Event* ScriptWaitStatement::setupWaitEvent(ScriptInterpreter* si,
 long ScriptWaitStatement::getMsecFrames(ScriptInterpreter* si, long msecs)
 {
 	float rate = si->getTargetTrack()->getEffectiveSpeed();
-    int baseFrames = si->getMobius()->msecToFrames(msecs);
+    long baseFrames = si->getMobius()->msecToFrames((int)msecs);
 	long frames = (long)(baseFrames * rate);
 	return frames;
 }

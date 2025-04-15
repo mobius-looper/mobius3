@@ -2,7 +2,7 @@
  *  Workflow for project export
  */
 
-#include <JuceHeader.h >
+#include <JuceHeader.h>
 
 #include "../ui/common/YanDialog.h"
 #include "../mobius/TrackContent.h"
@@ -33,7 +33,7 @@ class ProjectExportTask : public Task, public YanDialog::Listener
     void cancel() override;
     
     // internal use but need to be public for the async notification?
-    void yanDialogClosed(YanDialog* d, int button);
+    void yanDialogClosed(YanDialog* d, int button) override;
 
   private:
 

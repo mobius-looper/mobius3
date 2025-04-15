@@ -14,12 +14,12 @@ class DialogTestTask : public Task, public YanDialog::Listener
 
     void run() override;
 
-    void cancel();
+    void cancel() override;
     
     // internal use but need to be public for the async notification?
     // void continueWorkflow(bool cancel);
     
-    void yanDialogClosed(YanDialog* d, int button);
+    void yanDialogClosed(YanDialog* d, int button) override;
 
   private:
 

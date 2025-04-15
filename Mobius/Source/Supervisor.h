@@ -365,7 +365,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     }
 
     // stupid utility to generate unique identififers for bindings
-    int newUid();
+    int newUid() override;
 
     //////////////////////////////////////////////////////////////////////
     // Services

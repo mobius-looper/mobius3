@@ -27,7 +27,7 @@ class ProjectImportTask : public Task, public YanDialog::Listener
     void ping() override;
     void cancel() override;
     
-    void yanDialogClosed(YanDialog* d, int button);
+    void yanDialogClosed(YanDialog* d, int button) override;
     void fileChosen(juce::File file);
     
   private:

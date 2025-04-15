@@ -100,8 +100,8 @@ class YanDialog : public juce::Component, public juce::Button::Listener
         juce::Colour borderColor;
         int postGap = SectionPostGap;
         
-        void ContentSection::addField(YanField* f);
-        void ContentSection::setContent(juce::Component* c);
+        void addField(YanField* f);
+        void setContent(juce::Component* c);
         void clear();
         int getPreferredHeight();
         void resized() override;
