@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../Notification.h"
+#include "../TrackContent.h"
 
 class BaseTrack
 {
@@ -75,7 +76,8 @@ class BaseTrack
 
     // and can really spill its guts
     virtual void gatherContent(class TrackContent* content) = 0;
-
+    virtual void loadContent(class TrackContent* content, class TrackContent::Track* src) = 0;
+    
     // and we can watch what it does
     virtual int scheduleFollowerEvent(QuantizeMode q, int follower, int eventId) = 0;
 

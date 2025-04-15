@@ -189,6 +189,12 @@ class MobiusInterface {
     virtual class Audio* allocateAudio() = 0;
 
     /**
+     * new: open up AudioPool for the new project/snapshot loader
+     * needs redesign
+     */
+    virtual class AudioPool* getAudioPool() = 0;
+
+    /**
      * Receive an Audio returned by allocateAudio filled in with data
      * and install it as a loop.  Ownership of the Audio is taken.
      */
@@ -281,7 +287,7 @@ class MobiusInterface {
     // New interface, eventually replacement for saveProject and loadProject
 
     virtual class TrackContent* getTrackContent(bool includeLayers) = 0;
-    virtual juce::StringArray loadTrackContent(class TrackContent* c) = 0;
+    virtual void loadTrackContent(class TrackContent* c) = 0;
 
     // newer interfaces for individual loop load/save that fit more with
     // the Project style of doing things

@@ -15,6 +15,7 @@
 #include "../../util/Trace.h"
 
 #include "../Notification.h"
+#include "../TrackContent.h"
 
 /****************************************************************************
  *                                                                          *
@@ -80,7 +81,8 @@ class Track : public TraceContext
     void dump(class StructureDumper& d);
 
     void gatherContent(class TrackContent* c);
-
+    void loadContent(class TrackContent* c, class TrackContent::Track* src);
+    
     //////////////////////////////////////////////////////////////////////
     // Old Interface
     //////////////////////////////////////////////////////////////////////

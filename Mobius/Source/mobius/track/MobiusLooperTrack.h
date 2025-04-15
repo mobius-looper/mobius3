@@ -54,6 +54,7 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     void finishWait(class TrackWait& wait) override;
 
     void gatherContent(class TrackContent* content) override;
+    void loadContent(class TrackContent* content, class TrackContent::Track* src) override;
     
     //
     // MslTrack

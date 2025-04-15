@@ -12,6 +12,7 @@
 #include "../mobius/TrackContent.h"
 #include "../mobius/Audio.h"
 #include "../mobius/AudioFile.h"
+#include "../mobius/AudioPool.h"
 
 #include "../Provider.h"
 #include "Task.h"
@@ -238,11 +239,11 @@ TrackContent* ProjectClerk::readOld(Task* task, juce::File file)
 /**
  * A Track element used to contain snapshots of a few parameters like the levels
  * and a flag indiciating whether it was active.
- * Ignoring those.
  */
 void ProjectClerk::parseOldTrack(Task* task, juce::File project, TrackContent* content, juce::XmlElement* root)
 {
     TrackContent::Track* track = new TrackContent::Track();
+    track->active = root->getBoolAttribute("active");
 
     for (auto* el : root->getChildIterator()) {
         if (el->hasTagName("Loop")) {
@@ -260,14 +261,11 @@ void ProjectClerk::parseOldTrack(Task* task, juce::File project, TrackContent* c
       delete track;
 }
 
-/**
- * Loop has a flag indiciating that it was active
- * this might be useful
- */
 void ProjectClerk::parseOldLoop(Task* task, juce::File project, TrackContent::Track* track, juce::XmlElement* root)
 {
     TrackContent::Loop* loop = new TrackContent::Loop();
-
+    loop->active = root->getBoolAttribute("active");
+    
     for (auto* el : root->getChildIterator()) {
         if (el->hasTagName("Layer")) {
             parseOldLayer(task, project, loop, el);
@@ -321,13 +319,11 @@ void ProjectClerk::parseOldLayer(Task* task, juce::File project, TrackContent::L
     // and now we've got our old audio file reader
     // continue using that till I can test a replacement
 
-    // this is normally passed an AudioPool to allocate blocks
-    // since we are at the shell level that is not accessible
-    // and even if you provide a way to pass that up, it is unclear whether
-    // that is thread safe
-    
-    AudioPool* pool = provider->getAudioPool();
-    juce::String errors;
+    // continue to use the ancient Audio/AudioPool system
+    // this really needs a rewrite
+    MobiusInterface* mobius = provider->getMobius();
+    AudioPool* pool = mobius->getAudioPool();
+    juce::StringArray errors;
     Audio* audio = AudioFile::read(file, pool, errors);
 
     if (errors.size() > 0) {
@@ -338,8 +334,9 @@ void ProjectClerk::parseOldLayer(Task* task, juce::File project, TrackContent::L
         task->addError("Unable to read .wav file");
     }
     else {
-        layer = new TrackContent::Layer();
+        TrackContent::Layer* layer = new TrackContent::Layer();
         layer->audio.reset(audio);
+        layer->cycles = cycles;
         loop->layers.add(layer);
     }
 }

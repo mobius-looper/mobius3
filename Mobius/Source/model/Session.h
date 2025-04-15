@@ -26,7 +26,8 @@ class Session
     typedef enum {
         TypeAudio,
         TypeMidi,
-        TypeSampler
+        TypeSampler,
+        TypeUnknown
     } TrackType;
 
     class Track {

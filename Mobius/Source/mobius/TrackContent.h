@@ -18,7 +18,7 @@ class TrackContent
 
     class Layer {
       public:
-
+        int cycles = 0;
         std::unique_ptr<class Audio> audio;
         std::unique_ptr<class MidiSequence> midi;
     };
@@ -26,12 +26,14 @@ class TrackContent
     class Loop {
       public:
         int number = 0;
+        bool active = false;
         juce::OwnedArray<Layer> layers;
     };
 
     class Track {
       public:
         int number = 0;
+        bool active = false;
         juce::OwnedArray<Loop> loops;
     };
 
@@ -40,6 +42,11 @@ class TrackContent
 
     juce::OwnedArray<Track> tracks;
     juce::StringArray errors;
+
+    // statistics set during loading
+    int tracksLoaded = 0;
+    int loopsLoaded = 0;
+    int layersLoaded = 0;
     
 };
 

@@ -1712,6 +1712,64 @@ void Track::gatherContent(TrackContent* content)
     }
 }
 
+void Track::loadContent(TrackContent* content, TrackContent::Track* src)
+{
+    content->tracksLoaded++;
+    
+    // same shit as TrackManager does for track number normalization
+    // need to do this at a higher level since MidiTrack will need the same thing
+    int withNumbers = 0;
+    int total = 0;
+    for (auto loop : src->loops) {
+        total++;
+        if (loop->number > 0)
+          withNumbers++;
+    }
+
+    if (withNumbers == 0) {
+        int n = 1;
+        for (auto loop : src->loops)
+          loop->number = n++;
+    }
+    else if (withNumbers != src->loops.size()) {
+        Trace(1, "Track: TrackContent has mixture of numbered and unnumbered loops");
+    }
+
+    if (total > mLoopCount) {
+        Trace(1, "Track: TrackContent has more loops than are configured for this track");
+        // interesting: we could extend he loop count when we encounter them, but then this
+        // will violate the Session::Track definition and we're not in a position
+        // to change that here
+    }
+
+    // Loop needs to know if it will be active or not to set the mode
+    // this used to be saved in the Project and we still capture that flag
+    // but with all the possible content errors, we may not actually install that one
+    // force it to be the first loop in the payload
+    // !! pretty sure there are going to be issues with sparse loop lists
+    bool foundActive = false;
+    for (auto loop : src->loops) {
+        loop->active = false;
+        if (loop->number == 0) {
+            Trace(1, "Track: Ignoring TrackContent unnumbered loop");
+        }
+        else {
+            int lindex = loop->number - 1;
+            if (lindex >= mLoopCount)
+              Trace(1, "Track: Ignoring TracnContent loop out of range");
+            else {
+                Loop* dest = mLoops[lindex];
+                if (!foundActive) {
+                    loop->active = true;
+                    foundActive = true;
+                    mLoop = dest;
+                }
+                dest->loadContent(content, loop);
+            }
+        }
+    }
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

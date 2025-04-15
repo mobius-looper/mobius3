@@ -104,6 +104,11 @@ void LogicalTrack::gatherContent(class TrackContent* c)
     track->gatherContent(c);
 }
 
+void LogicalTrack::loadContent(class TrackContent* c, class TrackContent::Track* t)
+{
+    track->loadContent(c, t);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Session Refresh

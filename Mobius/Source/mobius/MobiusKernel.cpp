@@ -1881,14 +1881,6 @@ void MobiusKernel::finishWait(MslWait* wait, bool canceled)
 //
 //////////////////////////////////////////////////////////////////////
 
-juce::StringArray MobiusKernel::loadTrackContent(TrackContent* c)
-{
-    juce::StringArray errors;
-    errors.add("Not implemented");
-    (void)c;
-    return errors;
-}
-
 /**
  * This is what underpins project export.
  * Copy all of the current track content into the TrackContent payload container.
@@ -1919,6 +1911,27 @@ TrackContent* MobiusKernel::getTrackContent(bool includeLayers)
         resume();
     }
     return content;
+}
+
+void MobiusKernel::loadTrackContent(TrackContent* c)
+{
+    suspend();
+    
+    // we shouldn't have to wait too long and don't need to "poll" more than once
+    // since audio blocks should be comming in every few milliseconds
+    container->sleep(100);
+
+    if (!isSuspended()) {
+        c->errors.add("Unable to suspend kernel");
+        // !!this is bad, even if we clear this flag there is no assurance
+        // that the audio thread didn't see it at this very moment
+        // need to work on the race conditions 
+        suspendRequested = false;
+    }
+    else {
+        mTracks->loadContent(c);
+        resume();
+    }
 }
 
 /****************************************************************************/

@@ -1147,6 +1147,12 @@ void MidiTrack::gatherContent(TrackContent* content)
     content->errors.add(juce::String("Track ") + juce::String(getNumber()) + ": Unable to export MIDI content");
 }
 
+void MidiTrack::loadContent(TrackContent* content, TrackContent::Track* src)
+{
+    (void)src;
+    content->errors.add(juce::String("Track ") + juce::String(getNumber()) + ": Unable to import MIDI content");
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

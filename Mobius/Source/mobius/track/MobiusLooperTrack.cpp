@@ -200,6 +200,11 @@ void MobiusLooperTrack::gatherContent(TrackContent* content)
     track->gatherContent(content);
 }
 
+void MobiusLooperTrack::loadContent(TrackContent* content, TrackContent::Track* src)
+{
+    track->loadContent(content, src);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MslTrack Waits

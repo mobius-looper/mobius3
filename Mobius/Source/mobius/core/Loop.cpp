@@ -6320,6 +6320,63 @@ void Loop::gatherContent(TrackContent::Loop* lcontent)
     }
 }
 
+/**
+ * The code here is mostly the same as the old code for loading Projects
+ * That would completely clear the loop of it's layers which I think makes
+ * sense since you can't randomly mix snapshot layers and curernt layers
+ * with any continunity.
+ */
+void Loop::loadContent(TrackContent* content, TrackContent::Loop* src)
+{
+    clear();
+
+    content->loopsLoaded++;
+
+    LayerPool* lp = mMobius->getLayerPool();
+
+    for (auto srclayer : src->layers) {
+        if (srclayer->audio == nullptr) {
+            Trace(1, "Loop: Ignoring TrackContent layer with no audio");
+        }
+        else {
+            Layer* layer = lp->newLayer(this);
+            layer->setAudio(srclayer->audio.release());
+            layer->setCycles(srclayer->cycles);
+            layer->setPrev(mPlay);
+            mPlay = layer;
+            content->layersLoaded++;
+        }
+    }
+    
+    if (mPlay != nullptr) {
+        mRecord = mPlay->copy();
+        mRecord->setPrev(mPlay);
+    }
+    
+	// Can't be in Reset any more
+	// switch processing will change this, but let this be
+	// our "resume" point, could save this in the project if we
+	// want to be REALLY anal
+	// !! need to be able to restore the frame from the project
+	setFrame(-(mInput->latency));
+	mPlayFrame = mOutput->latency;
+
+	if (!src->active) {
+		setMode(PlayMode);
+		mMuteMode = false;
+		mMute = false;
+		mPause = false;
+	}
+	else {
+		// put the active loop in a pause mute since it is hard to predict
+		// when the load will finish
+		setMode(MuteMode);
+		mMuteMode = true;
+		mMute = true;
+		mPause = true;
+	}
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

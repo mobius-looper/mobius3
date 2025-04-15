@@ -147,9 +147,27 @@ void ProjectImportTask::inspectImport()
             step = ImportNew;
         }
         else {
-            addError("Not a valid snapshot folder");
-            addError(importFile.getFullPathName());
-            step = Result;
+            // it might be an old project, but the name of the manifest file
+            // is arbitrary
+            int types = juce::File::TypesOfFileToFind::findFiles;
+            bool recursive = false;
+            juce::String pattern = juce::String("*.mob");
+            juce::Array<juce::File> files = importFile.findChildFiles(types, recursive, pattern,
+                                                                      juce::File::FollowSymlinks::no);
+
+            if (files.size() == 0) {
+                addError("Not a valid snapshot folder");
+                addError(importFile.getFullPathName());
+                step = Result;
+            }
+            else {
+                // usually just one, but might be a dumping ground for several
+                if (files.size() > 0)
+                  Trace(1, "ProjectImportTask: Multiple projects found in directory %s",
+                        importFile.getFullPathName().toUTF8());
+                importFile = files[0];
+                step = ImportOld;
+            }
         }
     }
     else if (importFile.existsAsFile()) {
@@ -171,6 +189,14 @@ void ProjectImportTask::inspectImport()
     transition();
 }
 
+/**
+ * Two ways this could work.
+ * 1) read it into a TrackContent and send it down or
+ * 2) evaluate it as an MCL file and have the MCL subsystem handle it
+ *
+ * If you ever decide to do 2, then reading old projects could the same
+ * after converting the .mob file to an .mcl file
+ */
 void ProjectImportTask::doImportNew()
 {
     clearMessages();
@@ -197,6 +223,9 @@ void ProjectImportTask::doImportOld()
         addError("Empty project");
     }
     else {
+        MobiusInterface* mobius = provider->getMobius();
+        mobius->loadTrackContent(content.get());
+        addErrors(content->errors);
     }
     
     step = Result;

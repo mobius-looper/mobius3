@@ -53,6 +53,7 @@ class Task
     void clearMessages();
     void addMessage(juce::String s);
     void addError(juce::String e);
+    void addErrors(juce::StringArray& src);
     void addWarning(juce::String w);
     
   protected:

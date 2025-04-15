@@ -79,6 +79,12 @@ void Task::addError(juce::String e)
     errors.add(e);
 }
 
+void Task::addErrors(juce::StringArray& errors)
+{
+    for (auto e : errors)
+      errors.add(e);
+}
+
 void Task::addWarning(juce::String w)
 {
     warnings.add(w);

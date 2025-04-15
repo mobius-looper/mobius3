@@ -39,6 +39,7 @@ class MobiusShell : public MobiusInterface
     void performMaintenance() override;
     void doAction(class UIAction* action) override;
     bool doQuery(class Query* query) override;
+    class AudioPool* getAudioPool() override;
     class Audio* allocateAudio() override;
     void installLoop(class Audio* a, int track, int loop) override;
     void installScripts(class ScriptConfig*) override;
@@ -57,7 +58,7 @@ class MobiusShell : public MobiusInterface
     juce::StringArray saveProject(juce::File dest) override;
     juce::StringArray loadProject(juce::File src) override;
     class TrackContent* getTrackContent(bool includeLayers) override;
-    juce::StringArray loadTrackContent(class TrackContent* c) override;
+    void loadTrackContent(class TrackContent* c) override;
     juce::StringArray saveLoop(juce::File dest) override;
     juce::StringArray loadLoop(juce::File src) override;
     juce::StringArray saveLoop(int trackNumber, int loopNumber, juce::File& file) override;
@@ -80,7 +81,6 @@ class MobiusShell : public MobiusInterface
   protected:
     
     // accessors for the Kernel only
-    class AudioPool* getAudioPool();
     class UIActionPool* getActionPool();
     void doKernelEvent(class KernelEvent* e);
     

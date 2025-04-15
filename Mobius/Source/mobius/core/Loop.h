@@ -133,6 +133,7 @@ class Loop : public TraceContext {
 
     void dump(class StructureDumper& d);
     void gatherContent(TrackContent::Loop* lcontent);
+    void loadContent(TrackContent* content, TrackContent::Loop* src);
     
     void kludgeSavePlayLayer();
 

@@ -24,6 +24,7 @@
 #include "TrackEvent.h"
 #include "../midi/MidiWatcher.h"
 #include "../midi/MidiPools.h"
+#include "../TrackContent.h"
 
 class TrackManager : public LongWatcher::Listener, public TrackListener
 {
@@ -54,6 +55,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     // part of project export
     void gatherContent(class TrackContent* content);
+    void loadContent(class TrackContent* content);
     
     class LogicalTrack* getLogicalTrack(int number);
 
@@ -177,4 +179,6 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void doTrackSelectAction(class UIAction* a);
 
     int getLatency(SymbolId sid);
+    
+    Session::TrackType getType(TrackContent::Track* src);
 };

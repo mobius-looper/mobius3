@@ -25,6 +25,7 @@
 #include "../sync/Pulse.h"
 
 #include "../Notification.h"
+#include "../TrackContent.h"
 
 #include "TrackProperties.h"
 #include "ParameterVault.h"
@@ -47,7 +48,7 @@ class LogicalTrack
     void refresh(class ParameterSets* sets);
     void refresh(class GroupDefinitions* groups);
     void gatherContent(class TrackContent* content);
-    
+    void loadContent(class TrackContent* content, class TrackContent::Track* src);
     void markDying();
     bool isDying();
     
