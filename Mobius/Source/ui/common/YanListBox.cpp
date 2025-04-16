@@ -23,6 +23,7 @@ void YanListBox::setItems(juce::StringArray names)
 {
     // todo: detect if this was already added
     items.addArray(names);
+    listbox.updateContent();
 }
 
 int YanListBox::getPreferredComponentWidth()
