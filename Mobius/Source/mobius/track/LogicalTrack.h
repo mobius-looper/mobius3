@@ -170,6 +170,7 @@ class LogicalTrack
     int getParameterOrdinal(SymbolId id);
     int getParameterOrdinal(Symbol* s);
     bool getBoolParameter(SymbolId sid);
+    juce::String getStringParameter(SymbolId sid);
     int unbindFeedback();
 
     // think on this one

@@ -92,6 +92,9 @@ class ParameterVault
 
     // used in the implementation of LogicalTrack::unbindFeedback
     void unbind(SymbolId id);
+
+    // not managed as an ordinal but the vault still does overlay resolution
+    juce::String getString(SymbolId id);
     
   private:
 

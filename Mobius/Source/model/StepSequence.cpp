@@ -1,3 +1,18 @@
+/**
+ * Some adjustments from 2.x
+ *
+ * Immediately after load or GlobalRfeset we're effectively at the first index of 0
+ * and if you then do Speednext it returns the second item in the list.
+ *
+ * It makes more sense to have index zero implicitly mean "none" and the first Next goes
+ * to the first step in the list. Then when you advance past the end and wrap back to zero
+ * there is an implicit zero step at the beginning.
+ *
+ * Easiest way to handle that is to inject a zero at the beginning during parsing
+ * rather than making all the callers use -1 as an index and deal with the wrap.
+ * 
+ *
+ */
 
 #include <string>
 
@@ -70,24 +85,38 @@ int StepSequence::getStepCount()
 	return mStepCount;
 }
 
+/**
+ * Hate the old-school interface here, but it's been working
+ * so keep it going.
+ *
+ * This preteds there is always a zero at the front so the number
+ * of steps is 1+ what was parsed.
+ */
 int StepSequence::advance(int current, bool next, int dflt,
 						  int* retval)
 {
+    // with the leading zero, the deftult will never be used now
 	int value = dflt;
 	int index = current;
-
-	if (mStepCount > 0) {
+    // leading zero
+    int max = mStepCount + 1;
+    
+	if (max > 0) {
 		if (next) {
 			index++;
-			if (index >= mStepCount)
+			if (index >= max)
 			  index = 0;
 		}
 		else {
 			index--;
 			if (index < 0)
-			  index = mStepCount  - 1;
+			  index = max  - 1;
 		}
-		value = mSteps[index];
+
+        if (index == 0)
+          value = 0;
+        else
+          value = mSteps[index - 1];
 	}
 
 	if (retval)

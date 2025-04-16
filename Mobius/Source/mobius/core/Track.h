@@ -13,6 +13,7 @@
 #define TRACK_H
 
 #include "../../util/Trace.h"
+#include "../../model/StepSequence.h"
 
 #include "../Notification.h"
 #include "../TrackContent.h"
@@ -198,6 +199,7 @@ class Track : public TraceContext
 	// sequence step for the SpeedNext function
 	int getSpeedSequenceIndex();
 	void setSpeedSequenceIndex(int s);
+    class StepSequence* getSpeedSequence();
 
 	// sequence step for the PitchNext function
 	int getPitchSequenceIndex();
@@ -329,6 +331,8 @@ class Track : public TraceContext
 	bool        mUISignal = false;
 	int         mSpeedSequenceIndex = 0;
 	int         mPitchSequenceIndex = 0;
+
+    StepSequence mSpeedSequence;
 
     /**
      * Support for an old feature where we could move the controls

@@ -548,6 +548,10 @@ void SpeedFunction::convertAction(Action* action, Loop* l, SpeedChange* change)
         // octave and step in SpeedChange, just reset
         // the step and handle the octave in the event handler
         change->value = 0;
+
+        // new: this also resets the SpeedSequence if there is one so we
+        // don't need to have another binding like SpeedNext(reset) to do that
+        l->getTrack()->setSpeedSequenceIndex(0);
     }
     else if (mType == SPEED_OCTAVE) {
         int value = action->arg.getInt();

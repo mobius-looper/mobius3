@@ -58,10 +58,9 @@ int ParameterSource::getTimeStretchRange(Track* t)
 }
 StepSequence* ParameterSource::getSpeedSequence(Track* t)
 {
-    (void)t;
-    // !! decide how this should be modeled, we can't store this
-    // in a ValueSet so it would need to be cached on the Track or something
-    return nullptr;
+    // don't need to go through the vault here, it will have been
+    // cached in the Track in parsed StepSequence form
+    return t->getSpeedSequence();
 }
 bool ParameterSource::isSpeedShiftRestart(Track* t)
 {

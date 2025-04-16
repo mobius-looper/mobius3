@@ -1024,6 +1024,15 @@ bool LogicalTrack::getBoolParameter(SymbolId sid)
     return value;
 }
 
+/**
+ * Only a few of these and they can't be managed by ordinals.
+ * The only ones used down here are ParamSpeedSequence and ParamPitchSequence
+ */
+juce::String LogicalTrack::getStringParameter(SymbolId sid)
+{
+    return vault.getString(sid);
+}
+
 ///////////////////////////////////////////////////////////////////////
 //
 // Parameter Enumeration Conversion

@@ -452,6 +452,11 @@ void Track::refreshParameters()
     
     mInput->setLatency(inputLatency);
     mOutput->setLatency(outputLatency);
+
+    // this is a String in the Session model, but at runtime it's more convenient
+    // to deal with as a parsed StepSequence
+    juce::String s = lt->getStringParameter(ParamSpeedSequence);
+    mSpeedSequence.setSource(s.toUTF8());
     
     // !! Loops normally rewind themselves to -inputLatency when
     // they are in Reset.  On startup, they will be initializaed at a time
@@ -798,6 +803,11 @@ MobiusMode* Track::getMode()
 Synchronizer* Track::getSynchronizer()
 {
 	return mSynchronizer;
+}
+
+StepSequence* Track::getSpeedSequence()
+{
+    return &mSpeedSequence;
 }
 
 int Track::getSpeedSequenceIndex()

@@ -296,6 +296,50 @@ void ParameterVault::setLocalOrdinal(SymbolId sid, int value)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Strings
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * String parameters are weird.
+ * They can't be set in UIActios and can't be returned in Query
+ * They can't have local bindings.
+ * The only reason to have them in the fault is to deal with overlays.
+ * Suppose we could allow local bindings but this will be unstable
+ * for Query if you a list of MslBindings
+ */
+juce::String ParameterVault::getString(SymbolId id)
+{
+    juce::String value;
+
+    Symbol* s = symbols->getSymbol(id);
+    if (s != nullptr && s->parameterProperties != nullptr) {
+        if (s->parameterProperties->type != TypeString) {
+            Trace(1, "ParameterVault: Symbol %s was not a string parameter",
+                  s->getName());
+        }
+        else {
+            // todo: overlays
+            
+            if (track != nullptr) {
+                MslValue* v = track->get(s->name);
+                if (v != nullptr && v->type == MslValue::String)
+                  value = juce::String(v->getString());
+            }
+    
+            if (value.length() == 0 && session != nullptr) {
+                MslValue* v = session->get(s->name);
+                if (v != nullptr && v->type == MslValue::String)
+                  value = juce::String(v->getString());
+            }
+        }
+    }
+    
+    return value;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Overlays
 //
 //////////////////////////////////////////////////////////////////////

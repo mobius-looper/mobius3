@@ -201,6 +201,7 @@
     <Value name="soundCopyMode" value="multiply" type="enum" ordinal="2"/>
     <Value name="speedBendRange" value="12" type="int"/>
     <Value name="speedRecord" value="false" type="bool"/>
+    <Value name="speedSequence" value="2 5 -5 3"/>
     <Value name="speedShiftRestart" value="false" type="bool"/>
     <Value name="speedStepRange" value="24" type="int"/>
     <Value name="speedTransfer" value="off" type="enum" ordinal="0"/>
