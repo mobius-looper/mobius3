@@ -79,7 +79,8 @@ class YanField : public juce::Component
     int getPreferredWidth(int rowHeight);
     
     virtual int getPreferredComponentWidth() = 0;
-
+    virtual int getPreferredComponentHeight() {return 0;}
+    
     virtual void setDisabled(bool b);
     virtual bool isDisabled();
     

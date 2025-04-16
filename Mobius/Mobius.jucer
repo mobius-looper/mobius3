@@ -364,6 +364,8 @@
                 file="Source/ui/common/YanFieldHelpers.h"/>
           <FILE id="f2zY9Q" name="YanForm.cpp" compile="1" resource="0" file="Source/ui/common/YanForm.cpp"/>
           <FILE id="QtLbZf" name="YanForm.h" compile="0" resource="0" file="Source/ui/common/YanForm.h"/>
+          <FILE id="hKU1n2" name="YanLisBox.h" compile="0" resource="0" file="Source/ui/common/YanLisBox.h"/>
+          <FILE id="HjCxkr" name="YanListBox.cpp" compile="1" resource="0" file="Source/ui/common/YanListBox.cpp"/>
           <FILE id="bZ5HFu" name="YanParameter.cpp" compile="1" resource="0"
                 file="Source/ui/common/YanParameter.cpp"/>
           <FILE id="M0KOLA" name="YanParameter.h" compile="0" resource="0" file="Source/ui/common/YanParameter.h"/>

@@ -5,6 +5,8 @@
 #include <JuceHeader.h>
 
 #include "../ui/common/YanDialog.h"
+#include "../ui/common/YanField.h"
+#include "../ui/common/YanListBox.h"
 #include "../mobius/TrackContent.h"
 
 #include "TaskPromptDialog.h"
@@ -14,11 +16,21 @@ class ProjectExportTask : public Task, public YanDialog::Listener
 {
   public:
 
+    class SnapshotChooser : public juce::Component {
+      public:
+        SnapshotChooser();
+        YanInput snapshotName {"Snapshot Name"};
+        YanListBox snapshots {"Existing Snapshots"};
+
+        void resized() override;
+    };
+
     typedef enum {
         Start,
         WarnMissingUserFolder,
         WarnInvalidUserFolder,
-        ChooseFolder,
+        ChooseContainer,
+        ChooseSnapshot,
         VerifyFolder,
         WarnOverwrite,
         Export,
@@ -44,6 +56,9 @@ class ProjectExportTask : public Task, public YanDialog::Listener
     TaskPromptDialog dialog {this};
     std::unique_ptr<juce::FileChooser> chooser;
 
+    YanInput snapshotName {"Snapshot Name"};
+    SnapshotChooser snapshotChooser;
+    
     Step step = Start;
 
     std::unique_ptr<class TrackContent> content;
@@ -52,10 +67,11 @@ class ProjectExportTask : public Task, public YanDialog::Listener
 
     void transition();
     void fileChosen(juce::File file);
-    void findProjectContainer();
+    void findContainer();
     void warnMissingUserFolder();
     void warnInvalidUserFolder();
-    void chooseFolder();
+    void chooseContainer();
+    void chooseSnapshot();
     void verifyFolder();
     bool isEmpty(juce::File f);
     void warnOverwrite();

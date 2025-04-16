@@ -98,6 +98,19 @@ void ProjectExportTask::ping()
 {
 }
 
+ProjectExportTask::SnapshotChooser::SnapshotChooser()
+{
+    addAndMakeVisible(snapshotName);
+    addAndMakeVisible(snapshots);
+}
+    
+void ProjectExportTask::SnapshotChooser::resized()
+{
+    juce::Rectangle<int> area = getLocalBounds();
+    snapshotName.setBounds(area.removeFromTop(20));
+    snapshots.setBounds(area);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Transition Logic
@@ -108,10 +121,11 @@ void ProjectExportTask::transition()
 {
     switch (step) {
         
-        case Start: findProjectContainer(); break;
+        case Start: findContainer(); break;
         case WarnMissingUserFolder: warnMissingUserFolder(); break;
         case WarnInvalidUserFolder: warnInvalidUserFolder(); break;
-        case ChooseFolder: chooseFolder(); break;
+        case ChooseContainer: chooseContainer(); break;
+        case ChooseSnapshot: chooseSnapshot(); break;
         case VerifyFolder: verifyFolder(); break;
         case WarnOverwrite: warnOverwrite(); break;
         case Export: doExport(); break;
@@ -129,7 +143,13 @@ void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
         
         case WarnMissingUserFolder:
         case WarnInvalidUserFolder:
-            step = ChooseFolder;
+            step = ChooseContainer;
+            break;
+
+        case ChooseSnapshot: {
+            projectFolder = projectContainer.getChildFile(snapshotName.getValue());
+            step = VerifyFolder;
+        }
             break;
 
         case WarnOverwrite: {
@@ -137,8 +157,7 @@ void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
             if (button == 0)
               step = Export;
             else if (button == 1)
-              //step = ChooseFolderName;
-              step = ChooseFolder;
+              step = ChooseSnapshot;
             else
               step = Cancel;
         }
@@ -163,9 +182,9 @@ void ProjectExportTask::fileChosen(juce::File file)
     if (file == juce::File()) {
         step = Cancel;
     }
-    else if (step == ChooseFolder) {
-        projectFolder = file;
-        step = VerifyFolder;
+    else if (step == ChooseContainer) {
+        projectContainer = file;
+        step = ChooseSnapshot;
     }
     else {
         Trace(1, "ProjectExportTask: Unexpected step after file chooser %d", step);
@@ -193,25 +212,28 @@ void ProjectExportTask::fileChosen(juce::File file)
  * If UserFileFolder is specified, the flow transitions directly to FindProjectFolder
  * to look for a project folder within the container.
  */
-void ProjectExportTask::findProjectContainer()
+void ProjectExportTask::findContainer()
 {
     // first see if we can auto-create it within the configured user directory
     SystemConfig* scon = provider->getSystemConfig();
     userFolder = scon->getString("userFileFolder");
 
-    projectContainer = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
+    // juce::File::getSpecialLocation(juce::File::userHomeDirectory);
+    projectContainer = provider->getRoot();
         
     if (userFolder.length() == 0) {
         step = WarnMissingUserFolder;
     }
     else {
         juce::File f (userFolder);
-        if (f.isDirectory()) {
-            projectContainer = f;
-            step = ChooseFolder;
+        if (!f.isDirectory()) {
+            step = WarnInvalidUserFolder;
         }
         else {
-            step = WarnInvalidUserFolder;
+            // todo: within UserFileFolder, put snapshots under
+            // a snapshots subdirectory
+            projectContainer = f;
+            step = ChooseSnapshot;
         }
     }
     
@@ -242,7 +264,7 @@ void ProjectExportTask::warnInvalidUserFolder()
     dialog.show(provider->getDialogParent());
 }
 
-void ProjectExportTask::chooseFolder()
+void ProjectExportTask::chooseContainer()
 {
     if (chooser != nullptr) {
         // should not be possible
@@ -256,11 +278,11 @@ void ProjectExportTask::chooseFolder()
 
         juce::File startPath = projectContainer;
 
-        juce::String title = "Select a project folder...";
+        juce::String title = "Select a folder to contain snapshots...";
 
         chooser.reset(new juce::FileChooser(title, startPath, ""));
 
-        auto chooserFlags = (juce::FileBrowserComponent::openMode |
+        auto chooserFlags = (juce::FileBrowserComponent::saveMode |
                              juce::FileBrowserComponent::canSelectDirectories);
 
         chooser->launchAsync (chooserFlags, [this,purpose] (const juce::FileChooser& fc)
@@ -269,7 +291,7 @@ void ProjectExportTask::chooseFolder()
             if (result.size() > 0) {
                 juce::File file = result[0];
                 Pathfinder* pf = provider->getPathfinder();
-                pf->saveLastFolder(purpose, file.getParentDirectory().getFullPathName());
+                pf->saveLastFolder(purpose, file.getFullPathName());
 
                 // !! this may recorse and call chooseFolder again
                 // to avoid the chooser != nullptr test above, have to reset it
@@ -286,6 +308,39 @@ void ProjectExportTask::chooseFolder()
             }
         });
     }
+}
+
+/**
+ * Here after the snaphsot continer folder has been choosen, either
+ * auytomatically with in User File Folder or by browsing.
+ */
+void ProjectExportTask::chooseSnapshot()
+{
+    dialog.reset();
+
+    dialog.setTitle("Select Snapshot Name");
+
+    dialog.addMessage(projectContainer.getFullPathName());
+
+    Session* s = provider->getSession();
+    //snapshotName.setValue(s->getName());
+    //dialog.addField(&snapshotName);
+
+    snapshotChooser.snapshotName.setValue(s->getName());
+    juce::StringArray items;
+    items.add("foo");
+    items.add("bar");
+    snapshotChooser.snapshots.setItems(items);
+    snapshotChooser.setSize(300,200);
+    //snapshotChooser.snapshots.updateContent();
+    dialog.setContent(&snapshotChooser);
+    
+    dialog.clearButtons();
+    dialog.addButton("Ok");
+    dialog.addButton("Different Loctaion");
+    dialog.addButton("Cancel");
+    
+    dialog.show(provider->getDialogParent());
 }
 
 /**
