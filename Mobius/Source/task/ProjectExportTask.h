@@ -1,5 +1,5 @@
 /**
- *  Workflow for project export
+ *  Workflow for snapshot export
  */
 
 #include <JuceHeader.h>
@@ -26,17 +26,16 @@ class ProjectExportTask : public Task, public YanDialog::Listener
     };
 
     typedef enum {
-        Start,
+        FindContainer,
         WarnMissingUserFolder,
         WarnInvalidUserFolder,
-        ChooseContainer,
-        ChooseSnapshot,
+        ChooseFolder,
         VerifyFolder,
+        InvalidFolder,
         WarnOverwrite,
         Export,
         Result,
-        Cancel,
-        DialogTest
+        Cancel
     } Step;
     
     ProjectExportTask();
@@ -51,8 +50,8 @@ class ProjectExportTask : public Task, public YanDialog::Listener
   private:
 
     juce::String userFolder;
-    juce::File projectContainer;
-    juce::File projectFolder;
+    juce::File snapshotContainer;
+    juce::File snapshotFolder;
 
     TaskPromptDialog dialog {this};
     std::unique_ptr<juce::FileChooser> chooser;
@@ -60,7 +59,7 @@ class ProjectExportTask : public Task, public YanDialog::Listener
     YanInput snapshotName {"Snapshot Name"};
     SnapshotChooser snapshotChooser;
     
-    Step step = Start;
+    Step step = FindContainer;
 
     std::unique_ptr<class TrackContent> content;
 
@@ -68,18 +67,17 @@ class ProjectExportTask : public Task, public YanDialog::Listener
 
     void transition();
     void fileChosen(juce::File file);
+    
     void findContainer();
     void warnMissingUserFolder();
     void warnInvalidUserFolder();
-    void chooseContainer();
-    void chooseSnapshot();
+    void chooseFolder();
     void verifyFolder();
     bool isEmpty(juce::File f);
+    void invalidFolder();
     void warnOverwrite();
     void doExport();
     void showResult();
-
-    void dialogTest();
     
 };
 

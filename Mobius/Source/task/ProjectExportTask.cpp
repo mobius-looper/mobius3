@@ -1,53 +1,25 @@
 /*
- * The most annoying part about this process is determining where the
- * the project goes.  
+ * The process for exporting a snapshot.
  *
- * Export ultimately needs the full path to a project folder.
+ * The most annoying part of all this is figuring out where it goes.
+ * A file browser needs to be involved and neither the native browser
+ * or the juce generic browser work like I want them to.
  *
- * The project folder itself will be created so what the user must select is the
- * folder *containing* the project folder.
+ * To make this more obvious to the user, going to need to copy the Juce
+ * code and modify it.
  *
- * The default location is the value of the ParmUserFileFolder from the system
- * configuration.  If this is not set, the user must choose a container with
- * a file browser.
+ * First the Container folder is located.  This is normally what wasn configured
+ * as the User File Folder.  If this is not configured, a wrning dialog is
+ * presented suggesting they go set it.
  *
- * The name of the project folder will start as the name of the session.
- * Once the container is defaulted or chosen, it is examined to see if it already has
- * a folder with the project name.  If the project folder does not exist or is empty,
- * the export proceeds.
+ * Next a file browser is displayed allowing them to selet an existing folder or
+ * enter the name of a new one.   Here, I'd like to pre-fill the folder name
+ * with the name of the current session, but not seeing a way to do that.
  *
- * If the project folder already exists, a name qualifier is added to the base name to
- * make it unique.  If the name qualification is disabled or fails, the user is warned
- * that the existing folder will be overwritten.
+ * After selecting a folder, it is examined to see if it is suitable and if it
+ * already has content, an overwrite wrning dialog is displayed.
  *
- * The overwrite warning dialog displays the path of the containing folder and a text
- * field where they can enter their own name. If they select Ok without changing the name,
- * the overwrite proceeds.  If they enter a name, and it is unique the export proceeds
- * to that name.
- *
- * If they enter a new name and it is also existing, the overwrite warning is displayed again.
- *
- * NOTE: Sinc the user can't see what names are in the containing folder, it would be nice to
- * have a scrolling panel of the existing projects in that folder.
- *
- * Once the project folder has been confirmed, the export proceeds.
- *
- * A final results dialog is displayed that shows:
- *
- *    - the full path of the project folder that was used
- *    - the number of .wav or .mid files that were created
- *    - errors or warnings encountered during the export process
- *
- * Well, that worked, but it's awkward having to enter just a unique file name without knowing
- * what is in the containing directory.  So while that was a nice exercise, it should be like this:
- *
- * The file browser, needs to select the actual folder for the project.  Title it
- * "Select Project Folder".
- *
- * This should orient itself on the container, with the name pre-filled.
- *
- * Try to use the user file folder as the container as before
- *
+ * Finally, the snapshot is exported, and a results dialog is displayed.
  */
 
 #include <JuceHeader.h>
@@ -80,8 +52,9 @@ ProjectExportTask::ProjectExportTask()
 
 void ProjectExportTask::run()
 {
-    //step = Start;
-    step = DialogTest;
+    waiting = false;
+    finished = false;
+    step = FindContainer;
     transition();
 }
 
@@ -128,16 +101,15 @@ void ProjectExportTask::transition()
 
         switch (step) {
         
-            case Start: findContainer(); break;
+            case FindContainer: findContainer(); break;
             case WarnMissingUserFolder: warnMissingUserFolder(); break;
             case WarnInvalidUserFolder: warnInvalidUserFolder(); break;
-            case ChooseContainer: chooseContainer(); break;
-            case ChooseSnapshot: chooseSnapshot(); break;
+            case ChooseFolder: chooseFolder(); break;
             case VerifyFolder: verifyFolder(); break;
+            case InvalidFolder: invalidFolder(); break;
             case WarnOverwrite: warnOverwrite(); break;
             case Export: doExport(); break;
             case Result: showResult(); break;
-            case DialogTest: dialogTest(); break;
 
             default: cancel(); break;
         }
@@ -154,13 +126,8 @@ void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
         
         case WarnMissingUserFolder:
         case WarnInvalidUserFolder:
-            step = ChooseContainer;
-            break;
-
-        case ChooseSnapshot: {
-            projectFolder = projectContainer.getChildFile(snapshotName.getValue());
-            step = VerifyFolder;
-        }
+        case InvalidFolder:
+            step = ChooseFolder;
             break;
 
         case WarnOverwrite: {
@@ -168,7 +135,7 @@ void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
             if (button == 0)
               step = Export;
             else if (button == 1)
-              step = ChooseSnapshot;
+              step = ChooseFolder;
             else
               step = Cancel;
         }
@@ -177,17 +144,15 @@ void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
         case Result:
             step = Cancel;
             break;
-
-        case DialogTest:
-            step = Cancel;
-            break;
-
+            
         default: {
             Trace(1, "ProjectExportTask: Unexpected step after closing dialog %d", step);
             step = Cancel;
         }
             break;
     }
+
+    transition();
 }
 
 void ProjectExportTask::fileChosen(juce::File file)
@@ -197,14 +162,21 @@ void ProjectExportTask::fileChosen(juce::File file)
     if (file == juce::File()) {
         step = Cancel;
     }
-    else if (step == ChooseContainer) {
-        projectContainer = file;
-        step = ChooseSnapshot;
+    else if (step == ChooseFolder) {
+        // interesting question
+        // there is no way right now to convey Cancel other than
+        // canceling the entire thing so if we get here they they must
+        // have selected a file, may want to pass en empty string on Cancel
+        // and allow workflow transitions based on that 
+        snapshotFolder = file;
+        step = VerifyFolder;
     }
     else {
         Trace(1, "ProjectExportTask: Unexpected step after file chooser %d", step);
         step = Cancel;
     }
+    
+    transition();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -214,17 +186,17 @@ void ProjectExportTask::fileChosen(juce::File file)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Determine the folder to contain the project folder.
+ * Determine the folder to contain the snapshot folder.
  *
  * This expects ParamUserFileFolder to be specified which will e the
  * default container.  If it isn't set, or is invalid, then warning
- * dialogs are shoen first  to encourge proper configuration.
+ * dialogs are shown first  to encourge proper configuration.
  *
- * After the warnings, a file chooser is launched to locate the project folder
+ * After the warnings, a file chooser is launched to locate the snapshot folder
  * with the starting point being the user's home directory.
+ * update: that's too annoying for me, the default container is the
+ * application support folder which is redirected to the dev tree.
  *
- * If UserFileFolder is specified, the flow transitions directly to FindProjectFolder
- * to look for a project folder within the container.
  */
 void ProjectExportTask::findContainer()
 {
@@ -232,8 +204,10 @@ void ProjectExportTask::findContainer()
     SystemConfig* scon = provider->getSystemConfig();
     userFolder = scon->getString("userFileFolder");
 
+    // if userFolder isn't set define to the application support folder
+    // some might prefer this to be the normal system user documents folder
     // juce::File::getSpecialLocation(juce::File::userHomeDirectory);
-    projectContainer = provider->getRoot();
+    snapshotContainer = provider->getRoot();
         
     if (userFolder.length() == 0) {
         step = WarnMissingUserFolder;
@@ -246,8 +220,8 @@ void ProjectExportTask::findContainer()
         else {
             // todo: within UserFileFolder, put snapshots under
             // a snapshots subdirectory
-            projectContainer = f;
-            step = ChooseSnapshot;
+            snapshotContainer = f;
+            step = ChooseFolder;
         }
     }
 }
@@ -255,12 +229,11 @@ void ProjectExportTask::findContainer()
 void ProjectExportTask::warnMissingUserFolder()
 {
     dialog.reset();
-    dialog.setTitle("Project Export");
-    // user file folder is not set at all
-    // can recommend they do that, or just go straight to the browser
+    dialog.setTitle("Snapshot Export");
+    
     dialog.addWarning("The User File Folder was not set in the system configuration");
     dialog.addWarning("It is recommended that this be set to the default");
-    dialog.addWarning("location for exports");
+    dialog.addWarning("location for file exports");
     
     dialog.show(provider->getDialogParent());
     waiting = true;
@@ -269,8 +242,8 @@ void ProjectExportTask::warnMissingUserFolder()
 void ProjectExportTask::warnInvalidUserFolder()
 {
     dialog.reset();
-    dialog.setTitle("Project Export");
-    // UserFileFolder is set but is bad, tell them
+    dialog.setTitle("Snapshot Export");
+
     dialog.addWarning(juce::String("Invalid value for User File Folder parameter"));
     dialog.addWarning(juce::String("Value: ") + userFolder);
     
@@ -278,26 +251,27 @@ void ProjectExportTask::warnInvalidUserFolder()
     waiting = true;
 }
 
-void ProjectExportTask::chooseContainer()
+void ProjectExportTask::chooseFolder()
 {
     if (chooser != nullptr) {
         // should not be possible
         Trace(1, "ProjectExportTask: FileChooser already active");
-        step = Cancel;
+        cancel();
     }
     else {
-        juce::String purpose = "projectExport";
+        juce::String purpose = "snapshotExport";
     
         //Pathfinder* pf = provider->getPathfinder();
         //juce::File startPath(pf->getLastFolder(purpose));
 
-        juce::File startPath = projectContainer;
+        juce::File startPath = snapshotContainer;
 
-        juce::String title = "Select a folder to contain snapshots...";
+        juce::String title = "Select Snapshot Folder";
 
-        chooser.reset(new juce::FileChooser(title, startPath, ""));
+        chooser.reset(new juce::FileChooser(title, startPath, "*.mcl"));
 
         auto chooserFlags = (juce::FileBrowserComponent::saveMode |
+                             juce::FileBrowserComponent::canSelectFiles |
                              juce::FileBrowserComponent::canSelectDirectories);
 
         chooser->launchAsync (chooserFlags, [this,purpose] (const juce::FileChooser& fc)
@@ -312,6 +286,8 @@ void ProjectExportTask::chooseContainer()
                 // to avoid the chooser != nullptr test above, have to reset it
                 // and delete the last file chooser manually
                 juce::FileChooser* me = chooser.release();
+
+                Trace(2, "File chosen %s", file.getFullPathName().toUTF8());
                 
                 fileChosen(file);
 
@@ -327,55 +303,55 @@ void ProjectExportTask::chooseContainer()
 }
 
 /**
- * Here after the snaphsot continer folder has been choosen, either
- * auytomatically with in User File Folder or by browsing.
- */
-void ProjectExportTask::chooseSnapshot()
-{
-    dialog.reset();
-
-    dialog.setTitle("Select Snapshot Name");
-
-    dialog.addMessage(projectContainer.getFullPathName());
-
-    Session* s = provider->getSession();
-    //snapshotName.setValue(s->getName());
-    //dialog.addField(&snapshotName);
-
-    snapshotChooser.snapshotName.setValue(s->getName());
-    juce::StringArray items;
-    items.add("foo");
-    items.add("bar");
-    snapshotChooser.snapshots.setItems(items);
-    snapshotChooser.setSize(300,200);
-    //snapshotChooser.snapshots.updateContent();
-    dialog.setContent(&snapshotChooser);
-    
-    dialog.clearButtons();
-    dialog.addButton("Ok");
-    dialog.addButton("Different Loctaion");
-    dialog.addButton("Cancel");
-    
-    dialog.show(provider->getDialogParent());
-    waiting = true;
-}
-
-/**
- * Here after the user has entered an alternate name after the last attempt
- * found a conflict and we asked for a different one
+ * Here after the user has entered a folder to contain the snapshot.
+ *
+ * The way the Juce file browser component works, these states may exist.
+ *
+ *    - user entered a name for the folder that does not yet exist
+ *    - user selected the name of an existing folder
+ *    - user browsed INTO the folder and selected the .mcl file
+ *
+ * If you take away the ability to browse for a file as well as a directory,
+ * then it reverts to using the native file browser, but configured in an awkward
+ * way that doesn't let you type in a name, and fails to save if you don't select
+ * an existing folder, forcing you to right-click-new to make one first.
+ *
+ * Unforatunately juce::FileChooser doesn't give you enough hooks to adjust this
+ * so it would have to be copied and modified.  The Juce generic file browser
+ * works well enough, though it's got some things I'd like to be different to.
+ * Like not allowing files to be selected and instead of the name prompt being
+ * "file:" it shouuld be "Snapshot folder:".  But the prompt is baked into the
+ * Juce code and can't be changed.
  */
 void ProjectExportTask::verifyFolder()
 {
-    if (!projectFolder.existsAsFile() && !projectFolder.isDirectory()) {
-        // nice clean export to a new folder
-        step = Export;
+    clearMessages();
+    
+    if (snapshotFolder.existsAsFile()) {
+        // they probably entered an existing snapshot folder and selected
+        // the manifest file
+        // could be smarter about this
+        addWarning("You have selected a file");
+        addWarning("You must select a folder to contain the snapshot");
+        step = InvalidFolder;
     }
-    else if (projectFolder.isDirectory() && isEmpty(projectFolder)) {
-        // folder exists but is clean, use it
-        step = Export;
+    else if (snapshotFolder.isDirectory()) {
+        if (!isEmpty(snapshotFolder))
+          step = WarnOverwrite;
+        else
+          step = Export;
     }
     else {
-        step = WarnOverwrite;
+        // must have entered a new name, verify that we can create it
+        juce::Result res = snapshotFolder.createDirectory();
+        if (res.failed()) {
+            addError("Unable to create folder for snapshot");
+            addError(res.getErrorMessage());
+            step = InvalidFolder;
+        }
+        else {
+            step = Export;
+        }
     }
 }
 
@@ -416,18 +392,39 @@ bool ProjectExportTask::isEmpty(juce::File f)
 }
 
 /**
- * Display a warning about an existing non-empty project folder and
+ * Display a warning about an existing non-empty snapshot folder and
+ * ask to overwrite.
+ */
+void ProjectExportTask::invalidFolder()
+{
+    dialog.reset();
+
+    dialog.setTitle("Snapshot Export");
+
+    dialog.addMessage(snapshotFolder.getFullPathName());
+    
+    transferMessages(&dialog);
+
+    dialog.clearButtons();
+    
+    dialog.show(provider->getDialogParent());
+    waiting = true;
+}
+
+/**
+ * Display a warning about an existing non-empty snapshot folder and
  * ask to overwrite.
  */
 void ProjectExportTask::warnOverwrite()
 {
     dialog.reset();
 
-    dialog.setTitle("Project Export");
+    dialog.setTitle("Snapshot Export");
 
-    dialog.addMessage(projectFolder.getFullPathName());
+    dialog.addMessage(snapshotFolder.getFullPathName());
+    dialog.addMessageGap();
     
-    dialog.addWarning(juce::String("The project folder is not empty"));
+    dialog.addWarning(juce::String("The snapshot folder is not empty"));
 
     dialog.clearButtons();
     dialog.addButton("Overwrite");
@@ -449,13 +446,13 @@ void ProjectExportTask::doExport()
 
     TrackContent* tc = mobius->getTrackContent(includeLayers);
     if (tc == nullptr) {
-        errors.add("Mobius engine did not return track content");
+        addError("Mobius engine did not return track content");
         content.reset();
     }
     else if (tc->tracks.size() == 0) {
         // all tracks were empty, we could go ahead and create the
-        // project folder and leave it empty, but why bother
-        warnings.add("Session has no content to export");
+        // snapshot folder and leave it empty, but why bother
+        addWarning("Session has no content to export");
         delete tc;
     }
     else {
@@ -470,8 +467,8 @@ void ProjectExportTask::doExport()
         else {
             ProjectClerk pc(provider);
             // this may add warning or error messages to the Task
-            int count = pc.writeProject(this, projectFolder, content.get());
-            messages.add(juce::String(count) + " files exported");
+            int count = pc.writeProject(this, snapshotFolder, content.get());
+            addMessage(juce::String(count) + " files exported");
         }
     }
     
@@ -485,7 +482,7 @@ void ProjectExportTask::doExport()
 void ProjectExportTask::showResult()
 {
     dialog.reset();
-    dialog.setTitle("Project Export");
+    dialog.setTitle("Snapshot Export");
     
     for (auto msg : messages) {
         dialog.addMessage(msg);
@@ -500,56 +497,6 @@ void ProjectExportTask::showResult()
     }
 
     dialog.show(provider->getDialogParent());
-    waiting = true;
-}
-
-void ProjectExportTask::dialogTest()
-{
-    if (chooser != nullptr) {
-        // should not be possible
-        Trace(1, "ProjectExportTask: FileChooser already active");
-    }
-    else {
-        juce::String purpose = "projectExport";
-    
-        //Pathfinder* pf = provider->getPathfinder();
-        //juce::File startPath(pf->getLastFolder(purpose));
-
-        juce::File startPath = projectContainer;
-
-        juce::String title = "Select snapshot folder...";
-
-        chooser.reset(new juce::FileChooser(title, startPath, "*.mcl"));
-
-        auto chooserFlags = (juce::FileBrowserComponent::saveMode |
-                             juce::FileBrowserComponent::canSelectFiles |
-                             juce::FileBrowserComponent::canSelectDirectories);
-
-        chooser->launchAsync (chooserFlags, [this,purpose] (const juce::FileChooser& fc)
-        {
-            juce::Array<juce::File> result = fc.getResults();
-            if (result.size() > 0) {
-                juce::File file = result[0];
-                Pathfinder* pf = provider->getPathfinder();
-                pf->saveLastFolder(purpose, file.getFullPathName());
-
-                // !! this may recorse and call chooseFolder again
-                // to avoid the chooser != nullptr test above, have to reset it
-                // and delete the last file chooser manually
-                juce::FileChooser* me = chooser.release();
-
-                Trace(2, "File chosen %s", file.getFullPathName().toUTF8());
-                
-                fileChosen(file);
-
-                delete me;
-            }
-            else {
-                // same as cancel?
-                cancel();
-            }
-        });
-    }
     waiting = true;
 }
 

@@ -24,6 +24,7 @@ class Task
         DialogTest,
         Alert,
         ProjectExport,
+        SnapshotImport,
         ProjectImport
         
     } Type;
@@ -51,6 +52,7 @@ class Task
     bool hasMessages();
     bool hasErrors();
     void clearMessages();
+    void transferMessages(class YanDialog* dialog);
     void addMessage(juce::String s);
     void addError(juce::String e);
     void addErrors(juce::StringArray& src);

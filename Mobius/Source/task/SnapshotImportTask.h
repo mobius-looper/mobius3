@@ -7,7 +7,7 @@
 #include "Task.h"
 #include "TaskPromptDialog.h"
 
-class ProjectImportTask : public Task, public YanDialog::Listener
+class SnapshotImportTask : public Task, public YanDialog::Listener
 {
   public:
     
@@ -15,13 +15,12 @@ class ProjectImportTask : public Task, public YanDialog::Listener
         FindFolder,
         Inspect,
         MismatchedTracks,
-        ImportNew,
-        ImportOld,
+        Import,
         Result,
         Cancel
     } Step;
     
-    ProjectImportTask();
+    SnapshotImportTask();
 
     void run() override;
     void ping() override;
@@ -43,8 +42,7 @@ class ProjectImportTask : public Task, public YanDialog::Listener
     void transition();
     void findImport();
     void inspectImport();
-    void doImportNew();
-    void doImportOld();
+    void doImport();
     void showResult();
 
 };

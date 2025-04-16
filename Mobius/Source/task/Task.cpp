@@ -1,6 +1,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../ui/common/YanDialog.h"
 
 #include "Task.h"
 
@@ -35,6 +36,7 @@ const char* Task::getTypeName()
         case DialogTest: name = "DialogTest"; break;
         case Alert: name = "Alert"; break;
         case ProjectExport: name = "ProjectExport"; break;
+        case SnapshotImport: name = "SnapshotImport"; break;
         case ProjectImport: name = "ProjectImport"; break;
     }
     return name;
@@ -67,6 +69,16 @@ void Task::clearMessages()
     messages.clear();
     warnings.clear();
     errors.clear();
+}
+
+void Task::transferMessages(YanDialog* d)
+{
+    for (auto m : messages)
+      d->addMessage(m);
+    for (auto w : warnings)
+      d->addWarning(w);
+    for (auto e : errors)
+      d->addError(e);
 }
 
 void Task::addMessage(juce::String m)

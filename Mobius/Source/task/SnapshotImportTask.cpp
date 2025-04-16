@@ -16,14 +16,14 @@
 #include "Task.h"
 #include "ProjectClerk.h"
 
-#include "ProjectImportTask.h"
+#include "SnapshotImportTask.h"
 
-ProjectImportTask::ProjectImportTask()
+SnapshotImportTask::SnapshotImportTask()
 {
-    type = Task::ProjectImport;
+    type = Task::SnapshotImport;
 }
 
-void ProjectImportTask::run()
+void SnapshotImportTask::run()
 {
     waiting = false;
     finished = false;
@@ -31,7 +31,7 @@ void ProjectImportTask::run()
     transition();
 }
 
-void ProjectImportTask::cancel()
+void SnapshotImportTask::cancel()
 {
     // todo: close any open dialogs
     waiting = false;
@@ -39,7 +39,7 @@ void ProjectImportTask::cancel()
     chooser.reset();
 }
 
-void ProjectImportTask::ping()
+void SnapshotImportTask::ping()
 {
 }
 
@@ -49,7 +49,7 @@ void ProjectImportTask::ping()
 //
 //////////////////////////////////////////////////////////////////////
 
-void ProjectImportTask::transition()
+void SnapshotImportTask::transition()
 {
     while (!waiting && !finished) {
 
@@ -57,8 +57,7 @@ void ProjectImportTask::transition()
         
             case FindFolder: findImport(); break;
             case Inspect: inspectImport(); break;
-            case ImportNew: doImportNew(); break;
-            case ImportOld: doImportOld(); break;
+            case Import: doImport(); break;
             case Result: showResult(); break;
             case Cancel: cancel(); break;
 
@@ -67,7 +66,7 @@ void ProjectImportTask::transition()
     }
 }
 
-void ProjectImportTask::yanDialogClosed(YanDialog* d, int button)
+void SnapshotImportTask::yanDialogClosed(YanDialog* d, int button)
 {
     (void)d;
     (void)button;
@@ -80,7 +79,7 @@ void ProjectImportTask::yanDialogClosed(YanDialog* d, int button)
     transition();
 }
 
-void ProjectImportTask::fileChosen(juce::File file)
+void SnapshotImportTask::fileChosen(juce::File file)
 {
     waiting = false;
     
@@ -93,7 +92,7 @@ void ProjectImportTask::fileChosen(juce::File file)
         step = Inspect;
     }
     else {
-        Trace(1, "ProjectImportTask: Unexpected step after file chooser %d", step);
+        Trace(1, "SnapshotImportTask: Unexpected step after file chooser %d", step);
         step = Cancel;
     }
     
@@ -106,25 +105,24 @@ void ProjectImportTask::fileChosen(juce::File file)
 //
 //////////////////////////////////////////////////////////////////////
 
-void ProjectImportTask::findImport()
+void SnapshotImportTask::findImport()
 {
     if (chooser != nullptr) {
         // should not be possible
-        Trace(1, "ProjectImportTask: FileChooser already active");
+        Trace(1, "SnapshotImportTask: FileChooser already active");
         finished = true;
     }
     else {
-        juce::String purpose = "projectImport";
+        juce::String purpose = "snapshotImport";
     
         Pathfinder* pf = provider->getPathfinder();
         juce::File startPath(pf->getLastFolder(purpose));
 
-        juce::String title = "Select a project folder...";
+        juce::String title = "Select a Snapshot Folder";
 
-        chooser.reset(new juce::FileChooser(title, startPath, "*.mob"));
+        chooser.reset(new juce::FileChooser(title, startPath, ""));
 
         auto chooserFlags = (juce::FileBrowserComponent::openMode |
-                             juce::FileBrowserComponent::canSelectFiles | 
                              juce::FileBrowserComponent::canSelectDirectories);
 
         chooser->launchAsync (chooserFlags, [this,purpose] (const juce::FileChooser& fc)
@@ -132,11 +130,12 @@ void ProjectImportTask::findImport()
             juce::Array<juce::File> result = fc.getResults();
             if (result.size() > 0) {
                 juce::File file = result[0];
-                Pathfinder* pf = provider->getPathfinder();
 
+                // need this?
+                Pathfinder* pf = provider->getPathfinder();
                 pf->saveLastFolder(purpose, file.getParentDirectory().getFullPathName());
 
-                // !! this may recorse and call chooseFolder again
+                // !! the workflow may recorse and call findImport again
                 // to avoid the chooser != nullptr test above, have to reset it
                 // and delete the last file chooser manually
                 juce::FileChooser* me = chooser.release();
@@ -154,57 +153,31 @@ void ProjectImportTask::findImport()
     }
 }
 
-void ProjectImportTask::inspectImport()
+void SnapshotImportTask::inspectImport()
 {
-    Trace(2, "ProjectImportTask: Inspecting %s", importFile.getFullPathName().toUTF8());
+    Trace(2, "SnapshotImportTask: Inspecting %s", importFile.getFullPathName().toUTF8());
 
     if (importFile.isDirectory()) {
         // supposed to be a new snapshot folder
         juce::File manifest = importFile.getChildFile("content.mcl");
         if (manifest.existsAsFile()) {
-            step = ImportNew;
+            step = Import;
         }
         else {
-            // it might be an old project, but the name of the manifest file
-            // is arbitrary
-            int types = juce::File::TypesOfFileToFind::findFiles;
-            bool recursive = false;
-            juce::String pattern = juce::String("*.mob");
-            juce::Array<juce::File> files = importFile.findChildFiles(types, recursive, pattern,
-                                                                      juce::File::FollowSymlinks::no);
-
-            if (files.size() == 0) {
-                addError("Not a valid snapshot folder");
-                addError(importFile.getFullPathName());
-                step = Result;
-            }
-            else {
-                // usually just one, but might be a dumping ground for several
-                if (files.size() > 0)
-                  Trace(1, "ProjectImportTask: Multiple projects found in directory %s",
-                        importFile.getFullPathName().toUTF8());
-                importFile = files[0];
-                step = ImportOld;
-            }
-        }
-    }
-    else if (importFile.existsAsFile()) {
-        if (importFile.getFileExtension().equalsIgnoreCase(".mob")) {
-            step = ImportOld;
-        }
-        else {
-            addError("Not an old project file");
+            // in theory we could look to see if there is an old .mob file in
+            // here and import the project, but since those weren't required
+            // to be in distinct folders there could be more than one
+            // make them use the task specifically for importing old projects
+            addError("Not a valid snapshot folder");
             addError(importFile.getFullPathName());
             step = Result;
         }
     }
     else {
         // should have canceled if they didn't pick anything
-        addError("No file selected");
+        addError("No folder selected");
         step = Result;
     }
-
-    transition();
 }
 
 /**
@@ -215,7 +188,7 @@ void ProjectImportTask::inspectImport()
  * If you ever decide to do 2, then reading old projects could the same
  * after converting the .mob file to an .mcl file
  */
-void ProjectImportTask::doImportNew()
+void SnapshotImportTask::doImport()
 {
     clearMessages();
 
@@ -230,56 +203,19 @@ void ProjectImportTask::doImportNew()
     step = Result;
 }
 
-void ProjectImportTask::doImportOld()
-{
-    clearMessages();
-
-    ProjectClerk pc(provider);
-    content.reset(pc.readOld(this, importFile));
-    if (content == nullptr) {
-        addError("Empty project");
-    }
-    else {
-        MobiusInterface* mobius = provider->getMobius();
-        mobius->loadTrackContent(content.get());
-        addErrors(content->errors);
-
-        juce::String loopLabel = (content->loopsLoaded == 1) ? "loop" : "loops";
-        juce::String trackLabel = (content->tracksLoaded == 1) ? "track" : "tracks";
-
-        juce::String msg = juce::String("Imported ") + juce::String(content->loopsLoaded) +
-            " " + loopLabel + " into " + juce::String(content->tracksLoaded) + " " + trackLabel;
-        addMessage(msg);
-
-        // until you actually save layers, don't show this one
-        //addMessage(juce::String(content->layersLoaded) + " layers updated");
-    }
-    
-    step = Result;
-}
-
 /**
  * Show the final result after exporting.
  * Same as the export task except for the title, find a way to share
  */
-void ProjectImportTask::showResult()
+void SnapshotImportTask::showResult()
 {
     dialog.reset();
-    dialog.setTitle("Project Import");
-    
-    for (auto msg : messages) {
-        dialog.addMessage(msg);
-    }
+    dialog.setTitle("Snapshot Import");
 
-    for (auto error : errors) {
-        dialog.addError(error);
-    }
-
-    for (auto warning : warnings) {
-        dialog.addWarning(warning);
-    }
+    transferMessages(&dialog);
 
     dialog.show(provider->getDialogParent());
+    
     waiting = true;
 }
 
