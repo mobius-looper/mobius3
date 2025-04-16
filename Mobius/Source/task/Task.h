@@ -61,8 +61,9 @@ class Task
     class Provider* provider = nullptr;
     Type type = None;
     int id = 0;
+    bool waiting = false;
     bool finished = false;
-
+    
     juce::StringArray messages;
     juce::StringArray errors;
     juce::StringArray warnings;

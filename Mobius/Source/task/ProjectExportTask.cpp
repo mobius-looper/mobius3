@@ -80,18 +80,23 @@ ProjectExportTask::ProjectExportTask()
 
 void ProjectExportTask::run()
 {
-    step = Start;
+    //step = Start;
+    step = DialogTest;
     transition();
 }
 
 void ProjectExportTask::cancel()
 {
     // todo: close any open dialogs
+    waiting = false;
     finished = true;
 
-    // this is a unique_ptr but want to verify we can delete
-    //this at any time to cancel it
+    // !! this is a unique_ptr but want to verify we can delete
+    // this at any time to cancel the async FileChooser
     chooser.reset();
+
+    // the YanDialog if we've been displaying one will be deleted
+    // when the Task is deleted, could close it early though...
 }
 
 void ProjectExportTask::ping()
@@ -119,26 +124,32 @@ void ProjectExportTask::SnapshotChooser::resized()
 
 void ProjectExportTask::transition()
 {
-    switch (step) {
-        
-        case Start: findContainer(); break;
-        case WarnMissingUserFolder: warnMissingUserFolder(); break;
-        case WarnInvalidUserFolder: warnInvalidUserFolder(); break;
-        case ChooseContainer: chooseContainer(); break;
-        case ChooseSnapshot: chooseSnapshot(); break;
-        case VerifyFolder: verifyFolder(); break;
-        case WarnOverwrite: warnOverwrite(); break;
-        case Export: doExport(); break;
-        case Result: showResult(); break;
-        case Cancel: cancel(); break;
+    while (!waiting && !finished) {
 
-        default: cancel(); break;
+        switch (step) {
+        
+            case Start: findContainer(); break;
+            case WarnMissingUserFolder: warnMissingUserFolder(); break;
+            case WarnInvalidUserFolder: warnInvalidUserFolder(); break;
+            case ChooseContainer: chooseContainer(); break;
+            case ChooseSnapshot: chooseSnapshot(); break;
+            case VerifyFolder: verifyFolder(); break;
+            case WarnOverwrite: warnOverwrite(); break;
+            case Export: doExport(); break;
+            case Result: showResult(); break;
+            case DialogTest: dialogTest(); break;
+
+            default: cancel(); break;
+        }
     }
 }
 
 void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
 {
     (void)d;
+
+    waiting = false;
+    
     switch (step) {
         
         case WarnMissingUserFolder:
@@ -167,18 +178,22 @@ void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
             step = Cancel;
             break;
 
+        case DialogTest:
+            step = Cancel;
+            break;
+
         default: {
             Trace(1, "ProjectExportTask: Unexpected step after closing dialog %d", step);
             step = Cancel;
         }
             break;
     }
-
-    transition();
 }
 
 void ProjectExportTask::fileChosen(juce::File file)
 {
+    waiting = false;
+    
     if (file == juce::File()) {
         step = Cancel;
     }
@@ -190,7 +205,6 @@ void ProjectExportTask::fileChosen(juce::File file)
         Trace(1, "ProjectExportTask: Unexpected step after file chooser %d", step);
         step = Cancel;
     }
-    transition();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -236,8 +250,6 @@ void ProjectExportTask::findContainer()
             step = ChooseSnapshot;
         }
     }
-    
-    transition();
 }
 
 void ProjectExportTask::warnMissingUserFolder()
@@ -251,6 +263,7 @@ void ProjectExportTask::warnMissingUserFolder()
     dialog.addWarning("location for exports");
     
     dialog.show(provider->getDialogParent());
+    waiting = true;
 }
 
 void ProjectExportTask::warnInvalidUserFolder()
@@ -262,6 +275,7 @@ void ProjectExportTask::warnInvalidUserFolder()
     dialog.addWarning(juce::String("Value: ") + userFolder);
     
     dialog.show(provider->getDialogParent());
+    waiting = true;
 }
 
 void ProjectExportTask::chooseContainer()
@@ -269,6 +283,7 @@ void ProjectExportTask::chooseContainer()
     if (chooser != nullptr) {
         // should not be possible
         Trace(1, "ProjectExportTask: FileChooser already active");
+        step = Cancel;
     }
     else {
         juce::String purpose = "projectExport";
@@ -307,6 +322,7 @@ void ProjectExportTask::chooseContainer()
                 cancel();
             }
         });
+        waiting = true;
     }
 }
 
@@ -341,6 +357,7 @@ void ProjectExportTask::chooseSnapshot()
     dialog.addButton("Cancel");
     
     dialog.show(provider->getDialogParent());
+    waiting = true;
 }
 
 /**
@@ -360,8 +377,6 @@ void ProjectExportTask::verifyFolder()
     else {
         step = WarnOverwrite;
     }
-    
-    transition();
 }
 
 bool ProjectExportTask::isEmpty(juce::File f)
@@ -420,6 +435,7 @@ void ProjectExportTask::warnOverwrite()
     dialog.addButton("Cancel");
     
     dialog.show(provider->getDialogParent());
+    waiting = true;
 }
 
 void ProjectExportTask::doExport()
@@ -461,7 +477,6 @@ void ProjectExportTask::doExport()
     
     // success or failure, go on to the final result dialog
     step = Result;
-    transition();
 }
 
 /**
@@ -485,6 +500,57 @@ void ProjectExportTask::showResult()
     }
 
     dialog.show(provider->getDialogParent());
+    waiting = true;
+}
+
+void ProjectExportTask::dialogTest()
+{
+    if (chooser != nullptr) {
+        // should not be possible
+        Trace(1, "ProjectExportTask: FileChooser already active");
+    }
+    else {
+        juce::String purpose = "projectExport";
+    
+        //Pathfinder* pf = provider->getPathfinder();
+        //juce::File startPath(pf->getLastFolder(purpose));
+
+        juce::File startPath = projectContainer;
+
+        juce::String title = "Select snapshot folder...";
+
+        chooser.reset(new juce::FileChooser(title, startPath, "*.mcl"));
+
+        auto chooserFlags = (juce::FileBrowserComponent::saveMode |
+                             juce::FileBrowserComponent::canSelectFiles |
+                             juce::FileBrowserComponent::canSelectDirectories);
+
+        chooser->launchAsync (chooserFlags, [this,purpose] (const juce::FileChooser& fc)
+        {
+            juce::Array<juce::File> result = fc.getResults();
+            if (result.size() > 0) {
+                juce::File file = result[0];
+                Pathfinder* pf = provider->getPathfinder();
+                pf->saveLastFolder(purpose, file.getFullPathName());
+
+                // !! this may recorse and call chooseFolder again
+                // to avoid the chooser != nullptr test above, have to reset it
+                // and delete the last file chooser manually
+                juce::FileChooser* me = chooser.release();
+
+                Trace(2, "File chosen %s", file.getFullPathName().toUTF8());
+                
+                fileChosen(file);
+
+                delete me;
+            }
+            else {
+                // same as cancel?
+                cancel();
+            }
+        });
+    }
+    waiting = true;
 }
 
 /****************************************************************************/

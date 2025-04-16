@@ -35,7 +35,8 @@ class ProjectExportTask : public Task, public YanDialog::Listener
         WarnOverwrite,
         Export,
         Result,
-        Cancel
+        Cancel,
+        DialogTest
     } Step;
     
     ProjectExportTask();
@@ -78,6 +79,8 @@ class ProjectExportTask : public Task, public YanDialog::Listener
     void doExport();
     void showResult();
 
+    void dialogTest();
+    
 };
 
 
