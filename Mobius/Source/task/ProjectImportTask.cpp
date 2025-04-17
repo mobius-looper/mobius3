@@ -14,7 +14,7 @@
 #include "../Pathfinder.h"
 
 #include "Task.h"
-#include "ProjectClerk.h"
+#include "SnapshotClerk.h"
 
 #include "ProjectImportTask.h"
 
@@ -27,7 +27,7 @@ void ProjectImportTask::run()
 {
     waiting = false;
     finished = false;
-    step = FindFolder;
+    step = FindProject;
     transition();
 }
 
@@ -55,10 +55,9 @@ void ProjectImportTask::transition()
 
         switch (step) {
         
-            case FindFolder: findImport(); break;
-            case Inspect: inspectImport(); break;
-            case ImportNew: doImportNew(); break;
-            case ImportOld: doImportOld(); break;
+            case FindProject: findProject(); break;
+            case Inspect: inspect(); break;
+            case Import: doImport(); break;
             case Result: showResult(); break;
             case Cancel: cancel(); break;
 
@@ -88,7 +87,7 @@ void ProjectImportTask::fileChosen(juce::File file)
         // can we get here?
         step = Cancel;
     }
-    else if (step == FindFolder) {
+    else if (step == FindProject) {
         importFile = file;
         step = Inspect;
     }
@@ -106,7 +105,7 @@ void ProjectImportTask::fileChosen(juce::File file)
 //
 //////////////////////////////////////////////////////////////////////
 
-void ProjectImportTask::findImport()
+void ProjectImportTask::findProject()
 {
     if (chooser != nullptr) {
         // should not be possible
@@ -119,7 +118,7 @@ void ProjectImportTask::findImport()
         Pathfinder* pf = provider->getPathfinder();
         juce::File startPath(pf->getLastFolder(purpose));
 
-        juce::String title = "Select a project folder...";
+        juce::String title = "Select a Project .mob File";
 
         chooser.reset(new juce::FileChooser(title, startPath, "*.mob"));
 
@@ -154,88 +153,61 @@ void ProjectImportTask::findImport()
     }
 }
 
-void ProjectImportTask::inspectImport()
+void ProjectImportTask::inspect()
 {
     Trace(2, "ProjectImportTask: Inspecting %s", importFile.getFullPathName().toUTF8());
 
-    if (importFile.isDirectory()) {
-        // supposed to be a new snapshot folder
-        juce::File manifest = importFile.getChildFile("content.mcl");
-        if (manifest.existsAsFile()) {
-            step = ImportNew;
-        }
-        else {
-            // it might be an old project, but the name of the manifest file
-            // is arbitrary
-            int types = juce::File::TypesOfFileToFind::findFiles;
-            bool recursive = false;
-            juce::String pattern = juce::String("*.mob");
-            juce::Array<juce::File> files = importFile.findChildFiles(types, recursive, pattern,
-                                                                      juce::File::FollowSymlinks::no);
-
-            if (files.size() == 0) {
-                addError("Not a valid snapshot folder");
-                addError(importFile.getFullPathName());
-                step = Result;
-            }
-            else {
-                // usually just one, but might be a dumping ground for several
-                if (files.size() > 0)
-                  Trace(1, "ProjectImportTask: Multiple projects found in directory %s",
-                        importFile.getFullPathName().toUTF8());
-                importFile = files[0];
-                step = ImportOld;
-            }
-        }
-    }
-    else if (importFile.existsAsFile()) {
+    if (importFile.existsAsFile()) {
         if (importFile.getFileExtension().equalsIgnoreCase(".mob")) {
-            step = ImportOld;
+            step = Import;
         }
         else {
-            addError("Not an old project file");
+            // file browser should have prevented this
+            addError("Not an old Project file");
             addError(importFile.getFullPathName());
             step = Result;
         }
     }
+    else if (importFile.isDirectory()) {
+        // not supposed to do this, but if they happened to pick a directory
+        // containing a .mob file we could use that instead
+        // the problem is that old users may have put several projects in the
+        // same container and we don't know which one to pick
+
+        int types = juce::File::TypesOfFileToFind::findFiles;
+        bool recursive = false;
+        juce::String pattern = juce::String("*.mob");
+        juce::Array<juce::File> files = importFile.findChildFiles(types, recursive, pattern,
+                                                                  juce::File::FollowSymlinks::no);
+
+        if (files.size() == 0) {
+            addError("No project file found in folder");
+            addError(importFile.getFullPathName());
+            step = Result;
+        }
+        else {
+            // usually just one, but might be a dumping ground for several
+            if (files.size() > 0)
+              Trace(1, "ProjectImportTask: Multiple projects found in directory %s",
+                    importFile.getFullPathName().toUTF8());
+            importFile = files[0];
+            step = Import;
+        }
+    }
     else {
-        // should have canceled if they didn't pick anything
-        addError("No file selected");
+        // no selection, browser shold have prevented this
+        addError("Not an old Project file");
+        addError(importFile.getFullPathName());
         step = Result;
     }
-
-    transition();
 }
 
-/**
- * Two ways this could work.
- * 1) read it into a TrackContent and send it down or
- * 2) evaluate it as an MCL file and have the MCL subsystem handle it
- *
- * If you ever decide to do 2, then reading old projects could the same
- * after converting the .mob file to an .mcl file
- */
-void ProjectImportTask::doImportNew()
+void ProjectImportTask::doImport()
 {
     clearMessages();
 
-    ProjectClerk pc(provider);
-    content.reset(pc.readSnapshot(this, importFile));
-    if (content == nullptr) {
-        addError("Empty Snapshot");
-    }
-    else {
-    }
-    
-    step = Result;
-}
-
-void ProjectImportTask::doImportOld()
-{
-    clearMessages();
-
-    ProjectClerk pc(provider);
-    content.reset(pc.readOld(this, importFile));
+    SnapshotClerk clerk(provider);
+    content.reset(clerk.readProject(this, importFile));
     if (content == nullptr) {
         addError("Empty project");
     }

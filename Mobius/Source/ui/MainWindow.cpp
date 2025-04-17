@@ -231,14 +231,27 @@ void MainWindow::mainMenuSelection(int id)
             case MainMenu::OpenLoop:
                 supervisor->menuLoadLoop();
                 break;
-            case MainMenu::OpenProject:
-                supervisor->menuLoadProject();
-                break;
             case MainMenu::SaveLoop:
                 supervisor->menuSaveLoop();
                 break;
-            case MainMenu::SaveProject:
+            case MainMenu::SnapshotImport: {
+                TaskMaster* tm = supervisor->getTaskMaster();
+                tm->launch(Task::SnapshotImport);
+            }
+                break;
+            case MainMenu::ProjectImport: {
+                TaskMaster* tm = supervisor->getTaskMaster();
+                tm->launch(Task::ProjectImport);
+            }
+                break;
+            case MainMenu::SnapshotExport: {
+                TaskMaster* tm = supervisor->getTaskMaster();
+                tm->launch(Task::SnapshotExport);
+            }
+                break;
+            case MainMenu::ProjectExport: {
                 supervisor->menuSaveProject();
+            }
                 break;
             case MainMenu::QuickSave:
                 supervisor->menuQuickSave();
@@ -259,19 +272,6 @@ void MainWindow::mainMenuSelection(int id)
                 break;
             case MainMenu::AnalyzeMidi: {
                 supervisor->menuLoadMidi(true);
-            }
-                break;
-            case MainMenu::ProjectExport: {
-                // start using this style instead of a bunch of Supervisor:menuFoo methods
-                UIAction a;
-                a.symbol = supervisor->getSymbols()->getSymbol(FuncProjectExport);
-                supervisor->doAction(&a);
-            }
-                break;
-            case MainMenu::ProjectImport: {
-                UIAction a;
-                a.symbol = supervisor->getSymbols()->getSymbol(FuncProjectImport);
-                supervisor->doAction(&a);
             }
                 break;
             case MainMenu::RunMcl: {

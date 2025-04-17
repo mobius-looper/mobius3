@@ -84,16 +84,16 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         
         // File
         OpenLoop = 1,
-        OpenProject,
         SaveLoop,
-        SaveProject,
+        SnapshotImport,
+        ProjectImport,
+        SnapshotExport,
+        ProjectExport,
         QuickSave,
         LoadScripts,
         LoadSamples,
         LoadMidi,
         RunMcl,
-        ProjectImport,
-        ProjectExport,
         Exit,
 
         // Configuration

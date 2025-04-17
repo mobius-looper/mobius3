@@ -143,8 +143,9 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     
     if (menuIndex == menuIndexFile)
     {
-        menu.addItem(OpenProject, "Load Project...");
-        menu.addItem(SaveProject, "Save Project...");
+        menu.addItem(SnapshotImport, "Import Snapshot...");
+        menu.addItem(SnapshotExport, "Export Snapshot...");
+        menu.addItem(ProjectImport, "Import Old Project...");
         menu.addSeparator();
         menu.addItem(OpenLoop, "Load Loop...");
         menu.addItem(SaveLoop, "Save Loop...");
@@ -375,9 +376,8 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(TraceLog, "Trace Log");
         menu.addItem(DecacheForms, "Decache Forms");
         menu.addItem(AnalyzeMidi, "Analyze MIDI File");
+        menu.addItem(ProjectExport, "Old Project Exporter");
         menu.addItem(HelpTest, "Help Test");
-        menu.addItem(ProjectImport, "New Project Import");
-        menu.addItem(ProjectExport, "New Project Export");
         menu.addItem(CancelTasks, "Cancel Tasks");
         menu.addItem(TestTask, "Test Task");
         

@@ -14,7 +14,7 @@
 #include "../Pathfinder.h"
 
 #include "Task.h"
-#include "ProjectClerk.h"
+#include "SnapshotClerk.h"
 
 #include "SnapshotImportTask.h"
 
@@ -192,8 +192,8 @@ void SnapshotImportTask::doImport()
 {
     clearMessages();
 
-    ProjectClerk pc(provider);
-    content.reset(pc.readSnapshot(this, importFile));
+    SnapshotClerk clerk(provider);
+    content.reset(clerk.readSnapshot(this, importFile));
     if (content == nullptr) {
         addError("Empty Snapshot");
     }

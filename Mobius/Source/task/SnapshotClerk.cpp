@@ -17,14 +17,14 @@
 #include "../Provider.h"
 #include "Task.h"
 
-#include "ProjectClerk.h"
+#include "SnapshotClerk.h"
 
-ProjectClerk::ProjectClerk(Provider* p)
+SnapshotClerk::SnapshotClerk(Provider* p)
 {
     provider = p;
 }
 
-ProjectClerk::~ProjectClerk()
+SnapshotClerk::~SnapshotClerk()
 {
 }
 
@@ -39,7 +39,7 @@ ProjectClerk::~ProjectClerk()
  * Existing files may be cleared out of the way as that happens.
  * The user will have had the opportunity to cancel if they didn't want overwrites.
  */
-int ProjectClerk::writeProject(Task* task, juce::File folder, TrackContent* content)
+int SnapshotClerk::writeSnapshot(Task* task, juce::File folder, TrackContent* content)
 {
     int fileCount = 0;
     
@@ -59,7 +59,7 @@ int ProjectClerk::writeProject(Task* task, juce::File folder, TrackContent* cont
     else {
         juce::Result res = folder.createDirectory();
         if (res.failed()) {
-            task->addError("Unable to create project folder");
+            task->addError("Unable to create snapshot folder");
             task->addError(res.getErrorMessage());
         }
     }
@@ -67,7 +67,7 @@ int ProjectClerk::writeProject(Task* task, juce::File folder, TrackContent* cont
     if (!task->hasErrors()) {
 
         juce::String manifest;
-        manifest += juce::String("project\n");
+        manifest += juce::String("snapshot\n");
 
         for (auto track : content->tracks) {
             
@@ -105,7 +105,7 @@ int ProjectClerk::writeProject(Task* task, juce::File folder, TrackContent* cont
                         // need to update this!!
                         Audio* audio = layer->audio.get();
                 
-                        // when exchanging project files with other applications it can
+                        // when exchanging snapshot files with other applications it can
                         // is important to save the correct sample rate used when they were
                         // recorded.  AudioFile will take the sampleRate stored in the Audio
                         // object
@@ -140,7 +140,7 @@ int ProjectClerk::writeProject(Task* task, juce::File folder, TrackContent* cont
 }
 
 /**
- * We're about to save project content files in a folder.
+ * We're about to save snapshot content files in a folder.
  * If the folder is not empty, we have a few options:
  *
  *    1) wipe it completely
@@ -155,13 +155,13 @@ int ProjectClerk::writeProject(Task* task, juce::File folder, TrackContent* cont
  * 3 is the most conservative, but unless we follow the manifest file exactly on import
  * leaving unused files behind might cause them to be loaded on import.
  */
-void ProjectClerk::cleanFolder(Task* task, juce::File folder)
+void SnapshotClerk::cleanFolder(Task* task, juce::File folder)
 {
     cleanFolder(task, folder, "wav");
     cleanFolder(task, folder, "mid");
 }
 
-void ProjectClerk::cleanFolder(Task* task, juce::File folder, juce::String extension)
+void SnapshotClerk::cleanFolder(Task* task, juce::File folder, juce::String extension)
 {
     int types = juce::File::TypesOfFileToFind::findFiles;
     bool recursive = false;
@@ -179,11 +179,11 @@ void ProjectClerk::cleanFolder(Task* task, juce::File folder, juce::String exten
 
 //////////////////////////////////////////////////////////////////////
 //
-// Import New Project
+// Import Snapshot
 //
 //////////////////////////////////////////////////////////////////////
 
-TrackContent* ProjectClerk::readSnapshot(Task* task, juce::File file)
+TrackContent* SnapshotClerk::readSnapshot(Task* task, juce::File file)
 {
     (void)task;
     (void)file;
@@ -196,7 +196,7 @@ TrackContent* ProjectClerk::readSnapshot(Task* task, juce::File file)
 //
 //////////////////////////////////////////////////////////////////////
 
-TrackContent* ProjectClerk::readOld(Task* task, juce::File file)
+TrackContent* SnapshotClerk::readProject(Task* task, juce::File file)
 {
     TrackContent* content = nullptr;
     
@@ -213,7 +213,7 @@ TrackContent* ProjectClerk::readOld(Task* task, juce::File file)
             task->addError(doc.getLastParseError());
         }
         else if (!docel->hasTagName("Project")) {
-            task->addError("Not an old project XML file");
+            task->addError("Not an old Project XML file");
         }
         else {
             content = new TrackContent();
@@ -226,7 +226,7 @@ TrackContent* ProjectClerk::readOld(Task* task, juce::File file)
                 }
                 else {
                     // don't die I guess
-                    Trace(1, "ProjectClerk: Unexpected element in old project file: %s",
+                    Trace(1, "SnapshotClerk: Unexpected element in old Project file: %s",
                           el->getTagName().toUTF8());
                 }
             }
@@ -240,7 +240,7 @@ TrackContent* ProjectClerk::readOld(Task* task, juce::File file)
  * A Track element used to contain snapshots of a few parameters like the levels
  * and a flag indiciating whether it was active.
  */
-void ProjectClerk::parseOldTrack(Task* task, juce::File project, TrackContent* content, juce::XmlElement* root)
+void SnapshotClerk::parseOldTrack(Task* task, juce::File project, TrackContent* content, juce::XmlElement* root)
 {
     TrackContent::Track* track = new TrackContent::Track();
     track->active = root->getBoolAttribute("active");
@@ -250,7 +250,7 @@ void ProjectClerk::parseOldTrack(Task* task, juce::File project, TrackContent* c
             parseOldLoop(task, project, track, el);
         }
         else {
-            Trace(1, "ProjectClerk: Unexpected element in old project file: %s",
+            Trace(1, "SnapshotClerk: Unexpected element in old Project file: %s",
                   el->getTagName().toUTF8());
         }
     }
@@ -261,7 +261,7 @@ void ProjectClerk::parseOldTrack(Task* task, juce::File project, TrackContent* c
       delete track;
 }
 
-void ProjectClerk::parseOldLoop(Task* task, juce::File project, TrackContent::Track* track, juce::XmlElement* root)
+void SnapshotClerk::parseOldLoop(Task* task, juce::File project, TrackContent::Track* track, juce::XmlElement* root)
 {
     TrackContent::Loop* loop = new TrackContent::Loop();
     loop->active = root->getBoolAttribute("active");
@@ -271,7 +271,7 @@ void ProjectClerk::parseOldLoop(Task* task, juce::File project, TrackContent::Tr
             parseOldLayer(task, project, loop, el);
         }
         else {
-            Trace(1, "ProjectClerk: Unexpected element in old project file: %s",
+            Trace(1, "SnapshotClerk: Unexpected element in old Project file: %s",
                   el->getTagName().toUTF8());
         }
     }
@@ -284,7 +284,7 @@ void ProjectClerk::parseOldLoop(Task* task, juce::File project, TrackContent::Tr
       delete loop;
 }
 
-void ProjectClerk::parseOldLayer(Task* task, juce::File project, TrackContent::Loop* loop, juce::XmlElement* root)
+void SnapshotClerk::parseOldLayer(Task* task, juce::File project, TrackContent::Loop* loop, juce::XmlElement* root)
 {
     // the important things in a Layer are the file path and the cycle count
     juce::String path = root->getStringAttribute("audio");
@@ -356,7 +356,7 @@ void ProjectClerk::parseOldLayer(Task* task, juce::File project, TrackContent::L
  * can easly slide between them.
  * 
  */
-bool ProjectClerk::looksAbsolute(juce::String path)
+bool SnapshotClerk::looksAbsolute(juce::String path)
 {
     return path.startsWithChar('/') || path.containsChar(':');
 }

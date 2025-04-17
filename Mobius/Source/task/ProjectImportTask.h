@@ -12,11 +12,10 @@ class ProjectImportTask : public Task, public YanDialog::Listener
   public:
     
     typedef enum {
-        FindFolder,
+        FindProject,
         Inspect,
         MismatchedTracks,
-        ImportNew,
-        ImportOld,
+        Import,
         Result,
         Cancel
     } Step;
@@ -32,7 +31,7 @@ class ProjectImportTask : public Task, public YanDialog::Listener
     
   private:
 
-    Step step = FindFolder;
+    Step step = FindProject;
 
     juce::File importFile;
     std::unique_ptr<class TrackContent> content;
@@ -41,10 +40,9 @@ class ProjectImportTask : public Task, public YanDialog::Listener
     std::unique_ptr<juce::FileChooser> chooser;
 
     void transition();
-    void findImport();
-    void inspectImport();
-    void doImportNew();
-    void doImportOld();
+    void findProject();
+    void inspect();
+    void doImport();
     void showResult();
 
 };

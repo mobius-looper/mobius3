@@ -23,7 +23,7 @@ class Task
         None,
         DialogTest,
         Alert,
-        ProjectExport,
+        SnapshotExport,
         SnapshotImport,
         ProjectImport
         

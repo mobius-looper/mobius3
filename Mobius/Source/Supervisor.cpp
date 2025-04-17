@@ -2219,11 +2219,11 @@ bool Supervisor::doUILevelAction(UIAction* action)
             case FuncLoadMidi:
                 loadMidi(action);
                 break;
-            case FuncProjectExport:
-                (void)(taskMaster->launch(Task::ProjectExport));
+            case FuncSnapshotExport:
+                (void)(taskMaster->launch(Task::SnapshotExport));
                 break;
-            case FuncProjectImport:
-                (void)(taskMaster->launch(Task::ProjectImport));
+            case FuncSnapshotImport:
+                (void)(taskMaster->launch(Task::SnapshotImport));
                 break;
             default:
                 handled = false;

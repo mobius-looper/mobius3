@@ -12,7 +12,7 @@
 #include "TaskPromptDialog.h"
 #include "Task.h"
 
-class ProjectExportTask : public Task, public YanDialog::Listener
+class SnapshotExportTask : public Task, public YanDialog::Listener
 {
   public:
 
@@ -38,7 +38,7 @@ class ProjectExportTask : public Task, public YanDialog::Listener
         Cancel
     } Step;
     
-    ProjectExportTask();
+    SnapshotExportTask();
 
     void run() override;
     void ping() override;

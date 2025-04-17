@@ -1,7 +1,7 @@
 /**
- * Utility to manage exporting and importing projects.
+ * Utility to manage exporting and importing snapshots.
  *
- * Eventual replacement for the older ProjectFiler
+ * Also conversion of old Projects into Snapshots.
  *
  */
 
@@ -11,23 +11,23 @@
 
 #include "../mobius/TrackContent.h"
 
-class ProjectClerk
+class SnapshotClerk
 {
   public:
 
-    ProjectClerk(class Provider* p);
-    ~ProjectClerk();
+    SnapshotClerk(class Provider* p);
+    ~SnapshotClerk();
     
-    int writeProject(class Task* task, juce::File folder, class TrackContent* content);
+    int writeSnapshot(class Task* task, juce::File folder, class TrackContent* content);
 
     class TrackContent* readSnapshot(class Task* task, juce::File file);
-    class TrackContent* readOld(class Task* task, juce::File file);
+    class TrackContent* readProject(class Task* task, juce::File file);
 
   private:
 
     class Provider* provider = nullptr;
 
-    void writeProject(class Task* t);
+    void writeSnapshot(class Task* t);
     void cleanFolder(class Task* t, juce::File folder);
     void cleanFolder(class Task* t, juce::File folder, juce::String extension);
 

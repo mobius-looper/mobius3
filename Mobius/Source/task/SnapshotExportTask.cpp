@@ -41,16 +41,16 @@
 #include "../ui/JuceUtil.h"
 
 #include "Task.h"
-#include "ProjectClerk.h"
+#include "SnapshotClerk.h"
 
-#include "ProjectExportTask.h"
+#include "SnapshotExportTask.h"
 
-ProjectExportTask::ProjectExportTask()
+SnapshotExportTask::SnapshotExportTask()
 {
-    type = Task::ProjectExport;
+    type = Task::SnapshotExport;
 }
 
-void ProjectExportTask::run()
+void SnapshotExportTask::run()
 {
     waiting = false;
     finished = false;
@@ -58,7 +58,7 @@ void ProjectExportTask::run()
     transition();
 }
 
-void ProjectExportTask::cancel()
+void SnapshotExportTask::cancel()
 {
     // todo: close any open dialogs
     waiting = false;
@@ -72,17 +72,17 @@ void ProjectExportTask::cancel()
     // when the Task is deleted, could close it early though...
 }
 
-void ProjectExportTask::ping()
+void SnapshotExportTask::ping()
 {
 }
 
-ProjectExportTask::SnapshotChooser::SnapshotChooser()
+SnapshotExportTask::SnapshotChooser::SnapshotChooser()
 {
     addAndMakeVisible(snapshotName);
     addAndMakeVisible(snapshots);
 }
     
-void ProjectExportTask::SnapshotChooser::resized()
+void SnapshotExportTask::SnapshotChooser::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     snapshotName.setBounds(area.removeFromTop(20));
@@ -95,7 +95,7 @@ void ProjectExportTask::SnapshotChooser::resized()
 //
 //////////////////////////////////////////////////////////////////////
 
-void ProjectExportTask::transition()
+void SnapshotExportTask::transition()
 {
     while (!waiting && !finished) {
 
@@ -116,7 +116,7 @@ void ProjectExportTask::transition()
     }
 }
 
-void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
+void SnapshotExportTask::yanDialogClosed(YanDialog* d, int button)
 {
     (void)d;
 
@@ -146,7 +146,7 @@ void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
             break;
             
         default: {
-            Trace(1, "ProjectExportTask: Unexpected step after closing dialog %d", step);
+            Trace(1, "SnapshotExportTask: Unexpected step after closing dialog %d", step);
             step = Cancel;
         }
             break;
@@ -155,7 +155,7 @@ void ProjectExportTask::yanDialogClosed(YanDialog* d, int button)
     transition();
 }
 
-void ProjectExportTask::fileChosen(juce::File file)
+void SnapshotExportTask::fileChosen(juce::File file)
 {
     waiting = false;
     
@@ -172,7 +172,7 @@ void ProjectExportTask::fileChosen(juce::File file)
         step = VerifyFolder;
     }
     else {
-        Trace(1, "ProjectExportTask: Unexpected step after file chooser %d", step);
+        Trace(1, "SnapshotExportTask: Unexpected step after file chooser %d", step);
         step = Cancel;
     }
     
@@ -198,7 +198,7 @@ void ProjectExportTask::fileChosen(juce::File file)
  * application support folder which is redirected to the dev tree.
  *
  */
-void ProjectExportTask::findContainer()
+void SnapshotExportTask::findContainer()
 {
     // first see if we can auto-create it within the configured user directory
     SystemConfig* scon = provider->getSystemConfig();
@@ -226,7 +226,7 @@ void ProjectExportTask::findContainer()
     }
 }
 
-void ProjectExportTask::warnMissingUserFolder()
+void SnapshotExportTask::warnMissingUserFolder()
 {
     dialog.reset();
     dialog.setTitle("Snapshot Export");
@@ -239,7 +239,7 @@ void ProjectExportTask::warnMissingUserFolder()
     waiting = true;
 }
 
-void ProjectExportTask::warnInvalidUserFolder()
+void SnapshotExportTask::warnInvalidUserFolder()
 {
     dialog.reset();
     dialog.setTitle("Snapshot Export");
@@ -251,11 +251,11 @@ void ProjectExportTask::warnInvalidUserFolder()
     waiting = true;
 }
 
-void ProjectExportTask::chooseFolder()
+void SnapshotExportTask::chooseFolder()
 {
     if (chooser != nullptr) {
         // should not be possible
-        Trace(1, "ProjectExportTask: FileChooser already active");
+        Trace(1, "SnapshotExportTask: FileChooser already active");
         cancel();
     }
     else {
@@ -323,7 +323,7 @@ void ProjectExportTask::chooseFolder()
  * "file:" it shouuld be "Snapshot folder:".  But the prompt is baked into the
  * Juce code and can't be changed.
  */
-void ProjectExportTask::verifyFolder()
+void SnapshotExportTask::verifyFolder()
 {
     clearMessages();
     
@@ -355,7 +355,7 @@ void ProjectExportTask::verifyFolder()
     }
 }
 
-bool ProjectExportTask::isEmpty(juce::File f)
+bool SnapshotExportTask::isEmpty(juce::File f)
 {
     bool empty = false;
     
@@ -395,7 +395,7 @@ bool ProjectExportTask::isEmpty(juce::File f)
  * Display a warning about an existing non-empty snapshot folder and
  * ask to overwrite.
  */
-void ProjectExportTask::invalidFolder()
+void SnapshotExportTask::invalidFolder()
 {
     dialog.reset();
 
@@ -415,7 +415,7 @@ void ProjectExportTask::invalidFolder()
  * Display a warning about an existing non-empty snapshot folder and
  * ask to overwrite.
  */
-void ProjectExportTask::warnOverwrite()
+void SnapshotExportTask::warnOverwrite()
 {
     dialog.reset();
 
@@ -435,7 +435,7 @@ void ProjectExportTask::warnOverwrite()
     waiting = true;
 }
 
-void ProjectExportTask::doExport()
+void SnapshotExportTask::doExport()
 {
     clearMessages();
     
@@ -462,12 +462,12 @@ void ProjectExportTask::doExport()
     if (!hasErrors()) {
         if (content == nullptr) {
             // should have caught this by now
-            Trace(1, "ProjectExportTask: Missing TrackContent");
+            Trace(1, "SnapshotExportTask: Missing TrackContent");
         }
         else {
-            ProjectClerk pc(provider);
+            SnapshotClerk clerk(provider);
             // this may add warning or error messages to the Task
-            int count = pc.writeProject(this, snapshotFolder, content.get());
+            int count = clerk.writeSnapshot(this, snapshotFolder, content.get());
             addMessage(juce::String(count) + " files exported");
         }
     }
@@ -479,7 +479,7 @@ void ProjectExportTask::doExport()
 /**
  * Show the final result after exporting.
  */
-void ProjectExportTask::showResult()
+void SnapshotExportTask::showResult()
 {
     dialog.reset();
     dialog.setTitle("Snapshot Export");

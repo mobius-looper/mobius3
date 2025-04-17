@@ -35,7 +35,7 @@ const char* Task::getTypeName()
         case None: name = "None"; break;
         case DialogTest: name = "DialogTest"; break;
         case Alert: name = "Alert"; break;
-        case ProjectExport: name = "ProjectExport"; break;
+        case SnapshotExport: name = "SnapshotExport"; break;
         case SnapshotImport: name = "SnapshotImport"; break;
         case ProjectImport: name = "ProjectImport"; break;
     }

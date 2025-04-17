@@ -14,17 +14,17 @@
               file="Source/task/DialogTestTask.cpp"/>
         <FILE id="FH2PAh" name="DialogTestTask.h" compile="0" resource="0"
               file="Source/task/DialogTestTask.h"/>
-        <FILE id="XGJdta" name="ProjectClerk.cpp" compile="1" resource="0"
-              file="Source/task/ProjectClerk.cpp"/>
-        <FILE id="kPlIYI" name="ProjectClerk.h" compile="0" resource="0" file="Source/task/ProjectClerk.h"/>
-        <FILE id="nu0YWB" name="ProjectExportTask.cpp" compile="1" resource="0"
-              file="Source/task/ProjectExportTask.cpp"/>
-        <FILE id="x2BpYt" name="ProjectExportTask.h" compile="0" resource="0"
-              file="Source/task/ProjectExportTask.h"/>
         <FILE id="lvOPwA" name="ProjectImportTask.cpp" compile="1" resource="0"
               file="Source/task/ProjectImportTask.cpp"/>
         <FILE id="gPC9kX" name="ProjectImportTask.h" compile="0" resource="0"
               file="Source/task/ProjectImportTask.h"/>
+        <FILE id="VpPLAy" name="SnapshotClerk.cpp" compile="1" resource="0"
+              file="Source/task/SnapshotClerk.cpp"/>
+        <FILE id="R5GZub" name="SnapshotClerk.h" compile="0" resource="0" file="Source/task/SnapshotClerk.h"/>
+        <FILE id="DoavYf" name="SnapshotExportTask.cpp" compile="1" resource="0"
+              file="Source/task/SnapshotExportTask.cpp"/>
+        <FILE id="IzmkpC" name="SnapshotExportTask.h" compile="0" resource="0"
+              file="Source/task/SnapshotExportTask.h"/>
         <FILE id="mHD6Nk" name="SnapshotImportTask.cpp" compile="1" resource="0"
               file="Source/task/SnapshotImportTask.cpp"/>
         <FILE id="T0jRYi" name="SnapshotImportTask.h" compile="0" resource="0"
