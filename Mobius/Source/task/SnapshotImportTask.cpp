@@ -198,6 +198,19 @@ void SnapshotImportTask::doImport()
         addError("Empty Snapshot");
     }
     else {
+        MobiusInterface* mobius = provider->getMobius();
+        mobius->loadTrackContent(content.get());
+        addErrors(content->errors);
+
+        juce::String loopLabel = (content->loopsLoaded == 1) ? "loop" : "loops";
+        juce::String trackLabel = (content->tracksLoaded == 1) ? "track" : "tracks";
+
+        juce::String msg = juce::String("Imported ") + juce::String(content->loopsLoaded) +
+            " " + loopLabel + " into " + juce::String(content->tracksLoaded) + " " + trackLabel;
+        addMessage(msg);
+
+        // until you actually save layers, don't show this one
+        //addMessage(juce::String(content->layersLoaded) + " layers updated");
     }
     
     step = Result;

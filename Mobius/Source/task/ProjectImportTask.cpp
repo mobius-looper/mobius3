@@ -238,18 +238,8 @@ void ProjectImportTask::showResult()
 {
     dialog.reset();
     dialog.setTitle("Project Import");
-    
-    for (auto msg : messages) {
-        dialog.addMessage(msg);
-    }
 
-    for (auto error : errors) {
-        dialog.addError(error);
-    }
-
-    for (auto warning : warnings) {
-        dialog.addWarning(warning);
-    }
+    transferMessages(&dialog);
 
     dialog.show(provider->getDialogParent());
     waiting = true;

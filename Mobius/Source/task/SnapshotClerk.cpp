@@ -183,11 +183,196 @@ void SnapshotClerk::cleanFolder(Task* task, juce::File folder, juce::String exte
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Once this gets working, this should be handled by MclParser/Evaluator
+ * since the snapshot manifest is an .mxl file
+ */
 TrackContent* SnapshotClerk::readSnapshot(Task* task, juce::File file)
+{
+    TrackContent* content = nullptr;
+    
+    if (!file.isDirectory()) {
+        // should have been caught by the task
+        task->addError("Not a snapshot folder");
+    }
+    else {
+        int types = juce::File::TypesOfFileToFind::findFiles;
+        bool recursive = false;
+        juce::String pattern = juce::String("*.mcl");
+        juce::Array<juce::File> files = file.findChildFiles(types, recursive, pattern,
+                                                            juce::File::FollowSymlinks::no);
+
+        if (files.size() == 0) {
+            task->addError("Missing snapshot control file");
+        }
+        else if (files.size() > 1) {
+            task->addError("Multiple snapshot control files");
+        }
+        else {
+            juce::File control = files[0];
+            juce::String mcl = control.loadFileAsString();
+            if (mcl.length() == 0) {
+                task->addError("Empty snapshot control file");
+            }
+            else {
+                content = new TrackContent();
+                parseSnapshotMcl(task, file, mcl, content);
+                validateContent(content);
+
+                if (task->hasErrors()) {
+                    delete content;
+                    content = nullptr;
+                }
+            }
+        }
+    }
+    
+    return content;
+}
+
+void SnapshotClerk::parseSnapshotMcl(Task* task, juce::File root, juce::String src, TrackContent* content)
+{
+    mclLineNumber = 1;
+    mclSectionFound = false;
+    mclTrack = nullptr;
+    mclLoop = nullptr;
+    
+    juce::StringArray lines = juce::StringArray::fromLines(src);
+    juce::String line;
+    for (int i = 0 ; i < lines.size() ; i++) {
+        line = lines[i];
+        juce::StringArray tokens = juce::StringArray::fromTokens(line, " ", "\"");
+        if (tokens.size() > 0) {
+
+            juce::String first = tokens[0];
+            
+            if (!mclSectionFound) {
+                // temporarily support older files that used "project" instead of "snapshot"
+                if (first != "snapshot" && first != "project") {
+                    task->addError("Missing snapshot section header");
+                }
+                else {
+                    mclSectionFound = true;
+                    mclTrack = nullptr;
+                    mclLoop = nullptr;
+                    mclLayer = nullptr;
+                }
+            }
+            else if (first == "track") {
+                mclTrack = new TrackContent::Track();
+                content->tracks.add(mclTrack);
+                mclLoop = nullptr;
+                mclLayer = nullptr;
+                mclTrack->number = readArgument(task, tokens, "Track");
+            }
+            else if (first == "loop") {
+                mclLoop = new TrackContent::Loop();
+                mclTrack->loops.add(mclLoop);
+                mclLayer = nullptr;
+                mclLoop->number = readArgument(task, tokens, "loop");
+            }
+            else if (mclTrack == nullptr || mclLoop == nullptr) {
+                task->addError("File name out of order");
+            }
+            else {
+                if (first == "cycles") {
+                    ensureLayer();
+                    mclLayer->cycles = readArgument(task, tokens, "cycles");
+                }
+                else {
+                    ensureLayer();
+                    // todo: it doesn't matter since we'll use whatever file is in this
+                    // position but could verify that the generated file name matches the
+                    // track and loop numbers if it was geerated by the exporter
+
+                    // !! todo: for generic .mcl files, should allow the path to be relative
+                    // or absolute, assuming relative for now
+                    juce::File file = root.getChildFile(first);
+                    if (!file.existsAsFile()) {
+                        task->addError(juce::String("Unresolved file: ") + first);
+                    }
+                    else if (file.getFileExtension() == ".wav") {
+                        mclLayer->audio.reset(readAudio(task, file));
+                    }
+                    else if (file.getFileExtension() == ".mid") {
+                        mclLayer->midi.reset(readMidi(task, file));
+                    }
+                    else {
+                        task->addError(juce::String("Unknown file extension ") + file.getFileExtension());
+                    }
+                }
+            }
+        }
+        
+        if (task->hasErrors())
+          break;
+        
+        mclLineNumber++;
+    }
+    
+}
+
+void SnapshotClerk::ensureLayer()
+{
+    if (mclLayer == nullptr) {
+        mclLayer = new TrackContent::Layer();
+        mclLoop->layers.add(mclLayer);
+    }
+}
+
+int SnapshotClerk::readArgument(Task* task, juce::StringArray& tokens, juce::String keyword)
+{
+    int arg = 0;
+    if (tokens.size() !=  2) {
+        task->addError(juce::String("Wrong number of tokens in ") + keyword + " line");
+    }
+    else {
+        juce::String second = tokens[1];
+        int value = second.getIntValue();
+        if (value <= 0)
+          task->addError(juce::String("Malformed ") + keyword + " argument");
+        else
+          arg = value;
+    }
+    return arg;
+}
+
+Audio* SnapshotClerk::readAudio(Task* task, juce::File file)
+{
+    MobiusInterface* mobius = provider->getMobius();
+    AudioPool* pool = mobius->getAudioPool();
+    juce::StringArray errors;
+    Audio* audio = AudioFile::read(file, pool, errors);
+
+    if (errors.size() > 0) {
+        task->addErrors(errors);
+        delete audio;
+    }
+    else if (audio == nullptr) {
+        task->addError("Unable to read .wav file");
+        delete audio;
+    }
+    return audio;
+}
+
+MidiSequence* SnapshotClerk::readMidi(Task* task, juce::File file)
 {
     (void)task;
     (void)file;
+    task->addError("MIDI files in snapshots not imnplemented");
     return nullptr;
+}
+
+/**
+ * After parsing, walk over the TrackContent to make sure that the
+ * struture makes sense.
+ *
+ * Mostly this just checks for combinations of audio and midi layers
+ * in the same track.
+ */
+void SnapshotClerk::validateContent(TrackContent* content)
+{
+    (void)content;
 }
 
 //////////////////////////////////////////////////////////////////////

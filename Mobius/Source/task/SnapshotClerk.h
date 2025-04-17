@@ -37,4 +37,18 @@ class SnapshotClerk
     void parseOldLayer(class Task* task, juce::File project, TrackContent::Loop* loop, juce::XmlElement* root);
     bool looksAbsolute(juce::String path);
 
+    // mcl parse state
+    int mclLineNumber = 0;
+    bool mclSectionFound = false;
+    TrackContent::Track* mclTrack = nullptr;
+    TrackContent::Loop* mclLoop = nullptr;
+    TrackContent::Layer* mclLayer = nullptr;
+    
+    void parseSnapshotMcl(class Task* task, juce::File root, juce::String src, TrackContent* content);
+    int readArgument(Task* task, juce::StringArray& tokens, juce::String keyword);
+    void ensureLayer();
+    class Audio* readAudio(class Task* task, juce::File f);
+    class MidiSequence* readMidi(class Task* task, juce::File f);
+    void validateContent(TrackContent* content);
+    
 };
